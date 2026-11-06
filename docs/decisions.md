@@ -30,7 +30,8 @@ Recorded at Gate 1 (2026-11-06). Each links to its contradiction (C#) or questio
 | D-024 | Q22 | Accepted, plus open-licence images with stored licence and attribution. | REQ-162, 203 |
 | D-025 | Q23, Q24, Q25 | Accepted: view count only; English and Nigeria only; events and sponsor invoices handled manually. | REQ-019, 053 |
 | D-026 | Working principle | Speed is the priority: finish as early as possible; the brief's dates are ceilings; parallelise; only external lead times and human approvals are real constraints. Added to CLAUDE.md. | — |
-| D-027 | Q16, Q17 | **Pending - team lead.** Not decided and not invented. They do not block architecture. (Q7, Q8, C13 moved to D-028.) | REQ-077, 111 |
+| D-027 | Q16 | **Pending - team lead.** Not decided and not invented. Does not block architecture. (Q7, Q8, C13 moved to D-028; Q17 to D-030.) | REQ-077 |
+| D-030 | Q17 | One login per profile owner, individual or organisation. Multi-user organisations are deferred. REQ-111 withdrawn for now; the organisation editor role in REQ-109 is not built. | REQ-109, 111 |
 | D-028 | Q7, Q8, C13 | **No tiers, packages or entitlements; every listing has the same format.** Commercial relationships are arrangements in the admin register: type (sponsored post, sponsored profile, media/editorial package, awards sponsorship, other), customer, amount, currency, payment method and reference, date received, confirmed by, start/end dates, notes. A "paid subscription" for the sprint target = a paid arrangement with status Confirmed (brief §9.3). Withdrawn: REQ-010, 012, 017, 185. | REQ-022, 116, 179–185 |
 | D-029 | Q1 (correction) | The demo/staging site is public and indexable; there is no private preview. A profile is public only after human approval; drafts and unreviewed profiles are admin-only. Removal, suppression, nominee decline and the kill switch must work on public indexed pages: immediate unpublish, 410 and noindex, sitemap and CDN purge. | REQ-191–193, 208, 209 |
 
@@ -39,6 +40,5 @@ Recorded at Gate 1 (2026-11-06). Each links to its contradiction (C#) or questio
 | Item | What is needed | Blocks /architect? |
 |---|---|---|
 | Q16 | CaromHQ API and prospect exchange | No — CSV first |
-| Q17 | Multiple users per organisation | No |
 
 Resolved by D-028: Q7, Q8, C13.

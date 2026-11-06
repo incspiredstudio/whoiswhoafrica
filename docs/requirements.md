@@ -5,7 +5,8 @@ Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). 
 **Scope change (D-005):** the website processes no payments. Customers pay offline; admins record payments in a commercial register. All payment/checkout requirements are marked **Withdrawn** (numbers kept): REQ-011, 048, 070, 073, 074, 076, 097, 099, 113, 114, 117, 118, 119.
 **Q7/Q8/C13 resolved (D-028):** there are no tiers, packages or entitlements. Every listing has the same format. Commercial relationships are admin-recorded arrangements. Withdrawn for this reason: REQ-010, 012, 017, 185.
 **Q1 correction (D-029):** the demo site is public and indexable; profiles are visible only after human approval; removals return 410/noindex (REQ-208, 209).
-**Pending (team lead):** Q16, Q17.
+**Q17 answered (D-030):** one login per profile owner; REQ-111 withdrawn for now.
+**Pending (team lead):** Q16.
 
 **Priority key:** `M` = MVP, built as early as possible (dates in the brief are ceilings, not targets) · `M (flag)` = built in the MVP but behind a feature flag that is OFF until the Venture CEO approves · `S` = should · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
 "Source" = spec section. `—` means not stated in the spec (inferred; see group 7).
@@ -183,9 +184,9 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 |---|---|---|---|
 | REQ-107 | Users can register with email verification. | — | M |
 | REQ-108 | Users can log in, log out, reset passwords, and see/revoke sessions. | — | M |
-| REQ-109 | Roles are enforced: visitor, profile owner, org editor, staff roles, judge. | — | M |
+| REQ-109 | Roles are enforced: visitor, profile owner (one login per profile), staff roles, judge. | — | M |
 | REQ-110 | A user can deactivate or delete their account; the effect on their profile and arrangements is defined and shown before confirming. | — | M |
-| REQ-111 | An organisation account supports multiple users (one owner, several editors). | 6.2 | Q17 |
+| REQ-111 | **WITHDRAWN** (deferred: one login per profile owner for now; D-030). ~~An organisation account supports multiple users (one owner, several editors).~~ | 6.2 | Withdrawn |
 | REQ-112 | Money is stored as integer minor units with a currency code (default NGN). Revenue is recorded by stream (REQ-180). | — | M |
 | REQ-113 | **WITHDRAWN** (no online payments to retry). ~~Failed or abandoned payments can be retried via a link; no profile is published without confirmed payment.~~ | 9.3 | Withdrawn |
 | REQ-114 | **WITHDRAWN** (no webhooks to reconcile). ~~Gateway webhooks are reconciled against the register daily; duplicates and mismatches are flagged.~~ | — | Withdrawn |

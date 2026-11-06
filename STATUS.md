@@ -5,7 +5,7 @@ Gate 1 (question list) answered. Next: /architect, then Gate 2 (architecture).
 
 ## Done
 - Spec copied to docs/spec.md; process files and templates created
-- docs/requirements.md: REQ-001–209 (17 withdrawn: payment, tier and package REQs)
+- docs/requirements.md: REQ-001–209 (18 withdrawn: payment, tier and package REQs)
 - docs/questions.md: 13 contradictions, 25 questions with Status column
 - docs/decisions.md: D-001–D-029
 - CLAUDE.md speed rule added
@@ -22,4 +22,4 @@ See docs/decisions.md. Key: no payments on the site (D-005); admin commercial re
 ## Next up
 - Run /architect; it must choose hosting, justify it, and list accounts to open (D-020)
 - You: supply reviewer names (Q4); request Legal's position by 13 Nov (Q5); open accounts by 13 Nov
-- Pending - team lead: Q16, Q17 (do not block architecture)
+- Pending - team lead: Q16 (does not block architecture)

@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (38 items): Answered 24 · Default accepted 12 · Pending - team lead 2 · Open 0.**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 25: Answered 15, Default accepted 8, Pending 2 (Q16, Q17).
+**Status summary (38 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 0.**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 25: Answered 16, Default accepted 8, Pending 1 (Q16).
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -57,7 +57,7 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 | Q | Status | Question | Why it matters | Decision / default | Ref |
 |---|---|---|---|---|---|
 | Q16 | Pending - team lead | CaromHQ API and prospect import/export? | Integration. | Not decided. CSV import/export in MVP; data designed for later integration (D-011). | D-011 |
-| Q17 | Pending - team lead | Can one organisation have several users? | Roles. | Not decided. Roles and organisation membership are configuration-friendly; no build block. | D-027 |
+| Q17 | Answered | Can one organisation have several users? | Roles. | **No, for now.** One login per profile owner (individual or organisation). Multi-user organisations are deferred and can be added later. | D-030 |
 | Q18 | Default accepted | How are claims verified and abuse handled? | Impersonation. | Organisation: email at its domain or document. Individual: document plus manual approval. Report button on every profile. | D-022 |
 | Q19 | Answered | Sprint target: 10 subscriptions or NGN 5m? | Reporting. | Resolved by C8: either condition; report both. | D-008 |
 | Q20 | Answered | Brand string and domain? | Copy, SEO, email. | Resolved by C1: brand WHOISWHO, domain wiwi.africa. | D-001 |
@@ -73,7 +73,7 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 
 None. Q7, Q8 and C13 are resolved (D-028). **Gate 1 is clear.**
 
-Non-blocking pending: Q16, Q17.
+Non-blocking pending: Q16.
 
 Still needed from you (not blockers for architecture): reviewer names for Q4, Legal's position by 13 Nov (Q5), accounts by 13 Nov (Q14).
 
