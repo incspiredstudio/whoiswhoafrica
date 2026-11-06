@@ -350,3 +350,123 @@ Other watch items: shared-host uptime vs the 99.5% target (REQ-045); review capa
 ## 12. ADRs
 
 One short record per decision in `docs/adr/`: ADR-001 framework, 002 database, 003 hosting and edge, 004 admin console, 005 publication model, 006 caching and unpublish, 007 media and file storage, 008 email, 009 AI drafting, 010 search, 011 queues and scheduling, 012 CI/CD and deploy, 013 audit log.
+
+---
+
+## 13. Alternatives comparison (added for Gate 2; sections 1–12 are unchanged)
+
+Question: should WHOISWHO be built on Laravel + Filament as proposed, or on an existing CMS? Facts below were read from the vendors' own pages on **2026-11-06** (URLs in 13.7). Anything I could not confirm is marked **n.v.** (not verified). Scores are my judgement, not measurements; I proposed option A, so treat its scores with that bias in mind and use the spikes in 13.6 to check them.
+
+### 13.1 Options
+
+| | Option | What it is |
+|---|---|---|
+| A | **Laravel + Filament** (proposed) | Custom PHP application with an admin framework. |
+| B | **WordPress on cPanel** | Custom post types + a custom plugin for the register, awards, provenance and review rules. |
+| C | **Strapi** | Node headless CMS with an admin UI and REST/GraphQL API. Needs a separate public frontend. |
+| D | **Directus** | Database-first headless platform (Docker/Node). Needs a separate public frontend. |
+| E | **Payload** | TypeScript CMS that runs inside a Next.js app, so admin and public site are one codebase. |
+| F | **Statamic** | Laravel-based CMS (a Laravel package) with a control panel; flat-file content by default. |
+
+### 13.2 Licensing and paid features (current, verified)
+
+| Option | Licence | Paid or enterprise-only items relevant to us | Cost for us |
+|---|---|---|---|
+| A | Laravel: MIT. Filament: MIT (repo page; LICENSE file itself not read). Current majors: Laravel 13 (PHP 8.3+), Filament 5 (PHP 8.2+, Laravel 11.28+). Laravel 12 is now in its security-fixes-only window until Feb 2027. | No paid Filament product was found; the Filament pricing page returned 404, so **n.v.** | US$0 licences |
+| B | WordPress: GPLv2 or later. Requires PHP 8.3 recommended, MariaDB 10.11+ or MySQL 8.0+. | Custom editorial statuses and role-based status control come from a plugin: PublishPress Statuses Pro lists US$49 (1 site), 99 (5), 199 (unlimited) per year; its bundle lists US$129/year (1 site). The page does not say exactly which features are free, **n.v.**. Built-in "pending" status needs no plugin. | US$0–130/year |
+| C | Community Edition: MIT, but code under `ee/` has a separate enterprise licence (that licence text not read), and the MIT grant has an exception if you have a Strapi Cloud account. | **Review Workflows: Enterprise only** (docs: "available with an Enterprise plan"). **Audit Logs: Enterprise only.** Content History and Releases: Growth (US$45/month, 3 users, +US$15 per extra user) and Enterprise. SSO is a US$150/month add-on. Draft & Publish and custom roles: free (docs: "Free feature"; custom-role details **n.v.**). Enterprise price: "Let's talk". | US$0 (Community) to US$45+/month (Growth) to quote-only |
+| D | **Not BSL.** Now the Monospace Sustainable Core License (MSCL 1.0), source-available, converting to GPL-3.0 four years after each release. Free under the Open Innovation Grant for organisations under US$5M annual revenue and (pricing page) fewer than 50 employees. | Above those limits, "advanced or enterprise features require a commercial license". Pricing tiers list seats, collections and Flows limits (Core: 3 seats, 25 collections, 5 Flows; Team: 10 seats, 50–100 collections, 20 Flows; Team shown as US$499–699/month, the page contradicts itself). It is **n.v.** whether those caps apply to self-hosted installs under the grant. No approval-workflow feature was found. Whether Incspired (the group) qualifies under the grant is unknown. | US$0 if eligible; otherwise ~US$500+/month |
+| E | Core: MIT. | **Publishing Workflows (multi-step approval) is listed as an Enterprise feature**, as are SSO and Visual Editing; enterprise price is sales-only. Open-source core has draft/published, scheduled publish, versions. | US$0 core |
+| F | Proprietary-style EULA (statamic.com/license); the docs call Core "free and open source". Reasonable legal read recommended. | **Pro US$349 per site + US$99/year for updates after year one.** Pro gates: roles and permissions, revisions/drafts/content history, REST and GraphQL API, multi-user editing, Git automation. Core allows one super-admin only. Pro does a licence check by calling Statamic's server hourly while someone is logged into the control panel. | US$349 + US$99/year (staging is free "in development") |
+
+### 13.3 Scorecard (1 = poor, 5 = excellent)
+
+Columns follow your criteria. The first four are gating requirements.
+
+| Criterion | A Laravel + Filament | B WordPress | C Strapi | D Directus | E Payload | F Statamic |
+|---|---|---|---|---|---|---|
+| REQ-208 nothing public before human approval | 5 | 3 | 3 | 3 | 4 | 3 |
+| REQ-209 immediate unpublish, 410, purge | 5 | 3 | 2 | 2 | 3 | 4 |
+| Per-field provenance (REQ-142/143) | 5 | 2 | 3 | 3 | 4 | 2 |
+| Judge isolation from commercial data (REQ-037/201) | 5 | 2 | 3 | 4 | 4 | 4 |
+| AI claim-verification flow (REQ-165–170) | 5 | 3 | 3 | 3 | 4 | 4 |
+| Editor ease for non-technical staff | 4 | 5 | 4 | 4 | 4 | 5 |
+| Security surface (smaller is better) | 3 | 2 | 3 | 3 | 3 | 4 |
+| Hosting fit: your cPanel (vs Node host / VPS) | 5 | 5 | 1 | 1 | 1 | 4 |
+| Monthly cost (lower is better) | 5 | 4 | 3 | 3 | 3 | 3 |
+| Lock-in (less is better) | 4 | 3 | 3 | 3 | 3 | 3 |
+| Time to build with parallel agents | 3 | 3 | 2 | 3 | 4 | 3 |
+| **Total (unweighted, /55)** | **49** | **35** | **30** | **32** | **37** | **39** |
+
+Why the scores (key points only):
+
+- **A.** Highest on the gating rows because the publish pointer, purge job, provenance tables and module walls are designed for exactly these REQs. It scores lower on build time (3) because the review queue, register and awards are custom, and on security (3) because custom code means our own bugs. Filament accelerates, but does not supply, the review workflow.
+- **B.** Native "pending" status and per-post-type `publish_posts` capability give a basic approval gate, and the REST API returns only `publish` status by default (verified for posts). But sitemaps, search and feeds were **n.v.**, and a large plugin surface can leak drafts (previews, caches, SEO plugins). Judge isolation is weak: one user/capability model, one database, and plugins can read everything, so the commercial wall rests on discipline instead of structure. Per-field provenance and the register need custom tables anyway. Hosting fit is the best (it is the cPanel default). Security surface is the largest and WordPress is the most attacked CMS.
+- **C.** Draft & Publish is free and the REST API serves `published` by default, but **multi-step Review Workflows and Audit Logs are Enterprise-only**, which fails REQ-051 and the review rules unless we build them. It is headless: a second codebase for public pages (SEO, caching, 410) is required. Node + build + process manager, not cPanel (docs recommend PM2 and a reverse proxy; MySQL 8.0+/MariaDB 10.3+/Postgres 14+ are supported, MongoDB is not).
+- **D.** Strong role/filter permissions, DB-first so provenance tables are easy, and versions/revisions/activity log are documented without a stated tier. But the licence changed (MSCL, not BSL), eligibility depends on organisation size, seat/collection caps may apply, there is no approval workflow, public-role misconfiguration exposes drafts (docs warn about it), and it is Docker-based, so not cPanel. Needs a separate public frontend. Node and database requirements pages were **n.v.**
+- **E.** Closest to A in design: code-first, TypeScript, one codebase with Next.js, field-level access control, versions and drafts with access-control-based hiding of drafts. Pitfalls found in the docs: drafts are **not** hidden unless you write the access function, and the Local API **skips access control by default** (a classic leak path for REQ-208). Multi-step approval is Enterprise. Databases are Postgres, MongoDB or SQLite, **not MySQL**, so it cannot use the cPanel database. It requires Next.js and a recent Node, so it cannot run on a typical cPanel (the docs do not mention cPanel; that conclusion is my inference). Needs a VPS or Node PaaS plus a managed Postgres.
+- **F.** Best control-panel experience for editors, runs on PHP 8.3 + Composer (same host needs as A), and sits inside a Laravel app, so custom code is possible. Weak spots: content defaults to flat files (I could not verify entries in a database, since the Eloquent-driver page returned 404), which fits poorly with 20k+ profiles with filters, per-field provenance rows and PII retention; revisions and roles need Pro; no approval workflow was found (only unpublished / published / working copy / revision); the licence includes an hourly phone-home in the control panel. Once the profile data model is custom Eloquent, Statamic becomes an editor for articles and pages only.
+- **Time to build.** Headless options (C, D) mean two codebases (CMS + frontend) and a deploy for each. A, E and F have one. E is a single TypeScript codebase that Claude Code writes well; A is a single PHP codebase of the same kind. Neither estimate is measured; S6 below tests it.
+
+### 13.4 What each option meets: out of the box, with a plugin, or only with custom code
+
+Legend: **OOB** = meets with the product as it ships (and its free tier). **PLG** = meets with a plugin or extension (free or paid, noted). **ENT** = exists only in an enterprise or paid tier. **CUS** = needs custom code on that platform. **n.v.** = not verified. Every option needs custom code for items marked CUS in all columns (they are product-specific).
+
+| Requirement group | A Laravel + Filament | B WordPress | C Strapi | D Directus | E Payload | F Statamic |
+|---|---|---|---|---|---|---|
+| Draft / publish state (REQ-014, 208 base) | CUS (revision pointer, ADR-005) | OOB (pending, publish) | OOB (D&P, free) | OOB (status filter pattern; docs warn) | OOB (drafts; **you must write the access rule**) | OOB (published/unpublished/working copy; revisions need Pro) |
+| Multi-step review, reviewer ≠ drafter (REQ-148) | CUS | PLG (PublishPress Statuses, paid) + CUS | ENT (Review Workflows) / CUS | CUS (Flows, tier caps n.v.) | ENT (Publishing Workflows) / CUS | CUS |
+| Nothing public across feeds, search, sitemap, preview, cache (REQ-208) | CUS (single read model + matrix test) | CUS (core + plugin surfaces unverified) | CUS (frontend + API) | CUS | CUS (Local API skips access by default) | CUS |
+| Immediate unpublish, 410, noindex, purge (REQ-209) | CUS | CUS (410 + CDN purge plugin/code) | CUS (in frontend) | CUS (in frontend) | CUS (in Next.js cache) | CUS |
+| Revisions / history (REQ-125) | CUS (append-only revisions) | OOB (post revisions) | ENT/Growth (Content History 14 days on Growth) | OOB (versions + revisions; tier n.v.) | OOB (versions; keeps 100 per doc by default) | ENT (Pro) |
+| Per-field provenance (REQ-142, 143) | CUS (field_provenance table) | CUS | CUS | CUS (easy: own table) | CUS (field + hooks) | CUS |
+| Roles, strong auth, MFA (REQ-047, 083) | PLG (spatie + Filament MFA) | PLG (2FA plugin) | OOB roles / SSO paid | OOB (RBAC; granular tier n.v.) | OOB roles; SSO ENT | ENT roles (Pro); 2FA OOB |
+| Audit log of staff actions (REQ-051, 188) | CUS (hash chain, ADR-013) | PLG (activity-log plugins) | ENT (Audit Logs) | OOB (`directus_activity`; tier n.v.) | CUS (versions are document history only) | ENT (audit logging in Enterprise tier) |
+| Directory filters and search for 10k+ (REQ-007, 008, 079) | CUS (FULLTEXT, ADR-010) | PLG (search/facet plugins) + CUS | CUS (DB filters or external search) | OOB filters + CUS search | CUS | CUS |
+| SEO: SSR, sitemap, schema.org (REQ-006, 044) | CUS (Blade) | PLG (SEO plugin) | CUS (in frontend) | CUS (in frontend) | CUS (Next.js) | OOB/PLG (addons) |
+| Import with dry-run, entity resolution, suppression (REQ-092, 145–147) | CUS | PLG (importers) + CUS | CUS | CUS (Flows) + CUS | CUS | CUS |
+| AI draft + claim-to-source verification (REQ-165–170) | CUS (ADR-009) | CUS | CUS | CUS | CUS | CUS |
+| Judge isolation from commercial data (REQ-037, 201) | CUS (separate panel + arch tests) | CUS (capabilities; weak structure) | CUS (roles + API) | CUS (role filters) | CUS (field/doc access) | CUS (roles need Pro) |
+| Commercial register, computed counting rule (REQ-022, 179–184) | CUS (Filament resources) | CUS | CUS | OOB CRUD + CUS rule | CUS | CUS |
+| Awards workflow, flags with approval ref (REQ-194–202) | CUS | CUS | CUS | CUS | CUS | CUS |
+| Public forms: rate limit, Turnstile (REQ-018, 081, 122) | OOB throttle + PLG Turnstile | PLG | CUS | CUS | CUS | OOB forms + CUS |
+| Kill switch, DSR, takedown (REQ-193, 059, 071) | CUS | CUS | CUS | CUS | CUS | CUS |
+| Admin UI for non-technical staff | PLG/OOB (Filament) | OOB | OOB | OOB | OOB | OOB |
+
+Reading the table: **no option supplies the product-specific core** (publication gate across all surfaces, 410 + purge, provenance, AI verification, judge wall, counting rule, awards). Those are custom in every column. The options differ in (1) how much generic admin UI they save, (2) whether review workflow and audit log are paid, (3) whether a second public frontend must be built, and (4) where they can run.
+
+### 13.5 Recommendation
+
+**Keep A (Laravel + Filament).** Reasons, in order of weight:
+1. Every gating requirement needs custom code in every option, so the question is which platform makes the custom parts safest. A puts the publication gate, purge, provenance and module walls in code we control, with architecture tests.
+2. Review workflow and audit log, which the REQs need, are **enterprise-gated in Strapi and Payload** and absent in Directus and Statamic; with A we build them once and own them.
+3. Only A, B and F fit your existing cPanel account; C, D and E need a Node host or VPS, a second service, and (for C and D) a second codebase.
+4. Cost is lowest and there is no licence or eligibility risk (D's grant depends on organisation size; F is US$349 + US$99/year per site).
+
+**Runner-ups:** E (Payload) is the strongest alternative if you move off cPanel anyway, because it is one TypeScript codebase. F (Statamic) is the strongest if editors mainly manage stories and pages. B (WordPress) is the strongest on editor familiarity and hosting but the weakest on the walls the REQs demand.
+
+**What would change the recommendation:**
+- **S1 fails and you prefer a VPS + Node:** E becomes a fair peer to A. The VPS fallback already exists for A, so this alone does not flip the choice; it would take a team preference for TypeScript.
+- **Editors, not developers, must change content types and page layouts often:** F or B gain weight; consider using F only for Stories/pages alongside A's directory (two systems, so I do not recommend it for the MVP).
+- **Incspired already runs and hires for WordPress, and accepts the plugin and hardening burden:** B, with the commercial register and judge portal kept outside WordPress.
+- **Enterprise Strapi or Payload licences are already available to Incspired:** C or E lose their main cost objection; the headless frontend problem for C remains.
+- **Directus eligibility confirmed (under US$5M revenue and 50 staff, no caps on the grant) and a Docker host exists:** D improves, but it still lacks an approval workflow.
+- **Spike S6 finds A's custom review/register UI costs far more than the estimate:** reconsider F for the admin shell.
+- **Q26 shows cPanel has no PHP 8.3 or SSH:** A moves to the VPS; B and F also fail, so the field narrows to A or E.
+
+Version note for A: the current Laravel major is 13 (PHP 8.3+), and 12 is now security-fix-only, so the scaffold should use **Laravel 13 + Filament 5**. This only pins the "current stable" wording in section 2; it does not change the design.
+
+### 13.6 Spike to confirm before M0 is final
+
+**S6 (about half a day, agents):** build the thinnest slice of REQ-208 + REQ-209 (revision pointer, one public page, unpublish with 410 and a faked purge, the surface matrix test) in A and in E, and compare lines of code, test clarity and leak risk. Decide at Gate 2 if you want this run; otherwise A proceeds.
+
+### 13.7 Sources (read 2026-11-06)
+
+- Strapi: https://strapi.io/pricing-self-hosted · https://docs.strapi.io/cms/features/review-workflows · https://docs.strapi.io/cms/features/audit-logs · https://docs.strapi.io/cms/features/draft-and-publish · https://docs.strapi.io/cms/deployment · https://docs.strapi.io/cms/api/rest/status · https://github.com/strapi/strapi/blob/develop/LICENSE
+- Directus: https://directus.com/pricing · https://directus.com/mscl · https://github.com/directus/directus · https://directus.com/docs/guides/auth/access-control · https://directus.com/docs/guides/security/best-practices · https://directus.com/docs/guides/content/content-versioning · https://directus.com/docs/self-hosting/overview
+- Payload: https://payloadcms.com/docs/getting-started/installation · https://payloadcms.com/docs/versions/drafts · https://payloadcms.com/docs/versions/overview · https://payloadcms.com/docs/access-control/overview · https://payloadcms.com/docs/production/deployment · https://payloadcms.com/docs/database/overview · https://payloadcms.com/enterprise/publishing-workflows · https://github.com/payloadcms/payload/blob/main/LICENSE.md
+- Statamic: https://statamic.com/pricing · https://statamic.com/blog/statamic-price-increase · https://statamic.com/features · https://statamic.dev/licensing.md · https://statamic.com/license · https://statamic.dev/requirements · https://statamic.dev/revisions · https://statamic.dev/tips/storing-users-in-a-database.md
+- WordPress and PublishPress: https://wordpress.org/about/requirements/ · https://wordpress.org/about/license/ · https://developer.wordpress.org/reference/functions/register_post_type/ · https://wordpress.org/documentation/article/post-status/ · https://developer.wordpress.org/rest-api/reference/posts/ · https://publishpress.com/statuses/ · https://publishpress.com/pricing/
+- Laravel and Filament: https://laravel.com/docs/releases · https://laravel.com/docs/12.x/deployment · https://filamentphp.com/docs/5.x/introduction/installation.md · https://github.com/filamentphp/filament
+
+**Not verified (do not rely on):** Directus Node/DB requirements and cPanel fit; Directus self-hosted seat caps under the grant; Strapi custom-role and field-level permission details; Payload field-access details and Cloud pricing; Statamic entries-in-database support and scale; WordPress sitemaps, search and feed defaults and security guidance; Filament paid add-ons; PublishPress free-vs-paid feature split. Conclusions about cPanel fit for C, D and E are my inference from their Node/Docker requirements.
