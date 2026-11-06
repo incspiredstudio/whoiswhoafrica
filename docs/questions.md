@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (38 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 0.**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 25: Answered 16, Default accepted 8, Pending 1 (Q16).
+**Status summary (41 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 3 (Q26–Q28, architecture, none block Gate 2).**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 28: Answered 16, Default accepted 8, Pending 1 (Q16), Open 3 (Q26–Q28).
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -67,13 +67,21 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 | Q24 | Default accepted | Languages and countries? | Scope. | English, Nigeria only. | D-025 |
 | Q25 | Default accepted | Event tickets and sponsor invoices in the platform? | Scope. | No; manual. | D-025 |
 
+### Architecture questions (raised by /architect, 2026-11-06)
+
+| Q | Status | Question | Why it matters | Default if you do not know |
+|---|---|---|---|---|
+| Q26 | Open | What does the cPanel account actually offer? PHP version (need 8.3), SSH access, Composer, cron every minute, MySQL/MariaDB version, TRIGGER privilege, outbound HTTPS, disk/inode/memory limits, data-centre region, uptime history, backups. | Decides hosting (ADR-003) and deploy method (ADR-012). Spike S1 checks it. | Assume it fails and plan the VPS fallback (about US$10–20/month) until S1 passes. |
+| Q27 | Open | Which Incspired shared services can we reuse (existing Cloudflare account, email provider, monitoring, Sentry, backup storage, a VPS)? | Fewer new accounts and processors. | Open the new accounts listed in architecture.md section 8. |
+| Q28 | Open | Who owns and pays for the new accounts (Cloudflare, Brevo, R2, Sentry, Anthropic API), and who is the named admin on each? | Account creation by 13 Nov (Q14); processor register (REQ-065). | You (the supervisor) own them; Incspired IT is added as a second admin. |
+
 ---
 
 ## BLOCKING items not Answered or Default accepted
 
 None. Q7, Q8 and C13 are resolved (D-028). **Gate 1 is clear.**
 
-Non-blocking pending: Q16.
+Non-blocking pending: Q16. Architecture questions Q26–Q28 are open with defaults; Q26 blocks the first deploy (M0), not Gate 2.
 
 Still needed from you (not blockers for architecture): reviewer names for Q4, Legal's position by 13 Nov (Q5), accounts by 13 Nov (Q14).
 
