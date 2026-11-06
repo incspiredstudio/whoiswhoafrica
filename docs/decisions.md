@@ -15,7 +15,7 @@ Recorded at Gate 1 (2026-11-06). Each links to its contradiction (C#) or questio
 | D-009 | C9 | Nominations form and admin queue are built behind an OFF flag; the page shows "Nominations open soon" with email sign-up. Turning the flag on needs the CEO's explicit approval. | REQ-106, 194, 195 |
 | D-010 | C10, C11 | Nigeria only for MVP; enquiry relay only, no public email/phone by default. | REQ-018, 053, 060 |
 | D-011 | C12, Q16 | CSV exchange first; data has stable IDs and change timestamps for a later integration. **To build a direct CaromHQ integration we need to know:** whether it has a public API and documentation; authentication method; objects (contacts, companies, deals, pipeline stages, notes); field mapping; webhooks; rate limits; sandbox availability; sync direction; ID ownership; expected volumes. | REQ-077, 205 |
-| D-012 | Q1 | Private staging (login-protected, noindex) with ~100 organisations and ~100 individuals. Public launch at least the same volume of fully reviewed profiles. Sourcing continues in parallel. A second human reviews every profile before it is public. | REQ-148, 191, 192 |
+| D-012 | Q1 | **Corrected by D-029.** Target ~100 organisation and ~100 individual reviewed profiles live; sourcing continues in parallel; a second human reviews every profile before it is public. | REQ-148, 191, 192 |
 | D-013 | Q2 | Individual stubs are in the MVP and published without consent: professional facts only, source and retrieval date per field, human review first, claim/correct/remove link, permanent suppression list, and a global kill switch for all unclaimed individuals. | REQ-133, 139, 156, 193, 207 |
 | D-014 | Q3 | Accepted source types: registries, regulators, exchange listings, Wikidata, licensed APIs, official sites; each approved before use. Never LinkedIn or social platforms; never news text or photos. | REQ-136–138 |
 | D-015 | Q4 | 100% human review before anything publishes. Reviewers: `<name 1>`, `<name 2>` (to be supplied). ~40 profiles per reviewer per week; add a third if backlog grows. | REQ-148, 206 |
@@ -30,14 +30,15 @@ Recorded at Gate 1 (2026-11-06). Each links to its contradiction (C#) or questio
 | D-024 | Q22 | Accepted, plus open-licence images with stored licence and attribution. | REQ-162, 203 |
 | D-025 | Q23, Q24, Q25 | Accepted: view count only; English and Nigeria only; events and sponsor invoices handled manually. | REQ-019, 053 |
 | D-026 | Working principle | Speed is the priority: finish as early as possible; the brief's dates are ceilings; parallelise; only external lead times and human approvals are real constraints. Added to CLAUDE.md. | — |
-| D-027 | Q7, Q8, Q16, Q17, C13 | **Pending - team lead.** Not decided and not invented. Plans, tiers and entitlements are configuration, so architecture is not blocked. | REQ-012, 111, 185 |
+| D-027 | Q16, Q17 | **Pending - team lead.** Not decided and not invented. They do not block architecture. (Q7, Q8, C13 moved to D-028.) | REQ-077, 111 |
+| D-028 | Q7, Q8, C13 | **No tiers, packages or entitlements; every listing has the same format.** Commercial relationships are arrangements in the admin register: type (sponsored post, sponsored profile, media/editorial package, awards sponsorship, other), customer, amount, currency, payment method and reference, date received, confirmed by, start/end dates, notes. A "paid subscription" for the sprint target = a paid arrangement with status Confirmed (brief §9.3). Withdrawn: REQ-010, 012, 017, 185. | REQ-022, 116, 179–185 |
+| D-029 | Q1 (correction) | The demo/staging site is public and indexable; there is no private preview. A profile is public only after human approval; drafts and unreviewed profiles are admin-only. Removal, suppression, nominee decline and the kill switch must work on public indexed pages: immediate unpublish, 410 and noindex, sitemap and CDN purge. | REQ-191–193, 208, 209 |
 
 ## Pending (team lead)
 
 | Item | What is needed | Blocks /architect? |
 |---|---|---|
-| Q7 | Free tier and what each tier adds | No — entitlements are configuration |
-| Q8 | Packages, prices, billing period, VAT | No — tier labels and amounts are admin-entered |
 | Q16 | CaromHQ API and prospect exchange | No — CSV first |
 | Q17 | Multiple users per organisation | No |
-| C13 | Register states vs unpriced packages (resolved by Q8) | No |
+
+Resolved by D-028: Q7, Q8, C13.

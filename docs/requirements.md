@@ -3,7 +3,9 @@
 Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). Written 2026-11-06; updated after Gate 1 answers (see `docs/decisions.md`).
 
 **Scope change (D-005):** the website processes no payments. Customers pay offline; admins record payments in a commercial register. All payment/checkout requirements are marked **Withdrawn** (numbers kept): REQ-011, 048, 070, 073, 074, 076, 097, 099, 113, 114, 117, 118, 119.
-**Pending (team lead):** Q7, Q8, Q16, Q17, C13. Plans and entitlements are configuration, so these do not block architecture.
+**Q7/Q8/C13 resolved (D-028):** there are no tiers, packages or entitlements. Every listing has the same format. Commercial relationships are admin-recorded arrangements. Withdrawn for this reason: REQ-010, 012, 017, 185.
+**Q1 correction (D-029):** the demo site is public and indexable; profiles are visible only after human approval; removals return 410/noindex (REQ-208, 209).
+**Pending (team lead):** Q16, Q17.
 
 **Priority key:** `M` = MVP, built as early as possible (dates in the brief are ceilings, not targets) · `M (flag)` = built in the MVP but behind a feature flag that is OFF until the Venture CEO approves · `S` = should · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
 "Source" = spec section. `—` means not stated in the spec (inferred; see group 7).
@@ -25,7 +27,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | 6 Revenue streams | Mixed | Payment is offline. Software = commercial register, Sponsored/Featured labels (6.1, 6.3); 6.2, 6.4, 6.5 = sales/ops. |
 | 7 Maiden edition | Mixed | Categories, judging panel, event = non-software; nomination flow = software. |
 | 8 Sprint plan | Timeline | Source of date-driven requirements. |
-| 9 Target / 9.3 counting rule | Mixed | Subscription register + counting rule = software. |
+| 9 Target / 9.3 counting rule | Mixed | Commercial register + counting rule = software. |
 | 10 Go-to-market | Non-software | Only SEO touches the product. |
 | 11 Brand voice | Non-software | Copy guidelines. |
 | 12 Identity & website | **Software** | Information architecture, pages, journeys. |
@@ -50,20 +52,20 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-007 | The directory can be browsed and filtered by industry, profession, sector, country, city, organisation type, professional category, achievement/recognition and award category. | 5.2 | M (industry, type, country, city, profession); S (rest) |
 | REQ-008 | Visitors can search profiles by name, organisation or keyword and get ranked results. | 5.2 | M |
 | REQ-009 | Admins can manage the controlled lists (industries, sectors, professions, organisation types, countries, cities) used by profiles and filters. | 5.2 | M |
-| REQ-010 | An informational packages page describes each package, its inclusions and indicative pricing as admin-editable content. It has no cart and no checkout, and its call to action leads to the enquiry form (REQ-177). | 6.1, 8 P1 | M |
+| REQ-010 | **WITHDRAWN** (no tiers or packages; every listing has the same format; D-028). ~~An informational packages page describes each package, its inclusions and indicative pricing as admin-editable content. It has no cart and no checkout, and its call to action leads to the enquiry form (REQ-177).~~ | 6.1, 8 P1 | Withdrawn |
 | REQ-011 | **WITHDRAWN** (no checkout; replaced by lead form REQ-177). ~~A prospective subscriber can choose a plan, create an account, pay and submit their profile in one continuous journey with no human intervention required.~~ | 12.3 | Withdrawn |
-| REQ-012 | A corporate/institutional customer record can cover several profiles and users (configuration-driven; details pending Q7). | 6.2 | Pending Q7 |
+| REQ-012 | **WITHDRAWN** (no packages; D-028). ~~A corporate/institutional customer record can cover several profiles and users (configuration-driven; details pending Q7).~~ | 6.2 | Withdrawn |
 | REQ-013 | The profile intake form validates input, saves drafts and accepts image uploads with enforced type and size limits. Customers reach it through an admin-issued invitation link after the offline agreement; there is no payment step. | 8 P1 | M |
 | REQ-014 | A submitted profile enters an editorial review queue and is not public until a staff reviewer approves it. | 8 P2, 16 | M |
 | REQ-015 | An owner can edit a published profile; changes to name, title, organisation, awards or achievement claims re-enter review before going live. | 6.1 | M |
-| REQ-016 | Admins can mark any post or profile Sponsored (REQ-182); featured directory placement is an admin setting displayed with its label, distinct from any trust status (REQ-024). | 6.1, 3.4 | M |
-| REQ-017 | Paid tiers allow additional images/media on the profile. | 6.1 | S |
+| REQ-016 | Admins can mark any post or profile Sponsored (REQ-182). The label is distinct from any trust status (REQ-024). There is no paid placement tier. | 6.1, 3.4 | M |
+| REQ-017 | **WITHDRAWN** (no paid tiers; every listing has the same format; D-028). ~~Paid tiers allow additional images/media on the profile.~~ | 6.1 | Withdrawn |
 | REQ-018 | A visitor can send an enquiry to a profile owner through a relay form; the owner's email/phone is not exposed; enquiries are rate-limited and spam-protected; owners can switch enquiries off. | 5.1 | M |
-| REQ-019 | A profile owner can see their profile status, subscription status, expiry and view count. | 6.1 | S |
+| REQ-019 | A profile owner can see their profile status and view count. | 6.1 | S |
 | REQ-020 | Profile analytics beyond view count (sources, enquiries over time). | 6.1 | L |
 | REQ-021 | The system keeps an admin-managed commercial register (see REQ-179). | 9.3 | M |
-| REQ-022 | The register applies the brief section 9.3 counting rule: a record counts as a paid subscription only when a package/tier is chosen, payment is received and confirmed by a named admin, the record is in the register, and onboarding has started. The status is computed from fields, not edited by hand. | 9.3 | M |
-| REQ-023 | Complimentary records carry a flag, are excluded from paid counts and revenue, and are reported separately. | 9.3 | M |
+| REQ-022 | Counting rule (brief section 9.3): a "paid subscription" for the sprint target is a paid arrangement with status Confirmed in the register. Confirmed requires amount, currency, payment method and reference, date received, a named confirmed-by admin, and onboarding started. Status is computed from fields, not edited by hand. Complimentary arrangements never count. | 9.3 | M |
+| REQ-023 | Complimentary arrangements carry a flag, are excluded from paid counts and revenue, and are reported separately. | 9.3 | M |
 | REQ-024 | Each profile shows exactly one trust status (see the status ladder in REQ-150). Sponsored, Award and Editorial markers are separate labels and never imply verification. | 3.4, 5.4 | M |
 | REQ-025 | Verification follows a documented checklist per entity type; the system records who verified, when, and what evidence; payment status is never an input. | 3.4, 6.1 | M |
 | REQ-026 | Sponsored articles and campaigns carry a visible "Sponsored" label on the page, listing cards and shares. | 6.3 | M |
@@ -134,7 +136,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-074 | **WITHDRAWN** (superseded by the admin commercial register, REQ-179). ~~Payments made by bank transfer/invoice can be confirmed by Finance in the admin and recorded against a subscription.~~ | 9.3 | Withdrawn |
 | REQ-075 | Transactional email is sent via a provider with SPF, DKIM and DMARC configured; bounces are recorded. | — | M |
 | REQ-076 | **WITHDRAWN** (receipts and invoices are issued offline by Finance). ~~Receipts and invoices (PDF, with VAT where applicable) are generated for each payment.~~ | 9.3 | Withdrawn |
-| REQ-077 | The subscription register, prospects and enquiries can be exported/imported (CSV) for CaromHQ; a live integration is built only if CaromHQ exposes an API. | 15.5 | Q16 |
+| REQ-077 | The commercial register, leads and enquiries can be exported/imported (CSV) for CaromHQ; a live integration is built only if CaromHQ exposes an API. | 15.5 | Q16 |
 | REQ-078 | Privacy-friendly web analytics measure visits, journey completion and conversions. | 14.3 | M |
 | REQ-079 | Search is provided by the database or a hosted search service sized for ≥ 10k profiles. | 5.2 | M |
 | REQ-080 | Uploaded media is stored in object storage behind a CDN. | 12.1 | M |
@@ -149,7 +151,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-084 | A review queue shows each pending item with a field-level diff, sources and approve / edit / reject-with-reason actions. | 8 P2 | M |
 | REQ-085 | Staff can create or edit a profile on behalf of a subscriber or as a complimentary listing; these are flagged and attributed. | 9.3 | M |
 | REQ-086 | Admins can edit a customer record's status, extend or end a term, or mark it complimentary; each change requires a reason and is audited. Refunds and cancellations are handled offline by Finance and recorded as a note and status only. | — | M |
-| REQ-087 | The subscription register exports to CSV with the counting-rule status of each row. | 9.3, 14 | M |
+| REQ-087 | The commercial register exports to CSV with the counting-rule status of each row. | 9.3, 14 | M |
 | REQ-088 | A weekly dashboard shows: paid subscriptions, revenue, average value, profiles submitted/published, journey completion rate, visitors, enquiries, nominations. | 14.2–14.5 | M |
 | REQ-089 | A support inbox tracks enquiries, claims and complaints with owner, status and age. | 8 P2 | M |
 | REQ-090 | Any visitor can report a profile; reports enter an abuse queue visible to staff. | 15.7 | M |
@@ -167,10 +169,10 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-097 | **WITHDRAWN** (no payment integration to test; D-005). ~~By **20 Nov 2026**: subscription packages are configured and payment + confirmation work end-to-end in the gateway's test mode.~~ | 8 P1 | Withdrawn |
 | REQ-098 | By **20 Nov 2026**: individual, business and institutional profile templates and the directory structure exist. | 8 P1 | M |
 | REQ-099 | **WITHDRAWN** (no live payments; REQ-177 and REQ-179 must be live instead). ~~By **21 Nov 2026**: live-mode payments and confirmation emails work, because direct outreach and "secure the first paid subscriptions" start that day.~~ | 8 P2 | Withdrawn |
-| REQ-100 | By **21 Nov 2026**: Terms, Privacy Policy and subscription terms are published before any customer data is collected. | 12.2 | M |
-| REQ-101 | By **20 Dec 2026**: initial subscribers are onboarded, their profiles reviewed and published, and the support process works. | 8 P2 | M |
+| REQ-100 | By **21 Nov 2026** (ceiling): Terms, Privacy Policy and commercial terms are published before any customer data is collected. | 12.2 | M |
+| REQ-101 | By **20 Dec 2026** (ceiling): first paying customers have their arrangements recorded and profiles reviewed and published, and the support process works. | 8 P2 | M |
 | REQ-102 | By **20 Dec 2026**: weekly reporting (REQ-088) is live. | 14.6 | M |
-| REQ-103 | By **31 Jan 2027**: the website and core subscription journey operate in production. | 8 P3 | M |
+| REQ-103 | By **31 Jan 2027** (ceiling): the website, enquiry journey and admin register operate in production. | 8 P3 | M |
 | REQ-104 | By **31 Jan 2027**: the directory is populated to the volume decided in Q1. | 8 P3 | Q1 |
 | REQ-105 | By **31 Jan 2027** (ceiling, not target): the sprint target is met if either condition holds: ≥ 10 paid subscriptions (counted under REQ-022) or NGN 5m confirmed revenue (all streams, REQ-180). | 8 P3, 9 | M |
 | REQ-106 | The Nominate page shows "Nominations open soon" with an email sign-up while the nominations flag is OFF (REQ-194). The flag is turned on only with the Venture CEO's explicit approval after the award rules and eligibility page are published. | 8 P2, C9 | M |
@@ -182,17 +184,17 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-107 | Users can register with email verification. | — | M |
 | REQ-108 | Users can log in, log out, reset passwords, and see/revoke sessions. | — | M |
 | REQ-109 | Roles are enforced: visitor, profile owner, org editor, staff roles, judge. | — | M |
-| REQ-110 | A user can deactivate or delete their account; the effect on their profile and subscription is defined and shown before confirming. | — | M |
+| REQ-110 | A user can deactivate or delete their account; the effect on their profile and arrangements is defined and shown before confirming. | — | M |
 | REQ-111 | An organisation account supports multiple users (one owner, several editors). | 6.2 | Q17 |
 | REQ-112 | Money is stored as integer minor units with a currency code (default NGN). Revenue is recorded by stream (REQ-180). | — | M |
 | REQ-113 | **WITHDRAWN** (no online payments to retry). ~~Failed or abandoned payments can be retried via a link; no profile is published without confirmed payment.~~ | 9.3 | Withdrawn |
 | REQ-114 | **WITHDRAWN** (no webhooks to reconcile). ~~Gateway webhooks are reconciled against the register daily; duplicates and mismatches are flagged.~~ | — | Withdrawn |
 | REQ-115 | Refunds and cancellations are handled offline by Finance; the platform stores status and notes only. | — | M |
-| REQ-116 | Each customer record stores term start and expiry; admins see expiry reminders (REQ-189). On expiry the system applies the configured fallback (e.g. revert tier label), not deletion. | — | M |
+| REQ-116 | Each arrangement stores start and end dates; admins see expiry reminders (REQ-189). When an arrangement ends, the Sponsored label it set is removed automatically; no profile or post is deleted. | — | M |
 | REQ-117 | **WITHDRAWN** (no online plan changes; tier label and expiry are admin-edited, REQ-185). ~~Plan upgrades/downgrades follow a defined proration rule.~~ | — | Withdrawn |
 | REQ-118 | **WITHDRAWN** (no promo codes at checkout; complimentary flag in REQ-179). ~~Promo codes and complimentary grants can be created by Admin.~~ | 9.3 | Withdrawn |
 | REQ-119 | **WITHDRAWN** (offline invoicing is done by Finance outside the platform). ~~Corporate customers can be invoiced and pay by bank transfer.~~ | 6.2 | Withdrawn |
-| REQ-120 | Terms, Privacy, Cookie policy, Subscription terms and Awards rules are published. | 12.2, 13.2 | M |
+| REQ-120 | Terms, Privacy, Cookie policy, commercial terms and Awards rules are published. | 12.2, 13.2 | M |
 | REQ-121 | 404/500 pages, robots.txt and sitemap.xml exist. | — | M |
 | REQ-122 | Public forms are rate-limited per IP and per account. | — | M |
 | REQ-123 | The system warns about likely duplicate profiles at submission and in review. | — | M |
@@ -290,7 +292,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | # | Work | Spec | Owner (per spec) |
 |---|---|---|---|
 | N1 | Brand positioning, identity, messaging and tone guidelines | 2, 11, 12, P1 | Venture CEO + Brand & Creative |
-| N2 | Pricing and package definition (what each tier includes) | 6.1, P1 | Venture CEO |
+| N2 | ~~Pricing and package definition~~ **Withdrawn**: no packages; arrangements are quoted per customer and recorded in the register | 6.1, P1 | — |
 | N3 | Sales: prospect research (approach B), 500→300→150→100→10 funnel, outreach scripts, proposals, introductions | 9, 10, P1–P3 | Venture CEO / sales |
 | N4 | Prospecting tools: licensed lead data or manual research; verify tool terms of service | brief | Sales |
 | N5 | Sales presentation, proposal documents | P1 | Sales |
@@ -298,7 +300,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | N7 | Editorial content production and media relations | 5.3, 10.3, P2 | Editorial |
 | N8 | Final award categories, eligibility criteria, judging panel, governance and conflict-of-interest policy | 5.4, 7.3–7.4 | Venture CEO |
 | N9 | Legal: subscription terms, privacy and data protection, award rules, sponsorship agreements, NDPA basis for publishing personal data | 13.2 | Legal |
-| N10 | Sponsorship packages and sponsor prospecting | 6.4, P3 | Venture CEO |
+| N10 | Sponsorship proposals and sponsor prospecting | 6.4, P3 | Venture CEO |
 | N11 | Event concept, venue, budget, date, ticketing/tables, execution schedule | 5.5, 6.5, 7.5, P3 | Events |
 | N12 | Partnerships (associations, chambers, alumni, media) | 10.4 | Venture CEO |
 | N13 | ~~Payment-gateway merchant account~~ **Withdrawn** (no payment processing on the site) | P1 | — |
@@ -313,23 +315,23 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-177 | The "Subscribe / Get Featured" page is an enquiry form (name, organisation, interest, contact) that creates a lead, plus informational package content (REQ-010). No cart, no checkout. The form is spam-protected and rate-limited. | 12.2, D-005 | M |
-| REQ-178 | Sales staff can manage leads: owner, status, notes, conversion to a customer record, CSV export. | D-005 | M |
-| REQ-179 | Admins can create and edit a customer record with: name/organisation, segment, package/tier label, amount, currency, payment method, payment reference, date received, confirmed-by, status, term start, term expiry, complimentary flag, notes. | 9.3, D-006 | M |
-| REQ-180 | Revenue entries are recorded by stream (subscription, media/editorial, sponsorship) with amount, currency, date received and confirmed-by. | 6, C8 | M |
-| REQ-181 | The admin dashboard shows both sprint numbers (count of paid subscriptions under REQ-022; confirmed revenue total) and revenue per stream. Thresholds (10 and NGN 5m) are configuration; no single gate is hard-coded. | 8, 9, C8 | M |
-| REQ-182 | Admins can mark any post or profile Sponsored with a sponsor name; the page, listing card and share preview show a visible disclosure label. | 6.3, D-006 | M |
-| REQ-183 | Admins can set Featured (editorial) with a recorded reason, and Verified via the checklist of REQ-025. Neither can be set from a payment or tier field. | 3.4 | M |
-| REQ-184 | Changing commercial data (tier, payment, sponsorship) never changes Verified or Featured, and the reverse; automated tests cover this. | 3.4 | M |
-| REQ-185 | Tier label and expiry are admin-editable per profile. Plans, tiers and entitlements are stored as configuration, not code. | 6.1, Q7/Q8 pending | M |
+| REQ-177 | The "Subscribe / Get Featured" page is an enquiry form (name, organisation, interest, contact) that creates a lead, plus informational content about being listed, sponsored posts and profiles, media/editorial work and awards sponsorship. No packages, tiers, cart or checkout. The form is spam-protected and rate-limited. | 12.2, D-005 | M |
+| REQ-178 | Sales staff can manage leads: owner, status, notes, conversion to a customer and arrangement, CSV export. | D-005 | M |
+| REQ-179 | Admins can create and edit arrangements in the commercial register. Fields: type (sponsored post, sponsored profile, media/editorial package, awards sponsorship, other), customer (with segment), amount, currency, payment method, payment reference, date received, confirmed-by, status (proposed, awaiting payment, confirmed, ended, cancelled), start date, end date, complimentary flag, notes. | 9.3, D-006, D-028 | M |
+| REQ-180 | Revenue is reported by arrangement type and by revenue stream (subscription, media/editorial, sponsorship). Each arrangement type has an admin-editable default stream. | 6, C8 | M |
+| REQ-181 | The admin dashboard shows both sprint numbers (count of Confirmed paid arrangements under REQ-022, with a breakdown by type; confirmed revenue total) and revenue per stream. Thresholds (10 and NGN 5m) are configuration; no single gate is hard-coded. | 8, 9, C8 | M |
+| REQ-182 | Admins can mark any post or profile Sponsored with a sponsor name; the page, listing card and share preview show a visible disclosure label. A sponsored-post or sponsored-profile arrangement can be linked to the item and applies the label between its start and end dates; admins may also set it manually. | 6.3, D-006 | M |
+| REQ-183 | Admins can set Featured (editorial) with a recorded reason, and Verified via the checklist of REQ-025. Neither can be set from an arrangement or payment field. | 3.4 | M |
+| REQ-184 | Changing commercial data (arrangement, payment, sponsorship) never changes Verified or Featured, and the reverse; automated tests cover this. | 3.4 | M |
+| REQ-185 | **WITHDRAWN** (no tiers, plans or entitlements; commercial relationships are arrangements, REQ-179; D-028). ~~Tier label and expiry are admin-editable per profile. Plans, tiers and entitlements are stored as configuration, not code.~~ | 6.1, Q7/Q8 pending | Withdrawn |
 | REQ-186 | Sponsors are records (name, logo, link) that admins can attach to awards, categories and pages. | 6.4 | M |
 | REQ-187 | Admins can keep internal notes on profiles, customers, leads and nominations; notes are never public and never visible to judges. | D-006 | M |
-| REQ-188 | Every change to commercial status, labels, tiers, sponsors and notes is written to the audit log (extends REQ-051) with actor, time, old and new values. | 15.7 | M |
+| REQ-188 | Every change to arrangements, Sponsored/Featured/Verified labels, sponsors and notes is written to the audit log (extends REQ-051) with actor, time, old and new values. | 15.7 | M |
 | REQ-189 | Admins see reminders for upcoming expiries; the system takes no automatic action against customers. | Q10 | M |
 | REQ-190 | All brand values (colours, fonts, logo, spacing) live in one central theme config; no brand values are hard-coded elsewhere, and a check fails the build if they are. | C5 | M |
-| REQ-191 | A private staging site (login-protected, noindex) is seeded with about 100 organisation and about 100 individual profiles for testing and demos. | Q1 | M |
-| REQ-192 | For public launch, at least the same volume of fully reviewed profiles is published; sourcing of further organisations and individuals continues through the approved pipeline. | Q1 | M |
-| REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once, is reversible, restricted to named roles, and audited. | Q2 | M |
+| REQ-191 | The target is about 100 organisation and about 100 individual reviewed profiles live. The demo/staging site is public and indexable by search engines; there is no private preview and no login protection. | Q1 | M |
+| REQ-192 | Sourcing of further organisations and individuals continues in parallel through the approved pipeline. | Q1 | M |
+| REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once and works on public, indexed pages (REQ-209). It is reversible, restricted to named roles, and audited. | Q2 | M |
 | REQ-194 | Feature flags for nominations, judging and public announcements default OFF; switching one on requires the Admin role, records the CEO's approval reference, and is audited. | C9, Q12 | M |
 | REQ-195 | While nominations are off, the Nominate page shows "Nominations open soon" with an email sign-up (consent recorded, unsubscribe supported). | C9 | M |
 | REQ-196 | Anyone may nominate. The nominator's email is verified; submissions are rate-limited with duplicate detection; there is no public voting. | Q15 | M (flag) |
@@ -345,3 +347,11 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-206 | The review queue shows per-reviewer workload and warns when backlog exceeds capacity so a third reviewer can be added. | Q4 | M |
 | REQ-207 | The suppression list is permanent, cannot be bypassed by any import, and covers removed individuals, declined nominees and removed organisations. | Q2, Q15 | M |
 | N20 | Offline payment collection, invoicing, receipts, refunds and renewals, done by Finance outside the platform; results recorded in the commercial register | Q10, D-005 | Finance |
+| N21 | After any removal or kill-switch use, request search-engine removal/refresh (e.g. Search Console removals) for already indexed URLs; the platform returns 410 and noindex meanwhile | D-029 | Editorial / admin |
+
+## 11. Added after Q1/Q7 corrections
+
+| ID | Requirement | Source | Pri |
+|---|---|---|---|
+| REQ-208 | A profile is publicly visible only after a human reviewer approves it. Drafts, unreviewed, rejected and AI-drafted-pending profiles are visible to admin roles only. This holds across pages, search, sitemaps, feeds, APIs, previews and caches, and automated tests cover each. | Q1 | M |
+| REQ-209 | Unpublishing is immediate and works on public, indexed pages: removal, suppression, nominee decline and the kill switch make the URL return 410 Gone with a noindex header, drop it from the sitemap and internal search, and purge it from the CDN/cache. Restoring after a reversible unpublish returns 200. | Q1, Q2 | M |

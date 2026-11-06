@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (38 items): Answered 21 · Default accepted 12 · Pending - team lead 5 · Open 0.**
-Contradictions 13: Answered 8, Default accepted 4, Pending 1. Questions 25: Answered 13, Default accepted 8, Pending 4.
+**Status summary (38 items): Answered 24 · Default accepted 12 · Pending - team lead 2 · Open 0.**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 25: Answered 15, Default accepted 8, Pending 2 (Q16, Q17).
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -26,7 +26,7 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 | C10 | Default accepted | §7.2 pan-African vs Nigeria first | Country scope. | Nigeria only for MVP; country field kept for later. | D-010 |
 | C11 | Default accepted | §5.1 contact options vs privacy | Contact data is a harassment risk. | Enquiry relay only; no public email/phone by default. | D-010 |
 | C12 | Answered | §15.5 CaromHQ vs shared services | No interface described. | CSV exchange first. Data designed (stable IDs, change timestamps) so a direct integration can be added. What is needed to build it: see D-011. | D-011 |
-| C13 | Pending - team lead | §9.3 counting rule vs unpriced packages | Register states depend on packages. | Resolved by Q8. Plans and entitlements are built as configuration, so this does not block /architect. | D-027 |
+| C13 | Answered | §9.3 counting rule vs unpriced packages | Register states depended on packages. | There are no tiers or packages. A "paid subscription" for the sprint target means a paid arrangement with status Confirmed in the register (§9.3 rule). | D-028 |
 
 ---
 
@@ -36,14 +36,14 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 
 | Q | Status | Question | Why it matters | Decision / default | Ref |
 |---|---|---|---|---|---|
-| Q1 | Answered | How many organisation and individual profiles, by when, for what purpose? | Import volume and human review workload. | **Override.** Private staging (login-protected, noindex) with ~100 organisations and ~100 individuals for testing and demos. Public launch (31 Jan is the ceiling): at least the same volume of fully reviewed profiles. Keep sourcing in parallel. A second human reviews every profile before public. | D-012 |
+| Q1 | Answered | How many organisation and individual profiles, by when, for what purpose? | Import volume, human review workload, exposure of unreviewed data. | **Corrected.** There is no private preview: the staging/demo site is public and can be indexed. A profile is public only after a human reviewer approves it; drafts and unreviewed profiles are admin-only. Target: ~100 organisation and ~100 individual reviewed profiles live; keep sourcing in parallel. The kill switch and suppression list must work on public, indexed pages (immediate unpublish, 410/noindex). | D-012 |
 | Q2 | Answered | Are public unclaimed individual stubs in the MVP? | Data model, legal exposure. | **Yes, in MVP and published without consent.** Professional facts only, each with source and retrieval date, human-reviewed first, visible claim / correct / remove link, permanent suppression list. **Global kill switch** unpublishes all unclaimed individual profiles at once. | D-013 |
 | Q3 | Default accepted | Which source types are acceptable? | Ingestion and reviewer trust. | Registries, regulators, exchange listings, Wikidata, licensed APIs, official sites; each source approved before use. Never LinkedIn or other social platforms; never news article text or photos. | D-014 |
 | Q4 | Answered | Who reviews, and how many per week? | Review is the quality gate. | Default accepted with one change: **100% human review before anything publishes (no sampling)**. Reviewers: `<name 1>`, `<name 2>` (names not yet supplied). About 40 profiles per reviewer per week; add a third reviewer if backlog grows. | D-015 |
 | Q5 | Answered | Legal basis for publishing personal data? | Consent flows, takedown handling. | Legitimate interests with right to object. Position requested from Incspired Legal by 13 Nov, in parallel with the build; **not a build blocker**. If Legal objects, use the kill switch and adjust. | D-016 |
 | Q6 | Answered | Is AI drafting allowed in the MVP? | Vendor, data transfer, review UI. | **Allowed** for organisations and individuals under rules: restate source facts only; every claim linked to a source passage and dropped if not; no claims on legal trouble, health, family, finances, politics; neutral tone; human approves every draft with claims beside sources; internal AI-assisted field plus model and prompt version; provider that does not train on our data; Legal confirms the transfer. | D-017 |
-| Q7 | Pending - team lead | Free tier, and what each paid tier adds (incl. corporate multi-profile)? | Entitlements. | Not decided. Tiers are admin-entered labels and records; entitlements are configuration. Does not block architecture. | D-027 |
-| Q8 | Pending - team lead | Packages, prices, billing period, VAT? | Reporting only; no checkout exists. | Not decided. Prices are admin-entered labels and records. Does not block architecture. | D-027 |
+| Q7 | Answered | Free tier, and what each paid tier adds? | Entitlements. | **No tiers, packages or entitlements.** Every listing has the same format. Commercial relationships are arrangements recorded in the admin register: type (sponsored post, sponsored profile, media/editorial package, awards sponsorship, other), customer, amount, currency, payment method and reference, date received, confirmed by, start/end dates, notes. | D-028 |
+| Q8 | Answered | Packages, prices, billing period, VAT? | Reporting only. | Resolved by Q7: no packages. Amounts are entered per arrangement. | D-028 |
 | Q9 | Answered (withdrawn) | Payment processor and merchant account? | — | **WITHDRAWN.** No payment processor, no merchant account. Payment is offline; admins record it. | D-005 |
 | Q10 | Answered | Refund, cancellation, renewal, expiry? | Admin states. | Handled offline by Finance. The platform stores renewal and expiry dates and shows reminders to admins. | D-018 |
 | Q11 | Default accepted | Meaning of Unclaimed / Claimed / Verified / Featured / Sponsored? | Credibility promise. | Verified = checklist, independent of payment. Featured = editorial only. Sponsored = labelled, orthogonal, never implies verification. | D-003 |
@@ -71,9 +71,9 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 
 ## BLOCKING items not Answered or Default accepted
 
-**Q7** and **Q8** (both `Pending - team lead`). Neither blocks /architect: tiers, prices and entitlements are admin-entered labels and configuration, and there is no checkout. **Gate 1 is clear.**
+None. Q7, Q8 and C13 are resolved (D-028). **Gate 1 is clear.**
 
-Non-blocking pending: Q16, Q17, C13.
+Non-blocking pending: Q16, Q17.
 
 Still needed from you (not blockers for architecture): reviewer names for Q4, Legal's position by 13 Nov (Q5), accounts by 13 Nov (Q14).
 
@@ -92,7 +92,6 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 | Reviewer names and availability | You / Editorial | Before the first import (Q4) | Any profile going public | Provide names |
 | Source approvals (terms, robots, licence per source) | Editorial + Legal | Before each import (REQ-137) | Data acquisition | Approve |
 | Award rules, eligibility page, judging panel | You | Before the flags are switched on (REQ-194) | Nominations, judging, announcements | Approve |
-| Package and price labels | You | Whenever ready (Q7, Q8) | Informational packages page | Decide; not a blocker |
 
 ---
 
@@ -108,6 +107,7 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 | **Reputational harm if profiles are wrong or stale** | Press, subjects. | Review gate, "last reviewed" date, refresh cycle, corrections log (REQ-144, 160, 164). |
 | **Copyright** | Takedown, claims. | No third-party photos except open-licence images with attribution (REQ-162, REQ-203). |
 | **Pay-to-win perception** | Brand collapse. | Status separation, no data path from commercial records to awards (REQ-024, 037, 184, 199, 201). |
+| **Public, indexed pages of real people** — search engines cache pages that are later removed | Removed or wrong profiles remain visible in search results | REQ-208, REQ-209 (410, noindex, sitemap and CDN purge); N21 search-engine removal requests |
 | **Empty-directory problem** | Low conversion. | Team-seeded organisations and individuals (Q1, REQ-191–192). |
 | **Human review capacity** (agents draft fast; only humans approve) | Backlog of unpublished profiles. | REQ-206; Q4 sizing. |
 | **Manual commercial register** — errors or fraud in hand-entered payments | Wrong revenue count against the target. | Confirmed-by field, computed counting rule, audit log (REQ-022, 179, 188). |
