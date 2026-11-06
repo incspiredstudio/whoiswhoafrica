@@ -311,6 +311,8 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | N17 | Next-quarter roadmap, Intelligence & Insights (5.6), expansion beyond Nigeria | 5.6, 18 | Venture CEO |
 | N18 | External accounts and DNS: domain registrar, DNS, hosting, email, monitoring; secrets held in the host's secret store | 13.2 | You / Incspired IT |
 | N19 | Brand asset delivery and approval | 12, P1 | Brand & Creative + Venture CEO |
+| N20 | Offline payment collection, invoicing, receipts, refunds and renewals, done by Finance outside the platform; results recorded in the commercial register | Q10, D-005 | Finance |
+| N21 | After any removal or kill-switch use, request search-engine removal/refresh (e.g. Search Console removals) for already indexed URLs; the platform returns 410 and noindex meanwhile | D-029 | Editorial / admin |
 
 ## 10. Added after Gate 1 (scope change and decisions)
 
@@ -347,8 +349,6 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-205 | Customers, leads and enquiries have stable external IDs and change timestamps so a CaromHQ integration can be added later; CSV import/export works meanwhile (REQ-077). | C12 | M |
 | REQ-206 | The review queue shows per-reviewer workload and warns when backlog exceeds capacity so a third reviewer can be added. | Q4 | M |
 | REQ-207 | The suppression list is permanent, cannot be bypassed by any import, and covers removed individuals, declined nominees and removed organisations. | Q2, Q15 | M |
-| N20 | Offline payment collection, invoicing, receipts, refunds and renewals, done by Finance outside the platform; results recorded in the commercial register | Q10, D-005 | Finance |
-| N21 | After any removal or kill-switch use, request search-engine removal/refresh (e.g. Search Console removals) for already indexed URLs; the platform returns 410 and noindex meanwhile | D-029 | Editorial / admin |
 
 ## 11. Added after Q1/Q7 corrections
 
