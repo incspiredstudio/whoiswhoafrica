@@ -303,3 +303,5 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | N15 | Reviewer recruitment and editorial guidelines for the review queue | brief | Editorial |
 | N16 | Data-acquisition source approval (terms/robots/licence checks) | brief | Editorial + Legal |
 | N17 | Next-quarter roadmap, Intelligence & Insights (5.6), expansion beyond Nigeria | 5.6, 18 | Venture CEO |
+| N18 | External accounts and DNS: domain registrar, DNS, hosting, email, monitoring; secrets held in the host's secret store | 13.2 | You / Incspired IT |
+| N19 | Brand asset delivery and approval | 12, P1 | Brand & Creative + Venture CEO |
