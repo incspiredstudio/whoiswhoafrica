@@ -1,8 +1,11 @@
 # WHOISWHO — Requirements
 
-Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). Written 2026-11-06. **Draft — pending answers in `docs/questions.md`.**
+Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). Written 2026-11-06; updated after Gate 1 answers (see `docs/decisions.md`).
 
-**Priority key:** `M` = proposed MVP (must exist by 31 Jan 2027 unless a date says otherwise) · `S` = should, if capacity allows · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
+**Scope change (D-005):** the website processes no payments. Customers pay offline; admins record payments in a commercial register. All payment/checkout requirements are marked **Withdrawn** (numbers kept): REQ-011, 048, 070, 073, 074, 076, 097, 099, 113, 114, 117, 118, 119.
+**Pending (team lead):** Q7, Q8, Q16, Q17, C13. Plans and entitlements are configuration, so these do not block architecture.
+
+**Priority key:** `M` = MVP, built as early as possible (dates in the brief are ceilings, not targets) · `M (flag)` = built in the MVP but behind a feature flag that is OFF until the Venture CEO approves · `S` = should · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
 "Source" = spec section. `—` means not stated in the spec (inferred; see group 7).
 
 ---
@@ -16,10 +19,10 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | 1, 2, 3 Intro, brand, values | Non-software | Shapes copy, design, editorial rules. |
 | 4 Audiences | Input | Drives roles and profile types. |
 | 5.1 Profiles, 5.2 Directory, 5.3 Editorial | **Software** | Core build. |
-| 5.4 Awards | Mixed | Governance is non-software; nominations/judging tooling is optional software (Q12). |
+| 5.4 Awards | **Software** | Full workflow built behind feature flags (Q12). Rules and governance are non-software. |
 | 5.5 Events | Non-software | Tickets, tables, venues — manual for now. |
 | 5.6 Intelligence | Out of scope | Spec says "not a requirement for the first three-month sprint". |
-| 6 Revenue streams | Mixed | 6.1 profile subscriptions = software; 6.3 labelling = software; 6.2, 6.4, 6.5 = sales/ops. |
+| 6 Revenue streams | Mixed | Payment is offline. Software = commercial register, Sponsored/Featured labels (6.1, 6.3); 6.2, 6.4, 6.5 = sales/ops. |
 | 7 Maiden edition | Mixed | Categories, judging panel, event = non-software; nomination flow = software. |
 | 8 Sprint plan | Timeline | Source of date-driven requirements. |
 | 9 Target / 9.3 counting rule | Mixed | Subscription register + counting rule = software. |
@@ -47,20 +50,20 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-007 | The directory can be browsed and filtered by industry, profession, sector, country, city, organisation type, professional category, achievement/recognition and award category. | 5.2 | M (industry, type, country, city, profession); S (rest) |
 | REQ-008 | Visitors can search profiles by name, organisation or keyword and get ranked results. | 5.2 | M |
 | REQ-009 | Admins can manage the controlled lists (industries, sectors, professions, organisation types, countries, cities) used by profiles and filters. | 5.2 | M |
-| REQ-010 | A plans page lists each subscription package, its inclusions, its price in NGN and its billing period. | 6.1, 8 P1 | M |
-| REQ-011 | A prospective subscriber can choose a plan, create an account, pay and submit their profile in one continuous journey with no human intervention required. | 12.3 | M |
-| REQ-012 | A corporate/institutional package lets one organisation hold several profiles and several users under one subscription. | 6.2 | Q7 |
-| REQ-013 | The profile intake form validates input, saves drafts, and accepts image uploads with enforced type and size limits. | 8 P1 | M |
+| REQ-010 | An informational packages page describes each package, its inclusions and indicative pricing as admin-editable content. It has no cart and no checkout, and its call to action leads to the enquiry form (REQ-177). | 6.1, 8 P1 | M |
+| REQ-011 | **WITHDRAWN** (no checkout; replaced by lead form REQ-177). ~~A prospective subscriber can choose a plan, create an account, pay and submit their profile in one continuous journey with no human intervention required.~~ | 12.3 | Withdrawn |
+| REQ-012 | A corporate/institutional customer record can cover several profiles and users (configuration-driven; details pending Q7). | 6.2 | Pending Q7 |
+| REQ-013 | The profile intake form validates input, saves drafts and accepts image uploads with enforced type and size limits. Customers reach it through an admin-issued invitation link after the offline agreement; there is no payment step. | 8 P1 | M |
 | REQ-014 | A submitted profile enters an editorial review queue and is not public until a staff reviewer approves it. | 8 P2, 16 | M |
 | REQ-015 | An owner can edit a published profile; changes to name, title, organisation, awards or achievement claims re-enter review before going live. | 6.1 | M |
-| REQ-016 | Paid "featured directory placement" is displayed with a "Sponsored/Promoted" label distinct from any trust status (see REQ-024). | 6.1, 3.4 | Q11 |
+| REQ-016 | Admins can mark any post or profile Sponsored (REQ-182); featured directory placement is an admin setting displayed with its label, distinct from any trust status (REQ-024). | 6.1, 3.4 | M |
 | REQ-017 | Paid tiers allow additional images/media on the profile. | 6.1 | S |
 | REQ-018 | A visitor can send an enquiry to a profile owner through a relay form; the owner's email/phone is not exposed; enquiries are rate-limited and spam-protected; owners can switch enquiries off. | 5.1 | M |
 | REQ-019 | A profile owner can see their profile status, subscription status, expiry and view count. | 6.1 | S |
 | REQ-020 | Profile analytics beyond view count (sources, enquiries over time). | 6.1 | L |
-| REQ-021 | The system keeps a subscription register: customer, package, amount, payment reference, payment date, onboarding status. | 9.3 | M |
-| REQ-022 | A subscription is counted toward the target only when: package selected, payment confirmed, entered in the register, and onboarding started; the count is computed by that rule, not edited by hand. | 9.3 | M |
-| REQ-023 | Complimentary listings are flagged and are excluded from the paid count and revenue; they are reported separately. | 9.3 | M |
+| REQ-021 | The system keeps an admin-managed commercial register (see REQ-179). | 9.3 | M |
+| REQ-022 | The register applies the brief section 9.3 counting rule: a record counts as a paid subscription only when a package/tier is chosen, payment is received and confirmed by a named admin, the record is in the register, and onboarding has started. The status is computed from fields, not edited by hand. | 9.3 | M |
+| REQ-023 | Complimentary records carry a flag, are excluded from paid counts and revenue, and are reported separately. | 9.3 | M |
 | REQ-024 | Each profile shows exactly one trust status (see the status ladder in REQ-150). Sponsored, Award and Editorial markers are separate labels and never imply verification. | 3.4, 5.4 | M |
 | REQ-025 | Verification follows a documented checklist per entity type; the system records who verified, when, and what evidence; payment status is never an input. | 3.4, 6.1 | M |
 | REQ-026 | Sponsored articles and campaigns carry a visible "Sponsored" label on the page, listing cards and shares. | 6.3 | M |
@@ -70,12 +73,12 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-030 | A Nominate page collects: nominator identity, nominee identity, category, supporting evidence, and a conflict-of-interest declaration. | 7.4, 12.2 | M |
 | REQ-031 | Staff can list, filter, export and set the status of nominations. | 7.4 | M |
 | REQ-032 | The Awards section shows the edition, categories, eligibility criteria and the nomination/judging process, managed as content. | 5.4, 7.3 | M |
-| REQ-033 | Category, nominee and winner pages exist and display only consented nominees. | 12.2 | L |
-| REQ-034 | The system tracks each nomination through the 10 stages of the recognition process. | 7.4 | Q12 |
-| REQ-035 | Judges have accounts and can score assigned nominations against published criteria. | 5.4 | Q12 |
-| REQ-036 | Judges and staff declare conflicts of interest; conflicted judges cannot see or score that nomination. | 5.4 | Q12 |
-| REQ-037 | Judge and scoring views never display subscription, payment or sponsorship status of nominees. | 5.4, 7.4 | Q12 |
-| REQ-038 | Winner notification and public announcement can be prepared and published from the system. | 7.4 | L |
+| REQ-033 | Category, nominee and winner pages exist; nominee pages appear only at the shortlist stage (REQ-198). | 12.2 | M (flag) |
+| REQ-034 | The system tracks each nomination through the 10 stages of the recognition process: screening, shortlist, judging, final approval, notification, announcement. | 7.4 | M (flag) |
+| REQ-035 | Judges have accounts and score assigned nominations against configurable criteria and weights (REQ-200). | 5.4 | M (flag) |
+| REQ-036 | Judges and staff declare conflicts of interest; conflicted judges cannot see or score that nomination. | 5.4 | M (flag) |
+| REQ-037 | Judge and scoring views never display payment, subscription, sponsorship or customer-record data of any nominee or nominator (see REQ-201). | 5.4, 7.4 | M (flag) |
+| REQ-038 | Winner notification and public announcement can be prepared and published from the system, behind a flag (REQ-194). | 7.4 | M (flag) |
 | REQ-039 | A Contact page sends messages to a staff inbox and logs them. | 12.2 | M |
 
 ## 2. Non-functional
@@ -87,13 +90,13 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-042 | Images are served resized and in modern formats via a CDN. | 12.1 | M |
 | REQ-043 | Public pages meet WCAG 2.1 AA. *(assumed target)* | 12 | M |
 | REQ-044 | Public content is server-rendered or static so it is indexable; canonical URLs and sitemaps are provided. | 5.3 | M |
-| REQ-045 | Production availability ≥ 99.5% monthly; the checkout path is monitored with alerting. *(assumed)* | — | M |
+| REQ-045 | Production availability ≥ 99.5% monthly; the enquiry form, directory and admin sign-in are monitored with alerting. *(assumed)* | — | M |
 | REQ-046 | All traffic is HTTPS; OWASP Top-10 mitigations, security headers, form rate limits and dependency scanning are in place. | — | M |
 | REQ-047 | Staff accounts require strong passwords and MFA. | — | M |
-| REQ-048 | Card data never touches WHOISWHO servers (hosted checkout / tokenised). | — | M |
+| REQ-048 | **WITHDRAWN** (no card handling on the site; PCI scope removed). ~~Card data never touches WHOISWHO servers (hosted checkout / tokenised).~~ | — | Withdrawn |
 | REQ-049 | Database and uploads are backed up daily; a restore is tested before launch; RPO 24 h, RTO 8 h. *(assumed)* | — | M |
-| REQ-050 | Errors, uptime and payment failures are monitored; logs contain no personal data beyond IDs. | — | M |
-| REQ-051 | All staff/admin actions on profiles, payments and reviews are written to an immutable audit log. | 15.7 | M |
+| REQ-050 | Errors, uptime and form-submission failures are monitored; logs contain no personal data beyond IDs. | — | M |
+| REQ-051 | All staff/admin actions on profiles, customer records and reviews are written to an immutable audit log. | 15.7 | M |
 | REQ-052 | Brand colours, type and the tagline "Influence. Achievement. Legacy." are implemented as design tokens so the approved identity can be applied or changed without rebuilding pages. | 2.2, 12.1 | M |
 | REQ-053 | The site is English-only, handles names with diacritics (UTF-8), uses NGN formatting and the WAT time zone. | 7.2 | M |
 | REQ-054 | The design handles ≥ 50 concurrent users and ≥ 100k page views/month on the launch infrastructure. *(assumed)* | — | M |
@@ -106,31 +109,31 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-057 | For each category of person whose data is held (subscriber, nominator, nominee, stub subject, visitor) the lawful basis is recorded and approved by Legal before data is collected. | 13.2 | M |
+| REQ-057 | For each category of person whose data is held the lawful basis is recorded. For public figures published without consent the basis is legitimate interests with a right to object; Incspired Legal's written position is requested by 13 Nov and is not a build blocker (D-016). | 13.2 | M |
 | REQ-058 | A privacy notice is shown at every point of collection; consent (where used) is stored with timestamp and policy version. | 12.2 | M |
 | REQ-059 | The system supports data-subject requests (access, correction, erasure, objection, portability) with intake, tracking and due dates. | — | M |
 | REQ-060 | Profile owners choose which contact details are public; the default is none beyond the enquiry form. | 5.1 | M |
 | REQ-061 | Marketing email requires separate opt-in and every message has one-click unsubscribe. | 10.5 | M |
 | REQ-062 | Non-essential cookies/analytics load only after consent. | — | M |
 | REQ-063 | A retention schedule exists per data class and a job deletes or anonymises data when it expires. | — | S |
-| REQ-064 | Nominee personal data is kept private and is not shown publicly until the nominee has consented. | 7.4 | M |
-| REQ-065 | A register lists every processor and its location (hosting, email, payments, analytics, any AI provider), each with a data-processing agreement. | — | M |
+| REQ-064 | Nominator details are never public. Nominee data stays private until eligibility screening is complete; see REQ-197 and REQ-198. | 7.4 | M |
+| REQ-065 | A register lists every processor and its location (hosting, email, analytics, AI provider), each with a data-processing agreement. | — | M |
 | REQ-066 | A breach-response procedure exists (detect, log, notify the regulator and affected people within the legal deadline). | — | M |
 | REQ-067 | The system does not collect or store sensitive personal data (health, religion, politics, ethnicity, biometrics, criminal records, sexual life, trade-union membership) in profiles, stubs or nominations; the intake forms exclude these and free text is checked. | — | M |
 | REQ-068 | Individuals under 18 cannot hold a profile. | — | M |
 | REQ-069 | Access is role-based and least-privilege; bulk export of personal data is limited to named roles and logged. | — | M |
-| REQ-070 | Only gateway reference IDs and amounts are stored for payments, never card numbers. | — | M |
+| REQ-070 | **WITHDRAWN** (no payment data held by the site; offline payments are recorded in the register, REQ-179). ~~Only gateway reference IDs and amounts are stored for payments, never card numbers.~~ | — | Withdrawn |
 | REQ-071 | A takedown/complaint process (defamation, privacy, IP) is published, tracked and has a response target. | 15.7 | M |
-| REQ-072 | A data-protection impact assessment is completed, and a data-protection officer/contact designated, before any personal data about non-consenting individuals is published. | — | Q2 |
+| REQ-072 | A data-protection impact assessment is completed and a data-protection contact designated, in parallel with the build. If Legal objects, the kill switch (REQ-193) is used. | — | M |
 
 ## 4. Integrations
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-073 | A payment gateway supporting NGN cards and bank transfer is integrated via hosted checkout; webhooks are signature-verified and idempotent. | 8 P1 | M |
-| REQ-074 | Payments made by bank transfer/invoice can be confirmed by Finance in the admin and recorded against a subscription. | 9.3 | M |
+| REQ-073 | **WITHDRAWN** (no payment gateway; D-005). ~~A payment gateway supporting NGN cards and bank transfer is integrated via hosted checkout; webhooks are signature-verified and idempotent.~~ | 8 P1 | Withdrawn |
+| REQ-074 | **WITHDRAWN** (superseded by the admin commercial register, REQ-179). ~~Payments made by bank transfer/invoice can be confirmed by Finance in the admin and recorded against a subscription.~~ | 9.3 | Withdrawn |
 | REQ-075 | Transactional email is sent via a provider with SPF, DKIM and DMARC configured; bounces are recorded. | — | M |
-| REQ-076 | Receipts and invoices (PDF, with VAT where applicable) are generated for each payment. | 9.3 | M |
+| REQ-076 | **WITHDRAWN** (receipts and invoices are issued offline by Finance). ~~Receipts and invoices (PDF, with VAT where applicable) are generated for each payment.~~ | 9.3 | Withdrawn |
 | REQ-077 | The subscription register, prospects and enquiries can be exported/imported (CSV) for CaromHQ; a live integration is built only if CaromHQ exposes an API. | 15.5 | Q16 |
 | REQ-078 | Privacy-friendly web analytics measure visits, journey completion and conversions. | 14.3 | M |
 | REQ-079 | Search is provided by the database or a hosted search service sized for ≥ 10k profiles. | 5.2 | M |
@@ -145,7 +148,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-083 | An admin console with roles: Admin, Editor, Reviewer, Sales/Support, Finance, Judge. | 13 | M |
 | REQ-084 | A review queue shows each pending item with a field-level diff, sources and approve / edit / reject-with-reason actions. | 8 P2 | M |
 | REQ-085 | Staff can create or edit a profile on behalf of a subscriber or as a complimentary listing; these are flagged and attributed. | 9.3 | M |
-| REQ-086 | Finance can refund, cancel, extend or comp a subscription; each action requires a reason and is audited. | — | M |
+| REQ-086 | Admins can edit a customer record's status, extend or end a term, or mark it complimentary; each change requires a reason and is audited. Refunds and cancellations are handled offline by Finance and recorded as a note and status only. | — | M |
 | REQ-087 | The subscription register exports to CSV with the counting-rule status of each row. | 9.3, 14 | M |
 | REQ-088 | A weekly dashboard shows: paid subscriptions, revenue, average value, profiles submitted/published, journey completion rate, visitors, enquiries, nominations. | 14.2–14.5 | M |
 | REQ-089 | A support inbox tracks enquiries, claims and complaints with owner, status and age. | 8 P2 | M |
@@ -153,7 +156,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-091 | Staff can unpublish or hide any profile or article immediately. | 15.7 | M |
 | REQ-092 | Staff can bulk-import profiles from CSV with validation and a dry-run, tagged with source and importer. | 8 P3 | M |
 | REQ-093 | Prospect lists can be imported/exported (CSV) in a store separate from public data (see REQ-176). | 9.2 | S |
-| REQ-094 | Email notifications fire for: payment received, profile received, approved, rejected with reason, renewal due, claim received, claim resolved. | 8 P2 | M |
+| REQ-094 | Email notifications fire for: enquiry received (to sales), profile received, approved, rejected with reason, nominee invitation, claim received, claim resolved. Renewal and expiry reminders go to admins only. | 8 P2 | M |
 | REQ-095 | An operations runbook documents deploy, rollback, backup restore and incident handling. | 15.5 | M |
 
 ## 6. Timeline-driven
@@ -161,16 +164,16 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
 | REQ-096 | By **20 Nov 2026**: homepage, core landing pages and the agreed site structure are viewable (staging acceptable). | 8 P1 | M |
-| REQ-097 | By **20 Nov 2026**: subscription packages are configured and payment + confirmation work end-to-end in the gateway's test mode. | 8 P1 | M |
+| REQ-097 | **WITHDRAWN** (no payment integration to test; D-005). ~~By **20 Nov 2026**: subscription packages are configured and payment + confirmation work end-to-end in the gateway's test mode.~~ | 8 P1 | Withdrawn |
 | REQ-098 | By **20 Nov 2026**: individual, business and institutional profile templates and the directory structure exist. | 8 P1 | M |
-| REQ-099 | By **21 Nov 2026**: live-mode payments and confirmation emails work, because direct outreach and "secure the first paid subscriptions" start that day. | 8 P2 | M |
+| REQ-099 | **WITHDRAWN** (no live payments; REQ-177 and REQ-179 must be live instead). ~~By **21 Nov 2026**: live-mode payments and confirmation emails work, because direct outreach and "secure the first paid subscriptions" start that day.~~ | 8 P2 | Withdrawn |
 | REQ-100 | By **21 Nov 2026**: Terms, Privacy Policy and subscription terms are published before any customer data is collected. | 12.2 | M |
 | REQ-101 | By **20 Dec 2026**: initial subscribers are onboarded, their profiles reviewed and published, and the support process works. | 8 P2 | M |
 | REQ-102 | By **20 Dec 2026**: weekly reporting (REQ-088) is live. | 14.6 | M |
 | REQ-103 | By **31 Jan 2027**: the website and core subscription journey operate in production. | 8 P3 | M |
 | REQ-104 | By **31 Jan 2027**: the directory is populated to the volume decided in Q1. | 8 P3 | Q1 |
-| REQ-105 | By **31 Jan 2027**: ≥ 10 paid subscriptions (or NGN 5m) are onboarded and recorded under REQ-022. | 8 P3, 9 | M |
-| REQ-106 | The nomination page (REQ-030) is live before nomination awareness campaigns begin (Phase 2, from 21 Nov). | 8 P2 | M |
+| REQ-105 | By **31 Jan 2027** (ceiling, not target): the sprint target is met if either condition holds: ≥ 10 paid subscriptions (counted under REQ-022) or NGN 5m confirmed revenue (all streams, REQ-180). | 8 P3, 9 | M |
+| REQ-106 | The Nominate page shows "Nominations open soon" with an email sign-up while the nominations flag is OFF (REQ-194). The flag is turned on only with the Venture CEO's explicit approval after the award rules and eligibility page are published. | 8 P2, C9 | M |
 
 ## 7. [implied] but unstated
 
@@ -181,14 +184,14 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-109 | Roles are enforced: visitor, profile owner, org editor, staff roles, judge. | — | M |
 | REQ-110 | A user can deactivate or delete their account; the effect on their profile and subscription is defined and shown before confirming. | — | M |
 | REQ-111 | An organisation account supports multiple users (one owner, several editors). | 6.2 | Q17 |
-| REQ-112 | Money is stored in integer minor units in NGN; VAT treatment is configured by Finance. | — | M |
-| REQ-113 | Failed or abandoned payments can be retried via a link; no profile is published without confirmed payment. | 9.3 | M |
-| REQ-114 | Gateway webhooks are reconciled against the register daily; duplicates and mismatches are flagged. | — | M |
-| REQ-115 | Refunds follow the policy decided in Q10 and are recorded against the original payment. | — | Q10 |
-| REQ-116 | Each subscription has a term, expiry, renewal reminders and a defined state on expiry (e.g. downgrade, not delete). | — | Q10 |
-| REQ-117 | Plan upgrades/downgrades follow a defined proration rule. | — | S |
-| REQ-118 | Promo codes and complimentary grants can be created by Admin. | 9.3 | S |
-| REQ-119 | Corporate customers can be invoiced and pay by bank transfer. | 6.2 | M |
+| REQ-112 | Money is stored as integer minor units with a currency code (default NGN). Revenue is recorded by stream (REQ-180). | — | M |
+| REQ-113 | **WITHDRAWN** (no online payments to retry). ~~Failed or abandoned payments can be retried via a link; no profile is published without confirmed payment.~~ | 9.3 | Withdrawn |
+| REQ-114 | **WITHDRAWN** (no webhooks to reconcile). ~~Gateway webhooks are reconciled against the register daily; duplicates and mismatches are flagged.~~ | — | Withdrawn |
+| REQ-115 | Refunds and cancellations are handled offline by Finance; the platform stores status and notes only. | — | M |
+| REQ-116 | Each customer record stores term start and expiry; admins see expiry reminders (REQ-189). On expiry the system applies the configured fallback (e.g. revert tier label), not deletion. | — | M |
+| REQ-117 | **WITHDRAWN** (no online plan changes; tier label and expiry are admin-edited, REQ-185). ~~Plan upgrades/downgrades follow a defined proration rule.~~ | — | Withdrawn |
+| REQ-118 | **WITHDRAWN** (no promo codes at checkout; complimentary flag in REQ-179). ~~Promo codes and complimentary grants can be created by Admin.~~ | 9.3 | Withdrawn |
+| REQ-119 | **WITHDRAWN** (offline invoicing is done by Finance outside the platform). ~~Corporate customers can be invoiced and pay by bank transfer.~~ | 6.2 | Withdrawn |
 | REQ-120 | Terms, Privacy, Cookie policy, Subscription terms and Awards rules are published. | 12.2, 13.2 | M |
 | REQ-121 | 404/500 pages, robots.txt and sitemap.xml exist. | — | M |
 | REQ-122 | Public forms are rate-limited per IP and per account. | — | M |
@@ -237,13 +240,13 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
 | REQ-132 | Organisation stubs (approach A) can be created from approved sources and published as Unclaimed after review. | brief | M |
-| REQ-133 | Individual stubs (approach C) are disabled by a feature flag until Legal sign-off (REQ-057, REQ-072) and the Q2 decision. | brief | Q2 |
+| REQ-133 | Individual stubs (approach C) are enabled in the MVP and published without the individual's consent under the rules in REQ-139 to REQ-176, with the kill switch REQ-193. | brief | M |
 | REQ-134 | Bulk-import adapters exist for CSV/JSON and for the Wikidata SPARQL API; other sources are entered manually. | brief | M |
 | REQ-135 | Wikidata-sourced records store the QID and are re-synced on request. | brief | S |
 | REQ-136 | A source registry records for each source: name, entity types, URL, access method (API / export / crawl / manual), licence and terms summary, robots.txt check date, approver, status. | brief | M |
 | REQ-137 | Ingestion is permitted only from sources with status Approved; Approved requires a named person to have checked terms, licence and robots rules. | brief | M |
 | REQ-138 | No automated collection from sites whose terms or robots rules forbid it, nor from login-walled sites or social platforms (including LinkedIn); any crawler identifies itself, rate-limits itself and never circumvents blocks. | brief | M |
-| REQ-139 | Individual stubs hold only these fields: name, current title, current organisation, industry, public-record roles (board, office), published awards, official or organisational website. | brief | Q2 |
+| REQ-139 | Individual stubs hold only these fields: name, current title, current organisation, industry, public-record roles (board, office), published awards, official or organisational website. | brief | M |
 | REQ-140 | Never stored for individuals: home address, phone, personal email, family, date of birth or age, health, religion, politics, ethnicity, finances, allegations, or personal social handles. The schema offers no field for them. | brief | M |
 | REQ-141 | Free-text fields in any stub or draft are scanned for patterns (phones, emails, addresses, ages, sensitive keywords) and blocked from review until cleared. | brief | M |
 | REQ-142 | Every field on an acquired record stores: source URL, retrieval date, confidence (high / medium / low) and method (API / import / manual / AI). | brief | M |
@@ -252,7 +255,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-145 | Each organisation and individual has one persistent ID; matching uses RC number, Wikidata QID, and normalised name + organisation + location. | brief | M |
 | REQ-146 | Probable duplicates are queued for human merge review; individuals are never auto-merged. | brief | M |
 | REQ-147 | A suppression list holds people and organisations who asked for removal; imports skip them. | brief | M |
-| REQ-148 | All acquired records go to the editorial review queue (REQ-084) with sources visible; nothing acquired is public without approval by a named reviewer who is not the importer. | brief | M |
+| REQ-148 | All acquired records go to the editorial review queue (REQ-084) with sources visible. 100% human review before publishing (no sampling); the approving reviewer is not the importer or drafter. | brief | M |
 | REQ-149 | Review throughput, queue age and rejection reasons are tracked. | brief | M |
 | REQ-150 | The status ladder is Unclaimed → Claimed → Verified → Featured; transitions are logged with actor and reason. | brief | M |
 | REQ-151 | All acquired stubs carry a visible "Unclaimed" label explaining that WHOISWHO compiled it from public sources. | brief | M |
@@ -269,17 +272,17 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-162 | Stub profiles show no photograph unless it is owner-supplied or licensed. | brief | M |
 | REQ-163 | Reviewers apply a neutral-content checklist: no allegations, litigation, rumours, opinion or personal life; only dated, sourced, professional facts. | brief | M |
 | REQ-164 | A corrections log records every change made after publication on a stub, with the reason. | brief | M |
-| REQ-165 | AI drafting is behind a feature flag, off by default (Q6). | brief | Q6 |
-| REQ-166 | If enabled, AI drafting uses only text from approved-source records as input; every sentence maps to a stored source passage; sentences without a mapping are rejected automatically. | brief | Q6 |
-| REQ-167 | AI output may not infer or characterise (e.g. "widely regarded", "renowned") and may not address sensitive attributes. | brief | Q6 |
-| REQ-168 | AI drafts are internal only; a reviewer ticks each claim against its source before publishing; model, prompt, version and source hash are stored. | brief | Q6 |
-| REQ-169 | The AI provider contract excludes training on submitted data and is in the processor register (REQ-065). | brief | Q6 |
-| REQ-170 | The public disclosure page states whether AI assisted a profile (as Legal decides). | brief | Q6 |
+| REQ-165 | AI drafting is allowed for organisation and individual profiles under REQ-166 to REQ-170 and is controlled by a feature flag. | brief | M |
+| REQ-166 | The model may only restate facts found in the fetched source text. Every claim is mapped to a stored source passage; any claim without a mapping is dropped automatically. | brief | M |
+| REQ-167 | AI output uses a neutral, factual tone with no praise or superlatives, and makes no claims about legal trouble, health, family, finances or political views. | brief | M |
+| REQ-168 | A human reviewer approves every AI-drafted profile and sees each claim next to its source. Profiles record internally that they were AI-assisted, plus model, prompt version and source hash. | brief | M |
+| REQ-169 | The AI provider's API terms exclude training on our data; Legal confirms the data transfer; the provider is in the processor register (REQ-065). | brief | M |
+| REQ-170 | The public disclosure page states how AI-assisted profiles are produced and reviewed (wording as Legal decides). | brief | M |
 | REQ-171 | A dashboard reports profiles by entity type, source, status and age. | brief | S |
 | REQ-172 | A subject may add a short right-of-reply note to a profile or editorial item, subject to review. | brief | S |
 | REQ-173 | Claimed profile owners can see which sources the platform used about them. | brief | S |
 | REQ-174 | Disputes (claim, correction, removal) escalate to a named Editor-in-Chief role. | brief | M |
-| REQ-175 | Complimentary individual profiles created by staff require recorded consent from the person before publication. | 9.3 | M |
+| REQ-175 | Complimentary profiles created for a customer require that customer's recorded consent before publication. (Stubs follow REQ-133 instead.) | 9.3 | M |
 | REQ-176 | Prospect data (approach B) lives in a separate store, is never public, and cannot become a profile except by entering the REQ-148 review path with an approved source. | brief | M |
 
 ## 9. Non-software work (tracked, not built)
@@ -298,10 +301,47 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | N10 | Sponsorship packages and sponsor prospecting | 6.4, P3 | Venture CEO |
 | N11 | Event concept, venue, budget, date, ticketing/tables, execution schedule | 5.5, 6.5, 7.5, P3 | Events |
 | N12 | Partnerships (associations, chambers, alumni, media) | 10.4 | Venture CEO |
-| N13 | Payment-gateway merchant account opening and KYC | P1 | Finance |
+| N13 | ~~Payment-gateway merchant account~~ **Withdrawn** (no payment processing on the site) | P1 | — |
 | N14 | CaromHQ record-keeping discipline | 15.5 | All |
 | N15 | Reviewer recruitment and editorial guidelines for the review queue | brief | Editorial |
 | N16 | Data-acquisition source approval (terms/robots/licence checks) | brief | Editorial + Legal |
 | N17 | Next-quarter roadmap, Intelligence & Insights (5.6), expansion beyond Nigeria | 5.6, 18 | Venture CEO |
 | N18 | External accounts and DNS: domain registrar, DNS, hosting, email, monitoring; secrets held in the host's secret store | 13.2 | You / Incspired IT |
 | N19 | Brand asset delivery and approval | 12, P1 | Brand & Creative + Venture CEO |
+
+## 10. Added after Gate 1 (scope change and decisions)
+
+| ID | Requirement | Source | Pri |
+|---|---|---|---|
+| REQ-177 | The "Subscribe / Get Featured" page is an enquiry form (name, organisation, interest, contact) that creates a lead, plus informational package content (REQ-010). No cart, no checkout. The form is spam-protected and rate-limited. | 12.2, D-005 | M |
+| REQ-178 | Sales staff can manage leads: owner, status, notes, conversion to a customer record, CSV export. | D-005 | M |
+| REQ-179 | Admins can create and edit a customer record with: name/organisation, segment, package/tier label, amount, currency, payment method, payment reference, date received, confirmed-by, status, term start, term expiry, complimentary flag, notes. | 9.3, D-006 | M |
+| REQ-180 | Revenue entries are recorded by stream (subscription, media/editorial, sponsorship) with amount, currency, date received and confirmed-by. | 6, C8 | M |
+| REQ-181 | The admin dashboard shows both sprint numbers (count of paid subscriptions under REQ-022; confirmed revenue total) and revenue per stream. Thresholds (10 and NGN 5m) are configuration; no single gate is hard-coded. | 8, 9, C8 | M |
+| REQ-182 | Admins can mark any post or profile Sponsored with a sponsor name; the page, listing card and share preview show a visible disclosure label. | 6.3, D-006 | M |
+| REQ-183 | Admins can set Featured (editorial) with a recorded reason, and Verified via the checklist of REQ-025. Neither can be set from a payment or tier field. | 3.4 | M |
+| REQ-184 | Changing commercial data (tier, payment, sponsorship) never changes Verified or Featured, and the reverse; automated tests cover this. | 3.4 | M |
+| REQ-185 | Tier label and expiry are admin-editable per profile. Plans, tiers and entitlements are stored as configuration, not code. | 6.1, Q7/Q8 pending | M |
+| REQ-186 | Sponsors are records (name, logo, link) that admins can attach to awards, categories and pages. | 6.4 | M |
+| REQ-187 | Admins can keep internal notes on profiles, customers, leads and nominations; notes are never public and never visible to judges. | D-006 | M |
+| REQ-188 | Every change to commercial status, labels, tiers, sponsors and notes is written to the audit log (extends REQ-051) with actor, time, old and new values. | 15.7 | M |
+| REQ-189 | Admins see reminders for upcoming expiries; the system takes no automatic action against customers. | Q10 | M |
+| REQ-190 | All brand values (colours, fonts, logo, spacing) live in one central theme config; no brand values are hard-coded elsewhere, and a check fails the build if they are. | C5 | M |
+| REQ-191 | A private staging site (login-protected, noindex) is seeded with about 100 organisation and about 100 individual profiles for testing and demos. | Q1 | M |
+| REQ-192 | For public launch, at least the same volume of fully reviewed profiles is published; sourcing of further organisations and individuals continues through the approved pipeline. | Q1 | M |
+| REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once, is reversible, restricted to named roles, and audited. | Q2 | M |
+| REQ-194 | Feature flags for nominations, judging and public announcements default OFF; switching one on requires the Admin role, records the CEO's approval reference, and is audited. | C9, Q12 | M |
+| REQ-195 | While nominations are off, the Nominate page shows "Nominations open soon" with an email sign-up (consent recorded, unsubscribe supported). | C9 | M |
+| REQ-196 | Anyone may nominate. The nominator's email is verified; submissions are rate-limited with duplicate detection; there is no public voting. | Q15 | M (flag) |
+| REQ-197 | Nominations are private until eligibility screening is complete; after screening the nominee is emailed a link to accept, decline or correct their details. | Q15 | M (flag) |
+| REQ-198 | Public nominee pages appear only at the shortlist stage, built from the reviewed profile and sourced facts. A nominee who declines is removed and added to the suppression list (REQ-147). | Q15 | M (flag) |
+| REQ-199 | Payment, subscription or sponsorship never creates a nomination or affects screening or shortlisting; there is no data path from commercial records into the awards workflow. | 5.4 | M |
+| REQ-200 | Admins configure categories, eligibility criteria, scoring criteria and weights, judges per category and shortlist size; none are hard-coded. | Q12 | M (flag) |
+| REQ-201 | Judge accounts see only assigned nominations and never payment, subscription or sponsorship data. | Q12 | M (flag) |
+| REQ-202 | Eligibility screening, shortlisting and final approval are separate recorded steps with named approvers. | Q12 | M (flag) |
+| REQ-203 | Images under open licences (e.g. Wikimedia Commons) may be used when the licence and attribution are stored with the image and shown on the page; no other third-party photos. | Q22 | M |
+| REQ-204 | The domain is wiwi.africa, including the email sending domain with SPF, DKIM and DMARC. | C1 | M |
+| REQ-205 | Customers, leads and enquiries have stable external IDs and change timestamps so a CaromHQ integration can be added later; CSV import/export works meanwhile (REQ-077). | C12 | M |
+| REQ-206 | The review queue shows per-reviewer workload and warns when backlog exceeds capacity so a third reviewer can be added. | Q4 | M |
+| REQ-207 | The suppression list is permanent, cannot be bypassed by any import, and covers removed individuals, declined nominees and removed organisations. | Q2, Q15 | M |
+| N20 | Offline payment collection, invoicing, receipts, refunds and renewals, done by Finance outside the platform; results recorded in the commercial register | Q10, D-005 | Finance |
