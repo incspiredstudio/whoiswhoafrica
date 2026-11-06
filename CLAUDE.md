@@ -15,3 +15,4 @@ Human gates after: the question list, the architecture, the plan.
 - Only a separate reviewer step marks work done. Tests first.
 - Never commit secrets, never read `.env*`, never force-push.
 - One branch + PR per issue ("Closes #N").
+- Speed: finish as early as possible; deadlines in the brief are ceilings, not targets; parallelise; only external lead times and human approvals are real constraints.
