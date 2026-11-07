@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (41 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 3 (Q26–Q28, architecture, none block Gate 2).**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 28: Answered 16, Default accepted 8, Pending 1 (Q16), Open 3 (Q26–Q28).
+**Status summary (52 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 14 (Q26–Q28 architecture; Q29–Q39 acquisition plan).**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 39: Answered 16, Default accepted 8, Pending 1 (Q16), Open 14 (Q26–Q39).
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -74,6 +74,24 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 | Q26 | Open | What does the cPanel account actually offer? PHP version (need 8.3), SSH access, Composer, cron every minute, MySQL/MariaDB version, TRIGGER privilege, outbound HTTPS, disk/inode/memory limits, data-centre region, uptime history, backups. | Decides hosting (ADR-003) and deploy method (ADR-012). Spike S1 checks it. | Assume it fails and plan the VPS fallback (about US$10–20/month) until S1 passes. |
 | Q27 | Open | Which Incspired shared services can we reuse (existing Cloudflare account, email provider, monitoring, Sentry, backup storage, a VPS)? | Fewer new accounts and processors. | Open the new accounts listed in architecture.md section 8. |
 | Q28 | Open | Who owns and pays for the new accounts (Cloudflare, Brevo, R2, Sentry, Anthropic API), and who is the named admin on each? | Account creation by 13 Nov (Q14); processor register (REQ-065). | You (the supervisor) own them; Incspired IT is added as a second admin. |
+
+### Acquisition plan questions (raised 2026-11-07, see docs/acquisition-plan.md section 12)
+
+Q29 and Q30 would amend recorded decisions (D-010/D-025 and D-015/REQ-148). Q29–Q33 block the pilot (target start 10 Nov).
+
+| Q | Status | Question | Why it matters | Default if you do not know |
+|---|---|---|---|---|
+| Q29 | Open | Split of the first 1,000: 500 organisations / 200 entrepreneurs / 300 individuals; 850 Nigeria / 150 other African (amends D-010, D-025)? | Source work, Legal per country | As proposed; non-Nigerian from batch B3 after Legal clears each country |
+| Q30 | Open | Keep 100% review (D-015) or allow sampling of structured registry organisation records (T1) after a measured gate? | Tooling (T-14), trust; saves only 2–5% | Keep 100% review |
+| Q31 | Open | Reviewer hours and target date for 1,000 | Section 4 capacity | 2 reviewers × 15 h/week → about 17 Jan |
+| Q32 | Open | Pilot review in hash-locked review packs before WordPress is ready, or wait for the WordPress review queue? | Pilot start date | Review packs |
+| Q33 | Open | Approve the pilot sources marked "Approve for pilot" (plan 2.2–2.5) with the supervisor as named approver (REQ-137)? | No fetch without approval | Approve |
+| Q34 | Open | Photos on unclaimed individuals and organisation logos? | Personality rights, trademark | None in the first 1,000 until Legal advises |
+| Q35 | Open | First individual published only after Legal's assessment and DPIA, or under D-016 with the kill switch? | Legal exposure | Wait for Legal; organisations publish first |
+| Q36 | Open | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field |
+| Q37 | Open | Listed companies from issuer pages + Wikidata, or wait for an NGX data licence? | NGX terms ban aggregation | Issuer pages + Wikidata; ask NGX for a quote |
+| Q38 | Open | AI budget cap US$250 and the reviewer hourly rate | Cost estimate | Cap approved; rate needed |
+| Q39 | Open | AI model and inference location (Opus 5.5 global, US-only at 1.1x, or Sonnet 5.5)? | Transfer record (REQ-169) | Opus 5.5, global, unless Legal prefers US-only |
 
 ---
 
