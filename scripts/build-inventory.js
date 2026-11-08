@@ -23,7 +23,7 @@ const NOUI = {
   108: "Staff sign-in is A01. Password reset and session list are WordPress defaults, not designed here (D-034: no public login).",
   190: "Build check that fails on hard-coded brand values; not a screen."
 };
-for (let n = 210; n <= 228; n++) NOUI[n] = "Publish first (D-033). The wireframe has not been updated for it; see docs/change-review-2026-11-08-publish-first.md.";
+for (let n = 210; n <= 228; n++) NOUI[n] = "Publish first (D-033). The wireframe has not been updated for it; see acquisition/docs/change-review-2026-11-08-publish-first.md.";
 
 // gaps found while inventorying (REQ has a surface, no screen in the first pass) and the fix
 const GAPS = [

@@ -68,7 +68,7 @@ No login or signup for anyone on the public website. Only staff use wp-admin, wi
 | `docs/requirements.md` | Changed | Done | — |
 | `docs/decisions.md` | Changed | D-034 added; D-019, D-022 amended; D-030 superseded | — |
 | `docs/questions.md` | Changed | Q56–Q62 added (Open); summary counts updated | — |
-| `docs/acquisition-plan.md` | Changed | Header note; step 14; requester check (6.3); T-23 to T-28; workload note | — |
+| `acquisition/docs/acquisition-plan.md` | Changed | Header note; step 14; requester check (6.3); T-23 to T-28; workload note | — |
 | `docs/GUIDE.md` | Changed | Files table and rules | — |
 | `docs/design-inspiration.md` | New | Part A of the instruction | — |
 | `docs/wireframe-inventory.md`, `prototype/` | See section 7 | Login, signup, owner and judge screens removed; new screens added | — |

@@ -65,12 +65,38 @@ The repo turns the product brief into a built product in stages. A human approve
 | `docs/architecture.md`, `docs/adr/` | Tech choices and design | Claude Code |
 | `docs/plan.md` | Milestones, tasks, timeline | Claude Code |
 | `docs/wireframe-inventory.md`, `prototype/` | Every screen and flow, and the clickable wireframe. **Since D-034 there are no login, signup, owner-area or judge screens; only staff use wp-admin.** | Claude Code |
+| `docs/contracts/import-format.md` | What the acquisition pipeline exports and what WordPress accepts; the only interface between them | The shared-docs owner |
+| `acquisition/docs/acquisition-plan.md` | Plan for the first 1,000 profiles | Claude Code (acquisition session) |
 | `docs/design-inspiration.md` | Visual references and open design questions, for the later design phase only | Claude Code |
 | `docs/traceability.md` | REQ to issue to test to verified | Claude Code |
 | `docs/verify-*.md` | Audit results with go / no-go | Claude Code |
 | `STATUS.md` | Where the project is right now; every session reads it first | Claude Code |
 | `CLAUDE.md` | The standing rules every session follows | you and Claude Code |
 | `.env` / `.env.example` | Secrets (never committed) / the list of needed variables | you / Claude Code |
+
+## 5a. Repo layout and who writes where
+| Folder | Holds | Who writes |
+|---|---|---|
+| `docs/` | Shared product docs, including `docs/contracts/import-format.md` | The shared-docs owner only |
+| `prototype/` | The clickable wireframe | Wireframe session |
+| `acquisition/docs/` | Acquisition plan, its change reviews, review guidelines, approved source list | Acquisition session |
+| `acquisition/pipeline/` | Pipeline code and staging-database migrations | Acquisition session |
+| `acquisition/data/` | Staging database, fetched pages, drafts, backups, real exports. **Never in git.** | Acquisition session |
+| `acquisition/exports/` | Schemas and sample exports with no personal data | Acquisition session |
+
+Sessions write only inside their own folder, and shared docs are edited by one session at a time. STATUS.md names the current owner. A session that is not the owner lists what it needs under "For shared docs" in its folder's status file. The exception: the wireframe session may regenerate `docs/wireframe-inventory.md` and edit `docs/wireframe-findings.md` and its two scripts.
+
+**Acquisition and the website meet only at `docs/contracts/import-format.md`.**
+
+| Stage | Shared-docs owner |
+|---|---|
+| Restructure, until `chore/repo-restructure` is merged | Restructure session |
+| Pending content amendments and wireframe review | **Wireframe session** |
+| Gate 2: architecture revision for WordPress, and settling the contract's unknowns | Website session |
+| Gate 3: `/plan`, then the website build | Website session |
+| Acquisition runs | Stays with the website session. The acquisition session writes only in `acquisition/`, and asks for any change to shared docs. |
+
+**Scope tags.** Every REQ, D, C and Q has a Scope column: `SITE`, `ACQUISITION` or `BOTH`. Numbers are never changed.
 
 ## 6. How to answer a question
 Reply in one message: "Accept all defaults except Q2: ..., Q5: ...". Claude Code writes the decisions and updates the Status column. If you don't know, say "Pending - <person>" and name who will decide.

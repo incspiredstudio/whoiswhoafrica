@@ -1,0 +1,24 @@
+# Secrets (never commit; agents never read these)
+.env
+.env.*
+!.env.example
+
+# Acquisition data: staging database, fetched pages, drafts, backups, real exports.
+# Can contain personal data. Only the README is tracked.
+acquisition/data/*
+!acquisition/data/README.md
+
+# Only schemas and samples with no personal data are tracked in exports/.
+acquisition/exports/*
+!acquisition/exports/README.md
+!acquisition/exports/schemas/
+!acquisition/exports/samples/
+
+# Guard against data files anywhere else
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+/backups/
+/*.sql

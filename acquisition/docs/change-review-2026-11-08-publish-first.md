@@ -11,7 +11,7 @@ The pipeline never publishes. AI gathers, does seven basic checks, stores in a p
 |---|---|
 | `docs/decisions.md` | D-033 recorded as amended, original text kept and struck through. Notes on D-013, D-015, D-016, D-017, D-029 updated. |
 | `docs/requirements.md` | See 2.1. |
-| `docs/acquisition-plan.md` | v3. Sections 3–8 and 10–12 rewritten, including both tracks; 1.1, 1.7, 2.1 and the header updated. D-034's lines kept. Sections 1.2–1.6, 2.2–2.6 and 9 unchanged. |
+| `acquisition/docs/acquisition-plan.md` | v3. Sections 3–8 and 10–12 rewritten, including both tracks; 1.1, 1.7, 2.1 and the header updated. D-034's lines kept. Sections 1.2–1.6, 2.2–2.6 and 9 unchanged. |
 | `docs/questions.md` | Q63–Q67 added. Q32, Q47, Q48, Q50–Q53 closed. Q31, Q33, Q35, Q36, Q38, Q39, Q46, Q49, Q54, Q55 reworded. Summary recounted. |
 | `docs/architecture.md` | One note at the top: the import path is a priority input for the revision. Nothing else. |
 | `docs/change-review-2026-11-08-no-accounts.md` | Item 7 and one decisions row corrected, as its author agreed. |
@@ -62,7 +62,7 @@ The pipeline never publishes. AI gathers, does seven basic checks, stores in a p
 | `docs/wireframe-findings.md` | Finding 7 | Still partly true: 404 for imported records; 200 with a label for organisations |
 | `docs/wireframe-findings.md` | Finding 21 (telling the subject) | Fits the review screen again for individuals |
 | `docs/wireframe-findings.md` | Finding 25 (capacity = 80 a week) | Now a reviewer-hours choice (Q31) |
-| To be written | `docs/review-guidelines.md`; `docs/runbook.md`; `docs/traceability.md`; Terms, Privacy, how-we-compile copy; `scripts/acquisition/` | Review steps; run and import steps; REQ-237; Legal's wording; the pipeline |
+| To be written | `acquisition/docs/review-guidelines.md`; `docs/runbook.md`; `docs/traceability.md`; Terms, Privacy, how-we-compile copy; `acquisition/pipeline/` | Review steps; run and import steps; REQ-237; Legal's wording; the pipeline |
 | **No longer affected** | Monitor runner, ADR-011, AI credentials, fire drill | Removed with the AI-publishes model |
 
 ## 4. Wireframe inventory (`docs/wireframe-inventory.md`)

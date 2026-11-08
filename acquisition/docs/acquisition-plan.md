@@ -4,7 +4,7 @@ Status: **Proposed v3, 2026-11-08: rewritten for D-033 as amended.** This is a p
 
 Relies on decisions D-002, D-010, D-012 to D-017, D-024, D-029, D-031, D-033, D-034 and requirements REQ-132 to REQ-176 and REQ-191 to REQ-238. Codes are explained in `docs/GUIDE.md`.
 
-**What changed in v3.** D-033 is corrected: the pipeline never publishes. AI gathers, does basic verification only, stores in a staging database and exports. Records are imported into WordPress and reviewed there. Organisations go live on import, labelled and noindex; individuals and entrepreneurs are not public until a reviewer approves. Removed: second AI audit, AI publishing, review packs, quick look, cap, automatic pause, continuous AI monitoring and AI takedown (the last two are a future item). Sections 3–8 and 10–12 are rewritten, and 1.1, 1.7 and 2.1 updated. Other affected documents: `docs/change-review-2026-11-08-publish-first.md`.
+**What changed in v3.** D-033 is corrected: the pipeline never publishes. AI gathers, does basic verification only, stores in a staging database and exports. Records are imported into WordPress and reviewed there. Organisations go live on import, labelled and noindex; individuals and entrepreneurs are not public until a reviewer approves. Removed: second AI audit, AI publishing, review packs, quick look, cap, automatic pause, continuous AI monitoring and AI takedown (the last two are a future item). Sections 3–8 and 10–12 are rewritten, and 1.1, 1.7 and 2.1 updated. Other affected documents: `acquisition/docs/change-review-2026-11-08-publish-first.md`.
 
 **D-034 (no public accounts, 2026-11-08).** There are no owner accounts. "Claim" is a request-to-claim form that staff verify and set to Claimed; owner edits are correction requests staff apply; refresh reminders are emails with a link to the form; the requester check in 6.3 uses a verified email link. Tooling T-23 to T-28 and the workload note are in sections 3.1, 6.3 and 7.2. Legal and the staff-role questions are Q56–Q62.
 
@@ -244,7 +244,7 @@ An agent does these checks as part of preparing each source-registry entry (REQ-
 | 5 | **Draft** | T1: fills a fixed template from structured fields, with no AI. T2/T3: the AI receives numbered source passages and returns claims, each with a passage ID and an exact quote. Model and prompt version are recorded. | — | REQ-165–167 |
 | 6 | **Basic verification** | The seven checks in 3.2. Writes a short verification report and a content hash on each record. | — | REQ-214 |
 | 7 | **Store** | Writes the record, sources, provenance, report and hash to the staging database. Failed records stay there with the reason and are replaced from the spares. | — | REQ-211 |
-| 8 | **Export** | Writes the import file with a manifest of hashes. | — | REQ-237 |
+| 8 | **Export** | Writes the import file with a manifest of hashes (`docs/contracts/import-format.md`). | — | REQ-237 |
 | 9 | **Import** | WordPress recomputes each hash and refuses a mismatch; suppression check (third of three); sets the state in 3.3. | **A named staff member starts each import,** after a dry run. | REQ-237, 212 |
 | 10 | **Review in WordPress** | Shows each claim beside its source, with the verification report. Records review time. | The reviewer checks identity, the criterion, every claim against its source, and the neutral-content checklist. Decision: approve, reject (reason code) or return. **Approver ≠ importer.** | REQ-148, 163, 168, 206, 222 |
 | 11 | **Approval** | Sets "Reviewed on <date>"; lifts noindex; adds sitemap entry and schema.org markup. An individual or entrepreneur becomes public at this point. | — | REQ-208, 216, 217 |
@@ -286,8 +286,8 @@ A profile can only go live on import once the safeguards in 5.4 pass. Until then
 - **Sites that block AI crawlers by name** (such as CAC). Their text is never fetched by an agent or passed to the model. People may consult them manually during review.
 
 ### 3.5 Where the data lives
-- **Pipeline code** goes in `scripts/acquisition/` (infra area).
-- **Fetched pages, drafts and personal data are never committed to git.**
+- **Pipeline code** goes in `acquisition/pipeline/`.
+- **Fetched pages, drafts and personal data are never committed to git.** They live in `acquisition/data/`, which is git-ignored.
 - **The staging database** (REQ-211) is a private store outside WordPress, on the machine running the pipeline, with an encrypted backup. No public site reads it.
 - **Review packs are gone.** Reviewers use the WordPress review queue. The content hash stays, so what is imported is what was drafted. If a reviewer then edits a field, the version history records it.
 
@@ -455,7 +455,7 @@ If Legal's transfer basis is not in when the run starts, the smoke lot uses the 
 | By Fri 13 Nov | Legal confirms the AI transfer basis (REQ-169) | Incspired Legal |
 | Same day | Run B | Agents |
 | As soon as possible | First task: import path and review queue (T-0, REQ-237) | Agents, after Gate 2 |
-| R0 (assumed 23 Nov) | Reviewer onboarding (2 h) using `docs/review-guidelines.md`. Pilot imported, not public. | You and reviewers |
+| R0 (assumed 23 Nov) | Reviewer onboarding (2 h) using `acquisition/docs/review-guidelines.md`. Pilot imported, not public. | You and reviewers |
 | R0, days 1–2 | Calibration: both reviewers review the same 10 profiles and compare | Reviewers |
 | R0, week 1 | Pilot review in WordPress. 20 profiles (10 organisations, 10 people) are reviewed by **both** reviewers to measure agreement. | Reviewers |
 | R0, week 1 | Supervisor re-checks all 50 reviewed profiles against their sources (a 100% audit) | You |
