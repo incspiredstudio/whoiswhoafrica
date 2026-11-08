@@ -210,7 +210,7 @@ S().role = "editor"; ctx.location.hash = "#/admin/suppression"; W.render(); chec
 S().role = "admin"; ctx.location.hash = "#/admin/suppression"; W.render(); check("administrator can add to the suppression list", /data-form="supp"/.test(app.innerHTML));
 S().role = "editor"; check("editor can edit but not bulk unpublish; reviewer can bulk unpublish but not edit (D-045)", W.can("edit") && !W.can("bulk") && (S().role = "reviewer", !W.can("edit") && W.can("bulk") && W.can("assignTerms")));
 S().role = "reviewer"; ctx.location.hash = "#/admin/suppression"; W.render(); check("reviewer sees the suppression list read-only", /Read-only for your role/.test(app.innerHTML));
-check("seed users have only the three staff roles", S().users.every((u) => ["Reviewer", "Editor", "Administrator"].includes(u.role)));
+check("seed users have only the three staff roles, one role and one unique email each", S().users.every((u) => ["reviewer", "editor", "admin"].includes(u.rk) && typeof u.rk === "string" && /@/.test(u.email)) && new Set(S().users.map((u) => u.email.toLowerCase())).size === S().users.length);
 check("confirmed-by and lead owners are not removed roles", S().arrangements.every((a) => !/Finance|Sales|Eic/.test(a.confirmedBy)) && S().leads.every((l) => !/Sales/.test(l.owner)));
 // D-045 capabilities (REQ-244)
 reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render();
@@ -233,6 +233,41 @@ S().role = "admin"; W.act.capToggle("editor|bulk_unpublish"); check("revoked aga
 S().role = "admin"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Users and capabilities screen lists the three sample users", /Sample Reviewer 1/.test(app.innerHTML) && /Sample Editor/.test(app.innerHTML) && /Sample Admin/.test(app.innerHTML) && /proposed limit, Q72/.test(app.innerHTML));
 S().role = "editor"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Editor gets 403 on Users and capabilities", /403/.test(app.innerHTML));
 check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_disputes", "editor") && !W.hasCap("handle_disputes", "reviewer") && /Editor/.test(W.disputeHandlers()));
+
+// staff sign-in has no role selector; role comes from the account (REQ-245, D-048)
+S().role = "visitor"; S().user = null; ctx.location.hash = "#/staff/signin"; W.ui.staffStep = 0; W.ui.staffErr = ""; W.render();
+check("staff sign-in step 1 has email and password and no role selector", /name="email"/.test(app.innerHTML) && /name="password"/.test(app.innerHTML) && !/name="role"/.test(app.innerHTML) && !/Role \(wireframe only\)/.test(app.innerHTML));
+check("sign-in lists the sample accounts", /Wireframe sample accounts/.test(app.innerHTML) && /reviewer@example\.test/.test(app.innerHTML));
+W.forms.staff0({ email: "reviewer@example.test", password: "wrong" });
+check("wrong password is refused with a generic message", W.ui.staffStep === 0 && /Email or password is incorrect/.test(app.innerHTML) && S().role === "visitor");
+W.forms.staff0({ email: "nobody@example.test", password: W.SAMPLE_PW });
+check("unknown email is refused with the same generic message", W.ui.staffStep === 0 && /Email or password is incorrect/.test(app.innerHTML));
+W.forms.staff0({ email: "Editor@Example.test", password: W.SAMPLE_PW });
+check("right email and password go to the two-factor step", W.ui.staffStep === 1 && S().role === "visitor");
+W.forms.staff1({ code: "111111" });
+check("wrong code is refused and no role is set", S().role === "visitor" && /code is wrong/.test(app.innerHTML));
+W.forms.staff1({ code: "000000" });
+check("role is resolved from the email (Editor)", S().role === "editor" && S().user === "editor@example.test" && W.persona() === "Sample Editor");
+W.act.signout(); check("sign out returns to Visitor", S().role === "visitor" && S().user === null);
+W.forms.staff0({ email: "admin@example.test", password: W.SAMPLE_PW }); W.forms.staff1({ code: "000000" });
+check("role is resolved from the email (Administrator)", S().role === "admin");
+ctx.location.hash = "#/admin"; W.render();
+check("no signed-in staff screen has a role selector for the user's own role", !/name="role"/.test(app.innerHTML));
+ctx.location.hash = "#/admin/users"; W.render();
+check("Users and roles shows emails and an Add user form with one role", /admin@example\.test/.test(app.innerHTML) && /data-form="addUser"/.test(app.innerHTML) && (app.innerHTML.match(/name="role"/g) || []).length === 1);
+const nUsers = S().users.length;
+W.forms.addUser({ name: "Sample New", email: "EDITOR@example.test", role: "reviewer" });
+check("duplicate email is refused (case-insensitive) with the one-role message", S().users.length === nUsers && /already belongs to a user; an email can have only one role/.test(app.innerHTML));
+W.forms.addUser({ name: "Sample New", email: "new.user@example.test", role: "reviewer" });
+const nu = S().users.filter((u) => u.email === "new.user@example.test");
+check("a new user is added with exactly one role and two-factor not yet enrolled", S().users.length === nUsers + 1 && nu.length === 1 && nu[0].rk === "reviewer" && typeof nu[0].rk === "string" && nu[0].mfa === false);
+W.act.setRole("new.user@example.test|editor");
+check("changing a user's role replaces it (one role) and is audit-logged", nu[0].rk === "editor" && S().audit.some((a) => a.action === "user.role" && a.target === "new.user@example.test"));
+W.act.setRole("admin@example.test|reviewer");
+check("an Administrator cannot change their own role", S().users.filter((u) => u.email === "admin@example.test")[0].rk === "admin");
+S().role = "editor"; S().user = "editor@example.test"; W.act.setRole("new.user@example.test|admin");
+check("a non-Administrator cannot change roles", nu[0].rk === "editor");
+S().role = "visitor"; S().user = null;
 // audit chain
 let prev = "00000000", okc = true; S().audit.forEach((r) => { if (r.prev !== prev) okc = false; prev = r.hash; }); check("audit chain", okc);
 console.log(n + " checks, " + fails + " failures");

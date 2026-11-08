@@ -37,6 +37,7 @@ JSON Lines is the normative form, because per-field provenance is nested. A REST
 | `generated_at` | string | ISO 8601 UTC |
 | `pipeline_version` | string | Code version |
 | `source_list_version` | string | The approved source list the run used |
+| `sources` | array | One entry per source used: `source_id` and display `name`. The website's read-only Sources screen shows these names (Q74, default accepted; the acquisition side confirms) |
 | `suppression_snapshot_id` | string | The snapshot the run used (section 11) |
 | `record_count` | integer | Lines in `records.jsonl` |
 | `counts` | object | `{"organisation": n, "individual": n, "entrepreneur": n}` |

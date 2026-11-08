@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v7";
+  var KEY = "wiw-wireframe-v8";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,7 +21,7 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 7 ? raw : W.seed();
+    W.S = raw && raw.v === 8 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
     W.syncLists();
   };
@@ -171,7 +171,7 @@
   function wfbar() {
     var S = W.S, roles = W.LISTS.roles;
     return '<div id="wfbar"><div class="wrap"><strong>WIREFRAME</strong><span class="tag">sample data</span>' +
-      '<label>Viewing as <select data-change="role" aria-label="Viewing as (role simulator)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
+      '<label title="Wireframe preview tool only. The real site has no role selector: a user signs in with an email and has one role.">Preview as <select data-change="role" aria-label="Preview as (wireframe tool, not part of the real site)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
       '<button type="button" data-act="outbox">Email outbox (' + S.emails.length + ')</button>' +
       '<a class="btnlink" href="#/staff/signin">Staff sign in (wp-admin preview)</a><a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
       '<button type="button" data-act="reset">Reset sample data</button></div></div>';
@@ -183,7 +183,7 @@
     return out;
   }
   function header(cur) {
-    var role = W.S.role, acct = role === "visitor" ? "" : '<a class="btn alt sm" href="#/admin">Staff console</a>';
+    var role = W.S.role, acct = role === "visitor" ? "" : '<a class="btn alt sm" href="#/admin">Staff console</a><button type="button" class="btn alt sm" data-act="signout">Sign out</button>';
     return '<a class="skip" href="#main" data-act="skip">Skip to content</a><header class="site-head"><div class="wrap"><a class="logo" href="#/">' + e(W.brand.name) + '<small>' + e(W.brand.tagline) + "</small></a>" +
       '<div class="head-actions"><form class="search" role="search" data-form="search"><label class="sr" for="hq">Search profiles and stories</label><input id="hq" name="q" type="search" placeholder="Search" style="width:9rem"><button class="btn sm" type="submit">Search</button></form>' + acct +
       '<button type="button" class="btn alt sm nav-toggle" data-act="navToggle" aria-expanded="' + (W.ui.nav ? "true" : "false") + '" aria-controls="mainnav">Menu</button></div>' +
@@ -272,7 +272,8 @@
   W.act.flows = function () { W.ui.flows = !W.ui.flows; W.render(); };
   W.act.notes = function () { W.ui.notes = !W.ui.notes; W.render(); };
   W.act.reset = function () { W.reset(); W.ui = { flows: false, notes: false, nav: false, modal: null }; location.hash = "#/"; W.render(); W.toast("Sample data reset."); };
-  W.act.role = function (v) { W.S.role = v; W.save(); var area = W.cur && W.cur.r.opts.area; if (v !== "visitor" && area !== "staff") location.hash = "#/admin"; else if (v === "visitor" && area === "staff") location.hash = "#/"; else W.render(); };
+  W.act.role = function (v) { W.S.role = v; var pu = (W.S.users || []).filter(function (u) { return u.rk === v; })[0]; W.S.user = pu ? pu.email : null; W.save(); var area = W.cur && W.cur.r.opts.area; if (v !== "visitor" && area !== "staff") location.hash = "#/admin"; else if (v === "visitor" && area === "staff") location.hash = "#/"; else W.render(); };
+  W.act.signout = function () { W.S.role = "visitor"; W.S.user = null; W.ui.staffStep = 0; W.ui.staffErr = ""; W.save(); W.toast("Signed out."); location.hash = "#/"; W.render(); };
   W.act.consent = function (v) { W.S.consent = v; W.save(); W.render(); W.toast(v === "all" ? "Analytics accepted. Consent stored with timestamp and policy version." : "Essential cookies only."); };
   W.act.cookiePrefs = function () { W.S.consent = null; W.save(); W.render(); };
   W.act.outbox = function () {

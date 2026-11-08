@@ -36,15 +36,9 @@ Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neithe
 ### 3.1 Rulings
 **Answered (D-045, D-046):** bulk unpublish by filter is for the Administrator and Reviewer (Q69) · the Administrator alone confirms payments (Q70) · roles are default bundles and the Administrator can grant or revoke capabilities per user across roles; disputes go to whoever holds the handle-disputes capability (Q71, REQ-244) · staff edits go live on one person's sign-off · D-010 confirmed. I read "add certain reviewer capabilities to admin and vice versa" as "between roles"; the Administrator already has everything.
 
-**Still open, defaults apply until you rule:**
-| # | Item | Recommended default |
-|---|---|---|
-| 1 | Exports are Administrator-only (REQ-069, 077, 087); the Editor loses the leads export | Keep |
-| 2 | Sprint target kept for the Administrator only | Keep |
-| 3 | Editor powers are wide; lead conversion by an Editor creates a proposed arrangement in a register the Editor cannot open | Confirm, or grant a capability |
-| 4 | Only the Administrator changes the suppression list; an Editor's valid removal adds an entry automatically | Keep |
-| 5 | Q72: which capabilities can never be granted | Users and roles, settings, commercial register, plugin installation, Nominations flag |
-| 6 | Q73 to Q80: WordPress architecture questions (submitted-profile state, Sources names in the contract, R2, two-factor, places taxonomy, background jobs, `site/` naming) | See questions.md |
+**Defaults accepted by you (D-047):** all remaining questions, including Q72 to Q80 (non-grantable capabilities, submitted-profile state, `sources[]` in the contract, R2, two-factor, places taxonomy, background jobs, `site/` ownership). Exports Administrator-only, the sprint target for the Administrator only, the Editor's wide powers and Administrator-only suppression changes stand as built.
+
+**Staff sign-in (D-048, REQ-245):** no role selector; an email is one user with one role.
 
 ### 3.2 Not yet reflected
 - **Wireframe has no publish-first states** (REQ-210 to 228) for the amended D-033.

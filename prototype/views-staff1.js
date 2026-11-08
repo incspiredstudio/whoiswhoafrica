@@ -41,7 +41,8 @@
   W.can = function (c) { return W.hasCap(CAPMAP[c] || c); };
   W.ACL = ACL; W.ALLSTAFF = ALL;
   var PERSONA = { reviewer: "Sample Reviewer 1", editor: "Sample Editor", admin: "Sample Admin" }; W.PERSONA = PERSONA;
-  W.persona = function () { return PERSONA[W.S.role] || "system"; };
+  W.curUser = function () { var S = W.S; return (S.users || []).filter(function (u) { return u.email === S.user && u.rk === S.role; })[0] || null; };
+  W.persona = function () { var u = W.curUser(); return u ? u.name : (PERSONA[W.S.role] || "system"); };
   W.staffRoute = function (path, inv, key, fn) { var cap = key ? (ACLCAP[key] || key) : null; W.route(path, inv, fn, { area: "staff", cap: cap, roles: cap ? W.rolesWithCap(cap) : ALL }); };
   W.disputeHandlers = function () { return ["reviewer", "editor"].filter(function (r) { return W.hasCap("handle_disputes", r); }).map(W.roleName).concat(["Administrator"]).join(", "); };
   function mini(path, inv, key, fn) { W.staffRoute(path, inv, key, fn); }
@@ -88,20 +89,30 @@
   };
 
   /* ---------- sign in (staff, with MFA) ---------- */
-  W.ui.staffStep = 0; W.ui.staffRole = "reviewer";
+  W.SAMPLE_PW = "sample-pass";
+  W.ui.staffStep = 0; W.ui.staffUser = "";
   W.route("/staff/signin", "A01", function () {
-    var s = W.ui.staffStep;
-    return '<div class="wrap section"><h1>Staff sign in</h1>' + (s === 0 ? '<form class="card stack-s" data-form="staff0" style="max-width:28rem">' + W.field("Work email", "email", { type: "email", req: true }) + W.field("Password", "password", { type: "password", req: true }) + W.field("Role (wireframe only)", "role", { type: "select", options: ALL.map(function (r) { return [r, W.roleName(r)]; }) }) + '<button class="btn">Continue</button></form>' : '<form class="card stack-s" data-form="staff1" style="max-width:28rem"><p>Enter the 6-digit code from your authenticator app (MFA is required for staff, REQ-047). <span class="muted small">Wireframe code: 000000</span></p>' + W.field("Code", "code", { req: true, attrs: 'inputmode="numeric"' }) + (W.ui.staffErr ? '<p class="err" role="alert">' + e(W.ui.staffErr) + "</p>" : "") + '<button class="btn">Sign in</button></form>') + "</div>";
+    var s = W.ui.staffStep, hint = '<div class="card" style="max-width:28rem"><h2 style="font-size:1rem">Wireframe sample accounts</h2><p class="small muted">The role comes from the account. There is no role selector: an email belongs to one user, and a user has one role (REQ-245).</p><ul class="small"><li><code>reviewer@example.test</code> (Reviewer)</li><li><code>editor@example.test</code> (Editor)</li><li><code>admin@example.test</code> (Administrator)</li></ul><p class="small">Sample password for all: <code>' + W.SAMPLE_PW + '</code> · two-factor code: <code>000000</code></p></div>';
+    return '<div class="wrap section"><h1>Staff sign in</h1>' + (s === 0 ? '<form class="card stack-s" data-form="staff0" style="max-width:28rem">' + W.field("Work email", "email", { type: "email", req: true }) + W.field("Password", "password", { type: "password", req: true }) + (W.ui.staffErr ? '<p class="err" role="alert">' + e(W.ui.staffErr) + "</p>" : "") + '<button class="btn">Continue</button></form>' : '<form class="card stack-s" data-form="staff1" style="max-width:28rem"><p>Enter the 6-digit code from your authenticator app (two-factor is required for staff, REQ-047). <span class="muted small">Wireframe code: 000000</span></p>' + W.field("Code", "code", { req: true, attrs: 'inputmode="numeric"' }) + (W.ui.staffErr ? '<p class="err" role="alert">' + e(W.ui.staffErr) + "</p>" : "") + '<button class="btn">Sign in</button></form>') + hint + "</div>";
   });
-  W.forms.staff0 = function (d) { W.ui.staffRole = d.role; W.ui.staffStep = 1; W.ui.staffErr = ""; W.render(); };
-  W.forms.staff1 = function (d) { if (d.code.trim() !== "000000") { W.ui.staffErr = "That code is wrong."; W.render(); return; } W.S.role = W.ui.staffRole; W.ui.staffStep = 0; W.save(); W.go("#/admin"); };
+  W.forms.staff0 = function (d) {
+    var u = (W.S.users || []).filter(function (x) { return x.email.toLowerCase() === String(d.email || "").trim().toLowerCase(); })[0];
+    if (!u || d.password !== W.SAMPLE_PW) { W.ui.staffErr = "Email or password is incorrect."; W.render(); return; }
+    W.ui.staffUser = u.email; W.ui.staffStep = 1; W.ui.staffErr = ""; W.render();
+  };
+  W.forms.staff1 = function (d) {
+    if (d.code.trim() !== "000000") { W.ui.staffErr = "That code is wrong."; W.render(); return; }
+    var u = (W.S.users || []).filter(function (x) { return x.email === W.ui.staffUser; })[0];
+    if (!u) { W.ui.staffStep = 0; W.ui.staffErr = "Email or password is incorrect."; W.render(); return; }
+    W.S.role = u.rk; W.S.user = u.email; W.ui.staffStep = 0; W.ui.staffErr = ""; W.log("auth.signin", u.email, "two-factor passed"); W.save(); W.go("#/admin");
+  };
 
   /* ---------- dashboard ---------- */
   function supportOpen() { var S = W.S; return S.corrections.concat(S.removals, S.reports).filter(function (x) { return x.status === "open" || x.status === "awaiting email check"; }).length; }
   mini("/admin", "A02", null, function () {
     var S = W.S, role = S.role;
     var showDir = W.hasCap("view_profiles") || W.hasCap("review_queue"), showCom = W.hasCap("revenue_tiles"), showAw = W.hasCap("nominations"), showPlat = W.hasCap("nominations_flag"), showSup = W.hasCap("support_inbox");
-    var out = head("Dashboard", "Viewing as <strong>" + e(W.roleName(role)) + "</strong>. Tiles follow the user's capabilities: by default Reviewers see review and directory tiles, Editors add support and nominations counts, and Administrators see everything, including the sprint target and revenue. The Administrator can change a user's capabilities (Users and capabilities). switch <strong>Viewing as</strong> in the top bar to preview the others. All numbers are sample data.");
+    var out = head("Dashboard", "Role: <strong>" + e(W.roleName(role)) + "</strong>. Tiles follow the user's capabilities: by default Reviewers see review and directory tiles, Editors add support and nominations counts, and Administrators see everything, including the sprint target and revenue. The Administrator can change a user's capabilities (Users and capabilities). switch <strong>Preview as</strong> in the top bar to preview the others. All numbers are sample data.");
     if (showDir) {
       var q = W.queue(), imported = S.profiles.filter(function (p) { return W.origin(p) === "import"; }).length, pending = S.profiles.filter(function (p) { return p.status === "pending"; }).length;
       var reviewed = S.profiles.filter(function (p) { return p.lastReviewed && (p.status === "published" || p.status === "unpublished"); }).length, published = W.publicProfiles().length;

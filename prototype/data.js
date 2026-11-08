@@ -37,7 +37,7 @@
 
   W.seed = function () {
     var S = {
-      v: 7, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
+      v: 8, role: "visitor", user: null, consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
       flags: { nominations: { on: false, ref: "" } },
       bulkLog: [],
       thresholds: { subs: 10, revenue: 500000000 },
@@ -172,8 +172,8 @@
     S.scores = { n4: { by: { "Sample Judge 1": { v: { k1: 8, k2: 7, k3: 9, k4: 8 }, by: "Sample Editor", at: "2026-11-06" } } } };
     S.caps = { reviewer: { grant: [], revoke: [] }, editor: { grant: [], revoke: [] }, admin: { grant: [], revoke: [] } };
     S.users = [
-      { name: "Sample Admin", role: "Administrator", mfa: true, last: "2026-11-07" }, { name: "Sample Reviewer 1", role: "Reviewer", mfa: true, last: "2026-11-07" },
-      { name: "Sample Reviewer 2", role: "Reviewer", mfa: true, last: "2026-11-06" }, { name: "Sample Editor", role: "Editor", mfa: true, last: "2026-11-06" }
+      { name: "Sample Admin", email: "admin@example.test", rk: "admin", mfa: true, last: "2026-11-07" }, { name: "Sample Reviewer 1", email: "reviewer@example.test", rk: "reviewer", mfa: true, last: "2026-11-07" },
+      { name: "Sample Reviewer 2", email: "reviewer2@example.test", rk: "reviewer", mfa: true, last: "2026-11-06" }, { name: "Sample Editor", email: "editor@example.test", rk: "editor", mfa: true, last: "2026-11-06" }
     ];
     S.processors = [
       { name: "Web hosting (cPanel host)", role: "Hosts site and database", location: "TBC (Q26)", dpa: "Not yet" },
