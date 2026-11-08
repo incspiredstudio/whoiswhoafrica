@@ -9,7 +9,7 @@
     countries: ["Nigeria", "Ghana", "Kenya", "South Africa", "Rwanda", "Egypt", "Pan-African (bodies)"],
     orgTypes: ["Company", "University / school", "Professional association", "Public body", "NGO / social enterprise"],
     professions: ["Executive", "Founder", "Academic", "Legal", "Medical", "Creative", "Public servant"],
-    roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", sales: "Sales / Support", finance: "Finance", eic: "Editor-in-Chief", awards: "Awards manager", admin: "Administrator" },
+    roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", admin: "Administrator" },
     streams: { subscription: "Subscription", media: "Media / editorial", sponsorship: "Sponsorship" },
     arrTypes: { sponsored_post: "Sponsored post", sponsored_profile: "Sponsored profile", media_package: "Media / editorial package", awards_sponsorship: "Awards sponsorship", other: "Other" },
     defaultStream: { sponsored_post: "media", sponsored_profile: "subscription", media_package: "media", awards_sponsorship: "sponsorship", other: "subscription" },
@@ -31,11 +31,15 @@
   }
   function acq(extra) { return extra; }
 
+  /* Import batches and per-source import errors are written by the acquisition import, not edited on the site (D-038, D-042). */
+  W.BATCHES = { "B-2026-11-01": "2026-11-01", "B-2026-11-03": "2026-11-03", "B-2026-11-05": "2026-11-05", "B-2026-11-06": "2026-11-06" };
+  W.SRC_ERRORS = { "Sample Registry A": 3, "Sample Exchange Listings": 1, "Sample Regulator PDF": 5, "Wikidata (SPARQL)": 0, "Sample Accreditation List": 2, "Sample Annual Report": 7, "Customer submission": 0 };
+
   W.seed = function () {
     var S = {
-      v: 5, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
+      v: 6, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
       flags: { nominations: { on: false, ref: "" } },
-      kill: { on: false, by: "", reason: "" },
+      bulkLog: [],
       thresholds: { subs: 10, revenue: 500000000 },
       profiles: [], articles: [], sponsors: [], customers: [], arrangements: [], leads: [],
       reports: [], corrections: [], removals: [], enquiries: [], nominations: [], signups: [],
@@ -116,16 +120,16 @@
       { id: "c4", name: "Sample Person A", segment: "Individual", contact: "Sample Person A", ext: "CUS-0004", profileId: "p-a" }
     ];
     S.arrangements = [
-      { id: "arr1", type: "sponsored_profile", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Finance 1", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
+      { id: "arr1", type: "sponsored_profile", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
       { id: "arr2", type: "sponsored_post", customerId: "c3", linkedProfile: "", linkedArticle: "a3", amount: 5000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "2026-11-04", end: "2026-12-04", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "media", notes: "Awaiting payment.", consent: false },
-      { id: "arr3", type: "awards_sponsorship", customerId: "c3", linkedProfile: "", amount: 100000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Finance 1", onboarding: true, start: "2026-11-05", end: "2027-03-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "sponsorship", notes: "Sample awards sponsorship. Has no effect on nominations or judging.", consent: false },
+      { id: "arr3", type: "awards_sponsorship", customerId: "c3", linkedProfile: "", amount: 100000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-05", end: "2027-03-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "sponsorship", notes: "Sample awards sponsorship. Has no effect on nominations or judging.", consent: false },
       { id: "arr4", type: "media_package", customerId: "c2", linkedProfile: "", amount: 8000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, cancelled: false, endedManual: false, stream: "media", notes: "Proposed.", consent: false },
       { id: "arr5", type: "other", customerId: "c4", linkedProfile: "p-a", amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: true, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Complimentary listing; customer consent recorded.", consent: true }
     ];
     S.leads = [
       { id: "l1", ext: "LEAD-0001", name: "Sample Contact L1", org: "Sample Org L1", interest: "Sponsored profile", contact: "lead1@example.org", status: "new", owner: "", notes: "", at: "2026-11-05" },
-      { id: "l2", ext: "LEAD-0002", name: "Sample Contact L2", org: "Sample Org L2", interest: "Awards sponsorship", contact: "lead2@example.org", status: "contacted", owner: "Sample Sales 1", notes: "Sample call booked.", at: "2026-11-04" },
-      { id: "l3", ext: "LEAD-0003", name: "Sample Contact L3", org: "Sample Org L3", interest: "Media / editorial work", contact: "lead3@example.org", status: "qualified", owner: "Sample Sales 1", notes: "", at: "2026-11-03" }
+      { id: "l2", ext: "LEAD-0002", name: "Sample Contact L2", org: "Sample Org L2", interest: "Awards sponsorship", contact: "lead2@example.org", status: "contacted", owner: "Sample Editor", notes: "Sample call booked.", at: "2026-11-04" },
+      { id: "l3", ext: "LEAD-0003", name: "Sample Contact L3", org: "Sample Org L3", interest: "Media / editorial work", contact: "lead3@example.org", status: "qualified", owner: "Sample Editor", notes: "", at: "2026-11-03" }
     ];
     S.reports = [{ id: "r1", profileId: "b6", reason: "Inaccurate information", detail: "Sample report text.", at: "2026-11-05", due: "2026-11-12", status: "open", owner: "" }];
     S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", emailVerified: true, at: "2026-11-05", due: "2026-11-12", status: "open" },
@@ -155,15 +159,20 @@
       criteria: [{ id: "k1", name: "Impact", weight: 30 }, { id: "k2", name: "Achievement", weight: 30 }, { id: "k3", name: "Credibility and integrity", weight: 20 }, { id: "k4", name: "Leadership or innovation", weight: 20 }],
       eligibility: "Sample eligibility text: individuals and organisations in Nigeria first, then other African countries; professional record in the last five years; no sensitive personal data. Final text is for the Venture CEO.",
       winners: [],
-      screeners: { screening: "Sample Reviewer 1", shortlist: "Sample Eic 1", final: "Sample Venture CEO" }
+      screeners: { screening: "Sample Reviewer 1", shortlist: "Sample Editor", final: "Sample Venture CEO" }
     };
+    /* Every profile carries a source name and an import batch (REQ-242). Customer-submitted profiles have neither. */
+    var SRC = { b1: ["Sample Registry A", "B-2026-11-01"], b3: ["Sample Exchange Listings", "B-2026-11-01"], b4: ["Sample Registry A", "B-2026-11-01"], b5: ["Sample Regulator PDF", "B-2026-11-03"], b6: ["Wikidata (SPARQL)", "B-2026-11-03"], i1: ["Sample Accreditation List", "B-2026-11-03"], i2: ["Sample Accreditation List", "B-2026-11-03"], i3: ["Sample Registry A", "B-2026-11-03"] };
+    S.profiles.forEach(function (q) {
+      var x = SRC[q.id];
+      if (!x && /^ip/.test(q.id)) x = ["Sample Annual Report", q.id === "ip7" || q.id === "ip8" ? "B-2026-11-06" : "B-2026-11-05"];
+      q.srcName = x ? x[0] : "Customer submission"; q.batch = x ? x[1] : "";
+    });
     S.judgeAssign = { "Sample Judge 1": ["n4", "n5", "n3"], "Sample Judge 2": ["n4", "n5"], "Sample Judge 3": ["n4", "n3"] };
-    S.scores = { n4: { by: { "Sample Judge 1": { v: { k1: 8, k2: 7, k3: 9, k4: 8 }, by: "Sample Awards Manager", at: "2026-11-06" } } } };
+    S.scores = { n4: { by: { "Sample Judge 1": { v: { k1: 8, k2: 7, k3: 9, k4: 8 }, by: "Sample Editor", at: "2026-11-06" } } } };
     S.users = [
       { name: "Sample Admin", role: "Administrator", mfa: true, last: "2026-11-07" }, { name: "Sample Reviewer 1", role: "Reviewer", mfa: true, last: "2026-11-07" },
-      { name: "Sample Reviewer 2", role: "Reviewer", mfa: true, last: "2026-11-06" }, { name: "Sample Editor", role: "Editor", mfa: true, last: "2026-11-06" },
-      { name: "Sample Sales 1", role: "Sales / Support", mfa: true, last: "2026-11-05" }, { name: "Sample Finance 1", role: "Finance", mfa: false, last: "2026-11-02" },
-      { name: "Sample Eic 1", role: "Editor-in-Chief", mfa: true, last: "2026-11-07" }, { name: "Sample Awards Manager", role: "Awards manager", mfa: true, last: "2026-11-06" }
+      { name: "Sample Reviewer 2", role: "Reviewer", mfa: true, last: "2026-11-06" }, { name: "Sample Editor", role: "Editor", mfa: true, last: "2026-11-06" }
     ];
     S.processors = [
       { name: "Web hosting (cPanel host)", role: "Hosts site and database", location: "TBC (Q26)", dpa: "Not yet" },

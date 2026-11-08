@@ -1,70 +1,74 @@
-# Consistency report: wireframe review fixes (2026-11-08)
+# Consistency report: wireframe review fixes (2026-11-08, two rounds)
 
-Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure`. Covers items 1 to 8 of the wireframe review. `acquisition/` was not touched; what needs changing there is in section 4.
+Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neither merged). Round 1 = D-035 to D-041. Round 2 (follow-up) = D-042 to D-044. `acquisition/` was not touched; what needs changing there is in section 4.
 
 ## 1. What changed
 
-**New decisions (docs/decisions.md):** D-035 dashboard counts, no directory target · D-036 no claiming · D-037 only the Nominations flag · D-038 no source registry in the website admin · D-039 controlled lists are WordPress taxonomies · D-040 corrections, removals and reports in the Support inbox · D-041 left menu by role.
+**New decisions:** D-035 dashboard counts, no directory target · D-036 no claiming · D-037 only the Nominations flag · D-038 no source registry in the admin (amended by D-042) · D-039 taxonomies · D-040 Support inbox, direct staff edits, Administrator-only exports · D-041 menus by role (superseded by D-044) · **D-042 read-only Sources screen** · **D-043 kill switch removed; bulk unpublish by filter** · **D-044 four roles only (Visitor, Reviewer, Editor, Administrator).**
 
-**Amended or superseded decisions:** D-002, D-003, D-009, D-010 (see 3.1), D-012 (superseded by D-035), D-013, D-019, D-022 (superseded by D-036), D-025, D-034 (claim parts superseded; corrections amended).
+**Amended or superseded decisions:** D-002, D-003, D-009, D-010, D-012, D-013, D-016, D-019, D-022, D-025, D-029, D-033 (control 6), D-034 (claims; seven roles), D-035, D-036, D-037, D-038, D-040, D-041.
 
 **Requirements** (never renumbered):
-- Withdrawn: REQ-124, 151, 152, 173, 230, 231.
-- Amended: REQ-009, 015, 018, 038, 069, 088, 089, 094, 104, 132, 136, 137, 138, 150, 156, 160, 165, 174, 181, 191, 193, 194, 206, 227, 232, 233, 235, 236. Priority `M (flag)` became `M` on REQ-033, 034, 036, 037, 038, 198, 200, 202, 234 (only the Nominations flag exists). REQ-196 and 197 stay flagged.
-- New: REQ-239 (dashboard counts and role views), REQ-240 (menus by role), REQ-241 (read-only source beside each claim).
+- Withdrawn: REQ-124, 151, 152, 173, 227, 230, 231.
+- Amended in round 2: REQ-036, 072, 083, 088, 133, 136, 174, 178, 181, 193, 194, 209, 234, 235, 239, 240, plus REQ-077 and 087 (exports are Administrator-only).
+- New: REQ-239 to REQ-241 (round 1), **REQ-242** (filterable source and import batch fields), **REQ-243** (read-only Sources screen).
 
-**Questions:** Q49, Q18, Q57, Q59 closed as Answered (overtaken). Q11, Q12, Q24, C10, Q34, Q2, Q56, Q58, Q62 reworded. Q68 added (kill switch scope). Counts updated.
+**Questions:** Q68 closed (kill switch gone). Q61, Q60, Q1, Q2, Q5, Q35 reworded. New: Q69 (who may bulk unpublish), Q70 (one Administrator records and confirms payments), Q71 (who handles disputes without an Editor-in-Chief).
 
-**Other docs:** GUIDE (labels table, flag and kill-switch terms), design-inspiration (card labels), contracts/import-format (one "claimed" removed), wireframe inventory (121 entries, regenerated) and findings 38 to 51.
+**Other docs:** GUIDE (labels, roles, bulk unpublish term), requirements header, wireframe inventory (121 entries) and findings 38 to 59.
 
-**Wireframe:** details in `prototype/STATUS.md`. Smoke test: 4,450 checks, 0 failures (Node, stubbed DOM; not tried in a real browser).
-
-### Stale items found and fixed (item 1d)
-"About 100 + 100" target and progress bars · "2 reviewers × about 40 = 80" and the backlog warning · "Country list is Nigeria only" and the disabled country select · "Nigerian only" award eligibility text · the Reviewer 1 / Reviewer 2 split · "Owner-supplied" in the review diff · "Unclaimed" wording on home, directory, profile and How-we-compile pages · inventory gap rows for REQ-191, 192, 206.
+### Round 2, item by item
+| Item | Status |
+|---|---|
+| 1 Sources read-only | **Changed.** Read-only Sources screen A59 (profile count, last import, errors, removals, link to filter Profiles); Profiles list filters and groups by source and import batch; the staff profile shows each field's source; REQ-242 and 243 added; REQ-136 to 138 stay enforced in the pipeline |
+| 2 Claim verification and AI drafting out of the menus | **Already done** in round 1; now smoke-tested (no routes, no menu entries) |
+| 3 Kill switch | **Changed.** Removed everywhere in the wireframe and docs; bulk unpublish by filter (source, type, import batch, state) with reason, count confirmation, 410 and noindex, audit rows and per-batch restore. D-013, D-016, D-029, D-033 control 6, D-036, D-037, REQ-072, 133, 193, 194, 209, 227 amended |
+| 4 Four roles | **Changed.** Visitor, Reviewer, Editor, Administrator only; permission matrix and per-role menus on the Roles screen; role switcher offers the four. REQ-083, 174, 178, 181, 234, 235, 239, 240 and the decisions listed above amended |
 
 ## 2. Checks run
-- No wireframe or inventory text contains a claim feature, Claimed or Unclaimed, an "x / 100" bar, the Directory target tile, a judging, announcements or AI-drafting flag, or "Nigeria only".
-- The wireframe cites no Withdrawn REQ. The inventory no longer cites REQ-124 or 173.
-- Every decision except D-026 (a working principle) lists a REQ.
-- Every REQ the inventory cites exists. 45 REQs have no UI, each with a stated reason; none unexplained.
-- The remaining word "claim" in requirements, decisions and questions is either a withdrawn row (kept for traceability), the original text inside an amended decision, or an AI "claim" meaning a statement of fact.
+- The wireframe and inventory contain no kill switch, claim feature, Claimed or Unclaimed label, "x / 100" bar, extra flag, or the removed roles.
+- No Withdrawn REQ is cited by the wireframe or inventory; every cited REQ exists. 41 REQs have no UI, each with a stated reason, none unexplained.
+- Smoke test: 2,069 checks, 0 failures (Node with a stubbed DOM; not tried in a real browser). The count is lower than before because three roles' checks are gone.
+- The words "Finance" and "Sales" remaining in REQ-086, 115 and D-018 mean the offline business function (refunds, payments), not a system role. Noted in the requirements header and GUIDE.
 
 ## 3. Still inconsistent, or needs your ruling
 
 ### 3.1 Needs a ruling
 | # | Item | Why | Recommended default |
 |---|---|---|---|
-| 1 | **Direct staff edits go live on one person's sign-off** (D-040, REQ-015, REQ-232) | D-015 says 100% human review before anything publishes. A staff edit is human, but there is no second check. Q57 (second approver) was closed as overtaken by your instruction | Accept; every edit is audited and versioned. Reconsider for name, title, organisation, awards if errors show |
-| 2 | **Who may edit a profile directly** | The wireframe lets Reviewer, Editor and Editor-in-Chief; a Reviewer editing is wide | Reviewer: edit and unpublish; keep. Confirm |
-| 3 | **Kill switch scope** (Q68, REQ-193) | Set to all import-origin individuals, even if later Verified or Featured; customer-submitted ones exempt | Yes |
-| 4 | **CSV exports are Administrator-only** (REQ-069, D-040) | REQ-077 (register, leads, enquiries to CaromHQ, Q16) and REQ-087 (register CSV) need exports by Finance and Sales/Support; REQ-131 is the venture's own data export | Administrator-only for personal data. Finance exports the register through an Administrator request, or the register export is carved out. Rule which |
-| 5 | **Sprint target kept** (10 subscriptions or NGN 5m, with bars) | Your no-target rule covered directory size. REQ-181 keeps the commercial target for Administrator, Finance and Sales/Support | Keep |
-| 6 | **Editor-in-Chief edits taxonomy terms; Editor and Editor-in-Chief run imports; Awards manager, Editor-in-Chief and Administrator publish nominee pages** | Assumed in the wireframe, not stated by you | Confirm |
-| 7 | **D-010 was never actually amended** | You referred to "the amended D-010". The file still said Nigeria only (also D-025, C10, Q24). I amended them now, per your instruction (Nigeria first, other African countries and pan-African bodies) | Confirm |
-| 8 | **Support inbox access** | Reviewer sees the inbox (your menu) but not Enquiries? Wireframe shows Correction, Removal, Report to Reviewer and enquiries to Sales/Support | Keep |
+| 1 | **Who may bulk unpublish by filter** (Q69) | Editor and Administrator as built. It can take down many live profiles at once; it includes Verified and Featured profiles | Keep, with the count confirmation, reason and per-batch restore |
+| 2 | **One Administrator records and confirms payments** (Q70, REQ-022) | Finance is gone; no second check on the counting rule | Accept for the sprint; a second Administrator reviews the register weekly |
+| 3 | **Disputes and removal requests go to the Editor** (Q71, REQ-174) | Editor-in-Chief is gone. The Reviewer cannot see the Support inbox, so removal requests reach only Editors and Administrators | Keep |
+| 4 | **Staff edits go live on one person's sign-off** (D-040, REQ-015, 232) | D-015 says 100% human review before publishing; a staff edit has no second check. Q57 was closed | Accept; every edit is audited and versioned |
+| 5 | **Exports are Administrator-only** (REQ-069, 077, 087) | The Editor loses the leads export; the register and CaromHQ exchange (Q16) need an Administrator | Keep |
+| 6 | **Sprint target kept** (10 subscriptions or NGN 5m, Administrator only) | Your no-target rule covered directory size | Keep |
+| 7 | **Editor's powers are wide** | Editor does edit, publish, unpublish, bulk unpublish, Sponsored label, taxonomies, nominations and scores, leads and the inbox. Verified and Featured are Editor and Administrator only. Lead conversion by an Editor creates a proposed arrangement in a register the Editor cannot open | Confirm; or add a narrower role later |
+| 8 | **Suppression list**: only the Administrator changes it | A valid removal handled by an Editor adds the entry automatically; the Editor cannot undo it | Keep |
+| 9 | **D-010 was not amended earlier** | You referred to "the amended D-010". The file said Nigeria only (also D-025, C10, Q24). I amended them on your word | Confirm |
 
 ### 3.2 Not yet reflected
-- **Wireframe has no publish-first states** (REQ-210 to 228) and none for the amended D-033. The pending-review label appears only as a preview on the review screen.
-- **architecture.md and ADRs** still describe Laravel with owner area, `claims` table, `trust_status` with unclaimed/claimed, judge panel, a flags list with judging and announcements, spatie roles including Judge and Owner, and a Source registry screen. Rewrite at Gate 2; do not carry any of this over.
-- **docs/contracts/import-format.md**, unknown U8 ("until the WordPress registry exists") assumes a registry in WordPress. D-038 puts the registry in the pipeline. Rule it when the contract's unknowns are settled.
-- **CLAUDE.md** stack line still says Laravel (D-031). Convention "feature flags through Flags::on()" now means one flag.
-- **docs/spec.md** (the brief) is unchanged: it lists a Judge role, a "Subscription plans" page, claim and owner features. The brief stays as intent.
-- **docs/traceability.md and docs/plan.md** do not exist yet.
-- **docs/change-review-2026-11-07.md** (the WIWI rename review) is untracked and still awaits your rulings (Q40 to Q45 are reserved, not logged).
+- **Wireframe has no publish-first states** (REQ-210 to 228) for the amended D-033.
+- **architecture.md and the ADRs** still describe Laravel, owner and judge panels, a `claims` table, `trust_status` with unclaimed and claimed, a kill switch, a flags list with judging and announcements, seven or more roles, and a Source registry screen. Rewrite at Gate 2 with D-034 to D-044 as input.
+- **docs/contracts/import-format.md**: unknown U8 ("until the WordPress registry exists") assumes a registry in WordPress. D-038 and D-042 keep the registry in the pipeline, with a read-only view in the site.
+- **CLAUDE.md**: stack line still says Laravel (D-031); "feature flags through Flags::on()" now means one flag; the roles line is not there.
+- **docs/spec.md** is unchanged. It lists a Judge role, a "Subscription plans" page, and claim, owner and kill-switch features. It stays as the intent.
+- **traceability.md and plan.md** do not exist yet.
+- **docs/change-review-2026-11-07.md** (the WIWI rename review) is untracked and awaits your rulings.
+- **Existing change reviews** (`docs/change-review-2026-11-08-no-accounts.md`) still describe the seven staff roles and the claim flow as they were at the time. They are history; D-036 and D-044 supersede them.
 
 ## 4. In `acquisition/` (not touched; needs changing there)
-- Header (line ~9) and step 13 (line ~252): describe a request-to-claim form and "set to Claimed". Replace with correction, removal and report handled in the Support inbox (D-036, D-040).
-- Tooling **T-24** (request to claim and claim verification): drop. **T-26** mentions claim email verification: change to correction, removal and report requesters. **T-25** (correction request with a second approver) and **T-28** ("flagged"): update to D-040 and D-037.
-- **T-1 "Source registry: admin screen"**: D-038 says no registry in the website admin; the registry lives in the pipeline.
-- **Line ~584**: "kill switch covers unclaimed individuals only"; change to acquired individual profiles.
-- **Line ~682 and ~804**: "unclaimed profile" and "photos on unclaimed individuals" (also Q34 text, now corrected in questions.md).
-- **Line ~526 and capacity assumptions** (2 reviewers, 40 per week, "Review backlog above 2 weeks of capacity"): the website shows no capacity figure (D-035, REQ-206). Keep capacity as a planning estimate only, labelled as such.
-- **Line ~13 and ~379** ("D-012 and REQ-191 target reviewed profiles live", "Reaches the first 100 organisations"): D-012 is superseded; the 1,000 and batch sizes are acquisition planning figures. The website will not show them.
-- **REQ-165** is now acquisition-only with no website flag; the plan's AI step should not refer to a site flag.
-- **Workload note (D-034)** mentions claims; reword.
+- **Claims:** header (line ~9) and step 13 (~252): replace the request-to-claim text with correction, removal and report handled in the Support inbox (D-036, D-040). T-24 (request to claim and claim verification): drop. T-26 mentions claim email verification: change to correction, removal and report requesters. T-25 (second approver): update to D-040. T-28 "flagged": update to D-037.
+- **Kill switch (line ~584 and elsewhere):** replace with bulk unpublish by filter (D-043); "kill switch covers unclaimed individuals only" no longer applies. REQ-227 is withdrawn; its batch unpublish is a filter on import batch.
+- **T-1 "Source registry: admin screen":** the registry lives in the pipeline; the website has a read-only Sources screen (D-042, REQ-243).
+- **Roles:** any mention of Editor-in-Chief, Reviewer duties beyond review, Finance, Sales/Support or Awards manager. The Editor handles disputes (REQ-174).
+- **Unclaimed wording:** line ~682 ("a published unclaimed profile helps a sales conversation") and ~804 (photos on unclaimed individuals; Q34 text is already corrected in questions.md).
+- **Capacity and targets:** lines ~13, ~379, ~526 (D-012 and REQ-191 "target reviewed profiles live", "first 100 organisations", "backlog above 2 weeks of capacity: workload warning REQ-206"). The website shows no capacity figure or directory target (D-035). Keep these as planning estimates only, labelled as such.
+- **REQ-165:** AI drafting has no website flag; the plan should not refer to one.
+- **Workload note (D-034):** mentions claims; reword.
+- **Import contract and batches:** the website's bulk unpublish and Sources screen filter by `source_id` and import batch, so the contract's `source_id` and batch ID must stay stable (U8).
 
 ## 5. Next
-1. Rule on 3.1 (eight items).
-2. Merge `chore/repo-restructure` and then this branch (or tell me the order).
+1. Rule on 3.1.
+2. Merge order: `chore/repo-restructure`, then `chore/wireframe-review-fixes`.
 3. Acquisition session applies section 4.
-4. Gate 2: rewrite `architecture.md` for WordPress with D-034 to D-041 as input.
+4. Gate 2: rewrite `architecture.md` for WordPress with D-034 to D-044 as input.

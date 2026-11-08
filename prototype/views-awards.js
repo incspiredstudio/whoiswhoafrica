@@ -32,7 +32,7 @@
   W.route("/awards/nominee/:ref", "V20", function (p, q, m) {
     var n = W.S.nominations.filter(function (x) { return x.ref === p.ref; })[0];
     var vis = n && W.nomPublic(n);
-    var staff = ["reviewer", "editor", "eic", "admin"].indexOf(W.S.role) >= 0;
+    var staff = ["reviewer", "editor", "admin"].indexOf(W.S.role) >= 0;
     if (!n || (!vis && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
     var pr = W.profile(n.profileId), prOK = pr && W.isPublic(pr);
     return (vis ? "" : '<div class="banner staffprev"><div class="wrap">Staff preview: not public until staff publish the nominee page (shortlist stage, nominee accepted).</div></div>') + page(W.crumbs([["Awards", "#/awards"], [n.nominee]]) + "<h1>" + e(n.nominee) + '</h1><div class="tagrow"><span class="pill ok">Shortlisted</span><span class="pill gray">' + e(n.category) + '</span></div><p>Built from the reviewed profile and sourced facts only. The nominator’s identity is never shown.</p>' + (prOK ? '<div class="grid c3">' + W.card(pr) + "</div>" : '<p class="muted">Profile not yet public.</p>') + '<p class="small muted">Sponsorship, subscription and payment have no effect on this page or on judging.</p>');

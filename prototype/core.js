@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v5";
+  var KEY = "wiw-wireframe-v6";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,7 +21,7 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 5 ? raw : W.seed();
+    W.S = raw && raw.v === 6 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
     W.syncLists();
   };
@@ -42,11 +42,9 @@
   /* ---------- selectors ---------- */
   /* Origin of a profile: "import" (arrived through the acquisition import) or "customer" (submitted by, or created with the consent of, the person or organisation). */
   W.origin = function (p) { return p.origin || (p.source === "acquired" ? "import" : "customer"); };
-  /* The kill switch hides every individual profile whose origin is the acquisition import, even if it was later made Verified, Featured or Sponsored. Individual profiles a customer submitted or consented to are not affected. */
-  W.isKilled = function (p) { return !!(W.S.kill.on && p.type === "individual" && W.origin(p) === "import" && p.status === "published"); };
   W.vis = function (p) {
     if (!p) return "none";
-    if (p.status === "published") return W.isKilled(p) ? "gone" : "public";
+    if (p.status === "published") return "public";
     if (p.status === "unpublished" || p.status === "suppressed") return "gone";
     return "hidden";
   };
@@ -180,7 +178,6 @@
   }
   function banners() {
     var S = W.S, out = "";
-    if (S.kill.on) out += '<div class="banner kill" role="status"><div class="wrap"><strong>Kill switch is ON.</strong> Every individual profile that came from the acquisition import returns 410 and is hidden from listings, search and the sitemap. Individual profiles that customers submitted are not affected. <a href="#/admin/killswitch" style="color:inherit">Manage</a></div></div>';
     var on = Object.keys(S.flags).filter(function (k) { return S.flags[k].on; });
     if (on.length) out += '<div class="banner flags" role="status"><div class="wrap">Feature flag ON: ' + on.map(function (k) { return "<strong>" + e(k) + "</strong>"; }).join(", ") + '. <a href="#/admin/flags">Manage</a></div></div>';
     return out;
