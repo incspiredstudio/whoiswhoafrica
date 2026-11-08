@@ -58,7 +58,7 @@ No login or signup for anyone on the public website. Only staff use wp-admin, wi
 | D-019 | Amended: no judge accounts or scoring portal; the rest (configurable rules, flags, judge wall from commercial data) stands |
 | D-022 | Amended: claim verification by form and staff. Evidence rules (domain email or document) stand |
 | D-030 | Superseded: no owner logins |
-| D-015, D-033 | Not changed. Staff-applied corrections go through review; claims and corrections still rise to the top of the queue (REQ-226) |
+| D-015, D-033 | Not changed by D-034 (D-033 was amended separately the same day). Staff-applied corrections go through review; claims and corrections still rise to the top of the queue (REQ-226) |
 | D-005, D-028, D-031, D-013 | No conflict |
 
 ## 4. Documents affected
@@ -101,7 +101,7 @@ These are listed, not resolved.
 4. **Judging confidentiality and audit.** Offline scoring means paper or spreadsheet scores outside the platform until staff enter them. The entry is audited but the original is not. Q60.
 5. **wp-admin is still a public URL.** WordPress has no way to hide the login completely; hiding the path reduces noise only. Two-factor, lockout, rate limiting and IP rules (Cloudflare) carry the security (REQ-047, 235). This is the one remaining login surface.
 6. **Mailing list.** REQ-106 and 195 keep an email sign-up for "nominations open soon". It is a list, not an account. Confirm.
-7. **D-033 (publish first).** A claim or correction moves a pending profile to the top of the review queue (REQ-226). Nothing changes, but claim requests now arrive as forms, so spam and abuse rates (a rival requesting removal) matter more; REQ-226 already rate-limits.
+7. **D-033 as amended.** A claim or correction moves a labelled organisation profile to the top of the review queue (REQ-226). Claim requests arrive as forms, so spam and abuse (a rival requesting removal) matter more; rate limits are in REQ-122 and REQ-230. Instant hide on a removal request has been removed.
 8. **Brief text.** The brief mentions judge portals only in passing (spec lines near 753 and 1219 talk about identifying judges). No contradiction with the brief's intent, but its admin roles list includes a Judge role that D-034 removes.
 
 ## 7. Wireframe

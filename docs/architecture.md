@@ -1,5 +1,7 @@
 # WHOISWHO — Architecture
 
+**Priority input for the WordPress revision (D-031, D-033 as amended): a basic import path into the profile post type, by CSV or REST (REQ-237, Q67), is the first acquisition task. The revision must decide the post type, how provenance is stored, CSV or REST, and how imports run on cPanel. This document is not otherwise revised yet.**
+
 Status: **draft for Gate 2** (2026-11-06). Inputs: `docs/requirements.md` (REQ-001–209), `docs/decisions.md` (D-001–D-030). No application code exists yet.
 Assumed constraints (edit if wrong): solo human supervisor + Claude Code agents; low budget; Nigeria first; **no online payment processing** (D-005); easy managed deployment; wiwi.africa and a cPanel account already exist (D-020); Incspired shared services may be available (unknown, see Q26–Q27).
 

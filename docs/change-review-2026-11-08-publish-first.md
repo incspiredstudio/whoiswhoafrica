@@ -1,147 +1,149 @@
-# Change review: publish first, human review after (D-033, 2026-11-08)
+# Change review: D-033 as amended (2026-11-08)
 
-Status: **Decision recorded. Rulings in section 5 are open.** The documents in section 2 are changed. Those in sections 3 and 4 are listed, **not changed**, so nothing moves until you rule. Numbering: D-032 and Q40–Q45 stay free for the pending brief review (`docs/change-review-2026-11-07.md`), so this uses D-033 and Q46–Q55.
+Status: **Corrected model recorded. Rulings in section 5 are open.** This replaces the first version of this review, which covered the AI-publishes model (see git history). Documents in section 2 are changed. Those in sections 3 and 4 are listed, **not changed**. Numbering: D-032 and Q40–Q45 stay free for the pending brief review; REQ-229–236 and Q56–Q62 belong to D-034; this uses REQ-237–238 and Q63–Q67.
 
 ## 1. Result in one paragraph
-D-033 is recorded with your seven controls. It amends D-015, D-029, REQ-148, REQ-208 and plan sections 3–6, as you asked. Modelling it shows it brings "live" forward by one to two weeks. It adds about 6% to review time. It does not bring search visibility forward, and mid-way it delays it, because quick looks use reviewer hours and pending profiles are noindex. Reviewer hours remain the main lever, and WordPress safeguards are now the critical path to the first public record.
+The pipeline never publishes. AI gathers, does seven basic checks, stores in a private staging database and exports. A named staff member imports into WordPress, where reviewers work. Organisations go live on import, labelled and noindex; individuals and entrepreneurs are not public until approved. Acquisition takes about 6.5 hours by estimate. Review is a separate track of about 190 reviewer-hours: at 2 × 15 h/week, 1,000 public and reviewed by 17 January if the import path exists by 23 November. The import path is now the first task, and nothing can be reviewed without it.
 
 ## 2. Changed in this commit
 
 | Document | Change |
 |---|---|
-| `docs/decisions.md` | New D-033. D-015 and D-029 marked amended, original text kept. D-012, D-013, D-016, D-017 marked as in conflict, text otherwise unchanged. |
-| `docs/requirements.md` | REQ-148 and REQ-208 amended, old text struck through. New section 12: REQ-210 to REQ-228, state table, transition table. Short pointers on REQ-006, 044, 051, 083, 084, 132, 141, 144, 193, 206. Conflict flags on REQ-163, 168, 170, 191. |
-| `docs/acquisition-plan.md` | v2. Sections 3, 4, 5, 6 rewritten, including the timeline. Sections 1.1, 1.7, 2.1, 7, 8, 10, 11, 12 and the header updated so the plan does not contradict itself. Sections 1.2–1.6, 2.2–2.6 and 9 unchanged. |
-| `docs/questions.md` | Q46–Q55 added. Q30 closed. Q1, Q4, Q31, Q35, Q36, Q38, Q39 updated. Summary recounted. |
+| `docs/decisions.md` | D-033 recorded as amended, original text kept and struck through. Notes on D-013, D-015, D-016, D-017, D-029 updated. |
+| `docs/requirements.md` | See 2.1. |
+| `docs/acquisition-plan.md` | v3. Sections 3–8 and 10–12 rewritten, including both tracks; 1.1, 1.7, 2.1 and the header updated. D-034's lines kept. Sections 1.2–1.6, 2.2–2.6 and 9 unchanged. |
+| `docs/questions.md` | Q63–Q67 added. Q32, Q47, Q48, Q50–Q53 closed. Q31, Q33, Q35, Q36, Q38, Q39, Q46, Q49, Q54, Q55 reworded. Summary recounted. |
+| `docs/architecture.md` | One note at the top: the import path is a priority input for the revision. Nothing else. |
+| `docs/change-review-2026-11-08-no-accounts.md` | Item 7 and one decisions row corrected, as its author agreed. |
 | `STATUS.md` | Stage, done, next up. |
+
+### 2.1 Every REQ changed
+
+| REQ | Change |
+|---|---|
+| 148, 208 | **Amended again.** Earlier versions kept struck through. |
+| 210 | Amended: six states; Staged, quick look, amber, red and AI takedown gone |
+| 211 | Amended: private store outside WordPress; no publishing credentials; resumable |
+| 212 | Amended: publish gate becomes import checks in WordPress |
+| 214 | Amended: colours become the seven basic checks and the verification report; organisations keep no named person |
+| 221 | Amended: hash confirms what is imported is what was drafted; review packs and AI republishing gone |
+| 222 | Amended: review in WordPress; sample and hidden-audit rules gone |
+| 226 | Amended: instant hide on removal gone |
+| 227 | Amended: can also act on one import batch |
+| 228 | Amended: import audit and a simpler dashboard |
+| 216 | One clause: applies to organisations on import |
+| 213, 215, 219, 220, 223, 224, 225 | **Withdrawn:** AI audit, quick look, AI roles, AI takedown, monitor, automatic pause, cap |
+| 237 | **New:** basic import path, first task |
+| 238 | **New, later:** AI monitoring and takedown as a separate WordPress feature |
+| 051, 084, 132, 141, 144, 193, 206 | Pointer notes updated |
+| 083, 229 | Reference to the non-human roles removed |
+| 163, 168, 170 | Conflict flags narrowed to AI-drafted organisations |
+| 217, 218 | Unchanged |
 
 ## 3. Other documents affected (not changed)
 
 | Document | Where | What must change |
 |---|---|---|
-| `CLAUDE.md` | Conventions: "only Review\PublishRevision sets profiles.published_revision_id" | The AI Publisher path must be allowed and still go through one choke point. Laravel wording is stale anyway (D-031). |
-| `CLAUDE.md` | Test-name example "REQ-208 hides unreviewed profiles from the sitemap" | Still true. Keep. |
-| `docs/GUIDE.md` | Line 81 "Nothing publishes without human review" | **Now false.** Replace with the D-033 rule. |
-| `docs/GUIDE.md` | Section with labels (line 52) | Add: pending label, publication states, quick look, AI takedown, green/amber/red. |
-| `docs/architecture.md` | Line 14; flow F1 (lines 80–88); line 200; line 243; line 388; lines 418–419; line 461 | "Nothing public before approval" is no longer the requirement. F1 needs states, a publish gate and a state-by-surface matrix. To be done in the WordPress revision (D-031), not separately. |
-| `docs/architecture.md` | Flow F2 (lines 92–99) | Add AI takedown as a trigger, plus bulk unpublish of pending. |
-| `docs/architecture.md` | Line 273 "staging… public and indexable per D-029, real data only after approval" | Conflicts with "staging database" unless Q53 = private store. |
-| `docs/architecture.md` | Line 327 and 332 (build order); line 110 and section 8 (flags, keys) | New first items: T-7, T-18, T-19, T-11. New `auto_publish` and `ai_takedown` flags; separate tokens. |
-| `docs/architecture.md` | Lines 48, 64 (cPanel cron) | The continuous monitor may not fit. Add a runner decision (Q26). |
-| `docs/adr/ADR-005` | Whole | Context says nothing is public before human approval; "set only by Review". Needs a new or superseding ADR. |
-| `docs/adr/ADR-006` | Decision | 200 + noindex is a new case; AI takedown and bulk unpublish are new triggers. |
-| `docs/adr/ADR-009` | Decision | Add the AI audit and monitor. Same code-verifies principle. |
-| `docs/adr/ADR-010` | "built from published revisions only" | Pending profiles are in on-site search but not on indexable lists. |
-| `docs/adr/ADR-011` | Cron-only queue | Monitor cadence and fetch delays (at least 5 seconds per host) need testing against the 55-second worker. |
-| `docs/adr/ADR-013` | "Staff actions" | Add AI actors. |
-| `docs/adr/ADR-004`, `ADR-003` | Admin surface; hosting | New queues and settings; hosting of the monitor. Both are already superseded in part by D-031. |
-| `.env.example` | Lines 62–63 (`AI_DRAFT_MODEL`, `AI_PROMPT_VERSION`) | Add audit model and prompt version, and service-token names, when the build starts. |
-| `docs/questions.md` | Risk register; "Top 3 risks"; Q2, Q6 text | Still say "100% human review" and "must be in place before any individual profile goes public". Rewrite after you rule. |
-| `docs/spec.md` (the brief) | 11.3 "avoid: unverified claims"; 15.4; 16 "editorial review", "verification, editorial oversight" | No edit: your decisions override the brief. **Tension to be aware of.** See risk 11 in plan 10.2. |
-| `docs/change-review-2026-11-07.md` | Q45 (crawler name) | Now also the monitor's identity. No clash in numbering. |
-| `prototype/README.md` | Flow descriptions | Update with the prototype. |
-| `docs/wireframe-findings.md` | Finding 6 (REQ-015 vs D-015) | Now turns on Q48. |
-| `docs/wireframe-findings.md` | Finding 7 (visitor at an unreviewed URL = 404) | **Now wrong** for pending profiles: 200 with a label. Still 404 for staged and held. |
-| `docs/wireframe-findings.md` | Finding 21 (telling the subject) | The control sat on the review screen, before publication. It needs a new home, and Legal's answer matters more when publication is automatic. |
-| `docs/wireframe-findings.md` | Finding 25 (capacity = 80 a week) | Now the REQ-225 rule. |
-| `docs/wireframe-findings.md` | Finding 15 (validating a removal request) | Pending profiles hide on request, so abuse handling needs designing. |
-| To be written | `docs/review-guidelines.md`; `docs/runbook.md`; `docs/traceability.md`; Terms, Privacy, how-we-compile copy | Quick look and sample rules; takedown, pause and fire-drill steps; REQ-210–228; Legal's wording. |
-| No effect | `.github/workflows/pages.yml`; awards and commerce decisions (D-005, D-019, D-021, D-028) apart from REQ-226 guards | None. |
+| `docs/GUIDE.md` | "Nothing publishes without human review" (line 84) | **False for imported organisations.** Replace with the D-033 rule. |
+| `docs/GUIDE.md` | Labels (line 52) | Add the review-pending label, publication states, verification report |
+| `CLAUDE.md` | "only Review\PublishRevision sets profiles.published_revision_id" | Import is now the second way a profile can become public. Laravel wording is stale anyway (D-031). |
+| `docs/architecture.md` | Line 14; flow F1 (lines 80–88); lines 200, 243, 388, 418–419, 461 | "Nothing public before approval" holds for individuals, not organisations. F1 needs states and an import path. Do it in the WordPress revision. |
+| `docs/architecture.md` | Lines 327, 332 (build order) | Import path and review queue come first |
+| `docs/architecture.md` | Line 273 "staging… real data only after approval" | Conflicts with importing real data into a public site (Q64) |
+| `docs/adr/ADR-005` | Whole | Context says nothing is public before human approval. New or superseding ADR needed. |
+| `docs/adr/ADR-006` | Decision | 200 + noindex is a new case; bulk unpublish by batch is a new trigger |
+| `docs/adr/ADR-009` | Decision | Unchanged in principle; the verification report and run are new |
+| `docs/adr/ADR-010` | "built from published revisions only" | Labelled organisations are in on-site search but not indexable lists |
+| `docs/adr/ADR-013` | "Staff actions" | Add imports |
+| `.env.example` | Lines 62–63 | No new AI variables needed now |
+| `docs/questions.md` | Risk register; Top 3 risks | Has a "not yet rewritten" note. Rewrite after you rule. |
+| `docs/spec.md` (the brief) | 11.3 "avoid: unverified claims"; 15.4; 16 "editorial review", "verification, editorial oversight" | No edit: your decisions override the brief. Live, unreviewed organisation profiles sit awkwardly with these. |
+| `docs/change-review-2026-11-07.md` | Q45 (crawler name) | Still relevant to the run |
+| `docs/wireframe-findings.md` | Finding 7 | Still partly true: 404 for imported records; 200 with a label for organisations |
+| `docs/wireframe-findings.md` | Finding 21 (telling the subject) | Fits the review screen again for individuals |
+| `docs/wireframe-findings.md` | Finding 25 (capacity = 80 a week) | Now a reviewer-hours choice (Q31) |
+| To be written | `docs/review-guidelines.md`; `docs/runbook.md`; `docs/traceability.md`; Terms, Privacy, how-we-compile copy; `scripts/acquisition/` | Review steps; run and import steps; REQ-237; Legal's wording; the pipeline |
+| **No longer affected** | Monitor runner, ADR-011, AI credentials, fire drill | Removed with the AI-publishes model |
 
 ## 4. Wireframe inventory (`docs/wireframe-inventory.md`)
-This file is generated from `prototype/inventory.js`, so changes go there and are then regenerated. Nothing is changed yet.
+Generated from `prototype/inventory.js`. Nothing is changed yet. The prototype still shows the older "nothing public before approval" model, so this is a smaller change than the first version suggested. Individuals keep that behaviour.
 
 ### 4.1 Existing entries
 
 | Entry | Screen | What changes |
 |---|---|---|
-| V01 | Home | Lists show reviewed profiles only |
-| V03, V04, V05, V06, V07 | Discover and Industry lists | Reviewed only, with a link to a noindex "include pending" view (Q54) |
-| V08, V38 | Search, no results | Pending shown with label; results are noindex. Copy "Unreviewed… never appear here" is now wrong. |
-| V09, V10, V11 | Profile pages | New state: label, correct/remove link, noindex, "Reviewed on <date>". Replaces "Last reviewed". Shown with Unclaimed. |
-| V12 | 410 | Also shown after AI takedown, with no reason |
-| V13 | 404 | Staged, held and rejected only |
-| V15 | Unreviewed profile | **Rewrite:** visitors now see the page with the label; staff see state, colour and audit |
-| V20 | Nominee page | Reviewed profiles only |
-| V28, V29, V30, V34, V35, V50 | FAQ, Privacy, Terms, How we compile, Complaints, Data rights | Copy must describe automatic publishing, the label and AI takedown. V34 is the main one. Legal's wording. |
-| V37 | Share preview | Pending share card carries the label |
-| V39, V40, V42, V44 | Correct, Remove, Claim, Report | Correct and claim move a pending profile up the queue. Remove hides at once. |
-| V48, V49 | Sitemap, robots previews | Pending excluded from sitemap; robots.txt must not block them |
-| O05, O15, O18 | Owner dashboard, claim status, sources | Show publication state for a claimed profile that was pending |
-| O06, O09, O11, O22 | Editor, submitted, editing, complimentary | No change if Q48 = (a); these stay approval-first |
-| A02, A46 | Dashboard, throughput | Live, reviewed, pending; oldest pending; thresholds; pause state; heartbeat |
-| A03 | Review queue | **Rewrite:** post-publication; sample first. Copy "reviewed by a person before it is public" is now wrong. |
-| A04 | Review item | Approve means "mark reviewed"; reject means 410. Hide audit on samples; record severity. |
-| A05, A06 | Profiles list, profile admin | State filter and column; takedown history; Verified, Featured and Sponsored blocked while pending |
-| A10, A11 | Reports, corrections and removals | Link to pending state and instant hide |
-| A16 | Arrangement edit | Cannot link to a pending profile |
-| A19 | Source registry | Monitor-allowed field; M sources |
-| A20 | Bulk import | Imports to the staging database; publishing is by the gate |
-| A21, A22 | Duplicates, suppression | Duplicates make amber; monitor re-checks suppression |
-| A23 | AI drafting | Add audit verdicts and colours |
-| A26 | Feature flags | Automatic publishing and AI takedown flags |
-| A27 | Kill switch | Add bulk unpublish of pending beside it |
-| A29 | Nomination detail | Pending profile cannot be used |
-| A33, A34 | Audit log, users and roles | AI actors; two service roles |
-| A37 | Compliance | DPIA and lawful basis covering publish first |
-| A39 | Stale records | Review debt now also shows here |
-| A47 | Settings | Thresholds, cap, ramp, cadence, label wording |
-| A48 | Purge log | AI takedowns |
+| V10, V11 | Business and institution profiles | New state: label, correct/remove link, noindex; then "Reviewed on <date>" |
+| V09 | Individual profile | "Reviewed on <date>" replaces "Last reviewed" |
+| V01, V03, V04, V05, V06, V07 | Home, Discover, Industry lists | Reviewed only, with a link to a noindex view of labelled organisations (Q54) |
+| V08, V38 | Search, no results | Labelled organisations shown with the label. Copy "Unreviewed… never appear here" needs changing. |
+| V15 | Unreviewed profile | Split: organisation (page with label) and individual (404, as now) |
+| V13 | 404 | Imported – not public and rejected |
+| V12 | 410 | Unchanged |
+| V34, V28, V29, V30, V35, V50 | How we compile, FAQ, Privacy, Terms, Complaints, Data rights | Describe the label and organisations going live before review. Legal's wording. |
+| V37 | Share preview | Labelled card |
+| V39, V42 | Correct, Claim | A labelled profile moves up the queue |
+| V48, V49 | Sitemap, robots previews | Labelled organisations excluded from the sitemap; robots.txt must not block them |
+| V20, A29, A16, A06 | Nominee page, nomination, arrangement, profile admin | Labelled profile cannot be used for awards, sponsorship, Verified or Featured (REQ-226) |
+| A02, A46 | Dashboard, throughput | Imported, public, reviewed, awaiting review |
+| A03 | Review queue | Copy "reviewed by a person before it is public" holds for individuals only; add batch filter |
+| A04 | Review item | Show verification report; approve on a live record means "mark reviewed" |
+| A05 | Profiles list | State filter and column |
+| A19 | Source registry | Access recoding (Q55) |
+| A20 | Bulk import with dry run | **Becomes the REQ-237 import path:** file, hash check, states set, batch undo |
+| A21, A22 | Duplicates, suppression | Duplicates flagged by the run; suppression checked at import |
+| A23 | AI drafting | Verification reports and dropped claims, read-only; the run happens outside WordPress |
+| A27 | Kill switch | Add bulk unpublish by batch beside it |
+| A33 | Audit log | Import events |
+| A37 | Compliance | DPIA, lawful basis, staging store |
+| A47 | Settings | Label wording |
+| A48 | Purge log | Bulk unpublish entries |
 
 ### 4.2 New entries needed
 
 | Proposed ID | Screen or state | REQ |
 |---|---|---|
-| V51 | "Include profiles pending review" list (noindex) | REQ-218 |
-| V52 | Removal requested: pending profile hidden at once | REQ-226 |
-| A49, A50 | Quick-look queue and item | REQ-215 |
-| A51, A52 | AI takedown queue and review item | REQ-220, 221 |
-| A53 | Monitor: findings and heartbeat | REQ-223 |
-| A54 | Publishing controls: pause state, cap, ramp stages, lifting a pause | REQ-224, 225 |
-| A55 | Bulk unpublish of pending | REQ-227 |
-| A56 | Staging records: colour and reason, amber and red queues | REQ-211, 214 |
+| V52 | List view including labelled organisations (noindex) | REQ-218 |
+| A57 | Import batches: history, counts, undo | REQ-237, 228 |
+| A58 | Bulk unpublish by batch | REQ-227 |
 
 ### 4.3 Flows, code and coverage
 
 | Item | What changes |
 |---|---|
-| Flow 1 "Nothing is public before approval" | **No longer true.** Becomes "Publish gate, label and noindex". |
-| Flows 2, 3, 14, 17, 18 | Extend for AI takedown, bulk unpublish, instant hide, staging database, audit |
-| New flows | "AI publishes, human reviews, becomes indexable"; "AI takedown, human review, restore"; "Automatic pause and cap" |
-| `prototype/core.js` line 47 (`vis`), line 290 | New states and visibility |
-| `prototype/data.js` | New states and sample records |
-| `prototype/flows.js` line 5 | Flow 1 and new flows |
-| `prototype/inventory.js` | The entries above |
-| `prototype/views-public.js` lines 82, 102, 105, 112, 124, 234, 255 | Search copy, staff banner, label, sitemap and how-we-compile |
-| `prototype/views-staff1.js` lines 72–73, 88, 107, 113, 151–159 | Dashboard, queue, review item, profile list |
-| `prototype/views-staff2.js` | Flags, kill switch, settings, purge log, new screens |
-| `prototype/views-awards.js` lines 38, 105 | Check nominee pages are reviewed only |
-| `scripts/smoke-prototype.js` | New assertions for states, label, noindex, takedown, pause |
-| `scripts/build-inventory.js` | Its summary lines change. Until `inventory.js` cites REQ-210–228, regenerating will report them as uncovered. GAP row for REQ-132 says "after review". |
+| Flow 1 "Nothing is public before approval" | True for individuals; add the organisation path |
+| Flows 2, 3, 14 | Add bulk unpublish; labelled organisations |
+| Flow 17 "Import with dry run" | Becomes the REQ-237 path |
+| Flow 18 "AI drafting" | Shows the report, not an in-WordPress run |
+| `prototype/core.js`, `data.js`, `flows.js`, `inventory.js`, `views-public.js`, `views-staff1.js`, `views-staff2.js` | States, label, lists and screens above |
+| `scripts/smoke-prototype.js` | New assertions for the labelled state and import |
+| `scripts/build-inventory.js` | REQ-237 is uncited until `inventory.js` cites it, and withdrawn rows drop out of coverage. REQ-210–228 were already uncited. |
 
-## 5. What now conflicts or needs your decision
-Plan section 12 gives options and recommendations. Q numbers are in `docs/questions.md`.
+## 5. What still conflicts or needs your decision
+Plan section 12 gives options and recommendations.
 
-**Conflicts you did not list, which D-033 cannot work with as written:**
+| # | Q | Issue | Default |
+|---|---|---|---|
+| 12 | Q46 | **AI-drafted organisation text public unreviewed** conflicts with D-017, REQ-163, REQ-168 | Written as you specified. **I recommend hiding the AI summary until approved:** same speed, nothing amended. |
+| 22 | Q63 | **Legal's AI transfer basis** blocks individuals' data (REQ-169, not on your list of limits), so "all 1,000 in one run" depends on it | Two runs |
+| 23 | Q64 | **Which WordPress takes the import?** D-029 makes staging public and indexable; architecture line 273 says real data only after approval | One site, all not public until safeguards pass |
+| 24 | Q65 | **All 500 organisations live at once?** No error rate would exist yet | First 100, then the rest |
+| 25 | Q66 | **Cap and automatic pause:** you listed them under neither keep nor remove; also instant hide | Confirmed removed; people apply S1 and S2 rules |
+| 26 | Q67 | **CSV or REST** | Files first, so the pipeline holds no WordPress credentials |
+| 21 | Q55 | **Manual-only sources** cannot feed the run as coded | Agents read terms; you approve re-coding; the rest left out |
+| 3 | Q31 | **Reviewer hours and review order** | 2 × 15 h/week, organisations first |
+| 15 | Q49 | **What counts,** with D-012, REQ-104, REQ-191 | Report both; target = public |
+| 7 | Q35 | **First individual public** versus D-016 | Wait for Legal |
+| 20 | Q54 | **Lists** show reviewed only, so Discover Businesses is thin until reviews land | Reviewed only |
 
-| Conflict | Text today | Ruling |
-|---|---|---|
-| D-017, REQ-168, REQ-163 | A human approves every AI draft, claim by claim; "Reviewers apply a neutral-content checklist" | Q46 |
-| D-013 | Individuals: "human review first" | Q47 |
-| D-012, REQ-191, REQ-104 | Target of "reviewed" profiles; "published" now has two meanings | Q49 |
-| D-016 | Legal "not a build blocker", kill switch if they object | Q35 |
-| D-029, architecture line 273 | Staging is public; "staging database" could mean that one | Q53 |
-| REQ-014, 015, 175, 198 | Approval-first for customers, owner edits, complimentary, nominees | Q48 (my default keeps them) |
+**Assumptions I added that you may want to check:**
+- Organisation records keep no named person before review, since individuals are not public until approved.
+- A flagged duplicate is not public on import, even for an organisation.
+- A named staff member starts each import, which is how "the pipeline never publishes" holds when organisations go live on import.
+- REQ-143 (no low-confidence or unsourced field) stays, enforced at import, although it is not one of your seven pipeline checks.
+- REQ-227 (bulk unpublish) stays, because the kill switch does not cover organisations.
+- The smoke-lot stop rules and all hour-by-hour times are my estimates until the first run measures them.
 
-**Consequences of your controls that you may want to weigh:**
-
-| Finding | Why it matters | Ruling |
-|---|---|---|
-| Noindex on a profile does not stop its name being indexed through a list | I made indexable lists reviewed-only, so the directory looks thinner early | Q54 |
-| "Unsuitable" could mean anything | I limited automatic takedown of reviewed, claimed and sponsored profiles to S1 | Q52 |
-| The kill switch covers unclaimed individuals only | Pending organisations had no equivalent, so I added REQ-227 | Tell me if you do not want it |
-| Most T1 sources are manual-only | The pipeline cannot gather from them or monitor them yet, so T1 may be mostly amber | Q55 |
-| The label may be read as an admission | Legal must see it before publication | Q35, plan 6.5 |
-| Continuous monitoring may not fit shared cPanel | Possible small extra cost and a Gate 2 decision | Q26 |
-
-**Items I could not verify:** NDPA sections on accuracy and automated decisions. The readable copy today is a scanned image, so I cite them from memory, and they are marked unverified in plan 6.4. All timing and error assumptions are pre-pilot.
+**Could not verify:**
+- The purchase needed to reach each Anthropic tier, and the limits of the Evaluation tier (not published on the page read). The rate-limit figures themselves were read on 2026-11-08.
+- The NDPA accuracy section (I recall s.24). The readable copy of the Act is a scanned image.
+- Whether approved sources can fill every quota. That is only known after seeding.

@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (69 items): Answered 26 · Default accepted 12 · Pending - team lead 1 · Open 30 (Q26–Q28 architecture; Q29, Q31–Q39 acquisition plan; Q46–Q55 publish first; Q56–Q62 no public accounts).**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 56: Answered 17, Default accepted 8, Pending 1 (Q16), Open 30. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
+**Status summary (74 items): Answered 33 · Default accepted 12 · Pending - team lead 1 · Open 28 (Q26–Q28 architecture; Q29, Q31, Q33–Q39 acquisition plan; Q46, Q49, Q54, Q55 and Q63–Q67 acquisition after D-033 was amended; Q56–Q62 no public accounts).**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 61: Answered 24, Default accepted 8, Pending 1 (Q16), Open 28. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -83,32 +83,32 @@ Q29 would amend D-010 and D-025. Q29, Q31–Q33 block the pilot (target start 10
 |---|---|---|---|---|
 | Q29 | Open | Split of the first 1,000: 500 organisations / 200 entrepreneurs / 300 individuals; 850 Nigeria / 150 other African (amends D-010, D-025)? | Source work, Legal per country | As proposed; non-Nigerian from batch B3 after Legal clears each country |
 | Q30 | Answered | Keep 100% review (D-015) or allow sampling of structured registry organisation records (T1) after a measured gate? | Tooling (T-14), trust; saves only 2–5% | **Overtaken by D-033.** T-14 dropped. |
-| Q31 | Open | Reviewer hours and target date for 1,000 | Section 4 capacity | 2 reviewers × 15 h/week → 1,000 live by 10 Jan, all reviewed by 17 Jan |
-| Q32 | Open | Pilot review in hash-locked review packs before WordPress is ready, or wait for the WordPress review queue? | Pilot start date | Review packs |
-| Q33 | Open | Approve the pilot sources marked "Approve for pilot" (plan 2.2–2.5) with the supervisor as named approver (REQ-137)? | No fetch without approval | Approve |
+| Q31 | Open | Reviewer hours, target date for 1,000 and review order (organisations first, or individuals after T1)? | Track 2 in plan 4.2 | 2 reviewers × 15 h/week, organisations first → all organisations reviewed by 13 Dec, 1,000 public and reviewed by 17 Jan |
+| Q32 | Answered | Pilot review in hash-locked review packs before WordPress is ready, or wait for the WordPress review queue? | Pilot start date | **Answered by D-033 as amended:** WordPress review queue; review packs removed; content hash kept. |
+| Q33 | Open | Approve all sources recommended for the run (plan 2.2–2.5), once unread terms are read, with the supervisor as named approver (REQ-137)? | The run starts right after this | Approve |
 | Q34 | Open | Photos on unclaimed individuals and organisation logos? | Personality rights, trademark | None in the first 1,000 until Legal advises |
-| Q35 | Open | First individual published only after Legal's written answer (assessment, DPIA and the new publish-first questions in plan 6.5), or under D-016 with the kill switch? Also amends REQ-170 wording. | Legal exposure; automatic publishing raises it | Wait for Legal; organisations publish first. Legal can take until about 7 Dec without moving a date. |
-| Q36 | Open | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field, always amber (full human review before going live) |
+| Q35 | Open | First individual goes public only after Legal's written answer (assessment, DPIA), or under D-016 with the kill switch? Also amends REQ-170 wording. | Legal exposure | Wait for Legal. Review can run meanwhile; approvals wait. |
+| Q36 | Open | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field |
 | Q37 | Open | Listed companies from issuer pages + Wikidata, or wait for an NGX data licence? | NGX terms ban aggregation | Issuer pages + Wikidata; ask NGX for a quote |
-| Q38 | Open | AI budget cap US$450 (was US$250; audit and monitoring added) and the reviewer hourly rate | Cost estimate | Cap approved; rate needed |
-| Q39 | Open | AI model and inference location, for drafting, audit and monitoring (Opus 5.5 global, US-only at 1.1x, or Sonnet 5.5)? | Transfer record (REQ-169) | Opus 5.5, global, unless Legal prefers US-only |
+| Q38 | Open | AI budget cap US$250 and the reviewer hourly rate | Cost estimate | Cap approved; rate needed |
+| Q39 | Open | AI model and inference location for drafting (Opus 5.5 global, US-only at 1.1x, or Sonnet 5.5)? | Transfer record (REQ-169) | Opus 5.5, global, unless Legal prefers US-only |
 
 ### Publish-first questions (raised 2026-11-08, see D-033, docs/change-review-2026-11-08-publish-first.md section 5 and plan section 12)
 
-Q46–Q49, Q53 and Q55 change the model and should be answered first. Q50–Q52 and Q54 are values I proposed.
+Updated when D-033 was amended: Q47, Q48, Q50–Q53 are closed. Q46, Q55 and Q63–Q67 should be answered first.
 
 | Q | Status | Question | Why it matters | Default if you do not know |
 |---|---|---|---|---|
-| Q46 | Open | D-017, REQ-163 and REQ-168 require human approval of every AI draft before going live. Amend them, and does an AI-drafted organisation (T2) get a quick look, no look, or stay review-first? | D-033 cannot work with them as written; T2 is not named in your tiers | Amend; T2 gets a quick look |
-| Q47 | Open | Control 2: keep the quick look for individuals and entrepreneurs, or publish them unreviewed too? D-013 needs a matching amendment either way. | Exposure; no look gains one week and 10 hours | Keep the quick look |
-| Q48 | Open | Does D-033 cover acquired records only, leaving customer submissions, owner edits, complimentary listings and nominees approval-first (REQ-014, 015, 175, 198)? | Scope of the change | Acquired records only |
-| Q49 | Open | What counts toward targets: live or reviewed? Does every record get a human review, with "samples" only setting the order? (D-012, REQ-104, REQ-191) | Reporting; noindex lasts until review | Report both; target = live; D-012 stays reviewed; every record is reviewed |
-| Q50 | Open | Cap on pending profiles: 400 total and 150 individuals, or two weeks of review capacity if lower; ramp 50, 150, 300, then cap? | Exposure against speed; 600/300 brings 1,000 live forward two weeks | As proposed; raise only after 200 individuals are reviewed cleanly |
-| Q51 | Open | Automatic pause thresholds in plan 6.1? | When publishing stops by itself | Accept |
-| Q52 | Open | AI takedown limits: any code on pending; S1 only on reviewed, claimed, verified or sponsored profiles, otherwise a flag; AI restores technical codes only? | You said "any it finds unsuitable"; a false takedown of a customer profile is costly | As proposed |
-| Q53 | Open | Is the "staging database" a private store no public site reads, or the one behind staging.wiwi.africa (public, D-029)? | Real unreviewed data on a public staging site; architecture line 273 | Private store |
-| Q54 | Open | Do indexable list pages show reviewed profiles only, with pending found by search, direct link or a noindex view? | Noindex on a profile does not stop its name being indexed through a list | Reviewed only |
-| Q55 | Open | Many sources are manual-only (CBN, PenCom, NAICOM, SEC, NCC, State House). Should agents read each one's terms and robots rules so you can approve re-coding where allowed, with the rest staying amber? | Pipeline cannot gather from them or monitor them; T1 may be mostly amber | Yes |
+| Q46 | Open | D-017, REQ-163 and REQ-168 require human approval of every AI draft before going live. For AI-drafted organisations (T2): go live as written and amend those three for organisations; go live with the AI summary hidden until approved; or wait for review? | Your state on import does not fit them for T2 | Documents assume go live as you wrote. I recommend hiding the summary until approved: same speed, nothing amended. |
+| Q47 | Answered | Control 2: keep the quick look for individuals and entrepreneurs, or publish them unreviewed too? | Exposure | **Answered by D-033 as amended:** neither. Individuals and entrepreneurs are not public until a reviewer approves. You may change this. |
+| Q48 | Answered | Does D-033 cover acquired records only? | Scope | **Answered by D-033 as amended:** it describes the acquisition pipeline and its import only; customer submissions, owner changes, complimentary listings and nominees stay approval-first. |
+| Q49 | Open | What counts toward targets: public or reviewed? (D-012, REQ-104, REQ-191) | Reporting; noindex lasts until review | Report both; target = public; D-012 stays reviewed |
+| Q50 | Answered | Cap on pending profiles? | Exposure | **Removed by D-033 as amended, pending Q66.** |
+| Q51 | Answered | Automatic pause thresholds? | When publishing stops by itself | **Removed by D-033 as amended, pending Q66.** S1 and S2 rules in plan 6.1 are applied by people. |
+| Q52 | Answered | AI takedown limits? | | **Removed by D-033 as amended.** Future item REQ-238. |
+| Q53 | Answered | Is the "staging database" private, or the one behind staging.wiwi.africa? | | **Answered by D-033 as amended:** a store outside WordPress that exports for import, so private. Q64 covers which WordPress takes the import. |
+| Q54 | Open | Do indexable list pages show reviewed profiles only, with labelled organisations found by search, direct link or a noindex view? | Noindex on a profile does not stop its name being indexed through a list | Reviewed only; organisations-first review fills the lists by 13 Dec |
+| Q55 | Open | Many sources are manual-only (CBN, PenCom, NAICOM, SEC, NCC, State House). Should agents read each one's terms and robots rules before the run so you can approve re-coding where allowed, with the rest left out? | The pipeline cannot gather from them as coded; typing them in does not fit the 24 hours | Yes |
 | Q56 | Open | D-034 leaves Claimed profiles with no way for the owner to see or edit anything. Confirm that owners only ever use forms and email, and staff do all edits and lookups (REQ-232, 236)? | Staff workload; owner experience | Yes. Revisit after the first 100 claims. |
 | Q57 | Open | Who approves a correction to name, title, organisation, awards or achievement claims? | Staff-made edits are the only control now | A second staff member (Reviewer or above) approves; other fields need one staff member. |
 | Q58 | Open | Life of a single-use signed link (REQ-233): intake, consent, nominee, nominator and claim verification? | Security against convenience | 14 days; nominator and claim verification 48 hours; reissued by staff on request. |
@@ -116,6 +116,16 @@ Q46–Q49, Q53 and Q55 change the model and should be answered first. Q50–Q52 
 | Q60 | Open | Who enters judges' scores, and how are judges' identities and scores kept private and consistent without a portal? Judging format (offline panel meeting, scoring sheets, emailed forms)? | Needed before judging opens; judges' conflict declarations | Judges score on a sheet or in a meeting; the Awards manager enters scores and a second staff member checks the entry; sheets are kept. |
 | Q61 | Open | Are the roles right, and who holds each one at launch (Awards manager, Editor-in-Chief, Finance)? Is Editor-in-Chief a separate role from Administrator? | Least privilege; the Administrator should be few people | Seven roles as in REQ-235; Administrator limited to 2 named people. Names needed. |
 | Q62 | Open | Do enquiries to claimed profiles go to the staff inbox or to a contact address the owner gave staff (REQ-018)? Who sends the owner the view count and sources (REQ-236)? | Privacy; staff workload | Forward to the owner's contact address held by staff; staff send the view count on request. |
+
+### Questions from the correction to D-033 (raised 2026-11-08, see plan section 12)
+
+| Q | Status | Question | Why it matters | Default if you do not know |
+|---|---|---|---|---|
+| Q63 | Open | Legal's AI transfer basis blocks individuals' data (REQ-169). Run organisations straight after source approvals and individuals when Legal confirms, wait and run all together, or send without it (amends D-017)? | "All 1,000 in one run" depends on it | Two runs |
+| Q64 | Open | Which WordPress takes the import, given the demo/staging site is public and indexable (D-029)? | Real unreviewed data; D-029 | One site, importing everything as not public until the safeguards in plan 5.4 pass |
+| Q65 | Open | Import all 500 organisations at once, or the first 100, reviewed, then the rest? | With no cap, the first error rate would arrive after everything is live | First 100, then the rest (about 3 working days at 2 × 15 h/week) |
+| Q66 | Open | Control 5 (cap and automatic pause) and instant hide on removal requests: confirm removed, with people applying the S1 and S2 rules at each import? | You listed them under neither "keep" nor "remove" | Confirm removed |
+| Q67 | Open | Import path: CSV or JSON files run by a named staff member, or REST with a token that can only create not-public records? | Architecture input; whether the pipeline holds any WordPress credentials | Files first |
 
 ---
 
@@ -147,7 +157,7 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 
 ## Risk register
 
-**Not yet rewritten for D-033.** Entries citing "100% human review" before publishing are out of date; current risks are in docs/acquisition-plan.md section 10.2.
+**Not yet rewritten for D-033 as amended.** Entries citing "100% human review" before publishing now hold for individuals and entrepreneurs, not imported organisations; current risks are in docs/acquisition-plan.md section 10.2.
 
 | Risk | Impact | Mitigation in requirements |
 |---|---|---|

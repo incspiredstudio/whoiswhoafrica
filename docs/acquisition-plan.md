@@ -1,16 +1,15 @@
 # WHOISWHO: Acquisition plan for the first 1,000 published profiles
 
-Status: **Proposed v2, 2026-11-08: rewritten for publish first (D-033).** This is a plan only. Nothing has been fetched, scraped or imported. Terms and licences were checked online on 2026-11-07 (section 2.6 lists what was read). This is not legal advice; legal points are for Incspired Legal to confirm.
+Status: **Proposed v3, 2026-11-08: rewritten for D-033 as amended.** This is a plan only. Nothing has been fetched, scraped or imported. Terms and licences were checked online on 2026-11-07 (section 2.6 lists what was read). This is not legal advice; legal points are for Incspired Legal to confirm.
 
-Relies on decisions D-002, D-010, D-012 to D-017, D-024, D-029, D-031, D-033 and requirements REQ-132 to REQ-176 and REQ-191 to REQ-228. Codes are explained in `docs/GUIDE.md`.
+Relies on decisions D-002, D-010, D-012 to D-017, D-024, D-029, D-031, D-033, D-034 and requirements REQ-132 to REQ-176 and REQ-191 to REQ-238. Codes are explained in `docs/GUIDE.md`.
 
-**What changed in v2.** D-033 reverses the order: the AI pipeline publishes, humans review afterwards, and AI monitors and takes down. Sections 3, 4, 5 and 6 are rewritten. Sections 1.1, 1.7, 2.1, 7, 8, 10, 11 and 12 are updated to match. Other affected documents are listed in `docs/change-review-2026-11-08-publish-first.md`.
+**What changed in v3.** D-033 is corrected: the pipeline never publishes. AI gathers, does basic verification only, stores in a staging database and exports. Records are imported into WordPress and reviewed there. Organisations go live on import, labelled and noindex; individuals and entrepreneurs are not public until a reviewer approves. Removed: second AI audit, AI publishing, review packs, quick look, cap, automatic pause, continuous AI monitoring and AI takedown (the last two are a future item). Sections 3–8 and 10–12 are rewritten, and 1.1, 1.7 and 2.1 updated. Other affected documents: `docs/change-review-2026-11-08-publish-first.md`.
 
-**D-034 (no public accounts, 2026-11-08).** There are no owner accounts. "Claim" is a request-to-claim form that staff verify and set to Claimed; owner edits are correction requests staff apply; refresh reminders are emails with a link to the form; the requester check in 6.3 uses a verified email link. Tooling T-23 to T-28 and the workload note are in sections 3.1, 6.3 and 7. Legal and the staff-role questions are Q56–Q62.
+**D-034 (no public accounts, 2026-11-08).** There are no owner accounts. "Claim" is a request-to-claim form that staff verify and set to Claimed; owner edits are correction requests staff apply; refresh reminders are emails with a link to the form; the requester check in 6.3 uses a verified email link. Tooling T-23 to T-28 and the workload note are in sections 3.1, 6.3 and 7.2. Legal and the staff-role questions are Q56–Q62.
 
 **Still in conflict with recorded decisions (need your ruling, see section 12):**
-- D-017, REQ-163 and REQ-168 require human approval of every AI draft before publication (decision 12).
-- D-013 says "human review first" for individuals (decision 13).
+- D-017, REQ-163 and REQ-168 require human approval of every AI draft before publication. This now affects AI-drafted organisations only (decision 12).
 - D-012 and REQ-191 target *reviewed* profiles live (decision 15).
 - D-010 and D-025 say Nigeria only. This plan includes about 150 profiles from other African countries, as you asked (decision 1).
 
@@ -19,7 +18,7 @@ Relies on decisions D-002, D-010, D-012 to D-017, D-024, D-029, D-031, D-033 and
 ## 1. Inclusion criteria and the split of the 1,000
 
 ### 1.1 How the test works
-A record is included only if it meets **one named criterion** (code below) **and** that criterion is backed by **an evidence URL from an approved source**. The automatic checks confirm that both are present. The person at the quick look or full review answers one question: "Does the evidence page show this criterion is met, for this exact entity, today?" No rejects with reason code `NOT_NOTABLE` and, if the profile is already live, unpublishes it. Popularity, press coverage, commercial interest and sales-prospect status are never criteria. The criterion code and evidence URL are stored on the record (tooling item T-13).
+A record is included only if it meets **one named criterion** (code below) **and** that criterion is backed by **an evidence URL from an approved source**. Both are carried on the record. The reviewer answers one question: "Does the evidence page show this criterion is met, for this exact entity, today?" No rejects with reason code `NOT_NOTABLE` and, if the profile is already live, unpublishes it. Popularity, press coverage, commercial interest and sales-prospect status are never criteria. The criterion code and evidence URL are stored on the record (tooling item T-13).
 
 **Baseline for every record:**
 - **It exists and is identifiable.** The official source names the entity unambiguously.
@@ -111,11 +110,11 @@ Non-Nigerian profiles start no earlier than batch B3 (section 4.3) and only afte
 
 ### 1.7 Tiers (used throughout this plan)
 
-| Tier | What it is | Count in the 1,000 | AI drafted? | Before going live (D-033; details in 3.3) |
+| Tier | What it is | Count in the 1,000 | AI drafted? | State on import (3.3) |
 |---|---|---|---|---|
-| **T1** | Organisation built only from structured registry or regulator fields: name, type, licence category, regulator, city, website, year founded. The text is templated, not AI. No named person. | 200 | No (the AI audit still runs) | Automatic checks + AI audit |
-| **T2** | Organisation with an AI-drafted summary from its official site or annual report | 300 | Yes | Quick look, until decision 12 |
-| **T3** | Entrepreneur or individual, whether AI-drafted or not | 500 | Usually | Quick look, unless decision 13 changes it |
+| **T1** | Organisation built only from structured registry or regulator fields: name, type, licence category, regulator, city, website, year founded. The text is templated, not AI. No named person. | 200 | No | Live, labelled, noindex |
+| **T2** | Organisation with an AI-drafted summary from its official site or annual report. No named person. | 300 | Yes | Live, labelled, noindex (decision 12) |
+| **T3** | Entrepreneur or individual, whether AI-drafted or not | 500 | Usually | Not public until a reviewer approves |
 
 ---
 
@@ -125,7 +124,7 @@ Non-Nigerian profiles start no earlier than batch B3 (section 4.3) and only afte
 - **Status:** No source is approved yet. Under REQ-137, a named person must approve each one. The "Recommendation" column is my proposal for your approval.
 - **Verified** = the terms, robots or list page was read on 2026-11-07. **Partly** = part was read, or the rest came from secondary sources. **Unverified** = the page could not be read.
 - **Access codes:** M = manual (a person reads the page and enters facts with the URL). P = polite fetch of single pages by an identified agent, honouring robots.txt. A = API. X = export or download file.
-- **Effect of publish first (decision 21):** M means a person reads the page, so the pipeline cannot gather from it automatically and the monitor cannot check it. Until an M source's terms and robots rules have been read and it is re-coded P, A or X, records depending on it are amber. Many sources below are M today, including the T1 pilot sources CBN and PenCom.
+- **Effect on the run (decision 21):** M means a person reads the page, so the pipeline cannot gather from it as coded, and typing it in does not fit the 24-hour run. Before H0, agents read each M source's terms and robots rules; if you approve, it is re-coded P, A or X. Otherwise it is left out of the run. Many sources below are M today, including the T1 pilot sources CBN and PenCom.
 - **Excluded everywhere:** LinkedIn (User Agreement s.8.2 bans scraping and bots), Facebook (Automated Data Collection Terms), Instagram, X/Twitter (crawling needs prior written consent), any login-walled site, news article text, and third-party photos (D-014, REQ-138).
 
 ### 2.2 Organisations: Nigeria
@@ -229,218 +228,213 @@ An agent does these checks as part of preparing each source-registry entry (REQ-
 
 ---
 
-## 3. Pipeline (publish first, D-033)
+## 3. Pipeline (D-033 as amended)
+
+**The pipeline never publishes anything.** AI gathers the data, does basic verification only, stores it in the staging database and exports it for import into WordPress. Reviewers then work inside WordPress.
 
 ### 3.1 Steps and who does what
 
 | # | Step | Agent or code does | Human does | Controls (REQ) |
 |---|---|---|---|---|
-| 0 | **Source approval** | Drafts the source-registry entry: URL, entity types, access method, terms quote, robots check date, risk, and whether the monitor may fetch it | Supervisor approves or rejects (named approver). Legal reviews any source marked "Legal check". | REQ-136, 137, 138 |
-| 1 | **Seed list** | Builds candidate lists from approved sources only. Each candidate carries a criterion code, evidence URL, country and type, against batch quotas. Suppression check (first of three). | Supervisor sets the quotas per batch | REQ-147, 192, 207 |
-| 2 | **Fetch** | Fetches only approved sources. Identifies itself (`WHOISWHO-bot/1.0 (+https://wiwi.africa/bot; contact address)`), re-checks robots.txt each run, waits at least 5 seconds between requests per host, never logs in or gets around a block, and stores each page with a hash and retrieval date. Wikidata calls follow the WDQS limits. | Enters facts by hand from sources that agents may not fetch (decision 21) | REQ-138, 142 |
-| 3 | **Entity resolution and de-duplication** | Matches on, in order: Wikidata QID, RC number, regulator licence number, LEI, official domain. Individuals are matched on name + organisation + role from one page. A probable duplicate makes the record amber. | A reviewer decides every probable duplicate. Individuals are never auto-merged. | REQ-145, 146 |
-| 4 | **Field allowlist and sensitive scan** | Keeps only allowlisted fields (REQ-139 for individuals). Drops forbidden data (REQ-140), including party affiliation. Scans free text for phone numbers, emails, addresses, ages, party names, religion and health words. | — | REQ-139, 140, 141 |
-| 5 | **Draft** | T1: fills a fixed template from structured fields, with no AI. T2/T3: the AI receives numbered source passages and returns claims, each with a passage ID and an exact quote. Code drops any claim whose quote is not found in the stored passage, whose field is outside the allowlist, or that matches the prohibited-topic list. Model and prompt version are recorded. | — | REQ-165–167 |
-| 6 | **Store** | Writes the version to the staging database with a content hash. Nothing here is public. | — | REQ-211, 221 |
-| 7 | **Automatic checks** | Every field has a source, retrieval date and confidence. Source links return HTTP 200. Criterion evidence is present. Suppression check (second of three). | — | REQ-142, 143, 212 |
-| 8 | **AI audit** | A separate model run, on every record, checks each claim against the stored passages. It can lower a record's colour but never raise it. | — | REQ-213 |
-| 9 | **Colour and route** | Code sets green, amber or red (3.2) and routes by tier (3.3). | — | REQ-214 |
-| 10 | **Human before go-live, where the tier requires it** | Shows the quick-look screen or the full review screen, with a timer | Quick look for green individuals and entrepreneurs. Full review for amber. A decision on red. | REQ-215, 222 |
-| 11 | **Publish** | Code re-runs the gate: no pause, under the cap, suppression check (third of three), hash matches. AI Publisher sets Published – review pending. The label and noindex apply at once. | A named human opens each ramp stage (section 6.6). No one presses publish per record. | REQ-212, 216, 217, 219, 225 |
-| 12 | **Human review after go-live** | Orders the queue: S1 flags, sample, claims and corrections, then oldest. Hides the AI audit from the reviewer on sampled records. | The reviewer checks identity, the criterion, every claim against its source, and the neutral-content checklist. Approve gives "Reviewed on <date>", indexing and a sitemap entry. Reject gives a 410. **Approver ≠ importer.** | REQ-148, 163, 222 |
-| 13 | **Monitor and AI takedown** | Runs the continuous checks (6.8). May unpublish with a reason code (6.7). Never edits facts. | A human reviews every AI takedown | REQ-220, 221, 223 |
-| 14 | **Corrections, claims and removals** | Sends refresh reminders by email with a link to the correction form (no owner login, D-034). Hides a pending profile at once on a removal request. | Reviewers verify claims and set Claimed, and apply correction requests in wp-admin (REQ-230–232). The Editor-in-Chief handles disputes. | REQ-156–161, 164, 174, 226, 229–232 |
+| 0 | **Source approval** | Reads terms and robots rules; drafts each source-registry entry: URL, entity types, access method, terms quote, robots check date, risk | Supervisor approves or rejects (named approver). Legal reviews any source marked "Legal check". **The run starts straight after this.** | REQ-136, 137, 138 |
+| 1 | **Seed list** | Builds about 1,200 candidates (20% spare) from approved sources only. Each carries a criterion code, evidence URL, country and type, against quotas. Suppression check (first of three). | Supervisor sets the quotas once | REQ-147, 192, 207 |
+| 2 | **Fetch** | Fetches only approved sources. Identifies itself (`WHOISWHO-bot/1.0 (+https://wiwi.africa/bot; contact address)`), re-checks robots.txt each run, waits at least 5 seconds between requests per host, never logs in or gets around a block, and stores each page with a hash and retrieval date. Wikidata calls follow the WDQS limits. | — | REQ-138, 142 |
+| 3 | **Entity resolution** | Matches on, in order: Wikidata QID, RC number, regulator licence number, LEI, official domain. Individuals are matched on name + organisation + role from one page. Probable duplicates are flagged, never merged. | A reviewer decides each flag in WordPress | REQ-145, 146 |
+| 4 | **Field allowlist** | Keeps only allowlisted fields (REQ-139 for individuals). Drops forbidden data (REQ-140), including party affiliation. **Organisation records keep no named person** in any field that can be public before review. | — | REQ-139, 140 |
+| 5 | **Draft** | T1: fills a fixed template from structured fields, with no AI. T2/T3: the AI receives numbered source passages and returns claims, each with a passage ID and an exact quote. Model and prompt version are recorded. | — | REQ-165–167 |
+| 6 | **Basic verification** | The seven checks in 3.2. Writes a short verification report and a content hash on each record. | — | REQ-214 |
+| 7 | **Store** | Writes the record, sources, provenance, report and hash to the staging database. Failed records stay there with the reason and are replaced from the spares. | — | REQ-211 |
+| 8 | **Export** | Writes the import file with a manifest of hashes. | — | REQ-237 |
+| 9 | **Import** | WordPress recomputes each hash and refuses a mismatch; suppression check (third of three); sets the state in 3.3. | **A named staff member starts each import,** after a dry run. | REQ-237, 212 |
+| 10 | **Review in WordPress** | Shows each claim beside its source, with the verification report. Records review time. | The reviewer checks identity, the criterion, every claim against its source, and the neutral-content checklist. Decision: approve, reject (reason code) or return. **Approver ≠ importer.** | REQ-148, 163, 168, 206, 222 |
+| 11 | **Approval** | Sets "Reviewed on <date>"; lifts noindex; adds sitemap entry and schema.org markup. An individual or entrepreneur becomes public at this point. | — | REQ-208, 216, 217 |
+| 12 | **QA audit** | Draws a random 5% sample of reviewed profiles each week | The other reviewer, or the supervisor, re-checks the sample | REQ-149 |
+| 13 | **Corrections, claims and removals** | Sends refresh reminders by email with a link to the correction form (no owner login, D-034). | Reviewers verify claims and set Claimed, and apply correction requests in wp-admin (REQ-230–232). The Editor-in-Chief handles disputes. | REQ-156–161, 164, 174, 226, 229–232 |
 
-### 3.2 The gate: green, amber, red
-Code sets the colour, not the model. Numbers are defaults until the pilot.
+### 3.2 Basic verification: exactly seven checks
 
-| Colour | Any of these | What happens |
+| # | Check | If it fails |
 |---|---|---|
-| **Green** | Every check and the AI audit pass | Routed by tier (3.3) |
-| **Amber** | A medium-confidence field; the audit is unsure; a probable duplicate; sources disagree; an individual's current role is not stated on an official page fetched in the last 30 days; the first 10 records from a new source; a current public office-holder (I1, I5); a source the monitor cannot fetch | Waits for full human review. Goes live as Reviewed, never as pending. |
-| **Red** | A suppressed match; sensitive or prohibited content; an unsupported claim; a low-confidence or unsourced field; no criterion evidence; an unapproved source; a possible minor | Never published until a human clears it. Usually rejected or sent back for a redraft. |
+| 1 | The source is on the approved list | Record not exported |
+| 2 | The source URL returned success | Retried, then not exported |
+| 3 | Every AI-drafted claim has an exact quote found in the stored source text | **That claim is dropped;** the count is reported |
+| 4 | Only allowlisted fields are kept | The field is dropped |
+| 5 | The sensitive-term scan passes | Record not exported |
+| 6 | The suppression check passes | Record not exported |
+| 7 | Probable duplicates are flagged | Exported with the flag; **not public on import, even for an organisation,** until a reviewer decides (REQ-146) |
 
-### 3.3 What each tier needs before going live
+**Each record's verification report** is short: run ID, the seven results, sources with retrieval dates, claims kept and dropped, flags, model and prompt version, content hash. The reviewer sees it in WordPress.
 
-| Tier | Before going live | After going live |
-|---|---|---|
-| **T1** structured-source organisation, no AI text, **no named person** | Automatic checks + AI audit | Full human review |
-| **T2** organisation with AI summary | Green: a 2-minute quick look (**default until decision 12**; D-017 and REQ-168 still say a human approves every AI draft) | Full human review |
-| **T3** individuals and entrepreneurs | Green: a quick look (**decision 13** may remove this) | Full human review |
-| Any tier, amber | Full human review | Nothing more; it is already reviewed |
-| Any tier, red | Human decision | — |
+**What this does not check.** Exact-quote matching proves the source says it, not that the source is right or current (the AU page in 2.5 shows a former Chair). It does not confirm identity or notability. Those are the reviewer's job, which is why the state on import matters, and why publishing AI-drafted organisation text before review is a decision for you (decision 12).
 
-**A record that names a person is never T1.** PenCom's list, for example, gives each MD's name: the T1 record omits it.
+### 3.3 State on import (you may change these)
 
-**A quick look is not a review.** It takes about 3 minutes and answers four questions: is this the right person, is the criterion met, is the role still current on the evidence page, and is anything prohibited visible at a glance? Claim-by-claim checking comes later. The profile stays labelled and noindex until then.
+| Record | State on import | Public? | Search engines | After a human approves |
+|---|---|---|---|---|
+| **Organisation** | Published – review pending, labelled "Compiled automatically from public sources. Human review pending." | Yes | noindex | "Reviewed on <date>", indexable |
+| **Individual or entrepreneur** | Imported – not public | No | — | Public, "Reviewed on <date>", indexable |
+| **Any record with a duplicate flag** | Imported – not public | No | — | As above |
 
-### 3.4 Rules for the AI steps
-- **Model.** Default to Claude Opus 5.5 for drafting and audit. At about US$0.15 per profile for both (section 10.1), quality matters more than cost.
-- **Audit independence.** The audit is a fresh run that sees the passages and the draft, not the drafter's reasoning. It is still the same model family, so it may share blind spots; the human review sample measures that (6.1).
-- **What exact-quote checking does not prove.** It proves the source says it, not that the source is right. Stale official pages are a known problem (2.5: the AU page shows a former Chair). A recent fetch does not prove the page is current. This is why the quick look asks whether the role is still current, and why disagreement between sources makes a record amber.
+A profile can only go live on import once the safeguards in 5.4 pass. Until then, organisations import as not public too, so review can start earlier.
+
+### 3.4 Rules for the AI step
+- **Model.** Default to Claude Opus 5.5 for drafting. At about US$0.10 per profile (section 10.1), quality matters more than cost.
 - **Data use and retention.** Under Anthropic's Commercial Terms, Anthropic "may not train models on Customer Content". API inputs and outputs are deleted within 30 days by default, and zero data retention is available on request.
 - **Transfer basis.** Anthropic's data processing addendum covers EU, UK and Swiss transfers, not Nigeria. Our NDPA s.41/43 transfer basis must be recorded by us and confirmed by Legal before any individual's data is sent (REQ-169). Inference location defaults to "global"; US-only costs 1.1x.
-- **Fetched text is data, never instructions.** Prompt injection in a source page cannot add a claim, because every claim must quote the stored passage exactly. It could try to sway an audit verdict or trigger a takedown, so the model holds no WordPress credentials: code acts on structured verdicts, and takedowns are reversible and human-reviewed.
+- **Fetched text is data, never instructions.** Prompt injection in a source page cannot add a claim, because every claim must quote the stored passage exactly. The model holds no WordPress credentials.
 - **Allowed fields only.** The prompt asks for allowlisted fields only and forbids praise, superlatives, and the topics in REQ-167.
-- **Sites that block AI crawlers by name** (such as CAC). Their text is never fetched by an agent, passed to the model or monitored. People may consult them manually.
+- **Sites that block AI crawlers by name** (such as CAC). Their text is never fetched by an agent or passed to the model. People may consult them manually during review.
 
 ### 3.5 Where the data lives
 - **Pipeline code** goes in `scripts/acquisition/` (infra area).
 - **Fetched pages, drafts and personal data are never committed to git.**
-- **The staging database** (REQ-211) holds every candidate version until it publishes. I read "staging database" as a private store, not the database behind staging.wiwi.africa, which D-029 makes public (decision 19).
-- **Before WordPress exists,** the staging database is a git-ignored local store plus an encrypted backup, and the pilot is reviewed in hash-locked *review packs* (decision 4):
-  - Each profile is a static page showing claims beside sources, plus a decision sheet.
-  - The pack records a **content hash** for each approved profile.
-  - WordPress imports an approved profile only if its hash matches (REQ-221), and it goes live as Reviewed.
-  - If WordPress is late, reviewers can keep working this way, so their time is not lost.
+- **The staging database** (REQ-211) is a private store outside WordPress, on the machine running the pipeline, with an encrypted backup. No public site reads it.
+- **Review packs are gone.** Reviewers use the WordPress review queue. The content hash stays, so what is imported is what was drafted. If a reviewer then edits a field, the version history records it.
+
+**Future item, not in acquisition scope:** continuous AI monitoring of published profiles and AI takedown, as a separate WordPress feature (REQ-238). Until then, refresh reminders (REQ-160), reports and corrections are how problems surface.
 
 ---
 
-## 4. Capacity and timeline
+## 4. Timeline
 
-### 4.1 Assumptions (pre-pilot; the pilot replaces these)
+There are two separate tracks: **acquisition,** which is machine time measured in hours, and **review,** which is human time measured in weeks.
+
+### 4.1 Track 1: acquisition, under 24 hours for all 1,000
+
+**The clock starts when source approvals are done (H0).**
+
+**Work to do** (estimates, replaced by measurements from the smoke lot):
+
+| Item | Estimate |
+|---|---|
+| Candidates, including 20% spare | About 1,200: 240 T1, 360 T2, 600 T3 |
+| Web requests | About 2,500: 600 robots.txt, 40 list pages, 240 T1 website checks, 720 T2 pages, 900 T3 pages. About 2,900 with 15% retries. |
+| AI drafting | 960 records, about 2 calls each: about 10.6M input and 2.4M output tokens |
+| Assumed call time | About 45 seconds a call, with 20 running at once after a ramp-up |
+
+**Hour by hour:**
+
+| Elapsed | Step | What happens | What limits it |
+|---|---|---|---|
+| **0:00–0:15** | Preflight | Freeze the approved source list. Load the suppression list. Confirm the Anthropic key, tier and limits with small calls. | Anthropic account |
+| **0:15–1:00** | Seed | Wikidata queries and about 40 list pages. About 1,200 candidates against quotas. First suppression check. | WDQS (5 parallel, 60-second timeout); 5 seconds per host |
+| **1:00–1:45** | Smoke lot | The 50 pilot records go right through. Automatic stop rules below. | — |
+| **1:00–3:00** | Fetch | About 2,900 requests. About 30 minutes at 10 workers, with time allowed for slow sites. The busiest host, at about 150 pages, takes 12.5 minutes. | 5 seconds per host; slow government sites |
+| **1:45–2:00** | T1 templates | 240 records, no AI | None |
+| **2:00–5:00** | Draft T2 and T3 | Starts small and ramps up. About 1.2 hours at 20 calls at once, 2.4 hours at 10. Three hours allowed. | Anthropic account; ramp-up |
+| **3:00 and 5:00** | Retry passes | Pages that failed are tried again, with backoff | Sites that are down |
+| **5:00–5:30** | Verify | Duplicate flags, the seven checks, reports, hashes | None |
+| **5:30–6:00** | Top up | Failed records are replaced from the spares. Quota shortfalls are listed by class. | Whether approved sources can fill each quota |
+| **6:00–6:30** | Export | Import file, hash manifest, run report, encrypted backup | None |
+
+**Target: about 6.5 hours. Allow 8. Treat 12 as the point to stop and investigate.** No person is needed during the run; the supervisor should be reachable. The run saves its progress, so it can resume after an interruption.
+
+**Automatic stop rules on the smoke lot,** which pause the run for a prompt or source fix: more than 30% of claims dropped; sensitive-term hits on more than 5% of records; more than 20% of source URLs failing. These numbers are my starting points.
+
+**What limits it:**
+
+| Limit | Finding | Effect |
+|---|---|---|
+| **Source approvals** | Human, and before the clock starts. **Decides whether the run can reach 1,000 at all.** Agents can prepare about 35 registry entries in about 2 hours, including the terms still unread (2.6). | Each source you reject or leave on hold lowers that quota. A source that stays manual-only (decision 21) cannot feed the run. |
+| **Anthropic account** | On the Start tier, Opus 5.5 allows 4,000 requests, 2M input and 400k output tokens a minute, so the tokens would pass in about 6 minutes. Spend cap US$500 a month, against about US$110 here. **New organisations may start on a lower Evaluation tier whose numbers are not published.** Sudden increases can trigger errors, so traffic ramps up. | Not a limit on Start. **To finish in 18 hours, the account needs at least about 10k input and 2.3k output tokens a minute.** Check in the Console before H0. The purchase needed to reach each tier is unverified. |
+| **Batch API** | 50% cheaper and "most batches" finish in under an hour, but a batch can take up to 24 hours before it expires. | **Not used,** because it could break the 24-hour target to save about US$55. |
+| **Fetch rate per host** | 5 seconds per host is the plan's own politeness rule. | Adds minutes, not hours, because requests are spread over about 600 hosts. |
+| **Legal: AI transfer basis (not on your list)** | REQ-169 and D-017 require this before any individual's data goes to the AI. Requested for 13 November. | **This can split the run:** see below. |
+| **Legal: other countries** | Collecting personal data about non-Nigerian people needs clearance first (6.5). | 70 records (non-Nigerian individuals and entrepreneurs) wait for Legal. Non-Nigerian organisations can be collected but not imported. |
+
+**Likely calendar if sources are approved on Tue 10 Nov** (decision 22):
+
+| Run | When | Records | Elapsed |
+|---|---|---|---|
+| A: organisations | Tue 10 Nov, straight after approvals | 500 (plus spares) | About 4 hours |
+| B: Nigerian individuals and entrepreneurs | As soon as Legal confirms the transfer basis (by Fri 13 Nov) | 430 (plus spares) | About 4.5 hours |
+| C: non-Nigerian individuals and entrepreneurs | Once Legal clears each country (by 11 Dec) | 70 | About 1 hour |
+
+If Legal has answered before H0 and you waive the country clearance, it is one run of about 6.5 hours.
+
+### 4.2 Track 2: review in WordPress
+
+**Starts at R0,** when the import path (REQ-237) and the review queue exist. **Dates below assume R0 = Monday 23 November and move with it, week for week.** The WordPress build has not started.
+
+**Assumptions (pre-pilot; the pilot replaces these):**
 
 | Item | Estimate | Note |
 |---|---|---|
-| T1 full review | 3 min | Check structured fields against the regulator list |
-| T2 full review | 8 min | Fields plus 4–8 AI claims against the source |
-| T3 full review | 12 min | Identity, criterion, claims, neutral-content check |
+| T1 / T2 / T3 full review | 3 / 8 / 12 min | Fields; fields plus 4–8 AI claims; identity, criterion, claims, neutral-content check |
 | Rework and rejects | +15% | Reviewing records that are then rejected or returned |
-| Corrections, removals and QA audit | +10% | Ongoing work after publishing |
-| **Effective minutes, full review** | **T1 3.8 · T2 10.1 · T3 15.2** | Estimate × 1.15 × 1.10 |
-| **Quick look, new** | T3 3 min, T2 2 min (3.45 and 2.3 effective) | Assumption; a key pilot measure |
-| **Review after a quick look, new** | T3 10 min, T2 7 min (12.65 and 8.86 effective) | Identity and criterion are already checked |
-| **Amber share, new** | T1 10%, T2 15%, T3 20% | Assumption; a key pilot measure |
-| **AI takedown reviews, new** | 2% of published × 5 min | Assumption |
-| Pilot speed | 1.5× slower | Learning curve and measurement |
-| "D-015 reviewer" | 7.5 focused hours/week (450 min) | About 40 profiles a week at the old blended mix, matching D-015 |
-| "Full-time reviewer" | 25 focused hours/week (1,500 min) | The rest of the week goes on meetings, corrections and admin |
+| Corrections, removals and QA audit | +10% | Ongoing work after publishing. D-034 adds 5–10 minutes per claim or correction on top. |
+| **Effective minutes** | **T1 3.8 · T2 10.1 · T3 15.2** | Estimate × 1.15 × 1.10 |
+| "D-015 reviewer" | 7.5 focused hours/week (450 min) | About 40 profiles a week at the blended mix |
+| "Full-time reviewer" | 25 focused hours/week (1,500 min) | |
 | Holidays | 21 Dec – 3 Jan at half capacity | Two weeks count as one |
-| Review priority | At least 30% of weekly hours go to post-publication review | Keeps the measurement sample on time |
+| Review order | Pilot, then organisations, then individuals (decision 3) | Keeps unreviewed public text live for the least time |
 
-### 4.2 Publish first does not reduce the review load
+**Total load:** T1 760 + T2 3,030 + T3 7,600 = **11,390 minutes, about 190 hours,** plus about 4 hours of pilot slowness. Individuals are two-thirds of it.
 
-| Tier | Count | Green | Human before going live | Human after going live | Minutes |
-|---|---|---|---|---|---|
-| T1 | 200 | 90% | Amber only | 3.8 each (green) | 760 |
-| T2 | 300 | 85% | 2.3 look, or 10.1 if amber | 8.86 each (green) | 3,299 |
-| T3 | 500 | 80% | 3.45 look, or 15.2 if amber | 12.65 each (green) | 7,960 |
-| AI takedown reviews | 1,000 | | | 0.1 each | 100 |
-| **Total** | **1,000** | | **about 4,000 min (67 h)** | **about 8,100 min (135 h)** | **12,119 (about 202 h)**, plus about 4 hours of pilot slowness |
+**Import batches** (the data can all be ready well before this; these are the order of import):
 
-Review-first was 11,390 minutes (190 h). **Publish first with quick looks costs about 6% more human time**, because a look plus a later review takes longer than one review. It moves the work; it does not remove it. A third of the load still sits before going live.
-
-| Variant | Total minutes |
-|---|---|
-| As proposed (T2 and T3 quick look) | 12,119 (202 h) |
-| T2 publishes without a look (decision 12) | 11,850 (198 h) |
-| T2 and T3 publish without a look (decision 13) | 11,490 (192 h) |
-
-### 4.3 Batches and ramp
-
-Organisations come first, since most can go live with little human time. Every batch is Nigeria-only until Legal clears the other countries.
-
-| Batch | Cumulative | T1 | T2 | T3 | Minutes | What goes in |
-|---|---|---|---|---|---|---|
-| Pilot | 50 | 15 | 15 | 20 | ≈ 920 | Section 5. Fully reviewed in shadow mode; goes live as Reviewed. |
-| B1 | 100 | 35 | 15 | 0 | 303 | Banks, PFAs, universities, listed companies, startups |
-| B2 | 250 | 100 | 50 | 0 | 945 | Remaining registry organisations |
-| B3 | 500 | 50 | 120 | 80 | 2,807 | First new individuals. First non-Nigerian organisations once cleared (no earlier than 14 Dec). |
-| B4 | 1,000 | 0 | 100 | 400 | 7,510 | Mostly individuals and entrepreneurs |
-
-**Ramp (section 6.6):** 50, then 150, then 300, then the cap of pending profiles. A named human opens each stage after the previous stage's sample passes. The model assumes 150 in week 1, 300 in week 2 and the full cap from week 3.
-
-### 4.4 Rewritten timeline
-
-**Calendar:**
-- **Pilot, shadow mode:** 10–18 November. Nothing goes live.
-- **Plan v2 and go-live sign-off:** 20 November.
-- **T0, first public record: Monday 23 November,** if the go-live gate passes (5.5). **This depends on the WordPress build, which is not started** (Gate 2 and Gate 3 are still ahead). Every date below moves with T0, week for week.
-- Week 4 ends 20 December (end of brief Phase 2). Week 8 ends 17 January. Week 10 ends 31 January (sprint end). Week 12 ends 14 February.
-- **Individuals beyond the pilot start in week 2 or 3,** if Legal has answered (decision 7). The live counts include the 20 pilot individuals; without Legal's answer they are 20 lower.
-
-**When each milestone is reached.** "Live" = public, including pending. "Reviewed" = a human has approved it, and it can be found through search engines.
-
-| Milestone | 2 × 7.5 h/week (current commitment; cap 200) | 2 × 15 h/week (cap 400) | 2 × full-time (cap 400) |
+| Batch | Records | What | Goes in when |
 |---|---|---|---|
-| 100 live | Week 1 (by 29 Nov) | Week 1 | Week 1 |
-| 250 live | Week 1 (by 29 Nov) | Week 1 | Week 1 |
-| 500 live | Week 3 (by 13 Dec) | Week 2 (by 6 Dec) | Week 2 (by 6 Dec) |
-| 750 live | Week 8 (by 17 Jan) | Week 4 (by 20 Dec) | Week 3 (by 13 Dec) |
-| **1,000 live** | **Week 13 (by 21 Feb).** About 865 by 31 Jan. | **Week 7 (by 10 Jan)** | **Week 4 (by 20 Dec)** |
-| 100 reviewed | Week 1 | Week 1 | Week 1 |
-| 250 reviewed | Week 2 (by 6 Dec) | Week 1 | Week 1 |
-| 500 reviewed | Week 7 (by 10 Jan) | Week 4 (by 20 Dec) | Week 2 (by 6 Dec) |
-| 750 reviewed | Week 11 (by 7 Feb) | Week 7 (by 10 Jan) | Week 4 (by 20 Dec) |
-| **1,000 reviewed and indexable** | **Week 14 (by 28 Feb).** About 745 by 31 Jan. | **Week 8 (by 17 Jan)** | **Week 6 (by 3 Jan)** |
-| 100 reviewed individuals (D-012 target) | Week 5 (by 27 Dec) | Week 3 (by 13 Dec) | Week 2 (by 6 Dec) |
-| Most pending at once (all / individuals) | 200 / 75 | 236 / 150 | 236 / 150 |
+| Pilot | 50 (30 organisations, 20 individuals and entrepreneurs) | Section 5 | R0 |
+| B1 | 70 organisations | Reaches the first 100 organisations | R0, once safeguards pass |
+| B2 | 320 Nigerian organisations | Rest of the Nigerian organisations | After B1, under decision 24 |
+| B3 | 80 non-Nigerian organisations | | After Legal clears each country |
+| B4 | 410 Nigerian individuals and entrepreneurs | Not public until approved | R0, once Legal's transfer basis is in and they have been collected |
+| B5 | 70 non-Nigerian individuals and entrepreneurs | Not public until approved | After Legal clears each country |
+
+**When each milestone is reached:**
+
+| Milestone | 2 × 7.5 h/week (current commitment) | 2 × 15 h/week | 2 × full-time |
+|---|---|---|---|
+| 500 organisations public, labelled | About R0 plus a few days, under decision 24 | Same | Same |
+| 100 reviewed | Week 2 (by 6 Dec) | Week 1 (by 29 Nov) | Week 1 |
+| 250 reviewed | Week 2 (by 6 Dec) | Week 1 (by 29 Nov) | Week 1 |
+| All 500 organisations reviewed and indexable | Week 6 (by 3 Jan) | Week 3 (by 13 Dec) | Week 2 (by 6 Dec) |
+| 100 individuals approved and public | Week 8 (by 17 Jan) | Week 4 (by 20 Dec) | Week 2 (by 6 Dec) |
+| 750 reviewed | Week 10 (by 31 Jan) | Week 5 (by 27 Dec) | Week 3 (by 13 Dec) |
+| **1,000 public and reviewed** | **Week 14 (by 28 Feb).** About 765 by 31 Jan. | **Week 8 (by 17 Jan)** | **Week 4 (by 20 Dec)** |
+
+Because individuals are not public until approved, 1,000 public and 1,000 reviewed now arrive together.
 
 **Week by week at 2 × 15 h/week:**
 
-| Week ending | Live | Reviewed | Pending | Of which individuals |
+| Week ending | Reviewed | Organisations reviewed | Individuals approved | Public |
 |---|---|---|---|---|
-| 29 Nov | 250 | 250 | 0 | 0 |
-| 6 Dec | 500 | 386 | 114 | 34 |
-| 13 Dec | 728 | 492 | 236 | 150 |
-| 20 Dec | 858 | 623 | 235 | 150 |
-| 27 Dec | 908 | 683 | 225 | 150 |
-| 3 Jan | 956 | 744 | 212 | 150 |
-| 10 Jan | 1,000 | 892 | 108 | 108 |
-| 17 Jan | 1,000 | 1,000 | 0 | 0 |
+| 29 Nov | 267 | 247 | 20 | 520 |
+| 6 Dec | 445 | 425 | 20 | 520 |
+| 13 Dec | 588 | 500 | 88 | 588 |
+| 20 Dec | 706 | 500 | 206 | 706 |
+| 27 Dec | 765 | 500 | 265 | 765 |
+| 3 Jan | 824 | 500 | 324 | 824 |
+| 10 Jan | 942 | 500 | 442 | 942 |
+| 17 Jan | 1,000 | 500 | 500 | 1,000 |
 
-### 4.5 What publish first buys, and the levers
+**Review order is a real choice** at 2 × 15 h/week:
 
-Compared with the review-first plan in the same model and batch order:
+| Order | All organisations reviewed | 1,000 public |
+|---|---|---|
+| **Organisations first (default)** | **13 Dec** | 17 Jan |
+| Individuals after T1 only | 17 Jan | 3 Jan |
 
-| Reviewers | 500 live | 750 live | 1,000 live | 1,000 reviewed |
-|---|---|---|---|---|
-| 2 × 7.5 h: review first | 27 Dec | 31 Jan | 28 Feb | 28 Feb |
-| 2 × 7.5 h: **publish first** | **13 Dec** | **17 Jan** | **21 Feb** | 28 Feb |
-| 2 × 15 h: review first | 13 Dec | 27 Dec | 17 Jan | 17 Jan |
-| 2 × 15 h: **publish first** | **6 Dec** | **20 Dec** | **10 Jan** | 17 Jan |
-| 2 × full-time: review first | 6 Dec | 20 Dec | 27 Dec | 27 Dec |
-| 2 × full-time: **publish first** | 6 Dec | **13 Dec** | **20 Dec** | 3 Jan |
+Putting individuals first brings 1,000 public forward two weeks, but leaves AI-drafted organisation text live and unreviewed until 17 January.
 
-**The result:**
-- **It brings "live" forward by one to two weeks.** The cap on individuals is what limits it.
-- **It does not bring forward search visibility, and mid-way it delays it.** Pending profiles are noindex, so 1,000 *indexable* profiles arrive no earlier. Because quick looks take reviewer time, the middle arrives later: at 2 × 15 h/week, 500 indexable moves from 13 Dec to 20 Dec, and 750 from 27 Dec to 10 Jan.
-- **Reviewer hours are still the main lever.** Going from 7.5 to 15 hours a week brings 1,000 live forward by six weeks. Publish first alone brings it forward by one.
-- **It adds resilience.** Most organisations keep going live if reviewers stall, and review packs still protect reviewer time if WordPress is late.
+### 4.3 Reviewers needed to reach 1,000 reviewed by week 4, 8 and 12
 
-**Levers at 2 × 15 h/week:**
+| Deadline | D-015 reviewers (7.5 h/week) | Full-time reviewers |
+|---|---|---|
+| Week 4 (20 Dec) | **7** | **2** |
+| Week 8 (17 Jan) | **4** | **2** (1 reaches 24 Jan) |
+| Week 12 (14 Feb) | **3** | **1**, but keep 2 for cover and the reviewer ≠ importer rule |
 
-| Change | 1,000 live | 1,000 reviewed | Most individuals pending |
-|---|---|---|---|
-| **As proposed: cap 400 / 150** | **10 Jan** | **17 Jan** | **150** |
-| Tighter cap, 300 / 100 | 17 Jan | 17 Jan | 100 |
-| Wider cap, 600 / 300 | 27 Dec | 17 Jan | About 300 |
-| Publish individuals with no quick look, cap 400 / 150 (decision 13) | 3 Jan | 17 Jan | 150 |
-| No quick look and cap 600 / 300 | 20 Dec | 17 Jan | About 300 |
-| Quick look takes 5 min, not 3 | 10 Jan | 24 Jan | 150 |
-| Legal clears individuals for week 3 (7 Dec) | 10 Jan | 17 Jan | 150 |
-| Legal clears individuals for week 5 (21 Dec) | 24 Jan | 31 Jan | 150 |
-| Legal clears individuals for week 8 (11 Jan) | 7 Feb | 14 Feb | 150 |
+**Cheapest way to meet the 31 January sprint end:** the two existing reviewers each give about 2 days (15 focused hours) a week from R0, reaching 1,000 by 17 January. Alternatively, 3 reviewers at 7.5 hours reach it by 31 January, with no margin.
 
-Legal can run until about 7 December without moving the dates. After that, each week's delay costs about a week.
-
-### 4.6 Reviewers needed to reach 1,000 by week 4, 8 and 12
-
-| Deadline | D-015 reviewers (7.5 h/week): 1,000 live | D-015 reviewers: 1,000 reviewed | Full-time: 1,000 live | Full-time: 1,000 reviewed |
-|---|---|---|---|---|
-| Week 4 (20 Dec) | **6** | **9** | **2** | **3** |
-| Week 8 (17 Jan) | **4** | **4** | **1**, keep 2 for cover | **2** |
-| Week 12 (14 Feb) | **3** | **3** | **1**, keep 2 for cover | **1**, keep 2 for cover |
-
-**Cheapest way to meet the 31 January sprint end:** the two existing reviewers each give about 2 days (15 focused hours) a week from 23 November: 1,000 live by 10 January and all reviewed by 17 January. Alternatively, 3 reviewers at 7.5 hours reach 1,000 live by 24 January and all reviewed by 31 January.
-
-**Sensitivity:** if the pilot shows T3 takes 25 minutes instead of 12, the total load rises by about half, and every date moves accordingly. The pilot result is the number that matters.
+**Sensitivity:** if the pilot shows T3 takes 25 minutes instead of 12, the total load rises to about 17,400 minutes, and every column above rises by about 50%. The pilot result is the number that matters.
 
 ---
 
-## 5. Pilot: 50 profiles in shadow mode
+## 5. Pilot: the first 50 records
 
-The pilot no longer only times human review. It must show whether the AI audit is good enough to let records go live without a person. **Nothing goes live during the pilot.** The pipeline runs in full and records what it *would* have published; humans review everything without seeing that verdict.
+The pilot has two parts. Machine checks happen inside the run. Human review happens in WordPress when the queue exists.
 
 ### 5.1 Composition (Nigeria only)
 - **15 T1 organisations:** 8 CBN-licensed banks, 4 PFAs, 3 NUC universities.
@@ -448,80 +442,70 @@ The pilot no longer only times human review. It must show whether the AI audit i
 - **10 entrepreneurs (E1):** founders of pilot startups or companies.
 - **10 individuals:** 3 ministers (I1), 3 bank CEOs (I2), 2 vice-chancellors (I3), 2 academy fellows (I3).
 
-Ministers are amber under 3.2. They stay in the pilot because they test identity and the party-field rule.
+If Legal's transfer basis is not in when the run starts, the smoke lot uses the 30 organisations, and the 20 people go through with run B.
 
 ### 5.2 Schedule
 
 | Date | Step | Owner |
 |---|---|---|
-| Mon 9 Nov | Decide items 1 and 3–21 (section 12); name the reviewers; send Legal the publish-first questions (6.5) | You |
-| Tue 10 Nov | Approve pilot sources (2.2–2.4, marked "Approve for pilot"); Anthropic API account live (Q28) | You |
-| Tue 10 Nov | Reviewer onboarding (2 h) using `docs/review-guidelines.md` (agent drafts it on 9 Nov) | You and reviewers |
-| 10–11 Nov | Agents seed, fetch, resolve, draft and audit the organisations (T1/T2); colours recorded and hidden; review packs built | Agents |
-| Wed 11 Nov | Calibration: both reviewers review the same 10 profiles and compare | Reviewers |
-| Fri 13 Nov | Legal confirms the AI transfer basis (REQ-169). **Individual drafting waits for this.** | Incspired Legal |
-| 13–14 Nov | Agents draft and audit the 20 T3 profiles | Agents |
-| 12–18 Nov | For T2 and T3, a quick look first (timed), then full review by the other reviewer, who cannot see the look's result. 20 profiles are reviewed by **both** reviewers to measure agreement. | Reviewers |
-| 11–18 Nov | The monitor runs against the 50 stored records, in dry-run mode | Agents |
-| 18–19 Nov | Supervisor re-checks all 50 against their sources (a 100% audit) | You |
-| Thu 19 Nov | Agent compares the AI's colours with human findings and produces the report (5.3) | Agents |
-| Fri 20 Nov | This plan is updated with measured numbers (brief Phase 1 exit: "a clear acquisition plan"); go/no-go on the gate in 5.5 | Agents, then your approval |
+| Mon 9 Nov | Answer section 12; name the reviewers; send Legal the questions in 6.5 | You |
+| Mon 9 Nov | Agents read the unread terms and prepare all source-registry entries | Agents |
+| Tue 10 Nov | Approve sources; Anthropic account live and tier checked (Q28) | You |
+| Tue 10 Nov | Run A, including the smoke lot | Agents |
+| By Fri 13 Nov | Legal confirms the AI transfer basis (REQ-169) | Incspired Legal |
+| Same day | Run B | Agents |
+| As soon as possible | First task: import path and review queue (T-0, REQ-237) | Agents, after Gate 2 |
+| R0 (assumed 23 Nov) | Reviewer onboarding (2 h) using `docs/review-guidelines.md`. Pilot imported, not public. | You and reviewers |
+| R0, days 1–2 | Calibration: both reviewers review the same 10 profiles and compare | Reviewers |
+| R0, week 1 | Pilot review in WordPress. 20 profiles (10 organisations, 10 people) are reviewed by **both** reviewers to measure agreement. | Reviewers |
+| R0, week 1 | Supervisor re-checks all 50 reviewed profiles against their sources (a 100% audit) | You |
+| End of R0 week 1 | Report (5.3); plan updated with measured numbers | Agents, then your approval |
 
-Reviewer time in the pilot is about 920 minutes (15 hours) across both reviewers, plus 2 hours each of onboarding.
+**Brief Phase 1 exit (20 November, "a clear acquisition plan"):** this plan, your answers and the run report meet it. Measured review times come later, once WordPress exists.
 
 ### 5.3 What the pilot measures
 
 | Measure | How | Feeds |
 |---|---|---|
-| **AI audit miss rate:** S1 and S2 errors that humans found in records the gate marked green | AI colour against human and supervisor findings | Whether automatic publishing is safe; thresholds in 6.1 |
-| **Quick-look catch rate:** how many S1 and S2 errors a look finds compared with full review | Look decisions against full review | Whether the look is worth its 3 minutes (decision 13) |
-| Green, amber and red shares by tier | Gate logs | 4.1 assumptions, the green share behind every date |
-| False amber and red | Human found nothing wrong | Gate tuning |
-| Monitor false alarms | Dry-run findings against stored records | Takedown rules (6.7) |
-| Minutes per profile: quick look, full review, review after a look | Timer in the review pack or queue (median and 90th percentile) | Section 4 capacity |
+| **Elapsed time and throughput of each step** | Run logs | Track 1 schedule |
+| **Claims dropped; failure rate of each check** | Verification reports | Prompts, sources |
+| **How much is wrong despite passing basic verification** | Reviewer findings and the supervisor's 100% audit | Whether organisations should go live on import (decision 12) |
+| Review minutes per profile, by tier | Timer in the WordPress queue (median and 90th percentile) | Track 2 capacity |
 | First-pass approval rate; reject reasons | Reason codes | Draft quality, source choice |
 | Draft error rate by field and severity | Reviewer findings | Prompt and template fixes |
-| AI claim-drop rate; claims left unsupported | Verifier logs | Drafting prompt |
 | Source quality: stale, wrong, link rot, by source | Errors traced to source | Source approvals (2.x) |
 | Disambiguation failures | Duplicate and identity errors | Matching rules |
 | Inter-reviewer agreement | Double-reviewed 20 | Guidelines, calibration |
-| AI cost and agent time per profile | Usage logs | Section 10 cost |
+| AI cost per profile | Usage logs | Section 10 cost |
 
-**What 50 records cannot show.** Zero errors in 30 green records still leaves a 95% upper bound of about 10%; zero in 100 leaves about 3%. The pilot can catch a bad pipeline. It cannot prove a good one. That is why the first 100 live records of each tier get full human review right away (6.1) and the ramp starts small.
+**What 50 records cannot show.** Zero errors in 30 organisations still leaves a 95% upper bound of about 10%. This is why decision 24 recommends importing the first 100 organisations and reviewing them before the other 400 go live.
 
-### 5.4 Decision rules after the pilot
+### 5.4 What must pass before organisations go live on import
+All of these must pass on the site that takes the import:
+1. Publication states (REQ-210) and the import path, including hash and suppression checks (REQ-212, 237).
+2. Label, noindex, sitemap exclusion and listing rules, with the state-by-surface tests passing (REQ-208, 216–218).
+3. 410, purge and restore (REQ-209); kill switch (REQ-193); bulk unpublish by batch (REQ-227).
+4. Removal, correction and suppression workflows (REQ-156–158, 207, 229–232); audit log (REQ-228).
+5. Legal items for organisations (6.5).
+
+**The review queue does not have to wait for all of this.** Records can be imported as not public, and reviewers can start, as soon as the import path and queue exist.
+
+### 5.5 Decision rules after the pilot
 
 | Result | Action |
 |---|---|
-| Any S1 error in a record the gate marked green | That tier does not publish automatically. Fix the cause and re-pilot 25 profiles of that type. |
-| S2 in green records above 3% (organisations) or 2% (individuals) | Revise the prompts and gate. Run a 25-profile second round for that tier. |
-| Quick look misses an S1 error that full review finds | Lengthen the look or make that case amber; re-test before individuals go live |
-| Green share below 50% in a tier | Rework the gate or sources; reset the date model, because amber costs full review before going live |
-| Median T3 review above 20 min | Choose one: cut T3 fields to the core REQ-139 set; raise reviewer hours; or move volume from T3 to T2 |
-| Monitor false alarms above 10% of records | Hold automatic takedown for that code; flag to a human instead |
-| A source causes more than 10% of errors | Downgrade it to "lead only" or reject it |
+| Any S1 error in the pilot | Fix the cause. Re-run and re-review 25 profiles of that type before importing more of it. |
+| S2 rate above 3% (organisations) or 2% (individuals) in records that passed verification | Revise prompts and sources. Review a further 25 for that tier. Consider making organisations not public on import. |
+| Median T3 review above 20 min | Choose one: cut T3 fields to the core REQ-139 set; raise reviewer hours; or move volume from T3 to T2. |
+| A source causes more than 10% of errors | Downgrade it to "lead only" or reject it; re-run those records |
 | Inter-reviewer agreement below 90% on approve/reject | Run a second calibration and tighten the criteria wording |
-| All within limits | T0 on 23 November, if the gate in 5.5 passes |
-
-### 5.5 Go-live gate (T0)
-Publish first needs all its safeguards working before the first record goes out, not after. **All of these must pass on the live environment:**
-1. Publication states and permitted transitions (REQ-210) and the publish gate (REQ-212).
-2. Label, noindex, sitemap exclusion and listing rules, with the state-by-surface test matrix passing (REQ-208, 216–218).
-3. 410, purge and restore (REQ-209); kill switch (REQ-193); bulk unpublish of pending (REQ-227).
-4. AI service roles proven unable to edit (REQ-219), and AI takedown and its human queue working (REQ-220, 221).
-5. Monitor running with a heartbeat (REQ-223); pause and cap firing in a drill (REQ-224, 225).
-6. Removal, correction and suppression workflows (REQ-156–158, 207); audit log (REQ-228).
-7. Legal items for organisations (6.5); pilot rules in 5.4 passed; supervisor sign-off.
-
-**Individuals need extra items:** the Legal items for individuals (6.5, decision 7), and the quick-look result from the pilot.
-
-**Fire drill:** before T0, the team triggers each of these on the live site with sample data and times them: an S1 takedown, a pause, the kill switch and a removal.
+| All within limits | Import the next batches |
 
 ---
 
 ## 6. Quality and risk controls
 
-### 6.1 Error definitions, sampling and thresholds that pause publishing
+### 6.1 Error definitions and thresholds that stop importing
 
 | Severity | Definition | Examples |
 |---|---|---|
@@ -529,185 +513,139 @@ Publish first needs all its safeguards working before the first record goes out,
 | **S2 material** | A fact is wrong | Wrong title, role, organisation, date, licence status; the source does not support the claim; the criterion is not actually met |
 | **S3 minor** | Presentation | Typo, formatting, a dead link where the fact is still right |
 
-**Human review sample.** Every record is reviewed eventually; the sample sets the order and supplies the error rate:
-- **Burn-in:** the first 100 records of each tier go to the front of the queue.
-- **After that:** a random 20% of each lot, at least 20 records, including at least 10 individuals where the lot has them.
-- **Deadline:** 3 business days. The reviewer does not see the AI audit on sampled records.
-- **Checking the reviewers:** 5% of records reviewed that week, at least 10, are re-checked by the other reviewer or the supervisor.
+These are rules people apply. With a named person starting each import, there is no automatic pause to build.
 
-**Proposed thresholds (all settings; decision 17).** The S2 numbers keep the earlier 2% and 3% limits, turned into rules that a small sample can apply:
-
-| Trigger | Automatic response |
+| Trigger | Response |
 |---|---|
-| **Any S1** found by anyone or anything | AI takedown of that profile at once (410). **Pause that tier and source.** S1 rules are unchanged. |
-| **Two S1 in 7 days,** or S1 from two sources | **Global pause.** Supervisor decides on the kill switch (REQ-193) or bulk unpublish (REQ-227). |
-| **Individuals (T3):** 3 or more S2 in the last 100 reviewed | Pause T3. Reviewers clear the affected lot first. Fix guidelines or prompts. |
-| **T1 or T2, each separately:** 4 or more S2 in the last 100 reviewed | Pause that tier; same steps |
-| **Any tier, early:** 2 or more S2 in its first 30 reviewed, or in the first 30 after a restart | Pause that tier |
-| **One source:** more than 10% of its last 20 reviewed records have an S1 or S2 error | Pause that source |
-| **No evidence:** a sample overdue by more than 2 business days | Pause that tier until it is reviewed. No measurement, no publishing. |
-| **Oldest pending** older than 21 days | Pause that tier, so review cannot quietly fall behind |
-| **Monitor heartbeat** missed for 48 hours | Global pause |
-| **AI takedowns:** more than 20 in 24 hours or 5% of live in 7 days | Global pause. Alert the supervisor; it may be a bug. Above this limit, new non-S1 findings are flagged rather than taken down. |
-| Humans overturn more than 20% of the last 30 AI takedowns | Alert; tune that reason code. No pause. |
-| Amber plus red above 40% of a lot | Pause that source until the cause is known |
-| Valid correction requests above 1% of published profiles in a week | Alert; audit the source and prompt |
-| Removal requests above 2% of individual profiles in a month | Pause T3. Supervisor and Legal review the inclusion criteria for that class. |
+| **Any S1 in published content** | Unpublish the profile at once (410). **Stop importing that tier and source** until the root cause is fixed and the supervisor signs off. If S1 errors in individuals look systemic, use the kill switch (REQ-193). If an organisation batch looks bad, bulk unpublish it (REQ-227). |
+| Weekly S2 rate above 2% for T3, or above 3% for T1/T2 | Stop importing that tier. Fully re-review the affected batch. Fix guidelines or prompts. |
+| QA sample size | 5% of profiles reviewed that week, at least 20 per week, always including at least 10 individuals |
+| Reject rate above 25% in a batch | Stop importing from that source or prompt version until it is fixed |
+| Valid correction requests above 1% of published profiles in a week | Review the source and prompt; audit the affected batch |
+| Removal requests above 2% of individual profiles in a month | Supervisor and Legal review the inclusion criteria for that class |
+| Review backlog above 2 weeks of capacity | Workload warning (REQ-206). Add reviewer hours. Do not import more organisations as live. |
 
-**Resuming:** only a named human, with a recorded reason. Publishing restarts one ramp stage lower. A pause stops new publishing only. It does not unpublish anything except the S1 profile; the supervisor can do that separately with bulk unpublish.
-
-**How these rules behave (chance one 100-record or 30-record window fires):**
-
-| Rule | True error rate → chance it fires |
-|---|---|
-| T3: 3+ in 100 | 1% → 8% · 2% → 32% · 5% → 88% |
-| T1/T2: 4+ in 100 | 1.5% → 6% · 3% → 35% · 6% → 86% |
-| T3: 2+ in first 30 | 1% → 4% · 5% → 45% · 8% → 70% |
-| T1/T2: 2+ in first 30 | 1.5% → 7% · 6% → 54% · 8% → 70% |
-
-So these rules rarely stop a good pipeline and usually stop a bad one, but a rate just over the limit can run for a while before they fire. That is why the cap also exists.
+The earlier cap on unreviewed profiles, the automatic pause and the AI takedown are removed (decision 25).
 
 ### 6.2 Corrections log
-Every change to a published profile writes an entry (REQ-164): what changed, old and new value, reason, who made it, and the source. Corrections are resolved within 7 days (REQ-158). The AI never makes these changes.
+Every change to a published profile writes an entry (REQ-164): what changed, old and new value, reason, who made it, and the source. Corrections are resolved within 7 days (REQ-158).
 
 ### 6.3 Removal and suppression
 - **Targets (unchanged):**
   - Acknowledge within 1 business day.
   - Hide within 2 business days of a valid request from the subject (REQ-158). Hiding means a 410 and noindex, removal from the sitemap and internal search, and a CDN purge (REQ-209).
   - Add the subject to the permanent suppression list (REQ-207).
-- **New: a removal request on a pending profile hides it at once** (REQ-226), since no human has yet vouched for it. It is reversible, and rate-limited so it cannot be used to knock out rivals in bulk.
-- **The suppression list is checked three times** (seed, pre-check, publish), and the monitor re-checks live profiles against it (6.8), so a suppressed entity can never come back through a new import.
+- **The suppression list is checked three times** (seed, basic verification, import), so a suppressed entity can never come back through a new import.
 - **The objection right is real.**
   - NDPA s.36 requires us to stop unless we show overriding legitimate grounds.
   - POPIA s.11(3) requires a stop on reasonable grounds.
   - **Default:** a subject who objects is removed and suppressed. The Editor-in-Chief may escalate only office-holders (I1/I5) to Legal.
 - **How a requester's identity is checked** is still open (wireframe finding 15). With no accounts (D-034), the requester's email is verified by a single-use signed link (REQ-233). Proposed default: a request from the subject's official work email, or from the organisation's domain, is accepted. Anything else goes to staff judgement.
-- **Search engines:** after a removal, staff file search-engine removal requests (N21). Pending profiles should rarely need this, since they are noindex.
+- **Search engines:** after a removal, staff file search-engine removal requests (N21).
 
 ### 6.4 Legal risks
 
 | Risk | What applies | Control |
 |---|---|---|
-| **Publishing before a human checks (new)** | **Publication happens when the page goes live.** The label may help or may read as an admission that we published unchecked. Whether it reduces liability is a question for Legal; I am not assuming it does. | Tiers, quick look for individuals, cap, fast takedown. Legal question 2 in 6.5. |
-| **Accuracy duty (new)** | The NDPA has a data-accuracy principle. I recall it as s.24, but could not re-read it today: the readable copy of the Act is a scanned image. **Unverified.** | Legal to confirm whether "live, pending review" meets it (question 3 in 6.5) |
-| **Solely automated decisions (new)** | The NDPA has a right about decisions based solely on automated processing. I recall it as s.37. **Unverified, same reason.** It may or may not cover an AI publishing or taking down a profile. | Humans review every takedown and every profile. Legal question 4 in 6.5. |
-| Lawful basis for individuals (NDPA s.25) | Legitimate interests fail if the subject "would not have a reasonable expectation" of the processing (s.25(2)(c)). The journalism exemption (s.3(2)(d)) still leaves s.25 in force. **Publish first makes this harder**, because AI-compiled pages that no human has checked are further from what a person might expect. | Professional, already-public facts only (REQ-139). A legitimate interests assessment (GAID Schedule 8) that covers publish first. A disclosure page (REQ-130, 170). An easy objection route. |
-| Sensitive data (s.30, s.65) | Political affiliation, religion, ethnicity and health are sensitive, with no "made public" exception | Excluded from the schema and scanned for (REQ-140, 141). No party field for office-holders. A hit is red before publishing and an S1 takedown after. |
-| DPIA (s.28; GAID) | Required for likely high risk; GAID requires one before deploying AI (summaries read, not the GAID text) | DPIA before the first individual is published, **covering automatic publishing and AI takedown** |
-| Registration as a data controller of major importance (s.44, s.65; GAID tiers) | GAID tiers are reportedly over 200, over 1,000 and over 5,000 subjects in 6 months, with fees of about ₦100k to ₦1m (unverified). 1,000 profiles would likely qualify. | Legal confirms the tier, registration, the DPO (s.32) and the audit-return duty |
-| Cross-border transfer (s.41–43) | Anthropic's addendum has no Nigerian mechanism | Legal records the basis before individuals are drafted. **The audit and monitor also send data**, so the basis must cover them. |
-| Defamation (civil; criminal defamation remains in the Criminal Code and Penal Code in some states) | No higher threshold for public figures; truth is a defence, with the burden on us | Source per claim, audit, neutral-content checks, no allegations, fast takedown and correction (REQ-142, 163, 158, 220). **Human checking now comes after publication.** |
+| **Organisations public before a human checks** | Publication happens when the page goes live. Organisation facts carry less data-protection risk, but defamation and wrong-fact risk remain. The label may help or may read as an admission; I am not assuming it reduces liability. | No named person on organisation records; label; noindex; Legal questions 1 and 2 in 6.5; decisions 12 and 24 |
+| **Accuracy duty** | The NDPA has a data-accuracy principle. I recall it as s.24, but could not re-read it: the readable copy of the Act is a scanned image. **Unverified.** | Individuals are reviewed before public. Legal to confirm for organisations that name no one. |
+| Lawful basis for individuals (NDPA s.25) | Legitimate interests fail if the subject "would not have a reasonable expectation" of the processing (s.25(2)(c)). The journalism exemption (s.3(2)(d)) still leaves s.25 in force. | Professional, already-public facts only (REQ-139). A legitimate interests assessment (GAID Schedule 8). A disclosure page (REQ-130, 170). An easy objection route. |
+| Sensitive data (s.30, s.65) | Political affiliation, religion, ethnicity and health are sensitive, with no "made public" exception | Excluded from the schema and scanned for (REQ-140, 141). No party field for office-holders. |
+| DPIA (s.28; GAID) | Required for likely high risk; GAID requires one before deploying AI (summaries read, not the GAID text) | DPIA before the first individual is published |
+| Registration as a data controller of major importance (s.44, s.65; GAID tiers) | GAID tiers are reportedly over 200, over 1,000 and over 5,000 subjects in 6 months, with fees of about ₦100k to ₦1m (unverified). 1,000 profiles would likely qualify. **The run holds data on about 600 people in the staging database from day one.** | Legal confirms the tier, registration, the DPO (s.32) and the audit-return duty |
+| Cross-border transfer (s.41–43) | Anthropic's addendum has no Nigerian mechanism | Legal records the basis before individuals are drafted. **Organisation pages may name people incidentally,** so Legal should say whether run A needs the same basis. |
+| Defamation (civil; criminal defamation remains in the Criminal Code and Penal Code in some states) | No higher threshold for public figures; truth is a defence, with the burden on us | Source per claim, neutral-content checklist, no allegations, fast correction (REQ-142, 163, 158) |
 | Cybercrimes Act s.24 (amended 2024) | Narrowed. Exact amended text not read. | The same controls; Legal to confirm |
-| Noindex is not privacy (new) | The page is public. Google says the rule "must not be blocked by a robots.txt file" to work, and that "some search engines might interpret the `noindex` rule differently". Scrapers may ignore it altogether. | Treat every pending page as fully public; REQ-217 surfaces; quick takedown |
-| Other countries | Ghana: every controller registers (Act 843 s.27). Kenya: registration above thresholds (s.18). POPIA: objection stops processing. | Per-country Legal clearance before any batch from that country |
-| Copyright and terms of use | Compilations and government works are protected; site terms are contracts. **Continuous monitoring is repeated automated access.** | Facts only, cited; terms checked per source, including for monitoring; no mirroring |
+| Noindex is not privacy | The page is public. Google says the rule "must not be blocked by a robots.txt file" to work, and that "some search engines might interpret the `noindex` rule differently". | Treat every labelled page as fully public; REQ-217; fast removal |
+| Other countries | Ghana: every controller registers (Act 843 s.27). Kenya: registration above thresholds (s.18). POPIA: objection stops processing. | Per-country Legal clearance before collecting people or importing anything from that country |
+| Copyright and terms of use | Compilations and government works are protected; site terms are contracts | Facts only, cited; terms checked per source; no mirroring |
 
 Penalties for context: NDPA s.48 sets a maximum of ₦10m or 2% of annual gross revenue for major-importance controllers. The NDPC fined MultiChoice ₦766.2m in 2025.
 
 ### 6.5 What we need from Incspired Legal, by batch
 
-**New questions for Legal, to go with the 13 November request (send by 9 November):**
-1. Does automatic publication of AI-compiled personal data, reviewed by a human afterwards, fit legitimate interests under s.25?
-2. Does the label ("Compiled automatically from public sources. Human review pending.") help, hurt or make no difference if a pending profile is wrong? Please approve or change the wording.
-3. Does publishing before human review meet the accuracy principle?
-4. Do automatic publishing or AI takedowns count as solely automated decisions? Does the human review after each one satisfy any duty that applies?
-5. May organisations publish without a person looking, given that their records hold no named person?
-6. Does the quick look for individuals change your answers? Would publishing individuals with no human look change them?
+**Questions for Legal, to go with the 13 November request (send by 9 November):**
+1. May organisation profiles go public before human review, given that they name no person and carry the label? Does it matter that their summaries are AI-drafted?
+2. Does the label ("Compiled automatically from public sources. Human review pending.") help, hurt or make no difference if an organisation profile is wrong? Please approve or change the wording.
+3. Does sending organisation pages to the AI, when they may mention people incidentally, need the same transfer basis as individuals?
+4. Holding data on about 600 people in a private staging database before any review: does this change the DPIA, registration or notification position?
 
 | Before | Legal item | Blocks |
 |---|---|---|
-| Any individual's data goes to the AI (13 Nov) | AI transfer basis (s.41/43), covering drafting, audit and monitoring, and choice of inference location; confirmation of the Anthropic processor terms (REQ-169) | T3 drafting in the pilot |
-| First **organisation** published | Terms and Privacy pages; wording for the "how we compile" page (REQ-130), the AI disclosure (REQ-170) and the label (REQ-216); questions 2 and 5 | T0 |
-| First **individual** published | Legitimate interests assessment; DPIA; registration tier, DPO and audit-return duty; whether and how subjects are told (REQ-159); sign-off of the neutral-content checklist; a written position on D-016; questions 1, 3, 4, 6 | Publishing T3 (decision 7) |
-| First **office-holder** batch | Confirm the office-holder field set and that party affiliation is excluded | I1 profiles |
-| First **non-Nigerian** batch (B3) | Per-country position: Ghana registration, Kenya threshold, POPIA | Non-Nigerian profiles |
+| Any individual's data goes to the AI (13 Nov) | AI transfer basis (s.41/43) and choice of inference location; confirmation of the Anthropic processor terms (REQ-169) | Run B |
+| First **organisation** published | Terms and Privacy pages; wording for the "how we compile" page (REQ-130), the AI disclosure (REQ-170) and the label (REQ-216); questions 1–3 | Organisations going live |
+| First **individual** approved as public | Legitimate interests assessment; DPIA; registration tier, DPO and audit-return duty; whether and how subjects are told (REQ-159); sign-off of the neutral-content checklist; a written position on D-016; question 4 | Individuals going public (decision 7) |
+| First **office-holder** approved | Confirm the office-holder field set and that party affiliation is excluded | I1 profiles |
+| First **non-Nigerian** batch | Per-country position: Ghana registration, Kenya threshold, POPIA | Run C; batches B3, B5 |
 | Any **licensed** dataset (NGX, Big Deal) | Contract review: display rights, attribution, share-alike | That source |
 | Images or logos | Personality rights, trademark | Decision 6 |
 
-### 6.6 Cap on pending profiles (proposed; decision 16)
-- **Total:** the lower of **400** or **two weeks of measured review capacity.** That is about 200 at 2 × 7.5 h/week and 400 at 2 × 15 h/week or more.
-- **Individuals and entrepreneurs:** at most **150,** or the same proportion of a lower cap (75 at a cap of 200).
-- **Why two weeks:** if something is badly wrong, reviewers could re-check every pending record within two weeks. It also limits the worst case: at the limit error rates, 150 individuals at 2% is about 3 people with a wrong fact live at any time, and 250 organisations at 3% is about 8.
-- **Ramp:** 50, 150, 300, then the cap. A named human opens each stage once the previous stage's sample passes. No new individuals go live before the 300 stage.
-- **At the cap,** records wait in the staging database. Reviewing one frees one.
-- **Raising it:** a named human may raise the individuals' limit once 200 individuals have been reviewed with no S1 and S2 within the limit. Section 4.5 shows what that buys: 600 / 300 brings 1,000 live forward by two weeks, for twice the exposure.
-
-### 6.7 AI takedowns
-The monitor may unpublish, reversibly, with a reason code. It never edits facts. Everything goes in the audit log. The public 410 page never shows or implies the reason, so a takedown cannot itself become a defamatory statement.
-
-| Reason code | Class | Applies to pending | Applies to reviewed, claimed, verified or sponsored | Who may restore |
-|---|---|---|---|---|
-| `SENSITIVE_DATA`, `PROHIBITED_TOPIC`, `SUPPRESSED_MATCH`, `IDENTITY_DOUBT` | S1 | Takedown | Takedown | Human only |
-| `SOURCE_CONTRADICTS`, `ROLE_ENDED`, `SOURCE_CONFLICT`, `NOT_ACTIVE` | Fact | Takedown | Flag to a human, due in 1 business day | Human only |
-| `SUBJECT_REQUEST` | Request | Takedown at once | Flag; REQ-158 applies | Human only |
-| `SOURCE_WITHDRAWN` (source approval removed) | Compliance | Takedown | Flag | Human only |
-| `SOURCE_DEAD` (all sources for a key field gone for 7 days) | Technical | Takedown | Flag | AI, if the source recovers, the hash matches and the whole gate passes again |
-
-**Republishing:** always a version with a matching content hash, after a full pass of the publish gate. A record corrected after a takedown is a new version and goes through the whole pipeline.
-
-**Human review of every takedown:** S1 class within 1 business day, others within 2. Outcomes: uphold, overturn or correct. Overturn rates are tracked by reason code. Decision 18 covers the choices in this table.
-
-### 6.8 Continuous checks on published profiles
-
-| Check | What it does | Pending / reviewed | AI? | If it finds a problem |
-|---|---|---|---|---|
-| **Source link health** | Requests each cited URL, respecting robots.txt, per-host delay and the source's access code | Daily / weekly | No | One or two failures: wait. Three over 72 hours: flag (S3). All sources for a key field gone for 7 days: `SOURCE_DEAD`. |
-| **Source content change** | Compares the normalised page hash with the stored one. If changed, checks whether each quoted passage is still there. | Same fetch | Only if a quote has gone | Quote present: log it. Quote gone: AI compares old and new text; a contradiction is `SOURCE_CONTRADICTS` or `ROLE_ENDED`. It never overwrites (REQ-161). |
-| **Prohibited-topic scan** | Pattern scan and AI read of the profile text and its cited passages. Also runs when the term list changes. | Weekly / monthly | Patterns, then AI | `PROHIBITED_TOPIC` or `SENSITIVE_DATA`, S1 |
-| **Conflicts between sources** | Compares key fields (current role, organisation, active status, identity) across cited sources and Wikidata | Weekly / monthly | Code first; AI only for free text | `SOURCE_CONFLICT` or `IDENTITY_DOUBT` |
-| **Suppression re-check (added)** | Compares live profiles with the suppression list | On every list change, and daily | No | `SUPPRESSED_MATCH`, S1 |
-| **Heartbeat (added)** | Each run reports in | Each run | No | Missed for 48 hours: global pause |
-
-**What the monitor cannot see:**
-- It reads only approved sources that allow automated access. Sources coded M, and sites such as CAC, are not monitored, which is why records depending on them are amber (decision 21).
-- It does not search the web or read news (D-014). It will not learn of a scandal or a change of job unless a cited source shows it.
-- Being correct on the page does not make the source right.
-
-### 6.9 What stays exactly as it was (control 6)
-- **The kill switch** (REQ-193), which also has a new companion: bulk unpublish of pending profiles (REQ-227), because the kill switch covers unclaimed individuals only and pending organisations would otherwise have no equivalent.
+### 6.6 What stays exactly as it was
+- **The kill switch** (REQ-193), alongside bulk unpublish by batch (REQ-227), because the kill switch covers unclaimed individuals only and labelled organisations would otherwise have no equivalent.
 - **Three suppression checks** and the permanent list (REQ-207).
 - **Removal SLA** (REQ-158).
-- **S1 rules:** any S1 unpublishes that profile at once and pauses its tier and source.
+- **S1 rules:** any S1 unpublishes that profile at once and stops importing that tier and source.
 
 ---
 
 ## 7. WordPress tooling needed (input for the Gate 2 architecture revision)
 These feed the WordPress architecture (D-031). "Proposed" items are not yet in `docs/requirements.md`. They become new REQs only if you approve them (no scope creep without approval).
 
+### 7.1 First task and priority input for the architecture revision: T-0, basic import path (REQ-237)
+**The staging data needs somewhere to go.** Acquisition can finish in a day, but nothing can be reviewed until WordPress can take the records. This is the first acquisition task to build and a priority input for the Gate 2 revision.
+
+**Scope:** one import path into the profile post type, by CSV or REST (decision 26).
+
+**Done when:**
+1. A staff member with a named role can dry-run a file and see a diff, then import it.
+2. Records are created or updated by stable ID, so running the same file twice changes nothing.
+3. Sources, per-field provenance, claims, the verification report, batch ID and content hash are stored with each record.
+4. WordPress recomputes each hash and refuses a mismatch.
+5. The suppression check runs again at import.
+6. State is set by record type (3.3), with a setting to import everything as not public.
+7. A reviewed field is never overwritten; a change is flagged instead.
+8. A whole batch can be undone.
+9. 1,000 records import within the host's limits, in chunks or by WP-CLI (Q26).
+10. Each import is in the audit log. Tests cite REQ-237.
+
+**The architecture revision must decide:** the profile post type and how provenance is stored (T-3: queryable, not buried in post meta), CSV or REST, and how imports run on cPanel.
+
+**To be filed as a GitHub issue** when `gh` is available.
+
+### 7.2 Tooling list
+
 | ID | Tool | Must do | REQ |
 |---|---|---|---|
-| T-1 | Source registry | Admin screen with name, entity types, URL, access method, terms summary, robots check date, approver, status, whether the monitor may fetch it. The importer refuses any source that is not Approved. | REQ-136, 137 |
-| T-2 | Import tool and staging database | CSV/JSON and Wikidata SPARQL adapters. **Dry run** with a diff. Idempotent on external keys (QID, RC, licence number, LEI, domain). Batch ID on every record. Suppression check. Duplicate detection. Never overwrites a reviewed field; flags a change instead. | REQ-134, 135, 145–147, 161, 207, 211 |
+| **T-0** | **Basic import path (first task)** | See 7.1 | **REQ-237** |
+| T-1 | Source registry | Admin screen with name, entity types, URL, access method, terms summary, robots check date, approver, status. The pipeline reads the approved list from an export of this, or from a file until it exists. | REQ-136, 137 |
+| T-2 | Wider import adapters | Wikidata re-sync and other adapters. Later than T-0. | REQ-134, 135, 145–147, 161, 207 |
 | T-3 | Provenance per field | Source URL, retrieval date, confidence, method, source hash, passage ID. Queryable for reports, so it should not be buried in post meta. | REQ-142, 143 |
-| T-4 | AI draft and audit store | Claims with passage quotes, a log of dropped claims, audit verdict per claim, model, prompt version, internal AI-assisted flag | REQ-166–168, 213 |
-| T-5 | Queues | Quick look. Full review after publication, ordered as in 6.1. Amber and red. **Claim beside source.** Neutral-content checklist. Reason codes and error severity. Approver ≠ importer enforced. Per-reviewer workload. | REQ-148, 163, 206, 215, 222 |
+| T-4 | AI draft record | Claims with passage quotes, log of dropped claims, verification report, model, prompt version, internal AI-assisted flag | REQ-166–168, 214 |
+| T-5 | Review queue | Filters by tier, batch, source and country. **Claim beside source,** with the verification report. Neutral-content checklist. Reason codes and error severity. Approver ≠ importer enforced. Per-reviewer workload and backlog warning. | REQ-148, 163, 206, 222 |
 | T-6 | Duplicate and merge queue | Human merge with an audit entry; never automatic for individuals | REQ-146 |
-| T-7 | **Publication states and publish gate** | The states and transitions in REQ-210. The gate in code. Unpublish gives a 410, noindex, sitemap removal and purge. Kill switch. Bulk unpublish of pending. | REQ-193, 208–210, 212, 227 |
-| T-8 | Corrections, removal and suppression | Corrections log; removal workflow with deadline timers; permanent suppression list checked at every import; pending profiles hide at once | REQ-156–158, 164, 207, 226 |
-| T-9 | **Pause and cap** | Automatic and manual pause by tier, source and globally; cap, age limit and ramp stages; all as settings; audited | REQ-224, 225 |
-| T-10 | **Proposed:** review timer | Records active seconds per quick look and review, per reviewer | (new; extends REQ-149) |
-| T-11 | **Hash lock** | Published version must match the checked hash; review-pack items import only if the hash matches | REQ-221 |
-| T-12 | **Reviewer re-check queue** | Random 5% of reviewed profiles each week for the second checker; result feeds the error-rate dashboard | REQ-222 (sample); (new for the re-check) |
-| T-13 | **Proposed:** inclusion criterion field | Criterion code plus evidence URL, required by the gate and shown at look and review | (new; REQ-212 relies on it) |
-| T-14 | ~~Sampling mode~~ | **Dropped.** Decision 2 is overtaken by D-033. | — |
-| T-15 | Dashboard | Live, reviewed and pending by tier, source and country; oldest pending; error rates against thresholds; pause state; takedowns and outcomes; monitor heartbeat | REQ-149, 171, 228 |
-| T-16 | Sensitive-pattern scan | Includes Nigerian party names and acronyms, religion and health terms; used before publishing and by the monitor | REQ-141, 223 |
+| T-7 | Publication states | The states and transitions in REQ-210. Unpublish gives a 410, noindex, sitemap removal and purge. Kill switch. Bulk unpublish by batch. | REQ-193, 208–210, 227 |
+| T-8 | Corrections, removal and suppression | Corrections log; removal workflow with deadline timers; permanent suppression list checked at every import | REQ-156–158, 164, 207, 226 |
+| ~~T-9~~ | ~~Pause and cap~~ | **Removed** (decision 25) | — |
+| T-10 | **Proposed:** review timer | Records active seconds per review, per reviewer | (new; extends REQ-149) |
+| T-11 | Hash check | Part of T-0 | REQ-221, 237 |
+| T-12 | **Proposed:** QA audit queue | Random sample of reviewed profiles each week for the second checker; result feeds the error-rate dashboard | (new) |
+| T-13 | **Proposed:** inclusion criterion field | Criterion code plus evidence URL, carried on each record, shown to the reviewer, required for approval | (new) |
+| T-15 | Dashboard | Imported, public, reviewed and awaiting review, by tier, source and country; throughput, oldest waiting, error rates, reasons | REQ-149, 171, 228 |
+| T-16 | Sensitive-pattern scan | Includes Nigerian party names and acronyms, religion and health terms | REQ-141 |
 | T-17 | Export | All profiles with provenance, in open formats | REQ-131 |
-| T-18 | **Label and noindex** | Label on page, cards and share previews; "Reviewed on <date>"; `X-Robots-Tag` and meta noindex; no sitemap, feed or schema.org for pending, **including from any SEO plugin**; listing rules; state-by-surface test matrix | REQ-216–218 |
-| T-19 | **AI service roles** | AI Publisher and AI Monitor with scoped, revocable tokens. Tests prove they cannot edit fields or change settings. | REQ-219 |
-| T-20 | **AI takedown and its queue** | Reason codes; reversible; human review with deadlines; restore rules | REQ-220, 221 |
-| T-21 | **Monitor** | The six checks in 6.8 with cadence settings and heartbeat. **Must run somewhere that allows continuous jobs:** shared cPanel may not (Q26, ADR-011). A small runner outside WordPress is likely. | REQ-223 |
-| T-22 | **Audit log for AI actors** | Service role, reason code and content hash on each action | REQ-228 |
-| T-23 | **No public accounts** | Front-end registration closed; no public login link; wp-login limited to staff; the only users are staff and the two service roles. Test that the site exposes no registration or login route. | REQ-229 |
+| T-18 | **Label and noindex** | Label on page, cards and share previews; "Reviewed on <date>"; `X-Robots-Tag` and meta noindex; no sitemap, feed or schema.org while labelled, **including from any SEO plugin**; listing rules; state-by-surface test matrix | REQ-216–218 |
+| ~~T-19, T-20, T-21~~ | ~~AI service roles, AI takedown, monitor~~ | **Removed from acquisition.** Monitoring and takedown are a future item (REQ-238). | — |
+| T-22 | Audit log for imports | Who imported, batch, file hash, record counts, states set | REQ-228 |
+| T-23 | **No public accounts** | Front-end registration closed; no public login link; wp-login limited to staff; the only users are staff. Test that the site exposes no registration or login route. | REQ-229 |
 | T-24 | **Request to claim and claim verification** | Public form with evidence upload and email verification; staff screen with evidence, method, rival claims; only staff set Claimed. | REQ-230, 231 |
 | T-25 | **Correction request** | Form and staff handling through the review queue; version history records requester and approver. Sensitive fields need a second approver (Q57). | REQ-232 |
 | T-26 | **Single-use signed links** | Purpose-bound, single-use, expiring, hashed tokens for nominator, nominee, intake, consent and claim email verification. | REQ-233 |
 | T-27 | **Staff roles and two-factor** | Seven roles with a tested capability matrix; two-factor enforced; same-day deactivation. | REQ-235, 047 |
 | T-28 | **Offline score entry** | Awards manager screen for scores, conflicts, shortlist and results (flagged). | REQ-234 |
 
-**Workload note (D-034):** with no owner accounts, every claim, correction and enquiry change lands on staff. Claims and corrections already sit at the top of the review queue (REQ-226); plan about 5 to 10 minutes per claim or correction on top of the review estimates in 4.1. The sales prospect list in section 9 can still point prospects to the claim form.
+**Workload note (D-034):** with no owner accounts, every claim, correction and enquiry change lands on staff. Claims and corrections already sit at the top of the review queue (REQ-226); plan about 5 to 10 minutes per claim or correction on top of the review estimates in 4.2. The sales prospect list in section 9 can still point prospects to the claim form.
 
-**Build order that unblocks acquisition soonest:** T-7, T-18, T-19 and T-11 first (nothing can go live safely without them), then T-2 with T-3, T-1, T-9, T-20, T-21, T-5, T-8, then the rest. All items in the go-live gate (5.5) come before T0.
+**Build order that unblocks acquisition soonest:** T-0, T-5 and T-3 first (records in, reviewers working, not public), then T-7 and T-18 (organisations can go live), then T-8 and T-1, then the rest.
 
 ---
 
@@ -716,28 +654,24 @@ Owner "You" = the supervisor. Dates are ceilings; earlier is better.
 
 | # | Task | Owner | Needed by | Blocks |
 |---|---|---|---|---|
-| H1 | Decide items 1 and 3–21 in section 12 | You | Mon 9 Nov | Everything |
-| H2 | Name the two reviewers and their weekly hours (Q4) | You | Mon 9 Nov | Pilot |
-| H3 | Name the Editor-in-Chief (REQ-174), who handles disputes and the named-award list | You | Fri 13 Nov | T0 |
-| H4 | Open the Anthropic API account; set the organisation's data settings; decide on zero data retention (Q28) | You | Tue 10 Nov | AI drafting |
-| H5 | Approve pilot sources (named approver per REQ-137) | You | Tue 10 Nov | Pilot fetch |
-| H6 | Reviewer onboarding (2 h) and calibration (10 profiles) | You and reviewers | 10–11 Nov | Pilot review |
-| H7 | Send Legal the publish-first questions (6.5) | You | Mon 9 Nov | First individual |
-| H8 | Legal: AI transfer basis, covering drafting, audit and monitoring | Incspired Legal | Fri 13 Nov (already requested, Q5) | T3 drafting |
-| H9 | Legal: Terms, Privacy, disclosure and label wording; questions 2 and 5 | Incspired Legal | Fri 20 Nov | T0 |
-| H10 | Legal: legitimate interests assessment, DPIA, registration tier, DPO, notification position; questions 1, 3, 4, 6 | Incspired Legal | Fri 20 Nov; no date impact up to about 7 Dec | First individual published |
-| H11 | Approve the Gate 2 architecture revision for WordPress, including D-033 | You | As soon as it is ready | T0 |
-| H12 | Pilot audit of the 50 profiles | You | Thu 19 Nov | Plan update |
-| H13 | Approve the plan update, reviewer hours and go/no-go on the gate in 5.5 | You | Fri 20 Nov | T0 |
-| H14 | Fire drill on the live site: S1 takedown, pause, kill switch, removal | You and Editor-in-Chief | Before T0 | T0 |
-| H15 | Approve B1 and B2 sources (the "after terms read" rows, and any re-coded from M) | You | Fri 20 Nov | B1, B2 |
-| H16 | Ask NGX for a reference-data licence quote (optional) | You | Thu 12 Nov | Optional O1 route |
-| H17 | Legal: office-holder field set | Incspired Legal | Fri 27 Nov | Office-holders |
-| H18 | Third reviewer onboarded, if the pilot says so | You | Mon 30 Nov | Section 4.6 targets |
-| H19 | Legal: per-country positions (Ghana, Kenya, South Africa) | Incspired Legal | Fri 11 Dec | B3 non-Nigerian |
-| H20 | **Each business day:** clear AI takedowns and S1 flags | Reviewers | Daily from T0 | SLA in 6.7 |
-| H21 | Open each ramp stage after its sample passes; lift pauses | You or Editor-in-Chief | As they arise, within 1 business day | Publishing |
-| H22 | Weekly: review error rates, cap and oldest pending | You or Editor-in-Chief | Every Friday | Control |
+| H1 | Decide the items in section 12 | You | Mon 9 Nov | Everything |
+| H2 | Name the two reviewers and their weekly hours (Q4) | You | Mon 9 Nov | Review |
+| H3 | Open the Anthropic API account; **check its tier and limits in the Console**; set the organisation's data settings; decide on zero data retention (Q28) | You | Before H0, target Tue 10 Nov | The run |
+| H4 | **Approve all sources** for the run (named approver per REQ-137), after agents prepare the entries | You | Tue 10 Nov | **The run: H0** |
+| H5 | Send Legal the questions in 6.5 | You | Mon 9 Nov | Organisations going live |
+| H6 | Legal: AI transfer basis | Incspired Legal | Fri 13 Nov (already requested, Q5) | Run B |
+| H7 | Name the Editor-in-Chief (REQ-174), who handles disputes and the named-award list | You | Fri 13 Nov | Publishing |
+| H8 | Approve the Gate 2 architecture revision, with the import path as its priority input | You | As soon as it is ready | R0 |
+| H9 | Legal: Terms, Privacy, disclosure and label wording | Incspired Legal | Fri 20 Nov | Organisations going live |
+| H10 | Legal: legitimate interests assessment, DPIA, registration tier, DPO, notification position | Incspired Legal | Fri 20 Nov | First individual going public |
+| H11 | Reviewer onboarding (2 h) and calibration (10 profiles) | You and reviewers | R0 | Review |
+| H12 | Start each import, after a dry run; decide on each next batch | You or Editor-in-Chief | From R0 | Publishing |
+| H13 | Pilot audit of the 50 reviewed profiles | You | End of R0 week 1 | Plan update |
+| H14 | Ask NGX for a reference-data licence quote (optional) | You | Thu 12 Nov | Optional O1 route |
+| H15 | Legal: office-holder field set | Incspired Legal | Fri 27 Nov | Office-holders going public |
+| H16 | Third reviewer onboarded, if the pilot says so | You | Mon 30 Nov | Section 4.3 targets |
+| H17 | Legal: per-country positions (Ghana, Kenya, South Africa) | Incspired Legal | Fri 11 Dec | Run C; B3, B5 |
+| H18 | Weekly: sign off the QA audit | You or Editor-in-Chief | Every Friday | Next imports |
 
 ---
 
@@ -764,137 +698,115 @@ The brief (§9.2) asks for a funnel: 500 qualified prospects, then 300 contacted
 
 ## 10. Cost estimate and top risks
 
-### 10.1 Cost (first 1,000 profiles, including the pilot, through 28 February)
+### 10.1 Cost (first 1,000 profiles, including the pilot)
 
 | Item | Basis | Estimate |
 |---|---|---|
-| AI drafting (Claude Opus 5.5, US$4 input / US$20 output per million tokens) | About 11k input and 2.5k output tokens per profile across the drafting and resolution calls, so about US$0.09. Allow +50% for re-drafts and rejects. 800 profiles use AI (T2 + T3). | About US$110 |
-| **AI audit (new)** | About 8k input and 1k output per record, so about US$0.05, on all 1,000, +50% for re-runs | About US$80 |
-| **AI monitoring (new)** | About US$0.02 per scan: monthly on all 1,000 (US$22), weekly on up to about 240 pending (about US$21 a month at peak), about US$5 a month for changed pages. Assumption: 10% of pages change each month. | Up to about US$50 a month; about US$145 for 3 months. Falls to about US$30 a month once all are reviewed. |
-| **AI total** | The Batch API (50% off) would apply to scans and part of the audit | **About US$335. Proposed cap: US$450** (was US$250) |
-| **Monitor runner (new)** | Shared cPanel may not allow continuous jobs (Q26). The architecture's fallback VPS is about US$10–20 a month. | US$0–60 for 3 months |
+| AI drafting (Claude Opus 5.5, US$4 input / US$20 output per million tokens) | About 11k input and 2.5k output tokens per profile, so about US$0.09, on 960 records including spares, plus some re-runs | **About US$110. Budget cap: US$250** |
+| Batch API | Would save about US$55, but a batch can take up to 24 hours | Not used for the main run |
 | Wikidata, GLEIF, regulator lists, official sites | Free | US$0 |
 | NGX reference data (optional) | Price by quote; not published | Unknown. Only if decision 9 chooses it. |
 | Africa: The Big Deal (optional) | About US$1,500 a year enterprise; publication licence unconfirmed | Not in the base case |
 | OpenCorporates, Crunchbase, CAC–NIBSS API | Not recommended | US$0 |
-| Reviewer time | About 206 h looks, reviews and takedowns + 10 h re-checks + 8 h onboarding and calibration ≈ **225 reviewer-hours** (was 215) | 225 × hourly rate. Illustration only: at ₦3,000, ₦6,000 or ₦10,000 an hour, that is ₦0.68m, ₦1.35m or ₦2.25m. **You supply the real rate.** |
-| Supervisor time | About 5–7 h a week (approvals, ramp stages, pauses, error-rate review) for 8–14 weeks | Internal |
+| Reviewer time | About 194 h review + 10 h QA + 8 h onboarding and calibration ≈ **215 reviewer-hours** | 215 × hourly rate. Illustration only: at ₦3,000, ₦6,000 or ₦10,000 an hour, that is ₦0.65m, ₦1.3m or ₦2.15m. **You supply the real rate.** |
+| Claims and corrections (D-034) | 5–10 minutes each, volume unknown | On top of the above |
+| Supervisor time | About 4–6 h a week (approvals, imports, QA sign-off) for 8–14 weeks | Internal |
 | NDPC registration and compliance audit (if Legal says it applies) | GAID fees reportedly ₦100k to ₦1m by tier, plus the fee of a licensed compliance organisation (unverified) | ₦0.1m to ₦1m+ |
 | Hosting and storage | Already covered by the architecture cost (section 9) | Negligible |
 
-Prices were read on 2026-11-07 from the official Anthropic pricing page. **Reviewer time is still most of the cost.**
+Prices were read on 2026-11-07 from the official Anthropic pricing page. **Reviewer time is about 90% of the cost.**
 
 ### 10.2 Top risks
 
 | # | Risk | Likelihood / impact | Mitigation |
 |---|---|---|---|
-| 1 | **A wrong fact about a real person is public before a full human check.** The label may not protect us. | Medium / severe | Quick look; amber rules; cap; S1 takedown; Legal first (decision 7); a choice remains open (decision 13) |
-| 2 | **Wrong-person errors** for individuals (common Nigerian names) | Medium / severe | The name + organisation + role rule (1.5); no auto-merge; quick look; `IDENTITY_DOUBT` takedown; S1 pause |
-| 3 | **Legal objection or NDPC exposure**, now larger because of automatic publishing | Medium / high | Organisations first; individuals wait for Legal (decision 7); kill switch; no party field; new questions in 6.5 |
-| 4 | **WordPress safeguards late.** Publish first cannot start until the gate in 5.5 passes. It is now the critical path to T0, and the build has not started. | High / high | Build order in section 7; review packs keep reviewers productive; organisations can go first |
-| 5 | **Review debt:** with profiles already live, review feels less urgent and the backlog ages | High / high | Cap; 21-day pause; sample-overdue pause; weekly review |
-| 6 | **Review capacity:** 2 reviewers at the D-015 level reach 1,000 reviewed only by 28 February | High / high | Decision 3 |
-| 7 | **Stale official data passes every automatic check,** because the quote is on the page but the page is wrong (AU page, NUC vice-chancellor names) | High / medium | Conflict check between sources; retrieval date per field; quick look asks if the role is current; refresh cycle (REQ-160) |
-| 8 | **AI audit shares blind spots with the drafter** | Medium / high | Shadow pilot measures misses; the sample hides the audit from reviewers; thresholds pause |
-| 9 | **Most T1 sources are manual-only today,** so little can be gathered or monitored automatically and amber swells | Medium / high | Decision 21; agents read terms and re-code sources where allowed |
-| 10 | **False or malicious takedowns** (bug, prompt injection, bulk removal requests) | Medium / medium | Reversible; takedown rate pause; human review of all; rate limits |
-| 11 | **Readers and customers see "Human review pending"** on a brand built on credibility (brief 3.4, 11.3, 15.4) | Medium / medium | Indexable lists show only reviewed profiles (REQ-218); no sponsorship or awards on pending (REQ-226); keep pending counts small |
-| 12 | **Noindex is not privacy:** pending pages can be copied or indexed by crawlers that ignore the rule | Medium / medium | Treat as fully public; takedown and N21 |
-| 13 | **Prospect data leaking into profiles** | Low / high | Separate store; reviewers blind to prospect status; profiles created only through the pipeline (section 9) |
-| 14 | **Minors** via youth-programme sources | Low / severe | Cohorts at least 5 years old only; no age field; possible minor is red |
+| 1 | **Up to 500 organisation profiles are public on basic verification alone.** It proves the source says it, not that it is right. There is no audit, monitor or cap behind it now. | Medium / high | No named person; label; noindex; review organisations first; first 100 before the rest (decision 24); bulk unpublish by batch |
+| 2 | **The import path and review queue are late.** Data can be ready in a day and then wait. The WordPress build has not started. | High / high | T-0 first; priority input for Gate 2; import as not public so review can start early |
+| 3 | **Review capacity:** 2 reviewers at the D-015 level reach about 765 by 31 January | High / high | Decision 3 |
+| 4 | **Legal objection or NDPC exposure:** registration tier, DPIA, transfer, sensitive data; also personal data held in staging from day one | Medium / high | Individuals not public until approved; organisations name no one; kill switch; no party field |
+| 5 | **Approved sources cannot fill the quotas.** Many sources are manual-only or still unread, and some sites are down. | High / medium | Decision 21; 20% spares; run report lists shortfalls by class |
+| 6 | **Stale official data passes every check** (the AU page shows a former Chair; NUC vice-chancellor names) | High / medium | Reviewer checks the role is current; retrieval date per field; refresh cycle (REQ-160). Organisations carry no leadership until reviewed. |
+| 7 | **Wrong-person errors** for individuals (common Nigerian names) | Medium / severe | The name + organisation + role rule (1.5); no auto-merge; human approval before public; S1 rules |
+| 8 | **Problems on live profiles go unnoticed** with no monitor | Medium / medium | Report button, correction form, refresh cycle; monitoring as a future item (REQ-238) |
+| 9 | **Review fatigue** lowers quality at volume | Medium / high | Review in focused 2-hour blocks; weekly QA audit; agreement checks; S2 thresholds that stop imports |
+| 10 | **"Human review pending" on a brand built on credibility** (brief 3.4, 11.3, 15.4) | Medium / medium | Indexable lists show only reviewed profiles (REQ-218); no sponsorship or awards while labelled (REQ-226); review organisations first |
+| 11 | **Anthropic account limited at first** (Evaluation tier numbers are not published) | Low / medium | Check before H0; the run needs only about 10k input tokens a minute to finish in 18 hours |
+| 12 | **Prompt injection or invented claims** from fetched pages | Low / high | Exact-quote check in code; allowlisted fields; human review |
+| 13 | **Minors** via youth-programme sources | Low / severe | Cohorts at least 5 years old only; no age field; not public until approved |
+| 14 | **Prospect data leaking into profiles** | Low / high | Separate store; reviewers blind to prospect status; profiles created only through the pipeline (section 9) |
 
 ---
 
 ## 11. One-page summary
 
-**Goal:** 1,000 published profiles: 500 organisations, 200 entrepreneurs, 300 notable individuals. 850 are Nigerian; about 150 come from Ghana, Kenya, South Africa and pan-African bodies, starting in B3 after Legal clears each country.
+**Goal:** 1,000 published profiles: 500 organisations, 200 entrepreneurs, 300 notable individuals. 850 are Nigerian; about 150 come from Ghana, Kenya, South Africa and pan-African bodies, after Legal clears each country.
 
-**Direction (D-033):** the AI pipeline gathers, drafts, verifies and publishes; humans review afterwards; AI monitors and takes down. Every record still gets a human review.
+**Model (D-033 as amended):** the pipeline never publishes. AI gathers, does basic verification, stores in a private staging database, and exports. A named staff member imports into WordPress, and reviewers work there.
 
-**Notability is a pass/fail test.** Each profile needs one named criterion (O1–O7, E1–E2, I1–I6) proven by an evidence URL from an approved source. Commercial interest is never a criterion.
+**Notability is a pass/fail test.** Each profile needs one named criterion (O1–O7, E1–E2, I1–I6) proven by an evidence URL from an approved source. The reviewer applies it. Commercial interest is never a criterion.
 
-**How a record goes live:**
-- **Structured-source organisations** with no named person: automatic checks plus AI audit.
-- **Individuals and entrepreneurs:** a 3-minute human look first (you may change this).
-- **AI-drafted organisations:** a 2-minute look, as the default until you rule.
-- **Amber:** waits for full human review. **Red:** not published.
+**Basic verification, seven checks only:** approved source; URL returned success; exact quote for every AI claim (unsupported claims dropped); allowlisted fields only; sensitive-term scan; suppression check; duplicates flagged. Each record carries a short report and a content hash.
 
-**While pending:** public, labelled "Compiled automatically from public sources. Human review pending." with a correct/remove link, noindex, and left out of the sitemap and indexable lists. After review: "Reviewed on <date>" and indexable.
+**State on import (you may change these):**
+- **Organisations:** live, labelled "Compiled automatically from public sources. Human review pending.", noindex. No named person.
+- **Individuals and entrepreneurs:** not public until a reviewer approves.
+- **After human approval:** "Reviewed on <date>", indexable.
 
-**Controls:**
-- **AI takedown:** reversible, with a reason code; it never edits facts; a human reviews every one.
-- **Automatic pause:** any S1; individuals 3+ S2 in the last 100; organisations 4+; sample overdue; oldest pending over 21 days; monitor silent for 48 hours.
-- **Cap:** 400 pending, 150 of them individuals, or two weeks of review capacity if lower. Ramp 50, 150, 300, 400.
-- **Continuous checks:** link health, content change, prohibited topics, source conflicts, suppression, heartbeat.
-- **Unchanged:** kill switch, three suppression checks, 2-day removal, S1 rules. No party affiliation, religion or health data, ever.
+**Track 1, acquisition: about 6.5 hours for all 1,000, under 12 in the worst ordinary case,** starting straight after source approvals. Fetch limits add minutes. Anthropic's Start tier is no constraint. **What can really hold it up:** your source approvals, Legal's AI transfer basis for individuals (by 13 November), and whether the approved sources can fill the quotas.
 
-**Timeline**, if WordPress safeguards pass by 23 November:
+**Track 2, review in WordPress, separate and later:** about 190 reviewer-hours. Starting 23 November if the import path exists:
 
-| Reviewers | 500 live | 1,000 live | 1,000 reviewed and indexable |
-|---|---|---|---|
-| 2 × 7.5 h/week (current) | 13 Dec | 21 Feb | 28 Feb |
-| **2 × 15 h/week (recommended)** | **6 Dec** | **10 Jan** | **17 Jan** |
-| 2 × full-time | 6 Dec | 20 Dec | 3 Jan |
+| Reviewers | All organisations reviewed | 1,000 public and reviewed |
+|---|---|---|
+| 2 × 7.5 h/week (current) | 3 Jan | 28 Feb (about 765 by 31 Jan) |
+| **2 × 15 h/week (recommended)** | **13 Dec** | **17 Jan** |
+| 2 × full-time | 6 Dec | 20 Dec |
 
-**What publish first buys:** one to two weeks on "live", and resilience if reviewers stall. It does not reduce review (about 202 hours, up 6%), and search visibility arrives no earlier. Reviewer hours remain the main lever.
-
-**Pilot:** 50 profiles, 10–18 November, in shadow mode: nothing goes live. It measures AI audit misses, quick-look catches and amber share, as well as review time. 
+**First task:** a basic WordPress import path (REQ-237, T-0), the priority input for the architecture revision. Without it the data has nowhere to go.
 
 **Sources:**
-- **Recommended for the pilot:** Wikidata (CC0), CBN lists (reuse allowed with attribution), PenCom, NUC, State House, organisations' own sites, Ventures Platform, Anzisha (older cohorts).
+- **Recommended:** Wikidata (CC0), CBN lists (reuse allowed with attribution), PenCom, NUC, State House, organisations' own sites, Ventures Platform, Anzisha (older cohorts).
 - **Not used as sources:** NGX (bans scraping and aggregation; use issuer pages), FMDQ, CAC for agents (reviewers may check it by hand), OpenCorporates, Crunchbase, Briter, D&B, YC, Techstars, MDCN, all social platforms.
-- **New issue:** many are manual-only today, so the pipeline cannot gather or monitor them until re-checked (decision 21).
 
-**Cost:** AI about US$335 (proposed cap US$450); licences US$0 in the base case; about 225 reviewer-hours.
+**Controls kept:** kill switch; three suppression checks; removal within 2 business days with 410; S1 rules. No party affiliation, religion or health data, ever.
 
-**Legal is on the critical path for individuals, and now has new questions:** AI transfer basis by 13 November; legitimate interests assessment, DPIA, registration tier, notification position and a view on publish first before the first individual goes live.
+**Removed from acquisition:** second AI audit, AI publishing, review packs, quick look, cap and automatic pause. **Future item:** AI monitoring and takedown as a separate WordPress feature.
 
-**Critical path to the first public record:** WordPress safeguards. The build has not started.
+**Cost:** AI about US$110 (cap US$250); licences US$0 in the base case; about 215 reviewer-hours, about 90% of the cost.
 
 ---
 
 ## 12. Decisions needed from you
-Reply in one message, for example "Accept all recommendations except 13: ...". Each is also logged in `docs/questions.md`. Numbers 1–11 keep their earlier meaning.
+Reply in one message, for example "Accept all recommendations except 24: ...". Each is also logged in `docs/questions.md`. Numbers keep their earlier meaning.
 
-**These decide the model (answer first):**
-
-| # | Q | Decision | Options | Recommendation |
-|---|---|---|---|---|
-| 12 | Q46 | **AI-drafted profiles.** D-017, REQ-163 and REQ-168 still require a human to approve each AI draft, claim by claim, before it goes live. You did not list them as amended, and D-033 cannot work with them as they are. | (a) Amend them: claim-by-claim approval moves after publication; AI-drafted organisations (T2) get a quick look; (b) as (a), but T2 goes live with no look; (c) keep them: only T1 publishes first, and T2 and T3 stay review-first | **(a).** (b) moves neither 1,000 date at 2 × 15 h/week and saves only about 4 hours. (c) is simply the old plan with T1 faster. |
-| 13 | Q47 | **Individuals.** Your open choice in control 2. D-013 says "human review first", so either way it needs a matching amendment. | (a) Keep as proposed: quick look first; D-013 amended to say so; (b) publish individuals unreviewed too: D-013 amended further | **(a).** (b) brings 1,000 live forward only one week (10 Jan to 3 Jan), saves 10 hours, and removes the only human check against a wrong-person page. Decide after the pilot's catch rate if you prefer. |
-| 7 | Q35 | **First individual goes live.** D-016 says Legal is not a build blocker; publish first raises the stakes. | (a) Wait for Legal's written answer, including the new questions (6.5); (b) publish under D-016 and use the kill switch if Legal objects | **(a).** Legal can take until about 7 December without moving a date. |
-| 14 | Q48 | **Scope of D-033.** Your model describes the AI pipeline, so I applied it to acquired records only. | (a) Acquired records only: customer submissions, owner edits, complimentary listings and nominees stay approval-first; (b) everything | **(a)** |
-| 15 | Q49 | **What counts.** D-012 and REQ-191 target "reviewed profiles live"; REQ-104 and "1,000 published" could now mean live or reviewed. Also, I read "human review samples" as the first part of reviewing every record, not as sampling instead of reviewing. | (a) Report both; target = live; D-012 target stays reviewed; every record gets reviewed; (b) target = reviewed; (c) review samples only, and unsampled records stay noindex for good | **(a)** |
-| 3 | Q31 | **Reviewer hours and target date** | (a) 2 × 7.5 h/week: 1,000 live 21 Feb; (b) 2 × 15 h/week: 10 Jan; (c) 3 × 7.5 h/week: 24 Jan; (d) 2 full-time: 20 Dec | **(b)** |
-
-**Values I proposed (accept or change):**
+**From this correction (answer first):**
 
 | # | Q | Decision | Options | Recommendation |
 |---|---|---|---|---|
-| 16 | Q50 | **Cap** (6.6) | (a) 400 pending / 150 individuals, or two weeks of capacity if lower, ramp 50–150–300–400; (b) 300 / 100; (c) 600 / 300 | **(a)**, raising it only after 200 individuals are reviewed cleanly |
-| 17 | Q51 | **Pause thresholds** (6.1) | Accept all; or change named rows | **Accept** |
-| 18 | Q52 | **AI takedown limits** (6.7). You said AI takes down "any it finds unsuitable". | (a) Pending: any code. Reviewed, claimed, verified, sponsored: S1 only, otherwise flag. AI restores technical codes only; (b) takedown on any code for every profile; (c) AI restores nothing | **(a).** A false takedown of a reviewed or customer profile costs more than a day's wait for a human. |
-| 20 | Q54 | **Listings** (REQ-218). Noindex on a profile does not stop its name being indexed through a list page. | (a) Indexable lists show reviewed only; pending found by search, direct link or a noindex view; (b) pending appear in all lists, and those pages lose indexing | **(a).** The directory looks thinner early on, but the lists stay indexable. |
-| 10 | Q38 | **Budget and rates** | AI cap US$450 (was US$250); supply the reviewer hourly rate | Approve the cap; give the rate |
+| 12 | Q46 | **AI-drafted organisation text goes live unreviewed.** D-017, REQ-163 and REQ-168 require a human to approve each AI draft first. Your new state on import does not fit them for T2. | (a) As you wrote: all organisations live; amend those three for organisations only; (b) organisations live, but the AI summary stays hidden until a reviewer approves; no amendment needed; (c) only T1 live; T2 waits for review | **(b).** Same speed, no wording amended, and no AI text goes public unchecked. I have written (a) in the documents because you specified it. |
+| 22 | Q63 | **Legal's AI transfer basis blocks individuals' data** (REQ-169), so "all 1,000 in one run" depends on it. | (a) Run organisations straight after source approvals, individuals when Legal confirms; (b) wait and run everything together; (c) send individuals' data without it (amends D-017) | **(a)** |
+| 23 | Q64 | **Which WordPress takes the import?** Under D-029 the demo/staging site is public and indexable. | (a) One site, importing everything as not public until 5.4 passes; (b) a private staging WordPress first, which amends D-029 | **(a)** |
+| 24 | Q65 | **All 500 organisations at once?** With no cap, the first error rate would arrive after everything is live. | (a) First 100 live, reviewed (about 3 working days at 2 × 15 h/week), then the rest; (b) all 500 on the first import | **(a)** |
+| 25 | Q66 | **Cap and automatic pause.** Control 5 in D-033's first version; you did not list them under "keep" or "remove". I removed them as the simpler reading, along with instant hide on removal requests. | (a) Confirm removed; people apply the S1 and S2 rules at each import; (b) keep a cap; (c) keep both | **(a)**, with decision 24 doing the cap's job |
+| 26 | Q67 | **CSV or REST for the import path** | (a) CSV (or JSON) files uploaded or run by a named staff member, so the pipeline holds no WordPress credentials; (b) REST, with a token that can only create not-public records | **(a)** first; it makes "never publishes" true by construction |
+| 3 | Q31 | **Reviewer hours and review order** | Hours: (a) 2 × 7.5 h/week: 28 Feb; (b) 2 × 15 h/week: 17 Jan; (c) 3 × 7.5 h/week: 31 Jan; (d) 2 full-time: 20 Dec. Order: organisations first, or individuals after T1 (1,000 public two weeks sooner at 2 × 15 h/week; organisations reviewed five weeks later). | **(b), organisations first** |
+| 21 | Q55 | **Manual-only sources** (CBN, PenCom, NAICOM, SEC, NCC, State House and others). Agents cannot gather from them as coded, and people typing them in does not fit the 24 hours. | (a) Agents read each one's terms and robots rules before H0; you approve re-coding where allowed; the rest are left out of the run; (b) use only sources already coded P, A or X | **(a)** |
 
-**Things only you can settle:**
-
-| # | Q | Decision | Options | Recommendation |
-|---|---|---|---|---|
-| 19 | Q53 | **"Staging database."** D-029 makes staging.wiwi.africa public, and the architecture says real data only after approval there. | (a) A private database that no public site reads; (b) the database behind staging.wiwi.africa, which means that site shows real unreviewed data | **(a)** |
-| 21 | Q55 | **Manual-only sources.** Many sources are coded M, including CBN, PenCom, NAICOM, SEC, NCC and State House. The pipeline cannot gather from them automatically and the monitor cannot check them. | (a) Agents read each one's terms and robots rules; you approve re-coding where allowed; the rest stay amber with people entering facts; (b) use only sources already P, A or X | **(a).** Otherwise T1 may turn out mostly amber. |
-
-**Unchanged from v1, still needed:**
+**Carried over, still open:**
 
 | # | Q | Decision | Options | Recommendation |
 |---|---|---|---|---|
-| 1 | Q29 | Split and countries: 500 / 200 / 300 by type; 850 Nigeria / 150 others. **Amends D-010 and D-025 (Nigeria only).** | (a) As proposed; (b) Nigeria only for the first 1,000; (c) another split | **(a)**, with non-Nigerian profiles from B3 after Legal |
-| 2 | Q30 | ~~Sampling for T1~~ | **Closed:** overtaken by D-033 | — |
-| 4 | Q32 | Pilot review tool before WordPress is ready | (a) Hash-locked review packs now; (b) wait for WordPress | **(a)** |
-| 5 | Q33 | Approve the pilot sources listed as "Approve for pilot" in 2.2–2.5, with you as the named approver (REQ-137) | Approve all / approve some / reject | **Approve all** |
+| 7 | Q35 | First individual goes public | (a) Wait for Legal's written assessment and DPIA; (b) publish under D-016 and use the kill switch if Legal objects | **(a).** Review can run meanwhile; approvals simply wait. |
+| 15 | Q49 | **What counts.** D-012 and REQ-191 target "reviewed" profiles; REQ-104 and "1,000 published" could mean public or reviewed. | (a) Report both; target = public; D-012 stays reviewed; (b) target = reviewed | **(a)** |
+| 20 | Q54 | **Listings** (REQ-218). Noindex on a profile does not stop its name being indexed through a list page. | (a) Indexable lists show reviewed only; labelled profiles found by search, direct link or a noindex view; (b) labelled profiles appear in all lists, and those pages lose indexing | **(a)**, since organisations-first review fills the lists by 13 December |
+| 1 | Q29 | Split and countries: 500 / 200 / 300 by type; 850 Nigeria / 150 others. **Amends D-010 and D-025 (Nigeria only).** | (a) As proposed; (b) Nigeria only for the first 1,000; (c) another split | **(a)** |
+| 5 | Q33 | Approve the sources, now **all** those for the run, with you as the named approver (REQ-137) | Approve all recommended / some / reject | **All recommended,** once the unread terms are read |
 | 6 | Q34 | Images | (a) No photos on unclaimed individuals and no logos in the first 1,000 until Legal advises; (b) allow Commons images under D-024 now | **(a)** |
-| 8 | Q36 | Public office-holders (I1) | (a) Include current federal ministers, governors, principal officers and agency heads, with no party field, and always amber; (b) exclude politicians from the first 1,000 | **(a)** |
+| 8 | Q36 | Public office-holders (I1) | (a) Include current federal ministers, governors, principal officers and agency heads, with no party field; (b) exclude politicians from the first 1,000 | **(a)** |
 | 9 | Q37 | Listed companies | (a) Build from issuer pages plus Wikidata, and ask NGX for a quote in parallel; (b) wait for an NGX licence | **(a)** |
-| 11 | Q39 | AI model and processing location, now for drafting, audit and monitoring | (a) Claude Opus 5.5, global inference; (b) Opus 5.5, US-only inference (1.1x); (c) a cheaper model (Sonnet 5.5) | **(a)** unless Legal prefers (b) for the transfer record |
+| 10 | Q38 | Budget and rates | AI cap US$250; supply the reviewer hourly rate | Approve the cap; give the rate |
+| 11 | Q39 | AI model and processing location | (a) Claude Opus 5.5, global inference; (b) Opus 5.5, US-only inference (1.1x); (c) a cheaper model (Sonnet 5.5) | **(a)** unless Legal prefers (b) for the transfer record |
 
-Also needed (already open): reviewer names (Q4), the Editor-in-Chief's name (REQ-174), the Anthropic account owner (Q28).
+**Closed by this correction:** 2 (sampling), 4 (review packs), 13 (quick look), 14 (scope), 16 (cap), 17 (pause thresholds), 18 (takedown limits), 19 (staging database: private store).
+
+Also needed (already open): reviewer names (Q4), the Editor-in-Chief's name (REQ-174), the Anthropic account owner (Q28), and Q56–Q62 from D-034.
