@@ -5,7 +5,8 @@
   W.TODAY = "2026-11-07";
   W.LISTS = {
     industries: ["Agriculture & Agritech", "Financial Services & Fintech", "Technology", "Health & Life Sciences", "Education", "Energy", "Media & Creative", "Legal & Professional Services", "Manufacturing", "Public Sector"],
-    cities: ["Lagos", "Abuja", "Port Harcourt", "Ibadan", "Kano", "Enugu"],
+    cities: ["Lagos", "Abuja", "Port Harcourt", "Ibadan", "Kano", "Enugu", "Accra", "Nairobi"],
+    countries: ["Nigeria", "Ghana", "Kenya", "South Africa", "Rwanda", "Egypt", "Pan-African (bodies)"],
     orgTypes: ["Company", "University / school", "Professional association", "Public body", "NGO / social enterprise"],
     professions: ["Executive", "Founder", "Academic", "Legal", "Medical", "Creative", "Public servant"],
     roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", sales: "Sales / Support", finance: "Finance", eic: "Editor-in-Chief", awards: "Awards manager", admin: "Administrator" },
@@ -15,32 +16,42 @@
     stages: ["Category definition", "Nominations", "Evidence collection", "Eligibility screening", "Independent assessment", "Shortlisting", "Final judging and approval", "Winner notification", "Public announcement", "Awards presentation"]
   };
 
+  /* Controlled lists are WordPress custom taxonomies (D-039): terms with name, slug, optional parent. Countries are Nigeria-first and include other African countries and pan-African bodies (amended D-010). */
+  W.TAXES = { industries: ["Industries", "Industry", false], cities: ["Cities", "City", true], countries: ["Countries", "Country", false], orgTypes: ["Organisation types", "Organisation type", false], professions: ["Professions", "Profession", false] };
+  W.slugify = function (s) { return String(s || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); };
+  W.seedTax = function () {
+    var T = {}, L = W.LISTS, cityParent = { Accra: "Ghana", Nairobi: "Kenya" };
+    Object.keys(W.TAXES).forEach(function (k) { T[k] = L[k].map(function (n) { return { name: n, slug: W.slugify(n), parent: k === "cities" ? (cityParent[n] || "Nigeria") : "" }; }); });
+    return T;
+  };
+  W.syncLists = function () { var T = W.S && W.S.tax; if (!T) return; Object.keys(T).forEach(function (k) { W.LISTS[k] = T[k].map(function (t) { return t.name; }); }); };
+
   function f(label, value, src, conf, method, date) {
-    return { label: label, value: value, src: src || "", conf: conf || "high", method: method || "manual", retrieved: date || "2026-10-30" };
+    return { label: label, value: value, src: src || "", url: src ? "https://example.org/sources/" + String(src).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "", conf: conf || "high", method: method || "manual", retrieved: date || "2026-10-30" };
   }
   function acq(extra) { return extra; }
 
   W.seed = function () {
     var S = {
-      v: 4, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0, claim: 0 }, used: {}, intake: {},
-      flags: { nominations: { on: false, ref: "" }, judging: { on: false, ref: "" }, announcements: { on: false, ref: "" }, ai_drafting: { on: false, ref: "" } },
+      v: 5, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
+      flags: { nominations: { on: false, ref: "" } },
       kill: { on: false, by: "", reason: "" },
       thresholds: { subs: 10, revenue: 500000000 },
       profiles: [], articles: [], sponsors: [], customers: [], arrangements: [], leads: [],
-      reports: [], corrections: [], removals: [], claims: [], enquiries: [], nominations: [], signups: [],
-      dsr: [], suppression: [], sources: [], imports: [], emails: [], audit: [], purges: [], notes: {}, scores: {}, coi: {}, escalations: [],
+      reports: [], corrections: [], removals: [], enquiries: [], nominations: [], signups: [],
+      dsr: [], suppression: [], imports: [], emails: [], audit: [], purges: [], notes: {}, scores: {}, coi: {}, escalations: [],
       judgeCoi: { "Sample Judge 2": ["n5"] }, annDraft: null,
-      lists: { industries: W.LISTS.industries.slice(), cities: W.LISTS.cities.slice(), orgTypes: W.LISTS.orgTypes.slice(), professions: W.LISTS.professions.slice() },
+      tax: W.seedTax(),
       dupes: [{ id: "dp1", aId: "b1", bName: "Sample Agritech Company", basis: "normalised name + city", kind: "organisation" }, { id: "dp2", aId: "ip2", bName: "Sample Person B.", basis: "name + organisation", kind: "individual" }]
     };
     var P = S.profiles;
-    P.push({ id: "p-a", slug: "sample-person-a", type: "individual", name: "Sample Person A", title: "Chief Sample Officer", org: "Sample Agritech Co.", industry: "Agriculture & Agritech", city: "Lagos", profession: "Executive", status: "published", trust: "claimed", sponsored: null, source: "subscriber", aiDrafted: false, views: 42, enquiries: true, lastReviewed: "2026-11-02",
+    P.push({ id: "p-a", slug: "sample-person-a", type: "individual", name: "Sample Person A", title: "Chief Sample Officer", org: "Sample Agritech Co.", industry: "Agriculture & Agritech", city: "Lagos", profession: "Executive", status: "published", trust: "", sponsored: null, source: "subscriber", aiDrafted: false, views: 42, enquiries: true, lastReviewed: "2026-11-02",
       bio: "Sample biography text written by the profile owner. It describes a sample professional career in a neutral, factual tone.",
       achievements: "Sample achievement one (2024). Sample achievement two (2025).", website: "https://example.org/sample-person-a",
       public: { website: true, email: false, phone: false },
       facts: [f("Current title", "Chief Sample Officer", "Owner-supplied", "high", "manual", "2026-11-02"), f("Organisation", "Sample Agritech Co.", "Owner-supplied", "high", "manual", "2026-11-02"), f("Industry", "Agriculture & Agritech", "Owner-supplied", "high", "manual", "2026-11-02")],
       history: [{ at: "2026-11-02 10:14", by: "Sample Person A", what: "Submitted profile" }, { at: "2026-11-02 15:40", by: "Sample Reviewer 1", what: "Approved and published" }] });
-    P.push({ id: "b1", slug: "sample-agritech-co", type: "business", name: "Sample Agritech Co.", title: "Agriculture technology company", industry: "Agriculture & Agritech", city: "Lagos", orgType: "Company", status: "published", trust: "unclaimed", sponsored: null, source: "acquired", aiDrafted: false, views: 18, enquiries: true, lastReviewed: "2026-11-01", founded: "2015",
+    P.push({ id: "b1", slug: "sample-agritech-co", type: "business", name: "Sample Agritech Co.", title: "Agriculture technology company", industry: "Agriculture & Agritech", city: "Lagos", orgType: "Company", status: "published", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 18, enquiries: true, lastReviewed: "2026-11-01", founded: "2015",
       bio: "Sample Agritech Co. is a sample company used to show how an organisation profile compiled from public sources looks.",
       achievements: "Listed as a sample licensee (2022).", website: "https://example.org/sample-agritech",
       facts: [f("Registered name", "Sample Agritech Co.", "Sample Registry A", "high", "import", "2026-10-28"), f("Registration no.", "RC-SAMPLE-0001", "Sample Registry A", "high", "import", "2026-10-28"), f("Founded", "2015", "Sample Registry A", "high", "import", "2026-10-28"), f("Headquarters", "Lagos", "Official website (sample)", "medium", "manual", "2026-10-29")],
@@ -49,35 +60,35 @@
       bio: "Sample Fintech Ltd. is a sample company that supplied its own profile and was verified using the checklist.", achievements: "Sample industry recognition (2025).", website: "https://example.org/sample-fintech",
       facts: [f("Founded", "2018", "Owner-supplied", "high", "manual", "2026-11-03"), f("Headquarters", "Lagos", "Owner-supplied", "high", "manual", "2026-11-03")],
       leadership: ["Sample Person D (Founder)"], products: "Sample payment tools.", history: [] });
-    P.push({ id: "b3", slug: "sample-logistics-plc", type: "business", name: "Sample Logistics Plc", title: "Freight and logistics", industry: "Technology", city: "Port Harcourt", orgType: "Company", status: "published", trust: "claimed", sponsored: null, source: "acquired", aiDrafted: false, views: 9, enquiries: true, lastReviewed: "2026-10-31", founded: "2009",
+    P.push({ id: "b3", slug: "sample-logistics-plc", type: "business", name: "Sample Logistics Plc", title: "Freight and logistics", industry: "Technology", city: "Port Harcourt", orgType: "Company", status: "published", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 9, enquiries: true, lastReviewed: "2026-10-31", founded: "2009",
       bio: "Sample Logistics Plc is a sample listed company profile.", achievements: "", website: "https://example.org/sample-logistics",
       facts: [f("Founded", "2009", "Sample Exchange Listings", "high", "import", "2026-10-27")], leadership: [], products: "Sample freight services.", history: [] });
     P.push({ id: "b4", slug: "sample-health-network", type: "business", name: "Sample Health Network", title: "Healthcare provider group", industry: "Health & Life Sciences", city: "Abuja", orgType: "Company", status: "published", trust: "featured", sponsored: null, source: "acquired", aiDrafted: false, views: 33, enquiries: true, lastReviewed: "2026-11-04", founded: "2011",
       bio: "Sample Health Network is a sample organisation that editors chose to feature.", achievements: "Sample editorial feature (2026).", website: "https://example.org/sample-health",
       facts: [f("Founded", "2011", "Sample Registry A", "high", "import", "2026-10-28")], leadership: [], products: "Sample clinical services.", history: [], featuredReason: "Sample editorial reason: spotlight series." });
-    P.push({ id: "b5", slug: "sample-energy-group", type: "business", name: "Sample Energy Group", title: "Energy services", industry: "Energy", city: "Lagos", orgType: "Company", status: "pending", trust: "unclaimed", sponsored: null, source: "acquired", aiDrafted: true, views: 0, enquiries: true, lastReviewed: "", founded: "2012", submittedAt: "2026-11-02", importedBy: "Sample Importer", drafter: "AI + Sample Importer",
+    P.push({ id: "b5", slug: "sample-energy-group", type: "business", name: "Sample Energy Group", title: "Energy services", industry: "Energy", city: "Lagos", orgType: "Company", status: "pending", trust: "", sponsored: null, source: "acquired", aiDrafted: true, views: 0, enquiries: true, lastReviewed: "", founded: "2012", submittedAt: "2026-11-02", importedBy: "Sample Importer", drafter: "AI + Sample Importer",
       bio: "Sample Energy Group provides sample energy services. Contact the head office on 0800-000-0000 for details.", achievements: "", website: "https://example.org/sample-energy",
       facts: [f("Founded", "2012", "Sample Regulator PDF", "medium", "AI", "2026-11-05"), f("Headquarters", "Lagos", "Official website (sample)", "high", "AI", "2026-11-05"), f("Reputation claim", "Widely regarded as a leader", "", "low", "AI", "2026-11-05")],
       scan: [{ kind: "Phone pattern", text: "0800-000-0000", cleared: false }], leadership: [], products: "Sample energy services.", history: [],
       aiClaims: [{ claim: "Founded in 2012", passage: "p3", quote: "Sample Energy Group was founded in 2012.", ok: true }, { claim: "Headquartered in Lagos", passage: "p5", quote: "The head office is in Lagos.", ok: true }, { claim: "Widely regarded as a leader", passage: "", quote: "", ok: false }] });
-    P.push({ id: "b6", slug: "sample-media-house", type: "business", name: "Sample Media House", title: "Publishing and broadcast", industry: "Media & Creative", city: "Ibadan", orgType: "Company", status: "published", trust: "unclaimed", sponsored: null, source: "acquired", aiDrafted: false, views: 5, enquiries: true, lastReviewed: "2025-04-15", founded: "2003",
+    P.push({ id: "b6", slug: "sample-media-house", type: "business", name: "Sample Media House", title: "Publishing and broadcast", industry: "Media & Creative", city: "Ibadan", orgType: "Company", status: "published", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 5, enquiries: true, lastReviewed: "2025-04-15", founded: "2003",
       bio: "Sample Media House is a sample media organisation.", achievements: "", website: "https://example.org/sample-media",
       facts: [f("Founded", "2003", "Wikidata (SPARQL)", "high", "API", "2026-10-26")], leadership: [], products: "", history: [] });
-    P.push({ id: "i1", slug: "sample-university-a", type: "institution", name: "Sample University A", title: "University", industry: "Education", city: "Ibadan", orgType: "University / school", status: "published", trust: "unclaimed", sponsored: null, source: "acquired", aiDrafted: false, views: 11, enquiries: true, lastReviewed: "2026-10-31", founded: "1962", mandate: "Sample mandate: teaching, research and public service.",
+    P.push({ id: "i1", slug: "sample-university-a", type: "institution", name: "Sample University A", title: "University", industry: "Education", city: "Ibadan", orgType: "University / school", status: "published", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 11, enquiries: true, lastReviewed: "2026-10-31", founded: "1962", mandate: "Sample mandate: teaching, research and public service.",
       bio: "Sample University A is a sample accredited institution.", achievements: "", website: "https://example.org/sample-university",
       facts: [f("Type", "University", "Sample Accreditation List", "high", "import", "2026-10-27"), f("Founded", "1962", "Sample Accreditation List", "high", "import", "2026-10-27")], leadership: [], products: "", longHistory: "Sample long history section for institutions. Dated, sourced and neutral.", history: [] });
-    P.push({ id: "i2", slug: "sample-professional-association", type: "institution", name: "Sample Professional Association", title: "Professional association", industry: "Legal & Professional Services", city: "Abuja", orgType: "Professional association", status: "published", trust: "claimed", sponsored: null, source: "acquired", aiDrafted: false, views: 7, enquiries: true, lastReviewed: "2026-10-30", founded: "1980", mandate: "Sample mandate: set professional standards.",
+    P.push({ id: "i2", slug: "sample-professional-association", type: "institution", name: "Sample Professional Association", title: "Professional association", industry: "Legal & Professional Services", city: "Abuja", orgType: "Professional association", status: "published", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 7, enquiries: true, lastReviewed: "2026-10-30", founded: "1980", mandate: "Sample mandate: set professional standards.",
       bio: "A sample association profile.", achievements: "", website: "https://example.org/sample-association", facts: [], leadership: [], products: "", longHistory: "Sample history.", history: [] });
-    P.push({ id: "i3", slug: "sample-foundation", type: "institution", name: "Sample Foundation", title: "NGO / social enterprise", industry: "Public Sector", city: "Kano", orgType: "NGO / social enterprise", status: "pending", trust: "unclaimed", sponsored: null, source: "acquired", aiDrafted: false, views: 0, enquiries: true, lastReviewed: "", founded: "2001", importedBy: "Sample Reviewer 1", drafter: "Sample Reviewer 1", submittedAt: "2026-11-04", mandate: "Sample mandate.",
+    P.push({ id: "i3", slug: "sample-foundation", type: "institution", name: "Sample Foundation", title: "NGO / social enterprise", industry: "Public Sector", city: "Kano", orgType: "NGO / social enterprise", status: "pending", trust: "", sponsored: null, source: "acquired", aiDrafted: false, views: 0, enquiries: true, lastReviewed: "", founded: "2001", importedBy: "Sample Reviewer 1", drafter: "Sample Reviewer 1", submittedAt: "2026-11-04", mandate: "Sample mandate.",
       bio: "Sample Foundation works on sample community projects.", achievements: "", website: "https://example.org/sample-foundation", facts: [f("Founded", "2001", "Sample Registry A", "high", "import", "2026-11-04")], leadership: [], products: "", longHistory: "", history: [], scan: [] });
     var ind = [
-      ["ip2", "sample-person-b", "Sample Person B", "Chief Executive", "Sample Agritech Co.", "Agriculture & Agritech", "Lagos", "Executive", "published", "unclaimed"],
-      ["ip3", "sample-person-c", "Sample Person C", "Chief Operating Officer", "Sample Agritech Co.", "Agriculture & Agritech", "Lagos", "Executive", "published", "unclaimed"],
+      ["ip2", "sample-person-b", "Sample Person B", "Chief Executive", "Sample Agritech Co.", "Agriculture & Agritech", "Lagos", "Executive", "published", ""],
+      ["ip3", "sample-person-c", "Sample Person C", "Chief Operating Officer", "Sample Agritech Co.", "Agriculture & Agritech", "Lagos", "Executive", "published", ""],
       ["ip4", "sample-person-d", "Sample Person D", "Founder", "Sample Fintech Ltd.", "Financial Services & Fintech", "Lagos", "Founder", "published", "verified"],
       ["ip5", "sample-person-e", "Sample Person E", "Professor of Sample Studies", "Sample University A", "Education", "Ibadan", "Academic", "published", "featured"],
-      ["ip6", "sample-person-f", "Sample Person F", "Director", "Sample Energy Group", "Energy", "Lagos", "Executive", "pending", "unclaimed"],
-      ["ip7", "sample-person-g", "Sample Person G", "Board member", "Sample Media House", "Media & Creative", "Ibadan", "Executive", "unpublished", "unclaimed"],
-      ["ip8", "sample-person-h", "Sample Person H", "Legal Counsel", "Sample Professional Association", "Legal & Professional Services", "Abuja", "Legal", "published", "unclaimed"]
+      ["ip6", "sample-person-f", "Sample Person F", "Director", "Sample Energy Group", "Energy", "Lagos", "Executive", "pending", ""],
+      ["ip7", "sample-person-g", "Sample Person G", "Board member", "Sample Media House", "Media & Creative", "Ibadan", "Executive", "unpublished", ""],
+      ["ip8", "sample-person-h", "Sample Person H", "Legal Counsel", "Sample Professional Association", "Legal & Professional Services", "Abuja", "Legal", "published", ""]
     ];
     ind.forEach(function (r) {
       P.push({ id: r[0], slug: r[1], type: "individual", name: r[2], title: r[3], org: r[4], industry: r[5], city: r[6], profession: r[7], status: r[8], trust: r[9], sponsored: null, source: "acquired", aiDrafted: r[0] === "ip6", views: 3, enquiries: true, lastReviewed: r[8] === "published" ? "2026-11-01" : "",
@@ -86,7 +97,7 @@
         importedBy: "Sample Importer", drafter: r[0] === "ip6" ? "AI + Sample Importer" : "Sample Importer", scan: [], history: [], removedReason: r[0] === "ip7" ? "Removal request from the subject, accepted (sample)" : "",
         featuredReason: r[9] === "featured" ? "Sample editorial reason." : "" });
     });
-    P.forEach(function (p) { if (!p.history) p.history = []; if (!p.public) p.public = { website: true, email: false, phone: false }; });
+    P.forEach(function (p) { if (!p.history) p.history = []; if (!p.public) p.public = { website: true, email: false, phone: false }; p.origin = p.source === "acquired" ? "import" : "customer"; p.country = "Nigeria"; });
 
     S.articles = [
       { id: "a1", slug: "sample-interview-one", type: "Interview", title: "Sample interview: building in a sample market", industry: "Agriculture & Agritech", author: "Sample Editor", date: "2026-11-03", status: "published", sponsor: null, profiles: ["b1"], body: "Sample interview body text. Placeholder paragraphs only." },
@@ -116,21 +127,10 @@
       { id: "l2", ext: "LEAD-0002", name: "Sample Contact L2", org: "Sample Org L2", interest: "Awards sponsorship", contact: "lead2@example.org", status: "contacted", owner: "Sample Sales 1", notes: "Sample call booked.", at: "2026-11-04" },
       { id: "l3", ext: "LEAD-0003", name: "Sample Contact L3", org: "Sample Org L3", interest: "Media / editorial work", contact: "lead3@example.org", status: "qualified", owner: "Sample Sales 1", notes: "", at: "2026-11-03" }
     ];
-    S.sources = [
-      { id: "src1", name: "Sample Registry A", types: "Organisations", url: "https://example.org/registry-a", access: "Manual", licence: "Public record (sample)", robots: "2026-10-20", approver: "Sample Editor", status: "Approved" },
-      { id: "src2", name: "Sample Exchange Listings", types: "Organisations, officers", url: "https://example.org/exchange", access: "Export", licence: "Sample terms allow reuse of facts", robots: "2026-10-20", approver: "Sample Editor", status: "Approved" },
-      { id: "src3", name: "Wikidata (SPARQL)", types: "Organisations, public figures", url: "https://www.wikidata.org", access: "API", licence: "CC0", robots: "2026-10-20", approver: "Sample Editor", status: "Approved" },
-      { id: "src4", name: "Sample Directory Site", types: "Companies", url: "https://example.org/directory", access: "Crawl", licence: "Terms forbid automated collection", robots: "2026-10-21", approver: "", status: "Rejected" },
-      { id: "src5", name: "Sample Regulator PDF list", types: "Organisations", url: "https://example.org/regulator", access: "Manual", licence: "To check", robots: "", approver: "", status: "Pending approval" }
-    ];
-    S.reports = [{ id: "r1", profileId: "b6", reason: "Inaccurate information", detail: "Sample report text.", at: "2026-11-05", status: "open", owner: "" }];
-    S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", at: "2026-11-05", due: "2026-11-12", status: "open" },
-      { id: "cr2", profileId: "p-a", kind: "Owner correction request", requesterRole: "The person named", field: "title", newValue: "Chief Sample Officer and Director", detail: "Change title to: Chief Sample Officer and Director", evidence: "https://example.org/sample-announcement", contact: "sample-person-a@example.org", emailVerified: true, at: "2026-11-06", due: "2026-11-13", status: "open" }];
+    S.reports = [{ id: "r1", profileId: "b6", reason: "Inaccurate information", detail: "Sample report text.", at: "2026-11-05", due: "2026-11-12", status: "open", owner: "" }];
+    S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", emailVerified: true, at: "2026-11-05", due: "2026-11-12", status: "open" },
+      { id: "cr2", profileId: "p-a", kind: "Correction", requesterRole: "The person named on this profile", detail: "Change title to: Chief Sample Officer and Director", evidence: "https://example.org/sample-announcement", contact: "sample-person-a@example.org", emailVerified: true, at: "2026-11-06", due: "2026-11-13", status: "open" }];
     S.removals = [{ id: "rm1", profileId: "ip3", kind: "Removal", detail: "Sample removal request from the subject.", contact: "sample@example.org", at: "2026-11-04", due: "2026-11-06", status: "open" }];
-    S.claims = [{ id: "cl1", ref: "CLM-0001", profileId: "b3", claimant: "Sample Claimant 1", relation: "Authorised representative", email: "claimant1@example.org", phone: "", route: "Document", evidence: "authority-letter.pdf", statement: "Sample statement.", emailVerified: true, token: "t-cl1", status: "approved", at: "2026-10-29" },
-      { id: "cl2", ref: "CLM-0002", profileId: "i1", claimant: "Sample Claimant 2", relation: "Authorised representative", email: "claimant2@sample-university.example", phone: "", route: "Domain email", evidence: "(none: domain email)", statement: "Sample statement.", emailVerified: true, token: "t-cl2", status: "pending", at: "2026-11-05" },
-      { id: "cl3", ref: "CLM-0003", profileId: "i1", claimant: "Sample Claimant 3", relation: "Authorised representative", email: "claimant3@example.org", phone: "", route: "Document", evidence: "id-and-letter.pdf", statement: "Sample statement.", emailVerified: true, token: "t-cl3", status: "pending", at: "2026-11-06" },
-      { id: "cl4", ref: "CLM-0004", profileId: "b6", claimant: "Sample Claimant 4", relation: "Authorised representative", email: "claimant4@example.org", phone: "", route: "Document", evidence: "authority-letter.pdf", statement: "Sample statement.", emailVerified: false, token: "t-cl4", status: "awaiting email check", at: "2026-11-07" }];
     S.enquiries = [{ id: "e1", profileId: "p-a", name: "Sample Visitor 1", email: "visitor1@example.org", message: "Sample enquiry message.", at: "2026-11-05", read: false }];
     S.dsr = [{ id: "d1", kind: "Access", who: "Sample Requester 1", at: "2026-11-03", due: "2026-12-03", status: "open" }, { id: "d2", kind: "Objection", who: "Sample Requester 2", at: "2026-11-01", due: "2026-12-01", status: "in progress" }];
     S.suppression = [{ id: "sp1", name: "Sample Person X", kind: "Removed individual", at: "2026-10-28", reason: "Removal request" }];
@@ -153,7 +153,7 @@
         { name: "Industry & Institutional Recognition", cats: ["Outstanding Educational Institution", "Outstanding Healthcare Institution", "Outstanding NGO or Social Enterprise", "Outstanding Professional Association", "Outstanding Corporate Institution"] }
       ],
       criteria: [{ id: "k1", name: "Impact", weight: 30 }, { id: "k2", name: "Achievement", weight: 30 }, { id: "k3", name: "Credibility and integrity", weight: 20 }, { id: "k4", name: "Leadership or innovation", weight: 20 }],
-      eligibility: "Sample eligibility text: Nigerian individuals and organisations; professional record in the last five years; no sensitive personal data. Final text is for the Venture CEO.",
+      eligibility: "Sample eligibility text: individuals and organisations in Nigeria first, then other African countries; professional record in the last five years; no sensitive personal data. Final text is for the Venture CEO.",
       winners: [],
       screeners: { screening: "Sample Reviewer 1", shortlist: "Sample Eic 1", final: "Sample Venture CEO" }
     };
@@ -169,13 +169,12 @@
       { name: "Web hosting (cPanel host)", role: "Hosts site and database", location: "TBC (Q26)", dpa: "Not yet" },
       { name: "Email provider", role: "Transactional email", location: "TBC", dpa: "Not yet" },
       { name: "Analytics (privacy-friendly)", role: "Visit counts", location: "TBC", dpa: "Not yet" },
-      { name: "AI provider", role: "Draft profiles from sources (flag off)", location: "TBC; Legal to confirm transfer", dpa: "Not yet" }
+      { name: "AI provider (acquisition pipeline, not the website)", role: "Drafts records before import", location: "TBC; Legal to confirm transfer", dpa: "Not yet" }
     ];
     S.emails = [
       { id: "m1", to: "Sample Person B (nominee)", subject: "You have been nominated", body: "Accept, decline or correct your details. Nothing is public.", link: "#/nominee/t-n6", at: W.TODAY },
       { id: "m2", to: "Sample Customer", subject: "You are invited to create your " + W.brand.name + " profile", body: "Your arrangement is agreed. Click to start.", link: "#/invite/demo", at: W.TODAY },
-      { id: "m3", to: "Sample Person A", subject: "Consent to a complimentary listing", body: "Click to give or withhold consent.", link: "#/consent/demo", at: W.TODAY },
-      { id: "m4", to: "Sample Claimant 4", subject: "Verify your email to send your claim request", body: "Single-use link. Your request enters the staff queue only after you click.", link: "#/confirm/t-cl4", at: W.TODAY }
+      { id: "m3", to: "Sample Person A", subject: "Consent to a complimentary listing", body: "Click to give or withhold consent.", link: "#/consent/demo", at: W.TODAY }
     ];
     S.audit = [];
     return S;

@@ -39,21 +39,23 @@ The repo turns the product brief into a built product in stages. A human approve
 - **Orchestrator:** the Claude Code session that picks issues and launches builder agents. It doesn't write feature code.
 - **Builder / reviewer / security reviewer:** the agents. Builders write code. A separate reviewer checks it. Only the reviewer marks work done.
 - **Traceability table** (`traceability.md`): one row per REQ showing issue, pull request, test, and whether it was verified. It proves nothing was missed.
-- **Feature flag:** a switch that keeps a built feature hidden until you turn it on (for example nominations).
-- **Kill switch:** one switch that unpublishes all unclaimed individual profiles immediately.
+- **Feature flag:** a switch that keeps a built feature hidden until you turn it on. The only flag is Nominations (D-037).
+- **Kill switch:** one safety switch, separate from the flags, that unpublishes all acquired individual profiles (individuals who came in through the acquisition import) immediately (D-036).
 - **Suppression list:** people who asked to be removed, so they are never republished.
 - **Staging:** the test copy of the site before production.
 - **Preview:** in this project the test site is public and indexable, so only human-approved profiles appear on it.
 - **Provisional theme:** temporary styling until the approved brand assets arrive. All brand values sit in one config file.
 
 ## 4. Profile and listing labels (never mix these up)
+There is no claiming (D-036), so there are no Claimed or Unclaimed labels.
+
 | Label | Meaning | Can it be bought? |
 |---|---|---|
-| **Unclaimed** | WHOISWHO created the profile from public sources; the person has not claimed it | no |
-| **Claimed** | The person or organisation took control of the profile | no |
 | **Verified** | Staff checked it against a checklist | **never** |
 | **Featured** | Chosen by the editors | **never** |
 | **Sponsored** | Paid placement or content, always labelled and never implies verification | yes |
+| *Compiled automatically from public sources. Human review pending.* | Review-state label on an imported profile that no human has reviewed yet | no |
+| *Reviewed on (date)* | Review-state label after a human approved it | no |
 
 ## 5. Files at a glance
 | File | Purpose | Edited by |
@@ -105,7 +107,7 @@ Reply in one message: "Accept all defaults except Q2: ..., Q5: ...". Claude Code
 - Speed first: finish as early as possible; the brief's dates are ceilings.
 - Claude Code builds everything; you approve at gates and handle outside work (accounts, legal, content, sales).
 - No payment processing on the website; payments are offline and admins record them.
-- No login or signup on the public website for anyone (D-034). Only staff use wp-admin, with two-factor. Claims, corrections and nominations use forms and single-use signed email links. Judging is offline.
+- No login or signup on the public website for anyone (D-034). Only staff use wp-admin, with two-factor. Corrections, removals, reports and nominations use forms and single-use signed email links. Judging is offline.
 - Never commit secrets or read `.env` files.
 - Nothing publishes without human review.
 - New ideas found during the build become new issues, not extra scope.

@@ -12,7 +12,7 @@
 
   W.route("/awards", "V18", function () {
     var A = W.S.awards;
-    return page("<h1>" + e(W.brand.edition) + '</h1><div class="row">' + flagPill(W.ok("nominations"), "Nominations") + flagPill(W.ok("judging"), "Judging / shortlist") + flagPill(W.ok("announcements"), "Announcements") + '</div><p class="small muted">Wireframe: these chips read the feature flags. Staff turn them on in Admin › Feature flags with the CEO’s approval reference.</p>' +
+    return page("<h1>" + e(W.brand.edition) + '</h1><div class="row">' + flagPill(W.ok("nominations"), "Nominations") + '</div><p class="small muted">Wireframe: this chip reads the nominations flag, the only feature flag. Staff turn it on in Admin › Feature flag with the CEO’s approval reference. Shortlist and winner pages appear when staff publish them.</p>' +
       '<div class="grid side"><div class="stack"><div class="card"><h2>How recognition works</h2><ol>' + W.LISTS.stages.map(function (s) { return "<li>" + e(s) + "</li>"; }).join("") + '</ol><p class="small muted">Payment, subscription or sponsorship never affects nominations, screening or judging. There is no public voting.</p></div>' +
       '<div class="card"><h2>Eligibility</h2><p>' + e(A.eligibility) + '</p><p><a href="#/awards/rules">Full awards rules</a></p></div></div><div class="stack">' +
       (W.nomOpen() ? '<div class="okbox"><h2>Nominations are open</h2><a class="btn" href="#/nominate">Nominate someone</a></div>' : '<div class="infobox"><h2>Nominations open soon</h2><a class="btn" href="#/nominate">Get notified</a></div>') + sponsorStrip() + "</div></div>" +
@@ -22,25 +22,24 @@
   });
   W.route("/awards/category/:i", "V19", function (p) {
     var c = cats()[Number(p.i)]; if (!c) return W.notFound.fn();
-    var noms = W.S.nominations.filter(function (n) { return n.category === c.name && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0; });
-    var win = W.ok("announcements") && W.S.awards.published ? W.S.awards.winners.filter(function (w) { return w.cat === c.name; })[0] : null;
+    var noms = W.S.nominations.filter(function (n) { return n.category === c.name && W.nomPublic(n); });
+    var win = W.S.awards.published ? W.S.awards.winners.filter(function (w) { return w.cat === c.name; })[0] : null;
     return page(W.crumbs([["Awards", "#/awards"], [c.name]]) + "<h1>" + e(c.name) + '</h1><p class="muted">' + e(c.group) + "</p><p>Sample category description and criteria summary. Anyone may nominate. Criteria and weights are configured by staff.</p>" +
       (win ? '<div class="okbox"><h2>Winner</h2><a href="#/awards/nominee/' + e(win.ref) + '">' + e(win.name) + "</a></div>" : "") +
-      "<h2>Shortlist</h2>" + (W.ok("judging") && noms.length ? '<div class="grid c3">' + noms.map(function (n) { return '<a class="card link" href="#/awards/nominee/' + e(n.ref) + '"><strong>' + e(n.nominee) + '</strong><div class="small muted">Shortlisted</div></a>'; }).join("") + "</div>" : W.empty("No shortlist yet", "Nominee pages appear only at the shortlist stage, after screening and nominee consent (REQ-198).")) +
+      "<h2>Shortlist</h2>" + (noms.length ? '<div class="grid c3">' + noms.map(function (n) { return '<a class="card link" href="#/awards/nominee/' + e(n.ref) + '"><strong>' + e(n.nominee) + '</strong><div class="small muted">Shortlisted</div></a>'; }).join("") + "</div>" : W.empty("No shortlist yet", "Nominee pages appear only at the shortlist stage, after screening and nominee consent (REQ-198).")) +
       "<p>" + (W.nomOpen() ? '<a class="btn" href="#/nominate">Nominate in this category</a>' : '<a class="btn alt" href="#/nominate">Nominations open soon</a>') + "</p>");
   });
   W.route("/awards/nominee/:ref", "V20", function (p, q, m) {
     var n = W.S.nominations.filter(function (x) { return x.ref === p.ref; })[0];
-    var vis = n && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && W.ok("judging");
+    var vis = n && W.nomPublic(n);
     var staff = ["reviewer", "editor", "eic", "admin"].indexOf(W.S.role) >= 0;
     if (!n || (!vis && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
     var pr = W.profile(n.profileId), prOK = pr && W.isPublic(pr);
-    return (vis ? "" : '<div class="banner staffprev"><div class="wrap">Staff preview: not public until shortlist and nominee acceptance.</div></div>') + page(W.crumbs([["Awards", "#/awards"], [n.nominee]]) + "<h1>" + e(n.nominee) + '</h1><div class="tagrow"><span class="pill ok">Shortlisted</span><span class="pill gray">' + e(n.category) + '</span></div><p>Built from the reviewed profile and sourced facts only. The nominator’s identity is never shown.</p>' + (prOK ? '<div class="grid c3">' + W.card(pr) + "</div>" : '<p class="muted">Profile not yet public.</p>') + '<p class="small muted">Sponsorship, subscription and payment have no effect on this page or on judging.</p>');
+    return (vis ? "" : '<div class="banner staffprev"><div class="wrap">Staff preview: not public until staff publish the nominee page (shortlist stage, nominee accepted).</div></div>') + page(W.crumbs([["Awards", "#/awards"], [n.nominee]]) + "<h1>" + e(n.nominee) + '</h1><div class="tagrow"><span class="pill ok">Shortlisted</span><span class="pill gray">' + e(n.category) + '</span></div><p>Built from the reviewed profile and sourced facts only. The nominator’s identity is never shown.</p>' + (prOK ? '<div class="grid c3">' + W.card(pr) + "</div>" : '<p class="muted">Profile not yet public.</p>') + '<p class="small muted">Sponsorship, subscription and payment have no effect on this page or on judging.</p>');
   });
   W.route("/awards/winners", "V21", function () {
     var A = W.S.awards;
-    if (!W.ok("announcements")) return page("<h1>Winners</h1>" + W.empty("Winners will be announced", "The announcements flag is OFF. Staff prepare winners in Admin › Announcements and publish only with the CEO’s approval."));
-    if (!A.published) return page("<h1>Winners</h1>" + W.empty("Not yet announced", "The flag is on but no announcement has been published."));
+    if (!A.published) return page("<h1>Winners</h1>" + W.empty("Winners will be announced", "Staff prepare winners in Admin › Shortlist and winners and publish the announcement with the CEO’s approval. Nothing is shown until then."));
     return page("<h1>Winners</h1><div class=\"grid c3\">" + A.winners.map(function (w) { return '<a class="card link" href="#/awards/nominee/' + e(w.ref) + '"><span class="pill ok">Winner</span><h3>' + e(w.name) + '</h3><div class="small muted">' + e(w.cat) + "</div></a>"; }).join("") + "</div>");
   });
   W.route("/awards/rules", "V33", function () {

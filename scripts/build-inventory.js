@@ -23,30 +23,35 @@ const NOUI = {
   108: "Staff sign-in is A01. Password reset and session list are WordPress defaults, not designed here (D-034: no public login).",
   190: "Build check that fails on hard-coded brand values; not a screen."
 };
+Object.assign(NOUI, {
+  136: "Enforced in the acquisition pipeline by the named approver, not in the website admin (D-038).", 137: "Enforced in the acquisition pipeline (D-038); the import dry run (A20) checks the file against the import contract.", 138: "Enforced in the acquisition pipeline (D-038).",
+  165: "AI drafting belongs to the acquisition pipeline, not the website (D-037).", 167: "Pipeline drafting rule (acquisition), not a screen.", 169: "Pipeline and provider terms (acquisition), not a screen.",
+  191: "No directory-size target on the website or its admin (D-035).", 206: "No review-capacity figure until the pilot measures one (D-035).",
+  124: "Claiming is removed (D-036); the requirement is stale.", 150: "Trust ladder without Unclaimed and Claimed (D-036); labels are Verified and Featured (A06).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
+  238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
+});
 for (let n = 210; n <= 228; n++) NOUI[n] = "Publish first (D-033). The wireframe has not been updated for it; see acquisition/docs/change-review-2026-11-08-publish-first.md.";
 
 // gaps found while inventorying (REQ has a surface, no screen in the first pass) and the fix
 const GAPS = [
-  [7, "Filters by profession, organisation type and country were missing", "V03, V05 (country shown as fixed Nigeria on V04)"],
+  [7, "Filters by profession, organisation type and country were missing", "V03, V04, V05 (country filter lists Nigeria first, then other African countries and pan-African bodies)"],
   [16, "Admin marking of posts/profiles as Sponsored had no named screen", "A06, A24"],
   [57, "Lawful basis per category of person had no place to be recorded", "A37 (table added)"],
   [72, "DPIA status and data-protection contact had no place", "A37"],
   [123, "Duplicate warning at submission (not only in review)", "O06 (warning), A04, A21"],
   [129, "Slug change with redirect", "A06 (Public URL card); old URL redirects"],
-  [132, "Organisation stubs published as Unclaimed after review", "V10, A04, A20"],
+  [132, "Organisation records compiled from public sources, imported and reviewed", "V10, A04, A20"],
   [135, "Re-sync of source-backed records on request", "A06 (Source sync card)"],
   [145, "Persistent ID and match basis", "A06, A21"],
   [160, "Stale-record workflow", "A39 (the yearly prompt is an email with a link to the correction request, V39)"],
   [161, "Source changes flagged for review, not overwritten", "A06 (Source sync card)"],
   [171, "Dashboard by type, source, status and age", "A02 (table added)"],
   [172, "Right of reply", "V39 (choose Add a right-of-reply note)"],
-  [173, "Owners learn which sources were used", "V39 (ask), A56 (staff reply)"],
+  [236, "Subjects can learn status, view count and sources used", "V39 (ask), A56 (staff reply)"],
   [175, "Consent for complimentary profiles", "A07, O22"],
   [189, "Expiry reminders", "A02, A44"],
-  [191, "Progress to about 100 organisations and 100 individuals", "A02 (progress bars added)"],
-  [192, "Continuing sourcing pipeline", "A19, A20"],
+  [192, "Continuing sourcing pipeline", "A20 (import). Sourcing itself runs in the acquisition pipeline (D-038)."],
   [204, "Sending domain visible in outgoing mail", "A40"],
-  [206, "Backlog warning for a third reviewer", "A02 (try the demo button)"],
   [159, "Notify the subject when a stub is created", "A04 shows a disabled control: waiting for Legal (Q5). Not designed further."]
 ];
 const PARTIAL = [

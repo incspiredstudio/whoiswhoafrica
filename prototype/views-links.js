@@ -1,5 +1,5 @@
 /* Account-free pages reached from a single-use signed email link (D-034, REQ-229, 233):
-   customer intake, consent for a complimentary listing, the expired-link page, the claim and nominator link landings live in their own files.
+   customer intake, consent for a complimentary listing and the expired-link page. There is no claiming at all (D-036).
    There is no sign up, sign in, password, account area or owner dashboard anywhere on the public site. */
 (function () {
   var W = window.W, e = W.esc;
@@ -14,11 +14,11 @@
   /* ---------- customer intake by single-use link ---------- */
   W.route("/invite/:token", "O23", function (par) {
     if (W.S.used[par.token]) return expiredPage();
-    return page('<h1>You are invited to create your profile</h1><p>Your arrangement with ' + e(W.brand.name) + ' has been agreed offline. This single-use link starts your profile. There is no account to create and no payment is taken on this site.</p><div class="infobox">A reviewer checks your profile before it is public. After that, ask for changes through the correction form on your public page. Staff apply them.</div>' + W.btn("Start my profile", "startInvite", par.token) + '<p class="small muted">Single-use link, no account. The draft is held against this link until you submit or it expires.</p>');
+    return page('<h1>You are invited to create your profile</h1><p>Your arrangement with ' + e(W.brand.name) + ' has been agreed offline. This single-use link starts your profile. There is no account to create and no payment is taken on this site.</p><div class="infobox">A reviewer checks your profile before it is public. After that, ask for changes through the correction form on your public page. Staff edit the profile.</div>' + W.btn("Start my profile", "startInvite", par.token) + '<p class="small muted">Single-use link, no account. The draft is held against this link until you submit or it expires.</p>');
   });
   W.act.startInvite = function (token) {
     var id = "p-new", p = W.profile(id);
-    if (!p) { W.S.profiles.push({ id: id, slug: "sample-organisation-b", type: "business", name: "", title: "", industry: "", city: "", status: "draft", trust: "unclaimed", sponsored: null, source: "subscriber", aiDrafted: false, views: 0, enquiries: true, lastReviewed: "", bio: "", achievements: "", website: "", facts: [], leadership: [], products: "", public: { website: true, email: false, phone: false }, history: [] }); }
+    if (!p) { W.S.profiles.push({ id: id, slug: "sample-organisation-b", type: "business", name: "", title: "", industry: "", city: "", status: "draft", trust: "", sponsored: null, source: "subscriber", origin: "customer", country: "Nigeria", aiDrafted: false, views: 0, enquiries: true, lastReviewed: "", bio: "", achievements: "", website: "", facts: [], leadership: [], products: "", public: { website: true, email: false, phone: false }, history: [] }); }
     W.S.intake[token] = id; W.save(); W.go("#/invite/" + token + "/form");
   };
 

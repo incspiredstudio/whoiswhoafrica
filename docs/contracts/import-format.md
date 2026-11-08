@@ -276,7 +276,7 @@ After a human approves, the state is Published – reviewed, shown as "Reviewed 
 | U11 | How long passages are kept in WordPress, and how they stay admin-only | Copyright and retention | REQ-063, 208 |
 | U12 | Image storage, if ever allowed | Section 10 | Q34, REQ-080 |
 | U13 | **The under-18 guard in REQ-212 has nothing to check,** because no age or date of birth may be stored (REQ-140) | At present only the seed rule protects against this (plan 1.3) | REQ-068, 212 |
-| U14 | What undo does to a batch once some records in it are reviewed or claimed | Section 12 | REQ-237 |
+| U14 | What undo does to a batch once some records in it are reviewed | Section 12 | REQ-237 |
 
 ## 15. Worked example (fictional; no personal data)
 

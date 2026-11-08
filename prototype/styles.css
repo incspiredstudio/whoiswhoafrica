@@ -83,8 +83,6 @@ legend{font-weight:700;padding:0 var(--s2)}
 .section.alt{background:var(--c-brand-soft)}
 .crumbs{font-size:.875rem;margin:var(--s3) 0;color:var(--c-muted)}
 .pill{display:inline-block;font-size:.75rem;font-weight:700;border-radius:99px;padding:1px 10px;border:1px solid transparent;vertical-align:middle}
-.pill.t-unclaimed{background:var(--t-unclaimed-bg);color:var(--t-unclaimed-ink);border-color:var(--c-line)}
-.pill.t-claimed{background:var(--t-claimed-bg);color:var(--t-claimed-ink);border-color:var(--t-claimed-ink)}
 .pill.t-verified{background:var(--t-verified-bg);color:var(--t-verified-ink);border-color:var(--t-verified-ink)}
 .pill.t-featured{background:var(--t-featured-bg);color:var(--t-featured-ink);border-color:var(--t-featured-ink)}
 .pill.sponsored{background:transparent;color:var(--t-sponsored-ink);border:2px dashed var(--t-sponsored-ink)}

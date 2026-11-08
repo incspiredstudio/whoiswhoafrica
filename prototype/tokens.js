@@ -16,8 +16,6 @@
     "c-ok-soft": "#e1f1e6", "c-warn": "#7a4f00", "c-warn-soft": "#fbf0d4", "c-bad": "#a12b2b",
     "c-bad-soft": "#f8e3e3", "c-ph": "#e6e6df", "c-ph-ink": "#6b6f7a", "c-staff": "#2b2d33",
     "c-staff-ink": "#f2f2ee", "c-judge": "#33264d", "c-bar": "#111318", "c-bar-ink": "#e9e9e4",
-    "t-unclaimed-bg": "#ececE6", "t-unclaimed-ink": "#43474f",
-    "t-claimed-bg": "#e6edf6", "t-claimed-ink": "#1f3a5f",
     "t-verified-bg": "#e1f1e6", "t-verified-ink": "#1b6b3a",
     "t-featured-bg": "#f6ecd6", "t-featured-ink": "#6a4300",
     "t-sponsored-ink": "#6b3a8a",

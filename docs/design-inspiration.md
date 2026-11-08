@@ -51,7 +51,7 @@ The long-running international award for the internet. Pages read: home and the 
 - **Edition identity.** A named edition ("The Maiden Edition") with a year theme could carry the brand.
 - **A clear first action.** Directory search, with the nomination call to action only while the nominations flag is on (REQ-194).
 - **Numbered or carded categories** for awards, and an archive of winners by year and category.
-- **Profile and winner cards** that show the trust label (Unclaimed, Claimed, Verified, Featured) and the Sponsored disclosure, never mixed (docs/GUIDE.md section 4).
+- **Profile and winner cards** that show the trust label (Verified, Featured) or the review-state label and the Sponsored disclosure, never mixed (docs/GUIDE.md section 4).
 - **Rules pages** (eligibility, criteria, process) treated as part of the brand's credibility.
 - **No accounts** (D-034): none of the login or gallery patterns apply.
 

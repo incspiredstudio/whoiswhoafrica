@@ -5,6 +5,8 @@
 **Repo layout (2026-11-08):** `docs/` shared; `prototype/` wireframe; `acquisition/` data acquisition. Interface: `docs/contracts/import-format.md`. Other sessions keep their status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
 ## Stage
+Wireframe review fixes applied 2026-11-08 on branch `chore/wireframe-review-fixes` (built on `chore/repo-restructure`; neither merged): D-035 to D-041 (no directory target, no claiming, only the Nominations flag, no source registry in the website admin, taxonomies, Support inbox, menus by role). REQ-239 to 241 added; REQ-124, 151, 152, 173, 230, 231 withdrawn; Q68 added. See docs/consistency-report.md: eight rulings needed (section 3.1) and the list for the acquisition session (section 4). The wireframe still lacks the D-033 publish-first states.
+
 D-034 (2026-11-08): no login or signup on the public site; only staff use wp-admin. Requirements (REQ-229–236, six withdrawn, eighteen amended), questions Q56–Q62, acquisition plan, GUIDE and the wireframe are updated; architecture.md and ADR-004 are not (rewritten at Gate 2). See docs/change-review-2026-11-08-no-accounts.md. docs/design-inspiration.md added (all points unverified; no browser available).
 
 Gate 1 answered. D-031: the CMS is WordPress on cPanel (supersedes the Laravel proposal; architecture.md and ADRs not yet revised). D-033 as amended (2026-11-08): the acquisition pipeline never publishes; records are imported into WordPress and reviewed there; organisations live on import, labelled and noindex; individuals and entrepreneurs not public until approved. **Now: your rulings (plan section 12, Q46, Q55, Q63–Q67 first), then wireframe review** (prototype/, not yet updated for D-033). After review: revise architecture.md for WordPress and D-033, with the import path (REQ-237) as priority input (Gate 2), then /plan (Gate 3).
@@ -33,6 +35,8 @@ Gate 1 answered. D-031: the CMS is WordPress on cPanel (supersedes the Laravel p
 See docs/decisions.md. Key: no payments on the site (D-005); admin commercial register (D-006); individual stubs published without consent with kill switch (D-013); AI drafting allowed with strict rules (D-017); full awards workflow behind OFF flags (D-019); domain wiwi.africa (D-001); no tiers or packages, commercial arrangements only (D-028); public indexed site (D-029); pipeline never publishes; organisations live on import, labelled and noindex; individuals not public until approved (D-033 as amended).
 
 ## Next up
+- You: rule on docs/consistency-report.md section 3.1; merge the two branches in order (`chore/repo-restructure`, then `chore/wireframe-review-fixes`)
+- Acquisition session: apply docs/consistency-report.md section 4 in `acquisition/`
 - You: rule on Q56–Q62 (defaults in docs/change-review-2026-11-08-no-accounts.md section 5); open both reference sites in a browser to confirm docs/design-inspiration.md
 - You: answer Q46, Q55, Q63–Q67, Q31 first, then the rest of plan section 12, by Mon 9 Nov; send Legal the questions in plan 6.5 by 9 Nov; name reviewers (Q4) and Editor-in-Chief; check the Anthropic account tier. Approve all run sources by Tue 10 Nov: the run starts straight after.
 - Agents: read unread source terms and prepare registry entries (9 Nov); run A organisations (10 Nov); run B individuals once Legal confirms the transfer basis (by 13 Nov).

@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v4";
+  var KEY = "wiw-wireframe-v5";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,12 +21,12 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 4 ? raw : W.seed();
+    W.S = raw && raw.v === 5 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
-    if (W.S.lists) Object.keys(W.S.lists).forEach(function (k) { W.LISTS[k] = W.S.lists[k]; });
+    W.syncLists();
   };
   W.save = function () { try { localStorage.setItem(KEY, JSON.stringify(W.S)); } catch (x) { /* storage blocked: state lives for this page only */ } };
-  W.reset = function () { try { localStorage.removeItem(KEY); } catch (x) { } W.S = W.seed(); W.LISTS.industries = W.S.lists.industries.slice(); W.LISTS.cities = W.S.lists.cities.slice(); W.LISTS.orgTypes = W.S.lists.orgTypes.slice(); W.LISTS.professions = W.S.lists.professions.slice(); W.save(); };
+  W.reset = function () { try { localStorage.removeItem(KEY); } catch (x) { } W.S = W.seed(); W.syncLists(); W.save(); };
   W.log = function (action, target, detail) {
     var A = W.S.audit, prev = A.length ? A[A.length - 1].hash : "00000000";
     var row = { n: A.length + 1, at: W.TODAY + " " + ("0" + (9 + (A.length % 9))).slice(-2) + ":" + ("0" + ((A.length * 7) % 60)).slice(-2), actor: W.S.role === "visitor" ? "system" : (W.persona ? W.persona() : W.roleName(W.S.role)), action: action, target: target || "", detail: detail || "", prev: prev };
@@ -40,7 +40,10 @@
   W.purge = function (url, why) { W.S.purges.unshift({ id: W.uid("pg"), url: url, why: why, at: W.TODAY, status: "purged (sample: about 5 s)" }); };
 
   /* ---------- selectors ---------- */
-  W.isKilled = function (p) { return !!(W.S.kill.on && p.type === "individual" && p.trust === "unclaimed" && p.status === "published"); };
+  /* Origin of a profile: "import" (arrived through the acquisition import) or "customer" (submitted by, or created with the consent of, the person or organisation). */
+  W.origin = function (p) { return p.origin || (p.source === "acquired" ? "import" : "customer"); };
+  /* The kill switch hides every individual profile whose origin is the acquisition import, even if it was later made Verified, Featured or Sponsored. Individual profiles a customer submitted or consented to are not affected. */
+  W.isKilled = function (p) { return !!(W.S.kill.on && p.type === "individual" && W.origin(p) === "import" && p.status === "published"); };
   W.vis = function (p) {
     if (!p) return "none";
     if (p.status === "published") return W.isKilled(p) ? "gone" : "public";
@@ -83,14 +86,17 @@
   W.queue = function () { return W.S.profiles.filter(function (p) { return p.status === "pending" || p.edit; }); };
   W.ok = function (name) { return !!W.S.flags[name].on; };
   W.nomOpen = function () { return W.ok("nominations"); };
-  W.shortlistVisible = function () { return W.ok("judging") || W.S.nominations.some(function (n) { return n.status === "shortlisted" && n.publicOK; }); };
+  /* Shortlist, finalist and winner pages go public through the normal publish step (staff press Publish on the nomination). There is no flag (D-037). */
+  W.nomPublic = function (n) { return !!(n && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && n.pub); };
   W.nomStage = function (n) {
     var m = { submitted: 2, screening: 4, invited: 4, accepted: 5, assessment: 5, shortlisted: 6, finalist: 7, winner: 9, ineligible: 4, declined: 4 };
     return m[n.status] || 2;
   };
 
   /* ---------- html bits ---------- */
-  W.trustPill = function (p) { var t = p.trust; return '<span class="pill t-' + t + '" title="Trust status (REQ-024)">' + (t === "verified" ? "✓ " : t === "featured" ? "★ " : "") + W.cap(t) + "</span>"; };
+  W.trustPill = function (p) { var t = p.trust; if (t !== "verified" && t !== "featured") return ""; return '<span class="pill t-' + t + '" title="Trust label (REQ-024). Staff checklist or editorial choice; never bought.">' + (t === "verified" ? "✓ " : "★ ") + W.cap(t) + "</span>"; };
+  W.PENDING_LABEL = "Compiled automatically from public sources. Human review pending.";
+  W.statePill = function (p) { return p.status === "published" && p.lastReviewed ? '<span class="pill ok" title="Review state (D-033)">Reviewed on ' + e(p.lastReviewed) + "</span>" : ""; };
   W.spPill = function (name) { return name ? ' <span class="pill sponsored" title="Paid placement disclosure. Not a trust status (REQ-155).">Sponsored · ' + e(name) + "</span>" : ""; };
   W.stPill = function (s) {
     var m = { published: "ok", confirmed: "ok", approved: "ok", pending: "warn", open: "warn", draft: "gray", proposed: "gray", rejected: "bad", unpublished: "bad", suppressed: "bad", cancelled: "bad", ended: "gray", new: "warn", contacted: "gray", qualified: "ok" };
@@ -174,9 +180,9 @@
   }
   function banners() {
     var S = W.S, out = "";
-    if (S.kill.on) out += '<div class="banner kill" role="status"><div class="wrap"><strong>Kill switch is ON.</strong> All unclaimed individual profiles return 410 and are hidden from listings, search and the sitemap. <a href="#/admin/killswitch" style="color:inherit">Manage</a></div></div>';
+    if (S.kill.on) out += '<div class="banner kill" role="status"><div class="wrap"><strong>Kill switch is ON.</strong> Every individual profile that came from the acquisition import returns 410 and is hidden from listings, search and the sitemap. Individual profiles that customers submitted are not affected. <a href="#/admin/killswitch" style="color:inherit">Manage</a></div></div>';
     var on = Object.keys(S.flags).filter(function (k) { return S.flags[k].on; });
-    if (on.length) out += '<div class="banner flags" role="status"><div class="wrap">Feature flags ON: ' + on.map(function (k) { return "<strong>" + e(k) + "</strong>"; }).join(", ") + '. <a href="#/admin/flags">Manage</a></div></div>';
+    if (on.length) out += '<div class="banner flags" role="status"><div class="wrap">Feature flag ON: ' + on.map(function (k) { return "<strong>" + e(k) + "</strong>"; }).join(", ") + '. <a href="#/admin/flags">Manage</a></div></div>';
     return out;
   }
   function header(cur) {
@@ -274,7 +280,7 @@
   W.act.cookiePrefs = function () { W.S.consent = null; W.save(); W.render(); };
   W.act.outbox = function () {
     var em = W.S.emails;
-    W.openModal("Sample email outbox", '<p class="small muted">Every email the system would send appears here. Open the link to act as the recipient.</p>' + (em.length ? em.map(function (m) { return '<div class="card" style="margin-bottom:8px"><strong>' + e(m.subject) + '</strong><div class="small muted">To: ' + e(m.to) + '</div><p class="small">' + e(m.body) + "</p>" + (m.link ? '<a class="btn sm" href="' + e(m.link) + '" data-act="closeModal-go" data-arg="' + e(m.link) + '">Open link in email</a>' : "") + "</div>"; }).join("") : W.empty("No emails yet", "Do something that sends mail (request to claim, nominate, submit, approve).")));
+    W.openModal("Sample email outbox", '<p class="small muted">Every email the system would send appears here. Open the link to act as the recipient.</p>' + (em.length ? em.map(function (m) { return '<div class="card" style="margin-bottom:8px"><strong>' + e(m.subject) + '</strong><div class="small muted">To: ' + e(m.to) + '</div><p class="small">' + e(m.body) + "</p>" + (m.link ? '<a class="btn sm" href="' + e(m.link) + '" data-act="closeModal-go" data-arg="' + e(m.link) + '">Open link in email</a>' : "") + "</div>"; }).join("") : W.empty("No emails yet", "Do something that sends mail (nominate, send a correction, submit, approve).")));
   };
   W.act["closeModal-go"] = function (h) { W.ui.modal = null; W.go(h); };
   W.forms.search = function (d) { W.go("#/search" + W.qs({ q: d.q })); };
