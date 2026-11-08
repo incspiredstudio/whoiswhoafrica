@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (52 items): Answered 25 · Default accepted 12 · Pending - team lead 1 · Open 14 (Q26–Q28 architecture; Q29–Q39 acquisition plan).**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 39: Answered 16, Default accepted 8, Pending 1 (Q16), Open 14 (Q26–Q39).
+**Status summary (62 items): Answered 26 · Default accepted 12 · Pending - team lead 1 · Open 23 (Q26–Q28 architecture; Q29, Q31–Q39 acquisition plan; Q46–Q55 publish first).**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 49: Answered 17, Default accepted 8, Pending 1 (Q16), Open 23. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -36,10 +36,10 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 
 | Q | Status | Question | Why it matters | Decision / default | Ref |
 |---|---|---|---|---|---|
-| Q1 | Answered | How many organisation and individual profiles, by when, for what purpose? | Import volume, human review workload, exposure of unreviewed data. | **Corrected.** There is no private preview: the staging/demo site is public and can be indexed. A profile is public only after a human reviewer approves it; drafts and unreviewed profiles are admin-only. Target: ~100 organisation and ~100 individual reviewed profiles live; keep sourcing in parallel. The kill switch and suppression list must work on public, indexed pages (immediate unpublish, 410/noindex). | D-012 |
+| Q1 | Answered | How many organisation and individual profiles, by when, for what purpose? | Import volume, human review workload, exposure of unreviewed data. | **Amended by D-033.** **Corrected.** There is no private preview: the staging/demo site is public and can be indexed. A profile is public only after a human reviewer approves it; drafts and unreviewed profiles are admin-only. Target: ~100 organisation and ~100 individual reviewed profiles live; keep sourcing in parallel. The kill switch and suppression list must work on public, indexed pages (immediate unpublish, 410/noindex). | D-012 |
 | Q2 | Answered | Are public unclaimed individual stubs in the MVP? | Data model, legal exposure. | **Yes, in MVP and published without consent.** Professional facts only, each with source and retrieval date, human-reviewed first, visible claim / correct / remove link, permanent suppression list. **Global kill switch** unpublishes all unclaimed individual profiles at once. | D-013 |
 | Q3 | Default accepted | Which source types are acceptable? | Ingestion and reviewer trust. | Registries, regulators, exchange listings, Wikidata, licensed APIs, official sites; each source approved before use. Never LinkedIn or other social platforms; never news article text or photos. | D-014 |
-| Q4 | Answered | Who reviews, and how many per week? | Review is the quality gate. | Default accepted with one change: **100% human review before anything publishes (no sampling)**. Reviewers: `<name 1>`, `<name 2>` (names not yet supplied). About 40 profiles per reviewer per week; add a third reviewer if backlog grows. | D-015 |
+| Q4 | Answered | Who reviews, and how many per week? | Review is the quality gate. | **Amended by D-033: review now follows publication for acquired records.** Default accepted with one change: **100% human review before anything publishes (no sampling)**. Reviewers: `<name 1>`, `<name 2>` (names not yet supplied). About 40 profiles per reviewer per week; add a third reviewer if backlog grows. | D-015 |
 | Q5 | Answered | Legal basis for publishing personal data? | Consent flows, takedown handling. | Legitimate interests with right to object. Position requested from Incspired Legal by 13 Nov, in parallel with the build; **not a build blocker**. If Legal objects, use the kill switch and adjust. | D-016 |
 | Q6 | Answered | Is AI drafting allowed in the MVP? | Vendor, data transfer, review UI. | **Allowed** for organisations and individuals under rules: restate source facts only; every claim linked to a source passage and dropped if not; no claims on legal trouble, health, family, finances, politics; neutral tone; human approves every draft with claims beside sources; internal AI-assisted field plus model and prompt version; provider that does not train on our data; Legal confirms the transfer. | D-017 |
 | Q7 | Answered | Free tier, and what each paid tier adds? | Entitlements. | **No tiers, packages or entitlements.** Every listing has the same format. Commercial relationships are arrangements recorded in the admin register: type (sponsored post, sponsored profile, media/editorial package, awards sponsorship, other), customer, amount, currency, payment method and reference, date received, confirmed by, start/end dates, notes. | D-028 |
@@ -75,23 +75,40 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 | Q27 | Open | Which Incspired shared services can we reuse (existing Cloudflare account, email provider, monitoring, Sentry, backup storage, a VPS)? | Fewer new accounts and processors. | Open the new accounts listed in architecture.md section 8. |
 | Q28 | Open | Who owns and pays for the new accounts (Cloudflare, Brevo, R2, Sentry, Anthropic API), and who is the named admin on each? | Account creation by 13 Nov (Q14); processor register (REQ-065). | You (the supervisor) own them; Incspired IT is added as a second admin. |
 
-### Acquisition plan questions (raised 2026-11-07, see docs/acquisition-plan.md section 12)
+### Acquisition plan questions (raised 2026-11-07, updated 2026-11-08 for D-033, see docs/acquisition-plan.md section 12)
 
-Q29 and Q30 would amend recorded decisions (D-010/D-025 and D-015/REQ-148). Q29–Q33 block the pilot (target start 10 Nov).
+Q29 would amend D-010 and D-025. Q29, Q31–Q33 block the pilot (target start 10 Nov).
 
 | Q | Status | Question | Why it matters | Default if you do not know |
 |---|---|---|---|---|
 | Q29 | Open | Split of the first 1,000: 500 organisations / 200 entrepreneurs / 300 individuals; 850 Nigeria / 150 other African (amends D-010, D-025)? | Source work, Legal per country | As proposed; non-Nigerian from batch B3 after Legal clears each country |
-| Q30 | Open | Keep 100% review (D-015) or allow sampling of structured registry organisation records (T1) after a measured gate? | Tooling (T-14), trust; saves only 2–5% | Keep 100% review |
-| Q31 | Open | Reviewer hours and target date for 1,000 | Section 4 capacity | 2 reviewers × 15 h/week → about 17 Jan |
+| Q30 | Answered | Keep 100% review (D-015) or allow sampling of structured registry organisation records (T1) after a measured gate? | Tooling (T-14), trust; saves only 2–5% | **Overtaken by D-033.** T-14 dropped. |
+| Q31 | Open | Reviewer hours and target date for 1,000 | Section 4 capacity | 2 reviewers × 15 h/week → 1,000 live by 10 Jan, all reviewed by 17 Jan |
 | Q32 | Open | Pilot review in hash-locked review packs before WordPress is ready, or wait for the WordPress review queue? | Pilot start date | Review packs |
 | Q33 | Open | Approve the pilot sources marked "Approve for pilot" (plan 2.2–2.5) with the supervisor as named approver (REQ-137)? | No fetch without approval | Approve |
 | Q34 | Open | Photos on unclaimed individuals and organisation logos? | Personality rights, trademark | None in the first 1,000 until Legal advises |
-| Q35 | Open | First individual published only after Legal's assessment and DPIA, or under D-016 with the kill switch? | Legal exposure | Wait for Legal; organisations publish first |
-| Q36 | Open | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field |
+| Q35 | Open | First individual published only after Legal's written answer (assessment, DPIA and the new publish-first questions in plan 6.5), or under D-016 with the kill switch? Also amends REQ-170 wording. | Legal exposure; automatic publishing raises it | Wait for Legal; organisations publish first. Legal can take until about 7 Dec without moving a date. |
+| Q36 | Open | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field, always amber (full human review before going live) |
 | Q37 | Open | Listed companies from issuer pages + Wikidata, or wait for an NGX data licence? | NGX terms ban aggregation | Issuer pages + Wikidata; ask NGX for a quote |
-| Q38 | Open | AI budget cap US$250 and the reviewer hourly rate | Cost estimate | Cap approved; rate needed |
-| Q39 | Open | AI model and inference location (Opus 5.5 global, US-only at 1.1x, or Sonnet 5.5)? | Transfer record (REQ-169) | Opus 5.5, global, unless Legal prefers US-only |
+| Q38 | Open | AI budget cap US$450 (was US$250; audit and monitoring added) and the reviewer hourly rate | Cost estimate | Cap approved; rate needed |
+| Q39 | Open | AI model and inference location, for drafting, audit and monitoring (Opus 5.5 global, US-only at 1.1x, or Sonnet 5.5)? | Transfer record (REQ-169) | Opus 5.5, global, unless Legal prefers US-only |
+
+### Publish-first questions (raised 2026-11-08, see D-033, docs/change-review-2026-11-08-publish-first.md section 5 and plan section 12)
+
+Q46–Q49, Q53 and Q55 change the model and should be answered first. Q50–Q52 and Q54 are values I proposed.
+
+| Q | Status | Question | Why it matters | Default if you do not know |
+|---|---|---|---|---|
+| Q46 | Open | D-017, REQ-163 and REQ-168 require human approval of every AI draft before going live. Amend them, and does an AI-drafted organisation (T2) get a quick look, no look, or stay review-first? | D-033 cannot work with them as written; T2 is not named in your tiers | Amend; T2 gets a quick look |
+| Q47 | Open | Control 2: keep the quick look for individuals and entrepreneurs, or publish them unreviewed too? D-013 needs a matching amendment either way. | Exposure; no look gains one week and 10 hours | Keep the quick look |
+| Q48 | Open | Does D-033 cover acquired records only, leaving customer submissions, owner edits, complimentary listings and nominees approval-first (REQ-014, 015, 175, 198)? | Scope of the change | Acquired records only |
+| Q49 | Open | What counts toward targets: live or reviewed? Does every record get a human review, with "samples" only setting the order? (D-012, REQ-104, REQ-191) | Reporting; noindex lasts until review | Report both; target = live; D-012 stays reviewed; every record is reviewed |
+| Q50 | Open | Cap on pending profiles: 400 total and 150 individuals, or two weeks of review capacity if lower; ramp 50, 150, 300, then cap? | Exposure against speed; 600/300 brings 1,000 live forward two weeks | As proposed; raise only after 200 individuals are reviewed cleanly |
+| Q51 | Open | Automatic pause thresholds in plan 6.1? | When publishing stops by itself | Accept |
+| Q52 | Open | AI takedown limits: any code on pending; S1 only on reviewed, claimed, verified or sponsored profiles, otherwise a flag; AI restores technical codes only? | You said "any it finds unsuitable"; a false takedown of a customer profile is costly | As proposed |
+| Q53 | Open | Is the "staging database" a private store no public site reads, or the one behind staging.wiwi.africa (public, D-029)? | Real unreviewed data on a public staging site; architecture line 273 | Private store |
+| Q54 | Open | Do indexable list pages show reviewed profiles only, with pending found by search, direct link or a noindex view? | Noindex on a profile does not stop its name being indexed through a list | Reviewed only |
+| Q55 | Open | Many sources are manual-only (CBN, PenCom, NAICOM, SEC, NCC, State House). Should agents read each one's terms and robots rules so you can approve re-coding where allowed, with the rest staying amber? | Pipeline cannot gather from them or monitor them; T1 may be mostly amber | Yes |
 
 ---
 
@@ -122,6 +139,8 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 ---
 
 ## Risk register
+
+**Not yet rewritten for D-033.** Entries citing "100% human review" before publishing are out of date; current risks are in docs/acquisition-plan.md section 10.2.
 
 | Risk | Impact | Mitigation in requirements |
 |---|---|---|

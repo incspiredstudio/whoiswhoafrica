@@ -6,6 +6,7 @@ Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). 
 **Q7/Q8/C13 resolved (D-028):** there are no tiers, packages or entitlements. Every listing has the same format. Commercial relationships are admin-recorded arrangements. Withdrawn for this reason: REQ-010, 012, 017, 185.
 **Q1 correction (D-029):** the demo site is public and indexable; profiles are visible only after human approval; removals return 410/noindex (REQ-208, 209).
 **Q17 answered (D-030):** one login per profile owner; REQ-111 withdrawn for now.
+**Publish first (D-033, 2026-11-08):** acquired records publish before human review, labelled and noindex, and every one is reviewed afterwards. REQ-148 and REQ-208 are amended; REQ-210 to REQ-228 are added in section 12. Requirements marked "Conflict with D-033" are unchanged until you rule.
 **Pending (team lead):** Q16.
 
 **Priority key:** `M` = MVP, built as early as possible (dates in the brief are ceilings, not targets) · `M (flag)` = built in the MVP but behind a feature flag that is OFF until the Venture CEO approves · `S` = should · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
@@ -49,7 +50,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-003 | The system supports individual profiles with: full name, title, industry/expertise, biography, career history, achievements, education, affiliation, social/professional links, media appearances, awards, enquiry option. | 5.1 | M |
 | REQ-004 | The system supports business profiles with: name, industry/sector, description, founding year, HQ and locations, leadership, products/services, achievements, website/social, business contact, media features. | 5.1 | M |
 | REQ-005 | The system supports institutional profiles (education, associations, public bodies, NGOs) as a distinct type with the business fields plus mandate/type and a longer history section. | 5.1 | S |
-| REQ-006 | Every published profile has a stable public URL, unique slug, page title/meta description, Open Graph tags and schema.org (Person/Organization) markup, and is listed in the sitemap. | 5.3, 12 | M |
+| REQ-006 | Every published profile has a stable public URL, unique slug, page title/meta description, Open Graph tags and schema.org (Person/Organization) markup, and is listed in the sitemap. *(D-033: pending-review profiles have no sitemap entry or schema.org markup; REQ-217.)* | 5.3, 12 | M |
 | REQ-007 | The directory can be browsed and filtered by industry, profession, sector, country, city, organisation type, professional category, achievement/recognition and award category. | 5.2 | M (industry, type, country, city, profession); S (rest) |
 | REQ-008 | Visitors can search profiles by name, organisation or keyword and get ranked results. | 5.2 | M |
 | REQ-009 | Admins can manage the controlled lists (industries, sectors, professions, organisation types, countries, cities) used by profiles and filters. | 5.2 | M |
@@ -92,14 +93,14 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-041 | Profile and directory pages reach Largest Contentful Paint ≤ 2.5 s on a mid-range Android phone over throttled 4G. *(assumed target)* | 12 | M |
 | REQ-042 | Images are served resized and in modern formats via a CDN. | 12.1 | M |
 | REQ-043 | Public pages meet WCAG 2.1 AA. *(assumed target)* | 12 | M |
-| REQ-044 | Public content is server-rendered or static so it is indexable; canonical URLs and sitemaps are provided. | 5.3 | M |
+| REQ-044 | Public content is server-rendered or static so it is indexable; canonical URLs and sitemaps are provided. *(D-033: pending-review pages are noindex; REQ-217.)* | 5.3 | M |
 | REQ-045 | Production availability ≥ 99.5% monthly; the enquiry form, directory and admin sign-in are monitored with alerting. *(assumed)* | — | M |
 | REQ-046 | All traffic is HTTPS; OWASP Top-10 mitigations, security headers, form rate limits and dependency scanning are in place. | — | M |
 | REQ-047 | Staff accounts require strong passwords and MFA. | — | M |
 | REQ-048 | **WITHDRAWN** (no card handling on the site; PCI scope removed). ~~Card data never touches WHOISWHO servers (hosted checkout / tokenised).~~ | — | Withdrawn |
 | REQ-049 | Database and uploads are backed up daily; a restore is tested before launch; RPO 24 h, RTO 8 h. *(assumed)* | — | M |
 | REQ-050 | Errors, uptime and form-submission failures are monitored; logs contain no personal data beyond IDs. | — | M |
-| REQ-051 | All staff/admin actions on profiles, customer records and reviews are written to an immutable audit log. | 15.7 | M |
+| REQ-051 | All staff/admin actions on profiles, customer records and reviews are written to an immutable audit log. *(D-033: AI actions too; REQ-228.)* | 15.7 | M |
 | REQ-052 | Brand colours, type and the tagline "Influence. Achievement. Legacy." are implemented as design tokens so the approved identity can be applied or changed without rebuilding pages. | 2.2, 12.1 | M |
 | REQ-053 | The site is English-only, handles names with diacritics (UTF-8), uses NGN formatting and the WAT time zone. | 7.2 | M |
 | REQ-054 | The design handles ≥ 50 concurrent users and ≥ 100k page views/month on the launch infrastructure. *(assumed)* | — | M |
@@ -148,8 +149,8 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-083 | An admin console with roles: Admin, Editor, Reviewer, Sales/Support, Finance, Judge. | 13 | M |
-| REQ-084 | A review queue shows each pending item with a field-level diff, sources and approve / edit / reject-with-reason actions. | 8 P2 | M |
+| REQ-083 | An admin console with roles: Admin, Editor, Reviewer, Sales/Support, Finance, Judge. *(D-033: plus two non-human roles; REQ-219.)* | 13 | M |
+| REQ-084 | A review queue shows each pending item with a field-level diff, sources and approve / edit / reject-with-reason actions. *(D-033: also used after publication; REQ-222.)* | 8 P2 | M |
 | REQ-085 | Staff can create or edit a profile on behalf of a subscriber or as a complimentary listing; these are flagged and attributed. | 9.3 | M |
 | REQ-086 | Admins can edit a customer record's status, extend or end a term, or mark it complimentary; each change requires a reason and is audited. Refunds and cancellations are handled offline by Finance and recorded as a note and status only. | — | M |
 | REQ-087 | The commercial register exports to CSV with the counting-rule status of each row. | 9.3, 14 | M |
@@ -242,7 +243,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-132 | Organisation stubs (approach A) can be created from approved sources and published as Unclaimed after review. | brief | M |
+| REQ-132 | Organisation stubs (approach A) can be created from approved sources and published as Unclaimed after review. *(D-033: may publish before human review; REQ-214.)* | brief | M |
 | REQ-133 | Individual stubs (approach C) are enabled in the MVP and published without the individual's consent under the rules in REQ-139 to REQ-176, with the kill switch REQ-193. | brief | M |
 | REQ-134 | Bulk-import adapters exist for CSV/JSON and for the Wikidata SPARQL API; other sources are entered manually. | brief | M |
 | REQ-135 | Wikidata-sourced records store the QID and are re-synced on request. | brief | S |
@@ -251,14 +252,14 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-138 | No automated collection from sites whose terms or robots rules forbid it, nor from login-walled sites or social platforms (including LinkedIn); any crawler identifies itself, rate-limits itself and never circumvents blocks. | brief | M |
 | REQ-139 | Individual stubs hold only these fields: name, current title, current organisation, industry, public-record roles (board, office), published awards, official or organisational website. | brief | M |
 | REQ-140 | Never stored for individuals: home address, phone, personal email, family, date of birth or age, health, religion, politics, ethnicity, finances, allegations, or personal social handles. The schema offers no field for them. | brief | M |
-| REQ-141 | Free-text fields in any stub or draft are scanned for patterns (phones, emails, addresses, ages, sensitive keywords) and blocked from review until cleared. | brief | M |
+| REQ-141 | Free-text fields in any stub or draft are scanned for patterns (phones, emails, addresses, ages, sensitive keywords) and blocked from review until cleared. *(D-033: also blocked from publishing; REQ-212.)* | brief | M |
 | REQ-142 | Every field on an acquired record stores: source URL, retrieval date, confidence (high / medium / low) and method (API / import / manual / AI). | brief | M |
 | REQ-143 | Fields with low confidence or no source cannot be published. | brief | M |
-| REQ-144 | Public stub pages show the source link for key facts and a "last reviewed" date. | brief | M |
+| REQ-144 | Public stub pages show the source link for key facts and a "last reviewed" date. *(D-033: pending profiles show the REQ-216 label instead of a date.)* | brief | M |
 | REQ-145 | Each organisation and individual has one persistent ID; matching uses RC number, Wikidata QID, and normalised name + organisation + location. | brief | M |
 | REQ-146 | Probable duplicates are queued for human merge review; individuals are never auto-merged. | brief | M |
 | REQ-147 | A suppression list holds people and organisations who asked for removal; imports skip them. | brief | M |
-| REQ-148 | All acquired records go to the editorial review queue (REQ-084) with sources visible. 100% human review before publishing (no sampling); the approving reviewer is not the importer or drafter. | brief | M |
+| REQ-148 | **AMENDED by D-033.** All acquired records pass the publish gate (REQ-212) from the staging database (REQ-211) and publish under the tier rules (REQ-214). A human reviews every published record afterwards in the review queue (REQ-084, REQ-222) with sources visible. A record stays Published – review pending and noindex until a human approves it. The approving reviewer is not the importer or drafter. ~~All acquired records go to the editorial review queue (REQ-084) with sources visible. 100% human review before publishing (no sampling); the approving reviewer is not the importer or drafter.~~ | brief | M |
 | REQ-149 | Review throughput, queue age and rejection reasons are tracked. | brief | M |
 | REQ-150 | The status ladder is Unclaimed → Claimed → Verified → Featured; transitions are logged with actor and reason. | brief | M |
 | REQ-151 | All acquired stubs carry a visible "Unclaimed" label explaining that WHOISWHO compiled it from public sources. | brief | M |
@@ -273,14 +274,14 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-160 | Unclaimed records are re-checked every 6 months, flagged stale at 12 months, and unpublished if not re-reviewed by 18 months; claimed owners are prompted yearly. | brief | S |
 | REQ-161 | Records synced from external sources flag source changes for review rather than overwriting. | brief | S |
 | REQ-162 | Stub profiles show no photograph unless it is owner-supplied or licensed. | brief | M |
-| REQ-163 | Reviewers apply a neutral-content checklist: no allegations, litigation, rumours, opinion or personal life; only dated, sourced, professional facts. | brief | M |
+| REQ-163 | **Conflict with D-033: see Q46.** Reviewers apply a neutral-content checklist: no allegations, litigation, rumours, opinion or personal life; only dated, sourced, professional facts. | brief | M |
 | REQ-164 | A corrections log records every change made after publication on a stub, with the reason. | brief | M |
 | REQ-165 | AI drafting is allowed for organisation and individual profiles under REQ-166 to REQ-170 and is controlled by a feature flag. | brief | M |
 | REQ-166 | The model may only restate facts found in the fetched source text. Every claim is mapped to a stored source passage; any claim without a mapping is dropped automatically. | brief | M |
 | REQ-167 | AI output uses a neutral, factual tone with no praise or superlatives, and makes no claims about legal trouble, health, family, finances or political views. | brief | M |
-| REQ-168 | A human reviewer approves every AI-drafted profile and sees each claim next to its source. Profiles record internally that they were AI-assisted, plus model, prompt version and source hash. | brief | M |
+| REQ-168 | **Conflict with D-033: see Q46.** A human reviewer approves every AI-drafted profile and sees each claim next to its source. Profiles record internally that they were AI-assisted, plus model, prompt version and source hash. | brief | M |
 | REQ-169 | The AI provider's API terms exclude training on our data; Legal confirms the data transfer; the provider is in the processor register (REQ-065). | brief | M |
-| REQ-170 | The public disclosure page states how AI-assisted profiles are produced and reviewed (wording as Legal decides). | brief | M |
+| REQ-170 | **Must now describe publish first: see Q35.** The public disclosure page states how AI-assisted profiles are produced and reviewed (wording as Legal decides). | brief | M |
 | REQ-171 | A dashboard reports profiles by entity type, source, status and age. | brief | S |
 | REQ-172 | A subject may add a short right-of-reply note to a profile or editorial item, subject to review. | brief | S |
 | REQ-173 | Claimed profile owners can see which sources the platform used about them. | brief | S |
@@ -332,9 +333,9 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-188 | Every change to arrangements, Sponsored/Featured/Verified labels, sponsors and notes is written to the audit log (extends REQ-051) with actor, time, old and new values. | 15.7 | M |
 | REQ-189 | Admins see reminders for upcoming expiries; the system takes no automatic action against customers. | Q10 | M |
 | REQ-190 | All brand values (colours, fonts, logo, spacing) live in one central theme config; no brand values are hard-coded elsewhere, and a check fails the build if they are. | C5 | M |
-| REQ-191 | The target is about 100 organisation and about 100 individual reviewed profiles live. The demo/staging site is public and indexable by search engines; there is no private preview and no login protection. | Q1 | M |
+| REQ-191 | **Conflict with D-033: see Q49.** The target is about 100 organisation and about 100 individual reviewed profiles live. The demo/staging site is public and indexable by search engines; there is no private preview and no login protection. | Q1 | M |
 | REQ-192 | Sourcing of further organisations and individuals continues in parallel through the approved pipeline. | Q1 | M |
-| REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once and works on public, indexed pages (REQ-209). It is reversible, restricted to named roles, and audited. | Q2 | M |
+| REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once and works on public, indexed pages (REQ-209). It is reversible, restricted to named roles, and audited. *(D-033: REQ-227 covers pending organisations.)* | Q2 | M |
 | REQ-194 | Feature flags for nominations, judging and public announcements default OFF; switching one on requires the Admin role, records the CEO's approval reference, and is audited. | C9, Q12 | M |
 | REQ-195 | While nominations are off, the Nominate page shows "Nominations open soon" with an email sign-up (consent recorded, unsubscribe supported). | C9 | M |
 | REQ-196 | Anyone may nominate. The nominator's email is verified; submissions are rate-limited with duplicate detection; there is no public voting. | Q15 | M (flag) |
@@ -347,12 +348,63 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-203 | Images under open licences (e.g. Wikimedia Commons) may be used when the licence and attribution are stored with the image and shown on the page; no other third-party photos. | Q22 | M |
 | REQ-204 | The domain is wiwi.africa, including the email sending domain with SPF, DKIM and DMARC. | C1 | M |
 | REQ-205 | Customers, leads and enquiries have stable external IDs and change timestamps so a CaromHQ integration can be added later; CSV import/export works meanwhile (REQ-077). | C12 | M |
-| REQ-206 | The review queue shows per-reviewer workload and warns when backlog exceeds capacity so a third reviewer can be added. | Q4 | M |
+| REQ-206 | The review queue shows per-reviewer workload and warns when backlog exceeds capacity so a third reviewer can be added. *(D-033: the backlog is now the post-publication queue; REQ-222, REQ-225.)* | Q4 | M |
 | REQ-207 | The suppression list is permanent, cannot be bypassed by any import, and covers removed individuals, declined nominees and removed organisations. | Q2, Q15 | M |
 
 ## 11. Added after Q1/Q7 corrections
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-208 | A profile is publicly visible only after a human reviewer approves it. Drafts, unreviewed, rejected and AI-drafted-pending profiles are visible to admin roles only. This holds across pages, search, sitemaps, feeds, APIs, previews and caches, and automated tests cover each. | Q1 | M |
+| REQ-208 | **AMENDED by D-033.** A profile is publicly visible only in state Published – review pending or Published – reviewed (REQ-210). Staged, held, rejected, taken-down and unpublished profiles are visible to admin roles only. Customer-submitted profiles and owner edits are public only after a human approves them (REQ-014, 015). This holds across pages, search, sitemaps, feeds, APIs, previews and caches, and automated tests cover every state on every surface. ~~A profile is publicly visible only after a human reviewer approves it. Drafts, unreviewed, rejected and AI-drafted-pending profiles are visible to admin roles only. This holds across pages, search, sitemaps, feeds, APIs, previews and caches, and automated tests cover each.~~ | Q1 | M |
 | REQ-209 | Unpublishing is immediate and works on public, indexed pages: removal, suppression, nominee decline and the kill switch make the URL return 410 Gone with a noindex header, drop it from the sitemap and internal search, and purge it from the CDN/cache. Restoring after a reversible unpublish returns 200. | Q1, Q2 | M |
+
+## 12. Added for publish first (D-033)
+
+These apply to acquired records (REQ-132, REQ-133). Customer submissions, owner edits, complimentary listings and nominee pages stay approval-first (REQ-014, 015, 175, 198) unless Q48 rules otherwise. They are the WordPress build's input (D-031). Numbers and limits marked "default" are proposals awaiting Q50–Q52 and are stored as settings, not code.
+
+| ID | Requirement | Source | Pri |
+|---|---|---|---|
+| REQ-210 | Every profile has exactly one publication state, stored separately from its trust status (REQ-150): Staged, Awaiting quick look, Held amber, Held red, Published – review pending, Published – reviewed, AI takedown, Unpublished, Rejected, Removed and suppressed. Only the two Published states are public. Only the transitions in the table below are allowed; any other attempt is refused and logged. | D-033 | M |
+| REQ-211 | Pipeline output is held in a staging database that no public page, feed, API or search reads. Each candidate version there has a content hash. Personal data in it follows the same rules as live data (REQ-063, REQ-140). See Q53. | D-033 | M |
+| REQ-212 | Code, not the model, decides publication. In one transaction the publish gate requires: source Approved (REQ-137); every field sourced and not low confidence (REQ-143); sensitive scan clear (REQ-141); quote verification passed (REQ-166); AI audit passed (REQ-213); inclusion criterion evidence present; suppression check clear (REQ-207); under-18 guard (REQ-068); no pause in force (REQ-224); under the cap (REQ-225); content hash equal to the version checked (REQ-221). Any failure blocks publication and logs the reason. | D-033 | M |
+| REQ-213 | Every record gets an AI audit before publication, including records whose text is not AI-drafted. The audit is a separate model run that sees only the stored source passages and the draft, and returns a verdict per claim (supported, identity consistent, neutral, no prohibited topic). It can only lower a record's colour, never raise it. Model, prompt version and verdict are stored. | D-033 | M |
+| REQ-214 | The gate gives each record a colour. Green: all checks and the audit pass. Amber (waits for full human review, then goes live as reviewed): medium-confidence field, audit unsure, probable duplicate, sources disagree, an individual's current role not stated on an official page fetched in the last 30 days, the first 10 records from a new source, a current public office-holder, a source that cannot be monitored automatically. Red (not published until a human clears it): suppressed match, sensitive or prohibited content, an unsupported claim, low-confidence or unsourced field, no criterion evidence, unapproved source, possible minor. Green structured-source organisation records with no named person publish automatically. Green individuals and entrepreneurs wait for a quick look (REQ-215). AI-drafted organisation records follow Q46; individuals may change under Q47. | D-033 | M |
+| REQ-215 | The quick-look screen shows name, organisation, role, the evidence page and the inclusion criterion, with a timer. The person checks four things: right person, criterion met, role still current on the evidence page, nothing prohibited at a glance. Decisions: go live, hold for full review, reject. A quick look is not a review: the profile stays Published – review pending. The person is not the importer. | D-033 | M |
+| REQ-216 | A Published – review pending profile shows, on its page, on any card and in its share preview, the label "Compiled automatically from public sources. Human review pending." with a correct/remove link and a link to the how-we-compile page (REQ-130). After human approval it shows "Reviewed on <date>", which satisfies REQ-144. The label is not a trust status (REQ-024), is shown alongside Unclaimed (REQ-151) and is never styled like Verified. The wording is one configuration value so Legal can change it. | D-033 | M |
+| REQ-217 | A Published – review pending profile returns HTTP 200 with an `X-Robots-Tag: noindex` header and a robots noindex meta tag. It has no sitemap entry, feed entry or schema.org markup, including anything generated by a plugin. robots.txt must not block these URLs, because a crawler has to read the page to see the rule. On human approval the noindex is removed, markup and sitemap entry are added, and the cache is purged in the same flow. Automated tests cover every state on every surface (extends REQ-208). | D-033 | M |
+| REQ-218 | Indexable listing pages (home, discover, industry) show reviewed profiles only, so a pending profile's name and title cannot be indexed through a list. Pending profiles are reachable by direct URL, on-site search and a noindex "include profiles pending review" view, always with the label. See Q54. | D-033 | M |
+| REQ-219 | Two non-human WordPress roles have separate credentials. AI Publisher may only move a record to Published – review pending. AI Monitor may only move a published profile to AI takedown and restore it under REQ-221. Neither may edit any field, approve a review, or change trust status, labels, flags, thresholds, the cap, suppression or users. Credentials are scoped, revocable service tokens held by code, never passed to the model, rotated and restricted by source address. Staff MFA (REQ-047) does not apply to them. | D-033 | M |
+| REQ-220 | The AI Monitor may take down a profile with a reason code from a fixed list. Takedown is reversible and behaves as REQ-209 (410, noindex, sitemap and search removal, purge). The public page never shows or implies the reason. Every takedown enters a queue for human review, due in 1 business day for S1-class codes and 2 for others, with the outcome uphold, overturn or correct. By default the monitor takes down pending profiles for any code, and reviewed, claimed, verified or sponsored profiles for S1-class codes only; other findings on those are flagged for a human (Q52). | D-033 | M |
+| REQ-221 | What is live must be the exact version checked, confirmed by content hash. Republishing requires a hash-checked version and a full pass of the publish gate. The AI may restore only after a technical reason code (for example a dead source that has recovered); every other code needs a human. The AI never edits facts. An automatically redrafted version never replaces a reviewed profile without human approval (REQ-161). Items reviewed in review packs import only if their hash matches the approved hash. | D-033 | M |
+| REQ-222 | Every published record is reviewed by a human in the review queue, with each claim beside its source (REQ-084, 163, 168). Approve sets Published – reviewed with the date; reject makes it 410. Queue order: S1 flags, measurement sample, profiles with a claim or correction, then oldest. The sample is the first 100 records of each tier, then a random 20% of each lot (at least 20 records), due within 3 business days, with the AI audit hidden from the reviewer. The reviewer records any error severity (S1, S2, S3) and is not the importer. | D-033 | M |
+| REQ-223 | A monitor runs continuously on published profiles: source link health, source content change, prohibited-topic scan, conflicts between sources, plus suppression re-check and a heartbeat. It obeys REQ-138 for every fetch, and fetched text is treated as data, never instructions. Findings flag or take down; they never overwrite a field (REQ-161). Cadence is a setting, by default daily or weekly for pending and weekly or monthly for reviewed (plan section 6.8). | D-033 | M |
+| REQ-224 | New publishing pauses automatically when a threshold in plan section 6.1 is passed (defaults: any S1; individuals 3 or more S2 in the last 100 reviewed; organisations 4 or more; 2 or more in the first 30 of any tier; sample overdue; oldest pending older than 21 days; monitor heartbeat missed for 48 hours). A pause can be per tier, per source or global, blocks REQ-212, and is lifted only by a named human with a reason. Thresholds are settings. A pause never unpublishes anything by itself except the S1 profile. | D-033 | M |
+| REQ-225 | Pending profiles are capped. Default: the lower of 400 or two weeks of measured review capacity, with individuals and entrepreneurs at no more than 150 (or the same proportion of a lower cap). Records beyond the cap stay in Staged. Each ramp stage (50, 150, 300, then the cap) is opened by a named human after the previous stage's sample passes. | D-033 | M |
+| REQ-226 | A pending profile cannot be Verified, Featured or Sponsored, cannot be linked to an arrangement, and cannot appear on an awards or nominee page. A claim or correction moves it to the top of the review queue. A removal request on a pending profile hides it at once (reversible, code SUBJECT_REQUEST), with rate limiting against abuse; REQ-158 deadlines still apply to acknowledging and deciding it. | D-033 | M |
+| REQ-227 | A restricted bulk action unpublishes all pending profiles, organisations included, with the same effect and audit as REQ-193. It fills the gap that the kill switch covers unclaimed individuals only. | D-033 | M |
+| REQ-228 | Every AI publish, takedown, restore, audit verdict, gate result, pause and cap event is written to the audit log with the service role, reason code and content hash (extends REQ-051, 188). The dashboard shows live, reviewed and pending counts by tier, oldest pending, error rates against thresholds, pause state, takedowns and their outcomes, and monitor heartbeat (extends REQ-149, 171). | D-033 | M |
+
+### 12.1 Publication states
+
+| State | Public? | Response | Search engines | Public label |
+|---|---|---|---|---|
+| Staged, Awaiting quick look, Held amber, Held red, Rejected | No | 404 | Not indexable | None |
+| Published – review pending | Yes | 200 | noindex; no sitemap or schema.org | "Compiled automatically from public sources. Human review pending." with correct/remove link |
+| Published – reviewed | Yes | 200 | Indexable; sitemap and schema.org | "Reviewed on <date>" |
+| AI takedown, Unpublished | No | 410 (restore gives 200) | noindex | None; no reason shown |
+| Removed and suppressed | No | 410, permanent | noindex | None |
+
+### 12.2 Who may move a profile between states
+
+| From | To | Actor | Condition |
+|---|---|---|---|
+| Staged | Awaiting quick look, Held amber, Held red, Published – review pending | Publish gate (code), through AI Publisher for the last | REQ-212, REQ-214 |
+| Awaiting quick look | Published – review pending | Human starts it, AI Publisher completes it | Publish gate still passes |
+| Awaiting quick look | Held amber, Rejected | Human | Quick look (REQ-215) |
+| Held amber, Held red | Published – reviewed, Rejected, or back to Staged | Human | Full review; publish gate still passes |
+| Published – review pending | Published – reviewed, or Rejected (410) | Human | REQ-222 |
+| Either Published state | AI takedown | AI Monitor | REQ-220 |
+| AI takedown | Previous Published state | Human; AI Monitor only for technical codes | REQ-221 |
+| AI takedown | Unpublished, Rejected, Removed and suppressed | Human | REQ-220 |
+| Any public state | Unpublished | Staff, kill switch, REQ-227 | REQ-091, 193, 209 |
+| Any state | Removed and suppressed | Staff | REQ-158, 207 |
