@@ -50,10 +50,10 @@ reload(); S().role = "reviewer";
 W.forms.approve({ id: "b5", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("approve blocked by scan", S().profiles.find((p) => p.id === "b5").status === "pending");
 W.act.clearScan("b5|0"); W.act.rmFact("b5|2"); W.forms.approve({ id: "b5", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("approve works", S().profiles.find((p) => p.id === "b5").status === "published");
 check("approved in sitemap", W.publicProfiles().some((p) => p.id === "b5"));
-W.forms.unpub({ id: "b6", reason: "test" }); check("unpublish -> gone", W.vis(W.profile("b6")) === "gone"); check("purge logged", S().purges.length >= 1);
+S().role = "editor"; W.forms.unpub({ id: "b6", reason: "test" }); check("unpublish -> gone", W.vis(W.profile("b6")) === "gone"); check("purge logged", S().purges.length >= 1);
 // D-043: bulk unpublish by filter replaces the kill switch
-S().role = "reviewer"; W.forms.bulk({ f: "~individual~~~import~", reason: "t" }); check("reviewer cannot bulk unpublish", W.isPublic(W.profile("ip2")));
-S().role = "editor"; ctx.location.hash = "#/admin/profiles?type=individual&origin=import"; W.render();
+S().role = "editor"; W.forms.bulk({ f: "~individual~~~import~", reason: "t" }); check("editor cannot bulk unpublish unless granted (D-045)", W.isPublic(W.profile("ip2")));
+S().role = "reviewer"; ctx.location.hash = "#/admin/profiles?type=individual&origin=import"; W.render();
 check("bulk panel shows the match count and the button", /Bulk unpublish by filter/.test(app.innerHTML) && /published profile\(s\) match/.test(app.innerHTML) && /data-act="bulkDlg"/.test(app.innerHTML));
 const audit0 = S().audit.length, purge0 = S().purges.length, nbulk = W.profFilter({ type: "individual", origin: "import" }).filter((p) => p.status === "published").length;
 W.forms.bulk({ f: "~individual~~~import~", reason: "" }); check("bulk needs a reason", W.isPublic(W.profile("ip2")));
@@ -63,7 +63,7 @@ check("bulk leaves customer-submitted individuals and organisations", W.isPublic
 check("bulk writes one audit row per profile plus one batch row, and a purge each", S().audit.length === audit0 + nbulk + 1 && S().audit.filter((a) => a.action === "bulk.unpublish").length === 1 && S().purges.length === purge0 + nbulk);
 check("recent bulk actions listed with a restore button", (ctx.location.hash = "#/admin/profiles", W.render(), /Restore this batch/.test(app.innerHTML)));
 S().role = "visitor"; ctx.location.hash = "#/people"; W.render(); check("people list drops the bulk-unpublished profiles", !/Sample Person B/.test(app.innerHTML));
-S().role = "editor"; W.act.bulkRestore(S().bulkLog[0].id); check("restore this batch brings them back", W.isPublic(W.profile("ip2")) && W.isPublic(W.profile("ip4")) && S().bulkLog[0].restored);
+S().role = "reviewer"; W.act.bulkRestore(S().bulkLog[0].id); check("restore this batch brings them back", W.isPublic(W.profile("ip2")) && W.isPublic(W.profile("ip4")) && S().bulkLog[0].restored);
 W.forms.bulk({ f: "Sample Annual Report~~B-2026-11-06~~~", reason: "x" }); check("bulk by source and batch", !W.isPublic(W.profile("ip8")) && W.isPublic(W.profile("ip2")) && W.profile("ip8").bulkId);
 // register counting
 reload(); const a = S().arrangements; check("seed counts", a.filter(W.counts).length === 2, a.filter(W.counts).map((x) => x.id).join());
@@ -130,7 +130,7 @@ S().role = "reviewer"; const exp0 = S().audit.length; W.act.dl("profiles"); chec
 S().role = "admin"; W.act.dl("profiles"); check("administrator export is logged", S().audit.some((a) => a.action === "export.profiles"));
 ctx.location.hash = "#/admin/exports"; S().role = "reviewer"; W.render(); check("exports screen 403 for reviewer", /403/.test(app.innerHTML));
 S().role = "reviewer"; ctx.location.hash = "#/admin/leads"; W.render(); check("reviewer has no leads screen", /403/.test(app.innerHTML));
-S().role = "editor"; ctx.location.hash = "#/admin/leads"; W.render(); check("editor sees no export button, only the note", /Administrator only/.test(app.innerHTML) && !/data-arg="leads"/.test(app.innerHTML));
+S().role = "editor"; ctx.location.hash = "#/admin/leads"; W.render(); check("editor sees no export button, only the note", /Administrator by default/.test(app.innerHTML) && !/data-arg="leads"/.test(app.innerHTML));
 // D-035: dashboard counts by state, no target numbers, no capacity, role-based
 reload();
 for (const role of Object.keys(W.LISTS.roles)) {
@@ -175,7 +175,7 @@ W.forms.scoregrid({ id: "n5", s_0_k1: 6, s_0_k2: 6, s_0_k3: 6, s_0_k4: 6, s_1_k1
 check("grid saves allowed judge, drops conflicted judge", by5["Sample Judge 1"] && !by5["Sample Judge 2"] && by5["Sample Judge 1"].by === "Sample Editor");
 check("weighted total", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }) === "7.9", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }));
 check("score range enforced", W.recordScore("n4", "Sample Judge 1", { k1: 11, k2: 5, k3: 5, k4: 5 }).indexOf("0 to 10") >= 0);
-S().role = "reviewer"; check("reviewer cannot enter scores", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("only an Editor") === 0);
+S().role = "reviewer"; check("reviewer cannot enter scores", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("only a user with the score_entry") === 0);
 S().role = "editor"; check("scores can be entered with no flag", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }) === "");
 ctx.location.hash = "#/admin/scores/n5"; W.render(); check("conflict row has no score inputs", app.innerHTML.includes("Conflict recorded") && app.innerHTML.includes('name="s_0_k1"') && !app.innerHTML.includes('name="s_1_k1"'));
 W.forms.judgecoi({ judge: "Sample Judge 1", n: "n4", why: "x" }); check("recording a conflict removes the judge's score", !(((S().scores.n4 || {}).by || {})["Sample Judge 1"]));
@@ -208,10 +208,31 @@ ctx.location.hash = "#/admin"; W.render(); check("editor dashboard: support coun
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); check("reviewer dashboard: no support counts", !/open corrections, removals and reports/.test(app.innerHTML));
 S().role = "editor"; ctx.location.hash = "#/admin/suppression"; W.render(); check("editor sees the suppression list read-only", /Read-only for your role/.test(app.innerHTML) && !/data-form="supp"/.test(app.innerHTML));
 S().role = "admin"; ctx.location.hash = "#/admin/suppression"; W.render(); check("administrator can add to the suppression list", /data-form="supp"/.test(app.innerHTML));
-S().role = "editor"; check("editor can edit and bulk unpublish; reviewer cannot", W.can("edit") && W.can("bulk") && (S().role = "reviewer", !W.can("edit") && !W.can("bulk") && W.can("assignTerms")));
+S().role = "editor"; check("editor can edit but not bulk unpublish; reviewer can bulk unpublish but not edit (D-045)", W.can("edit") && !W.can("bulk") && (S().role = "reviewer", !W.can("edit") && W.can("bulk") && W.can("assignTerms")));
 S().role = "reviewer"; ctx.location.hash = "#/admin/suppression"; W.render(); check("reviewer sees the suppression list read-only", /Read-only for your role/.test(app.innerHTML));
 check("seed users have only the three staff roles", S().users.every((u) => ["Reviewer", "Editor", "Administrator"].includes(u.role)));
 check("confirmed-by and lead owners are not removed roles", S().arrangements.every((a) => !/Finance|Sales|Eic/.test(a.confirmedBy)) && S().leads.every((l) => !/Sales/.test(l.owner)));
+// D-045 capabilities (REQ-244)
+reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render();
+check("reviewer has no Articles by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Articles") < 0 && /403/.test(app.innerHTML));
+S().role = "editor"; W.act.capToggle("reviewer|stories"); check("only the Administrator changes capabilities", !W.hasCap("stories", "reviewer"));
+S().role = "reviewer"; W.act.capToggle("reviewer|stories"); check("a Reviewer cannot grant themselves anything", !W.hasCap("stories", "reviewer"));
+S().role = "admin"; const au0 = S().audit.length; W.act.capToggle("reviewer|stories");
+check("grant stories to a Reviewer: effective, logged", W.hasCap("stories", "reviewer") && S().audit.length === au0 + 1 && S().audit[S().audit.length - 1].action === "capability.grant");
+S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Articles") >= 0 && !/403/.test(app.innerHTML));
+S().role = "admin"; W.act.capToggle("reviewer|stories"); S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render();
+check("revoking the grant brings the 403 back", !W.hasCap("stories", "reviewer") && /403/.test(app.innerHTML));
+S().role = "admin"; W.act.capToggle("editor|support_inbox"); S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
+check("revoking a default takes the screen away from that Editor", W.menuFor("editor").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML) && W.menuFor("editor", true).indexOf("Support inbox") >= 0);
+S().role = "admin"; W.act.capReset("editor"); check("reset to role defaults", W.hasCap("support_inbox", "editor"));
+W.act.capToggle("editor|users_roles"); W.act.capToggle("reviewer|settings"); W.act.capToggle("editor|commercial_register");
+check("locked capabilities (users_roles, settings, commercial_register) are not grantable to others (Q72)", !W.hasCap("users_roles", "editor") && !W.hasCap("settings", "reviewer") && !W.hasCap("commercial_register", "editor"));
+W.act.capToggle("editor|bulk_unpublish"); S().role = "editor";
+ctx.location.hash = "#/admin/profiles?type=individual&origin=import"; W.render(); check("Editor granted bulk_unpublish sees the bulk button", W.can("bulk") && /data-act="bulkDlg"/.test(app.innerHTML));
+S().role = "admin"; W.act.capToggle("editor|bulk_unpublish"); check("revoked again", !W.hasCap("bulk_unpublish", "editor"));
+S().role = "admin"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Users and capabilities screen lists the three sample users", /Sample Reviewer 1/.test(app.innerHTML) && /Sample Editor/.test(app.innerHTML) && /Sample Admin/.test(app.innerHTML) && /proposed limit, Q72/.test(app.innerHTML));
+S().role = "editor"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Editor gets 403 on Users and capabilities", /403/.test(app.innerHTML));
+check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_disputes", "editor") && !W.hasCap("handle_disputes", "reviewer") && /Editor/.test(W.disputeHandlers()));
 // audit chain
 let prev = "00000000", okc = true; S().audit.forEach((r) => { if (r.prev !== prev) okc = false; prev = r.hash; }); check("audit chain", okc);
 console.log(n + " checks, " + fails + " failures");

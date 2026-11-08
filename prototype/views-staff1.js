@@ -2,15 +2,48 @@
 (function () {
   var W = window.W, e = W.esc;
   var ALL = ["reviewer", "editor", "admin"];
-  /* D-044: only Visitor, Reviewer, Editor and Administrator. The Administrator passes every check, so "admin" is not listed. An empty list means Administrator only. */
-  var ACL = { review: ["reviewer", "editor"], profiles: ["reviewer", "editor"], sources: ["reviewer", "editor"], inbox: ["editor"], supprView: ["reviewer", "editor"], supprEdit: [], import: [], taxonomy: ["editor"], dsr: [], leads: ["editor"], customers: [], register: [], sponsors: ["editor"], articles: ["editor"], awards: ["editor"], scores: ["editor"], purges: [], emails: [], none: [] };
-  /* Capabilities inside a screen (the route ACLs above only open the screen). */
-  var CAP = { edit: ["editor", "admin"], publish: ["editor", "admin"], bulk: ["editor", "admin"], supprEdit: ["admin"], terms: ["editor", "admin"], assignTerms: ["reviewer", "editor", "admin"] };
-  W.can = function (c) { return (CAP[c] || []).indexOf(W.S.role) >= 0; };
+  /* D-044, D-045: only Visitor, Reviewer, Editor and Administrator. Roles are default bundles of named capabilities.
+     The Administrator can add or remove single capabilities for one user (REQ-244). Columns: id, label, group, default roles (R = Reviewer, E = Editor), locked.
+     The Administrator always has every capability. Locked capabilities are never granted to a non-Administrator (proposed limit, Q72). */
+  W.CAPS = [
+    ["review_queue", "Review queue: approve or reject", "Review", "RE"], ["duplicates", "Duplicates", "Review", "RE"], ["stale_records", "Stale records", "Review", "RE"],
+    ["view_profiles", "Profiles: view and filter by source, import batch, type and state", "Directory", "RE"], ["assign_terms", "Assign existing taxonomy terms to a profile", "Directory", "RE"],
+    ["view_sources", "Sources (read-only)", "Directory", "RE"], ["view_suppression", "Suppression list: view (read-only)", "Directory", "RE"],
+    ["bulk_unpublish", "Bulk unpublish by filter, and restore a batch", "Directory", "R"],
+    ["edit_profiles", "Edit a profile directly; set Verified or Featured", "Editing", "E"], ["publish_profiles", "Publish a profile", "Editing", "E"], ["unpublish_profile", "Unpublish and restore a single profile", "Editing", "E"],
+    ["stories", "Stories (articles)", "Editing", "E"], ["sponsored_label", "Sponsored label and sponsors", "Editing", "E"], ["edit_terms", "Taxonomy terms: add and edit", "Editing", "E"],
+    ["support_inbox", "Support inbox: enquiries, corrections, removals, reports", "Inbox", "E"], ["handle_disputes", "Handle disputes and removal requests (a valid removal adds to the suppression list)", "Inbox", "E"],
+    ["leads", "Leads and prospects", "Commercial", "E"],
+    ["nominations", "Nominations, screening, panel and conflicts, shortlist and winners publishing", "Awards", "E"], ["score_entry", "Score entry", "Awards", "E"],
+    ["suppression_change", "Suppression list: add or remove by hand", "Administration", ""], ["imports", "Import from the acquisition pipeline", "Administration", ""], ["data_requests", "Data requests and compliance", "Administration", ""],
+    ["commercial_register", "Commercial register, customers and payments (confirmed by)", "Administration", "", true], ["revenue_tiles", "Revenue, sprint target and arrangements tiles", "Administration", ""],
+    ["final_approval", "Final approval of a nominee (stands in for the Venture CEO)", "Administration", ""], ["nominations_flag", "Nominations flag (needs an approval reference)", "Administration", ""],
+    ["exports", "Export personal data (CSV), logged (REQ-069)", "Administration", ""], ["audit_log", "Audit log, purge log and email log", "Administration", ""],
+    ["users_roles", "Users, roles and capabilities", "Administration", "", true], ["settings", "Settings and plugins", "Administration", "", true]
+  ];
+  var CAPIDX = {}; W.CAPS.forEach(function (c) { CAPIDX[c[0]] = c; }); W.CAPIDX = CAPIDX;
+  var LETTER = { reviewer: "R", editor: "E" };
+  W.capDefault = function (cap, role) { var c = CAPIDX[cap]; if (!c) return false; if (role === "admin") return true; return !!LETTER[role] && c[3].indexOf(LETTER[role]) >= 0; };
+  W.hasCap = function (cap, role, defaultsOnly) {
+    role = role || W.S.role; if (!role || role === "visitor") return false;
+    if (role === "admin") return true;
+    var base = W.capDefault(cap, role); if (defaultsOnly) return base;
+    var g = (W.S.caps || {})[role] || { grant: [], revoke: [] };
+    if (g.revoke.indexOf(cap) >= 0) return false;
+    if (g.grant.indexOf(cap) >= 0 && CAPIDX[cap] && !CAPIDX[cap][4]) return true;
+    return base;
+  };
+  W.rolesWithCap = function (cap) { return ALL.filter(function (r) { return W.capDefault(cap, r); }); };
+  var ACLCAP = { review: "review_queue", profiles: "view_profiles", sources: "view_sources", inbox: "support_inbox", supprView: "view_suppression", supprEdit: "suppression_change", import: "imports", taxonomy: "edit_terms", dsr: "data_requests", leads: "leads", customers: "commercial_register", register: "commercial_register", sponsors: "sponsored_label", articles: "stories", awards: "nominations", scores: "score_entry", purges: "audit_log", emails: "audit_log" };
+  var ACL = {}; Object.keys(ACLCAP).forEach(function (k) { ACL[k] = W.rolesWithCap(ACLCAP[k]).filter(function (r) { return r !== "admin"; }); });
+  /* Capabilities inside a screen (the route capability only opens the screen). */
+  var CAPMAP = { edit: "edit_profiles", publish: "publish_profiles", unpublish: "unpublish_profile", bulk: "bulk_unpublish", supprEdit: "suppression_change", terms: "edit_terms", assignTerms: "assign_terms", disputes: "handle_disputes" };
+  W.can = function (c) { return W.hasCap(CAPMAP[c] || c); };
   W.ACL = ACL; W.ALLSTAFF = ALL;
-  var PERSONA = { reviewer: "Sample Reviewer 1", editor: "Sample Editor", admin: "Sample Admin" };
+  var PERSONA = { reviewer: "Sample Reviewer 1", editor: "Sample Editor", admin: "Sample Admin" }; W.PERSONA = PERSONA;
   W.persona = function () { return PERSONA[W.S.role] || "system"; };
-  W.staffRoute = function (path, inv, key, fn) { W.route(path, inv, fn, { area: "staff", roles: key ? ACL[key].concat([]) : ALL }); };
+  W.staffRoute = function (path, inv, key, fn) { var cap = key ? (ACLCAP[key] || key) : null; W.route(path, inv, fn, { area: "staff", cap: cap, roles: cap ? W.rolesWithCap(cap) : ALL }); };
+  W.disputeHandlers = function () { return ["reviewer", "editor"].filter(function (r) { return W.hasCap("handle_disputes", r); }).map(W.roleName).concat(["Administrator"]).join(", "); };
   function mini(path, inv, key, fn) { W.staffRoute(path, inv, key, fn); }
   function head(t, sub) { return "<h1>" + e(t) + "</h1>" + (sub ? '<p class="muted">' + sub + "</p>" : ""); }
   W.download = function (name, text) {
@@ -18,7 +51,7 @@
     W.toast("Downloaded " + name + " (sample file).");
   };
   /* Exports of personal data are Administrator-only and logged (REQ-069). */
-  W.exportBtn = function (k) { return W.S.role === "admin" ? W.btn("Export CSV", "dl", k, "alt") : '<span class="small muted">Export: Administrator only (REQ-069)</span>'; };
+  W.exportBtn = function (k) { return W.hasCap("exports") ? W.btn("Export CSV", "dl", k, "alt") : '<span class="small muted">Export needs the exports capability, Administrator by default (REQ-069)</span>'; };
   W.csv = function (rows) { return rows.map(function (r) { return r.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n"); };
   function age(d) { if (!d) return 0; return Math.max(0, Math.round((new Date(W.TODAY) - new Date(d)) / 86400000)); }
   W.age = age;
@@ -30,25 +63,25 @@
   W.forms.note = function (d) { (W.S.notes[d.key] = W.S.notes[d.key] || []).push({ text: d.text, by: W.persona(), at: W.TODAY }); W.log("note.add", d.key, "internal note"); W.save(); W.render(); };
 
   /* ---------- shell ---------- */
-  var TAXMENU = Object.keys(W.TAXES).map(function (k) { return [W.TAXES[k][0], "/admin/taxonomy/" + k, ACL.taxonomy]; });
+  var TAXMENU = Object.keys(W.TAXES).map(function (k) { return [W.TAXES[k][0], "/admin/taxonomy/" + k, "edit_terms"]; });
   var MENU = [
-    ["Overview", [["Dashboard", "/admin", ALL]]],
-    ["Review", [["Review queue", "/admin/review", ACL.review], ["Duplicates", "/admin/duplicates", ACL.review], ["Stale records", "/admin/stale", ACL.review]]],
-    ["Directory", [["Profiles", "/admin/profiles", ACL.profiles], ["Sources", "/admin/sources", ACL.sources], ["Import", "/admin/import", ACL.import], ["Prospects", "/admin/prospects", ACL.leads], ["Suppression list", "/admin/suppression", ACL.supprView]]],
+    ["Overview", [["Dashboard", "/admin", "*"]]],
+    ["Review", [["Review queue", "/admin/review", "review_queue"], ["Duplicates", "/admin/duplicates", "duplicates"], ["Stale records", "/admin/stale", "stale_records"]]],
+    ["Directory", [["Profiles", "/admin/profiles", "view_profiles"], ["Sources", "/admin/sources", "view_sources"], ["Import", "/admin/import", "imports"], ["Prospects", "/admin/prospects", "leads"], ["Suppression list", "/admin/suppression", "view_suppression"]]],
     ["Taxonomies", TAXMENU],
-    ["Inbox", [["Support inbox", "/admin/inbox", ACL.inbox], ["Data requests", "/admin/dsr", ACL.dsr]]],
-    ["Commercial", [["Leads", "/admin/leads", ACL.leads], ["Customers", "/admin/customers", ACL.customers], ["Register", "/admin/register", ACL.register], ["Sponsors", "/admin/sponsors", ACL.sponsors]]],
-    ["Content", [["Articles", "/admin/articles", ACL.articles]]],
-    ["Awards", [["Nominations", "/admin/nominations", ACL.awards], ["Awards setup", "/admin/awards", ACL.awards], ["Scores and results", "/admin/scores", ACL.scores], ["Judging panel and conflicts", "/admin/judges", ACL.awards], ["Shortlist and winners", "/admin/announcements", ACL.awards]]],
-    ["Platform", [["Feature flag", "/admin/flags", ACL.none], ["Audit log", "/admin/audit", ACL.none], ["Users and roles", "/admin/users", ACL.none], ["Roles and permissions", "/admin/roles", ACL.none], ["Compliance", "/admin/compliance", ACL.dsr], ["Purge log", "/admin/purges", ACL.purges], ["Exports", "/admin/exports", ACL.none], ["Email log", "/admin/emails", ACL.emails], ["Settings", "/admin/settings", ACL.none]]]
+    ["Inbox", [["Support inbox", "/admin/inbox", "support_inbox"], ["Data requests", "/admin/dsr", "data_requests"]]],
+    ["Commercial", [["Leads", "/admin/leads", "leads"], ["Customers", "/admin/customers", "commercial_register"], ["Register", "/admin/register", "commercial_register"], ["Sponsors", "/admin/sponsors", "sponsored_label"]]],
+    ["Content", [["Articles", "/admin/articles", "stories"]]],
+    ["Awards", [["Nominations", "/admin/nominations", "nominations"], ["Awards setup", "/admin/awards", "nominations"], ["Scores and results", "/admin/scores", "score_entry"], ["Judging panel and conflicts", "/admin/judges", "nominations"], ["Shortlist and winners", "/admin/announcements", "nominations"]]],
+    ["Platform", [["Feature flag", "/admin/flags", "nominations_flag"], ["Audit log", "/admin/audit", "audit_log"], ["Users and roles", "/admin/users", "users_roles"], ["Roles and permissions", "/admin/roles", "users_roles"], ["Users and capabilities", "/admin/capabilities", "users_roles"], ["Compliance", "/admin/compliance", "data_requests"], ["Purge log", "/admin/purges", "audit_log"], ["Exports", "/admin/exports", "exports"], ["Email log", "/admin/emails", "audit_log"], ["Settings", "/admin/settings", "settings"]]]
   ];
-  /* The left menu each role sees (D-041, D-044). Administrator sees everything. */
-  W.menuFor = function (role) { var out = []; MENU.forEach(function (g) { g[1].forEach(function (i) { if (role === "admin" || i[2].indexOf(role) >= 0) out.push(i[0]); }); }); return out; };
+  /* The left menu each user sees, from effective capabilities (D-041, D-044, D-045). The Administrator sees everything. */
+  W.menuFor = function (role, defaultsOnly) { var out = []; MENU.forEach(function (g) { g[1].forEach(function (i) { if (i[2] === "*" || W.hasCap(i[2], role, defaultsOnly)) out.push(i[0]); }); }); return out; };
   W.MENU = MENU;
   W.appShell = function (area, body, path) {
     var role = W.S.role, side = "";
     side = '<nav class="app-side" aria-label="Staff">' + MENU.map(function (g) {
-      var items = g[1].filter(function (i) { return role === "admin" || i[2].indexOf(role) >= 0; });
+      var items = g[1].filter(function (i) { return i[2] === "*" || W.hasCap(i[2], role); });
       return items.length ? "<h2>" + e(g[0]) + "</h2>" + items.map(function (i) { return '<a href="#' + i[1] + '"' + (path === i[1] || (i[1] !== "/admin" && path.indexOf(i[1]) === 0) ? ' aria-current="page"' : "") + ">" + e(i[0]) + "</a>"; }).join("") : "";
     }).join("") + "</nav>";
     return '<div class="app">' + side + '<div class="app-main">' + W.note("Preview of flows only. The real admin will be WordPress. Signed in as <strong>" + e(W.persona()) + "</strong> (" + e(W.roleName(role)) + ").") + body + "</div></div>";
@@ -67,9 +100,8 @@
   function supportOpen() { var S = W.S; return S.corrections.concat(S.removals, S.reports).filter(function (x) { return x.status === "open" || x.status === "awaiting email check"; }).length; }
   mini("/admin", "A02", null, function () {
     var S = W.S, role = S.role;
-    var can = function (list) { return role === "admin" || list.indexOf(role) >= 0; };
-    var showDir = can(["reviewer", "editor"]), showCom = can([]), showAw = can(["editor"]), showPlat = can([]), showSup = can(["editor"]);
-    var out = head("Dashboard", "Viewing as <strong>" + e(W.roleName(role)) + "</strong>. Reviewers see review and directory tiles; Editors add support and nominations counts; Administrators see everything, including the sprint target and revenue. Each role sees only its own tiles; switch <strong>Viewing as</strong> in the top bar to preview the others. All numbers are sample data.");
+    var showDir = W.hasCap("view_profiles") || W.hasCap("review_queue"), showCom = W.hasCap("revenue_tiles"), showAw = W.hasCap("nominations"), showPlat = W.hasCap("nominations_flag"), showSup = W.hasCap("support_inbox");
+    var out = head("Dashboard", "Viewing as <strong>" + e(W.roleName(role)) + "</strong>. Tiles follow the user's capabilities: by default Reviewers see review and directory tiles, Editors add support and nominations counts, and Administrators see everything, including the sprint target and revenue. The Administrator can change a user's capabilities (Users and capabilities). switch <strong>Viewing as</strong> in the top bar to preview the others. All numbers are sample data.");
     if (showDir) {
       var q = W.queue(), imported = S.profiles.filter(function (p) { return W.origin(p) === "import"; }).length, pending = S.profiles.filter(function (p) { return p.status === "pending"; }).length;
       var reviewed = S.profiles.filter(function (p) { return p.lastReviewed && (p.status === "published" || p.status === "unpublished"); }).length, published = W.publicProfiles().length;
@@ -94,7 +126,7 @@
         '<div class="card stack-s"><h2>Expiry reminders</h2>' + (soon.length ? "<ul>" + soon.map(function (a) { return "<li>" + e(W.LISTS.arrTypes[a.type]) + " for " + e((W.find("customers", a.customerId) || {}).name) + " ends " + e(a.end) + ' <a href="#/admin/register/' + e(a.id) + '">Open</a></li>'; }).join("") + "</ul>" : "<p class=\"muted\">Nothing ends in the next 30 days.</p>") + '<p class="small muted">Reminders only. The system takes no automatic action against customers (REQ-189).</p></div>';
     }
     if (showAw) out += '<div class="kpis"><div class="kpi"><b>' + S.nominations.length + '</b>nominations</div><div class="kpi"><b>' + S.nominations.filter(function (n) { return n.status === "shortlisted" || n.status === "finalist" || n.status === "winner"; }).length + '</b>shortlisted or later</div></div>';
-    if (role === "editor") out += '<div class="kpis"><div class="kpi"><b>' + S.articles.length + '</b>articles</div><div class="kpi"><b>' + S.articles.filter(function (a) { return a.status === "scheduled"; }).length + '</b>scheduled</div></div>';
+    if (W.hasCap("stories") && !showCom) out += '<div class="kpis"><div class="kpi"><b>' + S.articles.length + '</b>articles</div><div class="kpi"><b>' + S.articles.filter(function (a) { return a.status === "scheduled"; }).length + '</b>scheduled</div></div>';
     if (showPlat) out += '<div class="infobox"><strong>Feature flag:</strong> <span class="pill ' + (S.flags.nominations.on ? "flag-on" : "flag-off") + '">nominations ' + (S.flags.nominations.on ? "ON" : "OFF") + '</span> (public nomination form). </div>';
     return out;
   });
@@ -150,12 +182,12 @@
   };
 
   /* ---------- duplicates, stale ---------- */
-  mini("/admin/duplicates", "A21", "review", function () {
+  mini("/admin/duplicates", "A21", "duplicates", function () {
     var rows = W.S.dupes || [];
     return head("Probable duplicates", "Matching uses registration number, Wikidata ID, and normalised name + organisation + location. Individuals are never auto-merged (REQ-146).") + W.table(["Existing profile", "Incoming", "Basis", "Kind", ""], rows.map(function (d) { var a = W.profile(d.aId); return ['<a href="#/admin/profiles/' + e(a.id) + '">' + e(a.name) + "</a>", e(d.bName), e(d.basis), e(d.kind), W.btn("Merge into existing", "dupe", d.id + "|merge", "sm") + " " + W.btn("Not a duplicate", "dupe", d.id + "|keep", "sm alt")]; }), "No duplicates waiting.");
   });
   W.act.dupe = function (a) { var s = a.split("|"); W.S.dupes = W.S.dupes.filter(function (d) { return d.id !== s[0]; }); W.log("duplicate." + s[1], s[0], "human decision"); W.save(); W.render(); W.toast(s[1] === "merge" ? "Merged by a reviewer (never automatic)." : "Kept separate."); };
-  mini("/admin/stale", "A39", "review", function () {
+  mini("/admin/stale", "A39", "stale_records", function () {
     var rows = W.S.profiles.filter(function (p) { return p.status === "published"; }).map(function (p) { var m = Math.round(age(p.lastReviewed) / 30); return { p: p, m: m }; }).filter(function (x) { return x.m >= 6; });
     return head("Stale records", "Re-check at 6 months, flag stale at 12, unpublish at 18 unless re-reviewed. Customers are asked once a year, by email, to send corrections through the public form (REQ-160).") + W.table(["Profile", "Status", "Months since review", "Action due", ""], rows.map(function (x) { return ['<a href="#/admin/profiles/' + e(x.p.id) + '">' + e(x.p.name) + "</a>", W.trustPill(x.p), x.m, x.m >= 18 ? '<span class="pill bad">unpublish</span>' : x.m >= 12 ? '<span class="pill warn">flag stale</span>' : '<span class="pill gray">re-check</span>', x.m >= 18 ? (W.can("publish") ? W.btn("Unpublish", "unpubDlg", x.p.id, "sm bad") : "Editor to unpublish") : W.btn("Mark re-reviewed", "rereview", x.p.id, "sm alt")]; }), "Nothing is stale.");
   });
@@ -172,7 +204,7 @@
   };
   function uniq(list) { var m = {}; list.forEach(function (x) { if (x) m[x] = 1; }); return Object.keys(m).sort(); }
   function profRow(p) {
-    var v = W.vis(p), pub = W.can("publish");
+    var v = W.vis(p), pub = W.can("unpublish");
     return ['<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name || "(untitled)") + "</a>", e(p.type), e(W.srcOf(p)), e(p.batch || "\u2014"), W.stPill(p.status), W.trustPill(p) || "\u2014", e(W.sponsorOf(p) || "\u2014"), v === "public" ? "Page (200)" : v === "gone" ? "410 + noindex" : "404", pub ? (p.status === "published" ? W.btn("Unpublish", "unpubDlg", p.id, "sm bad") : p.status === "unpublished" ? W.btn("Restore", "restore", p.id, "sm") : "") : ""];
   }
   var PCOLS = ["Name", "Type", "Source", "Batch", "Status", "Label", "Sponsored", "Visitors see", ""];
@@ -187,7 +219,7 @@
       body = Object.keys(groups).sort().map(function (k) { return "<h2>" + e(q.group === "src" ? "Source: " : "Batch: ") + e(k) + ' <span class="muted small">(' + groups[k].length + " profile(s))</span></h2>" + W.table(PCOLS, groups[k].map(profRow)); }).join("") || '<p class="muted">No profiles match.</p>';
     } else body = W.table(PCOLS, rows.map(profRow), "No profiles match.");
     var bulk = '<div class="card stack-s"><h2>Bulk unpublish by filter</h2>';
-    if (!W.can("bulk")) bulk += '<p class="small muted">Bulk unpublish is for Editors and Administrators (D-043). Reviewers can view and filter only.</p>';
+    if (!W.can("bulk")) bulk += '<p class="small muted">Bulk unpublish is for Reviewers and Administrators by default (D-043, D-045). Your user does not have the bulk_unpublish capability; the Administrator can grant it.</p>';
     else bulk += '<p class="small muted">Uses the filters above: source, type, import batch and state. It replaces the old global switch (D-043). Each profile goes to 410 with noindex, leaves the sitemap and search, and is purged. Every profile gets its own audit row, plus one row for the batch. It is reversible below.</p><p role="status"><strong>' + targets.length + '</strong> published profile(s) match the current filters' + (filtered ? "" : " (no filter chosen)") + ".</p>" + (filtered && targets.length ? W.btn("Unpublish these " + targets.length + "\u2026", "bulkDlg", bulkKey(q), "bad") : '<p class="small muted">Choose at least one filter that matches a published profile.</p>');
     var log = W.S.bulkLog || [];
     bulk += "<h3>Recent bulk actions</h3>" + W.table(["When", "By", "Filter", "Profiles", "Reason", ""], log.map(function (b) { return [e(b.at), e(b.by), e(b.filter), b.ids.length, e(b.reason), b.restored ? '<span class="pill ok">restored</span>' : (W.can("bulk") ? W.btn("Restore this batch", "bulkRestore", b.id, "sm alt") : "")]; }), "None yet.") + "</div>";
@@ -199,7 +231,7 @@
     W.openModal("Unpublish " + t.length + " profile(s)", '<form data-form="bulk" class="stack-s"><input type="hidden" name="f" value="' + e(arg) + '"><p class="errbox"><strong>' + t.length + " published profile(s)</strong> match: " + e(bulkText(q)) + ". First names: " + e(t.slice(0, 5).map(function (p) { return p.name; }).join(", ")) + (t.length > 5 ? " and " + (t.length - 5) + " more" : "") + ".</p><p>Each URL returns 410 Gone with noindex at once, leaves the sitemap and search, and is queued for a CDN purge. You can restore the batch afterwards.</p>" + W.field("Reason (required, audited)", "reason", { type: "textarea", req: true }) + '<button class="btn bad">Unpublish ' + t.length + " profile(s) now</button></form>");
   };
   W.forms.bulk = function (d) {
-    if (!W.can("bulk")) { W.toast("Only an Editor or Administrator can bulk unpublish."); return; }
+    if (!W.can("bulk")) { W.toast("You do not have the bulk_unpublish capability (Reviewer and Administrator by default)."); return; }
     var q = bulkQ(d.f), t = bulkTargets(q), why = String(d.reason || "").trim();
     if (!why) { W.toast("A reason is required."); return; }
     if (!t.length) { W.toast("Nothing matches any more."); return; }
@@ -225,6 +257,7 @@
   });
   W.act.unpubDlg = function (id) { W.openModal("Unpublish " + W.profile(id).name, '<form data-form="unpub" class="stack-s"><input type="hidden" name="id" value="' + e(id) + '"><p>The URL will return 410 Gone with noindex immediately, leave the sitemap and search, and be purged from the CDN.</p>' + W.field("Reason (audited)", "reason", { type: "textarea", req: true }) + '<button class="btn bad">Unpublish now</button></form>'); };
   W.forms.unpub = function (d) {
+    if (!W.can("unpublish")) { W.toast("You do not have the unpublish_profile capability (Editor and Administrator by default)."); return; }
     var p = W.profile(d.id); p.status = "unpublished"; p.removedReason = d.reason; p.history.push({ at: W.TODAY, by: W.persona(), what: "Unpublished: " + d.reason });
     W.purge("/profile/" + p.slug, "unpublish"); W.log("profile.unpublish", p.id, d.reason); W.ui.modal = null; W.save(); W.render(); W.toast("Unpublished. 410 + noindex now; CDN purge queued.");
   };
@@ -275,7 +308,7 @@
     p.history.push({ at: W.TODAY, by: W.persona(), what: "Assigned terms: " + ch.join(", ") }); W.log("profile.terms", p.id, ch.join(", ")); W.save(); W.render(); W.toast("Terms saved.");
   };
   function editCard(p) {
-    var L = W.LISTS, can = ACL.taxonomy.indexOf(W.S.role) >= 0 || W.S.role === "admin", ind = p.type === "individual";
+    var L = W.LISTS, can = W.hasCap("edit_terms"), ind = p.type === "individual";
     var items = W.S.corrections.filter(function (c) { return c.profileId === p.id && c.status === "open"; });
     var sel = function (lab, name, opts, val, blank) { return W.field(lab, name, { type: "select", options: opts, blank: blank || "None", value: val }); };
     return '<form class="card stack-s" data-form="profedit"><h2>Edit this profile (staff)</h2><input type="hidden" name="id" value="' + e(p.id) + '"><p class="small muted">Saving changes the page at once. The edit is written to the audit log with your name and reason. ' + (can ? 'You can add terms under <a href="#/admin/taxonomy/industries">Taxonomies</a>.' : "You can assign existing terms only. Editors and Administrators add terms (D-039).") + "</p>" +
@@ -284,7 +317,7 @@
       W.field("Reason or request reference (audited)", "reason", { req: true }) + (items.length ? W.field("This resolves the open item", "item", { type: "select", options: items.map(function (c) { return [c.id, c.detail]; }), blank: "None" }) : "") + '<button class="btn">Save changes</button></form>';
   }
   W.forms.profedit = function (d) {
-    if (!W.can("edit")) { W.toast("Only an Editor or Administrator can edit a profile."); return; }
+    if (!W.can("edit")) { W.toast("You do not have the edit_profiles capability (Editor and Administrator by default)."); return; }
     var p = W.profile(d.id), keys = ["name", "title", "org", "website", "industry", "country", "city", "profession", "orgType", "bio", "achievements"], changed = [];
     keys.forEach(function (k) { if (d[k] !== undefined && d[k] !== (p[k] || "") ) { p[k] = d[k]; changed.push(k); } });
     if (!changed.length) { W.toast("Nothing changed."); return; }
@@ -315,20 +348,21 @@
   mini("/admin/inbox", "A12", "inbox", function (par, q) {
     var S = W.S, rows = [], pn = function (id) { var p = W.profile(id); return p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "\u2014"; };
     S.enquiries.forEach(function (x) { rows.push({ t: "Enquiry", sub: x.general ? "Contact form: " + x.name : "From " + x.name, p: x.general ? "" : x.profileId, st: x.read ? "read" : "new", due: "", at: x.at, owner: "Editor", act: x.read ? "" : W.btn("Mark read", "enqRead", x.id, "sm alt") }); });
-    S.corrections.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Correction", sub: x.detail + (x.contact ? " (" + x.contact + (x.emailVerified ? ", email confirmed" : ", email not confirmed") + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: "Editor", act: open ? '<a class="btn sm" href="#/admin/profiles/' + e(x.profileId) + '">Edit the profile</a> ' + W.btn("Mark resolved", "corrDone", x.id, "sm alt") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
-    S.removals.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Removal", sub: x.detail + (x.contact ? " (" + x.contact + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: "Editor", act: open ? W.btn("Valid: hide + suppress", "rmOk", x.id, "sm bad") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
+    S.corrections.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Correction", sub: x.detail + (x.contact ? " (" + x.contact + (x.emailVerified ? ", email confirmed" : ", email not confirmed") + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: W.disputeHandlers(), act: open ? '<a class="btn sm" href="#/admin/profiles/' + e(x.profileId) + '">Edit the profile</a> ' + W.btn("Mark resolved", "corrDone", x.id, "sm alt") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
+    S.removals.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Removal", sub: x.detail + (x.contact ? " (" + x.contact + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: W.disputeHandlers(), act: open ? W.btn("Valid: hide + suppress", "rmOk", x.id, "sm bad") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
     S.reports.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Report", sub: x.reason + ": " + x.detail, p: x.profileId, st: x.status, due: x.due, at: x.at, owner: x.owner || "unassigned", act: open ? W.btn("Hide profile now", "unpubDlg", x.profileId, "sm bad") + " " + W.btn("Dismiss", "repDone", x.id, "sm alt") + " " + W.btn("Resolve", "repDone", x.id, "sm") : "" }); });
     rows = rows.filter(function (r) { return !q.t || r.t === q.t; }).sort(function (a, b) { return age(b.at) - age(a.at); });
     return head("Support inbox", "Enquiries and the public correction, removal and report forms land here as typed items, each with a status and a due-date countdown (REQ-089, 158, D-040). Staff act by editing or unpublishing the profile directly in the admin; every edit and unpublish is written to the audit log automatically, and a valid removal also adds the person or organisation to the suppression list.") +
       '<form class="filters" data-filter="#/admin/inbox">' + W.field("Type", "t", { type: "select", options: ["Enquiry", "Correction", "Removal", "Report"], blank: "All", value: q.t }) + "</form>" +
-      '<p class="small muted">Targets: acknowledge in 1 business day; hide within 2 business days of a valid removal; resolve corrections within 7 days (REQ-158).</p>' +
+      '<p class="small muted">Disputes, corrections and removal requests are handled by whoever holds the <strong>handle_disputes</strong> capability: ' + e(W.disputeHandlers()) + ' by default (the Administrator can grant it to others, for example a Reviewer). Targets: acknowledge in 1 business day; hide within 2 business days of a valid removal; resolve corrections within 7 days (REQ-158).</p>' +
       W.table(["Type", "Item", "Profile", "Status", "Due", "Age (days)", "Owner", ""], rows.map(function (r) { return ['<span class="pill ' + (r.t === "Removal" ? "bad" : r.t === "Report" ? "warn" : "gray") + '">' + r.t + "</span>", e(r.sub), r.p ? pn(r.p) : "\u2014", W.stPill(r.st), W.dueText(r.due, r.st), age(r.at), e(r.owner), r.act]; }), "Inbox zero.");
   });
   W.act.enqRead = function (id) { W.find("enquiries", id).read = true; W.log("enquiry.read", id, ""); W.save(); W.render(); };
   W.act.repDone = function (id) { W.find("reports", id).status = "closed"; W.log("report.close", id, ""); W.save(); W.render(); };
-  W.act.corrDone = function (id) { var x = W.find("corrections", id); x.status = "closed"; W.log("request.close", id, x.kind + " resolved"); W.save(); W.render(); };
-  W.act.corrDecline = function (id) { var x = W.find("corrections", id) || W.find("removals", id); x.status = "declined"; W.log("request.decline", id, x.kind); W.save(); W.render(); };
+  W.act.corrDone = function (id) { if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; } var x = W.find("corrections", id); x.status = "closed"; W.log("request.close", id, x.kind + " resolved"); W.save(); W.render(); };
+  W.act.corrDecline = function (id) { if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; } var x = W.find("corrections", id) || W.find("removals", id); x.status = "declined"; W.log("request.decline", id, x.kind); W.save(); W.render(); };
   W.act.rmOk = function (id) {
+    if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; }
     var x = W.find("removals", id), p = W.profile(x.profileId); x.status = "done"; p.status = "suppressed"; p.removedReason = "Removal request";
     W.S.suppression.unshift({ id: W.uid("sp"), name: p.name, kind: "Removed individual or organisation", at: W.TODAY, reason: "Removal request " + id }); W.purge("/profile/" + p.slug, "removal request"); W.log("removal.approve", p.id, "suppressed"); W.mail(x.contact || "requester", "Your removal request was accepted", "The profile is no longer public.", ""); W.save(); W.render(); W.toast("Hidden (410 + noindex), added to the permanent suppression list, CDN purge queued.");
   };

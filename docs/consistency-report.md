@@ -1,6 +1,6 @@
 # Consistency report: wireframe review fixes (2026-11-08, two rounds)
 
-Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neither merged). Round 1 = D-035 to D-041. Round 2 (follow-up) = D-042 to D-044. `acquisition/` was not touched; what needs changing there is in section 4.
+Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neither merged). Round 3 added D-045, D-046, REQ-244, Q69 to Q72 answered or added, and the WordPress rewrite of architecture, ADRs and CLAUDE.md. Round 1 = D-035 to D-041. Round 2 (follow-up) = D-042 to D-044. `acquisition/` was not touched; what needs changing there is in section 4.
 
 ## 1. What changed
 
@@ -33,28 +33,28 @@ Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neithe
 
 ## 3. Still inconsistent, or needs your ruling
 
-### 3.1 Needs a ruling
-| # | Item | Why | Recommended default |
-|---|---|---|---|
-| 1 | **Who may bulk unpublish by filter** (Q69) | Editor and Administrator as built. It can take down many live profiles at once; it includes Verified and Featured profiles | Keep, with the count confirmation, reason and per-batch restore |
-| 2 | **One Administrator records and confirms payments** (Q70, REQ-022) | Finance is gone; no second check on the counting rule | Accept for the sprint; a second Administrator reviews the register weekly |
-| 3 | **Disputes and removal requests go to the Editor** (Q71, REQ-174) | Editor-in-Chief is gone. The Reviewer cannot see the Support inbox, so removal requests reach only Editors and Administrators | Keep |
-| 4 | **Staff edits go live on one person's sign-off** (D-040, REQ-015, 232) | D-015 says 100% human review before publishing; a staff edit has no second check. Q57 was closed | Accept; every edit is audited and versioned |
-| 5 | **Exports are Administrator-only** (REQ-069, 077, 087) | The Editor loses the leads export; the register and CaromHQ exchange (Q16) need an Administrator | Keep |
-| 6 | **Sprint target kept** (10 subscriptions or NGN 5m, Administrator only) | Your no-target rule covered directory size | Keep |
-| 7 | **Editor's powers are wide** | Editor does edit, publish, unpublish, bulk unpublish, Sponsored label, taxonomies, nominations and scores, leads and the inbox. Verified and Featured are Editor and Administrator only. Lead conversion by an Editor creates a proposed arrangement in a register the Editor cannot open | Confirm; or add a narrower role later |
-| 8 | **Suppression list**: only the Administrator changes it | A valid removal handled by an Editor adds the entry automatically; the Editor cannot undo it | Keep |
-| 9 | **D-010 was not amended earlier** | You referred to "the amended D-010". The file said Nigeria only (also D-025, C10, Q24). I amended them on your word | Confirm |
+### 3.1 Rulings
+**Answered (D-045, D-046):** bulk unpublish by filter is for the Administrator and Reviewer (Q69) · the Administrator alone confirms payments (Q70) · roles are default bundles and the Administrator can grant or revoke capabilities per user across roles; disputes go to whoever holds the handle-disputes capability (Q71, REQ-244) · staff edits go live on one person's sign-off · D-010 confirmed. I read "add certain reviewer capabilities to admin and vice versa" as "between roles"; the Administrator already has everything.
+
+**Still open, defaults apply until you rule:**
+| # | Item | Recommended default |
+|---|---|---|
+| 1 | Exports are Administrator-only (REQ-069, 077, 087); the Editor loses the leads export | Keep |
+| 2 | Sprint target kept for the Administrator only | Keep |
+| 3 | Editor powers are wide; lead conversion by an Editor creates a proposed arrangement in a register the Editor cannot open | Confirm, or grant a capability |
+| 4 | Only the Administrator changes the suppression list; an Editor's valid removal adds an entry automatically | Keep |
+| 5 | Q72: which capabilities can never be granted | Users and roles, settings, commercial register, plugin installation, Nominations flag |
+| 6 | Q73 to Q80: WordPress architecture questions (submitted-profile state, Sources names in the contract, R2, two-factor, places taxonomy, background jobs, `site/` naming) | See questions.md |
 
 ### 3.2 Not yet reflected
 - **Wireframe has no publish-first states** (REQ-210 to 228) for the amended D-033.
-- **architecture.md and the ADRs** still describe Laravel, owner and judge panels, a `claims` table, `trust_status` with unclaimed and claimed, a kill switch, a flags list with judging and announcements, seven or more roles, and a Source registry screen. Rewrite at Gate 2 with D-034 to D-044 as input.
-- **docs/contracts/import-format.md**: unknown U8 ("until the WordPress registry exists") assumes a registry in WordPress. D-038 and D-042 keep the registry in the pipeline, with a read-only view in the site.
-- **CLAUDE.md**: stack line still says Laravel (D-031); "feature flags through Flags::on()" now means one flag; the roles line is not there.
-- **docs/spec.md** is unchanged. It lists a Judge role, a "Subscription plans" page, and claim, owner and kill-switch features. It stays as the intent.
+- **architecture.md, the ADRs, CLAUDE.md and .env.example are rewritten for WordPress** (proposed v2, awaiting your Gate 2 approval). ADR-009 (AI drafting) is superseded: that work is in the acquisition pipeline. Laravel and Filament remain only as history. Cost, versions, plugin choices and host limits are marked "verify" until the M0 spikes. Import is a file upload (JSON Lines), not REST (Q77).
+- **docs/contracts/import-format.md**: unknown U8 and the Sources names (Q74) need the contract owner; the architecture proposes answers for U1 to U14 in section 3.4 but the contract is unedited.
+- **CLAUDE.md** now names `site/` for the website code. The ownership rule for it is Q80.
+- **docs/spec.md** is unchanged (it lists a Judge role, Subscription plans, claim and kill-switch features). It stays as the intent.
 - **traceability.md and plan.md** do not exist yet.
 - **docs/change-review-2026-11-07.md** (the WIWI rename review) is untracked and awaits your rulings.
-- **Existing change reviews** (`docs/change-review-2026-11-08-no-accounts.md`) still describe the seven staff roles and the claim flow as they were at the time. They are history; D-036 and D-044 supersede them.
+- **Earlier change reviews** (`change-review-2026-11-08-no-accounts.md`) describe the seven roles and the claim flow as they were. They are history; D-036 and D-044 supersede them.
 
 ## 4. In `acquisition/` (not touched; needs changing there)
 - **Claims:** header (line ~9) and step 13 (~252): replace the request-to-claim text with correction, removal and report handled in the Support inbox (D-036, D-040). T-24 (request to claim and claim verification): drop. T-26 mentions claim email verification: change to correction, removal and report requesters. T-25 (second approver): update to D-040. T-28 "flagged": update to D-037.

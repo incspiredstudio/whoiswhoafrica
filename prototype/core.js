@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v6";
+  var KEY = "wiw-wireframe-v7";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,7 +21,7 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 6 ? raw : W.seed();
+    W.S = raw && raw.v === 7 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
     W.syncLists();
   };
@@ -218,10 +218,10 @@
     var y = window.scrollY, prev = W.cur && W.cur.path;
     var m = W.match(location.hash); W.cur = m;
     var r = m.r, body, area = r.opts.area || "pub";
-    var roles = r.opts.roles;
+    var roles = r.opts.roles, cap = r.opts.cap;
     var role = W.S.role;
-    if (roles && roles.indexOf(role) < 0 && role !== "admin") {
-      body = W.forbidden ? W.forbidden(m, roles) : "<p>Not authorised.</p>"; area = r.opts.area === "staff" ? "pub" : area;
+    if (cap ? !W.hasCap(cap) : (roles && roles.indexOf(role) < 0 && role !== "admin")) {
+      body = W.forbidden ? W.forbidden(m, roles, cap) : "<p>Not authorised.</p>"; area = r.opts.area === "staff" ? "pub" : area;
     } else {
       body = r.fn(m.params, m.q, m);
       if (body && body.redirect) { W.go(body.redirect); return; }
@@ -281,8 +281,8 @@
   };
   W.act["closeModal-go"] = function (h) { W.ui.modal = null; W.go(h); };
   W.forms.search = function (d) { W.go("#/search" + W.qs({ q: d.q })); };
-  W.forbidden = function (m, roles) {
-    return '<div class="wrap section"><div class="errbox"><h1>403 · Not authorised</h1><p>Your role (<strong>' + e(W.roleName(W.S.role)) + '</strong>) cannot open this page. Roles that can: ' + roles.map(function (r) { return e(W.roleName(r)); }).join(", ") + ', Admin.</p><p><a class="btn" href="#/">Go home</a></p></div></div>';
+  W.forbidden = function (m, roles, cap) {
+    return '<div class="wrap section"><div class="errbox"><h1>403 \u00b7 Not authorised</h1><p>Your role (<strong>' + e(W.roleName(W.S.role)) + '</strong>) does not have ' + (cap ? 'the capability <strong>' + e(cap) + '</strong>' : 'access to this page') + '. By default it belongs to: ' + (roles || []).map(function (r) { return e(W.roleName(r)); }).join(", ") + '. The Administrator can grant a capability to one user (Users and capabilities).</p><p><a class="btn" href="#/">Go home</a></p></div></div>';
   };
   W.notFound = { inv: "V13", opts: {}, fn: function () { return '<div class="wrap section"><h1>404 · Page not found</h1><p>The page may not exist, or it is not public. Nothing is revealed about unpublished items (REQ-208).</p><p><a class="btn" href="#/">Home</a> <a class="btn alt" href="#/people">Discover people</a></p></div>'; } };
 })();

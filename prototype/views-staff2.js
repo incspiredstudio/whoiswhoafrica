@@ -3,7 +3,7 @@
   var W = window.W, e = W.esc, ACL = W.ACL, ALL = W.ALLSTAFF;
   function head(t, sub) { return "<h1>" + e(t) + "</h1>" + (sub ? '<p class="muted">' + sub + "</p>" : ""); }
   function mini(path, inv, key, fn) { W.staffRoute(path, inv, key, fn); }
-  function onlyAdmin(path, inv, fn) { W.route(path, inv, fn, { area: "staff", roles: [] }); }
+  function capRoute(cap, path, inv, fn) { W.route(path, inv, fn, { area: "staff", cap: cap, roles: W.rolesWithCap(cap) }); }
 
   /* ---------- import, prospects, suppression, taxonomies ---------- */
   /* There is no Source registry here (D-038): approved sources are managed in the acquisition pipeline by the named approver. */
@@ -178,8 +178,8 @@
     if (s[1] === "screen") { n.status = "screening"; n.screenedBy = me; }
     else if (s[1] === "eligible") { n.status = "invited"; n.screenedBy = me; var p = W.S.profiles.filter(function (x) { return x.name.toLowerCase() === n.nominee.toLowerCase(); })[0]; if (p) n.profileId = p.id; W.mail(n.nomineeEmail || "Nominee (no email on file)", "You have been nominated", "Accept, decline or correct your details. Nothing is public.", "#/nominee/" + n.token); }
     else if (s[1] === "assess") n.status = "assessment";
-    else if (s[1] === "shortlist") { if (["admin", "editor"].indexOf(W.S.role) < 0) { W.toast("Only an Editor or Administrator can shortlist."); return; } n.status = "shortlisted"; n.shortlistBy = me; }
-    else if (s[1] === "final") { if (W.S.role !== "admin") { W.toast("Final approval is by Admin (standing in for the Venture CEO)."); return; } n.status = "finalist"; n.finalBy = me; }
+    else if (s[1] === "shortlist") { if (!W.hasCap("nominations")) { W.toast("You do not have the nominations capability (Editor and Administrator by default)."); return; } n.status = "shortlisted"; n.shortlistBy = me; }
+    else if (s[1] === "final") { if (!W.hasCap("final_approval")) { W.toast("Final approval needs the final_approval capability, Administrator by default (stands in for the Venture CEO)."); return; } n.status = "finalist"; n.finalBy = me; }
     else if (s[1] === "winner") { n.status = "winner"; }
     else if (s[1] === "ineligible") n.status = "ineligible";
     W.log("nomination." + s[1], n.ref, me); W.save(); W.render();
@@ -219,7 +219,7 @@
   W.act.publishWin = function () { var A = W.S.awards; A.winners = W.S.nominations.filter(function (n) { return n.status === "winner"; }).map(function (n) { return { cat: n.category, name: n.nominee, ref: n.ref }; }); A.published = true; W.log("announcement.publish", "awards", A.winners.length + " winners"); W.save(); W.render(); };
 
   /* ---------- platform ---------- */
-  onlyAdmin("/admin/flags", "A26", function () {
+  capRoute("nominations_flag", "/admin/flags", "A26", function () {
     var F = W.S.flags.nominations;
     return head("Feature flag", "There is one feature flag: Nominations (D-037). It switches the public nomination form on or off. Turning it ON needs the Administrator and the Venture CEO\u2019s approval reference, and is audited (REQ-194).") +
       W.table(["Flag", "What it controls", "State", "Approval ref", ""], [["nominations", "The Nominate page. OFF: \u201cNominations open soon\u201d with an email sign-up. ON: the full nomination form.", '<span class="pill ' + (F.on ? "flag-on" : "flag-off") + '">' + (F.on ? "ON" : "OFF") + "</span>", e(F.ref || "\u2014"), F.on ? W.btn("Turn OFF", "flagOff", "nominations", "sm alt") : W.btn("Turn ON\u2026", "flagOnDlg", "nominations", "sm")]]) +
@@ -228,13 +228,13 @@
   W.act.flagOnDlg = function (k) { W.openModal("Turn on: " + k, '<form data-form="flagon" class="stack-s"><input type="hidden" name="k" value="' + e(k) + '"><p>Public pages change immediately. Only turn this on with the Venture CEO’s explicit approval.</p>' + W.field("Approval reference (email, minute or ticket)", "ref", { req: true }) + '<button class="btn">Turn ON</button></form>'); };
   W.forms.flagon = function (d) { W.S.flags[d.k] = { on: true, ref: d.ref }; W.log("flag.on", d.k, "approval: " + d.ref); W.ui.modal = null; W.save(); W.render(); W.toast(d.k + " is ON. Check the Nominate and Awards pages."); };
   W.act.flagOff = function (k) { W.S.flags[k] = { on: false, ref: "" }; W.log("flag.off", k, ""); W.save(); W.render(); W.toast(k + " is OFF."); };
-  onlyAdmin("/admin/audit", "A33", function () {
+  capRoute("audit_log", "/admin/audit", "A33", function () {
     var A = W.S.audit, bad = -1, prev = "00000000";
     return head("Audit log", "Append-only. Each row stores the hash of the one before, so tampering is detectable (REQ-051, 188). Exported nightly off-host.") + W.table(["#", "When", "Actor", "Action", "Target", "Detail", "Hash"], A.slice().reverse().slice(0, 60).map(function (a) { return [a.n, e(a.at), e(a.actor), e(a.action), e(a.target), e(a.detail), '<span class="mono">' + e(a.hash) + "</span>"]; }), "No actions yet. Do something as staff.") + "<p>" + W.btn("Verify chain", "verifyChain", "", "alt") + "</p>";
   });
   W.act.verifyChain = function () { var prev = "00000000", ok = true; W.S.audit.forEach(function (a) { if (a.prev !== prev) ok = false; prev = a.hash; }); W.toast(ok ? "Chain intact: " + W.S.audit.length + " rows verified." : "CHAIN BROKEN: alert raised."); };
-  onlyAdmin("/admin/users", "A34", function () {
-    return head("Users and roles", "Only staff have accounts. There are three staff roles: Reviewer, Editor and Administrator. Judge is not a role, and the public are visitors with no account (D-044). Two-factor sign-in is required for every one (REQ-047, 083, 235). Only the Administrator manages users.") + W.table(["User", "Role", "Two-factor", "Last seen", ""], W.S.users.map(function (u) { return [e(u.name), e(u.role), u.mfa ? '<span class="pill ok">on</span>' : '<span class="pill bad">OFF</span>', e(u.last), u.mfa ? "" : W.btn("Require two-factor", "mfa", u.name, "sm")]; })) + '<p><a class="btn alt" href="#/admin/roles">See what each role can open</a> ' + W.btn("Deactivate a leaver (sample)", "leaver", "", "alt") + '</p><p class="small muted">Leavers are deactivated the same day and the change is audited (REQ-235). Front-end registration is closed (REQ-229).</p>';
+  capRoute("users_roles", "/admin/users", "A34", function () {
+    return head("Users and roles", "Only staff have accounts. There are three staff roles: Reviewer, Editor and Administrator. Judge is not a role, and the public are visitors with no account (D-044). Two-factor sign-in is required for every one (REQ-047, 083, 235). Only the Administrator manages users.") + W.table(["User", "Role", "Two-factor", "Last seen", ""], W.S.users.map(function (u) { return [e(u.name), e(u.role), u.mfa ? '<span class="pill ok">on</span>' : '<span class="pill bad">OFF</span>', e(u.last), u.mfa ? "" : W.btn("Require two-factor", "mfa", u.name, "sm")]; })) + '<p><a class="btn alt" href="#/admin/roles">See what each role can open</a> <a class="btn alt" href="#/admin/capabilities">Users and capabilities</a> ' + W.btn("Deactivate a leaver (sample)", "leaver", "", "alt") + '</p><p class="small muted">Leavers are deactivated the same day and the change is audited (REQ-235). Front-end registration is closed (REQ-229).</p>';
   });
   W.act.leaver = function () { W.log("user.deactivate", "Sample Leaver", "same-day deactivation"); W.save(); W.toast("Account deactivated and logged (sample)."); };
   W.act.mfa = function (n) { W.S.users.filter(function (u) { return u.name === n; })[0].mfa = true; W.log("user.mfa", n, "required"); W.save(); W.render(); };
@@ -245,11 +245,11 @@
   mini("/admin/purges", "A48", "purges", function () {
     return head("Purge and unpublish log", "Each unpublish (single or bulk), removal and decline queues a CDN purge (REQ-209). The origin already answers 410 + noindex.") + W.table(["URL", "Why", "Date", "Status"], W.S.purges.map(function (p) { return ['<span class="mono">' + e(p.url) + "</span>", e(p.why), e(p.at), e(p.status)]; }), "Nothing purged yet. Unpublish a profile to see an entry.");
   });
-  mini("/admin/exports", "A41", "none", function () {
+  mini("/admin/exports", "A41", "exports", function () {
     return head("Exports", "CSV and open formats for CaromHQ and data portability (REQ-077, 087, 131).") + '<div class="grid c3">' + [["register", "Register with counting-rule status"], ["leads", "Leads"], ["customers", "Customers"], ["nominations", "Nominations"], ["profiles", "All profiles (open format)"], ["enquiries", "Enquiries"]].map(function (x) { return '<div class="card stack-s"><h2>' + e(x[1]) + "</h2>" + W.btn("Download CSV", "dl", x[0], "alt") + "</div>"; }).join("") + '</div><p class="small muted">Exports of personal data are Administrator-only and every export is logged (REQ-069, D-040). Reviewers and all other roles cannot export.</p>';
   });
   W.act.dl = function (k) {
-    if (W.S.role !== "admin") { W.log("export.denied", k, "role " + W.S.role); W.save(); W.toast("Exports of personal data are Administrator-only (REQ-069)."); return; }
+    if (!W.hasCap("exports")) { W.log("export.denied", k, "role " + W.S.role); W.save(); W.toast("Exports of personal data need the exports capability, Administrator by default (REQ-069)."); return; }
     var S = W.S, map = {
       register: [["id", "type", "customer", "amount_kobo", "currency", "status", "counts_toward_target", "complimentary"]].concat(S.arrangements.map(function (a) { return [a.id, a.type, (W.find("customers", a.customerId) || {}).name, a.amount, a.currency, W.arrStatus(a), W.counts(a) ? "yes" : "no", a.complimentary ? "yes" : "no"]; })),
       leads: [["id", "name", "org", "interest", "status"]].concat(S.leads.map(function (l) { return [l.ext, l.name, l.org, l.interest, l.status]; })),
@@ -264,7 +264,7 @@
   mini("/admin/emails", "A40", "emails", function () {
     return head("Email log", "Every notification the system sends (REQ-094). Provider bounces will be recorded here.") + W.table(["Date", "To", "Subject", "Link"], W.S.emails.map(function (m) { return [e(m.at), e(m.to), e(m.subject), m.link ? '<a href="' + e(m.link) + '">open</a>' : ""]; }), "No emails sent yet.");
   });
-  onlyAdmin("/admin/settings", "A47", function () {
+  capRoute("settings", "/admin/settings", "A47", function () {
     var t = W.S.thresholds;
     return head("Settings") + '<form class="card stack-s" data-form="settings"><h2>Sprint thresholds</h2>' + W.field("Paid subscriptions needed", "subs", { type: "number", value: t.subs }) + W.field("Confirmed revenue needed (NGN)", "rev", { type: "number", value: t.revenue / 100 }) + "<h2>Default revenue stream per arrangement type</h2>" + Object.keys(W.LISTS.arrTypes).map(function (k) { return W.field(W.LISTS.arrTypes[k], "st_" + k, { type: "select", options: Object.keys(W.LISTS.streams).map(function (s) { return [s, W.LISTS.streams[s]]; }), value: W.LISTS.defaultStream[k] }); }).join("") + '<button class="btn">Save</button></form>';
   });
@@ -278,7 +278,7 @@
   W.nomJudges = function (nomId) { return Object.keys(W.S.judgeAssign).filter(function (j) { return (W.S.judgeAssign[j] || []).indexOf(nomId) >= 0; }); };
   W.nomAverage = function (nomId) { var by = (W.S.scores[nomId] || {}).by || {}, ts = Object.keys(by).map(function (j) { return Number(calc(by[j].v)); }); return ts.length ? (ts.reduce(function (a, b) { return a + b; }, 0) / ts.length).toFixed(1) : "\u2014"; };
   W.recordScore = function (nomId, judge, v) {
-    if (["editor", "admin"].indexOf(W.S.role) < 0) return "only an Editor or Administrator records scores";
+    if (!W.hasCap("score_entry")) return "only a user with the score_entry capability (Editor or Administrator by default) records scores";
     if (W.nomJudges(nomId).indexOf(judge) < 0) return judge + " is not assigned to this nomination";
     if (W.coi(judge, nomId)) return "conflict recorded for " + judge + "; this judge cannot be scored on this nomination";
     var bad = W.S.awards.criteria.some(function (c) { var x = v[c.id]; return x === "" || x == null || isNaN(Number(x)) || Number(x) < 0 || Number(x) > 10; });
@@ -297,7 +297,7 @@
   mini("/admin/scores/:id", "A52", "scores", function (par) {
     var n = W.find("nominations", par.id); if (!n) return "<h1>Not found</h1>";
     var A = W.S.awards, js = W.nomJudges(n.id), by = (W.S.scores[n.id] || {}).by || {}, on = true;
-    var actions = (n.status === "assessment" ? (["admin", "editor"].indexOf(W.S.role) >= 0 ? W.btn("Shortlist (recorded approver)", "nomStep", n.id + "|shortlist") : '<span class="small muted">Shortlisting needs an Editor or Administrator (REQ-202).</span>') : "") + (n.status === "finalist" ? W.btn("Mark winner", "nomStep", n.id + "|winner") : "") + (n.status === "shortlisted" ? '<span class="small muted">Final approval is by the Administrator standing in for the Venture CEO. <a href="#/admin/nominations/' + e(n.id) + '">Open the nomination</a></span>' : "");
+    var actions = (n.status === "assessment" ? (W.hasCap("nominations") ? W.btn("Shortlist (recorded approver)", "nomStep", n.id + "|shortlist") : '<span class="small muted">Shortlisting needs the nominations capability, Editor or Administrator by default (REQ-202).</span>') : "") + (n.status === "finalist" ? W.btn("Mark winner", "nomStep", n.id + "|winner") : "") + (n.status === "shortlisted" ? '<span class="small muted">Final approval is by the Administrator standing in for the Venture CEO. <a href="#/admin/nominations/' + e(n.id) + '">Open the nomination</a></span>' : "");
     return '<p><a href="#/admin/scores">\u2190 Scores and results</a></p>' + head(n.ref + ": " + n.nominee, e(n.category)) +
       '<div class="card"><h2>Evidence</h2><p>' + e(n.evidence) + '</p><p class="small muted">The nominator is not shown. No payment, subscription or sponsorship data is available here.</p></div>' + 
       (js.length ? '<form class="card stack-s" data-form="scoregrid"><input type="hidden" name="id" value="' + e(n.id) + '"><h2>Scores by judge (0 to 10 per criterion)</h2><div class="tablewrap"><table class="t"><thead><tr><th scope="col">Judge</th>' + A.criteria.map(function (c) { return '<th scope="col">' + e(c.name) + " (" + c.weight + "%)</th>"; }).join("") + '<th scope="col">Weighted total</th></tr></thead><tbody>' + js.map(function (j, ji) {
@@ -316,19 +316,52 @@
     W.save(); W.render(); W.toast(msgs.length ? "Not saved: " + msgs.join("; ") + "." : saved ? saved + " judge score(s) saved and logged." : "Nothing to save.");
   };
   /* ---------- roles and permissions preview (REQ-235) ---------- */
-  mini("/admin/roles", "A54", "none", function () {
+  mini("/admin/roles", "A54", "users_roles", function () {
     var roles = [["reviewer", "Reviewer"], ["editor", "Editor"], ["admin", "Administrator"]];
-    var R = ["reviewer", "editor"], E = ["editor"], A = [];
-    var caps = [
-      ["Review queue: approve or reject", R], ["Duplicates and stale records", R], ["Profiles: view and filter by source, import batch, type and state", R], ["Assign existing taxonomy terms to a profile", R], ["Sources (read-only)", R], ["Suppression list: view (read-only)", R],
-      ["Edit a profile directly; set Verified, Featured or the Sponsored label", E], ["Publish, unpublish and restore a profile", E], ["Bulk unpublish by filter, and restore a batch", E], ["Stories (articles)", E], ["Taxonomy terms: add and edit (Industries, Cities, Countries, Organisation types, Professions)", E],
-      ["Nominations, screening, panel and conflicts, score entry, shortlist and winners publishing", E], ["Support inbox: enquiries, corrections, removals, reports (a valid removal adds to the suppression list)", E], ["Leads and prospects; sponsors", E],
-      ["Suppression list: add by hand", A], ["Import from the acquisition pipeline", A], ["Commercial register, customers and payments (confirmed by)", A], ["Revenue, sprint target and arrangements tiles", A], ["Users and roles, settings, plugins", A],
-      ["Export personal data (CSV), logged (REQ-069)", A], ["Audit log, purge log, email log, data requests, compliance", A], ["Nominations flag (needs an approval reference)", A]
-    ];
-    return head("Roles and permissions", "Preview of the capability matrix and left menus the WordPress build must enforce and test (REQ-083, 235, 240; D-041, D-044). There are three staff roles. Visitors have no account.") +
-      W.table(["Capability"].concat(roles.map(function (r) { return r[1]; })), caps.map(function (c) { return [e(c[0])].concat(roles.map(function (r) { var yes = r[0] === "admin" || c[1].indexOf(r[0]) >= 0; return yes ? '<span class="pill ok">Yes</span>' : '<span class="muted">\u2014</span>'; })); })) +
-      "<h2>Left menu by role</h2>" + W.table(["Role", "Screens in the left menu"], roles.map(function (r) { var m = W.menuFor(r[0]); return [e(r[1]), m.length + ": " + m.map(e).join(" \u00b7 ")]; })) +
-      '<div class="grid c2"><div class="card stack-s"><h2>Rules</h2><ul><li>Two-factor sign-in is required for every staff role (REQ-047).</li><li>Reviewers see only the review and directory screens. They cannot edit, publish, unpublish, approve sources, edit taxonomy terms, import, or export.</li><li>Judge is not a role. Judges have no account and no access to the site; an Editor enters their scores.</li><li>Nobody can install plugins or change roles except the Administrator.</li><li>Exports of personal data are Administrator-only and logged.</li><li>Leavers are deactivated the same day; every change is audited.</li><li>Profile owners, nominators and nominees have no account at all (REQ-229).</li></ul></div><div class="card stack-s"><h2>Try it</h2><p>Use <strong>Viewing as</strong> in the top bar to switch between Visitor, Reviewer, Editor and Administrator. Each role gets its own dashboard and left menu. Open a page your role is not allowed to see (for example Taxonomies as Reviewer) to see the 403 page.</p></div></div>';
+    var grp = "", rows = [];
+    W.CAPS.forEach(function (c) {
+      if (c[2] !== grp) { grp = c[2]; rows.push(['<strong>' + e(grp) + "</strong>", "", "", ""]); }
+      rows.push([e(c[1]) + ' <code class="small">' + e(c[0]) + "</code>"].concat(roles.map(function (r) { return W.hasCap(c[0], r[0], true) ? '<span class="pill ok">Yes</span>' : '<span class="muted">\u2014</span>'; })));
+    });
+    return head("Roles and permissions", "Preview of the role defaults and left menus the WordPress build must enforce and test (REQ-083, 235, 240, 244; D-044, D-045). A role is a default bundle of capabilities; the Administrator can add or remove single capabilities for one user (<a href=\"#/admin/capabilities\">Users and capabilities</a>). There are three staff roles. Visitors have no account.") +
+      W.table(["Capability"].concat(roles.map(function (r) { return r[1]; })), rows) +
+      "<h2>Left menu by role (defaults)</h2>" + W.table(["Role", "Screens in the left menu"], roles.map(function (r) { var m = W.menuFor(r[0], true); return [e(r[1]), m.length + ": " + m.map(e).join(" \u00b7 ")]; })) +
+      '<div class="grid c2"><div class="card stack-s"><h2>Rules</h2><ul><li>Two-factor sign-in is required for every staff role (REQ-047).</li><li>Reviewers see only the review and directory screens. By default they can assign existing terms and bulk unpublish by filter (D-045), but cannot edit, publish, import, edit terms or export.</li><li>Editors edit, publish and unpublish single profiles, but do not bulk unpublish unless the Administrator grants it.</li><li>Judge is not a role. Judges have no account and no access to the site; an Editor enters their scores.</li><li>Only the Administrator installs plugins, changes users, roles or capabilities.</li><li>Exports of personal data are Administrator-only and logged.</li><li>Leavers are deactivated the same day; every change is audited.</li><li>Profile owners, nominators and nominees have no account at all (REQ-229).</li></ul></div><div class="card stack-s"><h2>Try it</h2><p>Use <strong>Viewing as</strong> in the top bar to switch between Visitor, Reviewer, Editor and Administrator. Each role gets its own dashboard and left menu. Open a page your role is not allowed to see (for example Taxonomies as Reviewer) to see the 403 page. As Administrator, grant a capability on <a href="#/admin/capabilities">Users and capabilities</a>, switch to that user, and watch the menu change.</p></div></div>';
   });
+
+  /* ---------- users and capabilities (REQ-244, D-045) ---------- */
+  var CUSERS = [["reviewer", "Sample Reviewer 1"], ["editor", "Sample Editor"], ["admin", "Sample Admin"]];
+  mini("/admin/capabilities", "A60", "users_roles", function () {
+    var out = head("Users and capabilities", "A role is a default bundle of capabilities. The Administrator can add a capability to one user, or take one away, whatever the user\u2019s role: for example give an Editor <code>bulk_unpublish</code>, or a Reviewer <code>edit_profiles</code>. Changes are audited and take effect at once. Switch <strong>Viewing as</strong> to that role to see the menu and 403 pages change. Capabilities marked locked stay with Administrators (proposed limit, Q72).");
+    CUSERS.forEach(function (u) {
+      var role = u[0], g = W.S.caps[role], eff = W.CAPS.filter(function (c) { return W.hasCap(c[0], role); }).length, menu = W.menuFor(role).length, isAdmin = role === "admin";
+      var rows = W.CAPS.map(function (c) {
+        var def = W.capDefault(c[0], role), on = W.hasCap(c[0], role), tag = !isAdmin && on && !def ? ' <span class="pill warn">granted</span>' : (!isAdmin && !on && def ? ' <span class="pill bad">revoked</span>' : "");
+        var act = isAdmin ? '<span class="small muted">always</span>' : (c[4] && !on ? '<span class="small muted">locked: proposed limit, Q72</span>' : W.btn(on ? "Revoke" : "Grant", "capToggle", role + "|" + c[0], "sm " + (on ? "bad" : "")));
+        return [e(c[1]) + ' <code class="small">' + e(c[0]) + "</code>", e(c[2]), def ? "Yes" : "\u2014", on ? '<span class="pill ok">Yes</span>' + tag : '<span class="muted">\u2014</span>' + tag, act];
+      });
+      out += '<div class="card stack-s"><div class="row between"><h2>' + e(u[1]) + " \u00b7 " + e(W.roleName(role)) + "</h2>" + (isAdmin ? "" : W.btn("Reset to role defaults", "capReset", role, "sm alt")) + "</div><p class=\"small muted\">" + eff + " of " + W.CAPS.length + " capabilities \u00b7 " + menu + " left-menu items" + (isAdmin ? " \u00b7 the Administrator always has every capability" : " \u00b7 " + g.grant.length + " granted, " + g.revoke.length + " revoked") + ".</p>" + W.table(["Capability", "Group", "Role default", "This user", ""], rows) + "</div>";
+    });
+    return out;
+  });
+  W.act.capToggle = function (a) {
+    if (!W.hasCap("users_roles")) { W.toast("Only the Administrator changes capabilities."); return; }
+    var s = a.split("|"), role = s[0], cap = s[1], c = W.CAPIDX[cap], g = W.S.caps[role]; if (!c || !g || role === "admin") return;
+    var on = W.hasCap(cap, role), def = W.capDefault(cap, role), who = W.PERSONA[role];
+    if (on) {
+      g.grant = g.grant.filter(function (x) { return x !== cap; });
+      if (def && g.revoke.indexOf(cap) < 0) g.revoke.push(cap);
+      W.log("capability.revoke", who, cap);
+    } else {
+      if (c[4]) { W.toast("Locked: " + cap + " stays with Administrators (proposed limit, Q72)."); return; }
+      g.revoke = g.revoke.filter(function (x) { return x !== cap; });
+      if (!def && g.grant.indexOf(cap) < 0) g.grant.push(cap);
+      W.log("capability.grant", who, cap);
+    }
+    W.save(); W.render(); W.toast((on ? "Revoked " : "Granted ") + cap + " " + (on ? "from " : "to ") + who + ". Logged; effective at once.");
+  };
+  W.act.capReset = function (role) {
+    if (!W.hasCap("users_roles")) return;
+    W.S.caps[role] = { grant: [], revoke: [] }; W.log("capability.reset", W.PERSONA[role], "role defaults"); W.save(); W.render(); W.toast(W.PERSONA[role] + " is back to the role defaults.");
+  };
 })();

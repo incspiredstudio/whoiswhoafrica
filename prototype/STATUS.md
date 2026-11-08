@@ -18,6 +18,10 @@ Updated 2026-11-08 on branch `chore/wireframe-review-fixes`. Nothing committed b
 
 Removed screens: A27 Kill switch. New: A59 Sources. Reworked: A02, A05, A06, A12, A22, A31, A54, and flows 2, 3, 5, 6, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19.
 
+## Round 3 (D-045, D-046): bulk unpublish for Reviewer and Administrator; per-user capabilities
+- Bulk unpublish by filter and its restore are for Administrator and Reviewer only (capability `bulk_unpublish`). Editors lose it unless the Administrator grants it. Single unpublish/restore stays with Editor and Administrator (`unpublish_profile`).
+- Roles are default bundles of about 30 named capabilities (`W.CAPS`). New Administrator-only screen **Users and capabilities** (A60, `#/admin/capabilities`): grant or revoke any non-locked capability for one sample user per role; audited; menu and 403s follow effective capabilities. Locked to Administrators: `users_roles`, `settings`, `commercial_register` (proposed limit, Q72). Disputes and removals: `handle_disputes` (Editor by default). localStorage key `wiw-wireframe-v7`. Smoke: 2,100 checks, 0 failures (Node, stubbed DOM).
+
 ## For shared docs (the owner applies; this session does not edit them)
 Role names removed (Editor-in-Chief, Sales/Support, Finance, Awards manager) and the kill switch are still cited in:
 - **Requirements:** REQ-083 and REQ-235 (seven roles), REQ-239 (sprint, revenue and arrangements for Administrator only; Editor adds support and nominations counts), REQ-240 (Reviewer menu now includes Sources and has no Support inbox), REQ-174 (Editor-in-Chief), REQ-193 and REQ-227 (kill switch, "same effect as REQ-193"), REQ-209 (kill switch listed among unpublish triggers), REQ-136 (a read-only Sources screen now exists; pipeline approval unchanged), REQ-022, 178, 179, 181, 202 (role names), REQ-069, 077, 087 (exports Administrator only; leads and register exports). REQ-242 and REQ-243 are cited by A05 and A59 but do not exist until you add them.
@@ -31,3 +35,11 @@ All in `docs/wireframe-findings.md`, rows 52 to 59 (and rows 4, 5, 20, 31, 39, 4
 
 ## Not done
 The wireframe still has no D-033 publish-first states, so the "Compiled automatically ... Human review pending" label appears only as a preview on the review screen.
+
+
+### Round 3 additions to amend (D-045, D-046, REQ-244)
+- **REQ-193, D-043:** who may bulk unpublish is now Administrator and Reviewer (not Editor); say it is a capability.
+- **REQ-235, 240, 083, D-044:** the role defaults changed (Reviewer gains bulk_unpublish; Editor loses it). Add the capability model (new REQ-244): roles are default bundles, the Administrator can grant or revoke single capabilities per user, audited. Locked set and Q72.
+- **REQ-174, 232, D-040:** disputes and removals are handled by the `handle_disputes` capability holder (Editor by default), not by a fixed role.
+- **Q69, Q70, Q71:** answered by your rulings; Q72 (locked capabilities) is new.
+- **Role matrix wording** in GUIDE, consistency report and requirements header: Reviewer can bulk unpublish; Editor cannot by default.

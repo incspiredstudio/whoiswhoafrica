@@ -41,6 +41,7 @@ The repo turns the product brief into a built product in stages. A human approve
 - **Traceability table** (`traceability.md`): one row per REQ showing issue, pull request, test, and whether it was verified. It proves nothing was missed.
 - **Feature flag:** a switch that keeps a built feature hidden until you turn it on. The only flag is Nominations (D-037).
 - **Bulk unpublish by filter:** replaces the old kill switch (D-043). An Editor or Administrator unpublishes every profile matching a filter (source, type, import batch, state) at once, with a reason; it is reversible and audited.
+- **Capabilities:** the named permissions behind the roles. A role is a default bundle; the Administrator can grant or revoke single capabilities per user (D-046).
 - **Roles:** only Visitor (no account), Reviewer, Editor and Administrator (D-044). "Finance" in the docs means the offline business function, not a role.
 - **Suppression list:** people who asked to be removed, so they are never republished.
 - **Staging:** the test copy of the site before production.
