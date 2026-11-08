@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v3";
+  var KEY = "wiw-wireframe-v4";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,7 +21,7 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 3 ? raw : W.seed();
+    W.S = raw && raw.v === 4 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
     if (W.S.lists) Object.keys(W.S.lists).forEach(function (k) { W.LISTS[k] = W.S.lists[k]; });
   };
@@ -169,7 +169,7 @@
     return '<div id="wfbar"><div class="wrap"><strong>WIREFRAME</strong><span class="tag">sample data</span>' +
       '<label>Viewing as <select data-change="role" aria-label="Viewing as (role simulator)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
       '<button type="button" data-act="outbox">Email outbox (' + S.emails.length + ')</button>' +
-      '<a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
+      '<a class="btnlink" href="#/staff/signin">Staff sign in (wp-admin preview)</a><a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
       '<button type="button" data-act="reset">Reset sample data</button></div></div>';
   }
   function banners() {
@@ -180,7 +180,7 @@
     return out;
   }
   function header(cur) {
-    var role = W.S.role, acct = role === "visitor" ? '<a class="btn alt sm" href="#/login">Sign in</a>' : role === "owner" ? '<a class="btn alt sm" href="#/account">My profile</a>' : role === "judge" ? '<a class="btn alt sm" href="#/judge">Judge area</a>' : '<a class="btn alt sm" href="#/admin">Staff console</a>';
+    var role = W.S.role, acct = role === "visitor" ? "" : '<a class="btn alt sm" href="#/admin">Staff console</a>';
     return '<a class="skip" href="#main" data-act="skip">Skip to content</a><header class="site-head"><div class="wrap"><a class="logo" href="#/">' + e(W.brand.name) + '<small>' + e(W.brand.tagline) + "</small></a>" +
       '<div class="head-actions"><form class="search" role="search" data-form="search"><label class="sr" for="hq">Search profiles and stories</label><input id="hq" name="q" type="search" placeholder="Search" style="width:9rem"><button class="btn sm" type="submit">Search</button></form>' + acct +
       '<button type="button" class="btn alt sm nav-toggle" data-act="navToggle" aria-expanded="' + (W.ui.nav ? "true" : "false") + '" aria-controls="mainnav">Menu</button></div>' +
@@ -217,17 +217,14 @@
     var r = m.r, body, area = r.opts.area || "pub";
     var roles = r.opts.roles;
     var role = W.S.role;
-    if (area === "own" && role !== "owner") {
-      body = W.loginGate ? W.loginGate(m) : "<p>Sign in required.</p>"; area = "pub";
-    } else if (roles && roles.indexOf(role) < 0 && (role !== "admin" || area === "judge")) {
+    if (roles && roles.indexOf(role) < 0 && role !== "admin") {
       body = W.forbidden ? W.forbidden(m, roles) : "<p>Not authorised.</p>"; area = r.opts.area === "staff" ? "pub" : area;
     } else {
       body = r.fn(m.params, m.q, m);
       if (body && body.redirect) { W.go(body.redirect); return; }
     }
     var inner, tab = "";
-    if (area === "staff" || area === "judge") inner = W.appShell(area, body, m.path);
-    else if (area === "own") inner = '<div class="wrap section">' + W.ownerTabs(m.path) + body + "</div>";
+    if (area === "staff") inner = W.appShell(area, body, m.path);
     else inner = body;
     var inv = W.invById ? W.invById(m.inv || r.inv) : null;
     document.title = (inv ? inv.name + " · " : "") + W.brand.name + " wireframe";
@@ -272,18 +269,15 @@
   W.act.flows = function () { W.ui.flows = !W.ui.flows; W.render(); };
   W.act.notes = function () { W.ui.notes = !W.ui.notes; W.render(); };
   W.act.reset = function () { W.reset(); W.ui = { flows: false, notes: false, nav: false, modal: null }; location.hash = "#/"; W.render(); W.toast("Sample data reset."); };
-  W.act.role = function (v) { W.S.role = v; W.save(); var p = W.cur && W.cur.path; var area = W.cur && W.cur.r.opts.area; if (v === "judge") location.hash = "#/judge"; else if (["reviewer", "editor", "sales", "finance", "eic", "admin"].indexOf(v) >= 0 && area !== "staff") location.hash = "#/admin"; else if (v === "owner" && area !== "own") location.hash = "#/account"; else if (v === "visitor" && (area === "staff" || area === "own" || area === "judge")) location.hash = "#/"; else W.render(); };
+  W.act.role = function (v) { W.S.role = v; W.save(); var area = W.cur && W.cur.r.opts.area; if (v !== "visitor" && area !== "staff") location.hash = "#/admin"; else if (v === "visitor" && area === "staff") location.hash = "#/"; else W.render(); };
   W.act.consent = function (v) { W.S.consent = v; W.save(); W.render(); W.toast(v === "all" ? "Analytics accepted. Consent stored with timestamp and policy version." : "Essential cookies only."); };
   W.act.cookiePrefs = function () { W.S.consent = null; W.save(); W.render(); };
   W.act.outbox = function () {
     var em = W.S.emails;
-    W.openModal("Sample email outbox", '<p class="small muted">Every email the system would send appears here. Open the link to act as the recipient.</p>' + (em.length ? em.map(function (m) { return '<div class="card" style="margin-bottom:8px"><strong>' + e(m.subject) + '</strong><div class="small muted">To: ' + e(m.to) + '</div><p class="small">' + e(m.body) + "</p>" + (m.link ? '<a class="btn sm" href="' + e(m.link) + '" data-act="closeModal-go" data-arg="' + e(m.link) + '">Open link in email</a>' : "") + "</div>"; }).join("") : W.empty("No emails yet", "Do something that sends mail (sign up, submit, approve).")));
+    W.openModal("Sample email outbox", '<p class="small muted">Every email the system would send appears here. Open the link to act as the recipient.</p>' + (em.length ? em.map(function (m) { return '<div class="card" style="margin-bottom:8px"><strong>' + e(m.subject) + '</strong><div class="small muted">To: ' + e(m.to) + '</div><p class="small">' + e(m.body) + "</p>" + (m.link ? '<a class="btn sm" href="' + e(m.link) + '" data-act="closeModal-go" data-arg="' + e(m.link) + '">Open link in email</a>' : "") + "</div>"; }).join("") : W.empty("No emails yet", "Do something that sends mail (request to claim, nominate, submit, approve).")));
   };
   W.act["closeModal-go"] = function (h) { W.ui.modal = null; W.go(h); };
   W.forms.search = function (d) { W.go("#/search" + W.qs({ q: d.q })); };
-  W.loginGate = function (m) {
-    return '<div class="wrap section"><div class="infobox"><h1>Sign in to continue</h1><p>This page is for profile owners. You are viewing as <strong>' + e(W.LISTS.roles[W.S.role]) + '</strong>.</p><p><a class="btn" href="#/login">Go to sign in</a> <button class="btn alt" data-act="role" data-arg="owner">Wireframe shortcut: view as owner</button></p></div></div>';
-  };
   W.forbidden = function (m, roles) {
     return '<div class="wrap section"><div class="errbox"><h1>403 · Not authorised</h1><p>Your role (<strong>' + e(W.roleName(W.S.role)) + '</strong>) cannot open this page. Roles that can: ' + roles.map(function (r) { return e(W.roleName(r)); }).join(", ") + ', Admin.</p><p><a class="btn" href="#/">Go home</a></p></div></div>';
   };

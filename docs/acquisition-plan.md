@@ -6,6 +6,8 @@ Relies on decisions D-002, D-010, D-012 to D-017, D-024, D-029, D-031, D-033 and
 
 **What changed in v2.** D-033 reverses the order: the AI pipeline publishes, humans review afterwards, and AI monitors and takes down. Sections 3, 4, 5 and 6 are rewritten. Sections 1.1, 1.7, 2.1, 7, 8, 10, 11 and 12 are updated to match. Other affected documents are listed in `docs/change-review-2026-11-08-publish-first.md`.
 
+**D-034 (no public accounts, 2026-11-08).** There are no owner accounts. "Claim" is a request-to-claim form that staff verify and set to Claimed; owner edits are correction requests staff apply; refresh reminders are emails with a link to the form; the requester check in 6.3 uses a verified email link. Tooling T-23 to T-28 and the workload note are in sections 3.1, 6.3 and 7. Legal and the staff-role questions are Q56–Q62.
+
 **Still in conflict with recorded decisions (need your ruling, see section 12):**
 - D-017, REQ-163 and REQ-168 require human approval of every AI draft before publication (decision 12).
 - D-013 says "human review first" for individuals (decision 13).
@@ -247,7 +249,7 @@ An agent does these checks as part of preparing each source-registry entry (REQ-
 | 11 | **Publish** | Code re-runs the gate: no pause, under the cap, suppression check (third of three), hash matches. AI Publisher sets Published – review pending. The label and noindex apply at once. | A named human opens each ramp stage (section 6.6). No one presses publish per record. | REQ-212, 216, 217, 219, 225 |
 | 12 | **Human review after go-live** | Orders the queue: S1 flags, sample, claims and corrections, then oldest. Hides the AI audit from the reviewer on sampled records. | The reviewer checks identity, the criterion, every claim against its source, and the neutral-content checklist. Approve gives "Reviewed on <date>", indexing and a sitemap entry. Reject gives a 410. **Approver ≠ importer.** | REQ-148, 163, 222 |
 | 13 | **Monitor and AI takedown** | Runs the continuous checks (6.8). May unpublish with a reason code (6.7). Never edits facts. | A human reviews every AI takedown | REQ-220, 221, 223 |
-| 14 | **Corrections and removals** | Sends refresh reminders. Hides a pending profile at once on a removal request. | Reviewers handle corrections and removals. The Editor-in-Chief handles disputes. | REQ-156–161, 164, 174, 226 |
+| 14 | **Corrections, claims and removals** | Sends refresh reminders by email with a link to the correction form (no owner login, D-034). Hides a pending profile at once on a removal request. | Reviewers verify claims and set Claimed, and apply correction requests in wp-admin (REQ-230–232). The Editor-in-Chief handles disputes. | REQ-156–161, 164, 174, 226, 229–232 |
 
 ### 3.2 The gate: green, amber, red
 Code sets the colour, not the model. Numbers are defaults until the pilot.
@@ -579,7 +581,7 @@ Every change to a published profile writes an entry (REQ-164): what changed, old
   - NDPA s.36 requires us to stop unless we show overriding legitimate grounds.
   - POPIA s.11(3) requires a stop on reasonable grounds.
   - **Default:** a subject who objects is removed and suppressed. The Editor-in-Chief may escalate only office-holders (I1/I5) to Legal.
-- **How a requester's identity is checked** is still open (wireframe finding 15). Proposed default: a request from the subject's official work email, or from the organisation's domain, is accepted. Anything else goes to staff judgement.
+- **How a requester's identity is checked** is still open (wireframe finding 15). With no accounts (D-034), the requester's email is verified by a single-use signed link (REQ-233). Proposed default: a request from the subject's official work email, or from the organisation's domain, is accepted. Anything else goes to staff judgement.
 - **Search engines:** after a removal, staff file search-engine removal requests (N21). Pending profiles should rarely need this, since they are noindex.
 
 ### 6.4 Legal risks
@@ -696,6 +698,14 @@ These feed the WordPress architecture (D-031). "Proposed" items are not yet in `
 | T-20 | **AI takedown and its queue** | Reason codes; reversible; human review with deadlines; restore rules | REQ-220, 221 |
 | T-21 | **Monitor** | The six checks in 6.8 with cadence settings and heartbeat. **Must run somewhere that allows continuous jobs:** shared cPanel may not (Q26, ADR-011). A small runner outside WordPress is likely. | REQ-223 |
 | T-22 | **Audit log for AI actors** | Service role, reason code and content hash on each action | REQ-228 |
+| T-23 | **No public accounts** | Front-end registration closed; no public login link; wp-login limited to staff; the only users are staff and the two service roles. Test that the site exposes no registration or login route. | REQ-229 |
+| T-24 | **Request to claim and claim verification** | Public form with evidence upload and email verification; staff screen with evidence, method, rival claims; only staff set Claimed. | REQ-230, 231 |
+| T-25 | **Correction request** | Form and staff handling through the review queue; version history records requester and approver. Sensitive fields need a second approver (Q57). | REQ-232 |
+| T-26 | **Single-use signed links** | Purpose-bound, single-use, expiring, hashed tokens for nominator, nominee, intake, consent and claim email verification. | REQ-233 |
+| T-27 | **Staff roles and two-factor** | Seven roles with a tested capability matrix; two-factor enforced; same-day deactivation. | REQ-235, 047 |
+| T-28 | **Offline score entry** | Awards manager screen for scores, conflicts, shortlist and results (flagged). | REQ-234 |
+
+**Workload note (D-034):** with no owner accounts, every claim, correction and enquiry change lands on staff. Claims and corrections already sit at the top of the review queue (REQ-226); plan about 5 to 10 minutes per claim or correction on top of the review estimates in 4.1. The sales prospect list in section 9 can still point prospects to the claim form.
 
 **Build order that unblocks acquisition soonest:** T-7, T-18, T-19 and T-11 first (nothing can go live safely without them), then T-2 with T-3, T-1, T-9, T-20, T-21, T-5, T-8, then the rest. All items in the go-live gate (5.5) come before T0.
 

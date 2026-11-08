@@ -13,7 +13,7 @@ const ctx = {
 };
 ctx.window = ctx; ctx.scrollY = 0; ctx.scrollTo = () => {}; ctx.addEventListener = () => {};
 vm.createContext(ctx);
-for (const f of ["tokens.js", "data.js", "core.js", "views-public.js", "views-awards.js", "views-owner.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) {
+for (const f of ["tokens.js", "data.js", "core.js", "views-public.js", "views-awards.js", "views-links.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) {
   vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx, { filename: f });
 }
 const W = ctx.W; W.load();
@@ -64,14 +64,71 @@ S().role = "sales"; W.forms.lead({ name: "N", org: "O", interest: "x", contact: 
 // nominations
 reload(); S().role = "eic"; W.act.nomStep("n2|screen"); W.act.nomStep("n2|eligible"); check("invited", W.find("nominations", "n2").status === "invited");
 const nn = W.find("nominations", "n2"); W.act.nomDeclineYes(nn.token); check("decline suppresses", W.profile("b1").status === "suppressed" && S().suppression.some((s) => s.name === "Sample Fintech Ltd." || s.name === "Sample Agritech Co."));
-// judge
-reload(); S().flags.judging = { on: true, ref: "r" }; S().role = "judge"; W.forms.score({ id: "n4", k_k1: 5, k_k2: 6, k_k3: 7, k_k4: 8, comment: "" }, null, { submitter: { value: "submit" } }); check("score locked", S().scores.n4 && S().scores.n4.locked);
-W.forms.coi({ id: "n5", why: "x" }); check("coi hides", W.match("#/judge/score/n5").r.fn({ id: "n5" }, {}, {}).indexOf("Not available") >= 0);
-// owner
-reload(); S().role = "owner"; ctx.location.hash = "#/account/profile"; W.forms.profile({ type: "individual", name: "Sample Person A", title: "New Title", industry: "Technology", city: "Lagos", bio: "Call me on 0803 123 4567", achievements: "", warranty: "1", adult: "1" }, null, { submitter: { value: "submit" } });
-check("scan blocks bio (no throw)", true);
-W.forms.profile({ type: "individual", name: "Sample Person A", title: "New Title", industry: "Technology", city: "Lagos", bio: "Clean bio", achievements: "", warranty: "1", adult: "1" }, null, { submitter: { value: "submit" } });
-check("edit queued", !!W.profile("p-owner").edit && W.profile("p-owner").title === "Chief Sample Officer");
+// D-034: no public accounts
+check("no login/signup/account/judge routes", !W.routes.some((r) => /^\/(login|signup|account|judge|forgot|reset|verify)(\/|$)/.test(r.pattern)), W.routes.filter((r) => /^\/(login|signup|account|judge|forgot|reset|verify)/.test(r.pattern)).map((r) => r.pattern).join());
+check("no owner or judge role", !roles.includes("owner") && !roles.includes("judge") && roles.includes("awards"));
+check("seven staff roles + visitor", roles.length === 8, roles.join());
+for (const x of ["#/login", "#/signup", "#/account", "#/judge", "#/forgot"]) { reload(); S().role = "visitor"; check("route gone " + x, W.match(x).r === W.notFound); }
+// request to claim -> email link -> staff verification; only staff set Claimed
+reload(); S().role = "visitor";
+W.forms.claim({ slug: "sample-university-a", name: "N", relation: "Authorised representative of the organisation", email: "n@example.org", phone: "", route: "Document", statement: "s", ok: "1" });
+const cl = S().claims[0]; check("claim awaits email check", cl.status === "awaiting email check" && !cl.emailVerified);
+check("claim submit does not set Claimed", W.profile("i1").trust === "unclaimed");
+check("cannot decide before email confirmed", W.decideClaim(cl.id, "approve", "x") === "not open");
+ctx.location.hash = "#/confirm/" + cl.token; W.render(); check("email link moves claim to queue", cl.status === "pending" && cl.emailVerified && S().used[cl.token]);
+check("email link does not set Claimed", W.profile("i1").trust === "unclaimed");
+S().role = "reviewer"; check("reason required", W.decideClaim(cl.id, "approve", "") === "reason required");
+check("dispute: reviewer cannot approve", W.decideClaim(cl.id, "approve", "ok").indexOf("dispute") === 0 && W.profile("i1").trust === "unclaimed");
+S().role = "eic"; check("EIC approves", W.decideClaim(cl.id, "approve", "evidence checked") === "" && W.profile("i1").trust === "claimed");
+check("claim approval logged with reason", S().audit.some((a) => a.action === "claim.approve" && /evidence checked/.test(a.detail)));
+ctx.location.hash = "#/confirm/zzz"; W.render(); check("unknown link -> expired page", /expired or already used/.test(app.innerHTML));
+reload(); S().role = "visitor"; for (let k = 0; k < 4; k++) W.forms.claim({ slug: "sample-university-a", name: "N", relation: "Authorised representative of the organisation", email: "n@example.org", route: "Document", statement: "s" });
+check("claim rate limit", S().claims.filter((c) => c.claimant === "N").length === 3);
+// owner correction request -> staff -> review; second person approves
+reload(); S().role = "visitor";
+W.forms.correct({ id: "p-a", who: "The person named on this profile", need: "Correct a fact", part: "title", detail: "New Title", evidence: "", contact: "x@example.org" });
+const cr = S().corrections[0]; check("owner request awaits email", cr.status === "awaiting email check");
+ctx.location.hash = "#/confirm/" + cr.token; W.render(); check("owner request confirmed", cr.status === "open" && cr.emailVerified);
+S().role = "reviewer"; check("apply sends to review", W.applyCorrection(cr.id) === "" && W.profile("p-a").edit.title === "New Title" && W.profile("p-a").title === "Chief Sample Officer");
+const ap = { id: "p-a", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }; W.forms.approve(ap); check("same person cannot approve own change", W.profile("p-a").title === "Chief Sample Officer");
+S().role = "eic"; W.forms.approve(ap); check("second person approves", W.profile("p-a").title === "New Title");
+reload(); S().role = "visitor"; W.forms.correct({ id: "b1", who: "Someone else (a visitor)", need: "Correct a fact", part: "other", detail: "d", contact: "v@example.org" }); check("visitor correction needs no confirmation", S().corrections[0].status === "open");
+// customer intake by single-use link
+reload(); S().role = "visitor"; W.act.startInvite("demo"); check("intake draft held against link", !!S().intake.demo);
+W.forms.profile({ token: "demo", type: "business", name: "Sample Organisation B", title: "t", industry: "Technology", city: "Lagos", bio: "Clean", achievements: "", warranty: "1", email: "c@example.org" }, null, { submitter: { value: "submit" } });
+check("intake submit -> pending and link used", W.profile("p-new").status === "pending" && S().used.demo && W.profile("p-new").trust === "unclaimed");
+ctx.location.hash = "#/invite/demo"; W.render(); check("invite link single use", /expired or already used/.test(app.innerHTML));
+S().role = "reviewer"; W.forms.approve({ id: "p-new", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("staff approval publishes and sets Claimed", W.profile("p-new").status === "published" && W.profile("p-new").trust === "claimed");
+reload(); S().role = "visitor"; W.act.startInvite("demo"); W.forms.profile({ token: "demo", type: "individual", name: "S", title: "t", industry: "Technology", city: "Lagos", bio: "Call 0803 123 4567", achievements: "", warranty: "1", adult: "1", email: "c@example.org" }, null, { submitter: { value: "submit" } }); check("intake scan blocks (no throw, still draft)", W.profile("p-new").status === "draft");
+// nominator email link
+reload(); S().flags.nominations = { on: true, ref: "x" }; ctx.location.hash = "#/nominate"; W.forms.nom0({ name: "A", email: "a@example.org", rel: "Colleague", ok: "1" }); check("nominator waits for link", W.ui.nom.step === 1 && S().emails[0].link === "#/nominate/verify");
+ctx.location.hash = "#/nominate/verify"; W.render(); check("nominator link verifies", W.ui.nom.d.verified && W.ui.nom.step === 2);
+// offline judging: staff enter scores; conflicts block
+reload(); S().flags.judging = { on: true, ref: "r" }; S().role = "awards";
+check("score blocked for conflicted judge", W.recordScore("n5", "Sample Judge 2", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("conflict") >= 0 && !(((S().scores.n5 || {}).by || {})["Sample Judge 2"]));
+W.forms.scoregrid({ id: "n5", s_0_k1: 6, s_0_k2: 6, s_0_k3: 6, s_0_k4: 6, s_1_k1: 9, s_1_k2: 9, s_1_k3: 9, s_1_k4: 9 }); const by5 = (S().scores.n5 || {}).by || {};
+check("grid saves allowed judge, drops conflicted judge", by5["Sample Judge 1"] && !by5["Sample Judge 2"] && by5["Sample Judge 1"].by === "Sample Awards Manager");
+check("weighted total", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }) === "7.9", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }));
+check("score range enforced", W.recordScore("n4", "Sample Judge 1", { k1: 11, k2: 5, k3: 5, k4: 5 }).indexOf("0 to 10") >= 0);
+S().role = "reviewer"; check("reviewer cannot enter scores", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("only the Awards") === 0);
+S().role = "awards"; S().flags.judging.on = false; check("scores blocked while flag OFF", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }) === "the judging flag is OFF");
+S().flags.judging.on = true; ctx.location.hash = "#/admin/scores/n5"; W.render(); check("conflict row has no score inputs", app.innerHTML.includes("Conflict recorded") && app.innerHTML.includes('name="s_0_k1"') && !app.innerHTML.includes('name="s_1_k1"'));
+W.forms.judgecoi({ judge: "Sample Judge 1", n: "n4", why: "x" }); check("recording a conflict removes the judge's score", !(((S().scores.n4 || {}).by || {})["Sample Judge 1"]));
+S().role = "admin"; W.find("nominations", "n4").status = "assessment"; W.act.nomStep("n4|shortlist"); check("shortlist via score page flow", W.find("nominations", "n4").status === "shortlisted");
+// role access
+reload(); S().role = "awards"; ctx.location.hash = "#/admin/review"; W.render(); check("awards manager cannot open review queue", /403/.test(app.innerHTML));
+ctx.location.hash = "#/admin/scores"; W.render(); check("awards manager opens scores", /Scores and results/.test(app.innerHTML));
+S().role = "reviewer"; ctx.location.hash = "#/admin/scores"; W.render(); check("reviewer cannot open scores", /403/.test(app.innerHTML));
+S().role = "visitor"; ctx.location.hash = "#/admin"; W.render(); check("visitor gets 403 on admin", /403/.test(app.innerHTML));
+S().role = "reviewer"; ctx.location.hash = "#/admin/roles"; W.render(); check("roles matrix opens for staff", /Roles and permissions/.test(app.innerHTML) && /Awards manager/.test(app.innerHTML));
+// flows: every start route resolves and every inventory id exists
+for (const f of W.FLOWS) {
+  for (const id of f.inv) check("flow inventory id " + f.t + " " + id, !!W.invById(id), id);
+  reload(); S().role = f.role; ctx.location.hash = f.go; app.innerHTML = ""; try { W.render(); } catch (e) { check("flow start " + f.t, false, e.stack.split("\n")[0]); continue; }
+  check("flow start nonempty " + f.t, app.innerHTML.length > 200); if (!/^1\./.test(f.t)) check("flow start not 404 " + f.t, !/404 · Page not found/.test(app.innerHTML));
+  check("flow role exists " + f.t, roles.includes(f.role), f.role);
+}
+check("19 flows", W.FLOWS.length === 19);
 // audit chain
 let prev = "00000000", okc = true; S().audit.forEach((r) => { if (r.prev !== prev) okc = false; prev = r.hash; }); check("audit chain", okc);
 console.log(n + " checks, " + fails + " failures");

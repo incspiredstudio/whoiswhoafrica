@@ -7,6 +7,7 @@ Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). 
 **Q1 correction (D-029):** the demo site is public and indexable; profiles are visible only after human approval; removals return 410/noindex (REQ-208, 209).
 **Q17 answered (D-030):** one login per profile owner; REQ-111 withdrawn for now.
 **Publish first (D-033, 2026-11-08):** acquired records publish before human review, labelled and noindex, and every one is reviewed afterwards. REQ-148 and REQ-208 are amended; REQ-210 to REQ-228 are added in section 12. Requirements marked "Conflict with D-033" are unchanged until you rule.
+**No public accounts (D-034, 2026-11-08):** no login or signup for anyone on the public site. Only staff use wp-admin (two-factor required). Judges have no access for now. Withdrawn: REQ-019, 035, 107, 110, 128, 201. Amended: REQ-013, 015, 018, 036, 037, 047, 060, 083, 108, 109, 122, 152, 160, 173, 175, 196, 197, 200. New: REQ-229 to REQ-236 in section 13.
 **Pending (team lead):** Q16.
 
 **Priority key:** `M` = MVP, built as early as possible (dates in the brief are ceilings, not targets) · `M (flag)` = built in the MVP but behind a feature flag that is OFF until the Venture CEO approves · `S` = should · `L` = later (post-sprint) · `Q#` = scope depends on that open question.
@@ -57,13 +58,13 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-010 | **WITHDRAWN** (no tiers or packages; every listing has the same format; D-028). ~~An informational packages page describes each package, its inclusions and indicative pricing as admin-editable content. It has no cart and no checkout, and its call to action leads to the enquiry form (REQ-177).~~ | 6.1, 8 P1 | Withdrawn |
 | REQ-011 | **WITHDRAWN** (no checkout; replaced by lead form REQ-177). ~~A prospective subscriber can choose a plan, create an account, pay and submit their profile in one continuous journey with no human intervention required.~~ | 12.3 | Withdrawn |
 | REQ-012 | **WITHDRAWN** (no packages; D-028). ~~A corporate/institutional customer record can cover several profiles and users (configuration-driven; details pending Q7).~~ | 6.2 | Withdrawn |
-| REQ-013 | The profile intake form validates input, saves drafts and accepts image uploads with enforced type and size limits. Customers reach it through an admin-issued invitation link after the offline agreement; there is no payment step. | 8 P1 | M |
+| REQ-013 | The profile intake form validates input, saves drafts and accepts image uploads with enforced type and size limits. Customers reach it through a single-use signed link (REQ-233) emailed by staff after the offline agreement: no account, no password, no payment step. The draft is held against the link until submitted or expired. Staff may instead enter the profile for the customer (REQ-085). *(Amended by D-034.)* | 8 P1 | M |
 | REQ-014 | A submitted profile enters an editorial review queue and is not public until a staff reviewer approves it. | 8 P2, 16 | M |
-| REQ-015 | An owner can edit a published profile; changes to name, title, organisation, awards or achievement claims re-enter review before going live. | 6.1 | M |
+| REQ-015 | A profile owner asks for a change to a published profile through the correction-request form (REQ-232). Staff apply it in wp-admin through the usual review. Changes to name, title, organisation, awards or achievement claims need a second staff member's approval before going live (default; Q57). There is no owner login and no owner self-edit. *(Amended by D-034.)* | 6.1 | M |
 | REQ-016 | Admins can mark any post or profile Sponsored (REQ-182). The label is distinct from any trust status (REQ-024). There is no paid placement tier. | 6.1, 3.4 | M |
 | REQ-017 | **WITHDRAWN** (no paid tiers; every listing has the same format; D-028). ~~Paid tiers allow additional images/media on the profile.~~ | 6.1 | Withdrawn |
-| REQ-018 | A visitor can send an enquiry to a profile owner through a relay form; the owner's email/phone is not exposed; enquiries are rate-limited and spam-protected; owners can switch enquiries off. | 5.1 | M |
-| REQ-019 | A profile owner can see their profile status and view count. | 6.1 | S |
+| REQ-018 | A visitor can send an enquiry to a profile owner through a relay form; the owner's email/phone is not exposed; enquiries are rate-limited and spam-protected; a profile owner can ask staff to switch enquiries off, and staff do it in wp-admin (logged). Enquiries go to the staff inbox for unclaimed profiles and to the contact address staff hold for claimed ones. *(Amended by D-034.)* | 5.1 | M |
+| REQ-019 | **WITHDRAWN** (D-034: no owner area. Owners ask staff for the view count (REQ-236).) ~~A profile owner can see their profile status and view count.~~ | 6.1 | Withdrawn |
 | REQ-020 | Profile analytics beyond view count (sources, enquiries over time). | 6.1 | L |
 | REQ-021 | The system keeps an admin-managed commercial register (see REQ-179). | 9.3 | M |
 | REQ-022 | Counting rule (brief section 9.3): a "paid subscription" for the sprint target is a paid arrangement with status Confirmed in the register. Confirmed requires amount, currency, payment method and reference, date received, a named confirmed-by admin, and onboarding started. Status is computed from fields, not edited by hand. Complimentary arrangements never count. | 9.3 | M |
@@ -79,9 +80,9 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-032 | The Awards section shows the edition, categories, eligibility criteria and the nomination/judging process, managed as content. | 5.4, 7.3 | M |
 | REQ-033 | Category, nominee and winner pages exist; nominee pages appear only at the shortlist stage (REQ-198). | 12.2 | M (flag) |
 | REQ-034 | The system tracks each nomination through the 10 stages of the recognition process: screening, shortlist, judging, final approval, notification, announcement. | 7.4 | M (flag) |
-| REQ-035 | Judges have accounts and score assigned nominations against configurable criteria and weights (REQ-200). | 5.4 | M (flag) |
-| REQ-036 | Judges and staff declare conflicts of interest; conflicted judges cannot see or score that nomination. | 5.4 | M (flag) |
-| REQ-037 | Judge and scoring views never display payment, subscription, sponsorship or customer-record data of any nominee or nominator (see REQ-201). | 5.4, 7.4 | M (flag) |
+| REQ-035 | **WITHDRAWN** (D-034: judges have no accounts; scores are entered by staff (REQ-234).) ~~Judges have accounts and score assigned nominations against configurable criteria and weights (REQ-200).~~ | 5.4 | Withdrawn |
+| REQ-036 | Conflicts of interest are recorded per judge and nomination (declared by the judge offline, entered by the Awards manager). A score cannot be recorded for a judge in conflict with that nomination, and conflicted staff cannot screen it. *(Amended by D-034.)* | 5.4 | M (flag) |
+| REQ-037 | Score-entry and results screens, and any export of them, never display payment, subscription, sponsorship or customer-record data of any nominee or nominator (see REQ-201, REQ-234). *(Amended by D-034.)* | 5.4, 7.4 | M (flag) |
 | REQ-038 | Winner notification and public announcement can be prepared and published from the system, behind a flag (REQ-194). | 7.4 | M (flag) |
 | REQ-039 | A Contact page sends messages to a staff inbox and logs them. | 12.2 | M |
 
@@ -96,7 +97,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-044 | Public content is server-rendered or static so it is indexable; canonical URLs and sitemaps are provided. *(D-033: pending-review pages are noindex; REQ-217.)* | 5.3 | M |
 | REQ-045 | Production availability ≥ 99.5% monthly; the enquiry form, directory and admin sign-in are monitored with alerting. *(assumed)* | — | M |
 | REQ-046 | All traffic is HTTPS; OWASP Top-10 mitigations, security headers, form rate limits and dependency scanning are in place. | — | M |
-| REQ-047 | Staff accounts require strong passwords and MFA. | — | M |
+| REQ-047 | All human staff accounts require strong passwords and two-factor authentication, enforced before first use of wp-admin, with recovery codes and lockout after repeated failures. Only staff have accounts (REQ-229). *(Amended by D-034.)* | — | M |
 | REQ-048 | **WITHDRAWN** (no card handling on the site; PCI scope removed). ~~Card data never touches WHOISWHO servers (hosted checkout / tokenised).~~ | — | Withdrawn |
 | REQ-049 | Database and uploads are backed up daily; a restore is tested before launch; RPO 24 h, RTO 8 h. *(assumed)* | — | M |
 | REQ-050 | Errors, uptime and form-submission failures are monitored; logs contain no personal data beyond IDs. | — | M |
@@ -116,7 +117,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-057 | For each category of person whose data is held the lawful basis is recorded. For public figures published without consent the basis is legitimate interests with a right to object; Incspired Legal's written position is requested by 13 Nov and is not a build blocker (D-016). | 13.2 | M |
 | REQ-058 | A privacy notice is shown at every point of collection; consent (where used) is stored with timestamp and policy version. | 12.2 | M |
 | REQ-059 | The system supports data-subject requests (access, correction, erasure, objection, portability) with intake, tracking and due dates. | — | M |
-| REQ-060 | Profile owners choose which contact details are public; the default is none beyond the enquiry form. | 5.1 | M |
+| REQ-060 | Profile owners choose, by asking staff, which contact details are public; the default is none beyond the enquiry form. *(Amended by D-034.)* | 5.1 | M |
 | REQ-061 | Marketing email requires separate opt-in and every message has one-click unsubscribe. | 10.5 | M |
 | REQ-062 | Non-essential cookies/analytics load only after consent. | — | M |
 | REQ-063 | A retention schedule exists per data class and a job deletes or anonymises data when it expires. | — | S |
@@ -149,7 +150,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-083 | An admin console with roles: Admin, Editor, Reviewer, Sales/Support, Finance, Judge. *(D-033: plus two non-human roles; REQ-219.)* | 13 | M |
+| REQ-083 | An admin console (wp-admin) with exactly these human roles, each with least privilege (REQ-235): Administrator, Editor-in-Chief, Editor, Reviewer, Sales/Support, Finance, Awards manager. Judge is not a role. *(D-033: plus two non-human roles; REQ-219.)* *(Amended by D-034.)* | 13 | M |
 | REQ-084 | A review queue shows each pending item with a field-level diff, sources and approve / edit / reject-with-reason actions. *(D-033: also used after publication; REQ-222.)* | 8 P2 | M |
 | REQ-085 | Staff can create or edit a profile on behalf of a subscriber or as a complimentary listing; these are flagged and attributed. | 9.3 | M |
 | REQ-086 | Admins can edit a customer record's status, extend or end a term, or mark it complimentary; each change requires a reason and is audited. Refunds and cancellations are handled offline by Finance and recorded as a note and status only. | — | M |
@@ -183,10 +184,10 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri |
 |---|---|---|---|
-| REQ-107 | Users can register with email verification. | — | M |
-| REQ-108 | Users can log in, log out, reset passwords, and see/revoke sessions. | — | M |
-| REQ-109 | Roles are enforced: visitor, profile owner (one login per profile), staff roles, judge. | — | M |
-| REQ-110 | A user can deactivate or delete their account; the effect on their profile and arrangements is defined and shown before confirming. | — | M |
+| REQ-107 | **WITHDRAWN** (D-034: front-end registration is closed (REQ-229).) ~~Users can register with email verification.~~ | — | Withdrawn |
+| REQ-108 | Staff can log in to wp-admin, log out, reset passwords and see/revoke their own sessions; a reset never bypasses two-factor (REQ-047). There is no public login (REQ-229). *(Amended by D-034.)* | — | M |
+| REQ-109 | Roles are enforced: the anonymous visitor (no account) and the seven staff roles in REQ-235. There is no profile-owner, nominator, nominee or judge account. *(Amended by D-034.)* | — | M |
+| REQ-110 | **WITHDRAWN** (D-034: no user accounts to deactivate. Staff leavers are deactivated under REQ-235.) ~~A user can deactivate or delete their account; the effect on their profile and arrangements is defined and shown before confirming.~~ | — | Withdrawn |
 | REQ-111 | **WITHDRAWN** (deferred: one login per profile owner for now; D-030). ~~An organisation account supports multiple users (one owner, several editors).~~ | 6.2 | Withdrawn |
 | REQ-112 | Money is stored as integer minor units with a currency code (default NGN). Revenue is recorded by stream (REQ-180). | — | M |
 | REQ-113 | **WITHDRAWN** (no online payments to retry). ~~Failed or abandoned payments can be retried via a link; no profile is published without confirmed payment.~~ | 9.3 | Withdrawn |
@@ -198,13 +199,13 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-119 | **WITHDRAWN** (offline invoicing is done by Finance outside the platform). ~~Corporate customers can be invoiced and pay by bank transfer.~~ | 6.2 | Withdrawn |
 | REQ-120 | Terms, Privacy, Cookie policy, commercial terms and Awards rules are published. | 12.2, 13.2 | M |
 | REQ-121 | 404/500 pages, robots.txt and sitemap.xml exist. | — | M |
-| REQ-122 | Public forms are rate-limited per IP and per account. | — | M |
+| REQ-122 | Public forms are rate-limited per IP and per email address or link token. *(Amended by D-034.)* | — | M |
 | REQ-123 | The system warns about likely duplicate profiles at submission and in review. | — | M |
 | REQ-124 | A process exists for two parties claiming the same profile (ownership dispute). | — | M |
 | REQ-125 | Profile edits keep version history with author and timestamp. | 15.7 | M |
 | REQ-126 | Submitted content is covered by a licence and accuracy warranty accepted at submission. | — | M |
 | REQ-127 | Uploaded files are type-checked and scanned. | — | M |
-| REQ-128 | Owners can preview a draft exactly as it will be published. | — | S |
+| REQ-128 | **WITHDRAWN** (D-034: no owner area. Staff preview drafts in wp-admin (REQ-084).) ~~Owners can preview a draft exactly as it will be published.~~ | — | Withdrawn |
 | REQ-129 | Slug changes create redirects from the old URL. | — | S |
 | REQ-130 | A public "How WHOISWHO compiles profiles and what each label means" page exists. | 3.4 | M |
 | REQ-131 | The venture can export all its own data (profiles, register, content) in open formats. | 13.1 | S |
@@ -263,7 +264,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-149 | Review throughput, queue age and rejection reasons are tracked. | brief | M |
 | REQ-150 | The status ladder is Unclaimed → Claimed → Verified → Featured; transitions are logged with actor and reason. | brief | M |
 | REQ-151 | All acquired stubs carry a visible "Unclaimed" label explaining that WHOISWHO compiled it from public sources. | brief | M |
-| REQ-152 | Claimed requires proof the claimant is the person or an authorised representative of the organisation. | brief | M |
+| REQ-152 | Claimed requires proof the claimant is the person or an authorised representative of the organisation. The claimant sends a request-to-claim form with evidence (REQ-230); staff verify it (REQ-231). A profile becomes Claimed only by a staff action. *(Amended by D-034.)* | brief | M |
 | REQ-153 | Verified requires the checklist in REQ-025 and is independent of payment. | 3.4 | M |
 | REQ-154 | Featured is an editorial decision recorded with reason; it cannot be bought. | 3.4 | Q11 |
 | REQ-155 | Sponsored is a separate label that can sit on a profile of any status, does not alter the status, and is never styled like Verified. | 3.4, 6.3 | M |
@@ -271,7 +272,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-157 | Correction and removal requests do not require an account or payment. | brief | M |
 | REQ-158 | Response targets: acknowledge within 1 business day; hide the profile within 2 business days of a valid removal request from the subject; resolve corrections within 7 days. Breaches are flagged. | brief | M |
 | REQ-159 | Where lawful and a business contact exists, the subject is told when a stub is created (as decided by Legal in Q5). | brief | Q5 |
-| REQ-160 | Unclaimed records are re-checked every 6 months, flagged stale at 12 months, and unpublished if not re-reviewed by 18 months; claimed owners are prompted yearly. | brief | S |
+| REQ-160 | Unclaimed records are re-checked every 6 months, flagged stale at 12 months, and unpublished if not re-reviewed by 18 months; claimed owners are prompted yearly by email with a link to the correction form. *(Amended by D-034.)* | brief | S |
 | REQ-161 | Records synced from external sources flag source changes for review rather than overwriting. | brief | S |
 | REQ-162 | Stub profiles show no photograph unless it is owner-supplied or licensed. | brief | M |
 | REQ-163 | **Conflict with D-033: see Q46.** Reviewers apply a neutral-content checklist: no allegations, litigation, rumours, opinion or personal life; only dated, sourced, professional facts. | brief | M |
@@ -284,9 +285,9 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-170 | **Must now describe publish first: see Q35.** The public disclosure page states how AI-assisted profiles are produced and reviewed (wording as Legal decides). | brief | M |
 | REQ-171 | A dashboard reports profiles by entity type, source, status and age. | brief | S |
 | REQ-172 | A subject may add a short right-of-reply note to a profile or editorial item, subject to review. | brief | S |
-| REQ-173 | Claimed profile owners can see which sources the platform used about them. | brief | S |
+| REQ-173 | Claimed profile owners can ask, through the correction or contact form, which sources the platform used about them; staff send the list (REQ-236). *(Amended by D-034.)* | brief | S |
 | REQ-174 | Disputes (claim, correction, removal) escalate to a named Editor-in-Chief role. | brief | M |
-| REQ-175 | Complimentary profiles created for a customer require that customer's recorded consent before publication. (Stubs follow REQ-133 instead.) | 9.3 | M |
+| REQ-175 | Complimentary profiles created for a customer require that customer's recorded consent before publication, given on a single-use signed-link page (REQ-233) and stored on the arrangement. (Stubs follow REQ-133 instead.) *(Amended by D-034.)* | 9.3 | M |
 | REQ-176 | Prospect data (approach B) lives in a separate store, is never public, and cannot become a profile except by entering the REQ-148 review path with an approved source. | brief | M |
 
 ## 9. Non-software work (tracked, not built)
@@ -338,12 +339,12 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-193 | A global kill switch unpublishes all unclaimed individual profiles at once and works on public, indexed pages (REQ-209). It is reversible, restricted to named roles, and audited. *(D-033: REQ-227 covers pending organisations.)* | Q2 | M |
 | REQ-194 | Feature flags for nominations, judging and public announcements default OFF; switching one on requires the Admin role, records the CEO's approval reference, and is audited. | C9, Q12 | M |
 | REQ-195 | While nominations are off, the Nominate page shows "Nominations open soon" with an email sign-up (consent recorded, unsubscribe supported). | C9 | M |
-| REQ-196 | Anyone may nominate. The nominator's email is verified; submissions are rate-limited with duplicate detection; there is no public voting. | Q15 | M (flag) |
-| REQ-197 | Nominations are private until eligibility screening is complete; after screening the nominee is emailed a link to accept, decline or correct their details. | Q15 | M (flag) |
+| REQ-196 | Anyone may nominate. The nominator's email is verified by a single-use signed link (REQ-233); submissions are rate-limited with duplicate detection; there is no public voting. *(Amended by D-034.)* | Q15 | M (flag) |
+| REQ-197 | Nominations are private until eligibility screening is complete; after screening the nominee is emailed a single-use signed link (REQ-233) to accept, decline or correct their details, with no account. *(Amended by D-034.)* | Q15 | M (flag) |
 | REQ-198 | Public nominee pages appear only at the shortlist stage, built from the reviewed profile and sourced facts. A nominee who declines is removed and added to the suppression list (REQ-147). | Q15 | M (flag) |
 | REQ-199 | Payment, subscription or sponsorship never creates a nomination or affects screening or shortlisting; there is no data path from commercial records into the awards workflow. | 5.4 | M |
-| REQ-200 | Admins configure categories, eligibility criteria, scoring criteria and weights, judges per category and shortlist size; none are hard-coded. | Q12 | M (flag) |
-| REQ-201 | Judge accounts see only assigned nominations and never payment, subscription or sponsorship data. | Q12 | M (flag) |
+| REQ-200 | Admins configure categories, eligibility criteria, scoring criteria and weights, the judging panel per category and shortlist size; none are hard-coded. Judges are names on a panel, not users. *(Amended by D-034.)* | Q12 | M (flag) |
+| REQ-201 | **WITHDRAWN** (D-034: no judge accounts. Replaced by REQ-234 and REQ-037.) ~~Judge accounts see only assigned nominations and never payment, subscription or sponsorship data.~~ | Q12 | Withdrawn |
 | REQ-202 | Eligibility screening, shortlisting and final approval are separate recorded steps with named approvers. | Q12 | M (flag) |
 | REQ-203 | Images under open licences (e.g. Wikimedia Commons) may be used when the licence and attribution are stored with the image and shown on the page; no other third-party photos. | Q22 | M |
 | REQ-204 | The domain is wiwi.africa, including the email sending domain with SPF, DKIM and DMARC. | C1 | M |
@@ -408,3 +409,18 @@ These apply to acquired records (REQ-132, REQ-133). Customer submissions, owner 
 | AI takedown | Unpublished, Rejected, Removed and suppressed | Human | REQ-220 |
 | Any public state | Unpublished | Staff, kill switch, REQ-227 | REQ-091, 193, 209 |
 | Any state | Removed and suppressed | Staff | REQ-158, 207 |
+
+## 13. No public accounts (D-034)
+
+Claiming, profile changes, nominations and judging all work without any visitor, owner, nominator, nominee or judge account. Staff do the work in wp-admin. These are the WordPress build's input (D-031). Defaults marked Q56 to Q62 await your rulings.
+
+| # | Requirement | Spec | Priority |
+|---|---|---|---|
+| REQ-229 | The public website has no registration, login, password reset or account area for visitors, profile owners, nominators, nominees or judges. WordPress front-end registration is closed (no self sign-up, no default role, no user-facing login link). The only WordPress users are staff (REQ-235) and the two non-human roles (REQ-219). | D-034 | M |
+| REQ-230 | "Claim this profile" is a request-to-claim form with no account. Fields: claimant name, relationship (the person, or an authorised representative of the organisation), email, phone, evidence upload (type and size limits), and a statement. The email is verified by a single-use signed link (REQ-233) before the request enters the claim queue. Rate-limited and spam-protected. The claimant gets a reference number and an email when the request is resolved. | D-034, D-022, REQ-152 | M |
+| REQ-231 | A staff claim-verification screen shows each request beside the profile, the evidence, the method (domain email or document, D-022) and any rival claim. Staff approve (profile becomes Claimed, REQ-150), reject with a reason, or escalate a dispute to the Editor-in-Chief (REQ-124, 174). Only this action sets Claimed. Every decision is audited with actor and reason. | D-034, D-022 | M |
+| REQ-232 | Correct, remove and report stay as public forms and add a correction-request form for owner changes. A correction request records the requester's name, role, verified email, the fields to change, the new values and evidence. Staff handle it in wp-admin through the usual review (REQ-084); the version history records the request and the approver (REQ-125). A removal request from the subject follows REQ-158. | D-034, REQ-015, 156, 157 | M |
+| REQ-233 | Single-use signed email links carry the account-free flows: nominator verification (REQ-196), nominee accept, decline or correct (REQ-197), customer intake (REQ-013), consent for complimentary profiles (REQ-175) and claim email verification (REQ-230). Each link is bound to one purpose and one record, expires (default 14 days; Q58), works once, is stored hashed, shows an expired-or-used page afterwards, carries no personal data in the URL, is rate-limited, and can be revoked or reissued by staff. Every use is audited. | D-034 | M |
+| REQ-234 | Judging is offline. The Awards manager (or Administrator) records, in wp-admin, each judge's score per criterion for each nomination, using the weights in REQ-200, plus conflicts (REQ-036), the shortlist and the results. The totals are computed. Every entry is audited with who entered it and when. The screens show no commercial data (REQ-037). The shortlist, winners and announcements stay behind their feature flags (REQ-194). | D-034, D-019 | M (flag) |
+| REQ-235 | Seven human staff roles, each with the least privilege that does its job: Administrator (all, including users and settings), Editor-in-Chief (disputes, Featured, kill switch, final say on removals), Editor (content and stories), Reviewer (review queue, claims, corrections), Sales/Support (leads, enquiries, inbox), Finance (commercial register and payments), Awards manager (nominations, screening, score entry, results). A role-by-capability matrix is documented and tested; no role can install plugins or change roles except Administrator; two-factor is required (REQ-047). Leavers are deactivated the same day and the change is audited. | D-034 | M |
+| REQ-236 | Information that owners used to see in an account (profile status, view count, sources used, enquiries) is sent by staff on request through the contact form or a correction request, from the same data staff already see. Each such request is logged. | D-034, REQ-019, 173 | S |

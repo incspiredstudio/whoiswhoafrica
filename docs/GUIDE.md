@@ -64,6 +64,8 @@ The repo turns the product brief into a built product in stages. A human approve
 | `docs/decisions.md` | Every decision (D numbers) | Claude Code |
 | `docs/architecture.md`, `docs/adr/` | Tech choices and design | Claude Code |
 | `docs/plan.md` | Milestones, tasks, timeline | Claude Code |
+| `docs/wireframe-inventory.md`, `prototype/` | Every screen and flow, and the clickable wireframe. **Since D-034 there are no login, signup, owner-area or judge screens; only staff use wp-admin.** | Claude Code |
+| `docs/design-inspiration.md` | Visual references and open design questions, for the later design phase only | Claude Code |
 | `docs/traceability.md` | REQ to issue to test to verified | Claude Code |
 | `docs/verify-*.md` | Audit results with go / no-go | Claude Code |
 | `STATUS.md` | Where the project is right now; every session reads it first | Claude Code |
@@ -77,6 +79,7 @@ Reply in one message: "Accept all defaults except Q2: ..., Q5: ...". Claude Code
 - Speed first: finish as early as possible; the brief's dates are ceilings.
 - Claude Code builds everything; you approve at gates and handle outside work (accounts, legal, content, sales).
 - No payment processing on the website; payments are offline and admins record them.
+- No login or signup on the public website for anyone (D-034). Only staff use wp-admin, with two-factor. Claims, corrections and nominations use forms and single-use signed email links. Judging is offline.
 - Never commit secrets or read `.env` files.
 - Nothing publishes without human review.
 - New ideas found during the build become new issues, not extra scope.

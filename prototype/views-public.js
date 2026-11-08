@@ -59,7 +59,7 @@
   });
 
   W.route("/about", "V02", function () {
-    return page("<h1>About " + e(W.brand.name) + "</h1><p>Sample about copy. WHOISWHO is a directory and editorial platform. Mission, vision and values text is supplied by Brand (N1).</p><div class=\"grid c3\"><div class=\"card\"><h3>Influence</h3><p>Sample text.</p></div><div class=\"card\"><h3>Achievement</h3><p>Sample text.</p></div><div class=\"card\"><h3>Legacy</h3><p>Sample text.</p></div></div><p><a class=\"btn\" href=\"#/how-we-compile\">How we compile profiles</a> <a class=\"btn alt\" href=\"#/contact\">Contact us</a></p>");
+    return page("<h1>About " + e(W.brand.name) + "</h1><p>Sample about copy. " + e(W.brand.name) + " is a directory and editorial platform. Mission, vision and values text is supplied by Brand (N1).</p><div class=\"grid c3\"><div class=\"card\"><h3>Influence</h3><p>Sample text.</p></div><div class=\"card\"><h3>Achievement</h3><p>Sample text.</p></div><div class=\"card\"><h3>Legacy</h3><p>Sample text.</p></div></div><p><a class=\"btn\" href=\"#/how-we-compile\">How we compile profiles</a> <a class=\"btn alt\" href=\"#/contact\">Contact us</a></p>");
   });
 
   /* ---------- industries, search ---------- */
@@ -102,7 +102,7 @@
     return (staffPrev ? '<div class="banner staffprev"><div class="wrap">Staff preview. This profile is <strong>' + e(p.status) + "</strong> and is NOT public. Visitors would see " + (W.vis(p) === "gone" ? "410 Gone" : "404") + ".</div></div>" : "") +
       page(W.crumbs([[LIST[p.type === "individual" ? "people" : p.type === "business" ? "businesses" : "institutions"][3], LIST[p.type === "individual" ? "people" : p.type === "business" ? "businesses" : "institutions"][2]], [p.name]]) +
         '<div class="grid side"><div class="stack"><div class="row" style="flex-wrap:nowrap;align-items:flex-start">' + W.ph(p.type === "individual" ? "Photo (owner-supplied or licensed only)" : "Logo", "avatar") + "<div><h1 style=\"margin-bottom:4px\">" + e(p.name) + '</h1><div class="muted">' + e(p.title || "") + (p.org ? " · " + e(p.org) : "") + "</div><div class=\"tagrow\">" + W.trustPill(p) + W.spPill(sp) + '<span class="pill gray">' + types[p.type] + "</span></div></div></div>" +
-        (p.trust === "unclaimed" ? '<div class="infobox"><strong>Unclaimed.</strong> WHOISWHO compiled this profile from public sources. Last reviewed ' + e(p.lastReviewed || "n/a") + '. <a href="#/how-we-compile">How we compile profiles</a></div>' : "") +
+        (p.trust === "unclaimed" ? '<div class="infobox"><strong>Unclaimed.</strong> ' + e(W.brand.name) + ' compiled this profile from public sources. Last reviewed ' + e(p.lastReviewed || "n/a") + '. <a href="#/how-we-compile">How we compile profiles</a></div>' : "") +
         (sp ? '<div class="warnbox"><strong>Sponsored.</strong> ' + e(sp) + " paid for this placement. Sponsorship does not affect verification, status or awards.</div>" : "") +
         "<h2>About</h2><p>" + e(p.bio) + "</p>" + extra(p) +
         "<h2>Key facts and sources</h2><table class=\"facts\"><tbody>" + p.facts.filter(function (f) { return f.src; }).map(function (f) { return "<tr><th scope=\"row\">" + e(f.label) + "</th><td>" + e(f.value) + '<span class="src">Source: ' + e(f.src) + " · retrieved " + e(f.retrieved) + "</span></td></tr>"; }).join("") + "</tbody></table>" +
@@ -116,7 +116,7 @@
   }
   W.route("/profile/:slug", "V09", function (par, q, m) {
     var p = W.bySlug(par.slug); var inv = { individual: "V09", business: "V10", institution: "V11" };
-    var v = W.vis(p), staff = ["reviewer", "editor", "sales", "finance", "eic", "admin"].indexOf(W.S.role) >= 0 || (W.S.role === "owner" && p && p.id === W.S.ownerId);
+    var v = W.vis(p), staff = ["reviewer", "editor", "sales", "finance", "eic", "awards", "admin"].indexOf(W.S.role) >= 0;
     if (!p) { m.inv = "V13"; return W.notFound.fn(); }
     if (p.slug !== par.slug) return { redirect: "#/profile/" + p.slug };
     if (v === "public") { m.inv = inv[p.type]; return profileBody(p, false); }
@@ -134,8 +134,8 @@
   W.forms.enquiry = function (d) {
     var p = W.profile(d.id); W.S.rate.enquiry++;
     W.S.enquiries.unshift({ id: W.uid("e"), profileId: d.id, name: d.name, email: d.email, message: d.message, at: W.TODAY, read: false });
-    W.mail("Owner of " + p.name, "New enquiry via WHOISWHO", "Enquiry from " + d.name + " (email hidden until you reply).", "#/account/enquiries");
-    W.save(); W.closeModal(); W.render(); W.toast("Enquiry sent. The owner will reply by email if they choose.");
+    W.mail("Staff inbox", "New enquiry via " + W.brand.name + " for " + p.name, "From " + d.name + ". " + (p.trust === "unclaimed" ? "Unclaimed profile: staff keep it." : "Staff forward it to the contact address held for this profile.") + " The visitor's email is shown to staff only.", "#/admin/inbox");
+    W.save(); W.closeModal(); W.render(); W.toast("Enquiry sent to the team. They pass it on or reply by email.");
   };
   W.act.report = function (id) {
     W.openModal("Report this profile", '<form data-form="report" class="stack-s"><input type="hidden" name="id" value="' + e(id) + '">' + W.field("Reason", "reason", { type: "select", options: ["Inaccurate information", "Defamatory or harmful", "Privacy concern", "Copyright", "Other"], req: true }) + W.field("Details", "detail", { type: "textarea", req: true }) + W.bot() + '<button class="btn">Send report</button></form>');
@@ -144,14 +144,18 @@
     W.S.reports.unshift({ id: W.uid("r"), profileId: d.id, reason: d.reason, detail: d.detail, at: W.TODAY, status: "open", owner: "" });
     W.save(); W.closeModal(); W.toast("Report received. It enters the staff abuse queue.");
   };
+  var NEEDS = ["Correct a fact", "Add a right-of-reply note", "Change which contact details are public", "Switch enquiries on or off", "Send me the view count or the sources used"];
+  var PARTS = [["name", "Name"], ["title", "Title"], ["org", "Organisation"], ["achievements", "Achievements and awards"], ["bio", "Biography"], ["other", "Something else"]];
   W.route("/correct/:slug", "V39", function (par) {
     var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
-    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Suggest a correction"]]) + "<h1>Suggest a correction</h1><p>No account or payment needed. We acknowledge within 1 business day and resolve within 7 days (REQ-158).</p><form data-form=\"correct\" class=\"card stack-s\"><input type=\"hidden\" name=\"id\" value=\"" + e(p.id) + "\">" + W.field("What is wrong?", "detail", { type: "textarea", req: true }) + W.field("Source or evidence (link)", "evidence") + W.field("Your email", "contact", { type: "email", req: true }) + W.bot() + "<button class=\"btn\">Send correction</button></form>");
+    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Correction request"]]) + "<h1>Correction request</h1><p>No account, login or payment. Staff handle every request in the admin through the usual review (REQ-232). We acknowledge within 1 business day and resolve within 7 days (REQ-158). Owners use this same form to ask for changes, to set which contact details show, to switch enquiries on or off, or to get the view count and sources (REQ-236).</p><form data-form=\"correct\" class=\"card stack-s\"><input type=\"hidden\" name=\"id\" value=\"" + e(p.id) + "\">" + W.field("Who are you?", "who", { type: "select", options: ["The person named on this profile", "An authorised representative of the organisation", "Someone else (a visitor)"], req: true }) + W.field("What do you need?", "need", { type: "select", options: NEEDS, req: true }) + W.field("Which part of the profile?", "part", { type: "select", options: PARTS }) + W.field("New value or details", "detail", { type: "textarea", req: true }) + W.field("Source or evidence (link)", "evidence") + W.field("Your email", "contact", { type: "email", req: true, hint: "Owners confirm it by a single-use link." }) + W.bot() + "<button class=\"btn\">Send request</button></form>");
   });
   W.forms.correct = function (d) {
-    var id = W.uid("cr"); W.S.corrections.unshift({ id: id, profileId: d.id, kind: "Correction", detail: d.detail, contact: d.contact, at: W.TODAY, due: "2026-11-14", status: "open" });
-    W.mail(d.contact, "We received your correction", "Reference " + id + ". We will respond within 7 days.", "");
-    W.save(); W.go("#/done?kind=correction&ref=" + id);
+    var owner = d.who.indexOf("Someone else") !== 0, id = W.uid("cr"), tok = "t-" + W.uid("");
+    W.S.corrections.unshift({ id: id, profileId: d.id, kind: owner ? "Owner correction request" : "Correction", requesterRole: d.who, need: d.need, field: d.need === NEEDS[0] ? d.part : "", newValue: d.detail, detail: d.need + (d.need === NEEDS[0] ? " (" + d.part + ")" : "") + ": " + d.detail, evidence: d.evidence || "", contact: d.contact, emailVerified: !owner, token: tok, at: W.TODAY, due: "2026-11-14", status: owner ? "awaiting email check" : "open" });
+    if (owner) W.mail(d.contact, "Confirm your email to send your correction request", "Single-use link. Your request enters the staff queue only after you click.", "#/confirm/" + tok);
+    else W.mail(d.contact, "We received your correction", "Reference " + id + ". We will respond within 7 days.", "");
+    W.save(); W.go("#/done?kind=" + (owner ? "correctionowner" : "correction") + "&ref=" + id);
   };
   W.route("/remove/:slug", "V40", function (par) {
     var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
@@ -163,30 +167,39 @@
     W.save(); W.go("#/done?kind=removal&ref=" + id);
   };
   W.route("/done", "V41", function (p, q) {
-    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A staff member will reply. The message is logged."], lead: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], claim: ["Claim submitted", "A reviewer will check your proof. If someone else is also claiming, we will contact both parties."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
+    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A staff member will reply. The message is logged."], lead: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], claim: ["Check your email to finish your claim request", "We sent a single-use link to confirm your email. Your request enters the staff queue only after you click it. Staff then check your evidence and set the profile to Claimed. If someone else is also claiming, we contact both parties."], correctionowner: ["Check your email to finish your correction request", "We sent a single-use link to confirm your email. After you click it, staff handle the request in the usual review. Nothing changes on the public page until a person approves it."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
     return page('<div class="okbox"><h1>' + e(t[0]) + "</h1><p>" + e(t[1]) + "</p>" + (q.ref ? "<p>Reference: <strong class=\"mono\">" + e(q.ref) + "</strong></p>" : "") + '</div><p><a class="btn" href="#/">Home</a> <button class="btn alt" data-act="outbox">See the email sent</button></p>');
   });
 
-  /* ---------- claim flow ---------- */
-  W.ui.claim = { step: 0, who: "", route: "" };
+  /* ---------- request to claim (no account) ---------- */
   W.route("/claim/:slug", "V42", function (par) {
     var p = W.bySlug(par.slug); if (!p || !W.isPublic(p)) return W.notFound.fn();
-    var c = W.ui.claim, org = p.type !== "individual", names = ["Who you are", "Proof", "Confirm"];
-    var body;
-    if (c.step === 0) body = '<form data-form="claim0" class="stack-s"><input type="hidden" name="slug" value="' + e(p.slug) + '"><fieldset><legend>I am…</legend><label class="check"><input type="radio" name="who" value="self" required> ' + (org ? "an authorised representative of " + e(p.name) : "the person named on this profile") + "</label><label class=\"check\"><input type=\"radio\" name=\"who\" value=\"other\"> someone else (cannot claim; use “Suggest a correction”)</label></fieldset><button class=\"btn\">Continue</button></form>";
-    else if (c.step === 1) body = '<form data-form="claim1" class="stack-s"><input type="hidden" name="slug" value="' + e(p.slug) + '"><fieldset><legend>Proof</legend>' + (org ? '<label class="check"><input type="radio" name="route" value="Domain email" required> Verify with an email at the organisation’s website domain (we send a link)</label>' : "") + '<label class="check"><input type="radio" name="route" value="Document"' + (org ? "" : " required checked") + '> Upload a document (ID or authority letter). ' + (org ? "" : "Individuals claim by document and manual approval.") + "</label></fieldset>" + W.field("Document (PDF, JPG or PNG, max 5 MB)", "doc", { type: "file", hint: "Stored privately and deleted after the decision (retention-limited)." }) + '<div class="row"><button class="btn alt" type="button" data-act="claimBack">Back</button><button class="btn">Continue</button></div></form>';
-    else body = '<form data-form="claim2" class="stack-s"><input type="hidden" name="slug" value="' + e(p.slug) + '">' + W.field("Your name", "name", { req: true }) + W.field("Your email", "email", { type: "email", req: true }) + W.field("I confirm I am authorised to claim this profile and that what I submit is accurate and licensed for use (REQ-126).", "ok", { type: "checkbox", req: true }) + W.bot() + '<div class="row"><button class="btn alt" type="button" data-act="claimBack">Back</button><button class="btn">Submit claim</button></div></form>';
-    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Claim"]]) + "<h1>Claim " + e(p.name) + "</h1>" + W.steps(names, c.step) + body);
+    var org = p.type !== "individual";
+    var rl = W.S.rate.claim >= 3 ? '<div class="errbox" role="alert"><strong>Too many claim requests from this device.</strong> Please try again later (rate limit, REQ-230). Use Reset to clear.</div>' : "";
+    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Request to claim"]]) + "<h1>Request to claim " + e(p.name) + "</h1><p>No account is created. You send evidence, staff check it, and staff set the profile to Claimed (REQ-230, 231). " + (org ? "Organisations: prove authority by an email at the organisation\u2019s website domain, or by a document." : "Individuals: a document and manual approval.") + "</p>" + (rl || '<form data-form="claim" class="card stack-s"><input type="hidden" name="slug" value="' + e(p.slug) + '">' + W.field("Your name", "name", { req: true }) + W.field("Your relationship to this profile", "relation", { type: "select", options: org ? ["Authorised representative of the organisation", "Other (cannot claim; use the correction request)"] : ["The person named on this profile", "Other (cannot claim; use the correction request)"], req: true }) + W.field("Your email", "email", { type: "email", req: true, hint: "We send a single-use link to confirm it." }) + W.field("Phone (optional)", "phone", { hint: "Staff only, never public." }) + W.field("How will you prove it?", "route", { type: "select", options: org ? ["Domain email", "Document"] : ["Document"], req: true }) + W.field("Evidence upload (PDF, JPG or PNG, max 5 MB)", "doc", { type: "file", hint: "Stored privately and deleted after the decision (retention-limited). Wireframe: nothing is uploaded." }) + W.field("Short statement", "statement", { type: "textarea", req: true }) + W.field("I confirm I am authorised to claim this profile and that what I send is accurate and licensed for use (REQ-126).", "ok", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Send request to claim</button></form>'));
   });
-  W.act.claimBack = function () { W.ui.claim.step = Math.max(0, W.ui.claim.step - 1); W.render(); };
-  W.forms.claim0 = function (d) { if (d.who !== "self") { W.toast("Only the person or an authorised representative can claim."); return; } W.ui.claim.step = 1; W.render(); };
-  W.forms.claim1 = function (d) { W.ui.claim.route = d.route; W.ui.claim.step = 2; W.render(); };
-  W.forms.claim2 = function (d) {
-    var p = W.bySlug(d.slug), dispute = W.S.claims.some(function (c) { return c.profileId === p.id && c.status === "pending"; });
-    var id = W.uid("cl"); W.S.claims.unshift({ id: id, profileId: p.id, claimant: d.name, relation: "Authorised representative", route: W.ui.claim.route || "Document", status: "pending", at: W.TODAY, dispute: dispute });
-    W.mail(d.email, "Claim received for " + p.name, "Reference " + id + ". " + (W.ui.claim.route === "Domain email" ? "Click the link to verify your domain email." : "A reviewer will check your document."), "");
-    W.ui.claim = { step: 0, who: "", route: "" }; W.save(); W.go("#/done?kind=claim&ref=" + id);
+  W.forms.claim = function (d) {
+    var p = W.bySlug(d.slug);
+    if (d.relation.indexOf("Other") === 0) { W.toast("Only the person or an authorised representative can claim. Use the correction request instead."); return; }
+    if (W.S.rate.claim >= 3) { W.render(); return; }
+    W.S.rate.claim++;
+    var ref = "CLM-" + ("000" + (W.S.claims.length + 1)).slice(-4), tok = "t-" + W.uid("");
+    W.S.claims.unshift({ id: W.uid("cl"), ref: ref, profileId: p.id, claimant: d.name, relation: d.relation, email: d.email, phone: d.phone || "", route: d.route, evidence: d.route === "Document" ? "uploaded-evidence.pdf (simulated)" : "(none: domain email)", statement: d.statement, emailVerified: false, token: tok, status: "awaiting email check", at: W.TODAY });
+    W.mail(d.email, "Confirm your email to send your claim request", "Single-use link. Your request for " + p.name + " (" + ref + ") enters the staff queue only after you click.", "#/confirm/" + tok);
+    W.save(); W.go("#/done?kind=claim&ref=" + ref);
   };
+  W.route("/confirm/:token", "V51", function (par) {
+    var c = W.S.claims.filter(function (x) { return x.token === par.token; })[0], r = W.S.corrections.filter(function (x) { return x.token === par.token; })[0];
+    if (c) {
+      if (!c.emailVerified) { c.emailVerified = true; c.status = "pending"; W.S.used[par.token] = true; W.log("claim.email", c.ref, "email confirmed by signed link"); W.mail("Reviewer queue", "Claim to verify: " + (W.profile(c.profileId) || {}).name, c.ref + " is ready for evidence checks.", "#/admin/claims/" + c.id); W.save(); }
+      return page('<div class="okbox"><h1>Email confirmed</h1><p>Your claim request <strong class="mono">' + e(c.ref) + '</strong> is in the staff queue. Staff will check your evidence and email you. This link no longer works a second time (single use).</p></div><a class="btn" href="#/">Home</a>');
+    }
+    if (r) {
+      if (!r.emailVerified) { r.emailVerified = true; r.status = "open"; W.S.used[par.token] = true; W.log("correction.email", r.id, "email confirmed by signed link"); W.save(); }
+      return page('<div class="okbox"><h1>Email confirmed</h1><p>Your request is in the staff queue. Nothing changes on the public page until a person approves it. This link no longer works a second time (single use).</p></div><a class="btn" href="#/">Home</a>');
+    }
+    return W.expiredPage();
+  });
 
   /* ---------- stories ---------- */
   W.route("/stories", "V16", function (p, q) {
@@ -196,7 +209,7 @@
       (rows.length ? '<div class="grid c3">' + rows.map(W.articleCard).join("") + "</div>" : W.empty("No stories match", "Try another type or industry.", '<a class="btn" href="#/stories">Clear filters</a>')));
   });
   W.route("/stories/:slug", "V17", function (par, q, m) {
-    var a = W.S.articles.filter(function (x) { return x.slug === par.slug; })[0], staff = W.S.role !== "visitor" && W.S.role !== "owner" && W.S.role !== "judge";
+    var a = W.S.articles.filter(function (x) { return x.slug === par.slug; })[0], staff = W.S.role !== "visitor";
     if (!a || (a.status !== "published" && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
     var sp = W.sponsorOfArticle(a);
     return (a.status !== "published" ? '<div class="banner staffprev"><div class="wrap">Staff preview: ' + e(a.status) + " article, not public.</div></div>" : "") + page(W.crumbs([["Stories", "#/stories"], [a.title]]) + '<article class="stack"><div class="tagrow"><span class="pill gray">' + e(a.type) + "</span>" + W.spPill(sp) + "</div><h1>" + e(a.title) + '</h1><p class="muted">By ' + e(a.author) + " · " + e(a.date) + " · " + e(a.industry) + "</p>" + (sp ? '<div class="warnbox"><strong>Sponsored content.</strong> Paid for by ' + e(sp) + ". Editorial independence statement placeholder.</div>" : "") + W.ph("Hero image") + "<p>" + e(a.body) + "</p><p>Sample paragraph two. Placeholder text only.</p>" +
@@ -231,7 +244,7 @@
   legal("V32", "/commercial-terms", "Commercial terms", "Sample terms for arrangements agreed offline. There is no online payment. Sponsorship never buys Verified, Featured or award outcomes.", [["How arrangements work", "Quoted per customer; payment made offline to Finance; recorded by staff."], ["Refunds and renewals", "Handled offline by Finance."]]);
   legal("V28", "/faq", "Frequently asked questions", "Sample FAQ.", [["Is there a fee to be listed?", "Sample: arrangements are agreed offline."], ["Can I remove my profile?", "Yes. <a href=\"#/complaints\">Request removal</a>; no account or payment needed."], ["Can I pay for Verified?", "No."], ["How do nominations work?", "See <a href=\"#/awards\">Awards</a>."]]);
   W.route("/how-we-compile", "V34", function () {
-    return page("<h1>How WHOISWHO compiles profiles and what each label means</h1><p class=\"preview-note\">Placeholder wording; Legal decides the AI disclosure (REQ-170).</p><h2>Where information comes from</h2><p>Approved public sources such as registries, regulators, exchange listings, Wikidata and official websites. Never social platforms, news text or scraped photographs.</p><h2>Every profile is reviewed by a person</h2><p>Nothing is public until a human reviewer approves it. Reviewers check each fact against its source and apply a neutral-content checklist: dated, sourced, professional facts only.</p><h2>The status ladder</h2><ol><li><span class=\"pill t-unclaimed\">Unclaimed</span> compiled from public sources.</li><li><span class=\"pill t-claimed\">Claimed</span> the person or an authorised representative proved their identity.</li><li><span class=\"pill t-verified\">✓ Verified</span> passed our checklist. Independent of payment.</li><li><span class=\"pill t-featured\">★ Featured</span> an editorial decision. Cannot be bought.</li></ol><h2>Sponsored</h2><p><span class=\"pill sponsored\">Sponsored</span> is a separate disclosure for paid placements. It never implies verification.</p><h2>AI-assisted drafting</h2><p>Some profiles are drafted with AI from fetched source text. Each claim must match a stored source passage or it is dropped, and a person approves every profile.</p><h2>Corrections and removal</h2><p><a href=\"#/complaints\">Tell us about a problem</a>. No account or payment needed.</p>");
+    return page("<h1>How " + e(W.brand.name) + " compiles profiles and what each label means</h1><p class=\"preview-note\">Placeholder wording; Legal decides the AI disclosure (REQ-170).</p><h2>Where information comes from</h2><p>Approved public sources such as registries, regulators, exchange listings, Wikidata and official websites. Never social platforms, news text or scraped photographs.</p><h2>Every profile is reviewed by a person</h2><p>Nothing is public until a human reviewer approves it. Reviewers check each fact against its source and apply a neutral-content checklist: dated, sourced, professional facts only.</p><h2>The status ladder</h2><ol><li><span class=\"pill t-unclaimed\">Unclaimed</span> compiled from public sources.</li><li><span class=\"pill t-claimed\">Claimed</span> the person or an authorised representative proved their identity.</li><li><span class=\"pill t-verified\">✓ Verified</span> passed our checklist. Independent of payment.</li><li><span class=\"pill t-featured\">★ Featured</span> an editorial decision. Cannot be bought.</li></ol><h2>Sponsored</h2><p><span class=\"pill sponsored\">Sponsored</span> is a separate disclosure for paid placements. It never implies verification.</p><h2>AI-assisted drafting</h2><p>Some profiles are drafted with AI from fetched source text. Each claim must match a stored source passage or it is dropped, and a person approves every profile.</p><h2>Corrections and removal</h2><p><a href=\"#/complaints\">Tell us about a problem</a>. No account or payment needed.</p>");
   });
   W.route("/complaints", "V35", function () {
     return page("<h1>Complaints and takedown</h1><p>Defamation, privacy, copyright or accuracy concerns can be raised without an account or payment.</p><ul><li>We acknowledge within 1 business day.</li><li>We hide a profile within 2 business days of a valid removal request from the subject.</li><li>We resolve corrections within 7 days.</li></ul><p>Use “Suggest a correction”, “Request removal” or “Report” on any profile. Disputes escalate to the Editor-in-Chief.</p><p><a class=\"btn\" href=\"#/people\">Find a profile</a> <a class=\"btn alt\" href=\"#/contact\">Contact us</a></p>");

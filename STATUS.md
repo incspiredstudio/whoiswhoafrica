@@ -1,6 +1,8 @@
 # STATUS
 
 ## Stage
+D-034 (2026-11-08): no login or signup on the public site; only staff use wp-admin. Requirements (REQ-229–236, six withdrawn, eighteen amended), questions Q56–Q62, acquisition plan, GUIDE and the wireframe are updated; architecture.md and ADR-004 are not (rewritten at Gate 2). See docs/change-review-2026-11-08-no-accounts.md. docs/design-inspiration.md added (all points unverified; no browser available).
+
 Gate 1 answered. D-031: the CMS is WordPress on cPanel (supersedes the Laravel proposal; architecture.md and ADRs not yet revised). D-033: publish first, human review after (acquired records). **Now: your rulings on Q46–Q55, then wireframe review** (prototype/, not yet updated for D-033). After review: revise architecture.md for WordPress and D-033 (Gate 2), then /plan (Gate 3).
 
 ## Done
@@ -26,6 +28,7 @@ Gate 1 answered. D-031: the CMS is WordPress on cPanel (supersedes the Laravel p
 See docs/decisions.md. Key: no payments on the site (D-005); admin commercial register (D-006); individual stubs published without consent with kill switch (D-013); AI drafting allowed with strict rules (D-017); full awards workflow behind OFF flags (D-019); domain wiwi.africa (D-001); no tiers or packages, commercial arrangements only (D-028); public indexed site (D-029); publish first, human review after, labelled and noindex until reviewed (D-033).
 
 ## Next up
+- You: rule on Q56–Q62 (defaults in docs/change-review-2026-11-08-no-accounts.md section 5); open both reference sites in a browser to confirm docs/design-inspiration.md
 - You: answer Q46–Q55 first, then Q29, Q31–Q39 (docs/acquisition-plan.md section 12) by Mon 9 Nov; send Legal the publish-first questions (plan 6.5) by 9 Nov; name reviewers (Q4) and Editor-in-Chief; approve pilot sources by Tue 10 Nov. Shadow pilot 10–18 Nov; plan update and go/no-go on 20 Nov; first public record 23 Nov if the go-live gate (plan 5.5) passes.
 - Legal: AI transfer basis by 13 Nov (blocks drafting individuals); LIA, DPIA, NDPC registration tier and a view on publish first before the first individual is published
 - After your rulings: apply the listed edits to GUIDE, CLAUDE.md, architecture, ADRs, questions risk register, prototype and inventory (docs/change-review-2026-11-08-publish-first.md sections 3–4)

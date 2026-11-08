@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (62 items): Answered 26 · Default accepted 12 · Pending - team lead 1 · Open 23 (Q26–Q28 architecture; Q29, Q31–Q39 acquisition plan; Q46–Q55 publish first).**
-Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 49: Answered 17, Default accepted 8, Pending 1 (Q16), Open 23. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
+**Status summary (69 items): Answered 26 · Default accepted 12 · Pending - team lead 1 · Open 30 (Q26–Q28 architecture; Q29, Q31–Q39 acquisition plan; Q46–Q55 publish first; Q56–Q62 no public accounts).**
+Contradictions 13: Answered 9, Default accepted 4, Pending 0. Questions 56: Answered 17, Default accepted 8, Pending 1 (Q16), Open 30. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
 Status values: `Answered`, `Default accepted`, `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
 Companion to `docs/requirements.md`. Updated 2026-11-06 after Gate 1 answers.
@@ -109,6 +109,13 @@ Q46–Q49, Q53 and Q55 change the model and should be answered first. Q50–Q52 
 | Q53 | Open | Is the "staging database" a private store no public site reads, or the one behind staging.wiwi.africa (public, D-029)? | Real unreviewed data on a public staging site; architecture line 273 | Private store |
 | Q54 | Open | Do indexable list pages show reviewed profiles only, with pending found by search, direct link or a noindex view? | Noindex on a profile does not stop its name being indexed through a list | Reviewed only |
 | Q55 | Open | Many sources are manual-only (CBN, PenCom, NAICOM, SEC, NCC, State House). Should agents read each one's terms and robots rules so you can approve re-coding where allowed, with the rest staying amber? | Pipeline cannot gather from them or monitor them; T1 may be mostly amber | Yes |
+| Q56 | Open | D-034 leaves Claimed profiles with no way for the owner to see or edit anything. Confirm that owners only ever use forms and email, and staff do all edits and lookups (REQ-232, 236)? | Staff workload; owner experience | Yes. Revisit after the first 100 claims. |
+| Q57 | Open | Who approves a correction to name, title, organisation, awards or achievement claims? | Staff-made edits are the only control now | A second staff member (Reviewer or above) approves; other fields need one staff member. |
+| Q58 | Open | Life of a single-use signed link (REQ-233): intake, consent, nominee, nominator and claim verification? | Security against convenience | 14 days; nominator and claim verification 48 hours; reissued by staff on request. |
+| Q59 | Open | How does staff check a claimant is the person or an authorised representative (D-022) when there is no account? | Fraud and dispute risk | Organisation: email on the organisation's domain (verified link) or a document. Individual: document plus a call-back or an email from an official address. Doubtful cases go to the Editor-in-Chief. |
+| Q60 | Open | Who enters judges' scores, and how are judges' identities and scores kept private and consistent without a portal? Judging format (offline panel meeting, scoring sheets, emailed forms)? | Needed before judging opens; judges' conflict declarations | Judges score on a sheet or in a meeting; the Awards manager enters scores and a second staff member checks the entry; sheets are kept. |
+| Q61 | Open | Are the roles right, and who holds each one at launch (Awards manager, Editor-in-Chief, Finance)? Is Editor-in-Chief a separate role from Administrator? | Least privilege; the Administrator should be few people | Seven roles as in REQ-235; Administrator limited to 2 named people. Names needed. |
+| Q62 | Open | Do enquiries to claimed profiles go to the staff inbox or to a contact address the owner gave staff (REQ-018)? Who sends the owner the view count and sources (REQ-236)? | Privacy; staff workload | Forward to the owner's contact address held by staff; staff send the view count on request. |
 
 ---
 

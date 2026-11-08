@@ -8,7 +8,7 @@
     cities: ["Lagos", "Abuja", "Port Harcourt", "Ibadan", "Kano", "Enugu"],
     orgTypes: ["Company", "University / school", "Professional association", "Public body", "NGO / social enterprise"],
     professions: ["Executive", "Founder", "Academic", "Legal", "Medical", "Creative", "Public servant"],
-    roles: { visitor: "Visitor (signed out)", owner: "Profile owner (Sample Person A)", reviewer: "Reviewer", editor: "Editor", sales: "Sales / Support", finance: "Finance", eic: "Editor-in-Chief", admin: "Admin", judge: "Judge (Sample Judge 1)" },
+    roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", sales: "Sales / Support", finance: "Finance", eic: "Editor-in-Chief", awards: "Awards manager", admin: "Administrator" },
     streams: { subscription: "Subscription", media: "Media / editorial", sponsorship: "Sponsorship" },
     arrTypes: { sponsored_post: "Sponsored post", sponsored_profile: "Sponsored profile", media_package: "Media / editorial package", awards_sponsorship: "Awards sponsorship", other: "Other" },
     defaultStream: { sponsored_post: "media", sponsored_profile: "subscription", media_package: "media", awards_sponsorship: "sponsorship", other: "subscription" },
@@ -22,19 +22,19 @@
 
   W.seed = function () {
     var S = {
-      v: 3, role: "visitor", ownerId: "p-owner", consent: null, rate: { enquiry: 0, nominate: 0 },
+      v: 4, role: "visitor", consent: null, rate: { enquiry: 0, nominate: 0, claim: 0 }, used: {}, intake: {},
       flags: { nominations: { on: false, ref: "" }, judging: { on: false, ref: "" }, announcements: { on: false, ref: "" }, ai_drafting: { on: false, ref: "" } },
       kill: { on: false, by: "", reason: "" },
       thresholds: { subs: 10, revenue: 500000000 },
       profiles: [], articles: [], sponsors: [], customers: [], arrangements: [], leads: [],
       reports: [], corrections: [], removals: [], claims: [], enquiries: [], nominations: [], signups: [],
       dsr: [], suppression: [], sources: [], imports: [], emails: [], audit: [], purges: [], notes: {}, scores: {}, coi: {}, escalations: [],
-      judgeCoi: {}, annDraft: null, auth: { owner: true },
+      judgeCoi: { "Sample Judge 2": ["n5"] }, annDraft: null,
       lists: { industries: W.LISTS.industries.slice(), cities: W.LISTS.cities.slice(), orgTypes: W.LISTS.orgTypes.slice(), professions: W.LISTS.professions.slice() },
       dupes: [{ id: "dp1", aId: "b1", bName: "Sample Agritech Company", basis: "normalised name + city", kind: "organisation" }, { id: "dp2", aId: "ip2", bName: "Sample Person B.", basis: "name + organisation", kind: "individual" }]
     };
     var P = S.profiles;
-    P.push({ id: "p-owner", slug: "sample-person-a", type: "individual", name: "Sample Person A", title: "Chief Sample Officer", org: "Sample Agritech Co.", industry: "Agriculture & Agritech", city: "Lagos", profession: "Executive", status: "published", trust: "claimed", sponsored: null, source: "subscriber", aiDrafted: false, views: 42, enquiries: true, lastReviewed: "2026-11-02", ownerOwned: true,
+    P.push({ id: "p-a", slug: "sample-person-a", type: "individual", name: "Sample Person A", title: "Chief Sample Officer", org: "Sample Agritech Co.", industry: "Agriculture & Agritech", city: "Lagos", profession: "Executive", status: "published", trust: "claimed", sponsored: null, source: "subscriber", aiDrafted: false, views: 42, enquiries: true, lastReviewed: "2026-11-02",
       bio: "Sample biography text written by the profile owner. It describes a sample professional career in a neutral, factual tone.",
       achievements: "Sample achievement one (2024). Sample achievement two (2025).", website: "https://example.org/sample-person-a",
       public: { website: true, email: false, phone: false },
@@ -102,14 +102,14 @@
       { id: "c1", name: "Sample Fintech Ltd.", segment: "Business", contact: "Sample Contact 1", ext: "CUS-0001", profileId: "b2" },
       { id: "c2", name: "Sample Logistics Plc", segment: "Business", contact: "Sample Contact 2", ext: "CUS-0002", profileId: "b3" },
       { id: "c3", name: "Sample Sponsor X", segment: "Sponsor", contact: "Sample Contact 3", ext: "CUS-0003", profileId: "" },
-      { id: "c4", name: "Sample Person A", segment: "Individual", contact: "Sample Person A", ext: "CUS-0004", profileId: "p-owner" }
+      { id: "c4", name: "Sample Person A", segment: "Individual", contact: "Sample Person A", ext: "CUS-0004", profileId: "p-a" }
     ];
     S.arrangements = [
       { id: "arr1", type: "sponsored_profile", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Finance 1", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
       { id: "arr2", type: "sponsored_post", customerId: "c3", linkedProfile: "", linkedArticle: "a3", amount: 5000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "2026-11-04", end: "2026-12-04", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "media", notes: "Awaiting payment.", consent: false },
       { id: "arr3", type: "awards_sponsorship", customerId: "c3", linkedProfile: "", amount: 100000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Finance 1", onboarding: true, start: "2026-11-05", end: "2027-03-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "sponsorship", notes: "Sample awards sponsorship. Has no effect on nominations or judging.", consent: false },
       { id: "arr4", type: "media_package", customerId: "c2", linkedProfile: "", amount: 8000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, cancelled: false, endedManual: false, stream: "media", notes: "Proposed.", consent: false },
-      { id: "arr5", type: "other", customerId: "c4", linkedProfile: "p-owner", amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: true, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Complimentary listing; customer consent recorded.", consent: true }
+      { id: "arr5", type: "other", customerId: "c4", linkedProfile: "p-a", amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: true, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Complimentary listing; customer consent recorded.", consent: true }
     ];
     S.leads = [
       { id: "l1", ext: "LEAD-0001", name: "Sample Contact L1", org: "Sample Org L1", interest: "Sponsored profile", contact: "lead1@example.org", status: "new", owner: "", notes: "", at: "2026-11-05" },
@@ -124,12 +124,14 @@
       { id: "src5", name: "Sample Regulator PDF list", types: "Organisations", url: "https://example.org/regulator", access: "Manual", licence: "To check", robots: "", approver: "", status: "Pending approval" }
     ];
     S.reports = [{ id: "r1", profileId: "b6", reason: "Inaccurate information", detail: "Sample report text.", at: "2026-11-05", status: "open", owner: "" }];
-    S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", at: "2026-11-05", due: "2026-11-12", status: "open" }];
+    S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", at: "2026-11-05", due: "2026-11-12", status: "open" },
+      { id: "cr2", profileId: "p-a", kind: "Owner correction request", requesterRole: "The person named", field: "title", newValue: "Chief Sample Officer and Director", detail: "Change title to: Chief Sample Officer and Director", evidence: "https://example.org/sample-announcement", contact: "sample-person-a@example.org", emailVerified: true, at: "2026-11-06", due: "2026-11-13", status: "open" }];
     S.removals = [{ id: "rm1", profileId: "ip3", kind: "Removal", detail: "Sample removal request from the subject.", contact: "sample@example.org", at: "2026-11-04", due: "2026-11-06", status: "open" }];
-    S.claims = [{ id: "cl1", profileId: "b3", claimant: "Sample Claimant 1", relation: "Authorised representative", route: "Document", status: "approved", at: "2026-10-29" },
-      { id: "cl2", profileId: "i1", claimant: "Sample Claimant 2", relation: "Authorised representative", route: "Domain email", status: "pending", at: "2026-11-05" },
-      { id: "cl3", profileId: "i1", claimant: "Sample Claimant 3", relation: "Authorised representative", route: "Document", status: "pending", at: "2026-11-06" }];
-    S.enquiries = [{ id: "e1", profileId: "p-owner", name: "Sample Visitor 1", email: "visitor1@example.org", message: "Sample enquiry message.", at: "2026-11-05", read: false }];
+    S.claims = [{ id: "cl1", ref: "CLM-0001", profileId: "b3", claimant: "Sample Claimant 1", relation: "Authorised representative", email: "claimant1@example.org", phone: "", route: "Document", evidence: "authority-letter.pdf", statement: "Sample statement.", emailVerified: true, token: "t-cl1", status: "approved", at: "2026-10-29" },
+      { id: "cl2", ref: "CLM-0002", profileId: "i1", claimant: "Sample Claimant 2", relation: "Authorised representative", email: "claimant2@sample-university.example", phone: "", route: "Domain email", evidence: "(none: domain email)", statement: "Sample statement.", emailVerified: true, token: "t-cl2", status: "pending", at: "2026-11-05" },
+      { id: "cl3", ref: "CLM-0003", profileId: "i1", claimant: "Sample Claimant 3", relation: "Authorised representative", email: "claimant3@example.org", phone: "", route: "Document", evidence: "id-and-letter.pdf", statement: "Sample statement.", emailVerified: true, token: "t-cl3", status: "pending", at: "2026-11-06" },
+      { id: "cl4", ref: "CLM-0004", profileId: "b6", claimant: "Sample Claimant 4", relation: "Authorised representative", email: "claimant4@example.org", phone: "", route: "Document", evidence: "authority-letter.pdf", statement: "Sample statement.", emailVerified: false, token: "t-cl4", status: "awaiting email check", at: "2026-11-07" }];
+    S.enquiries = [{ id: "e1", profileId: "p-a", name: "Sample Visitor 1", email: "visitor1@example.org", message: "Sample enquiry message.", at: "2026-11-05", read: false }];
     S.dsr = [{ id: "d1", kind: "Access", who: "Sample Requester 1", at: "2026-11-03", due: "2026-12-03", status: "open" }, { id: "d2", kind: "Objection", who: "Sample Requester 2", at: "2026-11-01", due: "2026-12-01", status: "in progress" }];
     S.suppression = [{ id: "sp1", name: "Sample Person X", kind: "Removed individual", at: "2026-10-28", reason: "Removal request" }];
     S.imports = [];
@@ -155,12 +157,13 @@
       winners: [],
       screeners: { screening: "Sample Reviewer 1", shortlist: "Sample Eic 1", final: "Sample Venture CEO" }
     };
-    S.judgeAssign = { "Sample Judge 1": ["n4", "n5", "n3"] };
+    S.judgeAssign = { "Sample Judge 1": ["n4", "n5", "n3"], "Sample Judge 2": ["n4", "n5"], "Sample Judge 3": ["n4", "n3"] };
+    S.scores = { n4: { by: { "Sample Judge 1": { v: { k1: 8, k2: 7, k3: 9, k4: 8 }, by: "Sample Awards Manager", at: "2026-11-06" } } } };
     S.users = [
-      { name: "Sample Admin", role: "Admin", mfa: true, last: "2026-11-07" }, { name: "Sample Reviewer 1", role: "Reviewer", mfa: true, last: "2026-11-07" },
+      { name: "Sample Admin", role: "Administrator", mfa: true, last: "2026-11-07" }, { name: "Sample Reviewer 1", role: "Reviewer", mfa: true, last: "2026-11-07" },
       { name: "Sample Reviewer 2", role: "Reviewer", mfa: true, last: "2026-11-06" }, { name: "Sample Editor", role: "Editor", mfa: true, last: "2026-11-06" },
       { name: "Sample Sales 1", role: "Sales / Support", mfa: true, last: "2026-11-05" }, { name: "Sample Finance 1", role: "Finance", mfa: false, last: "2026-11-02" },
-      { name: "Sample Eic 1", role: "Editor-in-Chief", mfa: true, last: "2026-11-07" }, { name: "Sample Judge 1", role: "Judge", mfa: true, last: "2026-11-04" }
+      { name: "Sample Eic 1", role: "Editor-in-Chief", mfa: true, last: "2026-11-07" }, { name: "Sample Awards Manager", role: "Awards manager", mfa: true, last: "2026-11-06" }
     ];
     S.processors = [
       { name: "Web hosting (cPanel host)", role: "Hosts site and database", location: "TBC (Q26)", dpa: "Not yet" },
@@ -170,9 +173,9 @@
     ];
     S.emails = [
       { id: "m1", to: "Sample Person B (nominee)", subject: "You have been nominated", body: "Accept, decline or correct your details. Nothing is public.", link: "#/nominee/t-n6", at: W.TODAY },
-      { id: "m2", to: "Sample Customer", subject: "You are invited to create your WHOISWHO profile", body: "Your arrangement is agreed. Click to start.", link: "#/invite/demo", at: W.TODAY },
+      { id: "m2", to: "Sample Customer", subject: "You are invited to create your " + W.brand.name + " profile", body: "Your arrangement is agreed. Click to start.", link: "#/invite/demo", at: W.TODAY },
       { id: "m3", to: "Sample Person A", subject: "Consent to a complimentary listing", body: "Click to give or withhold consent.", link: "#/consent/demo", at: W.TODAY },
-      { id: "m4", to: "Sample New User", subject: "Verify your email", body: "Click to verify your email.", link: "#/verify/demo", at: W.TODAY }
+      { id: "m4", to: "Sample Claimant 4", subject: "Verify your email to send your claim request", body: "Single-use link. Your request enters the staff queue only after you click.", link: "#/confirm/t-cl4", at: W.TODAY }
     ];
     S.audit = [];
     return S;
