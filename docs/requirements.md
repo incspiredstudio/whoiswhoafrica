@@ -1,6 +1,6 @@
 # WHOISWHO — Requirements
 
-Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). Written 2026-11-06; updated after Gate 1 answers (see `docs/decisions.md`).
+Derived from `docs/spec.md` (Venture Brief, sprint 4 Nov 2026 – 31 Jan 2027). Written 2026-11-06; updated after Gate 1 answers (see `docs/decisions.md`). **Brief v2 (2026-11-09, D-052):** `docs/spec.md` is now `WIWI - VENTURE BRIEF (1).md`, the most current brief; its name text "WIWI" is not adopted, the brand stays WHOISWHO.
 
 **Scope change (D-005):** the website processes no payments. Customers pay offline; admins record payments in a commercial register. All payment/checkout requirements are marked **Withdrawn** (numbers kept): REQ-011, 048, 070, 073, 074, 076, 097, 099, 113, 114, 117, 118, 119.
 **Q7/Q8/C13 resolved (D-028):** there are no tiers, packages or entitlements. Every listing has the same format. Commercial relationships are admin-recorded arrangements. Withdrawn for this reason: REQ-010, 012, 017, 185.
@@ -52,7 +52,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | ID | Requirement | Source | Pri | Scope |
 |---|---|---|---|---|
 | REQ-001 | The public site provides pages: Home, About, Discover People, Discover Businesses, Discover Institutions, Industries, Awards/Maiden Edition, Stories, Subscribe/Get Featured, Nominate, Contact. | 12.2 | M | SITE |
-| REQ-002 | The home page states what WHOISWHO is, who it is for, and how to get listed, featured, nominated or recognised, without scrolling past the first screen on mobile. | 12.3 | M | SITE |
+| REQ-002 | The home page states what the brand is (name from the theme config), who it is for, and how to get listed, featured, nominated or recognised, without scrolling past the first screen on mobile. | 12.3 | M | SITE |
 | REQ-003 | The system supports individual profiles with: full name, title, industry/expertise, biography, career history, achievements, education, affiliation, social/professional links, media appearances, awards, enquiry option. | 5.1 | M | BOTH |
 | REQ-004 | The system supports business profiles with: name, industry/sector, description, founding year, HQ and locations, leadership, products/services, achievements, website/social, business contact, media features. | 5.1 | M | BOTH |
 | REQ-005 | The system supports institutional profiles (education, associations, public bodies, NGOs) as a distinct type with the business fields plus mandate/type and a longer history section. | 5.1 | S | BOTH |
@@ -107,7 +107,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-049 | **AMENDED 2026-11-09 (D-050).** Database and uploads are backed up daily (cPanel backups, plus a plugin or export if needed); a restore is tested before launch; RPO 24 h, RTO 8 h. No separate bucket is required. *(assumed)* | — | M | SITE |
 | REQ-050 | Errors, uptime and form-submission failures are monitored; logs contain no personal data beyond IDs. | — | M | SITE |
 | REQ-051 | All staff/admin actions on profiles, customer records and reviews are written to an immutable audit log. *(D-033: imports too; REQ-228.)* | 15.7 | M | SITE |
-| REQ-052 | Brand colours, type and the tagline "Influence. Achievement. Legacy." are implemented as design tokens so the approved identity can be applied or changed without rebuilding pages. | 2.2, 12.1 | M | SITE |
+| REQ-052 | **AMENDED 2026-11-09 (D-052).** Brand name (WHOISWHO), long-form name (Who Is Who In Africa), edition name, legal trading name (whoiswhoafrica), colours, type and the tagline "Influence. Achievement. Legacy." are implemented as design tokens so the approved identity can be applied or changed without rebuilding pages. | 2.2, 12.1 | M | SITE |
 | REQ-053 | The site is English-only, handles names with diacritics (UTF-8), uses NGN formatting and the WAT time zone. | 7.2 | M | SITE |
 | REQ-054 | The design handles ≥ 50 concurrent users and ≥ 100k page views/month on the launch infrastructure. *(assumed)* | — | M | SITE |
 | REQ-055 | Supports the latest two versions of Chrome, Safari, Edge, Firefox and Android Chrome. | — | M | SITE |
@@ -212,7 +212,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-127 | Uploaded files are type-checked and scanned. | — | M | SITE |
 | REQ-128 | **WITHDRAWN** (D-034: no owner area. Staff preview drafts in wp-admin (REQ-084).) ~~Owners can preview a draft exactly as it will be published.~~ | — | Withdrawn | SITE |
 | REQ-129 | Slug changes create redirects from the old URL. | — | S | SITE |
-| REQ-130 | A public "How WHOISWHO compiles profiles and what each label means" page exists. | 3.4 | M | SITE |
+| REQ-130 | A public "How [brand name] compiles profiles and what each label means" page exists (name from the theme config). | 3.4 | M | SITE |
 | REQ-131 | The venture can export all its own data (profiles, register, content) in open formats. | 13.1 | S | SITE |
 
 ## 8. Data acquisition and population (Nigeria first)
@@ -338,7 +338,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-187 | Admins can keep internal notes on profiles, customers, leads and nominations; notes are never public and never visible to judges. | D-006 | M | SITE |
 | REQ-188 | Every change to arrangements, Sponsored/Featured/Verified labels, sponsors and notes is written to the audit log (extends REQ-051) with actor, time, old and new values. | 15.7 | M | SITE |
 | REQ-189 | Admins see reminders for upcoming expiries; the system takes no automatic action against customers. | Q10 | M | SITE |
-| REQ-190 | All brand values (colours, fonts, logo, spacing) live in one central theme config; no brand values are hard-coded elsewhere, and a check fails the build if they are. | C5 | M | SITE |
+| REQ-190 | **AMENDED 2026-11-09 (D-052).** All brand values (brand name, legal trading name, edition name, colours, fonts, logo, spacing) live in one central theme config; no brand values are hard-coded elsewhere, and a check fails the build if they are. | C5 | M | SITE |
 | REQ-191 | No directory-size target number is stored or shown on the website or its admin. The demo/staging site is public and indexable by search engines; there is no private preview and no login protection. *(Amended by D-035: the earlier target of about 100 organisation and about 100 individual profiles is dropped.)* | Q1 | M | BOTH |
 | REQ-192 | Sourcing of further organisations and individuals continues in parallel through the approved pipeline. | Q1 | M | ACQUISITION |
 | REQ-193 | Bulk unpublish by filter replaces the global kill switch (D-043). An Administrator or Reviewer can unpublish every profile matching a filter (source, type, import batch and state, in any combination) at once, with a mandatory reason and a confirmation that shows the count. Each profile becomes 410 with noindex (REQ-209); the action is reversible per batch and audited with one row per profile and one for the batch. The suppression list (REQ-147, 207) and the removal flow (REQ-158) remain the other safety controls. *(D-045: Administrator and Reviewer only, by default; the Administrator can grant the capability to others (REQ-244). D-033: REQ-227 is folded in. Amended by D-036, D-037, D-043.)* | Q2 | M | SITE |

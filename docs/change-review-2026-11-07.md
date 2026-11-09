@@ -1,6 +1,6 @@
 # Brief update: change review (2026-11-07)
 
-Status: **Proposed. Nothing in the repo has been changed except this file.** Waiting for your approval and your rulings in section 4.
+Status: **Resolved 2026-11-09 (D-052).** Brand stays WHOISWHO; legal name whoiswhoafrica; `WIWI - VENTURE BRIEF (1).md` is the most current brief and is now `docs/spec.md`; no crawler name. Q40–Q45 are answered in questions.md. Text below is the original review.
 
 Compared: old = `docs/spec.md` (identical to the untracked `WHOISWHO - VENTURE BRIEF.md`); new = `WIWI - VENTURE BRIEF (1).md`. Method: both files normalised (embedded base64 images removed, whitespace, escapes and bold markers ignored), then line-diffed. I also decoded the one embedded image and looked at it, because it changes what the document shows.
 

@@ -47,7 +47,7 @@ Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neithe
 - **CLAUDE.md** now names `site/` for the website code. The ownership rule for it is Q80.
 - **docs/spec.md** is unchanged (it lists a Judge role, Subscription plans, claim and kill-switch features). It stays as the intent.
 - **traceability.md and plan.md** do not exist yet.
-- **docs/change-review-2026-11-07.md** (the WIWI rename review) is untracked and awaits your rulings.
+- **docs/change-review-2026-11-07.md** (the WIWI rename review) is resolved: brand stays WHOISWHO, legal name whoiswhoafrica, no crawler name (D-052). Q40–Q45 are logged and answered.
 - **Earlier change reviews** (`change-review-2026-11-08-no-accounts.md`) describe the seven roles and the claim flow as they were. They are history; D-036 and D-044 supersede them.
 
 ## 4. In `acquisition/` (not touched; needs changing there)
@@ -76,3 +76,4 @@ Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neithe
 - Q28: new accounts are not needed now; the Anthropic API account stays with acquisition.
 - Q46: AI summaries are published as written; the platform gets an in-house review before launch.
 - CaromHQ sync (Q16) is built last (D-051).
+- Crawler (D-052, Q45): drop the "WHOISWHO-bot/1.0" identity and info-page step (plan 2.1, step 2 Fetch); keep robots.txt and terms checks.

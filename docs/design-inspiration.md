@@ -61,7 +61,7 @@ Each needs an answer before the design phase starts. None blocks the wireframe r
 
 | # | Question | Notes |
 |---|---|---|
-| DQ1 | **Brand assets.** Is there a logo, wordmark, colour palette and typefaces? | The brief cover and the WIWI/WHOISWHO name question (docs/change-review-2026-11-07.md, Q40) are unresolved. |
+| DQ1 | **Brand assets.** Is there a logo, wordmark, colour palette and typefaces? | The name is settled (WHOISWHO, D-052); the logo and wordmark are not. |
 | DQ2 | **3D concept.** What is the 3D hero? Object, scene or abstract form? Interactive or a loop? | Must express Influence. Achievement. Legacy. Needs a fallback for no-WebGL and reduced motion. |
 | DQ3 | **Motion budget.** How much animation, and what is the load limit on a mid-range phone on a slow connection? | Affects hosting and cPanel limits and accessibility (reduced motion). Propose a page-weight and frame-rate budget. |
 | DQ4 | **Dark or light.** Dark, light, or both? | A dark hero suits 3D; long reading pages and profiles may need light. Contrast must meet WCAG 2.1 AA. |

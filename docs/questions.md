@@ -1,7 +1,7 @@
 # WHOISWHO — Contradictions, Questions and Risks
 
-**Status summary (87 items): Answered 54 · Default accepted 25 · Deferred 8 · Pending 0 · Open 0.** Updated 2026-11-09 (D-049 to D-051).
-Contradictions 13: Answered 9 · Default accepted 4 · Deferred 0 · Pending 0 · Open 0. Questions 74: Answered 45 · Default accepted 21 · Deferred 8 · Pending 0 · Open 0. Q40–Q45 are reserved by the pending brief review (docs/change-review-2026-11-07.md) and are not yet logged here.
+**Status summary (93 items): Answered 60 · Default accepted 25 · Deferred 8 · Pending 0 · Open 0.** Updated 2026-11-09 (D-049 to D-052).
+Contradictions 13: Answered 9 · Default accepted 4 · Deferred 0 · Pending 0 · Open 0. Questions 80: Answered 51 · Default accepted 21 · Deferred 8 · Pending 0 · Open 0.
 **Scope key:** `SITE` = the website and WordPress. `ACQUISITION` = the pipeline and its data. `BOTH` = binds both sides, or crosses the contract in `docs/contracts/import-format.md`. Numbers never change.
 Status values: `Answered`, `Default accepted`, `Deferred` (Legal skipped, judging, CaromHQ: revisited later), `Pending - team lead`, `Open`. Decisions are recorded in `docs/decisions.md` (D-###).
 
@@ -15,7 +15,7 @@ Working principle (D-026): finish as early as possible; the brief's dates are ce
 
 | # | Status | Where | Problem | Resolution | Decision | Scope |
 |---|---|---|---|---|---|---|
-| C1 | Answered | §2.1 vs §1 / title | Name appears as "WHOISWHO", "WHOISWHOINAFRICA.COM" and "WHOISWHO IN AFRICA". | Brand = WHOISWHO ("Who Is Who In Africa"). Domain = **wiwi.africa**, also the email sending domain. Edition = "WHOISWHO in Africa: The Maiden Edition". | D-001 | BOTH |
+| C1 | Answered | §2.1 vs §1 / title | Name appears as "WHOISWHO", "WHOISWHOINAFRICA.COM" and "WHOISWHO IN AFRICA". | Brand = WHOISWHO ("Who Is Who In Africa"). Domain = **wiwi.africa**, also the email sending domain. Edition = "WHOISWHO in Africa: The Maiden Edition". | D-001, D-052 | BOTH |
 | C2 | Answered | §1 "not simply a site where people upload profiles" vs §5.1, §8 | The only built flow was paid self-submitted profiles; 10 customers cannot populate a directory. | The WHOISWHO team seeds the directory from sourced public data (organisations first, then public figures as unclaimed profiles with sources and a claim/correct/remove link). Paid self-submitted profiles are a second path. | D-002 | BOTH |
 | C3 | Default accepted | §3.4 "paid ≠ verified" vs §6.1 verification as a paid benefit | Selling verification looks like buying credibility. | A subscription never buys the verification outcome; status is independent of payment. | D-003 | SITE |
 | C4 | Default accepted | §6.1 "Featured placement" vs the Featured rung of the ladder | Featured is either paid or earned. | Featured = editorial only; paid placement = Sponsored label. | D-003 | SITE |
@@ -155,6 +155,19 @@ Judging is offline and not being decided now (D-034). Questions about judges go 
 | Q | Status | Question | Why it matters | Default if you do not know | Scope |
 |---|---|---|---|---|---|
 | Q60 | Deferred - revisit later | Who enters judges' scores, and how are judges' identities and scores kept private and consistent without a portal? Judging format (offline panel meeting, scoring sheets, emailed forms)? | Needed before judging opens; judges' conflict declarations | Judges score on a sheet or in a meeting; an Editor enters scores and a second staff member checks the entry; sheets are kept. | SITE |
+
+## Brand name questions (brief v2, answered 2026-11-09, D-052)
+
+From `docs/change-review-2026-11-07.md`.
+
+| Q | Status | Question | Why it matters | Decision / default | Scope |
+|---|---|---|---|---|---|
+| Q40 | Answered | Is the brand name WHOISWHO (D-001) or WIWI (brief v2)? | Names, copy, legal notices, assets | **WHOISWHO.** | BOTH |
+| Q41 | Answered | If WIWI: is "WHOISWHO" retired, and what is the edition called? | Edition name | **Not applicable.** WHOISWHO stays; edition = "WHOISWHO in Africa: The Maiden Edition" (D-001). | BOTH |
+| Q42 | Answered | Which is current in the brief: the text (WIWI) or the master-brand image (WHOISWHO)? | The brief disagrees with itself | **`WIWI - VENTURE BRIEF (1).md` is the most current brief** and is now `docs/spec.md`. Its scope, numbers and dates apply; its "WIWI" product name is read as WHOISWHO. | BOTH |
+| Q43 | Answered | Which name does Legal use in Terms, Privacy and commercial terms? | Terms and Privacy (REQ-100) | **whoiswhoafrica.** Held as a brand config value. Clearance of the name stays a Legal item (skipped for now, D-051). | SITE |
+| Q44 | Answered | Show the pronunciation "We We Africa" on About? | Name clarity | **No.** The pronunciation belonged to WIWI; the brand is WHOISWHO. Default reversed because Q40 settled the other way. | SITE |
+| Q45 | Answered | What is the crawler called and what does it announce? | User agent | **No crawler name is needed** (D-052). The "WHOISWHO-bot" identity and info page are dropped from the acquisition plan; robots.txt and source terms are still obeyed (REQ-138). | ACQUISITION |
 
 ---
 

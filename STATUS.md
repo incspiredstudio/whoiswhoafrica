@@ -5,6 +5,8 @@
 **Repo layout (2026-11-08):** `docs/` shared; `prototype/` wireframe; `acquisition/` data acquisition. Interface: `docs/contracts/import-format.md`. Other sessions keep their status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
 ## Stage
+**Brief v2 and brand (D-052, 2026-11-09):** brand stays WHOISWHO; legal name whoiswhoafrica; `docs/spec.md` is now the WIWI brief (most current; old copy in docs/spec-versions/); Q40–Q45 logged and answered; no crawler name.
+
 **Unanswered questions sorted (D-049 to D-051, 2026-11-09):** 54 answered, 25 default accepted, 8 deferred, none open. No reviewer pay, hours or names needed (D-049). Build locally on WordPress and import to the live host; no object storage, spikes or new accounts; email by cPanel SMTP (D-050). Legal questions, judging and CaromHQ sync are deferred on purpose and have their own sections or are built last (D-051). Architecture, ADRs, .env.example and CLAUDE.md are being updated to match.
 
 **Defaults accepted (D-047, 2026-11-08):** every open question now carries its default (34 questions: Q26–Q29, Q31, Q33–Q39, Q46, Q54–Q56, Q58, Q60–Q67, Q72–Q80); only Q16 is still pending (team lead). D-048: staff sign-in has no role selector (REQ-245). The WIWI rename questions (Q40–Q45, docs/change-review-2026-11-07.md) are not logged and not applied: the brand stays WHOISWHO until you rule.
