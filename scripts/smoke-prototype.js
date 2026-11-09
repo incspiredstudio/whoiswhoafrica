@@ -13,7 +13,7 @@ const ctx = {
 };
 ctx.window = ctx; ctx.scrollY = 0; ctx.scrollTo = () => {}; ctx.addEventListener = () => {};
 vm.createContext(ctx);
-for (const f of ["tokens.js", "data.js", "core.js", "views-public.js", "views-awards.js", "views-links.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) {
+for (const f of ["tokens.js", "data.js", "core.js", "theme/hero-geo.js", "theme/components.js", "views-public.js", "views-awards.js", "theme/home-view.js", "views-links.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) {
   vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx, { filename: f });
 }
 const W = ctx.W; W.load();
@@ -62,19 +62,19 @@ check("bulk unpublish hides imported individuals, even Verified or Featured", !W
 check("bulk leaves customer-submitted individuals and organisations", W.isPublic(W.profile("p-a")) && W.isPublic(W.profile("b1")));
 check("bulk writes one audit row per profile plus one batch row, and a purge each", S().audit.length === audit0 + nbulk + 1 && S().audit.filter((a) => a.action === "bulk.unpublish").length === 1 && S().purges.length === purge0 + nbulk);
 check("recent bulk actions listed with a restore button", (ctx.location.hash = "#/admin/profiles", W.render(), /Restore this batch/.test(app.innerHTML)));
-S().role = "visitor"; ctx.location.hash = "#/people"; W.render(); check("people list drops the bulk-unpublished profiles", !/Sample Person B/.test(app.innerHTML));
+S().role = "visitor"; ctx.location.hash = "#/people"; W.render(); check("people list drops the bulk-unpublished profiles", !/Tunde Achebe-Wanjala/.test(app.innerHTML));
 S().role = "reviewer"; W.act.bulkRestore(S().bulkLog[0].id); check("restore this batch brings them back", W.isPublic(W.profile("ip2")) && W.isPublic(W.profile("ip4")) && S().bulkLog[0].restored);
-W.forms.bulk({ f: "Sample Annual Report~~B-2026-11-06~~~", reason: "x" }); check("bulk by source and batch", !W.isPublic(W.profile("ip8")) && W.isPublic(W.profile("ip2")) && W.profile("ip8").bulkId);
+W.forms.bulk({ f: "Annual Report~~B-2026-11-06~~~", reason: "x" }); check("bulk by source and batch", !W.isPublic(W.profile("ip8")) && W.isPublic(W.profile("ip2")) && W.profile("ip8").bulkId);
 // register counting
 reload(); const a = S().arrangements; check("seed counts", a.filter(W.counts).length === 2, a.filter(W.counts).map((x) => x.id).join());
 check("complimentary never counts", !W.counts(a.find((x) => x.id === "arr5")));
-check("sponsor label via arrangement", W.sponsorOf(W.profile("b2")) === "Sample Fintech Ltd.");
-W.act.arrEnd("arr1"); check("label removed when ended", W.sponsorOf(W.profile("b2")) === null); check("trust unchanged", W.profile("b2").trust === "verified");
+check("a profile is never Sponsored, even with a confirmed arrangement (D-055)", W.sponsorOf(W.profile("b2")) === null);
+W.act.arrEnd("arr1");  check("trust unchanged", W.profile("b2").trust === "verified");
 // leads
 S().role = "editor"; W.forms.lead({ name: "N", org: "O", interest: "x", contact: "c", msg: "m" }); check("lead added", S().leads.length === 4); W.act.leadConv(S().leads[0].id); check("lead converted", S().arrangements.length === 6);
 // nominations
 reload(); S().role = "editor"; W.act.nomStep("n2|screen"); W.act.nomStep("n2|eligible"); check("invited", W.find("nominations", "n2").status === "invited");
-const nn = W.find("nominations", "n2"); W.act.nomDeclineYes(nn.token); check("decline suppresses", W.profile("b1").status === "suppressed" && S().suppression.some((s) => s.name === "Sample Fintech Ltd." || s.name === "Sample Agritech Co."));
+const nn = W.find("nominations", "n2"); W.act.nomDeclineYes(nn.token); check("decline suppresses", W.profile("b1").status === "suppressed" && S().suppression.some((s) => s.name === "Tiderail Payments" || s.name === "Savanna Loop Agritech"));
 // D-034: no public accounts
 check("no login/signup/account/judge routes", !W.routes.some((r) => /^\/(login|signup|account|judge|forgot|reset|verify)(\/|$)/.test(r.pattern)), W.routes.filter((r) => /^\/(login|signup|account|judge|forgot|reset|verify)/.test(r.pattern)).map((r) => r.pattern).join());
 check("no owner or judge role", !roles.includes("owner") && !roles.includes("judge"));
@@ -82,8 +82,10 @@ check("exactly four roles: visitor, reviewer, editor, administrator", roles.join
 check("removed roles are gone from the role names", !JSON.stringify(W.LISTS.roles).match(/Editor-in-Chief|Sales|Finance|Awards manager/));
 for (const x of ["#/login", "#/signup", "#/account", "#/judge", "#/forgot"]) { reload(); S().role = "visitor"; check("route gone " + x, W.match(x).r === W.notFound); }
 // D-036: no claiming at all
-check("no claim routes or screens", !W.routes.some((r) => /claim/i.test(r.pattern)) && W.match("#/claim/sample-university-a").r === W.notFound && W.match("#/admin/claims").r === W.notFound);
-check("no claims in state", S().claims === undefined);
+check("claim routes exist (D-057)", W.match("#/claim/oyo-crest-university").r !== W.notFound && W.match("#/admin/claims").r !== W.notFound);
+check("claims are held in state, one new and one claimed profile (D-057)", Array.isArray(S().claims) && S().claims.some((c) => c.status === "new") && S().profiles.some((p) => p.claimed && p.manager));
+// claim flow (D-057): approve sets Claimed and Verified; assign a user; the checkmark shows to staff only
+reload(); S().role = "editor"; S().user = "editor@example.test"; { const c = S().claims.find((x) => x.status === "new"), p = W.profile(c.profileId); W.act.claimOk(c.id); check("approving a claim sets Claimed and Verified", c.status === "approved" && p.claimed === true && p.trust === "verified"); ctx.location.hash = "#/admin/profiles/" + p.id; W.render(); check("staff profile shows the checkmark and the assign form", /class="vcheck/.test(app.innerHTML) && /name="manager"/.test(app.innerHTML)); ctx.location.hash = "#/profile/" + p.slug; S().role = "visitor"; W.render(); check("public profile shows no checkmark and offers Claim this profile", !/vcheck/.test(app.innerHTML) && /Claim this profile/.test(app.innerHTML)); }
 // D-037: the only feature flag is nominations
 check("only the nominations flag exists", Object.keys(S().flags).join() === "nominations");
 check("no flags screen entries for the removed flags", W.match("#/admin/ai").r === W.notFound);
@@ -91,18 +93,18 @@ check("no flags screen entries for the removed flags", W.match("#/admin/ai").r =
 check("no source registry state in the site", S().sources === undefined);
 // D-042: Sources is a read-only screen; every profile carries a source and an import batch (REQ-242, 243)
 check("every profile has a source name; imports have a batch", S().profiles.every((p) => p.srcName && (W.origin(p) === "customer" || p.batch)));
-reload(); for (const r of ["reviewer", "editor", "admin"]) { S().role = r; ctx.location.hash = "#/admin/sources"; W.render(); check("sources screen opens for " + r, /Sources/.test(app.innerHTML) && /Sample Registry A/.test(app.innerHTML) && /Last import/.test(app.innerHTML) && /Import errors/.test(app.innerHTML) && /Removals/.test(app.innerHTML)); }
+reload(); for (const r of ["reviewer", "editor", "admin"]) { S().role = r; ctx.location.hash = "#/admin/sources"; W.render(); check("sources screen opens for " + r, /Sources/.test(app.innerHTML) && /National Company Registry/.test(app.innerHTML) && /Last import/.test(app.innerHTML) && /Import errors/.test(app.innerHTML) && /Removals/.test(app.innerHTML)); }
 check("sources screen has no mutation controls", (() => { const i = app.innerHTML.indexOf("<h1>Sources</h1>"), j = app.innerHTML.indexOf("Import errors are rows"); const main = app.innerHTML.slice(i, j); return i > 0 && j > i && /Last import/.test(main) && !/<form|<button|data-act=|type="submit"|<input|<select/i.test(main); })());
 check("sources screen says approval happens in the pipeline", /acquisition pipeline/.test(app.innerHTML) && /REQ-136 to 138/.test(app.innerHTML));
-check("sources link filters profiles by source", /#\/admin\/profiles\?src=Sample%20Registry%20A/.test(app.innerHTML));
+check("sources link filters profiles by source", /#\/admin\/profiles\?src=National%20Company%20Registry/.test(app.innerHTML));
 S().role = "visitor"; ctx.location.hash = "#/admin/sources"; W.render(); check("visitor 403 on sources", /403/.test(app.innerHTML));
-S().role = "reviewer"; ctx.location.hash = "#/admin/profiles?src=Sample%20Registry%20A"; W.render(); check("profiles filter by source", /Sample Agritech Co\./.test(app.innerHTML) && !/Sample Person B/.test(app.innerHTML));
-ctx.location.hash = "#/admin/profiles?batch=B-2026-11-05"; W.render(); check("profiles filter by import batch", /Sample Person B/.test(app.innerHTML) && !/Sample Agritech Co\./.test(app.innerHTML));
-ctx.location.hash = "#/admin/profiles?group=src"; W.render(); check("profiles grouped by source", /Source: Sample Registry A/.test(app.innerHTML) && /Source: Sample Annual Report/.test(app.innerHTML));
+S().role = "reviewer"; ctx.location.hash = "#/admin/profiles?src=National%20Company%20Registry"; W.render(); check("profiles filter by source", /Savanna Loop Agritech/.test(app.innerHTML) && !/Tunde Achebe-Wanjala/.test(app.innerHTML));
+ctx.location.hash = "#/admin/profiles?batch=B-2026-11-05"; W.render(); check("profiles filter by import batch", /Tunde Achebe-Wanjala/.test(app.innerHTML) && !/Savanna Loop Agritech/.test(app.innerHTML));
+ctx.location.hash = "#/admin/profiles?group=src"; W.render(); check("profiles grouped by source", /Source: National Company Registry/.test(app.innerHTML) && /Source: Annual Report/.test(app.innerHTML));
 ctx.location.hash = "#/admin/profiles?group=batch"; W.render(); check("profiles grouped by import batch", /Batch: B-2026-11-01/.test(app.innerHTML) && /Batch: B-2026-11-05/.test(app.innerHTML));
 check("reviewer sees no unpublish, edit or bulk controls", !/data-act="unpubDlg"|data-act="bulkDlg"|Create on behalf/.test(app.innerHTML));
-ctx.location.hash = "#/admin/profiles/b1"; W.render(); check("reviewer profile screen: terms only, no edit form", /Assign existing terms/.test(app.innerHTML) && !/data-form="profedit"/.test(app.innerHTML) && !/data-form="verify"/.test(app.innerHTML) && /source: Sample Registry A/.test(app.innerHTML));
-W.forms.profedit({ id: "b1", name: "Hacked", reason: "x" }); check("reviewer cannot edit by form", W.profile("b1").name === "Sample Agritech Co.");
+ctx.location.hash = "#/admin/profiles/b1"; W.render(); check("reviewer profile screen: terms only, no edit form", /Assign existing terms/.test(app.innerHTML) && !/data-form="profedit"/.test(app.innerHTML) && !/data-form="verify"/.test(app.innerHTML) && /source: National Company Registry/.test(app.innerHTML));
+W.forms.profedit({ id: "b1", name: "Hacked", reason: "x" }); check("reviewer cannot edit by form", W.profile("b1").name === "Savanna Loop Agritech");
 W.forms.profterms({ id: "b1", industry: "Technology" }); check("reviewer assigns an existing term", W.profile("b1").industry === "Technology");
 reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/review/b5"; W.render(); check("review screen shows each field's source URL and retrieval date, read-only", /Source \(URL\)/.test(app.innerHTML) && /Retrieved/.test(app.innerHTML) && /example\.org\/sources\//.test(app.innerHTML) && !/Approve source|Reject source/.test(app.innerHTML));
 // D-039: taxonomies are native term screens; Reviewers cannot edit terms
@@ -122,9 +124,9 @@ ctx.location.hash = "#/confirm/" + cr.token; W.render(); check("email link opens
 W.forms.remove({ id: "ip3", who: "I am the person", detail: "d", contact: "r@example.org" }); W.forms.report({ id: "b6", reason: "Other", detail: "d" });
 S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("inbox shows Correction, Removal and Report with a due countdown", /Correction/.test(app.innerHTML) && /Removal/.test(app.innerHTML) && /Report/.test(app.innerHTML) && /due in|overdue|due today/.test(app.innerHTML));
-const before = S().audit.length; W.forms.profedit({ id: "b1", name: "Sample Agritech Co.", title: "New Title", org: undefined, website: "https://example.org/sample-agritech", industry: "Agriculture & Agritech", country: "Nigeria", city: "Lagos", orgType: "Company", bio: "b", achievements: "a", reason: "request", item: cr.id });
+const before = S().audit.length; W.forms.profedit({ id: "b1", name: "Savanna Loop Agritech", title: "New Title", org: undefined, website: "https://example.org/sample-agritech", industry: "Agriculture & Agritech", country: "Nigeria", city: "Lagos", orgType: "Company", bio: "b", achievements: "a", reason: "request", item: cr.id });
 check("staff edit goes live at once and is audited", W.profile("b1").title === "New Title" && S().audit.length > before && S().audit.some((a) => a.action === "profile.edit") && cr.status === "closed");
-W.act.rmOk(S().removals[0].id); check("valid removal hides and suppresses", W.profile("ip3").status === "suppressed" && S().suppression.some((x) => x.name === "Sample Person C"));
+W.act.rmOk(S().removals[0].id); check("valid removal hides and suppresses", W.profile("ip3").status === "suppressed" && S().suppression.some((x) => x.name === "Halima Osei-Danjuma"));
 // REQ-069: export is Administrator-only and logged
 S().role = "reviewer"; const exp0 = S().audit.length; W.act.dl("profiles"); check("reviewer cannot export", S().audit.some((a) => a.action === "export.denied") && !S().audit.some((a) => a.action === "export.profiles"));
 S().role = "admin"; W.act.dl("profiles"); check("administrator export is logged", S().audit.some((a) => a.action === "export.profiles"));
@@ -149,7 +151,7 @@ const REVIEWER_MENU = ["Dashboard", "Review queue", "Duplicates", "Stale records
 check("reviewer menu is exactly the seven screens (no Support inbox, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); { const side = (app.innerHTML.match(/<nav class="app-side"[\s\S]*?<\/nav>/) || [""])[0]; const links = [...side.matchAll(/<a href="#[^"]*"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]); check("reviewer left menu renders exactly those links", JSON.stringify(links) === JSON.stringify(REVIEWER_MENU), links.join()); }
 check("administrator menu includes everything", ["Import", "Taxonomies", "Exports", "Roles and permissions", "Feature flag", "Shortlist and winners"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
-check("no Claim verification, AI drafting, kill switch or corrections screen in any menu", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /claim|ai drafting|kill|controlled lists|corrections and removals|reports/i.test(x))));
+check("no AI drafting, kill switch or corrections screen in any menu; Claims only for those with the capability", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /ai drafting|kill|controlled lists|corrections and removals|reports/i.test(x))) && W.menuFor("editor").includes("Claims") && !W.menuFor("reviewer").includes("Claims"));
 check("Sources is in the Reviewer, Editor and Administrator menus", ["reviewer", "editor", "admin"].every((r) => W.menuFor(r).indexOf("Sources") >= 0));
 check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Leads", "Articles", "Nominations", "Scores and results"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Users and roles", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
 check("Administrator menu includes Register, Customers, Import and Users and roles", ["Register", "Customers", "Import", "Users and roles", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
@@ -181,14 +183,19 @@ ctx.location.hash = "#/admin/scores/n5"; W.render(); check("conflict row has no 
 W.forms.judgecoi({ judge: "Sample Judge 1", n: "n4", why: "x" }); check("recording a conflict removes the judge's score", !(((S().scores.n4 || {}).by || {})["Sample Judge 1"]));
 S().role = "admin"; W.find("nominations", "n4").status = "assessment"; W.act.nomStep("n4|shortlist"); check("shortlist via score page flow", W.find("nominations", "n4").status === "shortlisted");
 // shortlist and winners publish through the normal publish step (no flag)
-reload(); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("shortlisted nominee page is not public until staff publish it", /404|Page not found/.test(app.innerHTML));
-S().role = "editor"; W.act.pubNom("n1"); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("nominee page public after publish", /Shortlisted/.test(app.innerHTML) && W.nomPublic(W.find("nominations", "n1")));
-S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners empty until announcement published", /Winners will be announced/.test(app.innerHTML));
-S().role = "admin"; W.find("nominations", "n1").status = "winner"; W.act.publishWin(); S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners page after publish", /Sample Fintech Ltd\./.test(app.innerHTML));
+reload(); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("shortlisted nominee page is not public until staff publish it", /Page not found/.test(app.innerHTML));
+S().role = "editor"; W.act.pubNom("n1"); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("nominee page public after publish", /Nominee/.test(app.innerHTML) && !/Shortlisted/.test(app.innerHTML) && W.nomPublic(W.find("nominations", "n1")));
+S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners page lists winners from the start, newest edition first, with filters", /Rift Valley Power/.test(app.innerHTML) && /Mwanga Pay/.test(app.innerHTML) && /<a class="btn sm alt"[^>]*>3</.test(app.innerHTML) && /name="year"/.test(app.innerHTML) && /name="category"/.test(app.innerHTML));
+S().role = "admin"; W.find("nominations", "n1").status = "winner"; W.act.publishWin(); S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners page after publish", /Rift Valley Power/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners?year=2026"; W.render(); check("winners filter by year, oldest edition", /Tiderail Payments/.test(app.innerHTML) && !/Rift Valley Power/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners?year=2027"; W.render(); check("winners filter by year", /Wanjiru Owusu-Eze/.test(app.innerHTML) && !/Kigali Data Foundry/.test(app.innerHTML) && !/Rift Valley Power/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners?category=Entrepreneur%20of%20the%20Year"; W.render(); check("winners filter by category", /Adaeze Onyekachi-Mbeki/.test(app.innerHTML) && /Ifeoma Kariuki-Bello/.test(app.innerHTML) && !/Mwanga Pay/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners?country=Kenya&type=organisation"; W.render(); check("winners filter by country and type", /Rift Valley Power/.test(app.innerHTML) && /Mara Fresh Logistics/.test(app.innerHTML) && !/Samuel Mwangi-Otieno/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners?q=zzzz"; W.render(); check("winners with no match say so", /No winners match/.test(app.innerHTML));
 // no kill switch text anywhere in rendered pages
 reload(); { let bad = 0; for (const role of Object.keys(W.LISTS.roles)) for (const x of W.INV) { S().role = role; ctx.location.hash = x.route; W.render(); if (/kill/i.test(app.innerHTML.replace(/<[^>]+>/g, " ")) || /Editor-in-Chief|Sales \/ Support|Awards manager/i.test(app.innerHTML.replace(/<[^>]+>/g, " "))) { bad++; console.log("kill/removed-role text on", role, x.id); } } check("no kill switch or removed role text in rendered pages", bad === 0); }
-// no Claimed or Unclaimed anywhere in rendered pages, for every role and route
-reload(); { let bad = 0; for (const role of Object.keys(W.LISTS.roles)) for (const x of W.INV) { S().role = role; ctx.location.hash = x.route; W.render(); const t = app.innerHTML.replace(/<[^>]+>/g, " "); if (/\bun?claimed\b/i.test(t) || /Claim this profile|Request to claim|\bclaim verification\b/i.test(t)) { bad++; console.log("CLAIM TEXT", role, x.id); } } check("no Claimed/Unclaimed/claim feature text on any screen", bad === 0); }
+// claims (D-057, replacing the D-036 check): the checkmark is staff-only; the public never sees Claimed, Unclaimed or Verified
+reload(); { let bad = 0; for (const role of Object.keys(W.LISTS.roles)) for (const x of W.INV) { if (!/^#\/(profile|people|businesses|institutions|directory|search|industries|awards|stories|$)/.test(x.route) && !/^#\/?$/.test(x.route)) continue; S().role = role; ctx.location.hash = x.route; W.render(); const t = app.innerHTML; if (role === "visitor" && (/un?claimed/i.test(t.replace(/<[^>]+>/g, " ")) || /class="vcheck/.test(t))) { bad++; console.log("CLAIM LEAK", role, x.id); } } check("visitors never see Claimed, Unclaimed or the Verified checkmark", bad === 0); }
 // role access
 reload(); S().role = "editor"; ctx.location.hash = "#/admin/scores"; W.render(); check("editor opens scores", /Scores and results/.test(app.innerHTML));
 S().role = "reviewer"; ctx.location.hash = "#/admin/scores"; W.render(); check("reviewer cannot open scores", /403/.test(app.innerHTML));
@@ -200,11 +207,63 @@ for (const x of W.INV) {
   check("inventory wpRec present " + x.id, !!x.wpRec, x.id);
   if (/^Remove/.test(x.wpRec)) check("removal has a reason " + x.id, !!x.wpNote, x.id);
 }
+// High-fidelity public pages (design-direction.md): rules that must hold on every public route, for a visitor
+reload(); S().role = "visitor";
+for (const x of W.INV.filter((i) => i.fidelity === "high")) {
+  ctx.location.hash = x.route; W.render(); const html = app.innerHTML, main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
+  const txt = main.replace(/<[^>]+>/g, " ");
+  check("high fidelity marks the page " + x.id, W.fid === "hf" && /fiction-strip/.test(html) && /site-foot/.test(html));
+  check("no password, sign-up or checkout on " + x.id, !/type="password"|\bsign ?up\b|\bcheckout\b|\bcart\b|\blog ?in\b/i.test(txt), x.route);
+  check("no REQ or decision codes in public copy " + x.id, !/\bREQ-\d|\bD-0\d\d\b|\bQ\d\d\b/.test(txt), x.route);
+  check("exactly one h1 on " + x.id, (main.match(/<h1[\s>]/g) || []).length === 1, x.route + " " + (main.match(/<h1[\s>]/g) || []).length);
+  check("every image has alt on " + x.id, !/<img(?![^>]*\balt=)[^>]*>/.test(main));
+  check("no goal counts on " + x.id, !/\b\d[\d,]*\+?\s*(profiles? by|target|goal)\b/i.test(txt) && !/1,?000/.test(txt), x.route);
+  check("image slots are marked on " + x.id, !/<img(?![^>]*data-img)(?![^>]*\bdip\b)/.test(main.replace(/<figure[^>]*data-img[^>]*><img/g, "<figure>").replace(/<img[^>]*data-img[^>]*>/g, "")));
+}
+// profile states
+reload(); S().role = "visitor";
+const pageFor = (slug) => { ctx.location.hash = "#/profile/" + slug; W.render(); return app.innerHTML; };
+{
+  const pend = pageFor("deltaline-cold-chain");
+  check("pending profile is public with the full label", /Compiled automatically from public sources\. Human review pending\./.test(pend) && /badge--pending/.test(pend));
+  check("pending profile has correct and remove links", /#\/correct\/deltaline-cold-chain/.test(pend) && /#\/remove\/deltaline-cold-chain/.test(pend));
+  check("pending profile shows the label in its share preview", /pending-note/.test(pend));
+  check("pending profile has no trust or sponsored label", !/badge--verified|badge--featured|badge--sponsored/.test(pend));
+  const rv = pageFor("bonny-reach-logistics"); check("public profile shows no review date and no trust badge", !/badge--reviewed|Reviewed on|Last reviewed|badge--verified/.test(rv));
+  const v = pageFor("tiderail-payments"); check("a profile never shows Sponsored or Verified (D-055)", !/badge--verified|notice--sponsored/.test(v) && !/badge--sponsored/.test(v.split("profile-body")[0]));
+  check("featured is not shown as a public badge", !/badge--featured/.test(pageFor("confluence-health-network")));
+  const sp = pageFor("osu-harbour-foods"); check("a profile with an arrangement shows no Sponsored label", !/notice--sponsored/.test(sp) && !/badge--sponsored/.test(sp.split("profile-body")[0]) && !/badge--verified|badge--featured/.test(sp));
+  check("a business profile has no cover image", !/profile-cover/.test(sp));
+  const en = pageFor("chidi-sesay-abara"); check("entrepreneur profile has ventures", /Ventures/.test(en) && /Entrepreneur/.test(en) && W.cur.inv === "V54");
+  check("an individual is never pending", S().profiles.every((p) => !p.compiled || p.type !== "individual"));
+  check("a pending profile holds no label or arrangement (REQ-226)", S().profiles.filter((p) => p.compiled).every((p) => !p.trust && !p.sponsored));
+}
+// REQ-218 (amended by D-054): lists show reviewed only, with no pending view; direct URL and search show pending with the label
+ctx.location.hash = "#/directory"; W.render(); check("directory hides pending by default", !/Deltaline Cold Chain/.test(app.innerHTML));
+ctx.location.hash = "#/directory?pending=1"; W.render(); check("directory has no pending view", !/Deltaline Cold Chain/.test(app.innerHTML));
+ctx.location.hash = "#/search?q=deltaline"; W.render(); check("search finds pending with the label", /Deltaline Cold Chain/.test(app.innerHTML) && /badge--pending/.test(app.innerHTML));
+ctx.location.hash = "#/sitemap.xml"; W.render(); check("sitemap leaves out pending", !/profile\/deltaline-cold-chain&lt;/.test(app.innerHTML) && /200 \+ noindex/.test(app.innerHTML));
+ctx.location.hash = "#/"; W.render(); check("home has no pending profile", !/Deltaline|Lake Basin/.test(app.innerHTML));
+ctx.location.hash = "#/directory?view=list"; W.render(); check("directory list view", /results--list/.test(app.innerHTML));
+S().role = "reviewer"; check("pending organisations are in the review queue", W.queue().some((p) => p.id === "b7"));
+W.forms.approve({ id: "b7", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("approving clears the pending state", !W.isPending(W.profile("b7")) && W.profile("b7").lastReviewed === W.TODAY); S().role = "visitor";
+// awards stages from the design review switch
+reload(); S().role = "visitor"; W.ui.nom = { step: 0, d: {} }; W.act.stage("open|#/nominate"); ctx.location.hash = "#/nominate"; W.render(); check("stage open shows the full form", /data-form="nom0"/.test(app.innerHTML) && W.nomOpen());
+W.act.stage("soon|#/nominate"); W.render(); check("stage soon shows the sign-up form", /data-form="signup"/.test(app.innerHTML) && !W.nomOpen());
+W.act.stage("nominees|#/awards/nominees"); ctx.location.hash = "#/awards/nominees"; W.render(); check("stage nominees shows citations", /citation/.test(app.innerHTML) && /Wanjiru Owusu-Eze/.test(app.innerHTML));
+W.act.stage("winners|#/awards/winners"); ctx.location.hash = "#/awards/winners"; W.render(); check("stage winners shows winners", /Winner/.test(app.innerHTML) && S().awards.published);
+W.act.stage("soon|#/awards/nominees"); W.render(); check("stage back to soon empties nominees", /Nominees are not published yet/.test(app.innerHTML));
+ctx.location.hash = "#/awards"; W.render(); check("awards page has no nominee strip and a public timeline", !/np-reel/.test(app.innerHTML) && /Nominees announced/.test(app.innerHTML) && !/Shortlisting/.test(app.innerHTML) && /id="categories"/.test(app.innerHTML));
+ctx.location.hash = "#/commercial-terms"; W.render(); check("commercial terms page is gone", /not found|Page not found|404/i.test(app.innerHTML));
+// staff screens keep the wireframe chrome; public pages do not use it
+reload(); S().role = "editor"; ctx.location.hash = "#/admin"; W.render(); check("staff screen keeps the wireframe look", W.fid === "wf" && /WIREFRAME/.test(app.innerHTML) && !/fiction-strip/.test(app.innerHTML));
+ctx.location.hash = "#/design-review"; W.render(); check("design review opens and lists public pages", W.fid === "hf" && /Compiled automatically, review pending/.test(app.innerHTML) && /Preview as/.test(app.innerHTML) && /flows-btn/.test(app.innerHTML));
+S().role = "visitor"; ctx.location.hash = "#/"; W.render(); check("public page keeps the role switcher and Flows menu", W.fid === "hf" && /data-change="role"/.test(app.innerHTML) && /flows-btn/.test(app.innerHTML));
 // flows: every start route resolves and every inventory id exists
 for (const f of W.FLOWS) {
   for (const id of f.inv) check("flow inventory id " + f.t + " " + id, !!W.invById(id), id);
   reload(); S().role = f.role; ctx.location.hash = f.go; app.innerHTML = ""; try { W.render(); } catch (e) { check("flow start " + f.t, false, e.stack.split("\n")[0]); continue; }
-  check("flow start nonempty " + f.t, app.innerHTML.length > 200); if (!/^1\./.test(f.t)) check("flow start not 404 " + f.t, !/404 · Page not found/.test(app.innerHTML));
+  check("flow start nonempty " + f.t, app.innerHTML.length > 200); if (!/^1\./.test(f.t)) check("flow start not 404 " + f.t, !/Page not found/.test(app.innerHTML));
   check("flow role exists " + f.t, roles.includes(f.role), f.role);
 }
 check("19 flows or fewer", W.FLOWS.length <= 19 && !W.FLOWS.some((f) => /kill/i.test(f.t + f.s.join(" "))));

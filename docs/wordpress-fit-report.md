@@ -15,7 +15,7 @@ Scope: `docs/requirements.md`, `decisions.md`, `questions.md`, `GUIDE.md`, `wire
 | Process | 39 | 20 | 50 |
 | **Total** | **203** | **52** | **104** |
 
-A further 42 REQs are withdrawn (all earlier rounds plus this one), keeping a type for their original topic only. About 70% of active REQs are custom plugin work; the main mass is the review/publish gate, labels, import, audit, commerce register and awards.
+A further 42 REQs are withdrawn (all earlier rounds plus this one), keeping a type for their original topic only. About 48% of active REQs (97 of 203) are custom plugin work; the main mass is the review/publish gate, labels, import, audit, commerce register and awards.
 
 Wireframe (122 entries): 18 native, 42 customised-native, 58 custom, 4 wireframe tools (n/a).
 

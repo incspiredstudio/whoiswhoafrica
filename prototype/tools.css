@@ -1,0 +1,29 @@
+/* Review tools shown on top of the high-fidelity pages: role switcher, Flows menu, design notes.
+   Prototype only. Not part of the site and not ported to the WordPress theme. */
+#wfbar { background: #111; color: #e7e7e0; font: 400 12px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; padding: 5px 0; }
+#wfbar .wrap { display: flex; flex-wrap: nowrap; gap: 6px 12px; align-items: center; max-width: none; padding-inline: 12px; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
+#wfbar strong { letter-spacing: .06em; }
+#wfbar label { display: flex; gap: 6px; align-items: center; margin: 0; font-weight: 400; font-size: 12px; color: inherit; }
+#wfbar select { width: auto; min-height: 0; background: #fff; color: #2f2f2f; border: 0; border-radius: 3px; padding: 2px 4px; font: inherit; }
+#wfbar button, #wfbar a.btnlink { background: transparent; color: #e7e7e0; border: 1px solid #6b6b6b; border-radius: 3px; padding: 2px 7px; cursor: pointer; text-decoration: none; font: inherit; }
+#wfbar a.btnlink.lead { background: #ffa600; border-color: #ffa600; color: #2f2f2f; font-weight: 600; }
+#wfbar .tag { background: #3d3d3d; border-radius: 3px; padding: 1px 6px; }
+#wfbar :focus-visible { outline: 2px solid #ffa600; outline-offset: 1px; }
+#tools-show { position: fixed; right: 8px; bottom: 8px; z-index: 60; background: #111; color: #e7e7e0; border: 1px solid #6b6b6b; border-radius: 3px; padding: 4px 8px; font: 12px system-ui, sans-serif; cursor: pointer; }
+#flows-btn, #notes-btn { position: fixed; bottom: 8px; z-index: 60; min-height: 0; padding: 5px 10px; border: 1px solid #6b6b6b; border-radius: 3px; background: #111; color: #e7e7e0; font: 600 12px system-ui, sans-serif; cursor: pointer; }
+#flows-btn { left: 8px; }
+#notes-btn { left: 70px; right: auto; }
+@media (max-width: 47.99rem) { .has-cookie #flows-btn, .has-cookie #notes-btn, .has-cookie #tools-show { bottom: 6.5rem; } }
+#flows, #notes-panel { position: fixed; bottom: 44px; z-index: 60; overflow: auto; background: #fff; color: #2f2f2f; border: 2px solid #111; border-radius: 6px; padding: 14px; font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+#flows { left: 8px; width: min(26rem, calc(100% - 16px)); max-height: 70vh; }
+#flows ol { padding-left: 1.2rem; margin: 8px 0 0; }
+#flows li { margin-bottom: 10px; }
+#flows h2, #notes-panel h2 { font: 700 15px/1.3 system-ui, sans-serif; margin: 0 0 6px; }
+#flows .btn, #flows button { display: inline-block; min-height: 0; padding: 2px 8px; font: 600 12px system-ui, sans-serif; color: #fff; background: #2f2f2f; border: 1px solid #2f2f2f; border-radius: 3px; cursor: pointer; }
+#flows .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#flows a, #notes-panel a { color: #0b57c9; }
+#notes-panel { left: 8px; width: min(24rem, calc(100% - 16px)); max-height: 50vh; }
+#notes-panel p { margin: 0 0 6px; }
+.tools-hidden #wfbar, .tools-hidden #flows-btn, .tools-hidden #notes-btn, .tools-hidden #flows, .tools-hidden #notes-panel { display: none !important; }
+@media print { #tools-show { display: none; } }
+.has-cookie #tools-show { right: auto; left: 8px; }

@@ -46,3 +46,12 @@ The wireframe still has no D-033 publish-first states, so the "Compiled automati
 
 ## WordPress fit (2026-11-09)
 Inventory entries now carry wpScreen (native, customised-native, custom) and a recommendation. Four removals recommended (A01, A24, A34, A57), two rulings needed (A54, A60); findings 70 to 76. No screen was changed.
+
+## High-fidelity public pages (2026-11-09, not committed)
+Home page rebuilt to an Awwwards-level concept: one particle stage morphs Africa on a globe into the brand marks over the colour blocks Influence, Achievement and Legacy. Other public pages use the brand guide's colours and Repline, but keep the earlier, plainer layouts. The user asked to see the home page first, so docs/design-direction.md and docs/design-system.md are not written yet and the inner pages are not yet raised to the home page's level. Repline's licence is unconfirmed: theme/fonts/Repline.otf came from the user's Downloads folder. Brand name conflict open: the guide says WiWi Africa, D-052 says WHOISWHO. Files: theme/home-view.js, home.js, home.css, stage3d.js, shapes.js, tokens.css, site.css.
+
+## 2026-11-09 (late): stories, claims, search
+- Stories page: no hero; a post grid starts the page (one large tile, two beside it, then three-column cards, a sign-up block, more cards). D-056, REQ-249.
+- Claiming returns (D-057): public "Claim this profile" form (V57), staff Claims screen (A61), Verified shown to staff as a checkmark, an assigned user per claimed profile. State key is now `wiw-wireframe-v12`. REQ-251 to 253; open Q92 to Q94.
+- Search across profiles and stories is now a requirement (REQ-254). The WordPress build needs a background-removal plugin for imported profile photos (REQ-255, Q95).
+- Smoke test: 3005 checks, 0 failures. Inventory: 128 entries, 0 unexplained.

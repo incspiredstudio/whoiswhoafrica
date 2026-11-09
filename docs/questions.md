@@ -144,7 +144,7 @@ Legal is skipped for now. Nothing in the build waits for it. The defaults below 
 |---|---|---|---|---|---|---|
 | Q21 | Deferred - Legal skipped | Retention and deletion periods? | NDPA. | Subscriber data 6 years after last payment, nominations 2 years, suppression record kept indefinitely (name only); subject to Legal's review. (Ref: D-023) | Process | BOTH |
 | Q34 | Deferred - Legal skipped | Photos on acquired individuals and organisation logos? | Personality rights, trademark | None in the first 1,000 until Legal advises | Process | BOTH |
-| Q35 | Deferred - Legal skipped | First individual goes public only after Legal's written answer (assessment, DPIA), or under D-016 with bulk unpublish by filter? Also amends REQ-170 wording. | Legal exposure | Wait for Legal. Review can run meanwhile; approvals wait. | Process | BOTH |
+| Q35 | Deferred - Legal skipped | First individual goes public only after Legal's written answer (assessment, DPIA), or under D-016 with bulk unpublish by filter? Also amended REQ-170 wording (REQ-170 withdrawn by D-054). | Legal exposure | Wait for Legal. Review can run meanwhile; approvals wait. | Process | BOTH |
 | Q36 | Deferred - Legal skipped | Include current public office-holders (no party field)? | Sensitive data (NDPA s.30) | Include, no party field | Process | BOTH |
 | Q37 | Deferred - Legal skipped | Listed companies from issuer pages + Wikidata, or wait for an NGX data licence? | NGX terms ban aggregation | Issuer pages + Wikidata; ask NGX for a quote | Process | ACQUISITION |
 | Q63 | Deferred - Legal skipped | Legal's AI transfer basis blocks individuals' data (REQ-169). Run organisations straight after source approvals and individuals when Legal confirms, wait and run all together, or send without it (amends D-017)? | "All 1,000 in one run" depends on it | Two runs | Process | ACQUISITION |
@@ -187,6 +187,10 @@ What building on WordPress raises. Each has a recommended default; the status is
 | Q89 | Open | Multisite or a single WordPress site? | Multisite adds roles, plugins and hosting complexity. | A single site. | Native | SITE |
 | Q90 | Open | How does content move from the local build to the live site, and what happens after go-live? | Importing over live data would lose edits (D-050). | One-way: export the database and files with WP-CLI or a migration plugin (for example WP Migrate) to a staging copy on the host, check it, then switch. After go-live the live site is the source of truth and is never overwritten; later content comes through the import file (REQ-237). | Process | SITE |
 | Q91 | Open | Search: core WordPress search with filters, or a relevance plugin or search service? | Directory search is the first action (design-inspiration section 3). | Core search with taxonomy and field filters at launch. Add a relevance plugin or external search only if measured results are poor. | Native+config | SITE |
+| Q92 | Open | What counts as enough evidence for a claim, and who approves it? | A wrong approval gives the wrong person control of a profile and a Verified mark (D-057). | A page on the official website naming the claimant, or a registration number, or a signed letter; the Editor approves; two people for a high-profile organisation. | Custom | SITE |
+| Q93 | Open | Is the profile's assigned user a new role (Profile manager) or an existing staff user? | D-044 allows only three staff roles; a manager account for a profile owner is a new kind of account (D-057 amends D-034). | A fourth, limited role, Profile manager, with a capability to edit only assigned profiles and no access to anything else; created only by the Administrator. | Custom | SITE |
+| Q94 | Open | Do the assigned user's edits publish straight away or after review? | Straight publishing would break the review rule (REQ-222, 226). | After review, in the same queue as other edits. | Custom | SITE |
+| Q95 | Open | Which tool removes photo backgrounds on import: a self-hosted model or a paid service? | Photos of real people are personal data; a paid service is a new processor and cost (D-057, REQ-255). | A self-hosted tool inside the plugin, run as a background job; a paid service only after Legal adds it to the processor list. Keep the original and allow a switch back. | Plugin | SITE |
 
 ---
 
@@ -229,7 +233,7 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 | **Platform terms of service** | Legal exposure. | Source allowlist, no social platforms (REQ-138). |
 | **Reputational harm if profiles are wrong or stale** | Press, subjects. | Review gate, "last reviewed" date, refresh cycle, corrections log (REQ-144, 160, 164). |
 | **Copyright** | Takedown, claims. | No third-party photos except open-licence images with attribution (REQ-162, REQ-203). |
-| **Pay-to-win perception** | Brand collapse. | Status separation, no data path from commercial records to awards (REQ-024, 037, 184, 199, 201). |
+| **Pay-to-win perception** | Brand collapse. | Status separation, no data path from commercial records to awards (REQ-037, 184, 199, 201). |
 | **Public, indexed pages of real people** — search engines cache pages that are later removed | Removed or wrong profiles remain visible in search results | REQ-208, REQ-209 (410, noindex, sitemap and CDN purge); N21 search-engine removal requests |
 | **Empty-directory problem** | Low conversion. | Team-seeded organisations and individuals (Q1, REQ-191–192). |
 | **Human review capacity** (agents draft fast; only humans approve) | Backlog of unpublished profiles. | REQ-206; Q4 sizing. |

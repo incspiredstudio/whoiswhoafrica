@@ -31,8 +31,8 @@ Why this shape:
 | Hosting | Built locally; live on the existing cPanel account. Cloudflare in front is optional at go-live. Fallback: one small VPS |
 | Payments | **None.** The register stores method and reference text only |
 | Email | cPanel mail SMTP through `wp_mail`; SPF, DKIM and DMARC on wiwi.africa. Brevo is an optional later upgrade |
-| Storage | WordPress media library on the host (originals kept); private files outside the web root; backups from cPanel plus a plugin or export if needed. No object storage |
-| Search | `wiw_profile_search` table with InnoDB FULLTEXT, built from public states only |
+| Storage | WordPress media library on the host (originals kept; a background-removal plugin adds a cut-out size to imported profile photographs, REQ-255, Q95); private files outside the web root; backups from cPanel plus a plugin or export if needed. No object storage |
+| Search | `wiw_profile_search` table with InnoDB FULLTEXT, built from public states only, covering profiles **and stories** in one query (REQ-254) |
 | Jobs | WP-Cron with Action Scheduler; a real cron every minute is an optional improvement on the live host |
 | AI | **Not on the site.** The acquisition pipeline owns drafting and basic verification |
 | Observability | Error log with IDs only; uptime monitor, Sentry and Cloudflare Web Analytics are later, optional |
@@ -216,7 +216,7 @@ IDs: WordPress post IDs plus a public `record_id` or ULID where the contract nee
 | `wiw_profile` | custom post type | Individual, organisation, institution (entity type stored in `wiw_profile_state`). No archive, no feed, no REST, `exclude_from_search`; URLs are served by our own rewrite and handler (section 5). The post stores the name (title) and slug; **fields are post meta** registered from the allowlist per entity type (REQ-003 to 005, 139, 140); no field exists for forbidden attributes. |
 | `wiw_story` | custom post type | Articles: interview, feature, spotlight, opinion, announcement, news (REQ-027 to 029). Uses the block editor, sanitised on output; scheduled publishing; Sponsored link. |
 | `wiw_sponsor` | custom post type | Name, logo, link; attached to editions, categories and pages (REQ-186). |
-| Pages | core `page` | About, How we compile (REQ-130), Terms, Privacy, Cookies, Awards rules (REQ-120), Contact. |
+| Pages | core `page` | About, Terms, Privacy, Cookies, Awards rules (REQ-120), Contact. |
 | `wiw_industry`, `wiw_sector`, `wiw_profession`, `wiw_org_type` | custom taxonomies | Controlled lists (REQ-009, D-039). Editors and Administrators add and edit terms in WordPress's native term screens; Reviewers can only assign existing terms. |
 | `wiw_place` | hierarchical custom taxonomy | Countries at the top (Nigeria first, other African countries and pan-African bodies), cities beneath, with ISO code as term meta (D-039). Shape to confirm (Q78). |
 

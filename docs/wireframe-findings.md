@@ -23,7 +23,7 @@ Found while designing screens (2026-11-07; rows were updated 2026-11-08 for D-03
 | 17 | REQ-068 | How is "under 18" checked? | The 18+ checkbox stays on the customer intake form (O06) and is self-declaration only. The request-to-claim and correction forms do not ask. (Updated for D-034.) | O06
 | 18 | REQ-007 | "Industry", "sector" and "professional category" are listed as separate filters. | One industry list plus profession; sector and category not separated. | V03 |
 | 19 | spec 12.2 vs D-028 | The brief lists a "Subscription plans" page; D-028 and REQ-010 say there are no plans. | No such page; Get Featured is an enquiry form with informational copy. | V24 |
-| 20 | REQ-154, Q11, D-044 | Who may set Featured, and on what grounds (still marked Q11). | Editor or Administrator, with a written reason; to be narrowed. | A06 |
+| 20 | REQ-154, Q11, D-044, D-055 | Who may set Featured. **Closed by D-055: profiles are never Featured; REQ-154 is withdrawn.** | n/a | A06 |
 | 21 | REQ-159, Q5 | Whether and how a subject is told that a stub exists. | A disabled control on the review screen, waiting for Legal. | A04 |
 | 22 | REQ-063, D-023 | Retention for claim documents and enquiries is not in the accepted defaults. | Retention for enquiries is marked "sample / not decided" on the Compliance screen. The claim-document row was removed with claiming (D-036). | A37 |
 | 23 | REQ-175, REQ-179 | The consent for a complimentary profile is a field on the arrangement and also a landing page for the customer. Which is the record of truth? | The single-use consent page (O22) sets the arrangement's consent field. The link works once. (Updated for D-034.) | O22, A16 |

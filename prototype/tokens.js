@@ -1,6 +1,7 @@
 /* PROVISIONAL THEME (D-004, REQ-052, REQ-190).
-   The ONLY place brand values live: name, tagline, colours, fonts, spacing.
-   styles.css and the views read these through CSS variables / W.brand. */
+   W.brand is the only place for the brand name, tagline, edition and domain.
+   The colour and spacing values below style the staff and tool screens only (styles.css).
+   Public pages take their design values from theme/tokens.css. */
 (function () {
   var W = (window.W = window.W || {});
   W.brand = {

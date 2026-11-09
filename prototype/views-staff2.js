@@ -8,7 +8,7 @@
   /* ---------- import, prospects, suppression, taxonomies ---------- */
   /* There is no Source registry here (D-038): approved sources are managed in the acquisition pipeline by the named approver. */
 
-  var SAMPLE_CSV = "name,type,industry,city,title,org,website,country\nSample Import Co. One,business,Technology,Lagos,,,https://example.org/one,NG\nSample Import Co. Two,business,Energy,Abuja,,,https://example.org/two,NG\nSample Person X,individual,Technology,Lagos,Director,Sample Import Co. One,,NG\nSample Agritech Co.,business,Agriculture & Agritech,Lagos,,,https://example.org/agritech,NG\n,business,Technology,Lagos,,,,NG\nSample Person Y,individual,Technology,Lagos,Call me on 0800-000-0000,Sample Import Co. Two,,NG\nSample Mining Co.,business,Mining,Lagos,,,,NG\nSample Accra Co.,business,Technology,Accra,,,,GH";
+  var SAMPLE_CSV = "name,type,industry,city,title,org,website,country\nSample Import Co. One,business,Technology,Lagos,,,https://example.org/one,NG\nSample Import Co. Two,business,Energy,Abuja,,,https://example.org/two,NG\nSample Person X,individual,Technology,Lagos,Director,Sample Import Co. One,,NG\nSavanna Loop Agritech,business,Agriculture & Agritech,Lagos,,,https://example.org/agritech,NG\n,business,Technology,Lagos,,,,NG\nSample Person Y,individual,Technology,Lagos,Call me on 0800-000-0000,Sample Import Co. Two,,NG\nSample Mining Co.,business,Mining,Lagos,,,,NG\nSample Accra Co.,business,Technology,Accra,,,,GH";
   W.ui.imp = { csv: SAMPLE_CSV, src: "export-sample.csv", rows: null };
   var CC = { NG: "Nigeria", GH: "Ghana", KE: "Kenya", ZA: "South Africa", RW: "Rwanda", EG: "Egypt", PAN: "Pan-African (bodies)" };
   function dry(csv) {
@@ -78,6 +78,27 @@
   W.act.taxDel = function (a) {
     var x = taxTerm(a); if (taxCount(x.k, x.t.name)) { W.toast("In use by " + taxCount(x.k, x.t.name) + " profile(s). Reassign them first."); return; }
     W.S.tax[x.k] = W.S.tax[x.k].filter(function (t) { return t !== x.t; }); W.syncLists(); W.log("taxonomy.delete", x.k, x.t.name); W.save(); W.render(); W.toast("Term deleted.");
+  };
+
+  /* ---------- claims (D-057) ---------- */
+  mini("/admin/claims", "A61", "review_claims", function () {
+    var rows = (W.S.claims || []).map(function (c) {
+      var p = W.profile(c.profileId), act = c.status === "new" ? W.btn("Approve", "claimOk", c.id, "sm") + " " + W.btn("Reject", "claimNo", c.id, "sm alt") : "";
+      return [e(c.id), p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "(removed)", e(c.name) + '<br><span class="muted small">' + e(c.relationship) + "</span>", e(c.email), '<span class="small">' + e(c.evidence) + "</span>", W.stPill(c.status === "new" ? "pending" : c.status === "approved" ? "approved" : "rejected") + (c.reason ? '<br><span class="muted small">' + e(c.reason) + "</span>" : ""), e(c.at), act];
+    });
+    return head("Claims", "Requests from a person or organisation to claim a profile. Approving sets Claimed and Verified (shown to staff as a checkmark) and lets you assign a user to keep the profile up to date (REQ-251 to 253).") + (rows.length ? W.table(["ID", "Profile", "Claimant", "Email", "Evidence", "Status", "Received", ""], rows) : W.empty("No claims", "Claims from the public form appear here."));
+  });
+  W.act.claimOk = function (id) {
+    var c = (W.S.claims || []).filter(function (x) { return x.id === id; })[0], p = c && W.profile(c.profileId); if (!c || !p || !W.can("review_claims")) return;
+    if (W.isPending(p)) { W.toast("Review the profile first: a pending profile cannot be Verified (REQ-226)."); return; }
+    c.status = "approved"; c.by = W.persona(); p.claimed = true; p.claimedAt = W.TODAY; p.trust = "verified";
+    p.history.push({ at: W.TODAY, by: W.persona(), what: "Claim approved; set Claimed and Verified" });
+    W.log("claim.approve", p.id, id + " approved; Verified set"); W.mail(c.email, "Your claim is approved", "You can now ask us to update the profile for " + p.name + ".", ""); W.save(); W.render(); W.toast("Claim approved. Assign a user on the profile if needed.");
+  };
+  W.act.claimNo = function (id) {
+    var c = (W.S.claims || []).filter(function (x) { return x.id === id; })[0]; if (!c || !W.can("review_claims")) return;
+    c.status = "rejected"; c.by = W.persona(); c.reason = "Evidence did not match";
+    W.log("claim.reject", c.profileId, id + " rejected"); W.mail(c.email, "About your claim", "We could not confirm the claim from the evidence sent. You can send it again with more.", ""); W.save(); W.render(); W.toast("Claim rejected.");
   };
 
   /* ---------- leads, customers ---------- */

@@ -168,3 +168,7 @@ table.t tr:last-child td{border-bottom:0}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{#wfbar,#flows,#flows-btn,#notes-btn,#notes-panel{display:none}}
+/* Verified checkmark badge (staff screens only, D-057) */
+.vcheck{display:inline-flex;vertical-align:-.2em;color:var(--blue,#0e71fe)}
+.vcheck svg{width:1.15em;height:1.15em;display:block}
+.vcheck--lg svg{width:1.4rem;height:1.4rem}

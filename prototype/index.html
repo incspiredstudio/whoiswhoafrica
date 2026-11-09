@@ -3,24 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clickable wireframe</title>
+<title>WHOISWHO prototype</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="styles.css">
+<link rel="preload" href="theme/fonts/repline.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="theme/fonts/montreal-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" id="css-wf" href="styles.css">
+<link rel="stylesheet" id="css-tokens" href="theme/tokens.css" media="not all">
+<link rel="stylesheet" id="css-site" href="theme/site.css" media="not all">
+<link rel="stylesheet" id="css-home" href="theme/home.css" media="not all">
+<link rel="stylesheet" id="css-tools" href="tools.css" media="not all">
 <script src="tokens.js"></script>
 </head>
 <body>
-<div id="app"><noscript><p style="padding:1rem">This wireframe needs JavaScript. It has no server and no build step.</p></noscript></div>
+<div id="app"><noscript><p style="padding:1rem">This prototype needs JavaScript. It has no server and no build step.</p></noscript></div>
 <div id="modal-root"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="data.js"></script>
 <script src="core.js"></script>
+<script src="theme/hero-geo.js"></script>
+<script src="theme/components.js"></script>
 <script src="views-public.js"></script>
 <script src="views-awards.js"></script>
+<script src="theme/shapes.js"></script>
+<script src="theme/home-view.js"></script>
 <script src="views-links.js"></script>
 <script src="views-staff1.js"></script>
 <script src="views-staff2.js"></script>
 <script src="inventory.js"></script>
 <script src="flows.js"></script>
-<script>W.boot();</script>
+<script src="theme/vendor/lenis.min.js" defer></script>
+<script src="theme/hero-w.js"></script>
+<script src="theme/stage3d.js"></script>
+<script src="theme/motion.js"></script>
+<script src="theme/home.js"></script>
+<script>window.addEventListener("DOMContentLoaded", function () { W.boot(); });</script>
 </body>
 </html>

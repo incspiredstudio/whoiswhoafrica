@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v8";
+  var KEY = "wiw-wireframe-v12";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -21,7 +21,7 @@
   W.load = function () {
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (x) { raw = null; }
-    W.S = raw && raw.v === 8 ? raw : W.seed();
+    W.S = raw && raw.v === 9 ? raw : W.seed();
     if (W.S.role === undefined) W.S.role = "visitor";
     W.syncLists();
   };
@@ -68,12 +68,8 @@
     return "proposed";
   };
   W.counts = function (a) { var s = W.arrStatus(a); return !a.complimentary && (s === "confirmed" || s === "ended") && W.arrMissing(a).length === 0; };
-  W.sponsorOf = function (p) {
-    if (p.sponsored) return p.sponsored;
-    var hit = W.S.arrangements.filter(function (a) { return a.type === "sponsored_profile" && a.linkedProfile === p.id && W.arrStatus(a) === "confirmed" && W.inWindow(a); })[0];
-    if (hit) { var c = W.find("customers", hit.customerId); return c ? c.name : "Sponsor"; }
-    return null;
-  };
+  /* Profiles cannot be Sponsored (D-055): that label is for stories only. Kept so older call sites read as "none". */
+  W.sponsorOf = function () { return null; };
   W.sponsorOfArticle = function (a) {
     if (a.sponsor) return a.sponsor;
     var hit = W.S.arrangements.filter(function (x) { return x.type === "sponsored_post" && x.linkedArticle === a.id && W.arrStatus(x) === "confirmed" && W.inWindow(x); })[0];
@@ -81,9 +77,11 @@
     return null;
   };
   W.publicArticles = function () { return W.S.articles.filter(function (a) { return a.status === "published"; }); };
-  W.queue = function () { return W.S.profiles.filter(function (p) { return p.status === "pending" || p.edit; }); };
+  W.queue = function () { return W.S.profiles.filter(function (p) { return p.status === "pending" || p.edit || p.compiled; }); };
   W.ok = function (name) { return !!W.S.flags[name].on; };
   W.nomOpen = function () { return W.ok("nominations"); };
+  /* Once nominees are announced, nominations for the edition are over: the Nominate page and its links say so, or step aside. */
+  W.nomClosed = function () { return !W.nomOpen() && (!!W.S.awards.published || W.S.nominations.some(W.nomPublic)); };
   /* Shortlist, finalist and winner pages go public through the normal publish step (staff press Publish on the nomination). There is no flag (D-037). */
   W.nomPublic = function (n) { return !!(n && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && n.pub); };
   W.nomStage = function (n) {
@@ -92,9 +90,14 @@
   };
 
   /* ---------- html bits ---------- */
-  W.trustPill = function (p) { var t = p.trust; if (t !== "verified" && t !== "featured") return ""; return '<span class="pill t-' + t + '" title="Trust label (REQ-024). Staff checklist or editorial choice; never bought.">' + (t === "verified" ? "✓ " : "★ ") + W.cap(t) + "</span>"; };
+  /* Verified is shown to staff as a checkmark badge, the kind social platforms use (D-057). Public pages never show it (D-054). */
+  W.vcheck = function (p, big) {
+    if (!p || p.trust !== "verified") return "";
+    return '<span class="vcheck' + (big ? " vcheck--lg" : "") + '" title="Verified' + (p.claimed ? " and claimed" : "") + '. Staff only, never bought (REQ-150)."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 1.8l2.4 1.9 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 12l-1.9 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 22.9l-2.4-1.9-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 12l1.9-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3z"/><path fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M7.6 12.3l3 3 5.8-6.2"/></svg><span class="sr">Verified' + (p.claimed ? ", claimed" : "") + "</span></span>";
+  };
+  W.trustPill = W.vcheck;
   W.PENDING_LABEL = "Compiled automatically from public sources. Human review pending.";
-  W.statePill = function (p) { return p.status === "published" && p.lastReviewed ? '<span class="pill ok" title="Review state (D-033)">Reviewed on ' + e(p.lastReviewed) + "</span>" : ""; };
+  W.statePill = function (p) { if (p.status === "published" && p.compiled) return '<span class="pill warn" title="Review state (D-033)">' + e(W.PENDING_LABEL) + "</span>"; return p.status === "published" && p.lastReviewed ? '<span class="pill ok" title="Review state (D-033)">Reviewed on ' + e(p.lastReviewed) + "</span>" : ""; };
   W.spPill = function (name) { return name ? ' <span class="pill sponsored" title="Paid placement disclosure. Not a trust status (REQ-155).">Sponsored · ' + e(name) + "</span>" : ""; };
   W.stPill = function (s) {
     var m = { published: "ok", confirmed: "ok", approved: "ok", pending: "warn", open: "warn", draft: "gray", proposed: "gray", rejected: "bad", unpublished: "bad", suppressed: "bad", cancelled: "bad", ended: "gray", new: "warn", contacted: "gray", qualified: "ok" };
@@ -113,7 +116,7 @@
     else input = '<input type="' + type + '"' + common + ' value="' + e(v) + '">';
     return '<div class="field"><label for="' + id + '">' + e(label) + (o.req ? ' <span class="muted" aria-hidden="true">*</span>' : "") + hint + "</label>" + input + "</div>";
   };
-  W.bot = function () { return '<p class="bot small">Bot challenge placeholder (shown on every public form, REQ-081). <label class="check" style="display:inline-flex"><input type="checkbox" name="human" required> I am human</label></p>'; };
+  W.bot = function () { return '<div class="bot small"><label class="check"><input type="checkbox" name="human" required> <span>I am human</span></label><span>Security check placeholder</span></div>'; };
   W.table = function (cols, rows, empty) {
     if (!rows.length) return W.empty(empty || "Nothing here", "No rows match. This is the empty state of the table.");
     return '<div class="tablewrap"><table class="t"><thead><tr>' + cols.map(function (c) { return "<th scope=\"col\">" + e(c) + "</th>"; }).join("") + "</tr></thead><tbody>" + rows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>";
@@ -135,7 +138,7 @@
     var r = document.getElementById("modal-root"); if (!r) return;
     var m = W.ui.modal;
     r.innerHTML = m ? '<div class="back" data-act="closeModal"></div><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><div class="row between"><h2 id="dlg-t">' + e(m.title) + '</h2><button type="button" class="btn alt sm" data-act="closeModal" aria-label="Close dialog">Close</button></div>' + m.html + "</div>" : "";
-    if (m) { var f = r.querySelector("input,select,textarea,button.btn:not(.alt)") || r.querySelector("button"); if (f) f.focus(); }
+    if (m) { var f = r.querySelector('input:not([type="hidden"]),select,textarea,button.btn:not(.alt)') || r.querySelector("button"); if (f) f.focus(); }
   };
   var toastT;
   W.toast = function (msg) {
@@ -156,10 +159,12 @@
     return { path: path || "/", q: q };
   };
   W.match = function (hash) {
+    var hh = String(hash || ""), ai = hh.indexOf("#", 1), anchor = ai > 0 ? hh.slice(ai + 1) : "";
+    if (ai > 0) hash = hh.slice(0, ai);
     var p = W.parse(hash);
     for (var i = 0; i < W.routes.length; i++) {
       var m = W.routes[i].re.exec(p.path);
-      if (m) { var params = {}; W.routes[i].keys.forEach(function (k, j) { params[k] = decodeURIComponent(m[j + 1]); }); return { r: W.routes[i], params: params, q: p.q, path: p.path }; }
+      if (m) { var params = {}; W.routes[i].keys.forEach(function (k, j) { params[k] = decodeURIComponent(m[j + 1]); }); return { r: W.routes[i], params: params, q: p.q, path: p.path, anchor: anchor }; }
     }
     return { r: W.notFound, params: {}, q: p.q, path: p.path };
   };
@@ -168,13 +173,15 @@
   /* ---------- chrome ---------- */
   W.NAV = [["Home", "#/"], ["About", "#/about"], ["People", "#/people"], ["Businesses", "#/businesses"], ["Institutions", "#/institutions"], ["Industries", "#/industries"], ["Awards", "#/awards"], ["Stories", "#/stories"], ["Get Featured", "#/subscribe"], ["Nominate", "#/nominate"], ["Contact", "#/contact"]];
 
-  function wfbar() {
-    var S = W.S, roles = W.LISTS.roles;
-    return '<div id="wfbar"><div class="wrap"><strong>WIREFRAME</strong><span class="tag">sample data</span>' +
-      '<label title="Wireframe preview tool only. The real site has no role selector: a user signs in with an email and has one role.">Preview as <select data-change="role" aria-label="Preview as (wireframe tool, not part of the real site)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
+  function wfbar(hf) {
+    var S = W.S, roles = W.LISTS.roles, staff = S.role !== "visitor";
+    return '<div id="wfbar"><div class="wrap"><strong>' + (hf ? "REVIEW TOOLS" : "WIREFRAME") + '</strong><a class="btnlink lead" href="#/design-review">Design review</a><span class="tag">sample data</span>' +
+      '<label title="Prototype preview tool only. The real site has no role selector: a user signs in with an email and has one role.">Preview as <select data-change="role" aria-label="Preview as (prototype tool, not part of the real site)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
+      (hf && S.flags.nominations.on ? '<span class="tag">Nominations flag ON</span>' : "") +
+      (hf && staff ? '<a class="btnlink" href="#/admin">Staff console</a><button type="button" data-act="signout">Sign out</button>' : "") +
       '<button type="button" data-act="outbox">Email outbox (' + S.emails.length + ')</button>' +
       '<a class="btnlink" href="#/staff/signin">Staff sign in (wp-admin preview)</a><a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
-      '<button type="button" data-act="reset">Reset sample data</button></div></div>';
+      '<button type="button" data-act="reset">Reset sample data</button>' + (hf ? '<button type="button" data-act="toolsToggle">Hide tools</button>' : "") + "</div></div>";
   }
   function banners() {
     var S = W.S, out = "";
@@ -188,24 +195,26 @@
       '<div class="head-actions"><form class="search" role="search" data-form="search"><label class="sr" for="hq">Search profiles and stories</label><input id="hq" name="q" type="search" placeholder="Search" style="width:9rem"><button class="btn sm" type="submit">Search</button></form>' + acct +
       '<button type="button" class="btn alt sm nav-toggle" data-act="navToggle" aria-expanded="' + (W.ui.nav ? "true" : "false") + '" aria-controls="mainnav">Menu</button></div>' +
       '<nav class="main-nav' + (W.ui.nav ? " open" : "") + '" id="mainnav" aria-label="Main"><ul>' + W.NAV.map(function (n) {
-        var label = n[0] === "Nominate" && !W.nomOpen() ? "Nominate (opens soon)" : n[0];
+        var label = n[0] === "Nominate" && !W.nomOpen() ? (W.nomClosed() ? "Nominations closed" : "Nominate (opens soon)") : n[0];
         return '<li><a href="' + n[1] + '"' + (cur === n[1].slice(1) ? ' aria-current="page"' : "") + ">" + e(label) + "</a></li>";
       }).join("") + "</ul></nav></div></header>";
   }
   function footer() {
     return '<footer class="site-foot"><div class="wrap grid c4"><div><strong>' + e(W.brand.name) + '</strong><p class="small">' + e(W.brand.tagline) + '</p><p class="small">Wireframe. Not a live site.</p></div>' +
-      '<div><h2 style="font-size:1rem">Trust and rules</h2><ul><li><a href="#/how-we-compile">How we compile profiles</a></li><li><a href="#/awards/rules">Awards rules</a></li><li><a href="#/complaints">Complaints and takedown</a></li><li><a href="#/faq">FAQ</a></li></ul></div>' +
-      '<div><h2 style="font-size:1rem">Legal</h2><ul><li><a href="#/privacy">Privacy policy</a></li><li><a href="#/terms">Terms</a></li><li><a href="#/cookies">Cookie policy</a></li><li><a href="#/commercial-terms">Commercial terms</a></li><li><a href="#/data-rights">Your data rights</a></li></ul></div>' +
+      '<div><h2 style="font-size:1rem">Trust and rules</h2><ul><li><a href="#/awards/rules">Awards rules</a></li><li><a href="#/complaints">Complaints and takedown</a></li><li><a href="#/faq">FAQ</a></li></ul></div>' +
+      '<div><h2 style="font-size:1rem">Legal</h2><ul><li><a href="#/privacy">Privacy policy</a></li><li><a href="#/terms">Terms</a></li><li><a href="#/cookies">Cookie policy</a></li><li><a href="#/data-rights">Your data rights</a></li></ul></div>' +
       '<div><h2 style="font-size:1rem">More</h2><ul><li><a href="#/contact">Contact</a></li><li><a href="#/sitemap.xml">Sitemap (preview)</a></li><li><a href="#/unsubscribe">Unsubscribe</a></li><li><button type="button" class="btn alt sm" data-act="cookiePrefs" style="color:var(--c-bar-ink);border-color:var(--c-bar-ink)">Cookie preferences</button></li></ul></div></div></footer>';
   }
+  /* A small card that appears once the visitor has scrolled a little (see motion.js). */
   function cookieBar() {
     if (W.S.consent) return "";
-    return '<div class="cookie" role="region" aria-label="Cookie consent"><div class="wrap row between"><p style="margin:0">We use essential cookies. Analytics load only if you accept (REQ-062). <a href="#/cookies">Cookie policy</a></p><div class="row"><button type="button" class="btn alt sm" data-act="consent" data-arg="essential">Essential only</button><button type="button" class="btn sm" data-act="consent" data-arg="all">Accept analytics</button></div></div></div>';
+    return '<div class="cookie" role="region" aria-label="Cookie consent" data-cookie><p>Essential cookies only, unless you accept analytics. <a href="#/cookies">Policy</a></p><div class="cookie-act"><button type="button" class="cookie-btn" data-act="consent" data-arg="essential">Decline</button><button type="button" class="cookie-btn cookie-btn--yes" data-act="consent" data-arg="all">Accept</button></div></div>';
   }
   function flowsUI() {
     var btn = '<button type="button" id="flows-btn" class="btn" data-act="flows" aria-expanded="' + (W.ui.flows ? "true" : "false") + '" aria-controls="flows">Flows</button>';
     var nb = '<button type="button" id="notes-btn" class="btn alt" data-act="notes" aria-expanded="' + (W.ui.notes ? "true" : "false") + '" style="' + (W.ui.notes ? "bottom:" : "") + '">Design notes</button>';
-    return btn + (W.ui.flows && W.flowsHtml ? W.flowsHtml() : "") + nb + (W.ui.notes ? notesPanel() : "");
+    var show = W.fid === "hf" && W.toolsHidden() ? '<button type="button" id="tools-show" data-act="toolsToggle">Review tools</button>' : "";
+    return btn + (W.ui.flows && W.flowsHtml ? W.flowsHtml() : "") + nb + (W.ui.notes ? notesPanel() : "") + show;
   }
   function notesPanel() {
     var cur = W.cur, inv = cur && cur.r && W.invById ? W.invById(cur.inv || cur.r.inv) : null;
@@ -213,28 +222,45 @@
     return '<aside id="notes-panel" aria-label="Design notes" style="bottom:3.6rem"><h2>' + e(inv.id) + " · " + e(inv.name) + '</h2><p><span class="pill gray">' + e(inv.tag) + "</span> " + e(inv.reqs) + "</p><p>" + e(inv.note || "") + '</p><p class="small"><a href="#/inventory/' + e(inv.id) + '">See in inventory</a></p></aside>';
   }
 
+  /* Public pages use theme/*.css; staff and tool pages keep styles.css. Both stay loaded and switch through media, so nothing flashes. */
+  /* The home page opens with the review tools folded away so it can be judged as the real site. */
+  W.toolsHidden = function () { return W.ui.toolsHidden === undefined ? !!(W.cur && W.cur.path === "/") : !!W.ui.toolsHidden; };
+  function setFidelity(hf) {
+    W.fid = hf ? "hf" : "wf";
+    if (typeof document === "undefined" || !document.documentElement) return;
+    var on = function (id, yes) { var n = document.getElementById(id); if (n) n.media = yes ? "all" : "not all"; };
+    on("css-wf", !hf); on("tokens", !hf); on("css-tokens", hf); on("css-site", hf); on("css-home", hf); on("css-tools", hf);
+    var c = document.documentElement.classList;
+    c.toggle("tools-hidden", hf && W.toolsHidden()); c.toggle("has-cookie", hf && !W.S.consent);
+  }
   W.render = function () {
     var app = document.getElementById("app"); if (!app) return;
     var y = window.scrollY, prev = W.cur && W.cur.path;
     var m = W.match(location.hash); W.cur = m;
-    var r = m.r, body, area = r.opts.area || "pub";
+    var r = m.r, body, area = r.opts.area || "pub", denied = false;
     var roles = r.opts.roles, cap = r.opts.cap;
     var role = W.S.role;
     if (cap ? !W.hasCap(cap) : (roles && roles.indexOf(role) < 0 && role !== "admin")) {
-      body = W.forbidden ? W.forbidden(m, roles, cap) : "<p>Not authorised.</p>"; area = r.opts.area === "staff" ? "pub" : area;
+      denied = true; body = W.forbidden ? W.forbidden(m, roles, cap) : "<p>Not authorised.</p>"; area = r.opts.area === "staff" ? "pub" : area;
     } else {
       body = r.fn(m.params, m.q, m);
       if (body && body.redirect) { W.go(body.redirect); return; }
     }
-    var inner, tab = "";
+    var inner;
     if (area === "staff") inner = W.appShell(area, body, m.path);
     else inner = body;
-    var inv = W.invById ? W.invById(m.inv || r.inv) : null;
-    document.title = (inv ? inv.name + " · " : "") + W.brand.name + " wireframe";
-    app.innerHTML = wfbar() + banners() + header(m.path) + '<main id="main" tabindex="-1">' + inner + "</main>" + footer() + cookieBar() + flowsUI();
-    if (m.path !== prev) { window.scrollTo(0, 0); var h = document.querySelector("#main h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); } }
+    var invId = m.inv || r.inv, inv = W.invById ? W.invById(invId) : null;
+    var hf = !denied && (!!r.opts.hf || /^[VNO]/.test(invId));
+    setFidelity(hf);
+    document.title = (inv ? inv.name + " · " : "") + W.brand.name + (hf ? "" : " wireframe");
+    app.innerHTML = hf ? wfbar(true) + W.siteHeader(m.path) + '<main id="main" tabindex="-1">' + inner + "</main>" + W.siteFooter() + W.siteCookie() + flowsUI()
+      : wfbar(false) + banners() + header(m.path) + '<main id="main" tabindex="-1">' + inner + "</main>" + footer() + cookieBar() + flowsUI();
+    var fresh = m.path !== prev;
+    if (fresh) { window.scrollTo(0, 0); var h = document.querySelector("#main h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); } }
     else window.scrollTo(0, y);
     W.paintModal();
+    if (hf) { if (W.afterPublic) W.afterPublic({ fresh: fresh }); } else if (W.afterTool) W.afterTool();
+    if (m.anchor) { var t = document.getElementById(m.anchor); if (t) t.scrollIntoView(); }
   };
 
   /* ---------- events ---------- */
@@ -260,7 +286,10 @@
       var lf = t.closest && t.closest("form[data-live]"); if (lf && W.live[lf.getAttribute("data-live")]) W.live[lf.getAttribute("data-live")](lf, ev);
     });
     document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && W.ui.modal) W.closeModal(); else if (ev.key === "Escape" && W.ui.flows) { W.ui.flows = false; W.render(); } });
-    window.addEventListener("hashchange", W.render);
+    window.addEventListener("hashchange", function () {
+      var next = W.parse(String(location.hash).replace(/(.)#.*$/, "$1")).path;
+      if (W.transition && W.fid === "hf" && W.cur && next !== W.cur.path && !/^\/(admin|staff|inventory|state)/.test(next)) W.transition(W.render); else W.render();
+    });
     W.render();
   };
 
@@ -271,7 +300,8 @@
   W.act.skip = function () { var m = document.getElementById("main"); if (m) m.focus(); };
   W.act.flows = function () { W.ui.flows = !W.ui.flows; W.render(); };
   W.act.notes = function () { W.ui.notes = !W.ui.notes; W.render(); };
-  W.act.reset = function () { W.reset(); W.ui = { flows: false, notes: false, nav: false, modal: null }; location.hash = "#/"; W.render(); W.toast("Sample data reset."); };
+  W.act.toolsToggle = function () { W.ui.toolsHidden = !W.toolsHidden(); W.render(); };
+  W.act.reset = function () { W.reset(); W.ui = { flows: false, notes: false, nav: false, modal: null, nom: { step: 0, d: {} }, img: "", toolsHidden: W.ui.toolsHidden }; location.hash = "#/"; W.render(); W.toast("Sample data reset."); };
   W.act.role = function (v) { W.S.role = v; var pu = (W.S.users || []).filter(function (u) { return u.rk === v; })[0]; W.S.user = pu ? pu.email : null; W.save(); var area = W.cur && W.cur.r.opts.area; if (v !== "visitor" && area !== "staff") location.hash = "#/admin"; else if (v === "visitor" && area === "staff") location.hash = "#/"; else W.render(); };
   W.act.signout = function () { W.S.role = "visitor"; W.S.user = null; W.ui.staffStep = 0; W.ui.staffErr = ""; W.save(); W.toast("Signed out."); location.hash = "#/"; W.render(); };
   W.act.consent = function (v) { W.S.consent = v; W.save(); W.render(); W.toast(v === "all" ? "Analytics accepted. Consent stored with timestamp and policy version." : "Essential cookies only."); };
@@ -285,5 +315,5 @@
   W.forbidden = function (m, roles, cap) {
     return '<div class="wrap section"><div class="errbox"><h1>403 \u00b7 Not authorised</h1><p>Your role (<strong>' + e(W.roleName(W.S.role)) + '</strong>) does not have ' + (cap ? 'the capability <strong>' + e(cap) + '</strong>' : 'access to this page') + '. By default it belongs to: ' + (roles || []).map(function (r) { return e(W.roleName(r)); }).join(", ") + '. The Administrator can grant a capability to one user (Users and capabilities).</p><p><a class="btn" href="#/">Go home</a></p></div></div>';
   };
-  W.notFound = { inv: "V13", opts: {}, fn: function () { return '<div class="wrap section"><h1>404 · Page not found</h1><p>The page may not exist, or it is not public. Nothing is revealed about unpublished items (REQ-208).</p><p><a class="btn" href="#/">Home</a> <a class="btn alt" href="#/people">Discover people</a></p></div>'; } };
+  W.notFound = { inv: "V13", opts: {}, fn: function () { return '<div class="wrap error-page"><p class="error-code" aria-hidden="true">404</p><h1>Page not found</h1><p class="muted">This page may have moved, or it may not be public. We do not say which.</p><div class="row" style="margin-top:1.5rem"><a class="btn" href="#/directory">Search the directory</a><a class="btn alt" href="#/">Back to home</a></div></div>'; } };
 })();

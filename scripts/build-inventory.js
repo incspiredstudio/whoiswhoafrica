@@ -4,7 +4,7 @@ const vm = require("vm"), fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..");
 const ctx = { console, document: { createElement: () => ({}), head: { appendChild() {} } }, localStorage: { getItem() { return null; }, setItem() {} }, location: { hash: "" }, Intl, FormData: function () {} };
 ctx.window = ctx; vm.createContext(ctx);
-for (const f of ["tokens.js", "data.js", "core.js", "views-public.js", "views-awards.js", "views-links.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) vm.runInContext(fs.readFileSync(path.join(root, "prototype", f), "utf8"), ctx, { filename: f });
+for (const f of ["tokens.js", "data.js", "core.js", "theme/hero-geo.js", "theme/components.js", "views-public.js", "views-awards.js", "theme/home-view.js", "views-links.js", "views-staff1.js", "views-staff2.js", "inventory.js", "flows.js"]) vm.runInContext(fs.readFileSync(path.join(root, "prototype", f), "utf8"), ctx, { filename: f });
 const W = ctx.W;
 const req = fs.readFileSync(path.join(root, "docs", "requirements.md"), "utf8");
 const reqs = {}; // n -> {text, withdrawn}
@@ -17,7 +17,7 @@ const NOUI = {
   20: "Later (post-sprint): analytics beyond the view count.",
   41: "Performance target; measured in QA, not a screen.", 42: "Image delivery through a CDN; a build property.", 43: "Applies to every screen; checked by accessibility tests, not a separate screen.", 44: "Rendering approach (server-rendered); a build property.",
   45: "Uptime monitoring service outside the product.", 46: "Security configuration and scanning.", 49: "Backup and restore process.", 50: "Error and uptime monitoring service.",
-  52: "Lives in prototype/tokens.js; not a screen.", 53: "Formatting (UTF-8, NGN, WAT) applies across screens; visible in the register and dates.", 54: "Capacity target for hosting.", 55: "Browser support target.", 56: "Staging and CI.",
+  52: "Lives in prototype/tokens.js (name) and prototype/theme/tokens.css (design values); not a screen.", 53: "Formatting (UTF-8, NGN, WAT) applies across screens; visible in the register and dates.", 54: "Capacity target for hosting.", 55: "Browser support target.", 56: "Staging and CI.",
   78: "Analytics service; loads only after consent (banner V46).", 80: "Object storage behind a CDN; a build property.", 95: "Runbook document.",
   96: "Delivery date.", 98: "Delivery date; the templates are V09 to V11.", 101: "Delivery date.", 103: "Delivery date.", 104: "Delivery volume (Q1).",
   108: "Staff sign-in is A01. Password reset and session list are WordPress defaults, not designed here (D-034: no public login).",
@@ -27,10 +27,10 @@ Object.assign(NOUI, {
   136: "Enforced in the acquisition pipeline by the named approver, not in the website admin (D-038).", 137: "Enforced in the acquisition pipeline (D-038); the import dry run (A20) checks the file against the import contract.", 138: "Enforced in the acquisition pipeline (D-038).",
   165: "AI drafting belongs to the acquisition pipeline, not the website (D-037).", 167: "Pipeline drafting rule (acquisition), not a screen.", 169: "Pipeline and provider terms (acquisition), not a screen.",
   191: "No directory-size target on the website or its admin (D-035).", 206: "No review-capacity figure until the pilot measures one (D-035).",
-  124: "Claiming is removed (D-036); the requirement is stale.", 150: "Trust ladder without Unclaimed and Claimed (D-036); labels are Verified and Featured (A06).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
-  238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
+  124: "Claiming is removed (D-036); the requirement is stale.", 150: "Verified shown to staff as a checkmark (D-057); no public Claimed or Unclaimed label (A06, A61).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
+  255: "WordPress plugin that cuts out photo backgrounds on import (D-057); a background job with no screen in the wireframe.",   238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
 });
-for (let n = 210; n <= 228; n++) NOUI[n] = "Publish first (D-033). The wireframe has not been updated for it; see acquisition/docs/change-review-2026-11-08-publish-first.md.";
+for (let n = 210; n <= 228; n++) NOUI[n] = "Publish-first rule (D-033) with no screen of its own. The public label and listing rules are in V52 and V56; the staff states are not yet fully in the wireframe.";
 
 // gaps found while inventorying (REQ has a surface, no screen in the first pass) and the fix
 const GAPS = [
@@ -66,6 +66,8 @@ md += "**Tags.** SPECIFIED: the brief or `docs/requirements.md` names the page, 
 md += "**Where.** Every row has a route in the clickable prototype (`/prototype`, hash routing). Staff screens preview flows only (there are no owner, nominee or judge accounts, D-034); the real admin will be WordPress (D-031).\n\n";
 const total = W.INV.length, spec = W.INV.filter((x) => x.tag === "SPECIFIED").length;
 md += `**Totals.** ${total} entries: ${spec} SPECIFIED, ${total - spec} IMPLIED. Some entries are states of one screen (modals, empty states, error states); each still has its own row so none is forgotten.\n\n`;
+const FID = { high: 0, wireframe: 0, tool: 0 }; W.INV.forEach((x) => FID[x.fidelity]++);
+md += `**Fidelity.** \`high\`: built on the design system in \`prototype/theme/\`, looks like the final site (${FID.high} entries). \`wireframe\`: staff screens that keep the wireframe look on purpose (${FID.wireframe}). \`tool\`: prototype tools (${FID.tool}). See docs/design-direction.md and docs/design-system.md.\n\n`;
 const WPT = ["native", "customised-native", "custom", "n/a (wireframe tool)"];
 const wpCount = {}; WPT.forEach((k) => (wpCount[k] = W.INV.filter((x) => x.wpScreen === k).length));
 const untagged = W.INV.filter((x) => WPT.indexOf(x.wpScreen) < 0 || !x.wpRec);
@@ -78,8 +80,8 @@ const needNote = W.INV.filter((x) => x.wpNote && !/^Remove/.test(x.wpRec));
 md += "## Native-overlap notes (not removals)\n\n| ID | Screen | Note |\n|---|---|---|\n" + needNote.map((x) => `| ${x.id} | ${cell(x.name)} | ${cell(x.wpNote)} |\n`).join("") + "\n";
 const groups = {}; W.INV.forEach((x) => { (groups[x.aud] = groups[x.aud] || []).push(x); });
 for (const a of Object.keys(groups)) {
-  md += `## ${a} (${groups[a].length})\n\n| ID | Screen or state | Serves | Tag | WP screen | Recommendation | Prototype route |\n|---|---|---|---|---|---|---|\n`;
-  for (const x of groups[a]) md += `| ${x.id} | ${cell(x.name)} | ${cell(x.reqText)}${x.dec ? "; " + cell(x.dec) : ""} | ${x.tag} | ${x.wpScreen} | ${cell(x.wpRec)} | \`${x.route}\` |\n`;
+  md += `## ${a} (${groups[a].length})\n\n| ID | Screen or state | Serves | Tag | Fidelity | WP screen | Recommendation | Prototype route |\n|---|---|---|---|---|---|---|---|\n`;
+  for (const x of groups[a]) md += `| ${x.id} | ${cell(x.name)} | ${cell(x.reqText)}${x.dec ? "; " + cell(x.dec) : ""} | ${x.tag} | ${x.fidelity} | ${x.wpScreen} | ${cell(x.wpRec)} | \`${x.route}\` |\n`;
   md += "\n";
 }
 md += "## Flows to try (the floating Flows menu)\n\n| # | Flow | Requirements | Entries |\n|---|---|---|---|\n";

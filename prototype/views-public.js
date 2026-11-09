@@ -1,18 +1,18 @@
-/* Public site screens (visitor). */
+/* Public site screens (visitor), high fidelity. Components live in theme/components.js, styles in theme/site.css. */
 (function () {
   var W = window.W, e = W.esc;
-  function page(html) { return '<div class="wrap section stack">' + html + "</div>"; }
-  var LIST = { people: ["individual", "People", "#/people", "Discover People"], businesses: ["business", "Businesses", "#/businesses", "Discover Businesses"], institutions: ["institution", "Institutions", "#/institutions", "Discover Institutions"] };
+  var LIST = {
+    directory: { path: "#/directory", label: "All", title: "The directory", lede: "The people, businesses and institutions shaping Africa, with a source beside every fact.", match: function () { return true; } },
+    people: { path: "#/people", label: "People", title: "People", lede: "Leaders and professionals on the public record. An individual is public only after a person on our team has approved the profile.", match: function (p) { return p.type === "individual"; } },
+    entrepreneurs: { path: "#/entrepreneurs", label: "Entrepreneurs", title: "Entrepreneurs", lede: "Founders and the ventures they built, reviewed by a person before they appear here.", match: function (p) { return W.isEntrepreneur(p); } },
+    businesses: { path: "#/businesses", label: "Businesses", title: "Businesses", lede: "Companies from startups to listed groups, with sources for every fact.", match: function (p) { return p.type === "business"; } },
+    institutions: { path: "#/institutions", label: "Institutions", title: "Institutions", lede: "Universities, professional associations, public bodies and foundations.", match: function (p) { return p.type === "institution"; } }
+  };
+  var ORDER = ["directory", "people", "entrepreneurs", "businesses", "institutions"];
 
-  W.card = function (p) {
-    var sp = W.sponsorOf(p);
-    return '<a class="card link" href="#/profile/' + e(p.slug) + '"><div class="row" style="flex-wrap:nowrap">' + W.ph(p.type === "individual" ? "Photo" : "Logo", "avatar") + '<div><h3 style="margin:0">' + e(p.name) + '</h3><div class="muted small">' + e(p.title || "") + (p.org ? " · " + e(p.org) : "") + "</div></div></div>" +
-      '<div class="tagrow">' + W.trustPill(p) + W.statePill(p) + W.spPill(sp) + '</div><div class="small muted">' + e(p.industry) + " · " + e(p.city) + "</div></a>";
-  };
-  W.articleCard = function (a) {
-    var sp = W.sponsorOfArticle(a);
-    return '<a class="card link" href="#/stories/' + e(a.slug) + '">' + W.ph("Hero image", "") + '<div class="tagrow"><span class="pill gray">' + e(a.type) + "</span>" + W.spPill(sp) + '</div><h3>' + e(a.title) + '</h3><div class="small muted">' + e(a.industry) + " · " + e(a.date) + "</div></a>";
-  };
+  /* ---------- directory ---------- */
+  function keep(q, skip) { return Object.keys(q).filter(function (k) { return (skip || []).indexOf(k) < 0 && k !== "page"; }).map(function (k) { return '<input type="hidden" name="' + e(k) + '" value="' + e(q[k]) + '">'; }).join(""); }
+  function without(base, q, key) { var n = {}; Object.keys(q).forEach(function (k) { if (k !== key && k !== "page") n[k] = q[k]; }); return base + W.qs(n); }
   function pager(base, q, total, per) {
     var pages = Math.max(1, Math.ceil(total / per)), cur = Math.min(pages, Number(q.page) || 1);
     if (pages === 1) return "";
@@ -20,115 +20,139 @@
     for (var i = 1; i <= pages; i++) { var nq = {}; Object.keys(q).forEach(function (k) { nq[k] = q[k]; }); nq.page = i === 1 ? "" : i; out += '<a class="btn sm ' + (i === cur ? "" : "alt") + '" href="' + base + W.qs(nq) + '"' + (i === cur ? ' aria-current="page"' : "") + ">" + i + "</a>"; }
     return out + "</nav>";
   }
-  function filterForm(base, q, extra) {
-    return '<form class="filters" data-filter="' + base + '" role="search" aria-label="Filter"><div class="field" style="margin:0"><label for="fq">Name or keyword</label><input id="fq" name="q" value="' + e(q.q || "") + '"></div>' +
-      W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) +
-      W.field("City", "city", { type: "select", options: W.LISTS.cities, blank: "All cities", value: q.city }) +
-      W.field("Country", "country", { type: "select", options: W.LISTS.countries, blank: "All countries", value: q.country }) + W.field("Label", "trust", { type: "select", options: [["verified", "Verified"], ["featured", "Featured"]], blank: "Any", value: q.trust }) + (extra || "") +
-      '<div><button class="btn" type="submit">Apply</button> <a class="btn alt" href="' + base + '">Clear</a></div></form>';
-  }
+  var FILTER_LABELS = { industry: "Industry", city: "City", country: "Country", trust: "Label", profession: "Profession", orgType: "Organisation type", q: "Search" };
   function directory(key) {
     return function (params, q) {
-      var L = LIST[key], per = 6;
+      var L = LIST[key], per = 16, list = q.view === "list";
+      var t = (q.q || "").toLowerCase();
       var rows = W.publicProfiles().filter(function (p) {
-        return p.type === L[0] && (!q.industry || p.industry === q.industry) && (!q.city || p.city === q.city) && (!q.trust || p.trust === q.trust) && (!q.country || p.country === q.country) && (!q.profession || p.profession === q.profession) && (!q.orgType || p.orgType === q.orgType) &&
-          (!q.q || (p.name + " " + (p.org || "") + " " + p.title + " " + p.bio).toLowerCase().indexOf(q.q.toLowerCase()) >= 0);
-      }).sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+        return L.match(p) && !W.isPending(p) && (!q.industry || p.industry === q.industry) && (!q.city || p.city === q.city) && (!q.trust || p.trust === q.trust) && (!q.country || p.country === q.country) && (!q.profession || p.profession === q.profession) && (!q.orgType || p.orgType === q.orgType) &&
+          (!t || (p.name + " " + (p.org || "") + " " + p.title + " " + p.bio).toLowerCase().indexOf(t) >= 0);
+      }).sort(function (a, b) { if (q.sort === "recent") return (b.lastReviewed || "") < (a.lastReviewed || "") ? -1 : 1; return a.name < b.name ? -1 : 1; });
       var cur = Math.min(Math.max(1, Math.ceil(rows.length / per)), Number(q.page) || 1), slice = rows.slice((cur - 1) * per, cur * per);
-      return page('<h1>' + e(L[3]) + "</h1><p class=\"muted\">Reviewed profiles. Each shows when it was reviewed; some are Verified or Featured. <a href=\"#/how-we-compile\">What the labels mean</a>.</p>" + filterForm(L[2], q, key === "people" ? W.field("Profession", "profession", { type: "select", options: W.LISTS.professions, blank: "Any profession", value: q.profession }) : key === "institutions" ? W.field("Organisation type", "orgType", { type: "select", options: W.LISTS.orgTypes, blank: "Any type", value: q.orgType }) : "") +
-        '<p role="status">' + rows.length + " profile" + (rows.length === 1 ? "" : "s") + " found.</p>" +
-        (slice.length ? '<div class="grid c3">' + slice.map(W.card).join("") + "</div>" : W.empty("No matching profiles", "Try removing a filter or searching a different word.", '<a class="btn" href="' + L[2] + '">Clear filters</a>')) + pager(L[2], q, rows.length, per));
+      var tabs = '<nav class="tabs" aria-label="Directory sections">' + ORDER.map(function (k) { return '<a href="' + LIST[k].path + '"' + (k === key ? ' aria-current="page"' : "") + ">" + e(LIST[k].label) + "</a>"; }).join("") + "</nav>";
+      var search = '<form class="dir-search" role="search" data-filter="' + L.path + '" aria-label="Search this section">' + keep(q, ["q"]) + '<label class="sr" for="dq">Name or keyword</label><input id="dq" name="q" type="search" value="' + e(q.q || "") + '" placeholder="Name, organisation or keyword"><button class="btn">Search</button></form>';
+      var active = Object.keys(q).filter(function (k) { return FILTER_LABELS[k] && q[k]; });
+      var chips = active.length ? '<div class="chips">' + active.map(function (k) { return '<a class="chip" href="' + without(L.path, q, k) + '" aria-label="Remove filter ' + e(FILTER_LABELS[k]) + '">' + e(k === "trust" ? W.cap(q[k]) : q[k]) + W.ico("close") + "</a>"; }).join("") + "</div>" : "";
+      var extra = (key === "people" || key === "entrepreneurs") ? W.field("Profession", "profession", { type: "select", options: W.LISTS.professions, blank: "Any profession", value: q.profession }) : key === "institutions" || key === "businesses" ? W.field("Organisation type", "orgType", { type: "select", options: W.LISTS.orgTypes, blank: "Any type", value: q.orgType }) : "";
+      var nOn = active.filter(function (k) { return k !== "q"; }).length;
+      var filters = '<details class="filters"><summary>' + W.ico("filter") + "Filters" + (nOn ? ' <span class="filters-n">' + nOn + "</span>" : "") + W.ico("chevron") + '</summary><form class="filters-body" data-filter="' + L.path + '" aria-label="Filter results">' + keep(q, ["industry", "city", "country", "trust", "profession", "orgType", "pending"]) +
+        W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) +
+        W.field("Country", "country", { type: "select", options: W.LISTS.countries, blank: "All countries", value: q.country }) +
+        W.field("City", "city", { type: "select", options: W.LISTS.cities, blank: "All cities", value: q.city }) +
+        extra +
+        '<div class="row"><button class="btn sm">Apply</button><a class="btn alt sm" href="' + L.path + '">Clear all</a></div></form></details>';
+      var sort = '<form class="row" data-filter="' + L.path + '" aria-label="Sort results">' + keep(q, ["sort"]) + '<label class="sr" for="dsort">Sort by</label><select id="dsort" name="sort" style="width:auto;min-height:2.25rem;padding-block:.25rem"><option value="">Name, A to Z</option><option value="recent"' + (q.sort === "recent" ? " selected" : "") + ">Recently updated</option></select></form>";
+      var vq = function (v) { var n = {}; Object.keys(q).forEach(function (k) { n[k] = q[k]; }); n.view = v; n.page = ""; return L.path + W.qs(n); };
+      var toggle = '<div class="view-toggle" role="group" aria-label="View as"><a href="' + vq("") + '" aria-current="' + (!list) + '">' + W.ico("grid") + 'Grid</a><a href="' + vq("list") + '" aria-current="' + list + '">' + W.ico("list") + "List</a></div>";
+      var results = slice.length ? (list ? '<div class="results--list">' + slice.map(W.card).join("") + "</div>" : W.grid(slice.map(W.card), "grid--4")) : W.empty("No matching profiles", "Try removing a filter or searching for a different word.", '<a class="btn" href="' + L.path + '">Clear filters</a>');
+      return W.band({ compact: true, title: L.title, lede: L.lede, aside: search, extra: tabs }) +
+        '<div class="wrap dir-layout"><div class="result-bar">' + filters + '<p role="status">' + rows.length + " profile" + (rows.length === 1 ? "" : "s") + '</p><div class="row">' + sort + toggle + "</div></div>" + chips + results + pager(L.path, q, rows.length, per) + "</div>";
     };
   }
-  W.route("/people", "V03", directory("people")); W.route("/businesses", "V04", directory("businesses")); W.route("/institutions", "V05", directory("institutions"));
+  W.route("/directory", "V52", directory("directory")); W.route("/people", "V03", directory("people")); W.route("/entrepreneurs", "V53", directory("entrepreneurs")); W.route("/businesses", "V04", directory("businesses")); W.route("/institutions", "V05", directory("institutions"));
 
-  /* ---------- home ---------- */
-  W.route("/", "V01", function () {
-    var feat = W.publicProfiles().filter(function (p) { return p.trust === "featured" || p.trust === "verified"; }).slice(0, 3);
-    var arts = W.publicArticles().slice(0, 3);
-    var nomState = W.nomOpen() ? '<p><span class="pill ok">Nominations are open</span></p><a class="btn" href="#/nominate">Nominate someone</a>' : '<p><span class="pill gray">Nominations open soon</span></p><a class="btn alt" href="#/nominate">Get notified</a>';
-    return '<section class="hero-block"><div class="wrap grid side"><div class="stack"><h1>' + e(W.brand.name) + ": who is who in Africa.</h1><p style=\"font-size:1.15rem\">A directory of reviewed profiles of people, businesses and institutions, with editorial stories and a recognition programme. <em>" + e(W.brand.tagline) + "</em></p>" +
-      '<div class="row"><a class="btn" href="#/subscribe">Get listed or featured</a><a class="btn alt" href="#/people">Discover people</a><a class="btn alt" href="#/nominate">' + (W.nomOpen() ? "Nominate" : "Nominate (opens soon)") + "</a></div></div>" + W.ph("3D hero element, built later (see design notes)", "hero") + "</div></section>" +
-      '<section class="section alt"><div class="wrap"><h2>What it is, who it is for, how to get in</h2><div class="grid c3"><div class="card"><h3>What it is</h3><p>A reviewed directory. Nothing is public until a person on our team has approved it.</p></div><div class="card"><h3>Who it is for</h3><p>Professionals, businesses and institutions that want an accurate, credible public profile.</p></div><div class="card"><h3>How to get in</h3><p>Be compiled from public sources, ask for a correction, enquire about being listed or featured, or be nominated.</p></div></div></div></section>' +
-      '<section class="section"><div class="wrap"><h2>Four ways in</h2><div class="grid c4"><a class="card link" href="#/subscribe"><h3>Get listed</h3><p class="muted small">Send an enquiry. We agree terms offline.</p></a><a class="card link" href="#/search"><h3>Check a profile</h3><p class="muted small">Find yourself or your organisation. Send a correction or ask for removal.</p></a><a class="card link" href="#/stories"><h3>Be featured</h3><p class="muted small">Editorial stories and spotlights.</p></a><a class="card link" href="#/awards"><h3>Be recognised</h3><p class="muted small">The Maiden Edition awards.</p></a></div></div></section>' +
-      '<section class="section"><div class="wrap"><h2>Labels</h2><div class="row"><span><span class="pill ok">Reviewed on 1 Nov 2026</span> a person on our team approved this version</span><span><span class="pill t-verified">✓ Verified</span> checked by our team</span><span><span class="pill t-featured">★ Featured</span> editors’ choice</span><span><span class="pill sponsored">Sponsored</span> paid disclosure, never a status</span></div><p class="small muted">Verified and Featured can never be bought. <a href="#/how-we-compile">How we compile profiles</a></p></div></section>' +
-      '<section class="section alt"><div class="wrap"><div class="row between"><h2>Featured and verified</h2><a href="#/people">See all people</a></div>' + (feat.length ? '<div class="grid c3">' + feat.map(W.card).join("") + "</div>" : W.empty("No featured profiles yet", "Editors have not featured anyone.")) + "</div></section>" +
-      '<section class="section"><div class="wrap"><div class="row between"><h2>Latest stories</h2><a href="#/stories">All stories</a></div><div class="grid c3">' + arts.map(W.articleCard).join("") + "</div></div></section>" +
-      '<section class="section alt"><div class="wrap"><h2>' + e(W.brand.edition) + "</h2><p>Categories, eligibility and the judging process are published on the Awards page.</p>" + nomState + ' <a class="btn alt" href="#/awards">Awards overview</a></div></section>';
-  });
-
+  /* The home page lives in theme/home-view.js. */
+  /* About: what the record is, the three words behind it, what you will find here. Sample wording until Brand signs it off. */
   W.route("/about", "V02", function () {
-    return page("<h1>About " + e(W.brand.name) + "</h1><p>Sample about copy. " + e(W.brand.name) + " is a directory and editorial platform. Mission, vision and values text is supplied by Brand (N1).</p><div class=\"grid c3\"><div class=\"card\"><h3>Influence</h3><p>Sample text.</p></div><div class=\"card\"><h3>Achievement</h3><p>Sample text.</p></div><div class=\"card\"><h3>Legacy</h3><p>Sample text.</p></div></div><p><a class=\"btn\" href=\"#/how-we-compile\">How we compile profiles</a> <a class=\"btn alt\" href=\"#/contact\">Contact us</a></p>");
+    var pub = W.publicProfiles().filter(function (p) { return !W.isPending(p); }), faces = pub.filter(function (p) { return p.photo; }).slice(0, 3);
+    var countries = pub.map(function (p) { return p.country; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).length;
+    var PILLARS = [["blue", "star", "Influence", "Who shapes decisions, markets and institutions, taken from the public record rather than from reputation."], ["orange", "comb", "Achievement", "What was actually done, with a date and a source beside it."], ["green", "spiral", "Legacy", "A record kept accurate over time, and corrected in the open."]];
+    var DO = [["#/directory", "The directory", "People, businesses and institutions, each with the facts and the sources behind them."], ["#/stories", "Stories", "Interviews, features and news about the people on the record."], ["#/awards", "The awards", "Recognition decided by independent judges, under rules published before nominations open."]];
+    return '<header class="ab-hero"><div class="wrap ab-hero-in"><div class="ab-hero-text"><p class="np-kicker">About ' + e(W.brand.name) + '</p><h1 class="ab-title"><span>A public record</span> <span>of who is shaping</span> <span class="ab-accent">Africa.</span></h1><p class="ab-lede">We document the people, businesses and institutions shaping the continent, and we recognise the best of them.</p></div>' +
+      (faces.length ? '<div class="ab-stack" aria-hidden="true">' + faces.map(function (p, i) { return '<span class="ab-stack-item" style="--i:' + i + '">' + W.profilePoster(p) + "</span>"; }).join("") + "</div>" : "") + "</div></header>" +
+      '<section class="section ab-why"><div class="wrap ab-why-in"><p class="ab-pull" data-reveal>Who runs what, who built what and who achieved what is scattered across registries, annual reports and press releases.</p><div class="ab-prose" data-reveal><p>It is hard to find, and harder to trust. ' + e(W.brand.name) + " brings it together in one place, with a source beside every fact.</p><p>Around the record we publish stories that explain it, and an awards programme that recognises what it shows.</p><p class=\"small muted\">Sample wording. The final mission, vision and values come from Brand.</p></div></div></section>" +
+      '<section class="ab-pillars" aria-labelledby="abWords"><div class="wrap"><h2 class="sr" id="abWords">What we stand for</h2><div class="ab-pillar-grid">' + PILLARS.map(function (x, i) { return '<div class="ab-pillar poster poster--' + x[0] + '" data-reveal style="--i:' + i + '"><span class="poster-pat" aria-hidden="true"></span><span class="poster-mark poster-mark--' + x[1] + '" aria-hidden="true"></span><div class="ab-pillar-in"><span class="ab-num">0' + (i + 1) + "</span><h3>" + e(x[2]) + "</h3><p>" + e(x[3]) + "</p></div></div>"; }).join("") + "</div></div></section>" +
+      '<section class="section ab-do" aria-labelledby="abDo"><div class="wrap"><div class="ab-do-head" data-reveal><p class="np-kicker">What you will find here</p><h2 id="abDo">Three ways into the record</h2></div><ol class="ab-do-list">' + DO.map(function (x, i) { return '<li data-reveal style="--i:' + i + '"><a href="' + x[0] + '"><span class="ab-num">0' + (i + 1) + '</span><span class="ab-do-t">' + e(x[1]) + '</span><span class="ab-do-d">' + e(x[2]) + '</span><span class="ab-do-go" aria-hidden="true">' + W.ico("arrow") + "</span></a></li>"; }).join("") + "</ol>" +
+      '<dl class="ab-figs" data-reveal><div><dt>Profiles</dt><dd>' + pub.length + "</dd></div><div><dt>Industries</dt><dd>" + W.LISTS.industries.length + "</dd></div><div><dt>Countries</dt><dd>" + countries + "</dd></div><div><dt>Stories</dt><dd>" + W.publicArticles().length + "</dd></div></dl></div></section>" +
+      '<section class="ab-cta"><div class="wrap ab-cta-in"><h2 data-reveal>Questions, a correction or a story to tell?</h2><div class="row" data-reveal><a class="btn" href="#/contact">Contact us</a><a class="btn alt" href="#/faq">Read the questions</a></div></div></section>';
   });
 
   /* ---------- industries, search ---------- */
   W.route("/industries", "V06", function () {
-    return page("<h1>Industries</h1><div class=\"grid c3\">" + W.LISTS.industries.map(function (i) {
-      var n = W.publicProfiles().filter(function (p) { return p.industry === i; }).length;
-      return '<a class="card link" href="#/industries/' + encodeURIComponent(i) + '"><h3>' + e(i) + '</h3><p class="muted small">' + n + " reviewed profile" + (n === 1 ? "" : "s") + "</p></a>";
-    }).join("") + "</div>");
+    return W.band({ eyebrow: "Directory", title: "Industries", lede: "Browse profiles and stories by the sector they work in." }) +
+      '<section class="section"><div class="wrap"><ul class="index-list" data-reveal>' + W.LISTS.industries.map(function (i) {
+        var n = W.publicProfiles().filter(function (p) { return p.industry === i && !W.isPending(p); }).length;
+        return '<li><a href="#/industries/' + encodeURIComponent(i) + '"><span>' + e(i) + '</span><span class="row"><span class="mono">' + n + '<span class="sr"> ' + (n === 1 ? "profile" : "profiles") + "</span></span>" + W.ico("arrow") + "</span></a></li>";
+      }).join("") + "</ul></div></section>";
   });
   W.route("/industries/:name", "V07", function (p) {
-    var ps = W.publicProfiles().filter(function (x) { return x.industry === p.name; }), as = W.publicArticles().filter(function (a) { return a.industry === p.name; });
-    return page(W.crumbs([["Industries", "#/industries"], [p.name]]) + "<h1>" + e(p.name) + "</h1><h2>Profiles</h2>" + (ps.length ? '<div class="grid c3">' + ps.map(W.card).join("") + "</div>" : W.empty("No profiles in this industry yet", "Check back soon, or browse all industries.", '<a class="btn" href="#/industries">All industries</a>')) + "<h2>Stories</h2>" + (as.length ? '<div class="grid c3">' + as.map(W.articleCard).join("") + "</div>" : "<p class=\"muted\">No stories yet.</p>"));
+    var ps = W.publicProfiles().filter(function (x) { return x.industry === p.name && !W.isPending(x); }), as = W.publicArticles().filter(function (a) { return a.industry === p.name; });
+    return W.band({ crumbs: [["Industries", "#/industries"], [p.name]], title: p.name }) + '<section class="section"><div class="wrap">' + W.sectionHead("", "Profiles") + (ps.length ? W.grid(ps.map(W.card)) : W.empty("No profiles in this industry yet", "Check back soon, or browse all industries.", '<a class="btn" href="#/industries">All industries</a>')) + "</div></section>" +
+      '<section class="section section--alt"><div class="wrap">' + W.sectionHead("", "Stories") + (as.length ? W.grid(as.map(function (a) { return W.articleCard(a); })) : '<p class="muted">No stories in this industry yet.</p>') + "</div></section>";
   });
+  /* Public search: profiles (name matches first) and stories. Used by the results page and the header search panel. */
+  W.searchHits = function (q) {
+    var t = (q || "").toLowerCase().trim();
+    if (!t) return { t: t, ps: [], as: [] };
+    var ps = W.publicProfiles().filter(function (x) { return (x.name + " " + (x.org || "") + " " + x.title + " " + x.industry + " " + x.bio).toLowerCase().indexOf(t) >= 0; }).sort(function (a, b) { return (b.name.toLowerCase().indexOf(t) >= 0) - (a.name.toLowerCase().indexOf(t) >= 0); });
+    var as = W.publicArticles().filter(function (a) { return (a.title + a.body).toLowerCase().indexOf(t) >= 0; });
+    return { t: t, ps: ps, as: as };
+  };
   W.route("/search", "V08", function (p, q) {
-    var t = (q.q || "").toLowerCase().trim();
-    var ps = !t ? [] : W.publicProfiles().filter(function (x) { return (x.name + " " + (x.org || "") + " " + x.title + " " + x.industry + " " + x.bio).toLowerCase().indexOf(t) >= 0; }).sort(function (a, b) { return (b.name.toLowerCase().indexOf(t) >= 0) - (a.name.toLowerCase().indexOf(t) >= 0); });
-    var as = !t ? [] : W.publicArticles().filter(function (a) { return (a.title + a.body).toLowerCase().indexOf(t) >= 0; });
-    return page("<h1>Search</h1><form class=\"search\" role=\"search\" data-form=\"search\"><label class=\"sr\" for=\"sq\">Search</label><input id=\"sq\" name=\"q\" value=\"" + e(q.q || "") + "\" type=\"search\"><button class=\"btn\">Search</button></form>" +
-      (!t ? W.empty("Type a name, organisation or keyword", "Results show reviewed profiles and stories only.") : '<p role="status">' + (ps.length + as.length) + " results for “" + e(q.q) + "” (ranked: name matches first).</p>" +
-        (ps.length || as.length ? (ps.length ? "<h2>Profiles</h2><div class=\"grid c3\">" + ps.map(W.card).join("") + "</div>" : "") + (as.length ? "<h2>Stories</h2><div class=\"grid c3\">" + as.map(W.articleCard).join("") + "</div>" : "") : W.empty("No results", "Nothing public matches. Unreviewed, removed and hidden profiles never appear here (REQ-208, 209).", '<a class="btn" href="#/people">Browse the directory</a>'))));
+    var hits = W.searchHits(q.q), t = hits.t, ps = hits.ps, as = hits.as;
+    var form = '<form class="dir-search" role="search" data-form="search"><label class="sr" for="sq">Search</label><input id="sq" name="q" value="' + e(q.q || "") + '" type="search" placeholder="Name, organisation or keyword"><button class="btn">Search</button></form>';
+    return W.band({ eyebrow: "Search", title: t ? "Results for “" + q.q + "”" : "Search the directory", extra: form }) + '<section class="section--tight"><div class="wrap section--tight">' +
+      (!t ? W.empty("Type a name, organisation or keyword", "Results show public profiles and stories only.") : '<p role="status" style="font-weight:600;margin-bottom:1.5rem">' + (ps.length + as.length) + " result" + (ps.length + as.length === 1 ? "" : "s") + ", name matches first</p>" +
+        (ps.length || as.length ? (ps.length ? '<h2 style="margin-bottom:1rem;font-size:var(--t-xl)">Profiles</h2>' + W.grid(ps.map(W.card)) : "") + (as.length ? '<h2 style="margin-block:2rem 1rem;font-size:var(--t-xl)">Stories</h2>' + W.grid(as.map(function (a) { return W.articleCard(a); })) : "") : W.empty("No results", "Nothing public matches that search. Check the spelling or try fewer words.", '<a class="btn" href="#/directory">Browse the directory</a>'))) + "</div></section>";
   });
 
   /* ---------- profile ---------- */
+  function timeline(rows) { return '<ul class="timeline-simple">' + rows.map(function (r) { return '<li><span class="mono">' + e(r.when) + "</span><span>" + e(r.what) + "</span></li>"; }).join("") + "</ul>"; }
+  function sec(title, html) { return "<section><h2>" + e(title) + "</h2>" + html + "</section>"; }
   function extra(p) {
-    if (p.type === "individual") {
-      return (p.source === "subscriber" ? '<h2>Career history</h2><p class="muted">Sample career history entries supplied by the owner.</p><h2>Education</h2><p class="muted">Sample education entries.</p><h2>Media appearances</h2><p class="muted">Sample media appearances (links only).</p>' : "") + (p.achievements ? "<h2>Awards and achievements</h2><p>" + e(p.achievements) + "</p>" : "");
-    }
     var out = "";
-    if (p.type === "institution") out += "<h2>Mandate</h2><p>" + e(p.mandate || "") + "</p><h2>History</h2><p>" + e(p.longHistory || "") + "</p>";
-    if (p.leadership && p.leadership.length) out += "<h2>Leadership</h2><ul>" + p.leadership.map(function (l) { return "<li>" + e(l) + "</li>"; }).join("") + "</ul>";
-    if (p.products) out += "<h2>Products and services</h2><p>" + e(p.products) + "</p>";
-    if (p.achievements) out += "<h2>Achievements</h2><p>" + e(p.achievements) + "</p>";
+    if (W.isEntrepreneur(p) && p.ventures) out += sec("Ventures", W.grid(p.ventures.map(function (v) { return '<div class="panel panel--ruled"><h3>' + e(v.name) + '</h3><p class="muted small">' + e(v.role) + " since " + e(v.since) + " · " + e(v.sector) + '</p><p class="small" style="margin-top:.5rem">' + e(v.note) + "</p></div>"; }), "grid--2"));
+    if (p.type === "institution") { if (p.mandate) out += sec("Mandate", "<p>" + e(p.mandate) + "</p>"); if (p.longHistory) out += sec("History", "<p>" + e(p.longHistory) + "</p>"); }
+    if (p.career) out += sec("Career", timeline(p.career));
+    if (p.education) out += sec("Education", '<ul class="timeline-simple">' + p.education.map(function (x) { return "<li style=\"grid-template-columns:1fr\"><span>" + e(x) + "</span></li>"; }).join("") + "</ul>");
+    if (p.milestones) out += sec("Milestones", timeline(p.milestones));
+    if (p.leadership && p.leadership.length) out += sec("Leadership", '<ul class="timeline-simple">' + p.leadership.map(function (l) { return "<li style=\"grid-template-columns:1fr\"><span>" + e(l) + "</span></li>"; }).join("") + "</ul>");
+    if (p.products) out += sec("Products and services", "<p>" + e(p.products) + "</p>");
+    if (p.achievements) out += sec(p.type === "individual" ? "Awards and achievements" : "Achievements", "<p>" + e(p.achievements) + "</p>");
+    if (p.media) out += sec("Media", '<ul class="timeline-simple">' + p.media.map(function (x) { return "<li style=\"grid-template-columns:1fr\"><span>" + e(x) + "</span></li>"; }).join("") + "</ul>");
     return out;
   }
   function profileBody(p, staffPrev) {
-    var sp = W.sponsorOf(p), arts = W.publicArticles().filter(function (a) { return a.profiles.indexOf(p.id) >= 0; });
-    var nom = W.S.nominations.filter(function (n) { return n.profileId === p.id && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && W.nomPublic(n); })[0];
-    var enq = p.enquiries ? W.btn("Send an enquiry", "enquiry", p.id) : '<p class="muted small">Enquiries are switched off for this profile.</p>';
-    var types = { individual: "Person", business: "Business", institution: "Institution" };
-    return (staffPrev ? '<div class="banner staffprev"><div class="wrap">Staff preview. This profile is <strong>' + e(p.status) + "</strong> and is NOT public. Visitors would see " + (W.vis(p) === "gone" ? "410 Gone" : "404") + ".</div></div>" : "") +
-      page(W.crumbs([[LIST[p.type === "individual" ? "people" : p.type === "business" ? "businesses" : "institutions"][3], LIST[p.type === "individual" ? "people" : p.type === "business" ? "businesses" : "institutions"][2]], [p.name]]) +
-        '<div class="grid side"><div class="stack"><div class="row" style="flex-wrap:nowrap;align-items:flex-start">' + W.ph(p.type === "individual" ? "Photo (supplied or licensed only)" : "Logo", "avatar") + "<div><h1 style=\"margin-bottom:4px\">" + e(p.name) + '</h1><div class="muted">' + e(p.title || "") + (p.org ? " · " + e(p.org) : "") + "</div><div class=\"tagrow\">" + W.trustPill(p) + W.statePill(p) + W.spPill(sp) + '<span class="pill gray">' + types[p.type] + "</span></div></div></div>" +
-        (p.source === "acquired" ? '<div class="infobox">' + e(W.brand.name) + ' compiled this profile from public sources. ' + (p.lastReviewed ? "Reviewed on " + e(p.lastReviewed) + "." : e(W.PENDING_LABEL)) + ' <a href="#/how-we-compile">How we compile profiles</a></div>' : "") +
-        (sp ? '<div class="warnbox"><strong>Sponsored.</strong> ' + e(sp) + " paid for this placement. Sponsorship does not affect verification, status or awards.</div>" : "") +
-        "<h2>About</h2><p>" + e(p.bio) + "</p>" + extra(p) +
-        "<h2>Key facts and sources</h2><table class=\"facts\"><tbody>" + p.facts.filter(function (f) { return f.src; }).map(function (f) { return "<tr><th scope=\"row\">" + e(f.label) + "</th><td>" + e(f.value) + '<span class="src">Source: ' + e(f.src) + " · retrieved " + e(f.retrieved) + "</span></td></tr>"; }).join("") + "</tbody></table>" +
-        (p.website && p.public.website ? '<p>Website: <a href="' + e(p.website) + '" rel="nofollow noopener">' + e(p.website) + "</a></p>" : "") +
-        (nom ? '<div class="okbox"><strong>Shortlisted:</strong> ' + e(nom.category) + ' <a href="#/awards/nominee/' + e(nom.ref) + '">Nominee page</a></div>' : "") +
-        (arts.length ? "<h2>Related stories</h2><div class=\"grid c2\">" + arts.map(W.articleCard).join("") + "</div>" : "") +
-        '<p class="small muted">Last reviewed: ' + e(p.lastReviewed || "n/a") + ". Corrections made after publication are logged internally (REQ-164).</p></div>" +
-        '<aside class="stack" aria-label="Actions"><div class="card stack-s"><h2>Contact</h2><p class="small muted">Contact details are not shown. Enquiries are relayed.</p>' + enq + "</div>" +
-        '<div class="card stack-s"><h2>This profile</h2><a class="btn alt" href="#/correct/' + e(p.slug) + '">Suggest a correction</a><a class="btn alt" href="#/remove/' + e(p.slug) + '">Request removal</a>' + W.btn("Report this profile", "report", p.id, "alt") + '<p class="small muted">No account or payment is needed to correct, remove or report.</p></div>' +
-        '<div class="card"><h2>Share preview</h2><div class="ph" style="min-height:3rem">Share image</div><strong>' + e(p.name) + (sp ? " · Sponsored" : "") + '</strong><div class="small muted">' + e(W.brand.name) + " · " + e(p.title || p.industry) + '</div><p class="small muted">Open Graph and schema.org ' + (p.type === "individual" ? "Person" : "Organization") + " markup in the build (REQ-006, 082).</p></div></aside></div>");
+    var pending = W.isPending(p), arts = W.publicArticles().filter(function (a) { return a.profiles.indexOf(p.id) >= 0; });
+    var nom = W.nomFor(p), ng = nom && W.groupOf(nom.category);
+    var enq = p.enquiries ? W.btn("Send an enquiry", "enquiry", p.id, "wide") : '<p class="muted small">Enquiries are switched off for this profile.</p>';
+    var types = { individual: W.isEntrepreneur(p) ? "Entrepreneur" : "Person", business: "Business", institution: "Institution" };
+    var section = W.isEntrepreneur(p) ? "entrepreneurs" : p.type === "individual" ? "people" : p.type === "business" ? "businesses" : "institutions";
+    var person = p.type === "individual", facts = p.facts.filter(function (f) { return f.src; });
+    var head = '<div class="wrap" style="padding-block:.75rem">' + W.crumbs([[LIST[section].title, LIST[section].path], [p.name]]) + "</div>" +
+      '<div class="wrap"><div class="profile-id">' + W.monogram(p.name, p.type, null, p.photo) + "<div><h1>" + e(p.name) + '</h1><p class="profile-role">' + e(p.title || "") + (p.org ? " · " + e(p.org) : "") + "</p>" + (nom ? W.awardTag(nom, "profile-award-tag") : "") + W.labels(p) +
+      '<p class="profile-loc meta">' + W.ico("pin") + " " + e(p.city) + ", " + e(p.country) + " · " + e(p.industry) + " · " + types[p.type] + '</p><p style="margin-top:.5rem"><span class="badge badge--fiction">Fictional sample profile</span></p></div></div></div>';
+    return (staffPrev ? W.staffBanner("Staff preview. This profile is " + e(p.status) + " and is not public. Visitors would see " + (W.vis(p) === "gone" ? "410 Gone" : "404") + ".") : "") +
+      '<article><header class="profile-head">' + head + '</header><div class="wrap split split--rail profile-body"><div class="profile-main">' +
+      (nom ? '<section class="prof-award poster poster--' + ng.tone + '" aria-labelledby="profAward"><span class="poster-pat" aria-hidden="true"></span><span class="poster-mark poster-mark--' + ng.mark + '" aria-hidden="true"></span><div class="prof-award-in"><p class="prof-award-k">' + W.ico("star") + e(W.brand.edition) + '</p><h2 id="profAward">' + (nom.status === "winner" ? "Winner, " : "Nominated for ") + e(nom.category) + "</h2>" + (nom.citation ? '<p class="prof-award-cite">' + e(nom.citation) + "</p>" : "") + '<a class="btn prof-award-btn" href="#/awards/nominee/' + e(nom.ref) + '">See the nomination' + W.ico("arrow") + "</a></div></section>" : "") +
+      (pending ? '<div class="notice notice--pending">' + W.ico("clock") + "<div><strong>" + e(W.PENDING_LABEL) + '</strong> <a href="#/correct/' + e(p.slug) + '">Correct</a> or <a href="#/remove/' + e(p.slug) + '">remove</a> this profile.</div></div>' : "") +
+      sec("About", '<p style="font-size:var(--t-md)">' + e(p.bio) + "</p>") + extra(p) +
+      sec("Key facts and sources", facts.length ? '<table class="facts"><tbody>' + facts.map(function (f) { return '<tr><th scope="row">' + e(f.label) + "</th><td>" + e(f.value) + '<span class="src">Source: ' + e(f.src) + " · retrieved " + e(W.fmtDate(f.retrieved)) + "</span></td></tr>"; }).join("") + "</tbody></table>" : '<p class="muted">No sourced facts are listed yet.</p>') +
+      (p.website && p.public.website ? '<p style="margin-top:1rem">Website: <a href="' + e(p.website) + '" rel="nofollow noopener">' + e(p.website.replace(/^https?:\/\//, "")) + "</a></p>" : "") +
+      (arts.length ? sec("Related stories", W.grid(arts.map(function (a) { return W.articleCard(a); }), "grid--2")) : "") +
+      "</div>" +
+      '<aside class="profile-rail" aria-label="Actions"><div class="panel panel--ruled"><h2>Contact</h2><p class="small muted" style="margin-bottom:.75rem">Contact details are not shown. We pass enquiries on.</p>' + enq + "</div>" +
+      '<div class="panel"><h2>Something wrong?</h2><div class="rail-actions"><a class="btn alt sm" href="#/claim/' + e(p.slug) + '">' + W.ico("check") + 'Claim this profile</a><a class="btn alt sm" href="#/correct/' + e(p.slug) + '">' + W.ico("edit") + 'Suggest a correction</a><a class="btn alt sm" href="#/remove/' + e(p.slug) + '">' + W.ico("trash") + "Request removal</a>" + W.btn("Report this profile", "report", p.id, "alt sm") + '</div><p class="small muted" style="margin-top:.75rem">No account or payment needed.</p></div>' +
+      '<div class="panel"><h2>When shared</h2><div class="share">' + W.img("cover", W.seedFor(p.slug), 600, 240, "Placeholder share image") + "<div><strong>" + e(p.name) + '</strong><span class="muted">' + e(W.brand.name) + " · " + e(p.title || p.industry) + "</span>" + (pending ? '<p class="pending-note" style="margin-top:.25rem">' + e(W.PENDING_LABEL) + "</p>" : "") + "</div></div></div></aside></div></article>";
   }
   W.route("/profile/:slug", "V09", function (par, q, m) {
     var p = W.bySlug(par.slug); var inv = { individual: "V09", business: "V10", institution: "V11" };
     var v = W.vis(p), staff = ["reviewer", "editor", "admin"].indexOf(W.S.role) >= 0;
     if (!p) { m.inv = "V13"; return W.notFound.fn(); }
     if (p.slug !== par.slug) return { redirect: "#/profile/" + p.slug };
-    if (v === "public") { m.inv = inv[p.type]; return profileBody(p, false); }
-    if (staff) { m.inv = inv[p.type]; return profileBody(p, true); }
-    if (v === "gone") { m.inv = "V12"; return page('<h1>410 · This profile has been removed</h1><p>This page is no longer available and will not return. Search engines are asked not to index it (noindex).</p><p class="small muted">Wireframe: the server answers 410 Gone with an X-Robots-Tag: noindex header, the URL is dropped from the sitemap and search, and the CDN copy is purged (REQ-209).</p><p><a class="btn" href="#/people">Discover people</a> <a class="btn alt" href="#/complaints">Questions about removals</a></p>'); }
+    var id = W.isPending(p) ? "V56" : W.isEntrepreneur(p) ? "V54" : inv[p.type];
+    if (v === "public") { m.inv = id; return profileBody(p, false); }
+    if (staff) { m.inv = id; return profileBody(p, true); }
+    if (v === "gone") { m.inv = "V12"; return '<div class="wrap error-page"><p class="error-code" aria-hidden="true">410</p><h1>This profile has been removed</h1><p class="muted">This page is no longer available and will not return. Search engines are asked not to index it.</p><div class="row" style="margin-top:1.5rem"><a class="btn" href="#/directory">Search the directory</a><a class="btn alt" href="#/complaints">Questions about removals</a></div></div>'; }
     m.inv = "V13"; return W.notFound.fn();
   });
 
   /* ---------- profile actions ---------- */
   W.act.enquiry = function (id) {
     var p = W.profile(id);
-    if (W.S.rate.enquiry >= 3) { W.openModal("Too many enquiries", '<div class="errbox"><p>You have sent several enquiries in a short time. Please try again later.</p><p class="small">Wireframe: rate limit per IP and per form (REQ-018, 122). Use Reset to clear.</p></div>'); return; }
-    W.openModal("Enquire: " + p.name, '<form data-form="enquiry" class="stack-s"><input type="hidden" name="id" value="' + e(id) + '">' + W.field("Your name", "name", { req: true }) + W.field("Your email", "email", { type: "email", req: true, hint: "Only used to relay the reply." }) + W.field("Message", "message", { type: "textarea", req: true }) + W.bot() + '<p class="small muted">The owner’s email and phone are never shown. <a href="#/privacy">Privacy notice</a></p><button class="btn">Send enquiry</button></form>');
+    if (W.S.rate.enquiry >= 3) { W.openModal("Too many enquiries", '<div class="errbox"><p>You have sent several enquiries in a short time. Please try again later.</p></div>'); return; }
+    W.openModal("Enquire: " + p.name, '<form data-form="enquiry" class="stack"><input type="hidden" name="id" value="' + e(id) + '">' + W.field("Your name", "name", { req: true }) + W.field("Your email", "email", { type: "email", req: true, hint: "Only used to relay the reply." }) + W.field("Message", "message", { type: "textarea", req: true }) + W.bot() + '<p class="small muted">The owner’s email and phone are never shown. <a href="#/privacy">Privacy notice</a></p><button class="btn">Send enquiry</button></form>');
   };
   W.forms.enquiry = function (d) {
     var p = W.profile(d.id); W.S.rate.enquiry++;
@@ -137,17 +161,32 @@
     W.save(); W.closeModal(); W.render(); W.toast("Enquiry sent to the team. They pass it on or reply by email.");
   };
   W.act.report = function (id) {
-    W.openModal("Report this profile", '<form data-form="report" class="stack-s"><input type="hidden" name="id" value="' + e(id) + '">' + W.field("Reason", "reason", { type: "select", options: ["Inaccurate information", "Defamatory or harmful", "Privacy concern", "Copyright", "Other"], req: true }) + W.field("Details", "detail", { type: "textarea", req: true }) + W.bot() + '<button class="btn">Send report</button></form>');
+    W.openModal("Report this profile", '<form data-form="report" class="stack"><input type="hidden" name="id" value="' + e(id) + '">' + W.field("Reason", "reason", { type: "select", options: ["Inaccurate information", "Defamatory or harmful", "Privacy concern", "Copyright", "Other"], req: true }) + W.field("Details", "detail", { type: "textarea", req: true }) + W.bot() + '<button class="btn">Send report</button></form>');
   };
   W.forms.report = function (d) {
     W.S.reports.unshift({ id: W.uid("r"), profileId: d.id, reason: d.reason, detail: d.detail, at: W.TODAY, status: "open", owner: "" });
-    W.save(); W.closeModal(); W.toast("Report received. It enters the staff abuse queue.");
+    W.save(); W.closeModal(); W.toast("Report received. A member of staff will look at it.");
   };
   var NEEDS = ["Correct a fact", "Add a right-of-reply note", "Change which contact details are public", "Switch enquiries on or off", "Send me the view count or the sources used"];
   var PARTS = [["name", "Name"], ["title", "Title"], ["org", "Organisation"], ["achievements", "Achievements and awards"], ["bio", "Biography"], ["other", "Something else"]];
+  function promises(items) { return '<ul class="timeline-simple">' + items.map(function (t) { return '<li><span class="mono">' + e(t[0]) + "</span><span>" + e(t[1]) + "</span></li>"; }).join("") + "</ul>"; }
+  W.route("/claim/:slug", "V57", function (par) {
+    var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
+    return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Claim"]], title: "Claim this profile", lede: "Tell us who you are and how we can check it. A member of staff reviews every claim before anything changes. No account is needed to ask." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">What happens next</h2>' + promises([["1 day", "We acknowledge your claim."], ["5 days", "We decide, after checking your evidence."]]) + '<p class="small muted">If we approve it, a named person on your side can ask us to keep the profile up to date, and staff check every change before it appears. A claim never changes how the profile ranks, and it cannot be bought.</p></div>' +
+      '<form data-form="claim" class="form"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Who are you?", "relationship", { type: "select", options: ["The person named on this profile", "An authorised representative of the organisation"], req: true }) + W.field("Your name", "name", { req: true }) + W.field("Your role", "role", { hint: "For example Chief Executive or Communications Manager." }) + W.field("Work email", "email", { type: "email", req: true, hint: "Use an address at the organisation's own domain if you can. It is never public." }) + W.field("Phone (optional)", "phone") + W.field("How can we check this?", "evidence", { type: "textarea", req: true, hint: "A page on the official website that names you, a registration number, or a letter on letterhead." }) + W.field("I agree that WHOISWHO may contact me about this claim.", "consent", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Send claim</button></form></div></section>';
+  });
+  W.forms.claim = function (d) {
+    var id = "CLM-" + ("0000" + ((W.S.claims || []).length + 1)).slice(-4); W.S.claims = W.S.claims || [];
+    W.S.claims.unshift({ id: id, profileId: d.id, name: d.name, relationship: d.relationship, email: d.email, phone: d.phone || "", role: d.role || "", evidence: d.evidence, status: "new", at: W.TODAY, by: "", reason: "" });
+    W.mail("Support inbox (Editor)", "New claim " + id, d.name + " asks to claim a profile.", "#/admin/claims"); W.mail(d.email, "We received your claim", "Reference " + id + ". We will reply within 5 days.", "");
+    W.save(); W.go("#/done?kind=claim&ref=" + id);
+  };
   W.route("/correct/:slug", "V39", function (par) {
     var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
-    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Correction request"]]) + "<h1>Correction request</h1><p>No account, login or payment. Your request goes to the staff Support inbox. Staff edit the profile directly in the admin and every edit is logged (D-040). We acknowledge within 1 business day and resolve within 7 days (REQ-158). Use this same form to ask for a change, to set which contact details show, to switch enquiries on or off, or to get the view count and sources (REQ-236).</p><form data-form=\"correct\" class=\"card stack-s\"><input type=\"hidden\" name=\"id\" value=\"" + e(p.id) + "\">" + W.field("Who are you?", "who", { type: "select", options: ["The person named on this profile", "An authorised representative of the organisation", "Someone else (a visitor)"], req: true }) + W.field("What do you need?", "need", { type: "select", options: NEEDS, req: true }) + W.field("Which part of the profile?", "part", { type: "select", options: PARTS }) + W.field("New value or details", "detail", { type: "textarea", req: true }) + W.field("Source or evidence (link)", "evidence") + W.field("Your email", "contact", { type: "email", req: true, hint: "If you are the person or their representative, confirm your email by a single-use link." }) + W.bot() + "<button class=\"btn\">Send request</button></form>");
+    return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Correction request"]], title: "Ask for a correction", lede: "No account or payment. A member of staff reads every request and edits the profile directly, and every edit is logged." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">What happens next</h2>' + promises([["1 day", "We acknowledge your request within one business day."], ["7 days", "We resolve corrections within seven days."]]) + '<p class="small muted">Use this form to fix a fact, add a right-of-reply note, choose which contact details show, switch enquiries on or off, or ask for the view count and the sources used.</p></div>' +
+      '<form data-form="correct" class="form"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Who are you?", "who", { type: "select", options: ["The person named on this profile", "An authorised representative of the organisation", "Someone else (a visitor)"], req: true }) + W.field("What do you need?", "need", { type: "select", options: NEEDS, req: true }) + W.field("Which part of the profile?", "part", { type: "select", options: PARTS }) + W.field("New value or details", "detail", { type: "textarea", req: true }) + W.field("Source or evidence (link)", "evidence") + W.field("Your email", "contact", { type: "email", req: true, hint: "If you are the person or their representative, we confirm your email with a single-use link." }) + W.bot() + '<button class="btn">Send request</button></form></div></section>';
   });
   W.forms.correct = function (d) {
     var owner = d.who.indexOf("Someone else") !== 0, id = W.uid("cr"), tok = "t-" + W.uid("");
@@ -158,45 +197,79 @@
   };
   W.route("/remove/:slug", "V40", function (par) {
     var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
-    return page(W.crumbs([[p.name, "#/profile/" + p.slug], ["Request removal"]]) + "<h1>Request removal</h1><p>No account or payment needed. We acknowledge within 1 business day and hide the profile within 2 business days of a valid request from the subject (REQ-158).</p><form data-form=\"remove\" class=\"card stack-s\"><input type=\"hidden\" name=\"id\" value=\"" + e(p.id) + "\">" + W.field("Who are you in relation to this profile?", "who", { type: "select", options: ["I am the person", "I represent the organisation", "Other"], req: true }) + W.field("Why should it be removed?", "detail", { type: "textarea", req: true }) + W.field("Your email", "contact", { type: "email", req: true }) + W.bot() + "<button class=\"btn bad\">Request removal</button></form>");
+    return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Request removal"]], title: "Ask us to remove a profile", lede: "No account or payment needed. If you are the person or organisation named, this is your right." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">What happens next</h2>' + promises([["1 day", "We acknowledge your request within one business day."], ["2 days", "We hide the profile within two business days of a valid request from the subject."]]) + '<p class="small muted">Once a valid removal is done, the page returns 410 Gone and leaves search and the sitemap. We keep the name on a list so it is not added again.</p></div>' +
+      '<form data-form="remove" class="form"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Who are you in relation to this profile?", "who", { type: "select", options: ["I am the person", "I represent the organisation", "Other"], req: true }) + W.field("Why should it be removed?", "detail", { type: "textarea", req: true }) + W.field("Your email", "contact", { type: "email", req: true }) + W.bot() + '<button class="btn bad">Request removal</button></form></div></section>';
   });
   W.forms.remove = function (d) {
     var id = W.uid("rm"); W.S.removals.unshift({ id: id, profileId: d.id, kind: "Removal", detail: d.detail, contact: d.contact, at: W.TODAY, due: "2026-11-09", status: "open", who: d.who });
     W.mail(d.contact, "We received your removal request", "Reference " + id + ". Acknowledged within 1 business day.", "");
     W.save(); W.go("#/done?kind=removal&ref=" + id);
   };
+  function okPage(title, text, ref, actions) { return '<div class="wrap wrap--text section"><div class="stack"><div class="eyebrow">Done</div><h1>' + e(title) + '</h1><p style="font-size:var(--t-md)">' + e(text) + "</p>" + (ref ? '<p>Your reference: <strong class="mono" style="font-size:var(--t-sm)">' + e(ref) + "</strong></p>" : "") + '<div class="row">' + actions + "</div></div></div>"; }
+  W.okPage = okPage;
   W.route("/done", "V41", function (p, q) {
-    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A staff member will reply. The message is logged."], lead: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], correctionowner: ["Check your email to finish your correction request", "We sent a single-use link to confirm your email. After you click it, the request is in the Support inbox. Staff edit the profile directly; nothing changes until they do."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
-    return page('<div class="okbox"><h1>' + e(t[0]) + "</h1><p>" + e(t[1]) + "</p>" + (q.ref ? "<p>Reference: <strong class=\"mono\">" + e(q.ref) + "</strong></p>" : "") + '</div><p><a class="btn" href="#/">Home</a> <button class="btn alt" data-act="outbox">See the email sent</button></p>');
+    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A member of staff will reply. The message is logged."], claim: ["Claim received", "We will acknowledge within 1 business day and decide within 5 days. Nothing changes on the profile until a person checks your evidence."], digest: ["You are subscribed", "We will email you new stories. Every email has an unsubscribe link."], lead: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], correctionowner: ["Check your email to finish your request", "We sent a single-use link to confirm your email. After you click it, the request reaches staff. Nothing changes on the profile until they act on it."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
+    return okPage(t[0], t[1], q.ref, '<a class="btn" href="#/">Back to home</a><button type="button" class="btn alt" data-act="outbox">See the email sent</button>');
   });
-
   W.route("/confirm/:token", "V51", function (par) {
     var r = W.S.corrections.filter(function (x) { return x.token === par.token; })[0];
     if (r) {
       if (!r.emailVerified) { r.emailVerified = true; r.status = "open"; W.S.used[par.token] = true; W.log("correction.email", r.id, "email confirmed by signed link"); W.save(); }
-      return page('<div class="okbox"><h1>Email confirmed</h1><p>Your request is in the staff queue. Nothing changes on the public page until a person approves it. This link no longer works a second time (single use).</p></div><a class="btn" href="#/">Home</a>');
+      return okPage("Email confirmed", "Your request has reached our staff. Nothing changes on the public page until a person acts on it. This link no longer works a second time.", "", '<a class="btn" href="#/">Back to home</a>');
     }
     return W.expiredPage();
   });
 
   /* ---------- stories ---------- */
+  var TYPES = ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"];
+  /* The stories page reads like a modern magazine or newsletter: a masthead with an email sign-up, filter pills, one lead story, a three-column grid, and a sign-up block part-way down (D-056). */
+  function readMins(a) { var w = [a.body].concat(a.paras || []).join(" ").split(/\s+/).length; return Math.max(2, Math.round(w / 180)); }
+  function blCard(a, i) {
+    var sp = W.sponsorOfArticle(a);
+    return '<li class="bl-card" data-reveal style="--i:' + (i % 3) + '"><a href="#/stories/' + e(a.slug) + '">' + W.img("story", a.seed || W.seedFor(a.slug), 640, 420, "Placeholder image for the story: " + a.title, "bl-img ratio-3x2") +
+      '<span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + readMins(a) + " min read</span>" + (sp ? W.badge.sponsored(sp) : "") + '</span><h3 class="bl-title">' + e(a.title) + '</h3><p class="bl-lede">' + e(a.lede || "") + '</p><span class="bl-by">By ' + e(a.author) + "</span></a></li>";
+  }
+  function digestForm(cls) {
+    var id = "bl-mail" + (cls ? "2" : "");
+    return '<form class="bl-sub ' + (cls || "") + '" data-form="digest" aria-label="Get the stories by email"><label class="sr" for="' + id + '">Email address</label><input id="' + id + '" name="email" type="email" required autocomplete="email" placeholder="Your email address"><button class="btn" type="submit">Subscribe</button></form>';
+  }
   W.route("/stories", "V16", function (p, q) {
-    var types = ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"];
-    var rows = W.publicArticles().filter(function (a) { return (!q.type || a.type === q.type) && (!q.industry || a.industry === q.industry); });
-    return page("<h1>Stories</h1><form class=\"filters\" data-filter=\"#/stories\" aria-label=\"Filter stories\">" + W.field("Type", "type", { type: "select", options: types, blank: "All types", value: q.type }) + W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) + "<div><a class=\"btn alt\" href=\"#/stories\">Clear</a></div></form>" +
-      (rows.length ? '<div class="grid c3">' + rows.map(W.articleCard).join("") + "</div>" : W.empty("No stories match", "Try another type or industry.", '<a class="btn" href="#/stories">Clear filters</a>')));
+    var rows = W.publicArticles().filter(function (a) { return (!q.type || a.type === q.type) && (!q.industry || a.industry === q.industry); }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var pills = '<nav class="bl-pills" aria-label="Story types"><a href="#/stories' + (q.industry ? W.qs({ industry: q.industry }) : "") + '"' + (!q.type ? ' aria-current="page"' : "") + ">All</a>" + TYPES.map(function (t) { return '<a href="#/stories' + W.qs({ type: t, industry: q.industry || "" }) + '"' + (q.type === t ? ' aria-current="page"' : "") + ">" + e(t) + "</a>"; }).join("") + "</nav>";
+    var filter = '<form class="bl-filter" data-filter="#/stories" aria-label="Filter stories">' + keep(q, ["industry"]) + W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) + "</form>";
+    var mosaic = rows.slice(0, 3), rest = rows.slice(3), cut = Math.min(6, rest.length), first = rest.slice(0, cut), later = rest.slice(cut);
+    function tile(a, big) {
+      var sp = W.sponsorOfArticle(a);
+      return '<article class="bl-tile' + (big ? " bl-tile--big" : "") + '" data-reveal><a href="#/stories/' + e(a.slug) + '">' + W.img("story", a.seed || W.seedFor(a.slug), big ? 1200 : 700, big ? 1000 : 520, "Placeholder image for the story: " + a.title, "bl-tile-img") +
+        '<span class="bl-tile-text"><span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + readMins(a) + " min read</span>" + (sp ? W.badge.sponsored(sp) : "") + '</span><span class="bl-tile-title">' + e(a.title) + "</span>" + (big ? '<span class="bl-tile-lede">' + e(a.lede || "") + "</span>" : "") + "</span></a></article>";
+    }
+    var mid = '<aside class="bl-news" aria-label="Stories by email"><p class="bl-kick">The stories, by email</p><h2>Get new stories in your inbox.</h2><p>Interviews, features and news from the record, when they are published. No spam, and you can leave at any time.</p>' + digestForm("bl-sub--dark") + "</aside>";
+    return '<section class="bl-body"><div class="wrap"><div class="bl-top"><h1>Stories</h1>' + pills + filter + "</div>" +
+      (rows.length ? '<div class="bl-mosaic">' + mosaic.map(function (a, i) { return tile(a, i === 0); }).join("") + "</div>" + (first.length ? '<ul class="bl-grid">' + first.map(blCard).join("") + "</ul>" : "") + mid + (later.length ? '<ul class="bl-grid">' + later.map(function (a, i) { return blCard(a, i); }).join("") + "</ul>" : "") : W.empty("No stories match", "Try another type or industry.", '<a class="btn" href="#/stories">Clear filters</a>')) + "</div></section>";
   });
+  W.forms.digest = function (d) {
+    var id = "LEAD-" + ("000" + (W.S.leads.length + 1)).slice(-4);
+    W.S.leads.unshift({ id: W.uid("l"), ext: id, name: d.email, org: "", interest: "Stories newsletter", contact: d.email, status: "new", owner: "", notes: "", at: W.TODAY });
+    W.mail(d.email, "You are subscribed to the stories", "Sample email. Reference " + id + ".", ""); W.save(); W.go("#/done?kind=digest&ref=" + id);
+  };
   W.route("/stories/:slug", "V17", function (par, q, m) {
     var a = W.S.articles.filter(function (x) { return x.slug === par.slug; })[0], staff = W.S.role !== "visitor";
     if (!a || (a.status !== "published" && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
-    var sp = W.sponsorOfArticle(a);
-    return (a.status !== "published" ? '<div class="banner staffprev"><div class="wrap">Staff preview: ' + e(a.status) + " article, not public.</div></div>" : "") + page(W.crumbs([["Stories", "#/stories"], [a.title]]) + '<article class="stack"><div class="tagrow"><span class="pill gray">' + e(a.type) + "</span>" + W.spPill(sp) + "</div><h1>" + e(a.title) + '</h1><p class="muted">By ' + e(a.author) + " · " + e(a.date) + " · " + e(a.industry) + "</p>" + (sp ? '<div class="warnbox"><strong>Sponsored content.</strong> Paid for by ' + e(sp) + ". Editorial independence statement placeholder.</div>" : "") + W.ph("Hero image") + "<p>" + e(a.body) + "</p><p>Sample paragraph two. Placeholder text only.</p>" +
-      (a.profiles.length ? "<h2>Profiles in this story</h2><div class=\"grid c3\">" + a.profiles.map(W.profile).filter(W.isPublic).map(W.card).join("") + "</div>" : "") + '<div class="card"><strong>Share preview</strong><div class="ph" style="min-height:3rem">Share image</div>' + e(a.title) + (sp ? " · Sponsored" : "") + "</div></article>");
+    var sp = W.sponsorOfArticle(a), others = W.publicArticles().filter(function (x) { return x.id !== a.id; }).slice(0, 3);
+    var people = a.profiles.map(W.profile).filter(function (x) { return x && W.isPublic(x); });
+    return (a.status !== "published" ? W.staffBanner("Staff preview: " + e(a.status) + " article, not public.") : "") + '<article><header class="wrap wrap--text article-head">' + W.crumbs([["Stories", "#/stories"], [a.type]]) + '<div class="story-meta" style="margin-top:1rem"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + e(a.industry) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h1>" + e(a.title) + '</h1><p class="article-lede">' + e(a.lede || "") + '</p><p class="muted small" style="margin-top:.75rem">By ' + e(a.author) + "</p></header>" +
+      '<div class="wrap">' + W.img("story", a.seed || W.seedFor(a.slug), 1400, 620, "Placeholder image for the story: " + a.title, "article-cover ratio-21x9") + '</div><div class="wrap wrap--text article-body">' +
+      (sp ? '<div class="notice notice--sponsored" style="font-size:var(--t-sm);line-height:1.5">' + W.ico("tag") + "<div><strong>Sponsored content.</strong> Paid for by " + e(sp) + ". The sponsor did not write it and has no influence over any label or award.</div></div>" : "") +
+      "<p>" + e(a.body) + "</p>" + (a.paras || []).slice(0, 1).map(function (x) { return "<p>" + e(x) + "</p>"; }).join("") + (a.quote ? "<blockquote>" + e(a.quote) + "</blockquote>" : "") + (a.paras || []).slice(1).map(function (x) { return "<p>" + e(x) + "</p>"; }).join("") + "</div></article>" +
+      (people.length ? '<section class="section section--alt"><div class="wrap">' + W.sectionHead("On the record", "Profiles in this story") + W.grid(people.map(W.card)) + "</div></section>" : "") +
+      '<section class="section"><div class="wrap">' + W.sectionHead("Keep reading", "More stories", ["All stories", "#/stories"]) + W.grid(others.map(function (x) { return W.articleCard(x); })) + "</div></section>";
   });
 
-  /* ---------- subscribe, contact ---------- */
+  /* ---------- get listed, contact ---------- */
   W.route("/subscribe", "V24", function () {
-    return page("<h1>Get listed or featured</h1><p>Tell us what you are looking for. We reply with terms agreed offline. <strong>Nothing is charged on this site</strong>, and every listing has the same format.</p><div class=\"grid c2\"><div class=\"stack\"><div class=\"card\"><h2>What we can do</h2><ul><li>Create or improve your listing</li><li>Sponsored posts and sponsored profiles (always labelled)</li><li>Media and editorial work</li><li>Awards sponsorship</li></ul></div><div class=\"infobox\"><strong>What money cannot buy.</strong> Verified and Featured are never for sale, and sponsorship never affects awards. <a href=\"#/how-we-compile\">Read why</a></div></div><form class=\"card stack-s\" data-form=\"lead\"><h2>Enquiry</h2>" + W.field("Your name", "name", { req: true }) + W.field("Organisation", "org") + W.field("Interested in", "interest", { type: "select", options: ["Listing a profile", "Sponsored profile", "Sponsored post", "Media / editorial work", "Awards sponsorship", "Not sure"], req: true }) + W.field("Email or phone", "contact", { req: true }) + W.field("Anything else?", "msg", { type: "textarea" }) + W.field("I have read the <a href=\"#/privacy\">privacy notice</a> and agree to be contacted about this enquiry.", "consent", { type: "checkbox", req: true }) + W.bot() + "<button class=\"btn\">Send enquiry</button></form></div>");
+    return W.band({ eyebrow: "Work with us", title: "Get listed or featured", lede: "Tell us what you are looking for. We reply with terms agreed offline. Nothing is charged on this site, and every listing has the same format." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside"><div class="prose"><h2 style="margin-top:0">What we can do</h2><ul><li>Create or improve your listing</li><li>Sponsored stories, always labelled</li><li>Media and editorial work</li><li>Awards sponsorship</li></ul></div></div><form class="form" data-form="lead"><h2 style="font-size:var(--t-xl)">Send an enquiry</h2>' + W.field("Your name", "name", { req: true }) + W.field("Organisation", "org") + W.field("Interested in", "interest", { type: "select", options: ["Listing a profile", "Sponsored story", "Media / editorial work", "Awards sponsorship", "Not sure"], req: true }) + W.field("Email or phone", "contact", { req: true }) + W.field("Anything else?", "msg", { type: "textarea" }) + W.field('I have read the <a href="#/privacy">privacy notice</a> and agree to be contacted about this enquiry.', "consent", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Send enquiry</button></form></div></section>';
   });
   W.forms.lead = function (d) {
     var id = "LEAD-" + ("000" + (W.S.leads.length + 1)).slice(-4);
@@ -205,7 +278,8 @@
     W.save(); W.go("#/done?kind=lead&ref=" + id);
   };
   W.route("/contact", "V26", function () {
-    return page("<h1>Contact</h1><form class=\"card stack-s\" data-form=\"contact\">" + W.field("Name", "name", { req: true }) + W.field("Email", "email", { type: "email", req: true }) + W.field("Message", "msg", { type: "textarea", req: true }) + W.bot() + "<button class=\"btn\">Send message</button></form>");
+    return W.band({ eyebrow: "Contact", title: "Talk to the team", lede: "A person reads every message. To change a profile, the quickest way is the correction form on that profile." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">Looking for something specific?</h2><ul><li><a href="#/search">Find a profile</a> to correct or remove it</li><li><a href="#/subscribe">Get listed or featured</a></li><li><a href="#/complaints">Complaints and takedown</a></li><li><a href="#/data-rights">Your data rights</a></li></ul></div><form class="form" data-form="contact">' + W.field("Name", "name", { req: true }) + W.field("Email", "email", { type: "email", req: true }) + W.field("Message", "msg", { type: "textarea", req: true }) + W.bot() + '<button class="btn">Send message</button></form></div></section>';
   });
   W.forms.contact = function (d) {
     var id = W.uid("msg"); W.S.enquiries.unshift({ id: id, profileId: "", name: d.name, email: d.email, message: d.msg, at: W.TODAY, read: false, general: true });
@@ -213,36 +287,62 @@
   };
 
   /* ---------- legal and trust pages ---------- */
+  var LEGAL_NOTE = "Draft sample text for the prototype. Legal supplies the final wording.";
   function legal(inv, path, title, intro, secs) {
-    W.route(path, inv, function () { return page("<h1>" + e(title) + "</h1><p class=\"preview-note\">Placeholder text. Legal supplies the final wording (N9).</p><p>" + intro + "</p>" + secs.map(function (s) { return "<h2>" + e(s[0]) + "</h2><p>" + s[1] + "</p>"; }).join("")); });
+    W.route(path, inv, function () { return W.band({ light: true, eyebrow: "Legal", title: title, lede: intro }) + '<section class="section--tight"><div class="wrap section--tight"><div class="prose">' + W.draftNote(LEGAL_NOTE) + secs.map(function (s) { return "<h2>" + e(s[0]) + "</h2><p>" + s[1] + "</p>"; }).join("") + "</div></div></section>"; });
   }
-  legal("V29", "/privacy", "Privacy policy", "Sample privacy policy. Version 0.1 (the version is stored with every consent, REQ-058).", [["Whose data we hold", "Sample list: profile owners, people profiled from public sources, nominators, enquirers."], ["Lawful basis", "Sample: legitimate interests with a right to object, for people profiled from public sources. Legal confirms."], ["Your rights", "Access, correction, erasure, objection, portability. <a href=\"#/data-rights\">Make a request</a>."], ["Retention", "Sample retention schedule by data class."], ["Processors", "Hosting, email, analytics, AI provider (flag off). Register held internally."]]);
-  legal("V30", "/terms", "Terms and conditions", "Sample terms.", [["Using the site", "Sample text."], ["Submitted content", "You grant a licence and warrant accuracy (REQ-126)."], ["Liability", "Sample text."]]);
-  legal("V31", "/cookies", "Cookie policy", "Essential cookies always; analytics only after consent (REQ-062).", [["Essential", "Session and security."], ["Analytics", "Privacy-friendly visit counts, after consent."]]);
-  legal("V32", "/commercial-terms", "Commercial terms", "Sample terms for arrangements agreed offline. There is no online payment. Sponsorship never buys Verified, Featured or award outcomes.", [["How arrangements work", "Quoted per customer; payment made offline; recorded by an Administrator."], ["Refunds and renewals", "Handled offline and recorded by an Administrator."]]);
-  legal("V28", "/faq", "Frequently asked questions", "Sample FAQ.", [["Is there a fee to be listed?", "Sample: arrangements are agreed offline."], ["Can I remove my profile?", "Yes. <a href=\"#/complaints\">Request removal</a>; no account or payment needed."], ["Can I pay for Verified?", "No."], ["How do nominations work?", "See <a href=\"#/awards\">Awards</a>."]]);
-  W.route("/how-we-compile", "V34", function () {
-    return page("<h1>How " + e(W.brand.name) + " compiles profiles and what each label means</h1><p class=\"preview-note\">Placeholder wording; Legal decides the AI disclosure (REQ-170).</p><h2>Where information comes from</h2><p>Approved public sources such as registries, regulators, exchange listings, Wikidata and official websites. Never social platforms, news text or scraped photographs.</p><h2>Every profile is reviewed by a person</h2><p>A human reviewer approves each profile. Profiles show the date of the last review. Reviewers check each fact against its source and apply a neutral-content checklist: dated, sourced, professional facts only.</p><h2>Labels</h2><ol><li><span class=\"pill ok\">Reviewed on (date)</span> a person approved this version. Before review a page can say: “Compiled automatically from public sources. Human review pending.”</li><li><span class=\"pill t-verified\">✓ Verified</span> passed our checklist. Independent of payment.</li><li><span class=\"pill t-featured\">★ Featured</span> an editorial decision. Cannot be bought.</li></ol><h2>Sponsored</h2><p><span class=\"pill sponsored\">Sponsored</span> is a separate disclosure for paid placements. It never implies verification.</p><h2>AI-assisted drafting</h2><p>Some profiles are drafted with AI from fetched source text. Each claim must match a stored source passage or it is dropped, and a person approves every profile.</p><h2>Corrections and removal</h2><p><a href=\"#/complaints\">Tell us about a problem</a>. No account or payment needed.</p>");
+  legal("V29", "/privacy", "Privacy policy", "What we hold, why we hold it, and what you can ask us to do. Version 0.1.", [["Whose data we hold", "People and organisations named in the directory, whether compiled from public sources or supplied by them; people who nominate, enquire or contact us; and staff."], ["Why we hold it", "To publish an accurate professional record, on the basis of legitimate interests with a right to object. Legal will confirm the basis for each group."], ["Your rights", 'You can ask for access, correction, erasure, objection and portability. <a href="#/data-rights">Make a request</a>.'], ["How long we keep it", "We keep each kind of data for a set period, published here once the retention schedule is agreed."], ["Who processes it", "Our web host, email provider and analytics provider. A full list is held internally and shared on request."]]);
+  legal("V30", "/terms", "Terms and conditions", "The rules for using this site and submitting content to it.", [["Using the site", "You may read, search and link to the directory. Bulk copying and automated collection are not allowed."], ["Submitted content", "If you send us content, you confirm you have the right to do so and that it is accurate, and you grant us a licence to publish it."], ["Liability", "We take care to check the record, and we correct it when it is wrong. We cannot promise it is free of error."]]);
+  legal("V31", "/cookies", "Cookie policy", "Essential cookies always. Analytics only after you agree.", [["Essential", "These keep the site working and secure, and they remember your cookie choice."], ["Analytics", "Privacy-friendly visit counts. They load only after you accept, and you can change your mind using Cookie preferences in the footer."]]);
+  W.route("/faq", "V28", function () {
+    var Q = [["Is there a fee to be listed?", "No fee is charged on this site. Paid arrangements, such as a subscription or a sponsored story, are agreed offline. Sponsored stories are always labelled. Being listed does not depend on them."], ["How do I get on the directory?", 'We compile profiles from public sources, and you can also <a href="#/subscribe">send us an enquiry</a>. A person reviews each profile. Individuals are public only after that review.'], ["Can I remove my profile?", 'Yes. Open your profile and choose Request removal, or see <a href="#/complaints">complaints and takedown</a>. No account or payment is needed.'], ["Can I pay for Verified?", "No. Verified comes from a staff checklist and Featured is an editorial choice. Neither can be bought."], ["What does “Compiled automatically” mean?", 'An organisation\'s profile can appear before a person has reviewed it, and it says so on the page, on cards and when shared.'], ["How do nominations work?", 'Anyone can nominate once nominations open. See the <a href="#/awards">awards overview</a>.'], ["Do I need an account?", "No. Nobody needs an account on the public site. Corrections, removals and nominations work through forms and single-use email links."]];
+    return W.band({ light: true, eyebrow: "Questions", title: "Frequently asked questions" }) + '<section class="section--tight"><div class="wrap section--tight"><div class="faq prose" style="max-width:48rem">' + Q.map(function (x, i) { return "<details" + (i === 0 ? " open" : "") + "><summary>" + e(x[0]) + W.ico("chevron") + "</summary><div><p>" + x[1] + "</p></div></details>"; }).join("") + "</div></div></section>";
   });
   W.route("/complaints", "V35", function () {
-    return page("<h1>Complaints and takedown</h1><p>Defamation, privacy, copyright or accuracy concerns can be raised without an account or payment.</p><ul><li>We acknowledge within 1 business day.</li><li>We hide a profile within 2 business days of a valid removal request from the subject.</li><li>We resolve corrections within 7 days.</li></ul><p>Use “Suggest a correction”, “Request removal” or “Report” on any profile. Disputes escalate to an Editor.</p><p><a class=\"btn\" href=\"#/people\">Find a profile</a> <a class=\"btn alt\" href=\"#/contact\">Contact us</a></p>");
+    return W.band({ tone: "blue", eyebrow: "Trust", title: "Complaints and takedown policy", lede: "Defamation, privacy, copyright or accuracy concerns can be raised without an account and without paying." }) +
+      '<section class="section"><div class="wrap split split--even"><div class="prose"><h2 style="margin-top:0">Our commitments</h2>' + promises([["1 day", "We acknowledge every complaint within one business day."], ["2 days", "We hide a profile within two business days of a valid removal request from the subject."], ["7 days", "We resolve corrections within seven days."]]) + '</div><div class="prose"><h2 style="margin-top:0">How to raise a concern</h2><p>Open the profile and use Suggest a correction, Request removal or Report this profile. Disputes go to an Editor.</p><p>A valid removal returns 410 Gone, removes the page from search and the sitemap, and keeps the name on a list so it is not added again.</p><div class="row"><a class="btn" href="#/directory">Find a profile</a><a class="btn alt" href="#/contact">Contact us</a></div><p class="small muted">Draft sample text. Legal supplies the final wording.</p></div></div></section>';
   });
   W.route("/data-rights", "V50", function () {
-    return page("<h1>Your data rights</h1><p>Ask to access, correct, erase, object to or port your personal data. We track every request with a due date.</p><form class=\"card stack-s\" data-form=\"dsr\">" + W.field("Request type", "kind", { type: "select", options: ["Access", "Correction", "Erasure", "Objection", "Portability"], req: true }) + W.field("Your name", "name", { req: true }) + W.field("Your email", "email", { type: "email", req: true }) + W.field("Details", "detail", { type: "textarea" }) + W.bot() + "<button class=\"btn\">Submit request</button></form>");
+    return W.band({ tone: "blue", eyebrow: "Trust", title: "Your data rights", lede: "Ask to access, correct, erase, object to or port your personal data. We track every request with a due date." }) +
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">Before you start</h2><p>To change or remove something on a public profile, the fastest route is the form on that profile.</p><p class="small muted">Draft sample text. Legal supplies the final wording.</p></div><form class="form" data-form="dsr">' + W.field("Request type", "kind", { type: "select", options: ["Access", "Correction", "Erasure", "Objection", "Portability"], req: true }) + W.field("Your name", "name", { req: true }) + W.field("Your email", "email", { type: "email", req: true }) + W.field("Details", "detail", { type: "textarea" }) + W.bot() + '<button class="btn">Submit request</button></form></div></section>';
   });
   W.forms.dsr = function (d) {
     var id = W.uid("d"); W.S.dsr.unshift({ id: id, kind: d.kind, who: d.name, at: W.TODAY, due: "2026-12-07", status: "open" });
     W.mail(d.email, "Data request received", "Reference " + id + ". Due 2026-12-07.", ""); W.save(); W.go("#/done?kind=dsr&ref=" + id);
   };
   W.route("/unsubscribe", "V45", function (p, q) {
-    var done = q.done === "1";
-    return page("<h1>Unsubscribe</h1>" + (done ? '<div class="okbox"><p>You are unsubscribed. We will not email you again about this list.</p></div>' : '<p>One click, no login.</p>' + W.btn("Unsubscribe me", "unsub", "", "")));
+    if (q.done === "1") return okPage("You are unsubscribed", "We will not email you again about this list.", "", '<a class="btn" href="#/">Back to home</a>');
+    return '<div class="wrap wrap--text section"><div class="stack"><div class="eyebrow">Emails</div><h1>Unsubscribe</h1><p>One click. No account needed.</p>' + W.btn("Unsubscribe me", "unsub", "", "") + "</div></div>";
   });
   W.act.unsub = function () { W.S.signups = []; W.save(); W.go("#/unsubscribe?done=1"); };
   W.route("/sitemap.xml", "V48", function () {
-    var urls = ["/", "/about", "/people", "/businesses", "/institutions", "/industries", "/awards", "/stories", "/subscribe", "/nominate", "/contact"]
-      .concat(W.publicProfiles().map(function (p) { return "/profile/" + p.slug; })).concat(W.publicArticles().map(function (a) { return "/stories/" + a.slug; }));
-    var excl = W.S.profiles.filter(function (p) { return !W.isPublic(p); });
-    return page("<h1>sitemap.xml (preview)</h1><p class=\"muted\">Built from the same visibility rule as pages and search (REQ-208, 209). " + urls.length + " URLs listed.</p><div class=\"grid c2\"><div><h2>Listed</h2><pre class=\"mono card\" style=\"overflow:auto\">" + urls.map(function (u) { return "&lt;url&gt;&lt;loc&gt;https://" + e(W.brand.domain) + e(u) + "&lt;/loc&gt;&lt;/url&gt;"; }).join("\n") + "</pre></div><div><h2>Excluded (" + excl.length + ")</h2>" + W.table(["Profile", "Status", "Visitors get"], excl.map(function (p) { return [e(p.name), W.stPill(p.status), W.vis(p) === "gone" ? "410 + noindex" : "404"]; })) + "<h2>robots.txt</h2><pre class=\"mono card\">User-agent: *\nAllow: /\nSitemap: https://" + e(W.brand.domain) + "/sitemap.xml</pre></div></div>");
+    var pubs = W.publicProfiles().filter(function (p) { return !W.isPending(p); });
+    var urls = ["/", "/about", "/directory", "/people", "/entrepreneurs", "/businesses", "/institutions", "/industries", "/awards", "/stories", "/subscribe", "/nominate", "/contact"].concat(pubs.map(function (p) { return "/profile/" + p.slug; })).concat(W.publicArticles().map(function (a) { return "/stories/" + a.slug; }));
+    var excl = W.S.profiles.filter(function (p) { return !W.isPublic(p) || W.isPending(p); });
+    return W.band({ light: true, eyebrow: "Preview", title: "sitemap.xml", lede: urls.length + " URLs listed, built from the same visibility rule as pages and search." }) +
+      '<section class="section--tight"><div class="wrap section--tight split split--even"><div><h2 style="font-size:var(--t-xl);margin-bottom:.75rem">Listed</h2><pre class="mono panel" style="max-height:30rem" tabindex="0">' + urls.map(function (u) { return "&lt;url&gt;&lt;loc&gt;https://" + e(W.brand.domain) + e(u) + "&lt;/loc&gt;&lt;/url&gt;"; }).join("\n") + '</pre></div><div class="stack"><h2 style="font-size:var(--t-xl)">Left out (' + excl.length + ")</h2>" + W.table(["Profile", "Status", "Visitors get"], excl.map(function (p) { return [e(p.name), W.isPending(p) ? '<span class="pill">review pending</span>' : W.stPill(p.status), W.isPending(p) ? "200 + noindex" : W.vis(p) === "gone" ? "410 + noindex" : "404"]; })) + '<h2 style="font-size:var(--t-xl)">robots.txt</h2><pre class="mono panel">User-agent: *\nAllow: /\nSitemap: https://' + e(W.brand.domain) + "/sitemap.xml</pre></div></div></section>";
   });
+
+  /* ---------- design review: every public page and state in one list ---------- */
+  var REVIEW = [
+    ["Home and about", [["V01", "Home", "#/"], ["V02", "About", "#/about"], ["V28", "Questions", "#/faq"], ["V26", "Contact", "#/contact"], ["V24", "Get listed or featured", "#/subscribe"]]],
+    ["Directory", [["V52", "All profiles: search, filters, grid", "#/directory"], ["V52", "All profiles: list view", "#/directory?view=list"], ["V03", "People", "#/people"], ["V53", "Entrepreneurs", "#/entrepreneurs"], ["V04", "Businesses", "#/businesses"], ["V05", "Institutions", "#/institutions"], ["V06", "Industries", "#/industries"], ["V07", "Industry page", "#/industries/Technology"], ["V08", "Search results", "#/search?q=lagos"], ["V38", "Search: no results", "#/search?q=zzzz"], ["V52", "Directory: empty state", "#/directory?q=zzzz"]]],
+    ["Profile types", [["V09", "Individual profile", "#/profile/tunde-achebe-wanjala"], ["V09", "Individual, supplied by the person", "#/profile/ngozi-balogun-mensah"], ["V54", "Entrepreneur profile", "#/profile/chidi-sesay-abara"], ["V10", "Business profile", "#/profile/savanna-loop-agritech"], ["V11", "Institution profile", "#/profile/oyo-crest-university"]]],
+    ["Profile states and labels", [["V56", "Compiled automatically, review pending", "#/profile/deltaline-cold-chain"], ["V56", "Pending: institution", "#/profile/lake-basin-water-institute"], ["V10", "Reviewed", "#/profile/bonny-reach-logistics"], ["V10", "Verified and Sponsored", "#/profile/tiderail-payments"], ["V54", "Verified entrepreneur", "#/profile/ifeoma-kariuki-bello"], ["V10", "Featured", "#/profile/confluence-health-network"], ["V54", "Featured entrepreneur", "#/profile/wanjiru-owusu-eze"], ["V10", "Sponsored, no trust label", "#/profile/osu-harbour-foods"], ["V12", "Removed (410)", "#/profile/emeka-diallo-hassan"], ["V13", "Not public (404)", "#/profile/harmattan-grid-energy"]]],
+    ["Awards", [["V18", "Awards overview", "#/awards"], ["V19", "Category page", "#/awards/category/5"], ["V55", "Nominees", "#/awards/nominees"], ["V21", "Winners", "#/awards/winners"], ["V33", "Awards rules", "#/awards/rules"], ["V22", "Nominate", "#/nominate"], ["N04", "Nomination submitted", "#/nominate/done?ref=NOM-0099"], ["N06", "Nominee response", "#/nominee/t-n6"], ["N09", "Invalid nominee link", "#/nominee/bad-token"]]],
+    ["Stories", [["V16", "Stories list", "#/stories"], ["V17", "Story", "#/stories/building-for-the-smallholder"], ["V17", "Sponsored story", "#/stories/merchant-settlement-spotlight"]]],
+    ["Forms", [["V39", "Correction request", "#/correct/savanna-loop-agritech"], ["V40", "Request removal", "#/remove/halima-osei-danjuma"], ["V44", "Report (button on any profile)", "#/profile/palmline-media-house"], ["V43", "Enquiry (button on any profile)", "#/profile/ngozi-balogun-mensah"], ["V50", "Your data rights", "#/data-rights"], ["V41", "Confirmation", "#/done?kind=correction&ref=cr1"], ["V45", "Unsubscribe", "#/unsubscribe"]]],
+    ["Legal and system", [["V29", "Privacy policy", "#/privacy"], ["V30", "Terms", "#/terms"], ["V31", "Cookie policy", "#/cookies"], ["V35", "Complaints and takedown policy", "#/complaints"], ["V13", "404", "#/not-a-real-page"], ["V14", "500", "#/error"], ["V48", "Sitemap preview", "#/sitemap.xml"]]],
+    ["Single-use link pages", [["O23", "Customer invitation", "#/invite/demo"], ["O06", "Customer profile form (press Start first)", "#/invite/demo"], ["O22", "Consent", "#/consent/demo"], ["O24", "Expired link", "#/expired"]]]
+  ];
+  W.route("/design-review", "X05", function () {
+    var st = W.awardStage().key;
+    var btn = function (key, label, go) { return '<button type="button" class="btn alt sm" data-act="stage" data-arg="' + key + "|" + go + '" aria-pressed="' + (st === key) + '">' + e(label) + "</button>"; };
+    return W.band({ eyebrow: "Prototype tool", title: "Design review", lede: "Every public page and state in one list. Open each at 360, 768 and 1280 pixels. Staff screens keep the wireframe look on purpose." }) +
+      '<div class="wrap section--tight"><div class="section--tight">' +
+      '<div class="review-group"><h2 style="font-size:var(--t-xl)">Awards stage</h2><p class="muted small" style="margin-top:.5rem">The seed starts at “Nominations open soon”. Switch to see the other states of Home, Awards, Nominate, Nominees and Winners. This only changes your browser’s sample data, and Reset puts it back.</p><div class="stage-switch">' + btn("soon", "Opens soon", "#/nominate") + btn("open", "Nominations open (full form)", "#/nominate") + btn("nominees", "Nominees announced", "#/awards/nominees") + btn("winners", "Winners published", "#/awards/winners") + "</div></div>" +
+      REVIEW.map(function (g) { return '<div class="review-group"><h2 style="font-size:var(--t-xl)">' + e(g[0]) + '</h2><ul class="review-links">' + g[1].map(function (l) { return '<li><a href="' + e(l[2]) + '"><span>' + e(l[1]) + '</span><span class="mono">' + e(l[0]) + "</span></a></li>"; }).join("") + "</ul></div>"; }).join("") +
+      '<div class="review-group"><h2 style="font-size:var(--t-xl)">Design system</h2><div class="badges" style="margin-top:.75rem">' + W.badge.reviewed("2026-11-01") + W.badge.verified() + W.badge.sponsored("Amber Coast Insurance") + W.badge.pending() + '</div><p class="small muted" style="margin-top:.75rem">Direction: docs/design-direction.md. Tokens and components: docs/design-system.md and prototype/theme/tokens.css.</p></div>' +
+      "</div></div>";
+  }, { hf: true });
 })();
