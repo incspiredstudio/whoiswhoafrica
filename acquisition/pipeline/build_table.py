@@ -30,7 +30,7 @@ header{padding:20px 20px 8px}h1{font-size:22px;margin:0 0 4px}.sub{color:var(--m
 .stat b{display:block;font-size:18px}.stat span{color:var(--muted);font-size:12px}
 form{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;border-bottom:1px solid var(--line);align-items:end}
 label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}input,select,button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:34px}
-input[type=search]{width:230px}button{cursor:pointer}button:hover{border-color:var(--accent)}label.check{flex-direction:row;align-items:center;gap:6px;min-height:34px;color:var(--ink);font-size:13px}
+select,input{max-width:100%;min-width:0}label{min-width:0;max-width:100%}input[type=search]{width:230px}button{cursor:pointer}button:hover{border-color:var(--accent)}label.check{flex-direction:row;align-items:center;gap:6px;min-height:34px;color:var(--ink);font-size:13px}
 .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;gap:12px;flex-wrap:wrap}.pager{display:flex;gap:6px;align-items:center}
 .wrap{overflow-x:auto;padding:0 20px 24px}table{border-collapse:collapse;width:100%;min-width:1000px;background:var(--panel);border:1px solid var(--line)}
 th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{white-space:nowrap;font-size:12px;color:var(--muted);user-select:none}

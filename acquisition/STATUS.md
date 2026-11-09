@@ -26,7 +26,7 @@ Run on your instruction of 2026-11-09: skip Legal, 1,000 notable entrepreneurs a
 ## Before any of this goes public
 - Legal: everything in plan 6.5 still applies.
 - Human review of every record.
-- 274 logos come from organisations' own sites and are not licensed. They need permission or removal.
+- 270 logos come from organisations' own sites and are not licensed. They need permission or removal.
 - Exclusion rules are keyword rules and will have misses, so some religious, political or entertainment figures may remain. Check `flags` and the `LEAD` criterion.
 
 ## Decisions needed
