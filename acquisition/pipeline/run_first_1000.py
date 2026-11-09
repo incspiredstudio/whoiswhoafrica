@@ -37,9 +37,8 @@ DB_PATH = DATA / "staging.sqlite"
 IMG = DATA / "images"
 UA = "WHOISWHO-bot/1.0 (+https://wiwi.africa/bot) python-urllib"
 RUN_ID = "first-1000-2026-11-09"
-TARGET_ORGS = int(sys.argv[2]) if len(sys.argv) > 2 else 600
-TARGET_PEOPLE = 1000 - TARGET_ORGS
-NIGERIA_SHARE = 0.85
+EXPANSION_RUN_ID = "expansion-2026-11-09"
+TOTAL_TARGET = 11000
 
 COUNTRIES = {"Q1033": "Nigeria", "Q117": "Ghana", "Q114": "Kenya", "Q258": "South Africa"}
 ORG_CLASSES = ["Q4830453", "Q783794", "Q22687", "Q6881511", "Q3918", "Q38723", "Q163740",
@@ -54,14 +53,14 @@ POLITICIAN = "Q82955"
 SENSITIVE = re.compile(
     r"\b(pastor|bishop|imam|evangelist|cleric|archbishop|apostle|prophet|muslim|christian|islam\w*|catholic|"
     r"anglican|pentecostal|ethnic\w*|hiv|aids|cancer|disabled|convict\w*|fraud\w*|arrest\w*|terror\w*|indict\w*|"
-    r"money launder\w*|scandal|lgbt\w*|lesbian|gay|queer|transgender|intersex|sexual\w*|sex work\w*|reproductive health|APC|PDP|APGA|NNPP|political party|born (?:on|in) \d|aged? \d+|\d+ years? old)\b",
+    r"killer|murder\w*|crimin\w*|drug lord|drug traffick\w*|traffick\w*|gangster|gang leader|assassin\w*|rapist|kidnap\w*|warlord|dictator|notorious|fugitive|money launder\w*|scandal|lgbt\w*|lesbian|gay|queer|transgender|intersex|sexual\w*|sex work\w*|reproductive health|APC|PDP|APGA|NNPP|political party|born (?:on|in) \d|aged? \d+|\d+ years? old)\b",
     re.I)
 CONTACT = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+|(?:\+?234|\b0[789][01])[\s-]?\d{3}[\s-]?\d{3,4}[\s-]?\d{0,4}")
 EXCLUDED_TYPE_LABEL = re.compile(
     r"\b(diocese|archdiocese|eparchy|church|denomination|parish|mosque|temple|religious|seminary|monastery|"
     r"political party|football|soccer|rugby|cricket|basketball|sports?|team|club|stadium|embassy|consulate|high commission|library|"
     r"wikimedia|wikipedia|film|song|album|television series|local government|olympic|"
-    r"secret service|intelligence|municipal|genootschap|ecclesiastical|catholic|apostolic|trappist|nunnery|vicariate|nunciature|hate group|vigilante|militia|terror\w*|political initiative|pressure group|advocacy group|secretariat|executive branch|cabinet|fort|castle|botanical garden|amusement park|estate|dyeworks|faculty|nursing faculty|handball|hockey|golf|tennis|athletics|multi-level marketing|pyramid scheme|ponzi|youth system|lyc.e|campaign|protest|"
+    r"political organi[sz]ation|secret police|titular see|rural community|region of \w+|human settlement|building|built structure|structure|caravanserai|lodge|stud farm|badminton|paralympic|cultural heritage|lyceum|french school|research reactor|local authority|scouting|boxing|swimming|volleyball|judo|chess|cycling|military|army|navy|air force|battalion|regiment|armed forces|armed group|armed organi[sz]ation|rebel|insurgent|jihad\w*|paramilitary|guerrilla|liberation (?:movement|front)|prison|refugee camp|kasbah|palace|mausoleum|shrine|zawiya|synagogue|cathedral|basilica|chapel|madrasa|archaeological|heritage site|national park|nature reserve|airport|railway station|bus station|dam|bridge|lighthouse|power station|oil field|mine|neighbou?rhood|commune|municipality|prefecture|province|district|village|city|town|parti politique|partido|secret service|intelligence|municipal|genootschap|ecclesiastical|catholic|apostolic|trappist|nunnery|vicariate|nunciature|hate group|vigilante|militia|terror\w*|political initiative|pressure group|advocacy group|secretariat|executive branch|cabinet|fort|castle|botanical garden|amusement park|estate|dyeworks|faculty|nursing faculty|handball|hockey|golf|tennis|athletics|multi-level marketing|pyramid scheme|ponzi|youth system|lyc.e|campaign|protest|"
     r"(secondary|primary|private|public|girls'|boys'|boarding|high|junior|elementary|grammar|international|nursery) school|preschool)\b|^school$", re.I)
 CATEGORY_RULES = [
     ("Education", re.compile(r"universit|polytechnic|college|school|academic|education|institute of technology", re.I)),
@@ -75,9 +74,9 @@ NON_BUSINESS_OCC = re.compile(
     r"basketball|athlete|player|boxer|sprinter|model|beauty pageant|film|television|comedian|presenter|broadcaster|influencer|"
     r"writer|author|novelist|poet|playwright|artist|painter|sculptor|photographer|journalist|activist|feminist|academic|professor|scientist|physician|nurse)\b", re.I)
 BUSINESS_WORDS = re.compile(r"\b(entrepreneur|business\w*|founder|co-founder|ceo|chief executive|banker|investor|financier|executive|industrialist|tycoon|magnate|chairman|chairperson|managing director|fintech|startup)\b", re.I)
-NAME_EXCLUDE = re.compile(r"\b(war|ponzi|ecclesiastical|mmm)\b", re.I)
+NAME_EXCLUDE = re.compile(r"(\b(war|ponzi|ecclesiastical|mmm|[ée]glise|dioc[èe]se|paroisse|mosqu[ée]e|cath[ée]drale|parti|partido|igreja|mosque|church|militia|rebel|insurgent|evangelical|presbyterian|methodist|baptist|anglican|catholic|adventist|pentecostal|sacred heart|christ|orthodox|coptic|patriarch\w*|islamic|muslim|jesus|bible|theolog\w*|mujahid\w*|jammeh|gaddafi|qaddafi)\b|حزب|مسجد|كنيسة)", re.I)
 NON_AFRICAN = re.compile(r"\b(American|British|English|Scottish|Welsh|Irish|Canadian|Australian|German|French|Italian|Spanish|Dutch|Belgian|Swiss|Swedish|Norwegian|Danish|Finnish|Russian|Ukrainian|Hungarian|Polish|Indian|Pakistani|Chinese|Japanese|Korean|Israeli|Lebanese|Emirati|Saudi|Turkish|Brazilian|Mexican|Portuguese|Greek|Bahamian|Jamaican)\b")
-AFRICAN = re.compile(r"\b(Nigerian|Ghanaian|Kenyan|South African|African)\b")
+AFRICAN = re.compile(r"\b(African|Nigerian|Ghanaian|Kenyan|Moroccan|Egyptian|Tunisian|Algerian|Senegalese|Ugandan|Cameroonian|Congolese|Tanzanian|Zimbabwean|Ivorian|Rwandan|Beninese|Guinean|Angolan|Ethiopian|Namibian|Togolese|Sudanese|Zambian|Burkinab[eé]|Libyan|Malagasy|Nigerien|Malian|Somali|Mozambican|Motswana|Batswana|Malawian|Gabonese|Burundian|Chadian|Gambian|Mauritian|Sierra Leonean|Mauritanian|Liberian|Cape Verdean|Eritrean|Seychellois|Swazi|Djiboutian|Comorian|Basotho|Mosotho|Equatoguinean|Bissau-Guinean)\b")
 BIRTH_BITS = re.compile(r"\s*\((?:born|b\.|né|née)?\s*[^()]*\b(?:1[89]|20)\d\d\b[^()]*\)|,?\s*\bborn\b[^,.;]*", re.I)
 POLITICS = re.compile(r"\b(political candidate|paramount chief|politician|president of|former president|vice president|governor|senator|minister|legislator|statesperson|member of (the )?(house|parliament|national assembly))\b", re.I)
 ALLOWED_IMAGE_MAGIC = [(b"\x89PNG", ".png"), (b"\xff\xd8\xff", ".jpg"), (b"GIF8", ".gif"), (b"\x00\x00\x01\x00", ".ico")]
@@ -88,7 +87,7 @@ _host_next = {}
 
 def db():
     DATA.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(DB_PATH, timeout=60)
+    con = sqlite3.connect(DB_PATH, timeout=300)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")
     con.executescript("""
@@ -118,9 +117,37 @@ def db():
     return con
 
 
+MANUAL_EXCLUDE = {"Sunday Adelaja", "Uniqueness and reform movement", "Brigade Mixte Mobile", "Central Revolutionary Investigation Department"}
+
+
 def clean_description(desc):
     """REQ-140: birth dates and years never reach the record, even inside free text."""
     return BIRTH_BITS.sub("", desc or "").strip(" ,;") or None
+
+
+def load_countries(con):
+    """All African Union members plus sovereign states on the African continent."""
+    con.execute("CREATE TABLE IF NOT EXISTS countries(qid TEXT PRIMARY KEY, name TEXT)")
+    con.execute("CREATE TABLE IF NOT EXISTS seeded(qid TEXT PRIMARY KEY)")
+    if not con.execute("SELECT COUNT(*) FROM countries").fetchone()[0]:
+        rows = sparql("""SELECT DISTINCT ?c ?cLabel WHERE {
+            { ?c wdt:P463 wd:Q7159 } UNION { ?c wdt:P31 wd:Q3624078; wdt:P30 wd:Q15 }
+            ?c wdt:P31/wdt:P279* wd:Q6256 .
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }""")
+        con.executemany("INSERT OR IGNORE INTO countries VALUES(?,?)", [(qid_of(r["c"]["value"]), r["cLabel"]["value"]) for r in rows])
+        con.executemany("INSERT OR IGNORE INTO countries VALUES(?,?)", list(COUNTRIES.items()))
+        con.executemany("INSERT OR IGNORE INTO seeded VALUES(?)", [(q,) for q in COUNTRIES])
+        con.commit()
+    COUNTRIES.clear()
+    COUNTRIES.update(dict(con.execute("SELECT qid,name FROM countries").fetchall()))
+
+
+def best_label(ent):
+    labels = ent.get("labels", {})
+    for lang in ("en", "fr", "pt", "es", "ar"):
+        if lang in labels:
+            return labels[lang]["value"]
+    return None
 
 
 def now():
@@ -203,6 +230,11 @@ def qid_of(uri):
 # ------------------------------------------------------------- seed
 def stage_seed():
     con = db()
+    con.execute("CREATE TABLE IF NOT EXISTS run1_selected AS SELECT * FROM selected")
+    con.execute("CREATE TABLE IF NOT EXISTS records_run1 AS SELECT * FROM records")
+    con.commit()
+    load_countries(con)
+    print("countries", len(COUNTRIES), sorted(COUNTRIES.values()), flush=True)
     con.executemany("INSERT OR REPLACE INTO sources VALUES(?,?,?,?,?,?,?,?)", [
         ("wikidata", "Wikidata", "https://www.wikidata.org/", "A", "CC0", "Supervisor instruction", "2026-11-09", "Plan 2.2-2.5"),
         ("commons", "Wikimedia Commons", "https://commons.wikimedia.org/", "A", "Per file", "Supervisor instruction", "2026-11-09", "Plan 2.5, images section"),
@@ -210,16 +242,19 @@ def stage_seed():
     ])
     con.commit()
     occ = " ".join("wd:" + c for c in ENTREPRENEUR_OCCUPATIONS)
-    org_classes = set(ORG_CLASSES)
-    for cls in ORG_CLASSES:
-        org_classes |= {qid_of(x["c"]["value"]) for x in sparql(f"SELECT ?c WHERE {{ ?c wdt:P279+ wd:{cls}. }}")}
-    org_classes -= EXCLUDED_ORG_CLASSES
+    org_classes = class_set(con, "org_classes", ORG_CLASSES) - EXCLUDED_ORG_CLASSES
     print("organisation classes", len(org_classes), flush=True)
-    for cq, cname in COUNTRIES.items():
+    done_countries = {r[0] for r in con.execute("SELECT qid FROM seeded")}
+    for cq, cname in sorted(COUNTRIES.items(), key=lambda x: x[1]):
+        if cq in done_countries:
+            continue
         print("seed", cname, flush=True)
         rows = sparql(f"""SELECT ?o ?t ?sl WHERE {{ ?o wdt:P17 wd:{cq}; wdt:P31 ?t; wikibase:sitelinks ?sl. FILTER(?sl >= 1) }}""")
         listed_here = {qid_of(x["o"]["value"]) for x in sparql(f"""SELECT DISTINCT ?o WHERE {{ ?o wdt:P17 wd:{cq}; wdt:P414 ?x. }}""")}
         print("  rows", len(rows), "listed", len(listed_here), flush=True)
+        if not rows:
+            print("  NO ROWS, will retry on next seed:", cname, flush=True)
+            continue
         for row in rows:
             t, q = qid_of(row["t"]["value"]), qid_of(row["o"]["value"])
             if t in org_classes:
@@ -246,6 +281,7 @@ def stage_seed():
             con.execute("INSERT OR IGNORE INTO founder_links VALUES(?,?)", (p, o))
             con.execute("INSERT OR IGNORE INTO candidates(qid,kind,country,sitelinks) VALUES(?,?,?,?)",
                         (p, "entrepreneur", cname, int(row["sl"]["value"])))
+        con.execute("INSERT OR REPLACE INTO seeded VALUES(?)", (cq,))
         con.commit()
     for name in PAN_AFRICAN:
         q = urllib.parse.urlencode({"action": "wbsearchentities", "search": name, "language": "en", "type": "item",
@@ -283,7 +319,7 @@ def item_ids(ent, prop, current_only=False):
 def trim_entity(ent, kind):
     """Allowlist step (REQ-139, REQ-140): only these leave memory. DOB, party, religion etc. are never read."""
     d = {
-        "name": ent.get("labels", {}).get("en", {}).get("value"),
+        "name": best_label(ent),
         "description": clean_description(ent.get("descriptions", {}).get("en", {}).get("value")),
         "enwiki": ent.get("sitelinks", {}).get("enwiki", {}).get("title"),
         "sitelinks": len(ent.get("sitelinks", {})),
@@ -296,16 +332,19 @@ def trim_entity(ent, kind):
         d.update(types=item_ids(ent, "P31"), hq=item_ids(ent, "P159") or item_ids(ent, "P131"), industry=item_ids(ent, "P452"),
                  exchange=item_ids(ent, "P414"), logo=next(iter(claim_values(ent, "P154")), None),
                  founded=(inception[0].get("time", "")[1:5] if inception and isinstance(inception[0], dict) else None),
+                 parent=item_ids(ent, "P749", True), subsidiaries=item_ids(ent, "P355", True), products=item_ids(ent, "P1056", True),
+                 member_of=item_ids(ent, "P463", True), employees=next((v.get("amount", "").lstrip("+") for v in claim_values(ent, "P1128", True) if isinstance(v, dict)), None),
                  dissolved=bool(claim_values(ent, "P576")))
     else:
         d.update(occupations=item_ids(ent, "P106"), employers=item_ids(ent, "P108", True), positions=item_ids(ent, "P39", True),
-                 awards=item_ids(ent, "P166"), owner_of=item_ids(ent, "P1830", True),
+                 awards=item_ids(ent, "P166"), owner_of=item_ids(ent, "P1830", True), boards=item_ids(ent, "P3320", True),
+                 member_of=item_ids(ent, "P463", True),
                  deceased=bool(claim_values(ent, "P570")))
     return d
 
 
 def api_entities(ids, props):
-    q = urllib.parse.urlencode({"action": "wbgetentities", "ids": "|".join(ids), "props": props, "languages": "en",
+    q = urllib.parse.urlencode({"action": "wbgetentities", "ids": "|".join(ids), "props": props, "languages": "en|fr|pt|es|ar",
                                 "sitefilter": "" , "format": "json", "maxlag": 5})
     st, _, body, _ = http("https://www.wikidata.org/w/api.php?" + q, gap=0.4, timeout=60, max_bytes=60_000_000, tries=5)
     if st != 200:
@@ -332,7 +371,7 @@ def stage_enrich():
     refs = set()
     for r in con.execute("SELECT data FROM entities"):
         d = json.loads(r[0])
-        for k in ("countries", "types", "hq", "industry", "exchange", "occupations", "employers", "positions", "awards", "owner_of"):
+        for k in ("countries", "types", "hq", "industry", "exchange", "occupations", "employers", "positions", "awards", "owner_of", "parent", "subsidiaries", "products", "member_of", "boards"):
             refs.update(d.get(k) or [])
     refs.update(r[0] for r in con.execute("SELECT org_qid FROM founder_links"))
     have = {r[0] for r in con.execute("SELECT qid FROM labels")}
@@ -340,9 +379,9 @@ def stage_enrich():
     print("labels to fetch", len(refs), flush=True)
     for i in range(0, len(refs), 50):
         for q, ent in api_entities(refs[i:i + 50], "labels").items():
-            label = ent.get("labels", {}).get("en", {}).get("value")
-            if label:
-                con.execute("INSERT OR REPLACE INTO labels VALUES(?,?)", (q, label))
+            lab = best_label(ent)
+            if lab:
+                con.execute("INSERT OR REPLACE INTO labels VALUES(?,?)", (q, lab))
         con.commit()
     print("entities", con.execute("SELECT COUNT(*) FROM entities").fetchone()[0])
 
@@ -426,21 +465,14 @@ def excluded_org_type(con, types):
     return any(EXCLUDED_TYPE_LABEL.search(label(con, t) or "") for t in types or [])
 
 
-def org_site_rows(con, limit_other=260):
-    """Website checks for every eligible Nigerian organisation, plus the strongest others."""
-    rows, others = [], 0
+def org_site_rows(con):
+    rows = []
     done = {r[0] for r in con.execute("SELECT qid FROM sites")}
-    q = """SELECT c.qid,c.country,e.data FROM candidates c JOIN entities e USING(qid) WHERE c.kind='organisation'
+    q = """SELECT p.qid,e.data FROM org_pool p JOIN entities e USING(qid) JOIN candidates c USING(qid)
            ORDER BY c.exchange DESC, c.sitelinks DESC"""
     for r in con.execute(q).fetchall():
         d = json.loads(r["data"])
-        if not d.get("website") or d.get("dissolved") or excluded_org_type(con, d.get("types")):
-            continue
-        if r["country"] != "Nigeria":
-            others += 1
-            if others > limit_other:
-                continue
-        if r["qid"] not in done:
+        if d.get("website") and r["qid"] not in done:
             rows.append((r["qid"], d["website"]))
     return rows
 
@@ -450,11 +482,11 @@ def stage_sites():
     rows = org_site_rows(con)
     print("sites to fetch", len(rows), flush=True)
     done = 0
-    with cf.ThreadPoolExecutor(16) as ex:
+    with cf.ThreadPoolExecutor(32) as ex:
         for res in ex.map(fetch_site, rows):
             con.execute("""INSERT OR REPLACE INTO sites VALUES(:qid,:url,:final_url,:status,:http,:description,:logo_url,:logo_kind,:retrieved_at)""", res)
             done += 1
-            if done % 25 == 0:
+            if done % 100 == 0:
                 con.commit()
                 print("sites", done, flush=True)
     con.commit()
@@ -511,6 +543,7 @@ def country_qid(name):
 
 def stage_select():
     con = db()
+    load_countries(con)
     con.execute("DELETE FROM exclusions")
     suppressed = suppression_set()
     business = class_set(con, "business", ["Q4830453", "Q783794", "Q6881511", "Q22687", "Q1378841", "Q46970"])
@@ -530,6 +563,8 @@ def stage_select():
             reason = "no_english_name"
         elif d["name"].lower() in suppressed:
             reason = "suppressed"
+        elif d["name"] in MANUAL_EXCLUDE:
+            reason = "manual_exclusion"
         elif SENSITIVE.search(text) or CONTACT.search(text):
             reason = "sensitive_term"
         elif r["kind"] == "organisation":
@@ -561,6 +596,8 @@ def stage_select():
                 reason = "non_business_primary_role"
             elif not is_biz_occ and not biz_founded:
                 reason = "not_entrepreneur"
+            elif not (biz_desc or biz_founded or (not d.get("description") and set(occ_ids) & set(ENTREPRENEUR_OCCUPATIONS))):
+                reason = "no_business_evidence"
         if reason:
             con.execute("INSERT OR REPLACE INTO exclusions VALUES(?,?,?)", (r["qid"], r["kind"], reason))
             continue
@@ -575,53 +612,60 @@ def stage_select():
             score = (tier, 1 if d.get("image") else 0, r["sitelinks"])
             people.append((score, r["qid"], r["country"], None))
 
-    def pick(pool, n, caps=None):
-        pool.sort(key=lambda x: x[0], reverse=True)
-        chosen, used, counts = [], set(), {}
-
-        def take(items, limit, use_caps):
-            taken = 0
-            for it in items:
-                if taken >= limit:
-                    break
-                if it[1] in used:
-                    continue
-                if use_caps and caps and counts.get(it[3], 0) >= int(caps.get(it[3], 1) * n):
-                    continue
-                chosen.append(it)
-                used.add(it[1])
-                counts[it[3]] = counts.get(it[3], 0) + 1
-                taken += 1
-
-        take([p for p in pool if p[2] == "Nigeria"], int(n * NIGERIA_SHARE), True)
-        by_country = {}
-        for it in pool:
-            if it[2] != "Nigeria":
-                by_country.setdefault(it[2], []).append(it)
-        interleaved = []
-        while any(by_country.values()):
-            for k in list(by_country):
-                if by_country[k]:
-                    interleaved.append(by_country[k].pop(0))
-        take(interleaved, n - len(chosen), True)
-        take(pool, n - len(chosen), False)
-        return [c[1] for c in chosen]
-
-    org_caps = {"Education": 0.22, "Government": 0.13, "NGO or association": 0.08, "Research": 0.03, "Other": 0.08, "Business": 1.0}
-    sel_orgs, sel_people = pick(orgs, TARGET_ORGS, org_caps), pick(people, TARGET_PEOPLE)
+    run1 = {r[0] for r in con.execute("SELECT qid FROM run1_selected")}
+    people.sort(key=lambda x: x[0], reverse=True)
+    orgs.sort(key=lambda x: x[0], reverse=True)
+    eligible = {x[1] for x in orgs} | {x[1] for x in people}
+    kept = run1 & eligible
+    print("run 1 kept", len(kept), "dropped by the wider rules", sorted(run1 - eligible)[:60])
+    sel_people = [p[1] for p in people if p[1] in kept or p[0][0] >= 1]
+    room = TOTAL_TARGET - len(sel_people)
+    chosen = [o for o in orgs if o[1] in kept]
+    used = {o[1] for o in chosen}
+    by_country = {}
+    for o in orgs:
+        if o[1] not in used:
+            by_country.setdefault(o[2], []).append(o)
+    order = []
+    while any(by_country.values()):
+        for k in list(by_country):
+            if by_country[k]:
+                order.append(by_country[k].pop(0))
+    caps = {"Education": 0.30, "Government": 0.18, "NGO or association": 0.15, "Research": 0.05, "Other": 0.06, "Business": 1.0}
+    counts = {}
+    for o in chosen:
+        counts[o[3]] = counts.get(o[3], 0) + 1
+    rest = []
+    for o in order:
+        if len(chosen) >= room:
+            break
+        if counts.get(o[3], 0) >= int(caps[o[3]] * room):
+            rest.append(o)
+            continue
+        chosen.append(o)
+        used.add(o[1])
+        counts[o[3]] = counts.get(o[3], 0) + 1
+    for o in rest:
+        if len(chosen) >= room:
+            break
+        chosen.append(o)
+    sel_orgs = [o[1] for o in chosen]
     con.execute("DROP TABLE IF EXISTS selected")
     con.execute("CREATE TABLE selected(qid TEXT PRIMARY KEY, kind TEXT)")
     con.executemany("INSERT INTO selected VALUES(?,?)", [(q, "organisation") for q in sel_orgs] + [(q, "entrepreneur") for q in sel_people])
+    con.execute("DROP TABLE IF EXISTS org_pool")
+    con.execute("CREATE TABLE org_pool(qid TEXT PRIMARY KEY)")
+    con.executemany("INSERT INTO org_pool VALUES(?)", [(o[1],) for o in orgs])
     con.commit()
-    print("pool orgs", len(orgs), "people", len(people), "selected", len(sel_orgs), len(sel_people))
+    print("pool orgs", len(orgs), "people", len(people), "selected orgs", len(sel_orgs), "people", len(sel_people), "total", len(sel_orgs) + len(sel_people))
     cats = {o[3] for o in orgs}
     print("org pool by category", {c: sum(1 for o in orgs if o[3] == c) for c in cats})
-    print("selected org by category", {c: sum(1 for o in orgs if o[3] == c and o[1] in set(sel_orgs)) for c in cats})
-    print("people pool tiers", {t: sum(1 for p in people if p[0][0] == t) for t in (5, 4, 3, 2, 1)})
-    print("people tiers selected", {t: sum(1 for p in people if p[0][0] == t and p[1] in set(sel_people)) for t in (5, 4, 3, 2, 1)})
+    picked = set(sel_orgs)
+    print("selected org by category", {c: sum(1 for o in orgs if o[3] == c and o[1] in picked) for c in cats})
+    print("people pool tiers", {t: sum(1 for x in people if x[0][0] == t) for t in (5, 4, 3, 2, 1)})
     for r in con.execute("SELECT kind,reason,COUNT(*) FROM exclusions GROUP BY 1,2"):
         print(tuple(r))
-    for r in con.execute("SELECT s.kind,c.country,COUNT(*) FROM selected s JOIN candidates c USING(qid) GROUP BY 1,2"):
+    for r in con.execute("SELECT c.country,SUM(s.kind='organisation'),SUM(s.kind='entrepreneur'),COUNT(*) n FROM selected s JOIN candidates c USING(qid) GROUP BY 1 ORDER BY n DESC"):
         print(tuple(r))
 
 
@@ -686,15 +730,22 @@ def stage_images():
             if not info or not info["thumb"] or not info["licence"]:
                 con.execute("INSERT OR REPLACE INTO images VALUES(?,?,?,?,?,?,?,?)", (qid, role, "no_licence_info", None, None, None, None, now()))
                 continue
-            st, _, body, _ = http(info["thumb"], gap=0.7, timeout=40, max_bytes=5_000_000)
+            st, _, body, _ = http(info["thumb"], gap=0.4, timeout=40, max_bytes=5_000_000)
             path = save_image(body, qid, role) if st == 200 else None
             con.execute("INSERT OR REPLACE INTO images VALUES(?,?,?,?,?,?,?,?)",
                         (qid, role, "ok" if path else f"http_{st}", path, info["page"], info["licence"], info["credit"], now()))
         con.commit()
         print("commons", min(i + 40, len(pending)), flush=True)
+    for r in con.execute("SELECT role,status,COUNT(*) FROM images GROUP BY 1,2"):
+        print(tuple(r))
+
+
+def stage_logos():
+    con = db()
     site_jobs = [(r["qid"], r["logo_url"], r["logo_kind"]) for r in con.execute(
-        """SELECT s.qid,t.logo_url,t.logo_kind FROM selected s JOIN sites t USING(qid)
+        """SELECT s.qid,t.logo_url,t.logo_kind FROM selected s JOIN sites t USING(qid) JOIN entities e USING(qid)
            WHERE s.kind='organisation' AND t.status='ok' AND t.logo_url IS NOT NULL
+             AND json_extract(e.data,'$.logo') IS NULL
              AND s.qid NOT IN (SELECT qid FROM images WHERE role='logo' AND status='ok')""")]
     print("site logos to fetch", len(site_jobs), flush=True)
 
@@ -709,13 +760,13 @@ def stage_images():
         path = save_image(body, qid, "logo") if st == 200 else None
         return qid, "ok" if path else f"http_{st}", path, url, kind
 
-    with cf.ThreadPoolExecutor(12) as ex:
+    with cf.ThreadPoolExecutor(32) as ex:
         n = 0
         for qid, status, path, url, kind in ex.map(get_logo, site_jobs):
             con.execute("INSERT OR REPLACE INTO images VALUES(?,?,?,?,?,?,?,?)",
                         (qid, "logo", status, path, url, "Not licensed: owner's copyright or trademark" if path else None, f"Organisation's own site ({kind})" if path else None, now()))
             n += 1
-            if n % 25 == 0:
+            if n % 100 == 0:
                 con.commit()
                 print("site logos", n, flush=True)
     con.commit()
@@ -768,12 +819,14 @@ def stage_finalise():
     listed = {r[0] for r in con.execute("SELECT qid FROM candidates WHERE exchange=1")}
     selected_orgs = {r[0] for r in con.execute("SELECT qid FROM selected WHERE kind='organisation'")}
     names_seen = {}
+    run1 = {r[0] for r in con.execute("SELECT qid FROM run1_selected")}
     rows = con.execute("""SELECT s.qid,s.kind,c.country,c.sitelinks,e.data,e.retrieved_at FROM selected s
                           JOIN candidates c USING(qid) JOIN entities e USING(qid)""").fetchall()
     for r in rows:
-        key = re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", json.loads(r["data"])["name"]).lower())
+        key = (r["kind"], r["country"], re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", json.loads(r["data"])["name"]).lower()))
         names_seen.setdefault(key, []).append(r["qid"])
     site_clean = 0
+    scan_failed = 0
     for r in rows:
         d, qid, kind = json.loads(r["data"]), r["qid"], r["kind"]
         d["description"] = clean_description(d.get("description"))
@@ -781,7 +834,7 @@ def stage_finalise():
         at = r["retrieved_at"]
         flags = []
         rec = dict(record_id="wd:" + qid, type=kind, qid=qid, name=d["name"], country=r["country"], sitelinks=d["sitelinks"],
-                   description=d.get("description"), website=d.get("website"), run_id=RUN_ID, retrieved_at=at,
+                   description=d.get("description"), website=d.get("website"), run_id=RUN_ID if qid in run1 else EXPANSION_RUN_ID, retrieved_at=at,
                    wikipedia_lead=("https://en.wikipedia.org/wiki/" + urllib.parse.quote(d["enwiki"].replace(" ", "_"))) if d.get("enwiki") else None)
         prov = {"name": ("wikidata", wd_url, "high", "API"), "country": ("wikidata", wd_url, "high", "API")}
         if d.get("description"):
@@ -805,22 +858,37 @@ def stage_finalise():
             met = bool(d.get("exchange"))
             rec["criterion"], rec["criterion_met"] = ("O1", 1) if met else ("O5", 1)
             rec["evidence_url"] = wd_url
-            kind_word = rec["org_type"] or "organisation"
+            kind_word = types[0] if types else "organisation"
+            kind_word = kind_word if kind_word.isupper() else kind_word[0].lower() + kind_word[1:]
             place = None if r["country"] == "Pan-African" else r["country"]
             city = rec["city"] if rec["city"] and rec["city"] != r["country"] else None
-            if d.get("description"):
-                bio = f"{d['name']} is {opening(d['description'])}."
-                if city:
-                    bio += f" Based in {city}."
+            desc_text = d.get("description") or ""
+            if desc_text:
+                bio = f"{d['name']} is {opening(desc_text)}."
+                if city and city not in desc_text:
+                    bio += f" It is based in {city}" + (f", {place}." if place and place not in desc_text else ".")
+                elif place and place not in desc_text:
+                    bio += f" It operates in {place}."
             else:
                 where = ", ".join(x for x in (city, place) if x)
                 bio = f"{d['name']} is {a_an(kind_word)}" + (f" based in {where}" if where else "") + "."
             if rec["founded_year"] and rec["founded_year"].isdigit():
-                bio += f" Founded in {rec['founded_year']}."
+                bio += f" It was founded in {rec['founded_year']}."
             if rec["exchange"]:
-                bio += f" Listed on {rec['exchange']}."
+                bio += f" Its shares are listed on {rec['exchange']}."
             if rec["industry"]:
-                bio += f" Industry: {rec['industry']}."
+                bio += f" It works in {rec['industry']}."
+            names = lambda key: [n for n in (label(con, x) for x in d.get(key) or []) if n]
+            if names("parent"):
+                bio += f" It is part of {join_list(names('parent')[:2])}."
+            if names("subsidiaries"):
+                bio += f" Its subsidiaries include {join_list(names('subsidiaries')[:4])}."
+            if names("products"):
+                bio += f" Its products and services include {join_list(names('products')[:4])}."
+            if d.get("employees") and d["employees"].replace(".", "").isdigit():
+                bio += f" It reports about {int(float(d['employees'])):,} employees."
+            if names("member_of"):
+                bio += f" It is a member of {join_list(names('member_of')[:3])}."
             rec["bio"] = bio
             for f in ("org_type", "city", "industry", "founded_year", "exchange"):
                 if rec.get(f):
@@ -887,12 +955,21 @@ def stage_finalise():
                     bio += f" {t} of {org_name}." if t in ("Founder", "Owner") else f" {t}, {org_name}."
             elif rec["current_title"] != occupation:
                 bio += f" {rec['current_title']}."
-            if pos:
-                extra = [x for x in pos[:3] if x.lower() != (rec["current_title"] or "").lower()]
-                if extra:
-                    bio += f" Public roles: {join_list(extra)}."
+            names = lambda key: [n for n in (label(con, x) for x in d.get(key) or []) if n]
+            if not (d.get("description") and r["country"] in d["description"]) and d.get("description"):
+                bio += f" They are from {r['country']}."
+            others = [n for _, n in orgs if n != rec.get("current_org")]
+            if others:
+                bio += f" Other companies founded: {join_list(others[:3])}."
+            extra = [x for x in pos[:4] if x.lower() != (rec["current_title"] or "").lower()]
+            if extra:
+                bio += f" Public roles: {join_list(extra)}."
+            if names("boards"):
+                bio += f" Board memberships: {join_list(names('boards')[:4])}."
+            if names("member_of"):
+                bio += f" Member of: {join_list(names('member_of')[:3])}."
             if awards:
-                bio += f" Awards: {join_list(awards[:3])}."
+                bio += f" Awards: {join_list(awards[:5])}."
             rec["bio"] = bio
             for f in ("current_title", "current_org", "roles", "awards"):
                 if rec.get(f):
@@ -904,7 +981,7 @@ def stage_finalise():
                 rec[prefix + "_path"], rec[prefix + "_source"], rec[prefix + "_licence"], rec[prefix + "_credit"] = im["path"], im["source_url"], im["licence"], im["credit"]
                 src = "own_site" if (im["licence"] or "").startswith("Not licensed") else "commons"
                 prov[prefix] = (src, im["source_url"], "medium", "API" if src == "commons" else "fetch")
-        dup = names_seen.get(re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", d["name"]).lower()), [])
+        dup = names_seen.get((kind, r["country"], re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", d["name"]).lower())), [])
         if len(dup) > 1:
             flags.append("possible_duplicate")
         scan_text = " ".join(str(rec.get(k) or "") for k in ("bio", "description", "site_description"))
@@ -918,8 +995,10 @@ def stage_finalise():
             "7_duplicates_flagged": "possible_duplicate" in flags,
         }
         if checks["5_sensitive_scan"] is False:
-            rec["bio"] = None
-            flags.append("sensitive_scan_hit")
+            con.execute("INSERT OR REPLACE INTO exclusions VALUES(?,?,?)", (qid, kind, "sensitive_term_in_final_text"))
+            scan_failed += 1
+            continue
+        rec["bio"] = re.sub(r"\.{2,}", ".", rec["bio"])
         rec["flags"] = json.dumps(flags)
         rec["checks"] = json.dumps(checks)
         canon = {k: rec.get(k) for k in sorted(rec) if k not in ("retrieved_at", "run_id", "flags", "checks", "photo_path", "logo_path")}
@@ -930,10 +1009,10 @@ def stage_finalise():
         con.executemany("INSERT OR REPLACE INTO provenance VALUES(?,?,?,?,?,?,?)",
                         [(rec["record_id"], f, *p[:2], at, *p[2:]) for f, p in prov.items()])
     con.commit()
-    print("records", con.execute("SELECT COUNT(*) FROM records").fetchone()[0], "site descriptions dropped", site_clean)
+    print("records", con.execute("SELECT COUNT(*) FROM records").fetchone()[0], "site descriptions dropped", site_clean, "records failed scan", scan_failed)
 
 
-STAGES = dict(seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, finalise=stage_finalise)
+STAGES = dict(seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, logos=stage_logos, finalise=stage_finalise)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in STAGES:

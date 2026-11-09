@@ -15,11 +15,11 @@ DATA = ROOT / "acquisition" / "data"
 FIELDS = ["record_id", "type", "qid", "name", "country", "city", "org_type", "org_category", "industry", "website", "website_status",
           "founded_year", "exchange", "current_title", "current_org", "roles", "awards", "sitelinks", "description", "bio",
           "site_description", "criterion", "criterion_met", "evidence_url", "wikipedia_lead", "photo_path", "photo_source",
-          "photo_licence", "photo_credit", "logo_path", "logo_source", "logo_licence", "logo_credit", "flags", "content_hash"]
+          "photo_licence", "photo_credit", "logo_path", "logo_source", "logo_licence", "logo_credit", "flags", "content_hash", "run_id"]
 
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>First 1,000: staging data</title>
+<meta name="robots" content="noindex,nofollow"><title>African directory staging</title>
 <style>
 :root{--bg:#f6f6f3;--panel:#fff;--ink:#1d1f1e;--muted:#5d645f;--line:#dcdfd9;--accent:#0b6b4f;--warn:#8a4b00;--warnbg:#fdf1de;--chip:#eef1ec}
 @media (prefers-color-scheme:dark){:root{--bg:#141615;--panel:#1d201e;--ink:#eceeea;--muted:#a3aaa4;--line:#333935;--accent:#58c9a1;--warn:#f2b866;--warnbg:#3a2c14;--chip:#2a2e2b}}
@@ -43,14 +43,14 @@ a{color:var(--accent)}dialog{max-width:760px;width:calc(100% - 32px);border:1px 
 .db{padding:6px 18px 18px}dl{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;margin:10px 0}dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}.close{margin-left:auto;align-self:flex-start}
 @media (max-width:640px){header,.stats,form,.bar,.wrap{padding-left:16px;padding-right:16px}.notice{margin-left:16px;margin-right:16px}input[type=search]{width:100%}form label:not(.check){flex:1 1 44%}dl{grid-template-columns:1fr}dt{font-weight:600}}
 </style></head><body>
-<header><h1>First 1,000: organisations and entrepreneurs</h1><p class="sub" id="meta"></p></header>
+<header><h1>African organisations and entrepreneurs</h1><p class="sub" id="meta"></p></header>
 <p class="notice"><b>Unreviewed staging data. Do not publish or share.</b> Compiled by script from Wikidata, Wikimedia Commons and organisations' own sites. No person has checked it and no Legal review has happened. Bios are built by template from Wikidata's description and structured facts, not written by AI. Logos from organisation sites are not licensed.</p>
 <div class="stats" id="stats"></div>
 <form id="f" onsubmit="return false">
 <label>Search<input type="search" id="q" placeholder="Name, organisation, bio"></label>
 <label>Type<select id="type"></select></label><label>Country<select id="country"></select></label>
 <label>Criterion<select id="criterion"></select></label><label>Category<select id="org_category"></select></label><label>Organisation type<select id="org_type"></select></label>
-<label>Website<select id="website_status"></select></label>
+<label>Website<select id="website_status"></select></label><label>Run<select id="run_id"></select></label>
 <label class="check"><input type="checkbox" id="hasPhoto">Has photo</label>
 <label class="check"><input type="checkbox" id="hasLogo">Has logo</label>
 <label class="check"><input type="checkbox" id="metOnly">Meets criterion</label>
@@ -70,17 +70,17 @@ const link=(u,t)=>safe(u)?el('a',{href:u,target:'_blank',rel:'noopener noreferre
 const list=v=>{try{return JSON.parse(v||'[]')}catch{return[]}};
 const CLABEL={O1:'O1 listed',O5:'O5 Wikipedia sitelink',E1:'E1 founder of listed company',LEAD:'Lead: not yet E1 or E2'};
 R.forEach(r=>{r._flags=list(r.flags);r._roles=list(r.roles);r._awards=list(r.awards);r._text=[r.name,r.current_org,r.current_title,r.bio,r.description,r.site_description,r.industry,r.city].join(' ').toLowerCase();r._t=r.type==='organisation'?'Organisation':'Entrepreneur'});
-function opts(id,key,fmt){const c={};R.forEach(r=>{if(r[key])c[r[key]]=(c[r[key]]||0)+1});const s=$(id);s.append(el('option',{value:''},'All'));Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([v,n])=>s.append(el('option',{value:v},(fmt?fmt(v):v)+' ('+n+')')))}
-opts('type','_t');opts('country','country');opts('criterion','criterion',v=>CLABEL[v]||v);opts('org_category','org_category');opts('org_type','org_type');const WS={ok:'Reached',no_website:'No website listed',http_error:'Site returned an error',unreachable:'Site unreachable',bad_url:'Domain not found or invalid',robots_blocked:'Not fetched: robots.txt',not_checked:'Not checked'};opts('website_status','website_status',v=>WS[v]||v);
+function opts(id,key,fmt){const c={};R.forEach(r=>{if(r[key])c[r[key]]=(c[r[key]]||0)+1});const s=$(id);s.append(el('option',{value:''},'All'));Object.entries(c).filter(([v,n])=>id!=='org_type'||n>=5).sort((a,b)=>b[1]-a[1]).forEach(([v,n])=>s.append(el('option',{value:v},(fmt?fmt(v):v)+' ('+n+')')))}
+opts('type','_t');opts('country','country');opts('criterion','criterion',v=>CLABEL[v]||v);opts('org_category','org_category');opts('org_type','org_type');opts('run_id','run_id');const WS={ok:'Reached',no_website:'No website listed',http_error:'Site returned an error',unreachable:'Site unreachable',bad_url:'Domain not found or invalid',robots_blocked:'Not fetched: robots.txt',not_checked:'Not checked'};opts('website_status','website_status',v=>WS[v]||v);
 const n=f=>R.filter(f).length;
 [[R.length,'records'],[n(r=>r.type==='organisation'),'organisations'],[n(r=>r.type!=='organisation'),'entrepreneurs'],[n(r=>r.criterion_met),'meet a plan criterion'],[n(r=>r.photo_path),'with photo'],[n(r=>r.logo_path),'with logo'],[n(r=>r.website_status==='ok'),'website reached']].forEach(([v,l])=>$('stats').append(el('div',{class:'stat'},el('b',{},v.toLocaleString()),el('span',{},l))));
-$('meta').textContent='Run '+META.run_id+' · built '+META.built;
+$('meta').textContent=META.countries+' countries · built '+META.built;
 const COLS=[['photo','Image'],['name','Name',1],['_t','Type',1],['country','Country',1],['role','Role or organisation type',1],['criterion','Criterion',1],['founded_year','Founded',1],['sitelinks','Sitelinks',1],['bio','Bio'],['website','Website']];
 COLS.forEach(([k,l,s])=>{const th=el('th',s?{class:'sort',tabindex:'0',scope:'col'}:{scope:'col'},l);if(s){th.dataset.k=k;const go=()=>{if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=k==='sitelinks'?-1:1}page=0;render()};th.onclick=go;th.onkeydown=e=>{if(e.key==='Enter')go()}}$('head').append(th)});
 const roleOf=r=>r.type==='organisation'?(r.org_type||''):[r.current_title,r.current_org].filter(Boolean).join(', ');
 const thumb=r=>{const p=r.photo_path&&r.type!=='organisation'?r.photo_path:(r.logo_path||r.photo_path);return p?el('img',{class:'thumb',src:p,alt:'',loading:'lazy'}):el('div',{class:'none'},'none')};
-function apply(){const q=$('q').value.trim().toLowerCase(),t=$('type').value,c=$('country').value,cr=$('criterion').value,o=$('org_type').value,g=$('org_category').value,w=$('website_status').value;
-view=R.filter(r=>(!q||r._text.includes(q))&&(!t||r._t===t)&&(!c||r.country===c)&&(!cr||r.criterion===cr)&&(!o||r.org_type===o)&&(!g||r.org_category===g)&&(!w||r.website_status===w)&&(!$('hasPhoto').checked||r.photo_path)&&(!$('hasLogo').checked||r.logo_path)&&(!$('metOnly').checked||r.criterion_met)&&(!$('flagged').checked||r._flags.length));
+function apply(){const q=$('q').value.trim().toLowerCase(),t=$('type').value,c=$('country').value,cr=$('criterion').value,o=$('org_type').value,g=$('org_category').value,w=$('website_status').value,u=$('run_id').value;
+view=R.filter(r=>(!q||r._text.includes(q))&&(!t||r._t===t)&&(!c||r.country===c)&&(!cr||r.criterion===cr)&&(!o||r.org_type===o)&&(!g||r.org_category===g)&&(!w||r.website_status===w)&&(!u||r.run_id===u)&&(!$('hasPhoto').checked||r.photo_path)&&(!$('hasLogo').checked||r.logo_path)&&(!$('metOnly').checked||r.criterion_met)&&(!$('flagged').checked||r._flags.length));
 const val=r=>sortKey==='role'?roleOf(r):r[sortKey];
 view.sort((a,b)=>{const x=val(a),y=val(b);if(x==null||x==='')return 1;if(y==null||y==='')return -1;return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y)))*sortDir})}
 function render(){apply();const pages=Math.max(1,Math.ceil(view.length/PAGE));page=Math.min(page,pages-1);const b=$('body');b.textContent='';
@@ -98,7 +98,7 @@ row(dl,'Criterion',CLABEL[r.criterion]||r.criterion);row(dl,'Evidence',r.evidenc
 if(r.photo_path){row(dl,'Photo licence',r.photo_licence);row(dl,'Photo credit',r.photo_credit);row(dl,'Photo source',r.photo_source?link(r.photo_source):null)}
 if(r.logo_path){row(dl,'Logo licence',r.logo_licence);row(dl,'Logo credit',r.logo_credit);row(dl,'Logo source',r.logo_source?link(r.logo_source):null)}
 row(dl,'Flags',r._flags.map(f=>f.replace(/_/g,' ')).join('; '));row(dl,'Content hash',r.content_hash);d.append(el('div',{class:'db'},dl));d.showModal();close.focus()}
-['q','type','country','criterion','org_category','org_type','website_status','hasPhoto','hasLogo','metOnly','flagged'].forEach(i=>$(i).addEventListener('input',()=>{page=0;render()}));
+['q','type','country','criterion','org_category','org_type','website_status','run_id','hasPhoto','hasLogo','metOnly','flagged'].forEach(i=>$(i).addEventListener('input',()=>{page=0;render()}));
 $('prev').onclick=()=>{page--;render()};$('next').onclick=()=>{page++;render()};$('clear').onclick=()=>{$('f').reset();page=0;render()};
 $('csv').onclick=()=>{const K=['name','_t','country','city','org_category','org_type','industry','current_title','current_org','founded_year','exchange','website','website_status','criterion','bio','record_id'];
 const esc=v=>{let s=String(v??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return'"'+s.replace(/"/g,'""')+'"'};const csv=[K.join(',').replace('_t','type'),...view.map(r=>K.map(k=>esc(r[k])).join(','))].join('\r\n');
@@ -114,8 +114,9 @@ def main():
     rows = [{k: r[k] for k in FIELDS} for r in con.execute("SELECT * FROM records ORDER BY sitelinks DESC")]
     payload = json.dumps(rows, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     import time
-    meta = json.dumps({"run_id": "first-1000-2026-11-09", "built": time.strftime("%Y-%m-%d %H:%M")})
-    out = DATA / "first-1000.html"
+    countries = con.execute("SELECT COUNT(DISTINCT country) FROM records").fetchone()[0]
+    meta = json.dumps({"countries": countries, "built": time.strftime("%Y-%m-%d %H:%M")})
+    out = DATA / "directory.html"
     out.write_text(PAGE.replace("__META__", meta).replace("__DATA__", payload), encoding="utf-8")
     print(out, len(rows), "records", out.stat().st_size // 1024, "KB")
 
