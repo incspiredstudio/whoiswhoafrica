@@ -191,6 +191,7 @@ What building on WordPress raises. Each has a recommended default; the status is
 | Q93 | Open | Is the profile's assigned user a new role (Profile manager) or an existing staff user? | D-044 allows only three staff roles; a manager account for a profile owner is a new kind of account (D-057 amends D-034). | A fourth, limited role, Profile manager, with a capability to edit only assigned profiles and no access to anything else; created only by the Administrator. | Custom | SITE |
 | Q94 | Open | Do the assigned user's edits publish straight away or after review? | Straight publishing would break the review rule (REQ-222, 226). | After review, in the same queue as other edits. | Custom | SITE |
 | Q95 | Open | Which tool removes photo backgrounds on import: a self-hosted model or a paid service? | Photos of real people are personal data; a paid service is a new processor and cost (D-057, REQ-255). | A self-hosted tool inside the plugin, run as a background job; a paid service only after Legal adds it to the processor list. Keep the original and allow a switch back. | Plugin | SITE |
+| Q96 | Open | The logo reads "wiwi Africa" but the site text says WHOISWHO (D-052). Which is the public name? | A logo and a name that differ confuse visitors and search results (D-058). | One name everywhere. If the logo is final, use "wiwi Africa" in text too; if WHOISWHO stays, the logo needs a new wordmark. | Theme | SITE |
 
 ---
 

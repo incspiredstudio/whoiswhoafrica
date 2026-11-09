@@ -138,7 +138,8 @@
   };
   /* The brand mark (the W with Africa inside) from the supplied icon file, drawn as a mask so it takes the text colour. */
   W.logoSvg = function (cls) { return '<span class="wiw-w ' + (cls || "") + '" aria-hidden="true"></span>'; };
-  function wordmark() { return W.logoSvg("logo-mark") + e(W.brand.name); }
+  /* The supplied logo (icon and wordmark), drawn as a mask so it takes the text colour: dark on light, white on dark. */
+  function wordmark() { return '<span class="wiw-logo" role="img" aria-label="' + e(W.brand.name) + '"></span>'; }
   function nomLabel() { return W.nomOpen() ? "Nominate" : "Nominate (opens soon)"; }
   function megaLink(href, title, text) { return '<li><a class="mega-link" href="' + href + '"><strong>' + e(title) + "</strong><span>" + e(text) + "</span></a></li>"; }
   function plain(href, t) { return '<li><a class="mega-plain" href="' + href + '">' + e(t) + "</a></li>"; }
