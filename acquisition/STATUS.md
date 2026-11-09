@@ -11,10 +11,27 @@ Run on your instructions of 2026-11-09: skip Legal; notable entrepreneurs and or
 
 **This is staging data. No person has reviewed it and nothing is published.** It does not replace plan run A or B.
 
+## Done: deceased notable Africans (`deceased-2026-11-09`)
+On your instruction: 1,000 notable Africans who have died, from any field, not only business.
+
+- **Count:** 999 people from 54 countries and 20 former African states. One more failed the final scan.
+- **Ranking:** by the number of Wikipedia language editions. Every country gets its 5 most notable first, and no country gets more than 150.
+- **Excluded:**
+  - people notable for crime
+  - people who died as minors
+  - deaths before 1500
+  - non-African people
+  - citizens only of former states that were not African, such as the Ottoman Empire or Castile
+- **Fields kept:** birth and death years, birth and death places, positions held with years, education, notable works and awards.
+- **Never read:** party, religion, ethnicity, cause of death and family.
+- **Grouping:** each person is grouped by field: politics, sport, literature, royalty and so on.
+- **Breakdown:** `docs/data-breakdown.md` holds counts only. Regenerate it after every run with `python -I acquisition/pipeline/breakdown.py`.
+
 ## Differences from the plan
 | Plan | This run | Why |
 |---|---|---|
 | 500 organisations, 200 entrepreneurs, 300 individuals; 850 Nigeria | 8,950 and 1,557, no notable individuals; all African countries | Your instructions; the mix is what the filters allow |
+| MVP excludes deceased persons (plan 1.4; REQ-139 has only a current title) | 999 deceased people collected, with birth and death years | Your instruction; REQ-140 (no date of birth) was written for living people, so Legal should confirm it does not apply |
 | Legal basis before any individual's data is processed, including AI (REQ-169, Q35, Q63) | Skipped for local collection, on your instruction | No AI API was used, and nothing was published |
 | No photos or logos until Legal advises (Q34) | Collected, on your instruction | Each stores licence or credit, and source |
 | Entrepreneurs meet E1 or E2 from a primary source | 1 meets E1; 1,556 marked `LEAD` | Wikidata alone cannot prove E1 or E2 |
@@ -40,4 +57,5 @@ The shared-docs owner should apply these:
 - Record the 2026-11-09 instruction to skip Legal for local collection as a decision, stating what it does not cover (publication). Affects REQ-169, Q34, Q35, Q63.
 - D-010 and Q29: this run covers all African countries. Plan 1.6's split is overtaken for the test data, not yet as policy.
 - Add to the plan's research log: `query.wikidata.org/robots.txt` disallows `/sparql` for crawlers, although the WDQS manual documents scripted use under a User-Agent policy.
+- Decide whether deceased notable people are in scope (plan 1.4 excludes them; REQ-139 assumes living people). If yes, add a REQ and a criterion code (this run uses `HIST`).
 - `docs/contracts/import-format.md`: this run's records are not yet in contract format. An export step is still to be written.

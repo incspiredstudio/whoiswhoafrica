@@ -38,6 +38,30 @@ IMG = DATA / "images"
 UA = "WHOISWHO-bot/1.0 (+https://wiwi.africa/bot) python-urllib"
 RUN_ID = "first-1000-2026-11-09"
 EXPANSION_RUN_ID = "expansion-2026-11-09"
+DECEASED_RUN_ID = "deceased-2026-11-09"
+DECEASED_TARGET = 1000
+DECEASED_FLOOR_PER_COUNTRY = 5
+DECEASED_CAP_PER_COUNTRY = 150
+# Deceased people are notable for many things, including politics and religion, so those are allowed here.
+# Prominence that comes from crime is not (plan 1.4).
+CRIME = re.compile(r"\b(serial killer|killer|murderer|mass murderer|criminal|gangster|drug lord|drug trafficker|rapist|kidnapper|bandit|terrorist|"
+                   r"cannibal|executed for|convicted|fraudster|con artist|hijacker|assassin)\b", re.I)
+PERSON_FIELDS = [
+    ("Royalty and traditional rulers", r"monarch|king|queen|emperor|empress|sultan|pharaoh|emir|oba|ooni|chief|sovereign|ruler|prince|princess|regent|negus|khedive|bey\b|dey\b"),
+    ("Politics and government", r"politician|president|prime minister|minister|statesperson|diplomat|ambassador|governor|senator|legislator|mayor|civil servant|head of state|head of government|member of parliament|vice-president"),
+    ("Activism and liberation", r"activist|revolutionary|freedom fighter|nationalist|trade unionist|human rights|independence|anti-apartheid|liberation|resistance"),
+    ("Military", r"military|soldier|army|general|officer|marshal|admiral|warrior|commander"),
+    ("Religion", r"cleric|priest|bishop|archbishop|cardinal|imam|pastor|theologian|missionary|saint|religious|pope|prophet|sheikh|marabout|mufti|preacher|nun|monk"),
+    ("Science, medicine and academia", r"scientist|physician|academic|professor|historian|economist|engineer|mathematician|philosopher|anthropologist|sociologist|linguist|surgeon|chemist|physicist|biologist|geographer|astronomer|researcher|doctor|educator|teacher|scholar"),
+    ("Literature and journalism", r"writer|poet|novelist|author|playwright|journalist|essayist|editor|publisher|dramatist|translator"),
+    ("Music", r"musician|singer|composer|songwriter|rapper|guitarist|drummer|bandleader|saxophonist|pianist|trumpeter|percussionist"),
+    ("Film, theatre and broadcasting", r"actor|actress|film director|film producer|screenwriter|comedian|presenter|broadcaster|dancer|choreographer"),
+    ("Visual arts and architecture", r"painter|sculptor|photographer|artist|architect|designer|illustrator|cartoonist"),
+    ("Sport", r"footballer|athlete|runner|boxer|player|cyclist|coach|wrestler|sprinter|swimmer|marathon|olympic|sportsperson|racing driver"),
+    ("Business", r"businessperson|entrepreneur|banker|industrialist|merchant|trader|executive"),
+    ("Law", r"lawyer|judge|jurist|barrister|attorney|advocate"),
+]
+PERSON_FIELDS = [(name, re.compile(r"\b(" + rx + r")", re.I)) for name, rx in PERSON_FIELDS]
 TOTAL_TARGET = 11000
 
 COUNTRIES = {"Q1033": "Nigeria", "Q117": "Ghana", "Q114": "Kenya", "Q258": "South Africa"}
@@ -104,7 +128,7 @@ def db():
     CREATE TABLE IF NOT EXISTS images(qid TEXT, role TEXT, status TEXT, path TEXT, source_url TEXT, licence TEXT, credit TEXT,
       retrieved_at TEXT, PRIMARY KEY(qid, role));
     CREATE TABLE IF NOT EXISTS records(record_id TEXT PRIMARY KEY, type TEXT, qid TEXT, name TEXT, country TEXT, city TEXT,
-      org_type TEXT, org_category TEXT, industry TEXT, website TEXT, website_status TEXT, founded_year TEXT, exchange TEXT, current_title TEXT,
+      org_type TEXT, org_category TEXT, person_field TEXT, lifespan TEXT, born_in TEXT, died_in TEXT, education TEXT, industry TEXT, website TEXT, website_status TEXT, founded_year TEXT, exchange TEXT, current_title TEXT,
       current_org TEXT, roles TEXT, awards TEXT, sitelinks INT, description TEXT, bio TEXT, site_description TEXT,
       criterion TEXT, criterion_met INT, evidence_url TEXT, wikipedia_lead TEXT,
       photo_path TEXT, photo_source TEXT, photo_licence TEXT, photo_credit TEXT,
@@ -299,6 +323,47 @@ def stage_seed():
         print(dict(r))
 
 
+def stage_seed_deceased():
+    con = db()
+    load_countries(con)
+    con.execute("CREATE TABLE IF NOT EXISTS seeded_deceased(qid TEXT PRIMARY KEY)")
+    done = {r[0] for r in con.execute("SELECT qid FROM seeded_deceased")}
+    added = 0
+    for cq, cname in sorted(COUNTRIES.items(), key=lambda x: x[1]):
+        if cq in done:
+            continue
+        rows = sparql(f"""SELECT DISTINCT ?p ?sl WHERE {{ ?p wdt:P27 wd:{cq}; wdt:P31 wd:Q5; wdt:P570 ?d; wikibase:sitelinks ?sl. FILTER(?sl >= 5) }}""")
+        for row in rows:
+            cur = con.execute("INSERT OR IGNORE INTO candidates(qid,kind,country,sitelinks) VALUES(?,?,?,?)",
+                              (qid_of(row["p"]["value"]), "deceased", cname, int(row["sl"]["value"])))
+            added += cur.rowcount
+        con.execute("INSERT OR REPLACE INTO seeded_deceased VALUES(?)", (cq,))
+        con.commit()
+        print("deceased", cname, len(rows), flush=True)
+    if "historical" not in done:
+        rows = sparql("""SELECT DISTINCT ?p ?sl ?sLabel ?bc WHERE {
+              ?s wdt:P31/wdt:P279* wd:Q3024240; wdt:P30 wd:Q15.
+              ?p wdt:P27 ?s; wdt:P31 wd:Q5; wdt:P570 ?d; wikibase:sitelinks ?sl.
+              FILTER(?sl >= 10) FILTER(YEAR(?d) >= 1500)
+              OPTIONAL { ?p wdt:P19/wdt:P17 ?bc }
+              SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }""")
+        best = {}
+        for row in rows:
+            q = qid_of(row["p"]["value"])
+            bc = qid_of(row["bc"]["value"]) if "bc" in row else None
+            country = COUNTRIES.get(bc) or row.get("sLabel", {}).get("value") or "Historical state"
+            if q not in best or bc in COUNTRIES:
+                best[q] = (country, int(row["sl"]["value"]), bc in COUNTRIES)
+        for q, (country, sl, modern) in best.items():
+            cur = con.execute("INSERT OR IGNORE INTO candidates(qid,kind,country,sitelinks) VALUES(?,?,?,?)",
+                              (q, "deceased", country if modern else f"{country} (historical)", sl))
+            added += cur.rowcount
+        con.execute("INSERT OR REPLACE INTO seeded_deceased VALUES('historical')")
+        con.commit()
+        print("deceased from historical African states", len(best), flush=True)
+    print("new deceased candidates", added, "total", con.execute("SELECT COUNT(*) FROM candidates WHERE kind='deceased'").fetchone()[0])
+
+
 # ------------------------------------------------------------- enrich
 def claim_values(ent, prop, current_only=False):
     out = []
@@ -336,6 +401,28 @@ def trim_entity(ent, kind):
                  parent=item_ids(ent, "P749", True), subsidiaries=item_ids(ent, "P355", True), products=item_ids(ent, "P1056", True),
                  member_of=item_ids(ent, "P463", True), employees=next((v.get("amount", "").lstrip("+") for v in claim_values(ent, "P1128", True) if isinstance(v, dict)), None),
                  dissolved=bool(claim_values(ent, "P576")))
+    elif kind == "deceased":
+        def year_of(v):
+            t = v.get("time", "") if isinstance(v, dict) else ""
+            m = re.match(r"([+-])0*(\d+)-", t)
+            return (int(m.group(2)) * (-1 if m.group(1) == "-" else 1)) if m else None
+
+        def qual_year(st, prop):
+            for q in st.get("qualifiers", {}).get(prop, []):
+                if q.get("datavalue"):
+                    return year_of(q["datavalue"]["value"])
+            return None
+        positions = []
+        for st in ent.get("claims", {}).get("P39", []):
+            dv = st.get("mainsnak", {}).get("datavalue")
+            if dv and st.get("rank") != "deprecated" and isinstance(dv["value"], dict) and "id" in dv["value"]:
+                positions.append([dv["value"]["id"], qual_year(st, "P580"), qual_year(st, "P582")])
+        births, deaths = claim_values(ent, "P569"), claim_values(ent, "P570")
+        d.update(occupations=item_ids(ent, "P106"), positions_dated=positions, awards=item_ids(ent, "P166"),
+                 educated=item_ids(ent, "P69"), works=item_ids(ent, "P800"), member_of=item_ids(ent, "P463"),
+                 employers=item_ids(ent, "P108"), birth_place=item_ids(ent, "P19")[:1], death_place=item_ids(ent, "P20")[:1],
+                 birth_year=year_of(births[0]) if births else None, death_year=year_of(deaths[0]) if deaths else None,
+                 deceased=bool(deaths))
     else:
         d.update(occupations=item_ids(ent, "P106"), employers=item_ids(ent, "P108", True), positions=item_ids(ent, "P39", True),
                  awards=item_ids(ent, "P166"), owner_of=item_ids(ent, "P1830", True), boards=item_ids(ent, "P3320", True),
@@ -372,8 +459,10 @@ def stage_enrich():
     refs = set()
     for r in con.execute("SELECT data FROM entities"):
         d = json.loads(r[0])
-        for k in ("countries", "types", "hq", "industry", "exchange", "occupations", "employers", "positions", "awards", "owner_of", "parent", "subsidiaries", "products", "member_of", "boards"):
+        for k in ("countries", "types", "hq", "industry", "exchange", "occupations", "employers", "positions", "awards", "owner_of", "parent", "subsidiaries", "products", "member_of", "boards",
+                  "educated", "works", "birth_place", "death_place"):
             refs.update(d.get(k) or [])
+        refs.update(x[0] for x in d.get("positions_dated") or [])
     refs.update(r[0] for r in con.execute("SELECT org_qid FROM founder_links"))
     have = {r[0] for r in con.execute("SELECT qid FROM labels")}
     refs = sorted(refs - have)
@@ -542,6 +631,73 @@ def country_qid(name):
     return next((q for q, n in COUNTRIES.items() if n == name), None)
 
 
+AFRICAN_STATE = re.compile(
+    r"egypt|tunis|zulu|kongo|zanzibar|dahomey|merina|imerina|madagascar|rhodesia|nyasaland|darfur|ethiopia|abyssinia|kanem|bornu|gaza empire|"
+    r"ashanti|asante|benin|yeke|hafsid|south african republic|orange free state|transvaal|natal|cape colony|union of south africa|"
+    r"mali empire|songhai|oyo|sokoto|wadai|buganda|bunyoro|basotho|swazi|ndebele|mutapa|morocc|algiers|tripoli|cyrenaica|sennar|funj|"
+    r"kush|aksum|axum|ghana empire|wolof|jolof|kaabu|futa|massina|toucouleur|kilwa|liberia|sierra leone|gold coast|nigeria|congo|"
+    r"bechuanaland|tanganyika|kenya|uganda|somali|eritrea|sudan|libya|french west africa|french equatorial africa|"
+    r"south west africa|german east africa|ruanda|urundi|mahdist|alaouite|saadi|marinid|wattasid|almohad|almoravid|ayyubid|fatimid|tulunid|ikhshidid|mamluk",
+    re.I)
+DEMONYMS = [("South African", "South Africa"), ("South Sudanese", "South Sudan"), ("Bissau-Guinean", "Guinea-Bissau"),
+            ("Equatoguinean", "Equatorial Guinea"), ("Nigerian", "Nigeria"), ("Nigerien", "Niger"), ("Ghanaian", "Ghana"),
+            ("Kenyan", "Kenya"), ("Moroccan", "Morocco"), ("Egyptian", "Egypt"), ("Tunisian", "Tunisia"), ("Algerian", "Algeria"),
+            ("Senegalese", "Senegal"), ("Ugandan", "Uganda"), ("Cameroonian", "Cameroon"), ("Tanzanian", "Tanzania"),
+            ("Zimbabwean", "Zimbabwe"), ("Ivorian", "Ivory Coast"), ("Rwandan", "Rwanda"), ("Beninese", "Benin"), ("Guinean", "Guinea"),
+            ("Angolan", "Angola"), ("Ethiopian", "Ethiopia"), ("Namibian", "Namibia"), ("Togolese", "Togo"), ("Sudanese", "Sudan"),
+            ("Zambian", "Zambia"), ("Burkinab", "Burkina Faso"), ("Libyan", "Libya"), ("Malagasy", "Madagascar"), ("Malian", "Mali"),
+            ("Somali", "Somalia"), ("Mozambican", "Mozambique"), ("Motswana", "Botswana"), ("Batswana", "Botswana"),
+            ("Malawian", "Malawi"), ("Gabonese", "Gabon"), ("Burundian", "Burundi"), ("Chadian", "Chad"), ("Gambian", "The Gambia"),
+            ("Mauritian", "Mauritius"), ("Sierra Leonean", "Sierra Leone"), ("Mauritanian", "Mauritania"), ("Liberian", "Liberia"),
+            ("Cape Verdean", "Cape Verde"), ("Eritrean", "Eritrea"), ("Seychellois", "Seychelles"), ("Swazi", "Eswatini"),
+            ("Djiboutian", "Djibouti"), ("Comorian", "Comoros"), ("Basotho", "Lesotho"), ("Mosotho", "Lesotho")]
+
+
+def deceased_country(d, default):
+    """Prefer the nationality the description states, when it is one of the person's citizenships."""
+    desc = d.get("description") or ""
+    hits = []
+    for dem, country in DEMONYMS:
+        i = desc.find(dem)
+        if i >= 0 and country_qid(country) in (d.get("countries") or []):
+            hits.append((i, -len(dem), country))
+    return min(hits)[2] if hits else default
+
+
+def deceased_reason(con, d, country=""):
+    occ_text = " ".join(label(con, o) or "" for o in d.get("occupations") or [])
+    text = f"{d.get('description') or ''} {occ_text}"
+    by, dy = d.get("birth_year"), d.get("death_year")
+    if not d.get("deceased"):
+        return "not_deceased"
+    if country.endswith("(historical)") and not AFRICAN_STATE.search(country):
+        return "historical_state_not_african"
+    if CRIME.search(text):
+        return "notable_for_crime"
+    if CONTACT.search(text):
+        return "contact_details_in_text"
+    if dy is not None and dy < 1500:
+        return "died_before_1500"
+    if by is not None and dy is not None and dy - by < 18:
+        return "died_as_minor"
+    if NON_AFRICAN.search(d.get("description") or "") and not AFRICAN.search(d.get("description") or ""):
+        return "not_african"
+    return None
+
+
+def person_field(con, d):
+    """Field with the most matching occupations and positions; ties go to the earlier field. Description only as a fallback."""
+    labels = [label(con, o) or "" for o in d.get("occupations") or []] + [label(con, x[0]) or "" for x in d.get("positions_dated") or []]
+    scores = [(sum(1 for l in labels if rx.search(l)), -i, name) for i, (name, rx) in enumerate(PERSON_FIELDS)]
+    best = max(scores)
+    if best[0] > 0:
+        return best[2]
+    for name, rx in PERSON_FIELDS:
+        if rx.search(d.get("description") or ""):
+            return name
+    return "Other"
+
+
 def stage_select():
     con = db()
     load_countries(con)
@@ -549,7 +705,7 @@ def stage_select():
     suppressed = suppression_set()
     business = class_set(con, "business", ["Q4830453", "Q783794", "Q6881511", "Q22687", "Q1378841", "Q46970"])
     biz_occ = class_set(con, "business_occupation", ENTREPRENEUR_OCCUPATIONS)
-    orgs, people = [], []
+    orgs, people, dead = [], [], []
     site = {r["qid"]: r for r in con.execute("SELECT * FROM sites")}
     founders = {}
     for r in con.execute("SELECT person_qid,org_qid FROM founder_links"):
@@ -566,6 +722,11 @@ def stage_select():
             reason = "suppressed"
         elif d["name"] in MANUAL_EXCLUDE:
             reason = "manual_exclusion"
+        elif r["kind"] == "deceased":
+            reason = deceased_reason(con, d, r["country"])
+            if not reason:
+                dead.append((r["sitelinks"], r["qid"], deceased_country(d, r["country"])))
+                continue
         elif SENSITIVE.search(text) or CONTACT.search(text):
             reason = "sensitive_term"
         elif r["kind"] == "organisation":
@@ -632,7 +793,7 @@ def stage_select():
         for k in list(by_country):
             if by_country[k]:
                 order.append(by_country[k].pop(0))
-    caps = {"Education": 0.30, "Government": 0.18, "NGO or association": 0.15, "Research": 0.05, "Other": 0.06, "Business": 1.0}
+    caps = {"Education": 0.30, "Government": 0.18, "NGO or association": 0.15, "Research": 0.05, "Media": 0.06, "Other": 0.06, "Business": 1.0}
     counts = {}
     for o in chosen:
         counts[o[3]] = counts.get(o[3], 0) + 1
@@ -653,7 +814,23 @@ def stage_select():
     sel_orgs = [o[1] for o in chosen]
     con.execute("DROP TABLE IF EXISTS selected")
     con.execute("CREATE TABLE selected(qid TEXT PRIMARY KEY, kind TEXT)")
-    con.executemany("INSERT INTO selected VALUES(?,?)", [(q, "organisation") for q in sel_orgs] + [(q, "entrepreneur") for q in sel_people])
+    dead.sort(key=lambda x: x[0], reverse=True)
+    sel_dead, per = [], {}
+    for x in dead:  # every country gets its most notable few first
+        if per.get(x[2], 0) < DECEASED_FLOOR_PER_COUNTRY:
+            sel_dead.append(x[1])
+            per[x[2]] = per.get(x[2], 0) + 1
+    chosen_dead = set(sel_dead)
+    for x in dead:  # then the rest by notability, with a cap per country
+        if len(sel_dead) >= DECEASED_TARGET:
+            break
+        if x[1] not in chosen_dead and per.get(x[2], 0) < DECEASED_CAP_PER_COUNTRY:
+            sel_dead.append(x[1])
+            chosen_dead.add(x[1])
+            per[x[2]] = per.get(x[2], 0) + 1
+    sel_dead = sel_dead[:DECEASED_TARGET] if len(sel_dead) > DECEASED_TARGET else sel_dead
+    print("deceased pool", len(dead), "selected", len(sel_dead), "countries", len({x[2] for x in dead if x[1] in set(sel_dead)}))
+    con.executemany("INSERT INTO selected VALUES(?,?)", [(q, "organisation") for q in sel_orgs] + [(q, "entrepreneur") for q in sel_people] + [(q, "deceased") for q in sel_dead])
     con.execute("DROP TABLE IF EXISTS org_pool")
     con.execute("CREATE TABLE org_pool(qid TEXT PRIMARY KEY)")
     con.executemany("INSERT INTO org_pool VALUES(?)", [(o[1],) for o in orgs])
@@ -834,8 +1011,8 @@ def stage_finalise():
         wd_url = f"https://www.wikidata.org/wiki/{qid}"
         at = r["retrieved_at"]
         flags = []
-        rec = dict(record_id="wd:" + qid, type=kind, qid=qid, name=d["name"], country=r["country"], sitelinks=d["sitelinks"],
-                   description=d.get("description"), website=d.get("website"), run_id=RUN_ID if qid in run1 else EXPANSION_RUN_ID, retrieved_at=at,
+        rec = dict(record_id="wd:" + qid, type=kind, qid=qid, name=d["name"], country=deceased_country(d, r["country"]) if kind == "deceased" else r["country"], sitelinks=d["sitelinks"],
+                   description=d.get("description"), website=d.get("website"), run_id=DECEASED_RUN_ID if kind == "deceased" else RUN_ID if qid in run1 else EXPANSION_RUN_ID, retrieved_at=at,
                    wikipedia_lead=("https://en.wikipedia.org/wiki/" + urllib.parse.quote(d["enwiki"].replace(" ", "_"))) if d.get("enwiki") else None)
         prov = {"name": ("wikidata", wd_url, "high", "API"), "country": ("wikidata", wd_url, "high", "API")}
         if d.get("description"):
@@ -904,6 +1081,61 @@ def stage_finalise():
                 prov["site_description"] = ("own_site", site["final_url"], "medium", "fetch")
             if rec["website_status"] not in ("ok",):
                 flags.append("website_" + rec["website_status"])
+        elif kind == "deceased":
+            def yr(y):
+                return f"{-y} BC" if y is not None and y < 0 else (str(y) if y is not None else "?")
+            by, dy = d.get("birth_year"), d.get("death_year")
+            rec["lifespan"] = f"{yr(by)}–{yr(dy)}"
+            rec["person_field"] = person_field(con, d)
+            names = lambda key, n: [x for x in (label(con, q) for q in (d.get(key) or [])[:n * 2]) if x][:n]
+            occs = names("occupations", 3)
+            rec["current_title"] = cap(occs[0]) if occs else None
+            positions = []
+            for q, a, b in d.get("positions_dated") or []:
+                lab = label(con, q)
+                if lab and lab not in [x.split(" (")[0] for x in positions]:
+                    span = f" ({yr(a)}–{yr(b)})" if a and b and a != b else f" ({yr(a)})" if a else ""
+                    positions.append(lab + span)
+            rec["roles"] = json.dumps(positions[:8], ensure_ascii=False)
+            awards = names("awards", 8)
+            rec["awards"] = json.dumps(awards, ensure_ascii=False)
+            rec["born_in"] = next(iter(names("birth_place", 1)), None)
+            rec["died_in"] = next(iter(names("death_place", 1)), None)
+            edu = names("educated", 4)
+            rec["education"] = "; ".join(edu) or None
+            works = names("works", 4)
+            members = names("member_of", 3)
+            desc_text = d.get("description") or ""
+            if desc_text:
+                bio = f"{d['name']} ({rec['lifespan']}) was {opening(desc_text)}."
+            else:
+                bio = f"{d['name']} ({rec['lifespan']}) was {a_an(occs[0]) if occs else 'a notable figure'}" + (f" from {r['country']}." if "historical" not in rec["country"] else ".")
+            if desc_text and rec["country"].split(" (")[0] not in desc_text and not AFRICAN.search(desc_text):
+                bio += f" Country: {r['country']}."
+            if rec["born_in"] and rec["died_in"]:
+                bio += f" Born in {rec['born_in']}; died in {rec['died_in']}."
+            elif rec["born_in"]:
+                bio += f" Born in {rec['born_in']}."
+            elif rec["died_in"]:
+                bio += f" Died in {rec['died_in']}."
+            if len(occs) > 1:
+                bio += f" Occupations: {join_list([o[0].lower() + o[1:] if not o[:2].isupper() else o for o in occs])}."
+            if positions:
+                bio += f" Positions held: {join_list(positions[:5])}."
+            if edu:
+                bio += f" Educated at {join_list(edu[:3])}."
+            if works:
+                bio += f" Notable works: {join_list(works)}."
+            if members:
+                bio += f" Member of {join_list(members)}."
+            if awards:
+                bio += f" Awards and honours: {join_list(awards[:6])}."
+            rec["bio"] = bio
+            rec["criterion"], rec["criterion_met"], rec["evidence_url"] = "HIST", 0, wd_url
+            flags.append("outside_mvp_scope_deceased")
+            for f in ("lifespan", "person_field", "current_title", "roles", "awards", "born_in", "died_in", "education"):
+                if rec.get(f):
+                    prov[f] = ("wikidata", wd_url, "medium", "API")
         else:
             orgs = [(o, label(con, o)) for o in business_founder_orgs(con, qid, founders, business)]
             orgs = [(o, n) for o, n in orgs if n]
@@ -991,7 +1223,7 @@ def stage_finalise():
             "2_source_url_success": True,
             "3_claim_quotes": "not_applicable_no_ai_text",
             "4_allowlisted_fields_only": True,
-            "5_sensitive_scan": not (SENSITIVE.search(scan_text) or CONTACT.search(scan_text)),
+            "5_sensitive_scan": not ((CRIME if kind == "deceased" else SENSITIVE).search(scan_text) or CONTACT.search(scan_text)),
             "6_suppression_check": "passed_but_no_list_exists_yet" if not suppression_set() else True,
             "7_duplicates_flagged": "possible_duplicate" in flags,
         }
@@ -1013,7 +1245,7 @@ def stage_finalise():
     print("records", con.execute("SELECT COUNT(*) FROM records").fetchone()[0], "site descriptions dropped", site_clean, "records failed scan", scan_failed)
 
 
-STAGES = dict(seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, logos=stage_logos, finalise=stage_finalise)
+STAGES = dict(seed_deceased=stage_seed_deceased, seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, logos=stage_logos, finalise=stage_finalise)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in STAGES:
