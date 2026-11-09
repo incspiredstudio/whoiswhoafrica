@@ -1,5 +1,12 @@
 # Pipeline
 
-Code for seeding, fetching, drafting, basic verification, staging and export, plus `migrations/` for the staging database. **Empty for now: no pipeline code or migrations exist yet.**
+Code for seeding, fetching, drafting, basic verification, staging and export, plus `migrations/` for the staging database.
+
+- `run_first_1000.py`: the 2026-11-09 test run. Stages: `seed`, `enrich`, `sites`, `select`, `images`, `finalise`.
+- `build_table.py`: builds the filterable table at `acquisition/data/first-1000.html`.
+
+Run from the repo root: `python -I acquisition/pipeline/run_first_1000.py <stage>`. See `acquisition/STATUS.md`.
+
+There is no AI drafting step or contract export yet.
 
 WordPress schema changes do not belong here. Output format: `docs/contracts/import-format.md`.
