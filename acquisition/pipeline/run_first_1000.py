@@ -63,10 +63,11 @@ EXCLUDED_TYPE_LABEL = re.compile(
     r"political organi[sz]ation|secret police|titular see|rural community|region of \w+|human settlement|building|built structure|structure|caravanserai|lodge|stud farm|badminton|paralympic|cultural heritage|lyceum|french school|research reactor|local authority|scouting|boxing|swimming|volleyball|judo|chess|cycling|military|army|navy|air force|battalion|regiment|armed forces|armed group|armed organi[sz]ation|rebel|insurgent|jihad\w*|paramilitary|guerrilla|liberation (?:movement|front)|prison|refugee camp|kasbah|palace|mausoleum|shrine|zawiya|synagogue|cathedral|basilica|chapel|madrasa|archaeological|heritage site|national park|nature reserve|airport|railway station|bus station|dam|bridge|lighthouse|power station|oil field|mine|neighbou?rhood|commune|municipality|prefecture|province|district|village|city|town|parti politique|partido|secret service|intelligence|municipal|genootschap|ecclesiastical|catholic|apostolic|trappist|nunnery|vicariate|nunciature|hate group|vigilante|militia|terror\w*|political initiative|pressure group|advocacy group|secretariat|executive branch|cabinet|fort|castle|botanical garden|amusement park|estate|dyeworks|faculty|nursing faculty|handball|hockey|golf|tennis|athletics|multi-level marketing|pyramid scheme|ponzi|youth system|lyc.e|campaign|protest|"
     r"(secondary|primary|private|public|girls'|boys'|boarding|high|junior|elementary|grammar|international|nursery) school|preschool)\b|^school$", re.I)
 CATEGORY_RULES = [
-    ("Education", re.compile(r"universit|polytechnic|college|school|academic|education|institute of technology", re.I)),
-    ("Government", re.compile(r"government|ministr|agency|regulat|federal|parliament|legislat|lower house|upper house|central bank|commission|law enforcement|armed|military", re.I)),
     ("NGO or association", re.compile(r"nonprofit|non-profit|non-governmental|foundation|charit|association|union|society|intergovernmental|international organi", re.I)),
-    ("Research", re.compile(r"research", re.I)),
+    ("Media", re.compile(r"news|media|broadcast|radio|television|newspaper|magazine|publish", re.I)),
+    ("Education", re.compile(r"universit|polytechnic|college|school|academic|education|institute of technology", re.I)),
+    ("Research", re.compile(r"research|think tank", re.I)),
+    ("Government", re.compile(r"government|ministr|government agency|regulat|federal|parliament|legislat|lower house|upper house|senate|central bank|commission|law enforcement|police|gendarmerie|court|archives|statistic|public institution", re.I)),
 ]
 NON_BUSINESS_OCC = re.compile(
     r"\b(politician|president|vice president|governor|senator|minister|legislator|diplomat|statesperson|party|military|soldier|general|monarch|"
