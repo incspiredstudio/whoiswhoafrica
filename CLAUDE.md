@@ -37,7 +37,7 @@ Human gates after: the question list, the architecture, the plan.
 - Terms and ID codes (REQ, C, Q, D, N, M, ADR) are explained in docs/GUIDE.md; use them consistently.
 
 ## Commands
-Stack: WordPress (current stable) on cPanel behind Cloudflare; custom plugin `whoiswho-core`, must-use plugin `whoiswho-guard`, theme `whoiswho`; MariaDB/MySQL; server-rendered PHP templates. See docs/architecture.md (proposed v2 until Gate 2 is approved). Website code lives in `site/`. The script names below are the plan; the M0 scaffold creates them (verify).
+Stack: WordPress (current stable) built locally and migrated to the live cPanel host (Cloudflare optional later); email through cPanel SMTP; media in the WordPress media library; custom plugin `whoiswho-core`, must-use plugin `whoiswho-guard`, theme `whoiswho`; MariaDB/MySQL; server-rendered PHP templates. See docs/architecture.md (proposed v2 until Gate 2 is approved). Website code lives in `site/`. The script names below are the plan; the M0 scaffold creates them (verify).
 - Install (in `site/`): `composer install` and `npm ci`; copy `.env.example` to the secrets file yourself (agents never read `.env*`)
 - Local environment: `npx wp-env start` (needs Docker; verify) or an equivalent local PHP and MariaDB
 - Test: `composer test` (PHPUnit on the WordPress test suite; one test: `composer test -- --filter REQ_208`); architecture tests: `composer test -- --testsuite Arch`
@@ -48,7 +48,7 @@ Stack: WordPress (current stable) on cPanel behind Cloudflare; custom plugin `wh
 - Dependency audit: `composer audit` and `npm audit --audit-level=high`
 - Migrate: `php bin/wiw.php migrate` (local); production runs it only through the deploy script
 - Run queued jobs locally: `php bin/wiw.php jobs:run`
-- Deploy: through GitHub Actions only (staging on merge to main; production after manual approval)
+- Go live: migrate the finished local site to the live host with the checklist in docs/architecture.md section 8, after your approval
 
 ## Conventions
 - Areas and ownership of the website code (edit only your area; cross-area needs become an issue): plugin = `site/wp-content/plugins/whoiswho-core/**`, `site/wp-content/mu-plugins/**`, `site/bin/`, tests/Unit|Integration|Arch; theme = `site/wp-content/themes/whoiswho/**`, tokens file, assets, UI specs in tests/e2e; infra = .github/, deploy/, scripts/, site/composer.json and lockfile, the wp-config template, docs/runbook.md, .env.example; qa = tests/e2e, tests/Visibility, tests/Security, docs/traceability.md, docs/verify-*.md.

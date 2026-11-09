@@ -1,8 +1,8 @@
 # WHOISWHO — Architecture (WordPress)
 
-Status: **Proposed v2 for WordPress, awaiting your approval (Gate 2).** Written 2026-11-08. It replaces the Laravel + Filament draft of 2026-11-06 (D-031). Inputs: `docs/requirements.md` (REQ-001 to REQ-244, withdrawn rows ignored), `docs/decisions.md` (D-001 to D-046), `docs/contracts/import-format.md` (v1.0-draft). No application code exists yet. Anything I could not support is marked **verify**.
+Status: **Proposed v2 for WordPress, awaiting your approval (Gate 2).** Written 2026-11-08; revised 2026-11-09 for a local WordPress build with cPanel SMTP and no object storage (D-049 to D-051). It replaces the Laravel + Filament draft of 2026-11-06 (D-031). Inputs: `docs/requirements.md` (REQ-001 to REQ-244, withdrawn rows ignored), `docs/decisions.md` (D-001 to D-046), `docs/contracts/import-format.md` (v1.0-draft). No application code exists yet. Anything I could not support is marked **verify**.
 
-Assumed constraints (edit if wrong): one human supervisor plus Claude Code agents; low budget; Nigeria first; **no online payment processing** (D-005); easy managed deployment; wiwi.africa and a cPanel account already exist (D-020); speed first (D-026). Incspired shared services may be available (Q26 to Q28).
+Assumed constraints (edit if wrong): one human supervisor plus Claude Code agents; low budget; Nigeria first; **no online payment processing** (D-005); easy managed deployment; wiwi.africa and a cPanel account already exist (D-020); speed first (D-026). **The site is built locally on WordPress and moved to the live cPanel host when finished (D-050).** Legal is skipped for now (D-051): items that depend on Legal are marked deferred and do not hold up the build.
 
 **What the site is not (so the design can stay small):** no public accounts of any kind (D-034), no claiming (D-036), no judge portal (D-019, D-034), no source registry or approval (D-038, D-042), no AI drafting (D-037, REQ-165), no kill switch (D-043), no tiers (D-028), no payment code (D-005). Acquisition is a separate pipeline that never publishes and talks to the site only through `docs/contracts/import-format.md` (D-033 as amended).
 
@@ -10,7 +10,7 @@ Assumed constraints (edit if wrong): one human supervisor plus Claude Code agent
 
 ## 1. Summary
 
-WordPress on the existing **cPanel** account, behind **Cloudflare**, with the product-specific rules in **one custom plugin (`whoiswho-core`), one must-use guard plugin (`whoiswho-guard`) and one theme (`whoiswho`)**. The database is the MariaDB/MySQL that cPanel offers; WordPress's own tables hold content and users, and **custom tables hold everything WordPress does poorly**: publication state, per-field provenance, versions, the commercial register, awards scores, signed links and the audit log. No Node server, message broker, Redis, payment gateway or front-end framework is needed.
+WordPress, built and tested locally and then migrated to the existing **cPanel** account (Cloudflare in front is a go-live option, not a dependency), with the product-specific rules in **one custom plugin (`whoiswho-core`), one must-use guard plugin (`whoiswho-guard`) and one theme (`whoiswho`)**. The database is the MariaDB/MySQL that cPanel offers; WordPress's own tables hold content and users, and **custom tables hold everything WordPress does poorly**: publication state, per-field provenance, versions, the commercial register, awards scores, signed links and the audit log. No Node server, message broker, Redis, payment gateway or front-end framework is needed.
 
 Why this shape:
 - You decided on WordPress (D-031) for editor familiarity and hosting fit. The comparison in section 13 recorded WordPress as the weakest on exactly the rules that matter here (nothing public before the rules allow it, across every surface; instant 410; provenance). So the design **does not trust WordPress's defaults for visibility**. It makes three moves instead:
@@ -28,15 +28,15 @@ Why this shape:
 | Admin | wp-admin with custom roles and capabilities (Reviewer, Editor, Administrator), custom list tables and screens; no judge area |
 | Database | MariaDB or MySQL (whatever cPanel offers), InnoDB, utf8mb4, through `$wpdb`; custom tables for product data |
 | Auth | WordPress users for staff only; enforced two-factor; front-end registration closed; no application passwords |
-| Hosting | cPanel (existing) behind Cloudflare; fallback: one small VPS |
+| Hosting | Built locally; live on the existing cPanel account. Cloudflare in front is optional at go-live. Fallback: one small VPS |
 | Payments | **None.** The register stores method and reference text only |
-| Email | Brevo SMTP through `wp_mail`; SPF, DKIM and DMARC on wiwi.africa |
-| Storage | Public images in object storage behind a CDN (REQ-080; Cloudflare R2, **verify offload method**); private files outside the web root; encrypted backups in a separate bucket |
+| Email | cPanel mail SMTP through `wp_mail`; SPF, DKIM and DMARC on wiwi.africa. Brevo is an optional later upgrade |
+| Storage | WordPress media library on the host (originals kept); private files outside the web root; backups from cPanel plus a plugin or export if needed. No object storage |
 | Search | `wiw_profile_search` table with InnoDB FULLTEXT, built from public states only |
-| Jobs | Real cron every minute driving a queue library (Action Scheduler, **verify**); WP-Cron disabled |
+| Jobs | WP-Cron with Action Scheduler; a real cron every minute is an optional improvement on the live host |
 | AI | **Not on the site.** The acquisition pipeline owns drafting and basic verification |
-| Observability | Uptime monitor, error log with IDs only, optional Sentry (**verify**), Cloudflare Web Analytics |
-| CI/CD | GitHub Actions: build an artifact, deploy by SSH and release directories to staging, then production after approval |
+| Observability | Error log with IDs only; uptime monitor, Sentry and Cloudflare Web Analytics are later, optional |
+| CI/CD | GitHub Actions run tests and checks. Going live is a migration of the finished local site (section 8); automated deploys can come later |
 
 ---
 
@@ -49,16 +49,16 @@ Why this shape:
 | **Admin console** | wp-admin: custom roles and capabilities, `WP_List_Table` screens, a few custom pages (ADR-004) | Review queue with field-level diff and source beside each claim, Support inbox, register, nominations and score entry, import, audit log, read-only Sources, users and capabilities. No third-party admin framework. | Filament (Laravel only). A separate admin app (second codebase). | Low-medium: admin screens are WordPress-specific; domain services are not. |
 | **Database** | MariaDB/MySQL through `$wpdb`; custom tables created and versioned by the plugin (ADR-002) | Native to cPanel. 10k to 100k profiles with FULLTEXT is within range (REQ-079). Money as integer kobo (REQ-112). | PostgreSQL (not on cPanel). Post meta for everything (cannot be queried or constrained; contract unknown U1). | Low. Standard SQL, no vendor-specific features. |
 | **Auth** | Staff users only; enforced two-factor; closed registration; lockout; no application passwords (ADR-004) | REQ-047, 108, 109, 229. No visitor or owner login exists, so there is nothing to attack at the front. | Third-party identity (extra processor). Front-end login (rejected by D-034). | Low. |
-| **Hosting** | Existing cPanel behind Cloudflare; fallback VPS (ADR-003) | Zero extra cost if the account passes spike S1. Cloudflare gives CDN (REQ-042), WAF and rate limits (REQ-046, 122), bot challenge (REQ-081) and cache purge (REQ-209). | Managed WordPress hosts (new monthly bill, held as fallback). | Medium: shared hosting is the weakest link for uptime (REQ-045) and cannot run daemons (ADR-011). |
+| **Hosting** | Local build, then the existing cPanel account; fallback VPS (ADR-003) | Zero extra cost. Host limits are checked on the live host at import time (section 8). Cloudflare, if added at go-live, gives CDN (REQ-042), WAF and rate limits (REQ-046, 122), bot challenge (REQ-081) and cache purge (REQ-209). | Managed WordPress hosts (new monthly bill, held as fallback). | Medium: shared hosting is the weakest link for uptime (REQ-045) and cannot run daemons (ADR-011). |
 | **Payments** | None (D-005). | The register stores method and reference text; a digit-pattern guard rejects card-like numbers. | — | — |
-| **Email** | Brevo SMTP; SPF, DKIM, DMARC on wiwi.africa (ADR-008) | Better deliverability than cPanel mail; same provider for transactional and opt-in mail with one-click unsubscribe (REQ-061, 075). | cPanel SMTP; SES; Postmark. | Low: standard SMTP. |
-| **File storage** | Public images offloaded to object storage behind the CDN; private uploads outside the web root; backups in a separate bucket (ADR-007) | REQ-080, 127, 203. No claim documents exist any more; private files are customer intake uploads and removal-request evidence. | Local uploads only (no off-host copy; acceptable only if the offload spike fails and you accept a REQ-080 change). | Low (S3 API). |
+| **Email** | cPanel mail SMTP through `wp_mail`; SPF, DKIM, DMARC on wiwi.africa (ADR-008) | No new account. One-click unsubscribe on opt-in mail still applies (REQ-061, 075). Bulk nominee mail volume is a risk to check at go-live (hosts cap messages per hour). | Brevo, SES, Postmark: later, optional. | Low: standard SMTP. |
+| **File storage** | WordPress media library for public images; private uploads outside the web root (ADR-007) | REQ-080 (amended), 127, 203. No claim documents exist any more; private files are customer intake uploads and removal-request evidence. | Object storage and CDN offload (not needed now). | Low. |
 | **Search** | FULLTEXT on a flattened table built from public read models (ADR-010) | REQ-007, 008, 079. | External search services (cost, operations). WordPress's built-in search (leak risk, poor ranking). | Upgrade path: swap the search service behind one interface. |
-| **Jobs** | System cron every minute drives Action Scheduler (verify) with a time budget (ADR-011) | Shared hosting cannot keep a worker alive; WP-Cron only fires on page requests, and edge caching makes those rare. Jobs: purge, email, imports in chunks, retention, stale checks, sponsored expiry, backups. | WP-Cron alone; Redis workers. | Move to a supervised worker on a VPS with no code change. |
+| **Jobs** | WP-Cron with Action Scheduler and a time budget (ADR-011) | WordPress already schedules jobs on page requests; a real cron on the live host is an optional improvement if edge caching makes requests rare. Jobs: purge, email, imports in chunks, retention, stale checks, sponsored expiry, backups. | WP-Cron alone; Redis workers. | Move to a supervised worker on a VPS with no code change. |
 | **AI** | None on the site (ADR-009 superseded) | REQ-165: AI drafting is in the acquisition pipeline. The site only verifies hashes and field rules on import. | — | — |
-| **Observability** | Uptime monitor on a health URL, directory, enquiry form and wp-admin sign-in (REQ-045, 050); structured logs with IDs only; Cloudflare Web Analytics; first-party counters (REQ-078) | Cookieless, so no consent banner for analytics (REQ-062). | GA4 (cookies, cross-border). | Low. |
+| **Observability** | Structured logs with IDs only; first-party counters (REQ-078); an uptime monitor on a health URL (REQ-045, 050) and Cloudflare Web Analytics are later, optional | Cookieless, so no consent banner for analytics (REQ-062). | GA4 (cookies, cross-border). | Low. |
 | **CI/CD** | GitHub Actions (ADR-012) | Matches the repo and PR workflow in CLAUDE.md. | Manual FTP. | Low. |
-| **Bot / abuse** | Cloudflare Turnstile + per-IP and per-email/token throttles + Cloudflare WAF rules | REQ-081, 122. | reCAPTCHA (Google cookies). | Low. |
+| **Bot / abuse** | Per-IP and per-email/token throttles in the plugin; Cloudflare Turnstile and WAF rules when Cloudflare is added | REQ-081, 122. | reCAPTCHA (Google cookies). | Low. |
 
 ---
 
@@ -67,14 +67,14 @@ Why this shape:
 ### 3.1 Overview
 
 ```
- Visitor ──► Cloudflare (DNS, CDN, WAF, Turnstile) ──► cPanel host
+ Visitor ──► (optional: Cloudflare) ──► cPanel host
                                                         ├─ WordPress core (pinned, vendored in the release)
                                                         │    ├─ mu-plugin  whoiswho-guard   (visibility, REST lock, headers, hardening)
                                                         │    ├─ plugin     whoiswho-core    (modules below)
                                                         │    └─ theme      whoiswho         (templates, tokens)
-                                                        ├─ cron (every minute): job runner
+                                                        ├─ WP-Cron / Action Scheduler: job runner
                                                         └─ MariaDB/MySQL (WordPress tables + wiw_* tables)
- whoiswho-core ──► Brevo (email)  ──► Cloudflare API (cache purge) ──► object storage (images, backups)
+ whoiswho-core ──► cPanel SMTP (email)  ──► (optional) Cloudflare API (cache purge)
  Acquisition pipeline ──(export bundle, files, contract section 2 to 12)──► Administrator uploads in wp-admin
  whoiswho-core ──(suppression snapshot, import result)──► acquisition side
 ```
@@ -130,13 +130,13 @@ Triggers: a single unpublish (`wiw_unpublish_profiles`); **bulk unpublish by fil
 1. **Bulk unpublish** (replaces the kill switch, D-043). The screen filters by source, type, import batch and state, in any combination, and shows a live match count. A mandatory reason and a confirmation that shows the count and the first few names are required. One request creates a `wiw_bulk_actions` row and schedules chunked jobs (a few hundred profiles per job) so a large batch stays within the host's limits.
 2. For each profile, in one transaction: `StateMachine` sets *Unpublished* (or *Removed and suppressed*), the search row is deleted, a suppression row is added if the trigger is a removal or decline, and **one audit row per profile plus one for the batch** is written (REQ-193).
 3. The origin returns **410 Gone with `X-Robots-Tag: noindex`** from the next request. It reads the state from the database, not from a cache, through a `parse_request` handler that resolves a slug to a tombstone in `wiw_profile_state`. Restoring a reversible unpublish returns 200 again. Rejected and Imported – not public return 404.
-4. After commit, **high-priority purge jobs** call the Cloudflare API: purge by URL for the profile page, its list pages, the sitemap and the share-image URL, in batches (the per-call limit is **verify**); a bulk action over a threshold also purges the HTML cache broadly. The edge caches public HTML for at most **120 seconds** (60 seconds for lists and search), so the worst case after a failed purge is two minutes. Failed purges retry and alert.
+4. If Cloudflare is in front, then after commit **high-priority purge jobs** call the Cloudflare API (without it there is no edge cache and the 410 in step 3 is already the live answer): purge by URL for the profile page, its list pages, the sitemap and the share-image URL, in batches (the per-call limit is **verify**); a bulk action over a threshold also purges the HTML cache broadly. The edge caches public HTML for at most **120 seconds** (60 seconds for lists and search), so the worst case after a failed purge is two minutes. Failed purges retry and alert.
 5. `sitemap.xml` is generated from the read model on request (cached five minutes) and purged by the same job (REQ-121, 209).
 6. **Restore this batch** reverses one bulk action by its ID, only for profiles still unpublished by that action; it is audited the same way.
 7. **Removal request (REQ-158).** A correction, removal or report arrives as a typed Support inbox item (F6) with a due date. A valid removal from the subject is acted on within two business days: staff unpublish the profile and, if valid, the suppression list gains the person or organisation (REQ-147, 207). Only the Administrator edits the suppression list manually; a removal handled by an Editor adds the entry automatically through the service, and nobody below the Administrator can undo it. Imports re-check the live list (contract section 11, check 3).
 8. N21 (human): file search-engine removal requests for already-indexed URLs.
 
-Spike S2 proves this end to end on the real Cloudflare zone and records the measured time to 410.
+Check on the live host at import time: confirm 410 and, if Cloudflare is used, purge by URL, and record the time to 410.
 
 ### 3.4 Flow F3: import from the acquisition pipeline (REQ-237, 148, 212, 214, 221, 222; contract sections 2 to 12)
 
@@ -145,7 +145,7 @@ The pipeline never publishes and holds no WordPress credential (D-033 as amended
 1. **Transfer.** The export bundle (manifest plus `records.jsonl`, JSON Lines) is uploaded over HTTPS in wp-admin, or placed in a private directory outside the web root and run with a CLI command (`php bin/wiw.php import`, or WP-CLI if the host has it, so WP-CLI is not required). Files are encrypted at rest, logged, and deleted after a retention period (contract U9). A REST import route is **not built for now** (Q67 default): it would need a service account, a fourth role that REQ-083 does not allow.
 2. **Manifest check.** Known contract version, counts, and `records_sha256` over the file. A bad manifest refuses the whole bundle.
 3. **Dry run (REQ-237).** Every record is validated without writing: schema and allowlisted fields per entity type, per-field provenance present, no low-confidence or unsourced field (REQ-143), verification report with the required results (REQ-214), **recomputed content hash equal to `content_hash`** (RFC 8785 canonical JSON; REQ-221), suppression check against the **live** list (REQ-207), images empty (contract section 10), taxonomy terms known. The screen shows a diff and the result code for each record. Unknown taxonomy terms are listed for mapping: an Editor or Administrator creates or maps the terms, then the dry run is repeated.
-4. **Apply in chunks.** After the Administrator confirms, an authenticated, resumable job runner applies 25 to 50 records per step (tuned in S3) from the admin page or the CLI. Progress is stored per batch, so a time-out resumes where it stopped. Each record gets a result code: `CREATED`, `UNCHANGED`, `UPDATED`, `FLAGGED_CHANGE` or a refusal code. A record failing a check is refused and the rest continue.
+4. **Apply in chunks.** After the Administrator confirms, an authenticated, resumable job runner applies 25 to 50 records per step (tuned on the live host at import time) from the admin page or the CLI. Progress is stored per batch, so a time-out resumes where it stopped. Each record gets a result code: `CREATED`, `UNCHANGED`, `UPDATED`, `FLAGGED_CHANGE` or a refusal code. A record failing a check is refused and the rest continue.
 5. **State.** WordPress sets the state by the contract's section 9 rules, in order: the *import everything as not public* setting; a probable duplicate; an individual or entrepreneur; an organisation (live, labelled "Compiled automatically from public sources. Human review pending.", noindex). The setting is an Administrator-only option, stored in settings and audited.
 6. **Storage.** Fields are stored as post meta registered from the entity-type allowlist (never exposed through REST); **per-field provenance** goes to `wiw_field_provenance`; claims, passages and the verification report go to `wiw_claims`, `wiw_passages` and `wiw_verification` (admin-only, never public, retention per REQ-063). Source, batch ID, tier, record ID and content hash go into `wiw_profile_state`, which makes source and batch filters cheap (REQ-242).
 7. **Undo a batch** (REQ-237): records created by the batch that are still unreviewed are removed; unreviewed updates revert to the previous version; reviewed records are kept (contract U14).
@@ -158,7 +158,7 @@ The pipeline never publishes and holds no WordPress credential (D-033 as amended
 |---|---|
 | U1 | Profile post type `wiw_profile`; provenance, claims, passages and reports in custom tables (not post meta) |
 | U2 | JSON Lines file upload in wp-admin or by CLI; REST deferred; REQ-237's "CSV or REST" wording should say "file or REST" (Q77) |
-| U3 | Chunked, resumable apply with per-record results (step 4); chunk size tuned in spike S3 |
+| U3 | Chunked, resumable apply with per-record results (step 4); chunk size tuned on the live host at import time |
 | U4 | Q64 stays open. Recommended: one site, with *import everything as not public* on until the safeguards in the plan pass |
 | U5 | The site owns the term values (taxonomies); unknown terms go through a mapping step before apply |
 | U6 | The site generates slugs from the name with a collision suffix; `record_id` maps to the post ID in `wiw_profile_state` |
@@ -180,6 +180,8 @@ The pipeline never publishes and holds no WordPress credential (D-033 as amended
 - Leads (`wiw_leads`, `wiw_customers`) are managed by Editors (REQ-178). Lead conversion creates a proposed arrangement that only the Administrator can open (a gap listed in the consistency report). CSV export is Administrator-only and logged (REQ-069, 077, 087).
 
 ### 3.6 Flow F5: nominations and offline judging (REQ-194 to 202, 234, 036 to 038)
+
+*Judging detail is deferred: to revisit later (the user will return to it). Nominations and score entry below are the current default.*
 
 - The only flag is **Nominations** (REQ-194, D-037): an option plus an approval reference. Switching it on needs `wiw_toggle_nominations` (Administrator), a "CEO approval reference" text, and an audit row. With the flag off, the Nominate page shows "Nominations open soon" and the email sign-up (REQ-106, 195; consent recorded, one-click unsubscribe). There is no flag for judging or announcements.
 - The nominator's email is verified by a **single-use signed link** (F6). Duplicates are detected on the normalised nominee name, organisation and category; submissions are rate limited per IP and per email.
@@ -277,7 +279,7 @@ Capabilities that cannot be granted to a non-Administrator (proposed: users and 
 
 ## 5. Module and route outline, and auth
 
-**There is no public JSON API.** Core REST is locked to logged-in staff by `whoiswho-guard`; the only public REST route is the Brevo bounce webhook, which checks a shared secret and is idempotent. Pages are server-rendered; forms post to the same site.
+**There is no public JSON API.** Core REST is locked to logged-in staff by `whoiswho-guard`; there is no public REST route. Bounce handling is manual until a mail provider with webhooks is added. Pages are server-rendered; forms post to the same site.
 
 | Area | Routes (outline) | Auth |
 |---|---|---|
@@ -287,8 +289,7 @@ Capabilities that cannot be granted to a non-Administrator (proposed: users and 
 | Staff sign-in | `/wp-login.php` (Cloudflare rate-limited; no link on the site), then two-factor | password plus two-factor, enforced before first use of wp-admin |
 | wp-admin screens | Dashboard (by role) · Review queue · Duplicates · Stale records · Profiles (filter and group by source, batch, type, state; bulk unpublish) · Sources (read-only) · Suppression list · Support inbox · Stories · Taxonomy term screens · Nominations, panel and conflicts, score entry, results · Leads · Commercial register · Imports · Users and capabilities · Roles and permissions (matrix and menus) · Audit log · Settings · Purge log | each screen and action checks a named capability; deny by default |
 | Health | `GET /healthz` (database, job heartbeat, disk) | none; no detail; token for verbose output |
-| Webhooks | `POST /wp-json/wiw/v1/brevo` (bounces) | shared secret; idempotent |
-| Scheduled jobs | purge, email, import chunks, sponsored apply and expire, expiry reminders, stale checks, retention, backup, view-count roll-up, SLA flags | CLI cron only |
+| Scheduled jobs | purge, email, import chunks, sponsored apply and expire, expiry reminders, stale checks, retention, backup, view-count roll-up, SLA flags | WP-Cron or CLI cron |
 
 Authorisation rules: deny by default; every admin action checks a capability and, where it applies to a record, a policy-style check in the module; destructive actions need a reason and write an audit row; tests assert 403 for each role and capability pairing, plus a pairing with a granted and a revoked capability.
 
@@ -324,28 +325,30 @@ Authorisation rules: deny by default; every admin action checks a capability and
 - **wp-admin hardening** (in `whoiswho-guard` and server config): file editing and file modifications disabled in production; automatic plugin updates off (updates ship through the pipeline); wp-config outside the web root; directory listing off; PHP execution blocked in uploads; core, plugin and theme paths read-only to the web user where cPanel allows.
 
 ### 6.3 Secrets
-- Real values exist only in: a `.env`-style file **outside the web root** (mode 600, created by you in cPanel or over SSH; N18) and GitHub **Environment** secrets (staging, production) used by the deploy job. cPanel has no secret manager, so that file is the host secret store (D-020). `wp-config.php` is committed as a template with no secrets and loads that file.
+- Real values exist only in: a `.env`-style file **outside the web root** (mode 600, created by you in cPanel or over SSH; N18) and GitHub **Environment** secrets if automated deploys are added later. cPanel has no secret manager, so that file is the host secret store (D-020). `wp-config.php` is committed as a template with no secrets and loads that file.
 - `.env.example` lists names only. Agents never read `.env*` (CLAUDE.md). A secret scanner runs in CI and as a pre-commit hook.
-- Keys: Brevo SMTP and webhook secret, Cloudflare API token (scoped to cache purge on one zone), Turnstile, object-storage tokens (separate for media and backups), optional Sentry DSN, the signed-link and form-token signing keys, the backup passphrase, and the WordPress salts.
+- Keys: SMTP credentials, and later, if used, a Cloudflare API token (cache purge on one zone), Turnstile, an optional Sentry DSN, the signed-link and form-token signing keys, the backup passphrase, and the WordPress salts.
 - Rotation is documented in the runbook.
 
 ### 6.4 PII and payment handling
 - No card or bank account data. The register holds method and reference text; a digit-pattern guard blocks card-like numbers in the reference field.
 - Personal-data columns and meta keys are catalogued (`pii.php`), kept out of logs and error reports, encrypted at rest where sensitive (evidence files), and covered by retention, the data-request export and erasure (REQ-059, 063).
 - Individual stubs follow the REQ-139 and 140 allowlist: the schema has no field for forbidden attributes, and free text is pattern-scanned on the pipeline side and again at import (REQ-141).
-- Processor register and data-processing agreements: hosting, Cloudflare, Brevo, object storage, error reporting, uptime monitor (REQ-065). The AI provider belongs to the acquisition side's register.
+- Processor register and data-processing agreements: hosting, cPanel mail, and any of Cloudflare, error reporting or an uptime monitor if added later (REQ-065). The AI provider belongs to the acquisition side's register.
 - Breach procedure in the runbook (REQ-066).
 
 ### 6.5 Validation, rate limits, dependencies, logging, backups
 - **Validation:** server-side only; length limits; Unicode-safe names (REQ-053); one validator class per form.
-- **Rate limits:** per IP and per email or link token for each public form (REQ-122); Cloudflare rate-limiting rules on the login, forms and signed links.
+- **Rate limits:** per IP and per email or link token for each public form (REQ-122); plugin throttles on the login, forms and signed links, plus Cloudflare rate-limiting rules if Cloudflare is added.
 - **Dependencies:** Dependabot weekly; `composer audit` and `npm audit` fail CI on high or critical; lockfiles committed; a WordPress vulnerability database check for plugins (option, **verify**); minimal packages; the reviewer agent reads dependency PRs.
 - **Headers:** HSTS, a nonce-based CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, frame-ancestors none.
 - **Logging:** structured, IDs not names or emails, request ID, 30-day retention; the audit log is separate and kept.
-- **Backups (REQ-049):** nightly database dump and private-file archive, encrypted, copied to a separate bucket; cPanel account backup as a second layer; **restore test** into staging before launch and monthly (RPO 24 h, RTO 8 h).
-- **Audit-log immutability on shared hosting:** append-only writer with no update or delete methods, hash chain, database triggers that block UPDATE and DELETE if the account has TRIGGER privilege (checked in S1), and a nightly off-host copy so tampering is detectable (ADR-013).
+- **Backups (REQ-049):** nightly database dump and private-file archive from cPanel backups, plus a backup plugin or export if needed; **restore test** into a local copy before launch and monthly (RPO 24 h, RTO 8 h).
+- **Audit-log immutability on shared hosting:** append-only writer with no update or delete methods, hash chain, database triggers that block UPDATE and DELETE if the account has TRIGGER privilege (checked on the live host at import time), and a periodic copy of the log off the server (a download by the Administrator is enough) so tampering is detectable (ADR-013).
 
 ### 6.6 Legal exposure (not legal advice)
+
+*Deferred (Legal skipped for now, D-051): nothing in the build waits on Legal. Legal-dependent items (individuals going public, photos, retention periods, data transfers) are decided later and are guarded by the review gate and bulk unpublish.*
 Publishing personal data without consent (D-013) is the largest exposure (NDPA 2023, defamation, false light). The architecture cannot remove it but limits it: individuals and entrepreneurs are never public before human review, organisations carry a visible label and noindex until reviewed, every field has a source, removal has a two-day service level, suppression is permanent, and bulk unpublish plus 410 and purge can take down a whole batch quickly. Legal's written position is outstanding (Q5, Q35).
 
 ---
@@ -356,19 +359,19 @@ Tests are written first (CLAUDE.md). Test names cite REQs, for example `test_REQ
 
 | REQ type | Test approach |
 |---|---|
-| Visibility and publication (208, 209, 210, 216 to 218, 193, 147, 207) | Integration-test matrix over every state and every surface (3.2); F2 test with a faked Cloudflare client asserting purge calls and the 410 path; spike S2 for real latency; state-transition tests for illegal moves |
+| Visibility and publication (208, 209, 210, 216 to 218, 193, 147, 207) | Integration-test matrix over every state and every surface (3.2); F2 test with a faked Cloudflare client asserting purge calls and the 410 path; a live-host latency check; state-transition tests for illegal moves |
 | Authorisation (083, 109, 235, 240, 244) | Role and capability pairing matrix of 200 and 403 responses; granted and revoked capability cases; menu tests; architecture tests for module boundaries |
 | Import (092, 132 to 148, 161, 212, 214, 221, 237) | Contract fixtures and the worked example's hash as a test vector; dry-run diff; field allowlist; forbidden fields refused; provenance required; suppression re-check; idempotent re-import; undo; a 1,000-record chunked run |
 | Business rules (022, 023, 179 to 184, 112) | Unit and property tests for the counting rule, money and label separation |
 | Forms and links (018, 081, 122, 196, 232, 233) | Validation, throttling, fake Turnstile, signed-link single use, scanner-style `GET` that must not consume, expiry |
 | Awards (030 to 038, 196 to 202, 234) | Conflict blocks score entry; computed totals; flag on and off; no commercial data reachable |
 | Privacy (057 to 072) | Data-request workflow, retention job, PII catalogue completeness |
-| UI, accessibility, performance (040 to 043, 055) | Playwright end-to-end on Chromium and a WebKit mobile profile; axe on key pages; Lighthouse CI budget (LCP, CLS) on staging |
-| Security (046) | Static analysis, `composer audit`, `npm audit`, secret scan, weekly baseline scan on staging, header test, no registration or login route exposed to visitors (REQ-229) |
+| UI, accessibility, performance (040 to 043, 055) | Playwright end-to-end on Chromium and a WebKit mobile profile; axe on key pages; Lighthouse CI budget (LCP, CLS) on the local build |
+| Security (046) | Static analysis, `composer audit`, `npm audit`, secret scan, weekly baseline scan of the local build, header test, no registration or login route exposed to visitors (REQ-229) |
 | Theme (052, 190) | CI check that fails if brand colours or fonts appear outside the tokens file |
 
 **CI gates on every PR (all required):** PHP coding standards (PHPCS with the WordPress ruleset) → static analysis (PHPStan with a WordPress extension, level agreed at M0; **verify**) → PHPUnit unit and integration tests on the WordPress test suite, plus architecture tests, with a coverage threshold for `src/` → asset build → Playwright smoke and axe → dependency audit → secret scan → the PR must cite REQ IDs and `Closes #N`. A separate reviewer step marks work done.
-**Deploy gates:** merge to `main` deploys to staging after smoke tests; production needs manual approval on the GitHub `production` environment.
+**Gates:** every PR passes the CI gates before merge. Going live is a manual migration (section 8) approved by you; automated staging and production deploys can be added later.
 
 ---
 
@@ -376,18 +379,19 @@ Tests are written first (CLAUDE.md). Test names cite REQs, for example `test_REQ
 
 | Item | Design |
 |---|---|
-| Environments | **Local** (wp-env or an equivalent container setup, **verify**; or a local PHP and MariaDB), **staging** (staging.wiwi.africa; public and indexable per D-029; real data only after the import safeguards pass; Q64), **production** (wiwi.africa). Two cPanel subdomain sites and databases. |
-| Accounts to open (N18) | **Cloudflare** (free; wiwi.africa zone, Turnstile), **GitHub** environments and secrets, **Brevo**, **object storage** (media and backups, separate tokens), **uptime monitor**, optional **Sentry**, **cPanel**: PHP version selector, SSH key access, two databases and users, cron jobs, the secrets file. Optional: Google Search Console (N21). There is no AI provider account on the site side. |
-| Build | CI builds an artifact: WordPress core (pinned), plugins and the theme (from the lockfile; third-party plugins pinned from the plugin directory, **verify the mechanism**), production Composer autoloader, built assets, a version stamp. |
-| Release | Upload to `releases/<timestamp>/` over SSH or rsync; symlink the shared secrets file, `wp-config.php` and the uploads directory; run the plugin's forward-only migrations (`php bin/wiw.php migrate`, or WP-CLI); warm the cache; run smoke checks; switch the `current` symlink atomically. The cPanel document root must follow a symlink or point at `current` (spike S1). If SSH is unavailable, the fallback is cPanel Git Version Control with `.cpanel.yml` copying the CI-built artifact. |
+| Environments | **Local** (wp-env or an equivalent local WordPress; the main build and test place), then **live** (wiwi.africa on cPanel). A staging site is optional; D-029 applies to whichever site is public: real data only after the import safeguards pass (Q64). |
+| Accounts (N18) | Needed now: **GitHub**, and **cPanel** (PHP version selector, a database and user, a mail account for SMTP). **Later, optional:** Cloudflare, Brevo, uptime monitor, Sentry. Object storage is not planned. Optional: Google Search Console (N21). There is no AI provider account on the site side. |
+| Build | For go-live, build an artifact: WordPress core (pinned), plugins and the theme (from the lockfile; third-party plugins pinned from the plugin directory, **verify the mechanism**), production Composer autoloader, built assets, a version stamp. |
+| Release (go-live migration) | Move the finished local site to the live host: copy the code (SSH, rsync or the cPanel file manager), import the database and uploads, set `wp-config.php` and the secrets file, run the plugin's forward-only migrations, then run smoke checks. Releases into `releases/<timestamp>/` with a `current` symlink are an optional later improvement. |
 | Config and secrets | Section 6.3. |
 | Migrations | Forward-only and **expand/contract** (additive first, remove later), so the previous release still runs against the new schema. A pre-migration database dump is taken automatically in production. |
 | Rollback | Switch `current` to the previous release (seconds). A database rollback means restoring the pre-deploy dump. |
-| Cron | One cPanel cron every minute runs the job runner. WP-Cron is disabled (`DISABLE_WP_CRON`). |
-| Monitoring | Uptime checks on the health URL, directory, enquiry form and wp-admin sign-in page (REQ-045); failed-job and purge-failure alerts; backup-success heartbeat. |
+| Cron | WP-Cron with Action Scheduler. If the live host allows it, a cPanel cron every minute can drive it instead. |
+| Monitoring | Failed-job alerts and a backup check in wp-admin. An uptime monitor is later, optional (REQ-045). |
 | Runbook | `docs/runbook.md` (REQ-095): deploy, rollback, restore, incident, bulk unpublish, key rotation, move to a VPS. |
+| **Local build and go-live checklist** | Build and test locally (all CI gates). Then, on the live host at import time: PHP version and memory and time limits, a database and user, SMTP sends and SPF/DKIM/DMARC, the uploads folder is writable, cron or WP-Cron runs jobs, a 1,000-record import in chunks, 410 behaviour, TRIGGER privilege for the audit-log triggers, and a restore test. Each result is written to the runbook. Failures lead to a fix or the VPS fallback; none of these block building. |
 
-**Fallback hosting (if S1 fails):** one small VPS (2 vCPU, 4 GB) in an EU or Africa region with Nginx or Caddy, PHP-FPM, MariaDB and a supervised worker, using the same release script. Same code, same CI.
+**Fallback hosting (if the live-host check fails):** one small VPS (2 vCPU, 4 GB) in an EU or Africa region with Nginx or Caddy, PHP-FPM, MariaDB and a supervised worker, using the same release script. Same code, same CI.
 
 ---
 
@@ -397,17 +401,17 @@ Tests are written first (CLAUDE.md). Test names cite REQs, for example `test_REQ
 |---|---|---|
 | cPanel hosting (already bought) | US$0 extra | replace with a VPS or managed WordPress hosting: **verify**, about US$20 to 60 |
 | Domain wiwi.africa | already paid (annual) | same |
-| Cloudflare | Free | Free, or a paid plan for better WAF and analytics (**verify**) |
-| Object storage (media and backups) | about US$0 to 1 (**verify**) | about US$2 to 5 (**verify**) |
-| Brevo email | Free tier (**verify the daily cap**) | about US$9 to 25 (**verify**) |
-| Error reporting (optional) | Free (**verify**) | about US$26 (**verify**) |
-| Uptime monitoring | Free | Free to US$10 |
+| Cloudflare (optional, later) | Free | Free, or a paid plan for better WAF and analytics (**verify**) |
+| Email | cPanel mail, included | a mail provider such as Brevo, about US$9 to 25 (**verify**) |
+| Error reporting and uptime monitoring (optional, later) | Free (**verify**) | about US$26 plus up to US$10 (**verify**) |
 | Paid WordPress plugins | none planned (custom plugin instead) | a 2FA or scanning plugin if chosen (**verify**) |
-| **Total** | **about US$5 to 15** | **about US$80 to 200** |
+| **Total** | **about US$0 to 5** | **about US$80 to 200** |
 
 No AI cost sits on the site side; the pipeline's cost is in the acquisition plan. The biggest cost driver is people (reviewers), not hosting.
 
 ---
+
+**CaromHQ sync is one of the last things built** (Q16). Nothing earlier depends on it; the CSV export is the only early path.
 
 ## 10. Parallelism plan
 
@@ -419,7 +423,7 @@ Website code lives in one folder, `site/` (proposed; see the report on how CLAUD
 |---|---|---|
 | **plugin** | `site/wp-content/plugins/whoiswho-core/**`, `site/wp-content/mu-plugins/**`, `site/bin/**`, `tests/Unit`, `tests/Integration`, `tests/Arch` | Modules, state machine, capabilities, admin screens, jobs, importer, mail classes |
 | **theme** | `site/wp-content/themes/whoiswho/**`, the tokens file, assets, `tests/e2e` for UI specs | Templates, components, tokens, accessibility, SEO output templates (markup is produced by the plugin's read models) |
-| **infra** | `.github/`, `deploy/`, `scripts/`, `site/composer.json` and lockfile, `site/wp-config.php` template, `.env.example`, `docs/runbook.md` | CI, deploy, backups, monitoring, Cloudflare and Brevo setup docs |
+| **infra** | `.github/`, `deploy/`, `scripts/`, `site/composer.json` and lockfile, `site/wp-config.php` template, `.env.example`, `docs/runbook.md` | CI, go-live migration, backups, runbook; Cloudflare and mail-provider setup docs only if those are added |
 | **qa** | `tests/e2e/`, `tests/Visibility/`, `tests/Security/`, `docs/traceability.md`, `docs/verify-*.md` | Independent verifier; writes no feature code |
 
 Interface contracts: the plugin exposes view-models through the read-model classes, documented per page in `docs/contracts/`; the theme builds against fixtures; infra owns the deploy command and the CI job names; the import contract is the only interface with the acquisition side.
@@ -428,7 +432,7 @@ Interface contracts: the plugin exposes view-models through the read-model class
 
 1. **Scaffold** (infra, plugin): `site/` project with a pinned WordPress, the three code packages, local environment, PHPCS, static analysis, PHPUnit, Playwright, asset build.
 2. **CI** (infra): all gates of section 7 with empty suites passing, Dependabot, secret scan.
-3. **Deploy to staging** (infra): release-directory script, secrets file, cron, health URL, Cloudflare in front. Includes spikes S1 and S2.
+3. **Go-live migration script** (infra): the steps in section 8 as a repeatable script; run it on a live host only when the local site is ready. Not needed to start building.
 4. **Platform core** (plugin): roles and capabilities with grants, enforced two-factor, closed registration, `AuditLogger` and the hash chain, settings, the Nominations flag, the PII catalogue.
 5. **Core data and the choke point** (plugin): `wiw_profile`, `wiw_profile_state`, versions, provenance, taxonomies, suppression, **`StateMachine`, the `wp_insert_post_data` guard, the `whoiswho-guard` mu-plugin and the `PublicProfile` read model, with the REQ-208 matrix test**.
 6. **Theme shell** (theme): tokens, base layout, components, theme-leak CI check.
@@ -440,20 +444,19 @@ After M0 these run in parallel waves: directory pages and search; review queue d
 
 ---
 
-## 11. Top risks and spikes
+## 11. Top risks and checks
 
-| # | Risk | Spike or mitigation |
+| # | Risk | Check or mitigation |
 |---|---|---|
-| 1 | **The cPanel account may not meet the needs** (PHP version, SSH, Composer or an artifact path, cron every minute, MariaDB version, TRIGGER privilege, symlink document root, outbound HTTPS, memory and time limits, inodes, region, uptime). | **S1 (half a day):** run a checklist script on the account and record the results in Q26. Fail leads to the VPS fallback. |
-| 2 | **Immediate unpublish may not be immediate** (CDN caches, indexed pages, purge limits). | **S2:** prove 410 and purge by URL on the real zone, measure time to 410, test a bulk action of several hundred profiles and the failure retry. |
-| 3 | **Import throughput on shared hosting** (1,000 records with provenance rows, memory and time limits). | **S3:** run a 1,000-record fixture in chunks on the real account; tune the chunk size; prove resume after a forced time-out. |
-| 4 | **Upload scanning** (a virus scanner may be unavailable). | **S4:** test availability; otherwise restrict types, re-encode images, flatten PDFs and accept evidence files only for staff review. |
-| 5 | **A WordPress surface leaks a non-public profile** (core sitemap, feed, REST, oEmbed, search, attachment, preview, SEO output, a future plugin). | **S5:** build the matrix test first against a bare install, then against every plugin added; keep the plugin list short and re-run the matrix for each addition. |
-| 6 | **Two-factor choice** (a maintained plugin versus custom code; enforcement before first wp-admin use; recovery codes). | **S6:** evaluate the maintained candidates against REQ-047; pick one; test enforcement and lockout (Q76). |
-| 7 | **Email deliverability for wiwi.africa** (SPF, DKIM, DMARC, bulk nominee mail). | **S7:** set up Brevo and records on the staging subdomain; send to the major providers and a Nigerian provider; warm up before bulk mail. |
-| 8 | **Media offload method** (a plugin versus custom code for the object store; REQ-080). | **S8:** test one maintained offload plugin and the custom option on staging; record cost and licence (Q75). |
+| 1 | **The cPanel account may not meet the needs** (PHP version, memory and time limits, cron, MariaDB version, TRIGGER privilege, outbound HTTPS, inodes, uptime). | Checked on the live host at import time (section 8). Failure leads to a fix or the VPS fallback. Does not block building. |
+| 2 | **Immediate unpublish may not be immediate** (indexed pages; edge caches if Cloudflare is added). | The origin returns 410 at once. If Cloudflare is added, test purge by URL and a bulk action of several hundred profiles, and record the time to 410. |
+| 3 | **Import throughput on shared hosting** (1,000 records with provenance rows, memory and time limits). | Test a 1,000-record fixture in chunks locally and again on the live host; tune the chunk size; prove resume after a forced time-out. |
+| 4 | **Upload scanning** (a virus scanner may be unavailable). | Restrict types, re-encode images, flatten PDFs and accept evidence files only for staff review; use a scanner if the host offers one. |
+| 5 | **A WordPress surface leaks a non-public profile** (core sitemap, feed, REST, oEmbed, search, attachment, preview, SEO output, a future plugin). | Build the matrix test first against a bare install, then against every plugin added; keep the plugin list short and re-run the matrix for each addition. |
+| 6 | **Two-factor** (WordPress has none built in). | Use one maintained plugin enforced for every staff role, with recovery codes; test enforcement and lockout locally (Q76). |
+| 7 | **Email volume and deliverability on cPanel mail** (SPF, DKIM, DMARC; hourly sending caps; bulk nominee mail). | Check at go-live; batch the sends; move to a mail provider only if the caps bite. |
 
-Other watch items: shared-host uptime against the 99.5% target (REQ-045); review capacity (measured by the pilot; REQ-206); Legal's position (Q5, Q35).
+Other watch items: shared-host uptime against the 99.5% target (REQ-045); review capacity (measured by the pilot; REQ-206); Legal's position (Q5, Q35; Legal is skipped for now, D-051).
 
 ---
 
@@ -470,7 +473,7 @@ One short record per decision in `docs/adr/`. Status of each is listed here.
 | ADR-005 | Publication model: one state machine, status mapping, versions table | Proposed v2 |
 | ADR-006 | Edge caching, 410 from database state, purge, bulk unpublish | Proposed v2 |
 | ADR-007 | Media and private files | Proposed v2 |
-| ADR-008 | Email: Brevo SMTP through `wp_mail` | Proposed v2 |
+| ADR-008 | Email: cPanel SMTP through `wp_mail` | Proposed v2 |
 | ADR-009 | AI drafting | **Superseded**: it is in the acquisition pipeline |
 | ADR-010 | Search: FULLTEXT on a public-only table | Proposed v2 |
 | ADR-011 | Jobs: system cron driving a queue library; WP-Cron off | Proposed v2 |
@@ -493,7 +496,7 @@ On 2026-11-06 the first draft proposed Laravel + Filament and compared it with f
 
 | Weakness found in the comparison | Response in this design |
 |---|---|
-| Plugin surface can leak drafts (previews, caches, SEO plugins) | `whoiswho-guard` closes core surfaces; no SEO plugin; matrix test on every surface; spike S5 |
+| Plugin surface can leak drafts (previews, caches, SEO plugins) | `whoiswho-guard` closes core surfaces; no SEO plugin; matrix test on every surface |
 | One user and capability model, plugins can read everything | Awards never touch commercial data by test; no judge accounts exist; few plugins; capability checks on every action |
 | No per-field provenance | `wiw_field_provenance` table, queried by the review queue and the Sources screen |
 | No immutable audit log | `wiw_audit_log` with a hash chain and an off-host copy |
@@ -556,12 +559,13 @@ Proposed numbers start at Q73 (Q72 is already used by REQ-244). They are not yet
 
 | Q | Question | Proposed default |
 |---|---|---|
-| Q26 to Q28 | Existing: what the cPanel account offers; which shared services can be reused; who owns the new accounts | See section 8 and spike S1 |
+| Q26, Q27 | What the cPanel account offers; which shared services can be reused | **Answered (D-050):** build locally on WordPress; check the host at import time; no new accounts needed now |
+| Q28 | Who owns and pays for the new accounts | **Answered (D-049, D-050):** none needed now; SMTP comes from cPanel mail |
 | Q72 | (Used by REQ-244) Which capabilities can never be granted to a non-Administrator | Users and capabilities, settings, the register, plugin install |
 | Q73 | A customer-submitted profile awaiting approval has no state name in REQ-210. Reuse *Imported – not public* with `origin = customer`? | Yes |
-| Q74 | Where does the site get source names for the read-only Sources screen, since the contract carries only `source_id`? | Add a `sources[]` array to the manifest (a MINOR contract change) |
-| Q75 | Media: offload public images to object storage with a plugin or custom code, or serve local uploads through the CDN (a REQ-080 change)? | Offload; decide after spike S8 |
-| Q76 | Two-factor: a maintained plugin or custom code? | A maintained plugin, if spike S6 shows enforcement and recovery codes |
+| Q74 | Where does the site get source names for the read-only Sources screen, since the contract carries only `source_id`? | A basic `sources[]` array for now (a MINOR contract change); revisit once acquisition is done |
+| Q75 | Media offload to object storage? | **Answered (D-050):** no; the WordPress media library is used (REQ-080 amended) |
+| Q76 | Two-factor: a maintained plugin or custom code? | **Answered (D-050):** a maintained plugin enforced for every staff role |
 | Q77 | REQ-237 says "CSV or REST" but the contract is JSON Lines. Reword to "file or REST", and confirm files first with no service account? | Yes |
 | Q78 | Shape of the places taxonomy: one hierarchical taxonomy with countries and cities, or separate country and city taxonomies? | One hierarchical taxonomy |
-| Q79 | Queue library: Action Scheduler (a library) or a small custom job table? | Action Scheduler, if spike S1 shows it runs within host limits |
+| Q79 | Queue library: Action Scheduler (a library) or a small custom job table? | **Answered (D-050):** WP-Cron with Action Scheduler; no spike |

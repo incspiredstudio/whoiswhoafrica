@@ -1,13 +1,13 @@
-# ADR-011 Jobs and scheduling on shared hosting: system cron driving a queue library
+# ADR-011 Jobs and scheduling: WP-Cron with Action Scheduler
 
-Status: Proposed v2 for WordPress (Gate 2) · Date: 2026-11-08 · REQs: REQ-045, 075, 160, 193, 209, 237
+Status: Proposed v2 for WordPress (Gate 2) · Date: 2026-11-08, amended 2026-11-09 (D-050) · REQs: REQ-045, 075, 160, 193, 209, 237
 
-**Context.** No persistent workers on cPanel. WP-Cron runs only when a page is requested, and with edge caching origin requests are sparse. Jobs: cache purge, email, import chunks, bulk unpublish chunks, sponsored apply and expiry, expiry reminders, stale checks, retention, backups.
+**Context.** No persistent workers on cPanel. WP-Cron runs when a page is requested; if an edge cache is added later, requests become sparse and a real cron can drive it. Jobs: cache purge, email, import chunks, bulk unpublish chunks, sponsored apply and expiry, expiry reminders, stale checks, retention, backups.
 
-**Decision.** Disable WP-Cron (`DISABLE_WP_CRON`). A cPanel cron every minute runs the job runner with a time budget under the host's limit. Use Action Scheduler as a library inside the plugin (verify licence, tables and host fit; Q79), with a high-priority group for purge and email; fall back to a small custom job table if it does not fit. Imports are chunked and resumable.
+**Decision.** Use WP-Cron with Action Scheduler as a library inside the plugin (Q79 answered, no spike), with a high-priority group for purge and email and a time budget per run. If the live host allows it, a cPanel cron every minute may drive it instead (`DISABLE_WP_CRON`). Imports are chunked and resumable.
 
 **Why.** Works on any cPanel; retries and logs come with the library; no extra services.
 
-**Rejected.** WP-Cron alone (unreliable timing). Redis workers (not on shared hosting).
+**Rejected.** A custom job table (not needed). Redis workers (not on shared hosting).
 
-**Consequences.** Job latency up to about one minute. Moving to a supervised worker on a VPS needs no code change.
+**Consequences.** Job timing depends on site traffic unless a real cron is added. Moving to a supervised worker on a VPS needs no code change.

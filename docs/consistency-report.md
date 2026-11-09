@@ -66,3 +66,13 @@ Branch `chore/wireframe-review-fixes`, built on `chore/repo-restructure` (neithe
 2. Merge order: `chore/repo-restructure`, then `chore/wireframe-review-fixes`.
 3. Acquisition session applies section 4.
 4. Gate 2: rewrite `architecture.md` for WordPress with D-034 to D-044 as input.
+
+
+## Addendum 2026-11-09 (D-049 to D-051): further changes needed in `acquisition/`
+
+- Remove reviewer hourly rate, reviewer hours and hours-based dates (Q31, Q38) from the plan, cost estimate and workload notes. Keep the US$250 AI cap.
+- Legal is skipped for now (D-051): do not make steps wait on Legal; mark Legal-dependent items deferred. Q35's default still keeps individuals not public.
+- Q74: the manifest `sources[]` is a basic structure for now (D-049); confirm and change after acquisition.
+- Q28: new accounts are not needed now; the Anthropic API account stays with acquisition.
+- Q46: AI summaries are published as written; the platform gets an in-house review before launch.
+- CaromHQ sync (Q16) is built last (D-051).

@@ -100,11 +100,11 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-042 | Images are served resized and in modern formats via a CDN. | 12.1 | M | SITE |
 | REQ-043 | Public pages meet WCAG 2.1 AA. *(assumed target)* | 12 | M | SITE |
 | REQ-044 | Public content is server-rendered or static so it is indexable; canonical URLs and sitemaps are provided. *(D-033: pending-review pages are noindex; REQ-217.)* | 5.3 | M | SITE |
-| REQ-045 | Production availability ≥ 99.5% monthly; the enquiry form, directory and admin sign-in are monitored with alerting. *(assumed)* | — | M | SITE |
+| REQ-045 | **AMENDED 2026-11-09 (D-050).** Production availability ≥ 99.5% monthly. Monitoring with alerting of the enquiry form, directory and admin sign-in is added when an uptime monitor is set up (later, optional). *(assumed)* | — | M | SITE |
 | REQ-046 | All traffic is HTTPS; OWASP Top-10 mitigations, security headers, form rate limits and dependency scanning are in place. | — | M | SITE |
 | REQ-047 | All human staff accounts require strong passwords and two-factor authentication, enforced before first use of wp-admin, with recovery codes and lockout after repeated failures. Only staff have accounts (REQ-229). *(Amended by D-034.)* | — | M | SITE |
 | REQ-048 | **WITHDRAWN** (no card handling on the site; PCI scope removed). ~~Card data never touches WHOISWHO servers (hosted checkout / tokenised).~~ | — | Withdrawn | SITE |
-| REQ-049 | Database and uploads are backed up daily; a restore is tested before launch; RPO 24 h, RTO 8 h. *(assumed)* | — | M | SITE |
+| REQ-049 | **AMENDED 2026-11-09 (D-050).** Database and uploads are backed up daily (cPanel backups, plus a plugin or export if needed); a restore is tested before launch; RPO 24 h, RTO 8 h. No separate bucket is required. *(assumed)* | — | M | SITE |
 | REQ-050 | Errors, uptime and form-submission failures are monitored; logs contain no personal data beyond IDs. | — | M | SITE |
 | REQ-051 | All staff/admin actions on profiles, customer records and reviews are written to an immutable audit log. *(D-033: imports too; REQ-228.)* | 15.7 | M | SITE |
 | REQ-052 | Brand colours, type and the tagline "Influence. Achievement. Legacy." are implemented as design tokens so the approved identity can be applied or changed without rebuilding pages. | 2.2, 12.1 | M | SITE |
@@ -127,7 +127,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 | REQ-062 | Non-essential cookies/analytics load only after consent. | — | M | SITE |
 | REQ-063 | A retention schedule exists per data class and a job deletes or anonymises data when it expires. | — | S | BOTH |
 | REQ-064 | Nominator details are never public. Nominee data stays private until eligibility screening is complete; see REQ-197 and REQ-198. | 7.4 | M | SITE |
-| REQ-065 | A register lists every processor and its location (hosting, email, analytics, AI provider), each with a data-processing agreement. | — | M | BOTH |
+| REQ-065 | A register lists every processor and its location (hosting, email, and any analytics or AI provider in use), each with a data-processing agreement. | — | M | BOTH |
 | REQ-066 | A breach-response procedure exists (detect, log, notify the regulator and affected people within the legal deadline). | — | M | BOTH |
 | REQ-067 | The system does not collect or store sensitive personal data (health, religion, politics, ethnicity, biometrics, criminal records, sexual life, trade-union membership) in profiles, stubs or nominations; the intake forms exclude these and free text is checked. | — | M | BOTH |
 | REQ-068 | Individuals under 18 cannot hold a profile. | — | M | BOTH |
@@ -142,12 +142,12 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 |---|---|---|---|---|
 | REQ-073 | **WITHDRAWN** (no payment gateway; D-005). ~~A payment gateway supporting NGN cards and bank transfer is integrated via hosted checkout; webhooks are signature-verified and idempotent.~~ | 8 P1 | Withdrawn | SITE |
 | REQ-074 | **WITHDRAWN** (superseded by the admin commercial register, REQ-179). ~~Payments made by bank transfer/invoice can be confirmed by Finance in the admin and recorded against a subscription.~~ | 9.3 | Withdrawn | SITE |
-| REQ-075 | Transactional email is sent via a provider with SPF, DKIM and DMARC configured; bounces are recorded. | — | M | SITE |
+| REQ-075 | **AMENDED 2026-11-09 (D-049).** Transactional email is sent through the SMTP of a cPanel mail account with SPF, DKIM and DMARC configured; failures and bounces found by staff are recorded. A mail provider may replace it later. | — | M | SITE |
 | REQ-076 | **WITHDRAWN** (receipts and invoices are issued offline by Finance). ~~Receipts and invoices (PDF, with VAT where applicable) are generated for each payment.~~ | 9.3 | Withdrawn | SITE |
 | REQ-077 | The commercial register, leads and enquiries can be exported/imported (CSV) for CaromHQ by the Administrator (logged, REQ-069); a live integration is built only if CaromHQ exposes an API. | 15.5 | Q16 | SITE |
 | REQ-078 | Privacy-friendly web analytics measure visits, journey completion and conversions. | 14.3 | M | SITE |
 | REQ-079 | Search is provided by the database or a hosted search service sized for ≥ 10k profiles. | 5.2 | M | SITE |
-| REQ-080 | Uploaded media is stored in object storage behind a CDN. | 12.1 | M | SITE |
+| REQ-080 | **AMENDED 2026-11-09 (D-050).** Uploaded media is stored in the WordPress media library on the host (originals kept). Object storage and CDN offload are not used; a CDN may cache images later. *(Was: object storage behind a CDN.)* | 12.1 | M | SITE |
 | REQ-081 | Public forms are protected by a bot challenge. | — | M | SITE |
 | REQ-082 | Pages expose social share cards; social links are displayed as links only (no social-platform API use). | 10.5 | M | SITE |
 

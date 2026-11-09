@@ -5,6 +5,8 @@
 **Repo layout (2026-11-08):** `docs/` shared; `prototype/` wireframe; `acquisition/` data acquisition. Interface: `docs/contracts/import-format.md`. Other sessions keep their status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
 ## Stage
+**Unanswered questions sorted (D-049 to D-051, 2026-11-09):** 54 answered, 25 default accepted, 8 deferred, none open. No reviewer pay, hours or names needed (D-049). Build locally on WordPress and import to the live host; no object storage, spikes or new accounts; email by cPanel SMTP (D-050). Legal questions, judging and CaromHQ sync are deferred on purpose and have their own sections or are built last (D-051). Architecture, ADRs, .env.example and CLAUDE.md are being updated to match.
+
 **Defaults accepted (D-047, 2026-11-08):** every open question now carries its default (34 questions: Q26–Q29, Q31, Q33–Q39, Q46, Q54–Q56, Q58, Q60–Q67, Q72–Q80); only Q16 is still pending (team lead). D-048: staff sign-in has no role selector (REQ-245). The WIWI rename questions (Q40–Q45, docs/change-review-2026-11-07.md) are not logged and not applied: the brand stays WHOISWHO until you rule.
 
 Wireframe review fixes applied 2026-11-08 in two rounds (merged by fast-forward into `chore/structured-build-setup`, together with `chore/repo-restructure`, 2026-11-08; not pushed, not merged to main). Round 1: D-035 to D-041. Round 2: D-042 read-only Sources screen, D-043 kill switch replaced by bulk unpublish by filter, D-044 only four roles (Visitor, Reviewer, Editor, Administrator). REQ-239 to 243 added; REQ-124, 151, 152, 173, 227, 230, 231 withdrawn. Round 3: your rulings D-045 (bulk unpublish: Administrator and Reviewer; Administrator alone confirms payments; one-person sign-off accepted; D-010 confirmed) and D-046 (capabilities per user, REQ-244); architecture.md, ADR-001 to 013, CLAUDE.md and .env.example rewritten for WordPress (proposed v2, awaiting your Gate 2 approval); Q73 to Q80 added. See docs/consistency-report.md: open rulings (section 3.1) and the list for the acquisition session (section 4). The wireframe still lacks the D-033 publish-first states.
@@ -40,13 +42,13 @@ See docs/decisions.md. Key: no payments on the site (D-005); admin commercial re
 - You: rule on docs/consistency-report.md section 3.1; merge the two branches in order (`chore/repo-restructure`, then `chore/wireframe-review-fixes`)
 - Acquisition session: apply docs/consistency-report.md section 4 in `acquisition/`
 - You: rule on Q56–Q62 (defaults in docs/change-review-2026-11-08-no-accounts.md section 5); open both reference sites in a browser to confirm docs/design-inspiration.md
-- You: answer Q46, Q55, Q63–Q67, Q31 first, then the rest of plan section 12, by Mon 9 Nov; send Legal the questions in plan 6.5 by 9 Nov; name reviewers (Q4) and Editor-in-Chief; check the Anthropic account tier. Approve all run sources by Tue 10 Nov: the run starts straight after.
+- You: approve all run sources (acquisition plan section 12) when ready. Legal and reviewer hours/names are not needed now (D-049, D-051). Check the Anthropic account tier.
 - Agents: read unread source terms and prepare registry entries (9 Nov); run A organisations (10 Nov); run B individuals once Legal confirms the transfer basis (by 13 Nov).
 - **First build task: basic WordPress import path (REQ-237, plan T-0), then the review queue. File as a GitHub issue when gh is available.**
 - Legal: AI transfer basis by 13 Nov (blocks run B); Terms, Privacy, label wording before organisations go live; LIA, DPIA, NDPC registration tier before the first individual goes public
 - After your rulings: apply the listed edits to GUIDE (line 84 is now false for organisations), CLAUDE.md, architecture, ADRs, questions risk register, prototype and inventory (acquisition/docs/change-review-2026-11-08-publish-first.md sections 3–4)
 - You: review the wireframe (prototype/index.html); answer docs/wireframe-findings.md; enable GitHub Pages (Settings > Pages > Source = GitHub Actions) if you want the link
-- Then: revise architecture.md for WordPress (Gate 2); answer Q26–Q28
+- Then: Gate 2 approval of architecture.md (WordPress, built locally, D-050)
 - Then: /plan
-- You: supply reviewer names (Q4); request Legal's position by 13 Nov (Q5); open accounts by 13 Nov
-- Pending - team lead: Q16 (does not block architecture)
+- You: nothing blocking. Reviewer names (Q4) and accounts (Q14) are not needed now; Legal (Q5) is skipped for now (D-051)
+- Deferred: Q16 CaromHQ sync (one of the last things built), the Legal section, the judging section (D-051)
