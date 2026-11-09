@@ -59,11 +59,28 @@ There is no claiming (D-036), so there are no Claimed or Unclaimed labels.
 | *Compiled automatically from public sources. Human review pending.* | Review-state label on an imported profile that no human has reviewed yet | no |
 | *Reviewed on (date)* | Review-state label after a human approved it | no |
 
+## 4a. WP type (how much of this is custom code)
+
+Every requirement, decision and question has a **WP type** column, set by D-053. It says how WordPress does the job.
+
+| WP type | Plain meaning | Example |
+|---|---|---|
+| **Native** | WordPress core already does it. Nothing to build. | Users, media library, revisions, trash |
+| **Native+config** | Core does it once we set it up: a role's capabilities, a taxonomy, a custom post type, a custom field. | Places taxonomy, profile post type |
+| **Custom plugin** | Genuinely custom code in `whoiswho-core`. | Review states and publish gate, suppression list, import, removal due dates, audit log, nominations |
+| **Theme** | Front end: templates, tokens, layout. | Home page, profile page design |
+| **Process** | Not software: a policy, a person's job or a decision. | Legal, reviewer names, accounts |
+
+**Capability** = one permission, such as "can publish profiles". A **role** is a bundle of capabilities. There are four roles (Visitor, Reviewer, Editor, Administrator) and the Administrator can change what each holds, or give one user an extra capability, in wp-admin without code. The single list is the section "Capabilities and default role mapping" in `requirements.md`. Core capabilities come with WordPress; plugin capabilities (named `wiw_*`) are added by `whoiswho-core`.
+
+**Wireframe screens** carry a separate tag in `wireframe-inventory.md`: *native* (WordPress provides it; shown only for illustration), *customised-native* (a WordPress screen with plugin additions) or *custom* (a plugin screen). Details: `docs/wordpress-fit-report.md`.
+
 ## 5. Files at a glance
 | File | Purpose | Edited by |
 |---|---|---|
 | `docs/spec.md` | The original brief (cleaned copy). Source of truth for intent. | you |
-| `docs/requirements.md` | What the product must do (REQ numbers) | Claude Code |
+| `docs/requirements.md` | What the product must do (REQ numbers), with a WP type per row and the capability list | Claude Code |
+| `docs/wordpress-fit-report.md` | How much of the spec is native WordPress, what was withdrawn, and what needs your ruling | Claude Code |
 | `docs/questions.md` | Contradictions and questions, with a Status column | Claude Code, from your answers |
 | `docs/decisions.md` | Every decision (D numbers) | Claude Code |
 | `docs/architecture.md`, `docs/adr/` | Tech choices and design | Claude Code |

@@ -229,7 +229,7 @@ IDs: WordPress post IDs plus a public `record_id` or ULID where the contract nee
 | `wiw_field_provenance` | post_id, field_key, source_id, source_url, retrieved_at, confidence, method, source_hash, passage_id | REQ-142, 143. Queryable for the Sources screen and reports (T-3). |
 | `wiw_claims`, `wiw_passages`, `wiw_verification` | claim text and quote, passage text, verification report JSON | Admin-only, never public (REQ-166 to 168, 214). Deleted or reduced after review per retention. |
 | `wiw_profile_search` | post_id, name, org, industry, profession, place, text (FULLTEXT), reviewed flag | Rebuilt from public states only (ADR-010). |
-| `wiw_redirects` | old_slug, post_id | Slug changes (REQ-129). |
+| (none) | | Old-slug redirects are core WordPress behaviour (REQ-129 withdrawn, D-053); no redirects table. |
 | `wiw_import_batches`, `wiw_import_results` | batch id, contract version, file hash, setting snapshot, status, cursor; record_id and result code | REQ-237. The result export carries no field values. |
 | `wiw_sources` | source_id, name, snapshot version, last_seen | A read-only snapshot used by the Sources screen (Q74). Counts (profiles, last import, errors, removals) are computed from `wiw_profile_state`, `wiw_import_results` and the removal log (REQ-243). There is no create, edit, approve or reject path. |
 | `wiw_duplicates` | post_a, post_b, score, status | Human merge review (REQ-123, 146). |
@@ -254,24 +254,7 @@ PII handling: the PII-catalogue file (`whoiswho-core/config/pii.php`) lists ever
 
 Three staff roles are **default bundles of named capabilities** (`wiw_reviewer`, `wiw_editor`, and the WordPress `administrator` role plus every `wiw_*` capability). WordPress's built-in subscriber, contributor, author and editor roles are removed on activation; `default_role` is empty and registration is closed. The **Administrator can grant or revoke individual capabilities for a user, across roles**, through a *Users and capabilities* screen. WordPress stores a per-user grant or an explicit `false` in the user's capabilities, so no extra mechanism is needed; the screen audits every change. Menus, routes and actions follow the user's *effective* capabilities.
 
-| Capability | Reviewer | Editor | Administrator |
-|---|---|---|---|
-| `wiw_view_dashboard_review` (review and directory tiles) | yes | yes | yes |
-| `wiw_review_records` (approve or reject in the review queue) | yes | yes | yes |
-| `wiw_resolve_duplicates`, `wiw_view_stale` | yes | yes | yes |
-| `wiw_view_profiles`, `wiw_assign_terms`, `wiw_view_sources`, `wiw_view_suppression` | yes | yes | yes |
-| `wiw_bulk_unpublish` (filter, restore a batch; D-045) | yes | no | yes |
-| `wiw_edit_profiles`, `wiw_unpublish_profiles` | no | yes | yes |
-| `wiw_set_trust_labels` (Verified, Featured), `wiw_set_sponsored` | no | yes | yes |
-| `wiw_manage_stories`, `wiw_manage_taxonomies` | no | yes | yes |
-| `wiw_manage_awards` (nominations, screening, panel, scores, shortlist, results) | no | yes | yes |
-| `wiw_support_inbox`, `wiw_handle_disputes`, `wiw_manage_leads` | no | yes | yes |
-| `wiw_view_dashboard_commercial` (sprint, revenue, arrangements tiles) | no | no | yes |
-| `wiw_manage_register` (arrangements, confirm payments; D-045) | no | no | yes |
-| `wiw_run_imports`, `wiw_export_data` | no | no | yes |
-| `wiw_view_audit`, `wiw_edit_suppression` | no | no | yes |
-| `wiw_toggle_nominations` | no | no | yes |
-| `wiw_manage_users`, `wiw_manage_capabilities`, `wiw_manage_settings`, plugin and theme install | no | no | yes |
+The capability list and the default role mapping are kept in one place only: `docs/requirements.md`, section "Capabilities and default role mapping" (D-053). It lists which capabilities are core WordPress and which `whoiswho-core` adds (`wiw_*`). Differences from the earlier list here: profile and story editing, unpublishing a story, term management, user management and plugin installation now use core WordPress capabilities (the profile type's generated `edit_wiw_profiles` family, `edit_posts` family, `manage_terms`, `create_users`/`promote_users`, `install_plugins`) instead of `wiw_edit_profiles`, `wiw_manage_stories`, `wiw_manage_taxonomies` and `wiw_manage_users`; `wiw_view_profiles` becomes core `read_private_wiw_profiles`; `wiw_receive_enquiries` is new (Q62).
 
 Capabilities that cannot be granted to a non-Administrator (proposed: users and capabilities, settings, the register, plugin install; Q72) are enforced by a `user_has_cap` filter, not only by the screen. The Reviewer's bulk-unpublish capability can unpublish one profile through the filter, so a Reviewer can act in an emergency without edit rights. The Reviewer menu is exactly: Dashboard (review tiles), Review queue, Duplicates, Stale records, Profiles, Sources (read-only), Suppression list (read-only); it grows only by grants (REQ-240, 244).
 

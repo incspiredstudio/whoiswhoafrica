@@ -194,6 +194,12 @@ reload(); S().role = "editor"; ctx.location.hash = "#/admin/scores"; W.render();
 S().role = "reviewer"; ctx.location.hash = "#/admin/scores"; W.render(); check("reviewer cannot open scores", /403/.test(app.innerHTML));
 S().role = "visitor"; ctx.location.hash = "#/admin"; W.render(); check("visitor gets 403 on admin", /403/.test(app.innerHTML));
 S().role = "admin"; ctx.location.hash = "#/admin/roles"; W.render(); check("roles matrix opens for the Administrator", /Roles and permissions/.test(app.innerHTML) && /Reviewer/.test(app.innerHTML) && /Editor/.test(app.innerHTML) && !/Awards manager|Editor-in-Chief|Sales|Finance/.test(app.innerHTML.replace(/<nav class="app-side"[\s\S]*?<\/nav>/, "")));
+// WordPress-fit tags: every inventory entry has a valid wpScreen and a recommendation
+for (const x of W.INV) {
+  check("inventory wpScreen valid " + x.id, ["native", "customised-native", "custom", "n/a (wireframe tool)"].includes(x.wpScreen), x.wpScreen);
+  check("inventory wpRec present " + x.id, !!x.wpRec, x.id);
+  if (/^Remove/.test(x.wpRec)) check("removal has a reason " + x.id, !!x.wpNote, x.id);
+}
 // flows: every start route resolves and every inventory id exists
 for (const f of W.FLOWS) {
   for (const id of f.inv) check("flow inventory id " + f.t + " " + id, !!W.invById(id), id);

@@ -66,10 +66,20 @@ md += "**Tags.** SPECIFIED: the brief or `docs/requirements.md` names the page, 
 md += "**Where.** Every row has a route in the clickable prototype (`/prototype`, hash routing). Staff screens preview flows only (there are no owner, nominee or judge accounts, D-034); the real admin will be WordPress (D-031).\n\n";
 const total = W.INV.length, spec = W.INV.filter((x) => x.tag === "SPECIFIED").length;
 md += `**Totals.** ${total} entries: ${spec} SPECIFIED, ${total - spec} IMPLIED. Some entries are states of one screen (modals, empty states, error states); each still has its own row so none is forgotten.\n\n`;
+const WPT = ["native", "customised-native", "custom", "n/a (wireframe tool)"];
+const wpCount = {}; WPT.forEach((k) => (wpCount[k] = W.INV.filter((x) => x.wpScreen === k).length));
+const untagged = W.INV.filter((x) => WPT.indexOf(x.wpScreen) < 0 || !x.wpRec);
+if (untagged.length) { console.log("untagged:", untagged.map((x) => x.id).join(",")); process.exit(1); }
+md += "**WordPress screen type (D-053).** `native`: a core WordPress screen or a page/post template, shown only for illustration. `customised-native`: a core screen or template with plugin-added columns, filters, fields, actions or a custom post type. `custom`: a screen or page the plugin builds. Public pages are tagged by how WordPress builds them: a plain content page is `native`, a template over profiles or posts is `customised-native`, a form or signed-link page is `custom`. Counts: " + WPT.map((k) => `${wpCount[k]} ${k}`).join(", ") + ".\n\n";
+md += "**Recommendation.** `Remove from wireframe: WordPress provides it`, `Keep as illustration only`, or `Keep: custom`. Staff screens that WordPress already provides are shown in the wireframe only so the flows can be walked; the real build does not design them.\n\n";
+const removals = W.INV.filter((x) => /^Remove/.test(x.wpRec));
+md += "## Recommended removals\n\n| ID | Screen | Why WordPress already provides it |\n|---|---|---|\n" + removals.map((x) => `| ${x.id} | ${cell(x.name)} | ${cell(x.wpNote)} |\n`).join("") + "\n";
+const needNote = W.INV.filter((x) => x.wpNote && !/^Remove/.test(x.wpRec));
+md += "## Native-overlap notes (not removals)\n\n| ID | Screen | Note |\n|---|---|---|\n" + needNote.map((x) => `| ${x.id} | ${cell(x.name)} | ${cell(x.wpNote)} |\n`).join("") + "\n";
 const groups = {}; W.INV.forEach((x) => { (groups[x.aud] = groups[x.aud] || []).push(x); });
 for (const a of Object.keys(groups)) {
-  md += `## ${a} (${groups[a].length})\n\n| ID | Screen or state | Serves | Tag | Prototype route |\n|---|---|---|---|---|\n`;
-  for (const x of groups[a]) md += `| ${x.id} | ${cell(x.name)} | ${cell(x.reqText)}${x.dec ? "; " + cell(x.dec) : ""} | ${x.tag} | \`${x.route}\` |\n`;
+  md += `## ${a} (${groups[a].length})\n\n| ID | Screen or state | Serves | Tag | WP screen | Recommendation | Prototype route |\n|---|---|---|---|---|---|---|\n`;
+  for (const x of groups[a]) md += `| ${x.id} | ${cell(x.name)} | ${cell(x.reqText)}${x.dec ? "; " + cell(x.dec) : ""} | ${x.tag} | ${x.wpScreen} | ${cell(x.wpRec)} | \`${x.route}\` |\n`;
   md += "\n";
 }
 md += "## Flows to try (the floating Flows menu)\n\n| # | Flow | Requirements | Entries |\n|---|---|---|---|\n";

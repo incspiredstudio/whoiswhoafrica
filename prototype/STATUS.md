@@ -43,3 +43,6 @@ The wireframe still has no D-033 publish-first states, so the "Compiled automati
 - **REQ-174, 232, D-040:** disputes and removals are handled by the `handle_disputes` capability holder (Editor by default), not by a fixed role.
 - **Q69, Q70, Q71:** answered by your rulings; Q72 (locked capabilities) is new.
 - **Role matrix wording** in GUIDE, consistency report and requirements header: Reviewer can bulk unpublish; Editor cannot by default.
+
+## WordPress fit (2026-11-09)
+Inventory entries now carry wpScreen (native, customised-native, custom) and a recommendation. Four removals recommended (A01, A24, A34, A57), two rulings needed (A54, A60); findings 70 to 76. No screen was changed.
