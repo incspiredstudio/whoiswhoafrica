@@ -33,21 +33,15 @@
       var tabs = '<nav class="tabs" aria-label="Directory sections">' + ORDER.map(function (k) { return '<a href="' + LIST[k].path + '"' + (k === key ? ' aria-current="page"' : "") + ">" + e(LIST[k].label) + "</a>"; }).join("") + "</nav>";
       var search = '<form class="dir-search" role="search" data-filter="' + L.path + '" aria-label="Search this section">' + keep(q, ["q"]) + '<label class="sr" for="dq">Name or keyword</label><input id="dq" name="q" type="search" value="' + e(q.q || "") + '" placeholder="Name, organisation or keyword"><button class="btn">Search</button></form>';
       var active = Object.keys(q).filter(function (k) { return FILTER_LABELS[k] && q[k]; });
-      var chips = active.length ? '<div class="chips">' + active.map(function (k) { return '<a class="chip" href="' + without(L.path, q, k) + '" aria-label="Remove filter ' + e(FILTER_LABELS[k]) + '">' + e(k === "trust" ? W.cap(q[k]) : q[k]) + W.ico("close") + "</a>"; }).join("") + "</div>" : "";
-      var extra = (key === "people" || key === "entrepreneurs") ? W.field("Profession", "profession", { type: "select", options: W.LISTS.professions, blank: "Any profession", value: q.profession }) : key === "institutions" || key === "businesses" ? W.field("Organisation type", "orgType", { type: "select", options: W.LISTS.orgTypes, blank: "Any type", value: q.orgType }) : "";
-      var nOn = active.filter(function (k) { return k !== "q"; }).length;
-      var filters = '<details class="filters"><summary>' + W.ico("filter") + "Filters" + (nOn ? ' <span class="filters-n">' + nOn + "</span>" : "") + W.ico("chevron") + '</summary><form class="filters-body" data-filter="' + L.path + '" aria-label="Filter results">' + keep(q, ["industry", "city", "country", "trust", "profession", "orgType", "pending"]) +
-        W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) +
-        W.field("Country", "country", { type: "select", options: W.LISTS.countries, blank: "All countries", value: q.country }) +
-        W.field("City", "city", { type: "select", options: W.LISTS.cities, blank: "All cities", value: q.city }) +
-        extra +
-        '<div class="row"><button class="btn sm">Apply</button><a class="btn alt sm" href="' + L.path + '">Clear all</a></div></form></details>';
-      var sort = '<form class="row" data-filter="' + L.path + '" aria-label="Sort results">' + keep(q, ["sort"]) + '<label class="sr" for="dsort">Sort by</label><select id="dsort" name="sort" style="width:auto;min-height:2.25rem;padding-block:.25rem"><option value="">Name, A to Z</option><option value="recent"' + (q.sort === "recent" ? " selected" : "") + ">Recently updated</option></select></form>";
+      var extra = (key === "people" || key === "entrepreneurs") ? { name: "profession", label: "Profession", blank: "Any profession", options: W.LISTS.professions, value: q.profession } : key === "institutions" || key === "businesses" ? { name: "orgType", label: "Organisation type", blank: "Any type", options: W.LISTS.orgTypes, value: q.orgType } : null;
       var vq = function (v) { var n = {}; Object.keys(q).forEach(function (k) { n[k] = q[k]; }); n.view = v; n.page = ""; return L.path + W.qs(n); };
       var toggle = '<div class="view-toggle" role="group" aria-label="View as"><a href="' + vq("") + '" aria-current="' + (!list) + '">' + W.ico("grid") + 'Grid</a><a href="' + vq("list") + '" aria-current="' + list + '">' + W.ico("list") + "List</a></div>";
       var results = slice.length ? (list ? '<div class="results--list">' + slice.map(W.card).join("") + "</div>" : W.grid(slice.map(W.card), "grid--4")) : W.empty("No matching profiles", "Try removing a filter or searching for a different word.", '<a class="btn" href="' + L.path + '">Clear filters</a>');
+      var bar = W.filterBar({ path: L.path, label: "Filter results", keep: keep(q, ["industry", "city", "country", "profession", "orgType", "sort", "page"]),
+        controls: [{ name: "industry", label: "Industry", blank: "All industries", options: W.LISTS.industries, value: q.industry }, { name: "country", label: "Country", blank: "All countries", options: W.LISTS.countries, value: q.country }, { name: "city", label: "City", blank: "All cities", options: W.LISTS.cities, value: q.city }].concat(extra ? [extra] : []),
+        sort: { name: "sort", value: q.sort || "", options: [["", "Name, A to Z"], ["recent", "Recently updated"]] }, count: rows.length + " profile" + (rows.length === 1 ? "" : "s"), clear: active.length > 0, extra: toggle });
       return W.band({ compact: true, title: L.title, lede: L.lede, aside: search, extra: tabs }) +
-        '<div class="wrap dir-layout"><div class="result-bar">' + filters + '<p role="status">' + rows.length + " profile" + (rows.length === 1 ? "" : "s") + '</p><div class="row">' + sort + toggle + "</div></div>" + chips + results + pager(L.path, q, rows.length, per) + "</div>";
+        '<div class="wrap dir-layout">' + bar + results + pager(L.path, q, rows.length, per) + "</div>";
     };
   }
   W.route("/directory", "V52", directory("directory")); W.route("/people", "V03", directory("people")); W.route("/entrepreneurs", "V53", directory("entrepreneurs")); W.route("/businesses", "V04", directory("businesses")); W.route("/institutions", "V05", directory("institutions"));
@@ -137,7 +131,7 @@
       (arts.length ? sec("Related stories", W.grid(arts.map(function (a) { return W.articleCard(a); }), "grid--2")) : "") +
       "</div>" +
       '<aside class="profile-rail" aria-label="Actions"><div class="panel panel--ruled"><h2>Contact</h2><p class="small muted" style="margin-bottom:.75rem">Contact details are not shown. We pass enquiries on.</p>' + enq + "</div>" +
-      '<div class="panel"><h2>Something wrong?</h2><div class="rail-actions">' + (p.claimed ? "" : '<a class="btn alt sm" href="#/claim/' + e(p.slug) + '">' + W.ico("check") + 'Claim this profile</a>') + '<a class="btn alt sm" href="#/correct/' + e(p.slug) + '">' + W.ico("edit") + 'Suggest a correction</a><a class="btn alt sm" href="#/remove/' + e(p.slug) + '">' + W.ico("trash") + "Request removal</a>" + W.btn("Report this profile", "report", p.id, "alt sm") + '</div><p class="small muted" style="margin-top:.75rem">No account or payment needed.</p></div>' +
+      '<div class="panel"><h2>Something wrong?</h2><div class="rail-actions">' + (p.claimed || W.isPending(p) ? "" : '<a class="btn alt sm" href="#/claim/' + e(p.slug) + '">' + W.ico("check") + 'Claim this profile</a>') + '<a class="btn alt sm" href="#/correct/' + e(p.slug) + '">' + W.ico("edit") + 'Suggest a correction</a><a class="btn alt sm" href="#/remove/' + e(p.slug) + '">' + W.ico("trash") + "Request removal</a>" + W.btn("Report this profile", "report", p.id, "alt sm") + '</div><p class="small muted" style="margin-top:.75rem">No account or payment needed.</p></div>' +
       '<div class="panel"><h2>When shared</h2><div class="share">' + W.img("cover", W.seedFor(p.slug), 600, 240, "Placeholder share image") + "<div><strong>" + e(p.name) + '</strong><span class="muted">' + e(W.brand.name) + " · " + e(p.title || p.industry) + "</span>" + (pending ? '<p class="pending-note" style="margin-top:.25rem">' + e(W.PENDING_LABEL) + "</p>" : "") + "</div></div></div></aside></div></article>";
   }
   W.route("/profile/:slug", "V09", function (par, q, m) {
@@ -176,6 +170,7 @@
   function promises(items) { return '<ul class="timeline-simple">' + items.map(function (t) { return '<li><span class="mono">' + e(t[0]) + "</span><span>" + e(t[1]) + "</span></li>"; }).join("") + "</ul>"; }
   W.route("/claim/:slug", "V57", function (par) {
     var p = W.bySlug(par.slug); if (!p) return W.notFound.fn();
+    if (W.isPending(p)) return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Claim"]], title: "Not yet open for claims", lede: "This profile has not been reviewed yet. Once it has, it can be claimed. To fix something now, ask for a correction." }) + '<section class="section--tight"><div class="wrap section--tight"><p><a class="btn" href="#/correct/' + e(p.slug) + '">Suggest a correction</a></p></div></section>';
     if (p.claimed) return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Claim"]], title: "Already claimed", lede: "A claim for this profile has already been approved. To change something, ask for a correction." }) + '<section class="section--tight"><div class="wrap section--tight"><p><a class="btn" href="#/correct/' + e(p.slug) + '">Suggest a correction</a></p></div></section>';
     return W.band({ crumbs: [[p.name, "#/profile/" + p.slug], ["Claim"]], title: "Claim this profile", lede: "Tell us who you are and how we can check it. A member of staff reviews every claim before anything changes. No account is needed to ask." }) +
       '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">What happens next</h2>' + promises([["1 day", "We acknowledge your claim."], ["5 days", "We decide, after checking your evidence."]]) + '<p class="small muted">If we approve it, a named person on your side can ask us to keep the profile up to date, and staff check every change before it appears. A claim never changes how the profile ranks, and it cannot be bought.</p></div>' +
@@ -214,7 +209,7 @@
   function okPage(title, text, ref, actions) { return '<div class="wrap wrap--text section"><div class="stack"><div class="eyebrow">Done</div><h1>' + e(title) + '</h1><p style="font-size:var(--t-md)">' + e(text) + "</p>" + (ref ? '<p>Your reference: <strong class="mono" style="font-size:var(--t-sm)">' + e(ref) + "</strong></p>" : "") + '<div class="row">' + actions + "</div></div></div>"; }
   W.okPage = okPage;
   W.route("/done", "V41", function (p, q) {
-    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A member of staff will reply. The message is logged."], claim: ["Claim received", "We will acknowledge within 1 business day and decide within 5 days. Nothing changes on the profile until a person checks your evidence."], digest: ["You are subscribed", "We will email you new stories. Every email has an unsubscribe link."], lead: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], correctionowner: ["Check your email to finish your request", "We sent a single-use link to confirm your email. After you click it, the request reaches staff. Nothing changes on the profile until they act on it."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
+    var t = { correction: ["Correction received", "We will acknowledge within 1 business day and resolve within 7 days."], removal: ["Removal request received", "We will acknowledge within 1 business day. A valid request from the subject hides the profile within 2 business days."], contact: ["Message sent", "A member of staff will reply. The message is logged."], claim: ["Claim received", "We will acknowledge within 1 business day and decide within 5 days. Nothing changes on the profile until a person checks your evidence."], digest: ["You are subscribed", "We will email you new stories. Every email has an unsubscribe link."], enquiry: ["Enquiry received", "Our team will contact you. Terms are agreed offline; nothing is charged on this site."], dsr: ["Request received", "We will respond within the legal deadline. A reference was emailed."], correctionowner: ["Check your email to finish your request", "We sent a single-use link to confirm your email. After you click it, the request reaches staff. Nothing changes on the profile until they act on it."], signup: ["You are on the list", "We emailed you to confirm. You can unsubscribe at any time."] }[q.kind] || ["Done", ""];
     return okPage(t[0], t[1], q.ref, '<a class="btn" href="#/">Back to home</a><button type="button" class="btn alt" data-act="outbox">See the email sent</button>');
   });
   W.route("/confirm/:token", "V51", function (par) {
@@ -228,34 +223,41 @@
 
   /* ---------- stories ---------- */
   var TYPES = ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"];
+  function metaTail(a) { return "<span>" + readMins(a) + " min read</span>"; }
   /* The stories page reads like a modern magazine or newsletter: a masthead with an email sign-up, filter pills, one lead story, a three-column grid, and a sign-up block part-way down (D-056). */
   function readMins(a) { var w = [a.body].concat(a.paras || []).join(" ").split(/\s+/).length; return Math.max(2, Math.round(w / 180)); }
   function blCard(a, i) {
     var sp = W.sponsorOfArticle(a);
     return '<li class="bl-card" data-reveal style="--i:' + (i % 3) + '"><a href="#/stories/' + e(a.slug) + '">' + W.img("story", a.seed || W.seedFor(a.slug), 640, 420, "Placeholder image for the story: " + a.title, "bl-img") +
-      '<span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + readMins(a) + " min read</span>" + (sp ? W.badge.sponsored(sp) : "") + '</span><h3 class="bl-title">' + e(a.title) + '</h3><p class="bl-lede">' + e(a.lede || "") + '</p><span class="bl-by">By ' + e(a.author) + "</span></a></li>";
+      '<span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(W.storyDate(a))) + "</span>" + metaTail(a) + (sp ? W.badge.sponsored(sp) : "") + '</span><h3 class="bl-title">' + e(a.title) + '</h3><p class="bl-lede">' + e(a.lede || "") + '</p><span class="bl-by">By ' + e(a.author) + "</span></a></li>";
   }
   function digestForm(cls) {
     var id = "bl-mail" + (cls ? "2" : "");
     return '<form class="bl-sub ' + (cls || "") + '" data-form="digest" aria-label="Get the stories by email"><label class="sr" for="' + id + '">Email address</label><input id="' + id + '" name="email" type="email" required autocomplete="email" placeholder="Your email address"><button class="btn" type="submit">Subscribe</button></form>';
   }
   W.route("/stories", "V16", function (p, q) {
-    var rows = W.publicArticles().filter(function (a) { return (!q.type || a.type === q.type) && (!q.industry || a.industry === q.industry); }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var all = W.publicArticles().filter(function (a) { return (!q.type || a.type === q.type) && (!q.industry || a.industry === q.industry); });
+    /* The paid slot is one labelled card above the grid. The other stories keep exactly the order they would have without it (REQ-263). */
+    var slot = W.slotFor("Stories"); if (slot && all.indexOf(slot) < 0) slot = null;
+    var rows = all.filter(function (a) { return !slot || a.id !== slot.id; }).sort(function (a, b) {
+      return a.date < b.date ? 1 : -1;
+    });
+    var slotHtml = slot ? '<aside class="bl-slot" aria-label="Sponsored story"><a href="#/stories/' + e(slot.slug) + '">' + W.img("story", slot.seed || W.seedFor(slot.slug), 900, 600, "Placeholder image for the story: " + slot.title, "bl-slot-img") + '<span class="bl-slot-text"><span class="bl-slot-label">' + W.ico("tag") + "Sponsored by " + e(W.sponsorOfArticle(slot)) + '</span><span class="bl-meta"><b>' + e(slot.type) + "</b><span>" + e(W.fmtDate(W.storyDate(slot))) + "</span>" + metaTail(slot) + '</span><span class="bl-slot-title">' + e(slot.title) + '</span><span class="bl-lede">' + e(slot.lede || "") + "</span></span></a></aside>" : "";
     var pills = '<nav class="bl-pills" aria-label="Story types"><a href="#/stories' + (q.industry ? W.qs({ industry: q.industry }) : "") + '"' + (!q.type ? ' aria-current="page"' : "") + ">All</a>" + TYPES.map(function (t) { return '<a href="#/stories' + W.qs({ type: t, industry: q.industry || "" }) + '"' + (q.type === t ? ' aria-current="page"' : "") + ">" + e(t) + "</a>"; }).join("") + "</nav>";
-    var filter = '<form class="bl-filter" data-filter="#/stories" aria-label="Filter stories">' + keep(q, ["industry"]) + W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "All industries", value: q.industry }) + "</form>";
+    var filter = W.filterBar({ path: "#/stories", label: "Filter stories", keep: keep(q, ["industry"]), controls: [{ name: "industry", label: "Industry", blank: "All industries", options: W.LISTS.industries, value: q.industry }], count: all.length + " stor" + (all.length === 1 ? "y" : "ies"), clear: !!(q.type || q.industry) });
     var mosaic = rows.slice(0, 3), rest = rows.slice(3), cut = Math.min(6, rest.length), first = rest.slice(0, cut), later = rest.slice(cut);
     function tile(a, big) {
       var sp = W.sponsorOfArticle(a);
       return '<article class="bl-tile' + (big ? " bl-tile--big" : "") + '" data-reveal><a href="#/stories/' + e(a.slug) + '">' + W.img("story", a.seed || W.seedFor(a.slug), big ? 1200 : 700, big ? 1000 : 520, "Placeholder image for the story: " + a.title, "bl-tile-img") +
-        '<span class="bl-tile-text"><span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + readMins(a) + " min read</span>" + (sp ? W.badge.sponsored(sp) : "") + '</span><span class="bl-tile-title">' + e(a.title) + "</span>" + (big ? '<span class="bl-tile-lede">' + e(a.lede || "") + "</span>" : "") + "</span></a></article>";
+        '<span class="bl-tile-text"><span class="bl-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(W.storyDate(a))) + "</span>" + metaTail(a) + (sp ? W.badge.sponsored(sp) : "") + '</span><span class="bl-tile-title">' + e(a.title) + "</span>" + (big ? '<span class="bl-tile-lede">' + e(a.lede || "") + "</span>" : "") + "</span></a></article>";
     }
     var mid = '<aside class="bl-news" aria-label="Stories by email"><p class="bl-kick">The stories, by email</p><h2>Get new stories in your inbox.</h2><p>Interviews, features and news from the record, when they are published. No spam, and you can leave at any time.</p>' + digestForm("bl-sub--dark") + "</aside>";
-    return '<section class="bl-body"><div class="wrap"><div class="bl-top"><h1>Stories</h1>' + pills + filter + "</div>" +
+    return '<section class="bl-body"><div class="wrap"><div class="bl-top"><h1>Stories</h1>' + pills + "</div>" + filter + slotHtml +
       (rows.length ? '<div class="bl-mosaic">' + mosaic.map(function (a, i) { return tile(a, i === 0); }).join("") + "</div>" + (first.length ? '<ul class="bl-grid">' + first.map(blCard).join("") + "</ul>" : "") + mid + (later.length ? '<ul class="bl-grid">' + later.map(function (a, i) { return blCard(a, i); }).join("") + "</ul>" : "") : W.empty("No stories match", "Try another type or industry.", '<a class="btn" href="#/stories">Clear filters</a>')) + "</div></section>";
   });
   W.forms.digest = function (d) {
-    var id = "LEAD-" + ("000" + (W.S.leads.length + 1)).slice(-4);
-    W.S.leads.unshift({ id: W.uid("l"), ext: id, name: d.email, org: "", interest: "Stories newsletter", contact: d.email, status: "new", owner: "", notes: "", at: W.TODAY });
+    var id = "SUB-" + ("000" + (W.S.subscribers.length + 1)).slice(-4);
+    W.S.subscribers.unshift({ id: W.uid("s"), ext: id, email: d.email, at: W.TODAY });
     W.mail(d.email, "You are subscribed to the stories", "Sample email. Reference " + id + ".", ""); W.save(); W.go("#/done?kind=digest&ref=" + id);
   };
   var COMMENTS = [["Adaeze O.", "2 days ago", "This is the clearest account of same-day settlement I have read. The point about small merchants waiting days for their own money is the right one."], ["Kwame B.", "yesterday", "Would love to see the sources for the merchant figures. Otherwise a useful read."]];
@@ -265,25 +267,82 @@
     if (!a || (a.status !== "published" && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
     var sp = W.sponsorOfArticle(a), others = W.publicArticles().filter(function (x) { return x.id !== a.id; }).slice(0, 3);
     var people = a.profiles.map(W.profile).filter(function (x) { return x && W.isPublic(x); });
-    return (a.status !== "published" ? W.staffBanner("Staff preview: " + e(a.status) + " article, not public.") : "") + '<article><header class="wrap wrap--text article-head">' + W.crumbs([["Stories", "#/stories"], [a.type]]) + '<div class="story-meta" style="margin-top:1rem"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span><span>" + e(a.industry) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h1>" + e(a.title) + '</h1><p class="article-lede">' + e(a.lede || "") + '</p><p class="muted small" style="margin-top:.75rem">By ' + e(a.author) + "</p></header>" +
+    return (a.status !== "published" ? W.staffBanner("Staff preview: " + e(a.status) + " article, not public.") : "") + '<article><header class="wrap wrap--text article-head">' + W.crumbs([["Stories", "#/stories"], [a.type]]) + '<div class="story-meta" style="margin-top:1rem"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(W.storyDate(a))) + "</span><span>" + e(a.industry) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h1>" + e(a.title) + '</h1><p class="article-lede">' + e(a.lede || "") + '</p><p class="muted small" style="margin-top:.75rem">By ' + e(a.author) + "</p></header>" +
       '<div class="wrap">' + W.img("story", a.seed || W.seedFor(a.slug), 1400, 620, "Placeholder image for the story: " + a.title, "article-cover ratio-21x9") + '</div><div class="wrap wrap--text article-body">' +
-      (sp ? '<div class="notice notice--sponsored" style="font-size:var(--t-sm);line-height:1.5">' + W.ico("tag") + "<div><strong>Sponsored content.</strong> Paid for by " + e(sp) + ". The sponsor did not write it and has no influence over any label or award.</div></div>" : "") +
+      (sp ? '<div class="notice notice--sponsored" style="font-size:var(--t-sm);line-height:1.5">' + W.ico("tag") + "<div><strong>Sponsored by " + e(sp) + ".</strong> The sponsor paid for this story's placement. The sponsor did not write it and has no influence over any label, ranking or award.</div></div>" : "") +
       "<p>" + e(a.body) + "</p>" + (a.paras || []).slice(0, 1).map(function (x) { return "<p>" + e(x) + "</p>"; }).join("") + (a.quote ? "<blockquote>" + e(a.quote) + "</blockquote>" : "") + (a.paras || []).slice(1).map(function (x) { return "<p>" + e(x) + "</p>"; }).join("") + "</div></article>" +
+      relatedEvent(a) +
       (people.length ? '<section class="section section--alt"><div class="wrap">' + W.sectionHead("On the record", "Profiles in this story") + W.grid(people.map(W.card)) + "</div></section>" : "") +
       '<section class="section st-comments" aria-labelledby="stCm"><div class="wrap wrap--text"><p class="np-kicker">Join in</p><h2 id="stCm">Comments</h2><ol class="st-cm-list">' + COMMENTS.map(function (c) { return '<li><div class="st-cm-av" aria-hidden="true">' + e(c[0].charAt(0)) + '</div><div><p class="st-cm-by"><strong>' + e(c[0]) + '</strong> <span class="muted small">' + e(c[1]) + '</span></p><p>' + e(c[2]) + '</p></div></li>'; }).join("") + '</ol><form class="form st-cm-form" data-form="comment"><input type="hidden" name="story" value="' + e(a.id) + '"><h3 style="font-size:var(--t-lg)">Leave a comment</h3>' + W.field("Comment", "text", { type: "textarea", req: true }) + W.field("Name", "name", { req: true }) + W.field("Email", "email", { type: "email", req: true, hint: "Never shown. Used to tell you when your comment is approved." }) + W.field("I agree that WHOISWHO stores my name and email to show and manage this comment.", "consent", { type: "checkbox", req: true }) + W.bot() + '<p class="small muted">Comments are checked by our team before they appear. We remove anything abusive, defamatory or off topic. Comments run on the wpDiscuz plugin in the WordPress build.</p><button class="btn">Post comment</button></form></div></section>' +
       '<section class="section"><div class="wrap">' + W.sectionHead("Keep reading", "More stories", ["All stories", "#/stories"]) + W.grid(others.map(function (x) { return W.articleCard(x); })) + "</div></section>";
   });
 
+  /* ---------- events (REQ-262, REQ-264, REQ-265) ---------- */
+  /* An event is its own post type. It has a date, a place and an organiser. Registration is on the organiser's site; WHOISWHO takes no payment (D-005). */
+  function evDate(v) { var d = v.start.slice(0, 10); return '<span class="ev-date" aria-hidden="true"><b>' + Number(d.slice(8, 10)) + "</b>" + e(W.fmtDate(d).split(" ")[1]) + "</span>"; }
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  function evStatus(v) { return W.eventState(v) === "past" ? "Past" : v.venue === "Online" ? "Online" : "Upcoming"; }
+  /* One agenda row, used on the Events page, under an event, and on Home. A big date, the title, where and who, a status tag. */
+  function evRow(v, compact) {
+    var d = v.start.slice(0, 10), past = W.eventState(v) === "past", st = evStatus(v);
+    return '<li class="ag-row' + (past ? " is-past" : "") + (compact ? " ag-row--compact" : "") + '"><a class="ag-link" href="#/events/' + e(v.slug) + '" data-cursor="Open"><span class="ag-date" aria-hidden="true"><b>' + Number(d.slice(8, 10)) + "</b>" + e(MONTHS[Number(d.slice(5, 7)) - 1].slice(0, 3)) + '</span><span class="ag-main"><span class="ag-title">' + e(v.title) + '</span><span class="ag-meta">' + e(W.eventWhere(v)) + " · " + e((v.organiser || "").replace(/ \(sample organiser\)/, "")) + '</span></span><span class="ag-tag ag-tag--' + st.toLowerCase() + '">' + st + "</span>" +
+      (compact ? "" : '<span class="ag-thumb" aria-hidden="true">' + W.img("story", v.seed || W.seedFor(v.slug), 240, 160, "", "ag-img") + "</span>") + W.ico("arrow") + "</a></li>";
+  }
+  W.evRow = evRow;
+  /* Rows grouped by month, each month under its own heading. */
+  function evAgenda(list) {
+    var groups = [], idx = {};
+    list.forEach(function (v) { var k = v.start.slice(0, 7); if (!(k in idx)) { idx[k] = groups.length; groups.push({ k: k, rows: [] }); } groups[idx[k]].rows.push(v); });
+    return groups.map(function (g) { return '<section class="ag-month" aria-label="' + e(MONTHS[Number(g.k.slice(5, 7)) - 1] + " " + g.k.slice(0, 4)) + '"><h3 class="ag-month-h"><span>' + e(MONTHS[Number(g.k.slice(5, 7)) - 1]) + "</span> " + e(g.k.slice(0, 4)) + '</h3><ul class="ag-list">' + g.rows.map(function (v) { return evRow(v); }).join("") + "</ul></section>"; }).join("");
+  }
+  /* The Related event card at the end of a story that links one (REQ-265). A draft event is never shown to the public. */
+  function relatedEvent(a) {
+    var v = a.relatedEvent ? W.find("events", a.relatedEvent) : null;
+    if (!v || (v.status !== "published" && W.S.role === "visitor")) return "";
+    var past = W.eventState(v) === "past";
+    return '<aside class="section ev-related" aria-labelledby="evRel"><div class="wrap wrap--text"><h2 id="evRel" class="np-kicker">Related event</h2><a class="ev-rel-card" href="#/events/' + e(v.slug) + '">' + evDate(v) + '<span class="ev-what"><strong>' + e(v.title) + "</strong><span>" + e(W.eventWhen(v)) + " · " + e(W.eventWhere(v)) + "</span><span>" + (past ? "This event has ended" : "Organised by " + e(v.organiser)) + "</span></span>" + W.ico("arrow") + "</a></div></aside>";
+  }
+  W.route("/events", "V58", function (p, q) {
+    var ok = function (v) { return (!q.city || v.city === q.city) && (!q.industry || v.industry === q.industry); };
+    var up = W.upcomingEvents().filter(ok), past = W.pastEvents().filter(ok), n = up.length + past.length;
+    var cities = W.publicEvents().map(function (v) { return v.city; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).sort();
+    var inds = W.publicEvents().map(function (v) { return v.industry; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; }).sort();
+    var next = up[0];
+    var hero = '<section class="ev-hero"><div class="wrap ev-hero-in"><div class="ev-hero-text"><p class="ev-kick">Calendar</p><h1>Events</h1><p class="ev-lede">Conferences, forums and open days across the continent. Each event links to its organiser, who handles registration and any fee.</p></div>' +
+      (next ? '<a class="ev-next" href="#/events/' + e(next.slug) + '" data-cursor="Open"><span class="ev-next-k">Next up</span><span class="ev-next-d"><b>' + Number(next.start.slice(8, 10)) + "</b>" + e(MONTHS[Number(next.start.slice(5, 7)) - 1]) + '</span><span class="ev-next-t">' + e(next.title) + '</span><span class="ev-next-m">' + e(W.eventWhere(next)) + '</span><span class="ev-next-go">View event' + W.ico("arrow") + "</span></a>" : "") + "</div></section>";
+    var bar = W.filterBar({ path: "#/events", label: "Filter events", controls: [{ name: "city", label: "City", blank: "All cities", options: cities, value: q.city }, { name: "industry", label: "Industry", blank: "All industries", options: inds, value: q.industry }], count: n + " event" + (n === 1 ? "" : "s"), clear: !!(q.city || q.industry) });
+    return hero + '<section class="ev-body"><div class="wrap">' + bar +
+      (up.length ? '<h2 class="ev-h">Upcoming</h2>' + evAgenda(up) : W.empty("No upcoming events match", "Try another city or industry.", '<a class="btn" href="#/events">Clear filters</a>')) +
+      (past.length ? '<h2 class="ev-h ev-h--past">Past events</h2><div class="ag-past">' + evAgenda(past) + "</div>" : "") + "</div></section>";
+  });
+  /* Event details: when, where, who runs it, and a link to register on the organiser's site. No payment is taken here (D-005). */
+  function evBlock(v) {
+    var past = W.eventState(v) === "past";
+    return '<aside class="ev-card" aria-label="Event details"><h2>' + (past ? "This event has ended" : "Event details") + '</h2><dl class="ev-dl"><div><dt>When</dt><dd>' + e(W.eventWhen(v)) + "</dd></div><div><dt>Where</dt><dd>" + e(W.eventWhere(v)) + "</dd></div><div><dt>Organiser</dt><dd>" + e(v.organiser) + "</dd></div>" + (v.price ? "<div><dt>Cost</dt><dd>" + e(v.price) + "</dd></div>" : "") + "</dl>" +
+      (past ? "" : '<a class="btn ev-reg" href="' + e(v.regUrl) + '" target="_blank" rel="noopener noreferrer">Register on the organiser’s site' + W.ico("arrow") + "</a>") + '<p class="small muted">Registration and any fee are handled by the organiser. WHOISWHO takes no payment and does not sell tickets.</p></aside>';
+  }
+  W.route("/events/:slug", "V59", function (par, q, m) {
+    var v = (W.S.events || []).filter(function (x) { return x.slug === par.slug; })[0], staff = W.S.role !== "visitor";
+    if (!v || (v.status !== "published" && !staff)) { m.inv = "V13"; return W.notFound.fn(); }
+    var rel = W.storiesOfEvent(v), more = W.upcomingEvents().filter(function (x) { return x.id !== v.id; }).slice(0, 3), past = W.eventState(v) === "past", d = v.start.slice(0, 10);
+    var poster = '<header class="ev-poster' + (past ? " is-past" : "") + '"><div class="ev-poster-img" aria-hidden="true">' + W.img("story", v.seed || W.seedFor(v.slug), 900, 700, "", "ev-poster-pic") + '</div><div class="wrap ev-poster-in">' + W.crumbs([["Events", "#/events"], [v.title]]) +
+      '<div class="ev-poster-row"><div class="ev-poster-date" aria-label="' + e(W.fmtDate(d)) + '"><b>' + Number(d.slice(8, 10)) + "</b><span>" + e(MONTHS[Number(d.slice(5, 7)) - 1]) + " " + e(d.slice(0, 4)) + '</span></div><div class="ev-poster-main"><span class="ag-tag ag-tag--' + evStatus(v).toLowerCase() + '">' + evStatus(v) + "</span><h1>" + e(v.title) + '</h1><p class="ev-poster-meta">' + e(W.eventWhere(v)) + " · Organised by " + e(v.organiser) + "</p></div></div></div></header>";
+    return (v.status !== "published" ? W.staffBanner("Staff preview: " + e(v.status) + " event, not public.") : "") + poster +
+      '<section class="ev-layout"><div class="wrap ev-layout-in"><div class="ev-side">' + evBlock(v) + '</div><div class="ev-text prose"><p class="ev-sum">' + e(v.summary || "") + "</p><p>" + e(v.body) + "</p>" + (v.paras || []).map(function (x) { return "<p>" + e(x) + "</p>"; }).join("") +
+      (rel.length ? '<h2 class="ev-h2">Related stories</h2><ul class="ev-rel-list">' + rel.map(function (x) { return '<li><a href="#/stories/' + e(x.slug) + '">' + e(x.title) + '</a><span class="muted small"> ' + e(x.type) + "</span></li>"; }).join("") + "</ul>" : "") + "</div></div></section>" +
+      (more.length ? '<section class="section ev-more"><div class="wrap">' + W.sectionHead("More to come", "More events", ["All events", "#/events"]) + '<ul class="ag-list">' + more.map(function (x) { return evRow(x); }).join("") + "</ul></div></section>" : "");
+  });
+
   /* ---------- get listed, contact ---------- */
   W.route("/subscribe", "V24", function () {
     return W.band({ eyebrow: "Work with us", title: "Get listed", lede: "Tell us what you are looking for. We reply with terms agreed offline. Nothing is charged on this site, and every listing has the same format." }) +
-      '<section class="section"><div class="wrap form-grid"><div class="form-aside"><div class="prose"><h2 style="margin-top:0">What we can do</h2><ul><li>Create or improve your listing</li><li>Sponsored stories, always labelled</li><li>Media and editorial work</li><li>Awards sponsorship</li></ul></div></div><form class="form" data-form="lead"><h2 style="font-size:var(--t-xl)">Send an enquiry</h2>' + W.field("Your name", "name", { req: true }) + W.field("Organisation", "org") + W.field("Interested in", "interest", { type: "select", options: ["Listing a profile", "Sponsored story", "Media / editorial work", "Awards sponsorship", "Not sure"], req: true }) + W.field("Email or phone", "contact", { req: true }) + W.field("Anything else?", "msg", { type: "textarea" }) + W.field('I have read the <a href="#/privacy">privacy notice</a> and agree to be contacted about this enquiry.', "consent", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Send enquiry</button></form></div></section>';
+      '<section class="section"><div class="wrap form-grid"><div class="form-aside"><div class="prose"><h2 style="margin-top:0">What we can do</h2><ul><li>Create or improve your listing</li><li>Sponsored stories, always labelled</li><li>Media and editorial work</li><li>Awards sponsorship</li></ul></div></div><form class="form" data-form="bizenquiry"><h2 style="font-size:var(--t-xl)">Send an enquiry</h2>' + W.field("Your name", "name", { req: true }) + W.field("Organisation", "org") + W.field("Interested in", "interest", { type: "select", options: ["Listing a profile", "Sponsored story", "Media / editorial work", "Awards sponsorship", "Not sure"], req: true }) + W.field("Email or phone", "contact", { req: true }) + W.field("Anything else?", "msg", { type: "textarea" }) + W.field('I have read the <a href="#/privacy">privacy notice</a> and agree to be contacted about this enquiry.', "consent", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Send enquiry</button></form></div></section>';
   });
-  W.forms.lead = function (d) {
-    var id = "LEAD-" + ("000" + (W.S.leads.length + 1)).slice(-4);
-    W.S.leads.unshift({ id: W.uid("l"), ext: id, name: d.name, org: d.org || "", interest: d.interest, contact: d.contact, status: "new", owner: "", notes: d.msg || "", at: W.TODAY });
-    W.mail("Support inbox (Editor)", "New lead: " + d.name, d.interest + " from " + (d.org || "an individual") + ".", "#/admin/leads"); W.mail(d.contact, "We received your enquiry", "Reference " + id + ".", "");
-    W.save(); W.go("#/done?kind=lead&ref=" + id);
+  W.forms.bizenquiry = function (d) {
+    var id = "ENQ-" + ("000" + (W.S.enquiries.filter(function (x) { return x.business; }).length + 1)).slice(-4);
+    W.S.enquiries.unshift({ id: W.uid("e"), ref: id, business: true, kind: d.interest, profileId: "", name: d.name, org: d.org || "", email: d.contact, message: d.msg || "", at: W.TODAY, read: false, general: true });
+    W.mail("Support inbox (Editor)", "New enquiry: " + d.name, d.interest + " from " + (d.org || "an individual") + ".", "#/admin/inbox"); W.mail(d.contact, "We received your enquiry", "Reference " + id + ".", "");
+    W.save(); W.go("#/done?kind=enquiry&ref=" + id);
   };
   W.route("/contact", "V26", function () {
     return W.band({ eyebrow: "Contact", title: "Talk to the team", lede: "A person reads every message. To change a profile, the quickest way is the correction form on that profile." }) +
@@ -323,7 +382,7 @@
         ["Can I pay to be nominated or to win?", "No. Judges never see payment, subscription or sponsorship information, and sponsors have no influence over who is nominated or who wins."]
       ]],
       ["Stories", [
-        ["What is a sponsored story?", "A story paid for by a sponsor. It is always marked “Sponsored” with the sponsor’s name. The sponsor does not write it, and it has no influence over profiles, labels or awards."]
+        ["What is a sponsored story?", "A story whose placement a sponsor paid for: a labelled slot on the home page or the stories page for set dates. It is always marked “Sponsored by” with the sponsor’s name. The sponsor does not write it. It never changes the order of other stories, search results, profiles, labels, nominations or winners."]
       ]],
       ["Your data", [
         ["Do I need an account?", "No. There are no public accounts. Everything on this site, including corrections, claims and nominations, works without one."],
@@ -354,7 +413,7 @@
   W.act.unsub = function () { W.S.signups = []; W.save(); W.go("#/unsubscribe?done=1"); };
   W.route("/sitemap.xml", "V48", function () {
     var pubs = W.publicProfiles().filter(function (p) { return !W.isPending(p); });
-    var urls = ["/", "/about", "/directory", "/people", "/entrepreneurs", "/businesses", "/institutions", "/industries", "/awards", "/stories", "/subscribe", "/nominate", "/contact"].concat(pubs.map(function (p) { return "/profile/" + p.slug; })).concat(W.publicArticles().map(function (a) { return "/stories/" + a.slug; }));
+    var urls = ["/", "/about", "/directory", "/people", "/entrepreneurs", "/businesses", "/institutions", "/industries", "/awards", "/stories", "/events", "/subscribe", "/nominate", "/contact"].concat(pubs.map(function (p) { return "/profile/" + p.slug; })).concat(W.publicArticles().map(function (a) { return "/stories/" + a.slug; })).concat(W.publicEvents().map(function (v) { return "/events/" + v.slug; }));
     var excl = W.S.profiles.filter(function (p) { return !W.isPublic(p) || W.isPending(p); });
     return W.band({ light: true, eyebrow: "Preview", title: "sitemap.xml", lede: urls.length + " URLs listed, built from the same visibility rule as pages and search." }) +
       '<section class="section--tight"><div class="wrap section--tight split split--even"><div><h2 style="font-size:var(--t-xl);margin-bottom:.75rem">Listed</h2><pre class="mono panel" style="max-height:30rem" tabindex="0">' + urls.map(function (u) { return "&lt;url&gt;&lt;loc&gt;https://" + e(W.brand.domain) + e(u) + "&lt;/loc&gt;&lt;/url&gt;"; }).join("\n") + '</pre></div><div class="stack"><h2 style="font-size:var(--t-xl)">Left out (' + excl.length + ")</h2>" + W.table(["Profile", "Status", "Visitors get"], excl.map(function (p) { return [e(p.name), W.isPending(p) ? '<span class="pill">review pending</span>' : W.stPill(p.status), W.isPending(p) ? "200 + noindex" : W.vis(p) === "gone" ? "410 + noindex" : "404"]; })) + '<h2 style="font-size:var(--t-xl)">robots.txt</h2><pre class="mono panel">User-agent: *\nAllow: /\nSitemap: https://' + e(W.brand.domain) + "/sitemap.xml</pre></div></div></section>";
@@ -366,8 +425,9 @@
     ["Directory", [["V52", "All profiles: search, filters, grid", "#/directory"], ["V52", "All profiles: list view", "#/directory?view=list"], ["V03", "People", "#/people"], ["V53", "Entrepreneurs", "#/entrepreneurs"], ["V04", "Businesses", "#/businesses"], ["V05", "Institutions", "#/institutions"], ["V06", "Industries", "#/industries"], ["V07", "Industry page", "#/industries/Technology"], ["V08", "Search results", "#/search?q=lagos"], ["V38", "Search: no results", "#/search?q=zzzz"], ["V52", "Directory: empty state", "#/directory?q=zzzz"]]],
     ["Profile types", [["V09", "Individual profile", "#/profile/tunde-achebe-wanjala"], ["V09", "Individual, supplied by the person", "#/profile/ngozi-balogun-mensah"], ["V54", "Entrepreneur profile", "#/profile/chidi-sesay-abara"], ["V10", "Business profile", "#/profile/savanna-loop-agritech"], ["V11", "Institution profile", "#/profile/oyo-crest-university"]]],
     ["Profile states and labels", [["V56", "Compiled automatically, review pending", "#/profile/deltaline-cold-chain"], ["V56", "Pending: institution", "#/profile/lake-basin-water-institute"], ["V10", "Reviewed", "#/profile/bonny-reach-logistics"], ["V10", "Verified and Sponsored", "#/profile/tiderail-payments"], ["V54", "Verified entrepreneur", "#/profile/ifeoma-kariuki-bello"], ["V10", "Featured", "#/profile/confluence-health-network"], ["V54", "Featured entrepreneur", "#/profile/wanjiru-owusu-eze"], ["V10", "Sponsored, no trust label", "#/profile/osu-harbour-foods"], ["V12", "Removed (410)", "#/profile/emeka-diallo-hassan"], ["V13", "Not public (404)", "#/profile/harmattan-grid-energy"]]],
-    ["Awards", [["V18", "Awards overview", "#/awards"], ["V19", "Category page", "#/awards/category/5"], ["V55", "Nominees", "#/awards/nominees"], ["V21", "Winners", "#/awards/winners"], ["V33", "Awards rules", "#/awards/rules"], ["V22", "Nominate", "#/nominate"], ["N04", "Nomination submitted", "#/nominate/done?ref=NOM-0099"], ["N06", "Nominee response", "#/nominee/t-n6"], ["N09", "Invalid nominee link", "#/nominee/bad-token"]]],
-    ["Stories", [["V16", "Stories list", "#/stories"], ["V17", "Story", "#/stories/building-for-the-smallholder"], ["V17", "Sponsored story", "#/stories/merchant-settlement-spotlight"]]],
+    ["Awards", [["V18", "Awards overview", "#/awards"], ["V19", "Category page", "#/awards/category/5"], ["V55", "Nominees", "#/awards/nominees"], ["V21", "Winners", "#/awards/winners"], ["V33", "Awards rules", "#/awards/rules"], ["V22", "Nominate", "#/nominate"], ["N04", "Nomination submitted", "#/nominate/done?ref=NOM-0099"]]],
+    ["Stories", [["V16", "Stories list", "#/stories"], ["V17", "Story", "#/stories/building-for-the-smallholder"], ["V17", "Sponsored story", "#/stories/merchant-settlement-spotlight"], ["V17", "Story with a related event", "#/stories/building-for-the-smallholder"]]],
+    ["Events", [["V58", "Events list", "#/events"], ["V59", "Event (upcoming)", "#/events/lagos-agri-finance-forum-2026"], ["V59", "Event (past)", "#/events/abuja-mediators-roundtable"]]],
     ["Forms", [["V39", "Correction request", "#/correct/savanna-loop-agritech"], ["V40", "Request removal", "#/remove/halima-osei-danjuma"], ["V44", "Report (button on any profile)", "#/profile/palmline-media-house"], ["V43", "Enquiry (button on any profile)", "#/profile/ngozi-balogun-mensah"], ["V50", "Your data rights", "#/data-rights"], ["V41", "Confirmation", "#/done?kind=correction&ref=cr1"], ["V45", "Unsubscribe", "#/unsubscribe"]]],
     ["Legal and system", [["V29", "Privacy policy", "#/privacy"], ["V30", "Terms", "#/terms"], ["V31", "Cookie policy", "#/cookies"], ["V35", "Complaints and takedown policy", "#/complaints"], ["V13", "404", "#/not-a-real-page"], ["V14", "500", "#/error"], ["V48", "Sitemap preview", "#/sitemap.xml"]]],
     ["Single-use link pages", [["O23", "Customer invitation", "#/invite/demo"], ["O06", "Customer profile form (press Start first)", "#/invite/demo"], ["O22", "Consent", "#/consent/demo"], ["O24", "Expired link", "#/expired"]]]

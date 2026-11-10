@@ -41,7 +41,7 @@
     verified: function () { return '<span class="badge badge--verified" title="Checked by our team against a published checklist. Never for sale.">' + W.ico("check") + "Verified</span>"; },
     reviewed: function (date) { return '<span class="badge badge--reviewed">Reviewed on ' + e(W.fmtDate(date)) + "</span>"; },
     pending: function () { return '<span class="badge badge--pending">' + W.ico("clock") + e(W.PENDING_LABEL) + "</span>"; },
-    sponsored: function (name) { return '<span class="badge badge--sponsored" title="Paid placement. Not a trust label.">' + W.ico("tag") + "Sponsored" + (name ? " · " + e(name) : "") + "</span>"; }
+    sponsored: function (name) { return '<span class="badge badge--sponsored" title="A sponsor paid for this placement. Not a trust label.">' + W.ico("tag") + "Sponsored" + (name ? " by " + e(name) : "") + "</span>"; }
   };
   W.labels = function (p, sponsorName) {
     var out = "";
@@ -57,14 +57,14 @@
      then industry, name and role. Lists carry only the pending label. */
   var CARD_TONES = ["blue", "purple", "green", "red", "orange"], CARD_MARKS = ["star", "comb", "spiral", "link"];
   /* The profile's public awards nomination, if any: nominee or winner, and only once the nominees are published.
-     A nomination before that is never shown (REQ-033). A win comes first. Shortlisting is a staff step, not a public label (D-055). */
+     A nomination before that is never shown (REQ-033). A win comes first. */
   W.nomFor = function (p) {
     if (!p || W.isPending(p)) return null;
-    var ns = (W.S.nominations || []).filter(function (n) { return n.profileId === p.id && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && W.nomPublic(n); });
-    return ns.filter(function (n) { return n.status === "winner"; })[0] || ns[0] || null;
+    var ns = (W.S.nominations || []).filter(function (n) { return n.profileId === p.id && W.nomPublic(n); });
+    return ns.filter(W.nomWinner)[0] || ns[0] || null;
   };
   W.awardTag = function (n, cls) {
-    var won = n.status === "winner";
+    var won = W.nomWinner(n);
     return '<a class="award-tag' + (won ? " award-tag--won" : "") + " " + (cls || "") + '" href="#/awards/nominee/' + e(n.ref) + '">' + W.ico("star") + '<span class="award-tag-t"><b>' + (won ? "Winner" : "Nominee") + '</b> <span class="award-tag-c">' + e(n.category) + "</span></span></a>";
   };
   /* A profile as a poster: colour and mark picked from its slug, so the same profile always looks the same. */
@@ -83,7 +83,7 @@
   W.articleCard = function (a, lead) {
     var sp = W.sponsorOfArticle(a);
     return '<a class="story' + (lead ? " story--lead" : "") + '" href="#/stories/' + e(a.slug) + '">' + W.img("story", a.seed || W.seedFor(a.slug), lead ? 1100 : 640, lead ? 660 : 400, "Placeholder image for the story: " + a.title, "ratio-3x2") +
-      '<div class="story-text"><div class="story-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h3>" + e(a.title) + "</h3>" + (lead && a.lede ? '<p class="muted">' + e(a.lede) + "</p>" : "") + "</div></a>";
+      '<div class="story-text"><div class="story-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(W.storyDate(a))) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h3>" + e(a.title) + "</h3>" + (lead && a.lede ? '<p class="muted">' + e(a.lede) + "</p>" : "") + "</div></a>";
   };
   /* Awards groups each carry one brand colour and one mark, used on nominee portraits and tiles. */
   var GROUP_TONE = { "Leadership & Public Impact": ["blue", "star"], "Entrepreneurship & Business": ["orange", "comb"], "Technology & Innovation": ["purple", "spiral"], "Professional Excellence": ["green", "link"], "Industry & Institutional Recognition": ["red", "comb"] };
@@ -167,11 +167,11 @@
   function megaBtn(id, label, current) { return '<li><button type="button" class="nav-link" data-act="mega" data-arg="' + id + '" aria-expanded="false" aria-controls="' + id + '"' + (current ? ' data-current="true"' : "") + ">" + e(label) + W.ico("chevron") + "</button></li>"; }
   W.siteHeader = function (cur) {
     return '<a class="skip" href="#main" data-act="skip">Skip to content</a><p class="fiction-strip">Prototype. Every person and organisation shown is fictional.</p><header class="site-head"><div class="wrap head-bar"><a class="logo" href="#/" aria-label="' + e(W.brand.name) + ' home">' + wordmark() + "</a>" +
-      '<nav class="nav-top" aria-label="Main"><ul>' + megaBtn("mega-directory", "Directory") + megaBtn("mega-awards", "Awards") + '<li><a class="nav-link" href="#/stories"' + (/^\/stories/.test(cur) ? ' aria-current="page"' : "") + ">Stories</a></li>" + megaBtn("mega-about", "About") + "</ul></nav>" +
+      '<nav class="nav-top" aria-label="Main"><ul>' + megaBtn("mega-directory", "Directory") + megaBtn("mega-awards", "Awards") + '<li><a class="nav-link" href="#/stories"' + (/^\/stories/.test(cur) ? ' aria-current="page"' : "") + ">Stories</a></li>" + '<li><a class="nav-link" href="#/events"' + (/^\/events/.test(cur) ? ' aria-current="page"' : "") + ">Events</a></li>" + megaBtn("mega-about", "About") + "</ul></nav>" +
       '<div class="head-tools"><button type="button" class="icon-btn search-link" data-act="searchOpen" aria-haspopup="dialog" aria-controls="searchOv" aria-label="Search the directory"' + (/^\/search/.test(cur) ? ' aria-current="page"' : "") + ">" + W.ico("search") + '</button><a class="btn sm head-cta" href="#/subscribe">Get listed</a><button type="button" class="icon-btn menu-btn" data-act="drawer" aria-expanded="false" aria-controls="drawer">' + W.ico("menu") + "Menu</button></div></div>" + megas() + "</header>" + drawer() + searchPanel();
   };
   /* ---------- search panel: opens from the header icon, shows results as you type ---------- */
-  var QUICK = [["#/people", "People"], ["#/entrepreneurs", "Entrepreneurs"], ["#/businesses", "Businesses"], ["#/institutions", "Institutions"], ["#/awards", "Awards"], ["#/stories", "Stories"]];
+  var QUICK = [["#/people", "People"], ["#/entrepreneurs", "Entrepreneurs"], ["#/businesses", "Businesses"], ["#/institutions", "Institutions"], ["#/awards", "Awards"], ["#/stories", "Stories"], ["#/events", "Events"]];
   function searchPanel() {
     return '<div class="sov" id="searchOv" role="dialog" aria-modal="true" aria-label="Search" hidden><div class="wrap sov-in">' +
       '<div class="sov-top"><span class="sov-kicker">Search</span><button type="button" class="icon-btn sov-close" data-act="searchClose">' + W.ico("close") + "Close</button></div>" +
@@ -193,7 +193,7 @@
       '<form role="search" data-form="search"><label class="sr" for="hq2">Search</label><input id="hq2" name="q" type="search" placeholder="Search the directory"></form>' +
       drawerGroup("Directory", [["#/directory", "All profiles"], ["#/people", "People"], ["#/entrepreneurs", "Entrepreneurs"], ["#/businesses", "Businesses"], ["#/institutions", "Institutions"], ["#/industries", "Industries"]]) +
       drawerGroup("Awards", [["#/awards", "Awards overview"], ["#/nominate", nomLabel()], ["#/awards/nominees", "Nominees"], ["#/awards/winners", "Winners"], ["#/awards/rules", "Eligibility and judging"]]) +
-      '<a class="drawer-link" href="#/stories">Stories</a>' +
+      '<a class="drawer-link" href="#/stories">Stories</a><a class="drawer-link" href="#/events">Events</a>' +
       drawerGroup("About", [["#/about", "About"], ["#/faq", "FAQ"], ["#/contact", "Contact"]]) +
       '<a class="drawer-link" href="#/subscribe">Get listed</a></div>';
   }
@@ -204,7 +204,7 @@
     var parts = W.brand.tagline.split(/\.\s*/).filter(Boolean);
     return '<footer class="site-foot on-dark pattern"><div class="wrap"><p class="foot-statement">' + parts.map(function (t) { return '<span aria-hidden="true">' + e(t) + ".</span>"; }).join("") + '<span class="sr">' + e(W.brand.tagline) + '</span></p><div class="foot-cols">' +
       col("Directory", [["#/people", "People"], ["#/entrepreneurs", "Entrepreneurs"], ["#/businesses", "Businesses"], ["#/institutions", "Institutions"], ["#/industries", "Industries"]]) +
-      col("Recognition", [["#/awards", "Awards"], ["#/nominate", nomLabel()], ["#/awards/winners", "Winners"], ["#/awards/rules", "Awards rules"], ["#/stories", "Stories"]]) +
+      col("Recognition", [["#/awards", "Awards"], ["#/nominate", nomLabel()], ["#/awards/winners", "Winners"], ["#/awards/rules", "Awards rules"], ["#/stories", "Stories"], ["#/events", "Events"]]) +
       col("Trust", [["#/complaints", "Complaints and takedown"], ["#/data-rights", "Your data rights"], ["#/faq", "FAQ"], ["#/contact", "Contact"]]) +
       '<div><h2>Legal</h2><ul><li><a href="#/privacy">Privacy policy</a></li><li><a href="#/terms">Terms</a></li><li><a href="#/cookies">Cookie policy</a></li><li><button type="button" class="foot-btn" data-act="cookiePrefs">Cookie preferences</button></li></ul></div></div>' +
       '<div class="foot-base"><span>© 2026 whoiswhoafrica. ' + e(W.brand.domain) + '</span><span>Design prototype with fictional sample content. <a href="#/sitemap.xml">Sitemap</a> · <a href="#/unsubscribe">Unsubscribe</a></span></div></div></footer>';

@@ -5,7 +5,7 @@
   function mini(path, inv, key, fn) { W.staffRoute(path, inv, key, fn); }
   function capRoute(cap, path, inv, fn) { W.route(path, inv, fn, { area: "staff", cap: cap, roles: W.rolesWithCap(cap) }); }
 
-  /* ---------- import, prospects, suppression, taxonomies ---------- */
+  /* ---------- import, suppression ---------- */
   /* There is no Source registry here (D-038): approved sources are managed in the acquisition pipeline by the named approver. */
 
   var SAMPLE_CSV = "name,type,industry,city,title,org,website,country\nSample Import Co. One,business,Technology,Lagos,,,https://example.org/one,NG\nSample Import Co. Two,business,Energy,Abuja,,,https://example.org/two,NG\nSample Person X,individual,Technology,Lagos,Director,Sample Import Co. One,,NG\nSavanna Loop Agritech,business,Agriculture & Agritech,Lagos,,,https://example.org/agritech,NG\n,business,Technology,Lagos,,,,NG\nSample Person Y,individual,Technology,Lagos,Call me on 0800-000-0000,Sample Import Co. Two,,NG\nSample Mining Co.,business,Mining,Lagos,,,,NG\nSample Accra Co.,business,Technology,Accra,,,,GH";
@@ -40,12 +40,6 @@
     rows.forEach(function (r) { W.S.profiles.push({ id: W.uid("im"), slug: r.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + W.uid(""), type: r.type, name: r.name, title: r.title, org: r.org, industry: r.industry, city: r.city, country: CC[r.cc], status: "pending", trust: "", sponsored: null, source: "acquired", origin: "import", aiDrafted: false, views: 0, enquiries: true, bio: r.name + " (imported; text to be written by a reviewer).", achievements: "", website: r.website, public: { website: true }, facts: [{ label: "Imported record", value: r.name, src: I.src, url: "https://example.org/imports/" + I.src, conf: "medium", method: "import", retrieved: W.TODAY }], leadership: [], products: "", history: [], scan: [], importedBy: W.persona(), drafter: W.persona(), submittedAt: W.TODAY }); });
     W.S.imports.unshift({ at: W.TODAY, src: I.src, by: W.persona(), n: rows.length }); W.log("import.run", I.src, rows.length + " rows"); W.ui.imp.rows = null; W.save(); W.render(); W.toast(rows.length + " profiles added to the review queue. You cannot approve your own import.");
   };
-  if (!Array.isArray(W.prospects)) W.prospects = null;
-  mini("/admin/prospects", "A42", "leads", function () {
-    var P = W.S.prospects = W.S.prospects || [{ id: "pr1", name: "Sample Prospect Co. A", source: "Manual research", status: "to contact" }, { id: "pr2", name: "Sample Prospect Co. B", source: "Licensed list (sample)", status: "contacted" }];
-    return head("Prospects (sales research)", "A separate store. Never public. A prospect can become a profile only through the acquisition pipeline and its import (REQ-093, 176).") + W.table(["Prospect", "Source", "Status", ""], P.map(function (p) { return [e(p.name), e(p.source), e(p.status), W.btn("Send to review path", "prospectGo", p.id, "sm alt")]; })) + "<p>" + W.exportBtn("prospects") + "</p>";
-  });
-  W.act.prospectGo = function (id) { W.toast("Prospects never go straight to the site. They can enter only through the acquisition pipeline and the import (sample guard)."); };
   mini("/admin/suppression", "A22", "supprView", function () {
     var edit = W.can("supprEdit");
     return head("Suppression list", "Permanent. No import or sync can bring these back. There is no remove button on purpose (REQ-147, 207)." + (edit ? "" : " Read-only for your role.")) + W.table(["Name", "Reason type", "Date", "Detail"], W.S.suppression.map(function (s) { return [e(s.name), e(s.kind), e(s.at), e(s.reason)]; })) + (edit ? '<form class="card stack-s" data-form="supp"><h2>Add manually</h2>' + W.field("Name", "name", { req: true }) + W.field("Reason", "reason", { req: true }) + '<button class="btn">Add</button></form>' : '<p class="small muted">A valid removal request adds a name here automatically (Support inbox). Adding by hand is for the Administrator; a valid removal handled by an Editor adds the name automatically.</p>');
@@ -75,25 +69,17 @@
     W.log("claim.reject", c.profileId, id + " rejected"); W.mail(c.email, "About your claim", "We could not confirm the claim from the evidence sent. You can send it again with more.", ""); W.save(); W.render(); W.toast("Claim rejected.");
   };
 
-  /* ---------- leads, customers ---------- */
-  mini("/admin/leads", "A13", "leads", function () {
-    return '<div class="row between"><h1>Leads</h1>' + W.exportBtn("leads") + "</div>" + W.table(["ID", "Name / org", "Interest", "Contact", "Status", "Owner", "Notes", ""], W.S.leads.map(function (l) { return [e(l.ext), e(l.name) + "<br><span class=\"muted small\">" + e(l.org) + "</span>", e(l.interest), e(l.contact), '<label class="sr" for="ls' + l.id + '">Status</label><select id="ls' + l.id + '" data-change="leadStatus" data-lead="' + e(l.id) + '">' + ["new", "contacted", "qualified", "converted", "lost"].map(function (s) { return "<option" + (s === l.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select>", e(l.owner || "unassigned"), e(l.notes), l.status === "converted" ? "Converted" : W.btn("Convert", "leadConv", l.id, "sm")]; }), "No leads yet.") + '<p class="small muted">Leads come from the Get Featured form. Notes also live under Internal notes (never public).</p>';
-  });
-  W.act.leadStatus = function (v, el) { var l = W.find("leads", el.getAttribute("data-lead")); l.status = v; if (!l.owner) l.owner = W.persona(); W.log("lead.status", l.ext, v); W.save(); W.render(); };
-  W.act.leadConv = function (id) {
-    var l = W.find("leads", id), cid = W.uid("c"), aid = W.uid("arr");
-    W.S.customers.push({ id: cid, name: l.org || l.name, segment: "Business", contact: l.name, ext: "CUS-" + ("000" + (W.S.customers.length + 1)).slice(-4), profileId: "" });
-    W.S.arrangements.push({ id: aid, type: "other", customerId: cid, linkedProfile: "", amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, cancelled: false, endedManual: false, stream: "subscription", notes: "From lead " + l.ext, consent: false });
-    l.status = "converted"; W.log("lead.convert", l.ext, "customer + arrangement"); W.save(); W.go("#/admin/register/" + aid); W.toast("Customer and a proposed arrangement created.");
-  };
+  /* ---------- customers ---------- */
+  W.act.newCustomer = function () { W.openModal("New customer", '<form data-form="customer" class="stack-s">' + W.field("Name", "name", { req: true }) + W.field("Segment", "segment", { type: "select", options: ["Individual", "Business", "Institution"] }) + W.field("Contact", "contact", { req: true }) + '<button class="btn">Add</button></form>'); };
+  W.forms.customer = function (d) { var id = W.uid("c"); W.S.customers.push({ id: id, name: d.name, segment: d.segment || "Business", contact: d.contact, ext: "CUS-" + ("000" + (W.S.customers.length + 1)).slice(-4), profileId: "" }); W.log("customer.create", id, d.name); W.ui.modal = null; W.save(); W.render(); W.toast("Customer added."); };
   mini("/admin/customers", "A14", "customers", function () {
-    return head("Customers") + W.table(["External ID", "Name", "Segment", "Contact", "Arrangements", ""], W.S.customers.map(function (c) { var n = W.S.arrangements.filter(function (a) { return a.customerId === c.id; }).length; return [e(c.ext), e(c.name), e(c.segment), e(c.contact), n, W.btn("Send profile invitation", "invite", c.id, "sm alt")]; })) + '<p class="small muted">Customers, leads and enquiries have stable external IDs and change timestamps for a later CaromHQ link (REQ-205).</p>';
+    return '<div class="row between"><h1>Customers</h1>' + W.btn("New customer", "newCustomer", "", "alt") + "</div>" + W.table(["External ID", "Name", "Segment", "Contact", "Arrangements", ""], W.S.customers.map(function (c) { var n = W.S.arrangements.filter(function (a) { return a.customerId === c.id; }).length; return [e(c.ext), e(c.name), e(c.segment), e(c.contact), n, W.btn("Send profile invitation", "invite", c.id, "sm alt")]; })) + '<p class="small muted">Customers and enquiries have stable external IDs and change timestamps for a later CaromHQ link (REQ-205).</p>';
   });
 
   /* ---------- register ---------- */
   mini("/admin/register", "A15", "register", function (par, q) {
     var rows = W.S.arrangements.filter(function (a) { return !q.s || W.arrStatus(a).indexOf(q.s) === 0; });
-    return '<div class="row between"><h1>Commercial register</h1><div class="row"><a class="btn" href="#/admin/register/new">New arrangement</a>' + W.btn("Export CSV", "dl", "register", "alt") + '</div></div><div class="infobox"><strong>Counting rule (REQ-022).</strong> A paid subscription = a non-complimentary arrangement with status Confirmed. Confirmed needs amount, currency, payment method and reference, date received, a named confirmed-by admin, and onboarding started. Status is computed from the fields; it is not typed in. Complimentary never counts. <em>Ended arrangements that were confirmed still count in this wireframe: see report notes.</em></div>' +
+    return '<div class="row between"><h1>Commercial register</h1><div class="row"><a class="btn" href="#/admin/register/new">New arrangement</a>' + '</div></div><div class="infobox"><strong>Counting rule (REQ-022).</strong> A paid subscription = a non-complimentary arrangement with status Confirmed. Confirmed needs amount, currency, payment method and reference, date received, a named confirmed-by admin, and onboarding started. Status is computed from the fields; it is not typed in. Complimentary never counts. <em>Ended arrangements that were confirmed still count in this wireframe: see report notes.</em></div>' +
       '<form class="filters" data-filter="#/admin/register">' + W.field("Status", "s", { type: "select", options: ["proposed", "awaiting payment", "confirmed", "ended", "cancelled"], blank: "Any", value: q.s }) + "</form>" +
       W.table(["ID", "Type", "Customer", "Amount", "Stream", "Status (computed)", "Counts?", "Dates", ""], rows.map(function (a) { var c = W.find("customers", a.customerId); return [e(a.id), e(W.LISTS.arrTypes[a.type]), e(c ? c.name : "?"), a.complimentary ? '<span class="pill gray">complimentary</span>' : W.money(a.amount, a.currency), e(W.LISTS.streams[a.stream]), W.stPill(W.arrStatus(a)), W.counts(a) ? '<span class="pill ok">Yes</span>' : '<span class="pill gray">No</span>', e((a.start || "?") + " to " + (a.end || "?")), '<a class="btn sm alt" href="#/admin/register/' + e(a.id) + '">Open</a>']; }));
   });
@@ -128,85 +114,201 @@
     var a = W.find("arrangements", d.id), before = W.arrStatus(a); var n2 = readArr(d, a); Object.assign(a, n2);
     W.log("arrangement.edit", a.id, "reason: " + d.reason + "; " + before + " to " + W.arrStatus(a)); W.save(); W.render(); W.toast("Saved. Status is now " + W.arrStatus(a) + "; Claimed and Featured unchanged.");
   };
-  W.act.arrEnd = function (id) { var a = W.find("arrangements", id); a.endedManual = true; W.log("arrangement.end", id, "ended by admin"); W.save(); W.render(); W.toast("Ended. The Sponsored label it set is removed automatically; nothing is deleted."); };
+  W.act.arrEnd = function (id) { var a = W.find("arrangements", id); a.endedManual = true; W.log("arrangement.end", id, "ended by admin"); W.save(); W.render(); W.toast("Ended. Nothing is deleted."); };
   W.act.arrCancel = function (id) { var a = W.find("arrangements", id); a.cancelled = true; W.log("arrangement.cancel", id, "recorded; refund handled offline and recorded by an Administrator"); W.save(); W.render(); };
-  mini("/admin/sponsors", "A18", "sponsors", function () {
-    return head("Sponsors", "Records admins attach to awards, categories and pages (REQ-186). Sponsor name is shown as a disclosure only.") + W.table(["Sponsor", "Link", "Logo", "Attached to"], W.S.sponsors.map(function (s) { return [e(s.name), e(s.link), e(s.logo), e(s.attached.join("; ") || "nothing")]; })) + '<form class="card stack-s" data-form="sponsor2"><h2>Add sponsor</h2>' + W.field("Name", "name", { req: true }) + W.field("Link", "link") + W.field("Attach to", "to", { type: "select", options: ["Awards: Maiden Edition", "Category page", "Stories page", "Not yet"] }) + '<button class="btn">Add</button></form>';
+  /* ---------- Stories (blog articles) ---------- */
+  mini("/admin/stories", "A62", "articles", function () {
+    var rows = W.S.articles.slice().sort(function (x, y) { return x.date < y.date ? 1 : -1; }).map(function (a) {
+      var sp = W.sponsorOfArticle(a), ev = a.relatedEvent ? W.find("events", a.relatedEvent) : null;
+      return ['<a href="#/stories/' + e(a.slug) + '">' + e(a.title) + "</a>", e(a.type), e(a.status), e(a.date), ev ? e(ev.title) : '<span class="muted">-</span>', sp ? "Sponsored by " + e(sp) : '<span class="muted">-</span>'];
+    });
+    return head("Stories", "Blog articles: interviews, features, news and more. In WordPress these are ordinary posts. Events are a separate post type on the Events screen (REQ-262); a story can link one event, which shows at the end of the story (REQ-265). Comments on a story are moderated with the WordPress defaults (REQ-258). A story is made Sponsored on the Story sponsors screen, never here.") +
+      W.table(["Title", "Type", "Status", "Published", "Related event", "Paid slot"], rows) +
+      '<form class="card stack-s" data-form="story"><h2>New story</h2>' +
+      W.field("Title", "title", { req: true }) + W.field("Type", "type", { type: "select", options: ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"], req: true }) +
+      W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "Choose" }) + W.field("Author", "author", { value: "WHOISWHO Stories" }) +
+      W.field("Summary", "lede", { type: "textarea", req: true }) + W.field("Body", "body", { type: "textarea" }) +
+      W.field("Related event (optional)", "relatedEvent", { type: "select", options: (W.S.events || []).map(function (v) { return [v.id, v.title + " (" + v.status + ")"]; }), blank: "None", hint: "The event shows as a card at the end of the story." }) +
+      W.field("Status", "status", { type: "select", options: ["draft", "scheduled", "published"] }) + W.field("Publish date", "date", { type: "date", value: W.TODAY }) +
+      '<button class="btn">Save story</button></form>';
   });
+  W.forms.story = function (d) {
+    var slug = d.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    var a = { id: W.uid("a"), slug: slug, seed: slug, type: d.type, title: d.title, industry: d.industry || "", author: d.author || "WHOISWHO Stories", date: d.date || W.TODAY, status: d.status || "draft", sponsor: null, profiles: [], lede: d.lede, body: d.body || d.lede, paras: [], quote: "" };
+    if (d.relatedEvent && W.find("events", d.relatedEvent)) a.relatedEvent = d.relatedEvent;
+    W.S.articles.push(a); W.log("story.add", a.id, a.type + ": " + a.title + " (" + a.status + ")" + (a.relatedEvent ? ", links event " + a.relatedEvent : "")); W.save(); W.render(); W.toast("Saved. " + (a.status === "published" ? "It is public." : "It is not public until published."));
+  };
+  W.act.storyEvent = function (id, ev) { var a = W.find("articles", id); if (!a) return; if (ev) a.relatedEvent = ev; else delete a.relatedEvent; W.log("story.event", id, ev ? "links event " + ev : "event link removed"); W.save(); W.render(); };
+
+  /* ---------- Events: their own post type (REQ-262, REQ-264) ---------- */
+  mini("/admin/events", "A63", "events", function () {
+    var rows = (W.S.events || []).slice().sort(function (x, y) { return x.start < y.start ? 1 : -1; }).map(function (v) {
+      return ['<a href="#/events/' + e(v.slug) + '">' + e(v.title) + "</a>", e(W.eventWhen(v)), e(W.eventWhere(v)), e(v.organiser), '<span class="pill ' + (v.status === "published" ? "ok" : "warn") + '">' + e(v.status) + "</span> " + e(v.status === "published" ? W.eventState(v) : ""), W.btn(v.status === "published" ? "Unpublish" : "Publish", "evToggle", v.id, "alt sm")];
+    });
+    return head("Events", "Events are their own post type, separate from stories (REQ-262). They appear on the Events page, on the Home page when upcoming, and at the end of any story that links them. An event is information only: registration and any fee are on the organiser's site, and WHOISWHO takes no payment (D-005). Events cannot be Sponsored.") +
+      W.table(["Event", "When", "Where", "Organiser", "Status", ""], rows, "No events yet.") +
+      '<form class="card stack-s" data-form="event"><h2>New event</h2>' +
+      W.field("Title", "title", { req: true }) + W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "Choose" }) +
+      W.field("Start date", "start", { type: "date", req: true }) + W.field("Start time", "time", { type: "time" }) + W.field("End date (optional)", "end", { type: "date" }) +
+      W.field("Venue (or Online)", "venue", { req: true }) + W.field("City", "city") + W.field("Country", "country") + W.field("Organiser", "organiser", { req: true }) +
+      W.field("Summary", "summary", { type: "textarea", req: true }) + W.field("Body", "body", { type: "textarea" }) +
+      W.field("Image", "image", { hint: "Chosen from the media library in WordPress. A placeholder is used here." }) +
+      W.field("Registration link (the organiser's site)", "regUrl", { type: "url", req: true, hint: "Information only. WHOISWHO takes no payment and sells no tickets (D-005)." }) + W.field("Price note", "price", { hint: "Text only, for example: Free to attend." }) +
+      W.field("Status", "status", { type: "select", options: ["draft", "published"] }) +
+      '<button class="btn">Save event</button></form>';
+  });
+  W.forms.event = function (d) {
+    if (!d.start || !d.venue || !d.organiser || !d.regUrl) { W.toast("An event needs a start date, a venue (or Online), an organiser and a registration link."); return; }
+    if (d.end && d.end < d.start) { W.toast("The end date is before the start date."); return; }
+    var slug = d.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    var v = { id: W.uid("ev"), slug: slug, seed: d.image || slug, title: d.title, industry: d.industry || "", status: d.status || "draft", summary: d.summary, body: d.body || d.summary, paras: [], start: d.start + (d.time ? "T" + d.time : ""), end: d.end || "", venue: d.venue, city: d.city || "", country: d.country || "", organiser: d.organiser, regUrl: d.regUrl, price: d.price || "" };
+    (W.S.events = W.S.events || []).push(v);
+    W.log("event." + (v.status === "published" ? "publish" : "add"), v.id, v.title + " (" + v.status + ")"); W.save(); W.render(); W.toast("Saved. " + (v.status === "published" ? "It is public." : "It is not public until published."));
+  };
+  W.act.evToggle = function (id) {
+    var v = W.find("events", id); if (!v) return;
+    v.status = v.status === "published" ? "draft" : "published";
+    W.log(v.status === "published" ? "event.publish" : "event.unpublish", id, v.title); W.save(); W.render(); W.toast(v.status === "published" ? "Published." : "Unpublished. It is no longer public; stories that link it no longer show it.");
+  };
+
+  /* ---------- Story sponsors: dated paid slots (REQ-263) ---------- */
+  mini("/admin/sponsors", "A18", "sponsors", function () {
+    var pls = (W.S.placements || []).slice().sort(function (x, y) { return x.start < y.start ? 1 : -1; });
+    var rows = pls.map(function (pl) {
+      var a = W.find("articles", pl.storyId), st = W.placementStatus(pl);
+      return [e(pl.sponsor), a ? '<a href="#/stories/' + e(a.slug) + '">' + e(a.title) + "</a>" : "(story removed)", e(pl.placement), e(pl.start), e(pl.end), '<span class="pill ' + (st === "active" ? "ok" : st === "scheduled" ? "warn" : "") + '">' + e(st) + "</span>", st === "active" || st === "scheduled" ? W.btn("End now", "plEnd", pl.id, "alt sm") : ""];
+    });
+    var stories = W.S.articles.map(function (a) { return [a.id, a.title + " (" + a.type + ", " + a.status + ")"]; });
+    return head("Story sponsors", "A story is Sponsored when a sponsor pays for a slot for it. The slot is one labelled card on the Home page, the Stories page or both, between two dates. It is always labelled \"Sponsored by\" with the sponsor's name. It never changes the order of other stories, search results, profiles, Featured, nominations or winners (REQ-263). Payment is agreed offline and recorded in the Register; no amount or payment detail is entered here.") +
+      W.table(["Sponsor", "Story", "Slot", "Start", "End", "Status", ""], rows, "No paid slots yet.") +
+      '<form class="card stack-s" data-form="placement"><h2>Add a paid slot</h2>' +
+      W.field("Sponsor", "sponsor", { type: "select", options: W.S.sponsors.map(function (s) { return s.name; }), req: true, hint: "Add the sponsor record below if it is not listed." }) +
+      W.field("Story", "storyId", { type: "select", options: stories, req: true }) +
+      W.field("Slot on", "placement", { type: "select", options: ["Home", "Stories", "Both"], req: true }) +
+      W.field("Start date", "start", { type: "date", req: true }) + W.field("End date", "end", { type: "date", req: true }) +
+      '<p class="small muted">One paid slot per page at a time. Only a published story can fill a slot. Slots are audit-logged (capability: story sponsors).</p><button class="btn">Add slot</button></form>' +
+      '<h2 style="margin-top:2rem">Sponsor records</h2><p class="small muted">The sponsor name, link and logo, also shown as "Supported by" on the Awards page. A sponsor record has no effect on nominations or winners (REQ-186, REQ-199).</p>' +
+      W.table(["Sponsor", "Link", "Logo", "Attached to"], W.S.sponsors.map(function (s) { return [e(s.name), e(s.link), e(s.logo), e(s.attached.join("; ") || "nothing")]; })) + '<form class="card stack-s" data-form="sponsor2"><h2>Add sponsor record</h2>' + W.field("Name", "name", { req: true }) + W.field("Link", "link") + W.field("Attach to", "to", { type: "select", options: ["Awards: Maiden Edition", "Category page", "Stories page", "Not yet"] }) + '<button class="btn">Add</button></form>';
+  });
+  W.forms.placement = function (d) {
+    var a = W.find("articles", d.storyId);
+    if (!a) { W.toast("Choose a story."); return; }
+    if (a.status !== "published") { W.toast("Only a published story can fill a paid slot."); return; }
+    if (!d.start || !d.end || d.end < d.start) { W.toast("Check the dates: the end must be on or after the start."); return; }
+    var clash = (W.S.placements || []).filter(function (o) { var st = W.placementStatus(o); return (st === "active" || st === "scheduled") && o.start <= d.end && d.start <= o.end && (o.placement === "Both" || d.placement === "Both" || o.placement === d.placement); })[0];
+    if (clash) { W.toast("That slot is taken by " + clash.sponsor + " from " + clash.start + " to " + clash.end + "."); return; }
+    var pl = { id: W.uid("pl"), sponsor: d.sponsor, storyId: d.storyId, placement: d.placement, start: d.start, end: d.end, ended: false };
+    W.S.placements.push(pl);
+    var sr = W.S.sponsors.filter(function (s) { return s.name === d.sponsor; })[0]; if (sr) sr.attached.push("Story: " + a.title);
+    W.log("placement.add", pl.id, d.sponsor + " on " + d.placement + " for " + a.title + ", " + d.start + " to " + d.end); W.save(); W.render(); W.toast("Slot added. It shows from " + d.start + " and is labelled Sponsored by " + d.sponsor + ".");
+  };
+  W.act.plEnd = function (id) { var pl = W.find("placements", id); pl.ended = true; W.log("placement.end", id, "ended by staff"); W.save(); W.render(); W.toast("Ended. The label and the slot are gone; the story stays."); };
   W.forms.sponsor2 = function (d) { W.S.sponsors.push({ id: W.uid("s"), name: d.name, link: d.link, logo: "Logo placeholder", attached: d.to === "Not yet" ? [] : [d.to] }); W.log("sponsor.add", d.name, d.to); W.save(); W.render(); };
 
   /* ---------- awards ---------- */
-  var STAT = { submitted: "Submitted", screening: "In screening", invited: "Nominee invited", accepted: "Nominee accepted", assessment: "Independent assessment", shortlisted: "Shortlisted", finalist: "Finalist (approved)", winner: "Winner", ineligible: "Ineligible", declined: "Declined (suppressed)" };
+  /* Nominations (REQ-267): a nomination has a Stage (Nominated or Winner) and a Status (Live or Not live). Live nominations are public. */
+  var STAGES = { nominated: "Nominated", winner: "Winner" };
+  function profLabel(p) { return p.name + " (" + p.id + ")"; }
+  function livePill(n) { return n.live ? '<span class="pill ok">Live</span>' : '<span class="pill gray">Not live</span>'; }
+  /* The contact email is backend only (personal data): never shown publicly, never exported, never logged. */
+  function mailLine(n) { return n.mailedAt ? '<p class="small muted">Nomination email sent on ' + e(n.mailedAt) + " by " + e(n.mailedBy || "staff") + ".</p>" : ""; }
+  function mailBtn(n, cls) { return n.nomineeEmail ? W.btn(n.mailedAt ? "Send nomination email again" : "Send nomination email", "nomMail", n.id, cls || "alt") : W.btn("Send nomination email", "nomMail", n.id, cls || "alt", ' disabled title="Add a contact email first"') + ' <span class="small muted">No contact email on file.</span>'; }
   mini("/admin/nominations", "A28", "awards", function (par, q) {
-    var rows = W.S.nominations.filter(function (n) { return !q.s || n.status === q.s; });
-    return '<div class="row between"><h1>Nominations</h1><div class="row">' + W.btn("Add curated nomination", "curate", "", "alt") + W.exportBtn("nominations") + "</div></div>" + (W.nomOpen() ? "" : '<div class="infobox">The public form is closed (nominations flag OFF). This queue still works for curated nominations.</div>') + '<form class="filters" data-filter="#/admin/nominations">' + W.field("Status", "s", { type: "select", options: Object.keys(STAT).map(function (k) { return [k, STAT[k]]; }), blank: "Any", value: q.s }) + "</form>" +
-      W.table(["Ref", "Nominee", "Category", "Status", "Stage", "Nominator verified", "Conflict", ""], rows.map(function (n) { return [e(n.ref), e(n.nominee), e(n.category), W.stPill(STAT[n.status] || n.status), W.nomStage(n) + " " + e(W.LISTS.stages[W.nomStage(n) - 1]), n.verified ? "Yes" : "No", n.coi ? '<span class="pill warn">declared</span>' : "—", '<a class="btn sm alt" href="#/admin/nominations/' + e(n.id) + '">Open</a>']; }), "No nominations.");
+    var rows = W.S.nominations.filter(function (n) { return (!q.c || n.category === q.c) && (!q.s || n.stage === q.s) && (!q.l || (n.live ? "1" : "0") === q.l); }), on = W.nomOpen(), F = W.S.flags.nominations;
+    var sw = '<div class="card row between" id="nomSwitch"><div><h2>Nominations page: <span class="pill ' + (on ? "flag-on" : "flag-off") + '">' + (on ? "Open" : "Closed") + '</span></h2><p class="small muted">' + (on ? "Visitors see the nomination form at /nominate." : "Visitors see “Nominations are closed”, with a link to the nominees or winners once those are live.") + (F.ref ? " Last reason: " + e(F.ref) + "." : "") + '</p></div><div>' + W.btn(on ? "Close nominations" : "Open nominations", "nomSwitch", on ? "close" : "open", on ? "alt" : "") + "</div></div>";
+    return '<div class="row between"><h1>Nominations</h1><div class="row">' + W.btn("Add profile to nominations", "addNomProfile", "", "alt") + "</div></div>" + sw +
+      '<form class="filters" data-filter="#/admin/nominations">' + W.field("Category", "c", { type: "select", options: W.cats().map(function (c) { return c.name; }), blank: "Any", value: q.c }) + W.field("Stage", "s", { type: "select", options: Object.keys(STAGES).map(function (k) { return [k, STAGES[k]]; }), blank: "Any", value: q.s }) + W.field("Status", "l", { type: "select", options: [["1", "Live"], ["0", "Not live"]], blank: "Any", value: q.l }) + "</form>" +
+      W.table(["Ref", "Nominee", "Category", "Stage", "Status", ""], rows.map(function (n) {
+        var pr = n.profileId ? W.profile(n.profileId) : null;
+        return [e(n.ref), (pr ? '<a href="#/admin/profiles/' + e(pr.id) + '">' + e(n.nominee) + "</a>" : e(n.nominee) + ' <span class="pill gray">no profile</span>'), e(n.category), W.stPill(STAGES[n.stage] || n.stage), livePill(n),
+          W.btn(n.live ? "Make not live" : "Make live", "nomLive", n.id, "sm" + (n.live ? " alt" : "")) + " " + W.btn(n.stage === "winner" ? "Set Nominated" : "Set Winner", "nomStage", n.id, "sm alt") + " " + (n.nomineeEmail ? W.btn("Send email", "nomMail", n.id, "sm alt") : "") + ' <a class="btn sm alt" href="#/admin/nominations/' + e(n.id) + '">Open</a>'];
+      }), "No nominations.");
   });
-  W.act.curate = function () { W.openModal("Add a curated nomination", '<form data-form="curate" class="stack-s">' + W.field("Nominee", "nominee", { req: true }) + W.field("Category", "category", { type: "select", options: W.cats().map(function (c) { return c.name; }) }) + W.field("Evidence", "evidence", { type: "textarea", req: true }) + '<button class="btn">Add</button></form>'); };
-  W.forms.curate = function (d) { var ref = "NOM-" + ("000" + (W.S.nominations.length + 1)).slice(-4); W.S.nominations.push({ id: W.uid("n"), ref: ref, nominator: "Staff (curated)", nominatorEmail: "", verified: true, nominee: d.nominee, nomineeType: "business", nomineeEmail: "", category: d.category, evidence: d.evidence, status: "submitted", profileId: "", token: "t-" + W.uid("") }); W.log("nomination.curate", ref, d.nominee); W.ui.modal = null; W.save(); W.render(); };
+  W.act.nomSwitch = function (to) {
+    W.openModal(to === "open" ? "Open nominations" : "Close nominations", '<form data-form="nomswitch" class="stack-s"><input type="hidden" name="to" value="' + e(to) + '"><p>The public Nominate page changes at once. This is recorded in the audit log with your name.</p>' + W.field("Reason (optional)", "reason") + '<button class="btn">' + (to === "open" ? "Open nominations" : "Close nominations") + "</button></form>");
+  };
+  W.forms.nomswitch = function (d) {
+    var on = d.to === "open"; W.S.flags.nominations = { on: on, ref: d.reason || "" };
+    W.log(on ? "nominations.open" : "nominations.close", "nominations", (d.reason || "no reason given") + " (" + W.persona() + ")");
+    W.purge("/nominate", on ? "nominations opened" : "nominations closed"); W.ui.modal = null; W.save(); W.render(); W.toast(on ? "Nominations are open." : "Nominations are closed.");
+  };
+  W.act.addNomProfile = function () {
+    var opts = W.S.profiles.map(function (p) { return '<option value="' + e(profLabel(p)) + '">' + e(p.type === "individual" ? "Person" : "Organisation") + (p.status === "published" ? "" : ", " + e(p.status)) + "</option>"; }).join("");
+    W.openModal("Add profile to nominations", '<form data-form="nomprofile" class="stack-s"><div class="field"><label for="f-nprof">Profile <span class="muted" aria-hidden="true">*</span> <span class="hint" id="f-nprof-h"> Type a name and pick from the list. If the nominee has no profile, create the profile first.</span></label><input id="f-nprof" name="profile" list="nprof-list" required autocomplete="off" aria-describedby="f-nprof-h"><datalist id="nprof-list">' + opts + "</datalist></div>" +
+      W.field("Category", "category", { type: "select", options: W.cats().map(function (c) { return c.name; }), req: true }) + W.field("Contact email (optional)", "email", { type: "email", hint: "Staff only. Never shown publicly. Used to send the nomination email." }) + W.field("Note (optional)", "note", { type: "textarea" }) + '<button class="btn">Add nomination</button></form>');
+  };
+  W.forms.nomprofile = function (d) {
+    var m = /\(([^()]+)\)\s*$/.exec(d.profile || ""), p = m && W.profile(m[1]);
+    if (!p) { W.toast("Pick a profile from the list. If there is none, create the profile first."); return; }
+    var ref = "NOM-" + ("000" + (W.S.nominations.length + 1)).slice(-4);
+    W.S.nominations.push({ id: W.uid("n"), ref: ref, nominator: "Staff (" + W.persona() + ")", nominatorEmail: "", verified: true, nominee: p.name, nomineeType: p.type === "individual" ? "individual" : "business", nomineeEmail: (d.email || "").trim(), category: d.category, evidence: d.note || "Added by staff.", stage: "nominated", live: false, profileId: p.id });
+    W.log("nomination.add", ref, p.name + " in " + d.category); W.ui.modal = null; W.save(); W.render(); W.toast("Added " + ref + ". It is Not live until you make it live.");
+  };
   mini("/admin/nominations/:id", "A29", "awards", function (par) {
-    var n = W.find("nominations", par.id); if (!n) return "<h1>Not found</h1>"; var st = W.nomStage(n);
-    var next = { submitted: ["Start eligibility screening", "screen"], screening: ["Mark eligible and invite nominee", "eligible"], accepted: ["Move to independent assessment", "assess"], assessment: ["Shortlist (approver recorded)", "shortlist"], shortlisted: ["Final approval (finalist)", "final"], finalist: ["Mark winner", "winner"] }[n.status];
-    return '<p><a href="#/admin/nominations">← Nominations</a></p>' + head(n.ref + ": " + n.nominee, e(n.category)) + W.steps(W.LISTS.stages, st - 1) +
-      '<div class="grid side"><div class="stack"><div class="card stack-s"><h2>Status: ' + e(STAT[n.status] || n.status) + '</h2><p>Nominator: ' + e(n.nominator) + " (" + (n.verified ? "email verified" : "unverified") + ")</p><p>Evidence: " + e(n.evidence) + "</p>" + (n.coi ? "<p>Conflict declared: " + e(n.coi) + "</p>" : "") + '<div class="row">' + (next ? W.btn(next[0], "nomStep", n.id + "|" + next[1]) : "") + (n.status === "screening" || n.status === "submitted" ? W.btn("Mark ineligible", "nomStep", n.id + "|ineligible", "alt bad") : "") + (n.status === "invited" ? '<a class="btn alt" href="#/nominee/' + e(n.token) + '">Open the nominee link</a>' : "") + (["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 ? (n.pub ? W.btn("Unpublish nominee page", "unpubNom", n.id, "alt bad") : W.btn("Publish nominee page", "pubNom", n.id)) : "") + "</div>" + (["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 ? '<p class="small muted">The nominee page is public only after you press Publish (the normal publish step; no flag, D-037). Public: <strong>' + (n.pub ? "yes" : "no") + "</strong>.</p>" : "") +
-      '<p class="small muted">Named approvers: screening ' + e(n.screenedBy || "—") + "; shortlist " + e(n.shortlistBy || "—") + "; final " + e(n.finalBy || "—") + ". Each step is a separate recorded action (REQ-202).</p></div></div>" +
-      '<div class="stack"><div class="infobox"><strong>No commercial data here.</strong> There is no data path from payments, subscriptions or sponsorship into screening, shortlisting or judging (REQ-199).</div>' + W.notesBox(n.id) + "</div></div>";
+    var n = W.find("nominations", par.id); if (!n) return "<h1>Not found</h1>"; var pr = n.profileId ? W.profile(n.profileId) : null;
+    var link = pr ? '<p>Profile: <a href="#/admin/profiles/' + e(pr.id) + '">' + e(pr.name) + "</a></p>" : '<form data-form="nomlink" class="row"><input type="hidden" name="id" value="' + e(n.id) + '">' + W.field("Link a profile", "pid", { type: "select", options: W.S.profiles.map(function (p) { return [p.id, p.name]; }), blank: "Choose a profile" }) + '<button class="btn sm">Link</button></form>';
+    return '<p><a href="#/admin/nominations">← Nominations</a></p>' + head(n.ref + ": " + n.nominee, e(n.category)) +
+      '<div class="grid side"><div class="stack"><form class="card stack-s" data-form="nomstage"><input type="hidden" name="id" value="' + e(n.id) + '"><h2>Stage and status</h2>' + W.field("Stage", "stage", { type: "select", options: Object.keys(STAGES).map(function (k) { return [k, STAGES[k]]; }), value: n.stage }) + W.field("Status", "live", { type: "select", options: [["1", "Live"], ["0", "Not live"]], value: n.live ? "1" : "0" }) + '<button class="btn">Save</button><p class="small muted">Judging happens outside the site. A Live nomination is public: a Nominated one on the nominees page, a Winner on the winners page. Your name is recorded and the change is audited (REQ-202).</p></form>' +
+      '<div class="card stack-s"><h2>Details</h2><p>Nominator: ' + e(n.nominator) + " (" + (n.verified ? "email verified" : "unverified") + ")</p><p>Evidence: " + e(n.evidence) + "</p>" + (n.coi ? "<p>Conflict declared by the nominator: " + e(n.coi) + "</p>" : "") + link +
+      "<p>Contact email (staff only): " + (n.nomineeEmail ? e(n.nomineeEmail) : '<span class="muted">none</span>') + "</p>" +
+      '<div class="row">' + mailBtn(n) + (n.stage === "winner" ? " " + (n.notified ? '<span class="pill ok">winner emailed</span>' : W.btn("Prepare winner email", "winMail", n.id, "alt", n.nomineeEmail ? "" : ' disabled title="Add a contact email first"')) : "") + " " + W.btn("Remove nomination", "nomRemove", n.id, "alt bad") + "</div>" + mailLine(n) + "</div></div>" +
+      '<div class="stack"><div class="infobox"><strong>No commercial data here.</strong> No payment, subscription or sponsorship record reaches nominations or winners (REQ-199).</div>' + W.notesBox(n.id) + "</div></div>";
   });
-  W.act.nomStep = function (a) {
-    var s = a.split("|"), n = W.find("nominations", s[0]), me = W.persona();
-    if (s[1] === "screen") { n.status = "screening"; n.screenedBy = me; }
-    else if (s[1] === "eligible") { n.status = "invited"; n.screenedBy = me; var p = W.S.profiles.filter(function (x) { return x.name.toLowerCase() === n.nominee.toLowerCase(); })[0]; if (p) n.profileId = p.id; W.mail(n.nomineeEmail || "Nominee (no email on file)", "You have been nominated", "Accept, decline or correct your details. Nothing is public.", "#/nominee/" + n.token); }
-    else if (s[1] === "assess") n.status = "assessment";
-    else if (s[1] === "shortlist") { if (!W.hasCap("nominations")) { W.toast("You do not have the nominations capability (Editor and Administrator by default)."); return; } n.status = "shortlisted"; n.shortlistBy = me; }
-    else if (s[1] === "final") { if (!W.hasCap("final_approval")) { W.toast("Final approval needs the final_approval capability, Administrator by default (stands in for the Venture CEO)."); return; } n.status = "finalist"; n.finalBy = me; }
-    else if (s[1] === "winner") { n.status = "winner"; }
-    else if (s[1] === "ineligible") n.status = "ineligible";
-    W.log("nomination." + s[1], n.ref, me); W.save(); W.render();
+  W.forms.nomstage = function (d) {
+    var n = W.find("nominations", d.id), me = W.persona(); if (!n || !STAGES[d.stage]) return;
+    n.stage = d.stage; n.live = d.live === "1"; n.stageBy = me;
+    W.purge("/awards/nominee/" + n.ref, "nomination changed");
+    W.log("nomination.stage", n.ref, STAGES[n.stage] + ", " + (n.live ? "Live" : "Not live") + " by " + me); W.save(); W.render(); W.toast("Saved: " + STAGES[n.stage] + ", " + (n.live ? "Live" : "Not live") + ".");
   };
+  W.act.nomLive = function (id) { var n = W.find("nominations", id); n.live = !n.live; n.stageBy = W.persona(); W.purge("/awards/nominee/" + n.ref, "nomination changed"); W.log(n.live ? "nomination.live" : "nomination.notlive", n.ref, (n.live ? "Live" : "Not live") + " by " + W.persona()); W.save(); W.render(); W.toast(n.live ? "Live. It is public now." : "Not live. It is no longer public."); };
+  W.act.nomStage = function (id) { var n = W.find("nominations", id); n.stage = n.stage === "winner" ? "nominated" : "winner"; n.stageBy = W.persona(); W.purge("/awards/nominee/" + n.ref, "nomination changed"); W.log("nomination.stage", n.ref, STAGES[n.stage] + " by " + W.persona()); W.save(); W.render(); W.toast("Stage: " + STAGES[n.stage] + "."); };
+  W.act.nomRemove = function (id) { var n = W.find("nominations", id); W.openModal("Remove " + n.ref + "?", "<p>This removes the nomination for " + e(n.nominee) + " in " + e(n.category) + '. It is no longer public. The removal is recorded in the audit log.</p><div class="row" style="margin-top:1rem"><button class="btn bad" data-act="nomRemoveYes" data-arg="' + e(id) + '">Remove</button><button class="btn alt" data-act="closeModal">Cancel</button></div>'); };
+  W.act.nomRemoveYes = function (id) { var n = W.find("nominations", id), i = W.S.nominations.indexOf(n); if (i < 0) return; W.S.nominations.splice(i, 1); W.purge("/awards/nominee/" + n.ref, "nomination removed"); W.log("nomination.remove", n.ref, n.nominee + " in " + n.category + " by " + W.persona()); W.ui.modal = null; W.save(); W.go("#/admin/nominations"); W.toast("Removed."); };
+  W.forms.nomlink = function (d) { var n = W.find("nominations", d.id), p = d.pid && W.profile(d.pid); if (!n || !p) { W.toast("Choose a profile."); return; } n.profileId = p.id; W.log("nomination.link", n.ref, p.name); W.save(); W.render(); };
+  /* The address is used for the send and is never written to the log or shown outside the staff screens. */
+  W.act.nomMail = function (id) {
+    var n = W.find("nominations", id); if (!n || !n.nomineeEmail) { W.toast("Add a contact email first."); return; }
+    W.mail(n.nomineeEmail, "You have been nominated", "You have been put forward for " + n.category + " in the awards. Nothing is public until our team decides.", "");
+    n.mailedAt = W.TODAY; n.mailedBy = W.persona(); W.log("nomination.email", n.ref, "nomination email sent by " + W.persona()); W.save(); W.render(); W.toast("Nomination email sent.");
+  };
+  W.act.winMail = function (id) { var n = W.find("nominations", id); if (!n || !n.nomineeEmail) { W.toast("Add a contact email first."); return; } n.notified = true; W.mail(n.nomineeEmail, "Congratulations", "You are a winner in " + n.category + ". Private until our team makes it live.", ""); W.log("winner.email", n.ref, "winner email prepared by " + W.persona()); W.save(); W.render(); };
+  /* Award categories (REQ-266): the only award setting in the admin. Eligibility and judging text are page copy, edited in the page editor (REQ-260). */
+  function catCount(name) { return W.S.nominations.filter(function (n) { return n.category === name; }).length; }
   mini("/admin/awards", "A30", "awards", function () {
-    var A = W.S.awards, sum = A.criteria.reduce(function (t, c) { return t + c.weight; }, 0);
-    return head("Awards setup", "Everything here is configuration. Nothing is hard-coded (REQ-200). Sample values; the Venture CEO decides (N8).") + '<form class="card stack-s" data-form="awardcfg">' + W.field("Eligibility criteria", "eligibility", { type: "textarea", value: A.eligibility }) + W.field("Shortlist size per category", "shortlistSize", { type: "number", value: A.shortlistSize }) + W.field("Judges on the panel per category", "judgesPerCategory", { type: "number", value: A.judgesPerCategory }) + "<h2>Scoring criteria and weights</h2>" + A.criteria.map(function (c, i) { return '<div class="row"><label class="sr" for="cn' + i + '">Name</label><input id="cn' + i + '" name="cn' + i + '" value="' + e(c.name) + '" style="flex:1"><label class="sr" for="cw' + i + '">Weight</label><input id="cw' + i + '" type="number" name="cw' + i + '" value="' + c.weight + '" style="width:6rem"></div>'; }).join("") + '<p class="' + (sum === 100 ? "" : "err") + '">Weights total ' + sum + "%." + (sum === 100 ? "" : " Must total 100.") + '</p><button class="btn">Save</button></form><div class="card"><h2>Categories (' + W.cats().length + ")</h2>" + A.groups.map(function (g) { return "<h3>" + e(g.name) + "</h3><p>" + g.cats.map(e).join("; ") + "</p>"; }).join("") + "</div>";
+    var A = W.S.awards;
+    return head("Award categories", "Add, rename, reorder and remove the categories shown on the Awards and Nominate pages and in the nomination form (REQ-266). Sample values; the Venture CEO decides the final list (N8).") +
+      A.groups.map(function (g, gi) {
+        return '<div class="card stack-s"><h2>' + e(g.name) + "</h2>" + (g.cats.length ? W.table(["Category", "Nominations", ""], g.cats.map(function (c, ci) {
+          var n = catCount(c);
+          return ['<form data-form="catrename" class="row"><input type="hidden" name="g" value="' + gi + '"><input type="hidden" name="c" value="' + ci + '"><label class="sr" for="cr' + gi + "-" + ci + '">Category name</label><input id="cr' + gi + "-" + ci + '" name="name" value="' + e(c) + '" style="flex:1" required><button class="btn sm alt">Rename</button></form>', String(n),
+            W.btn("Up", "catMove", gi + "|" + ci + "|-1", "sm alt", ci === 0 ? " disabled" : "") + " " + W.btn("Down", "catMove", gi + "|" + ci + "|1", "sm alt", ci === g.cats.length - 1 ? " disabled" : "") + " " + (n ? '<span class="small muted">Has nominations, cannot be removed</span>' : W.btn("Remove", "catRemove", gi + "|" + ci, "sm alt bad"))];
+        }), "") : "<p class=\"muted\">No categories in this group.</p>") +
+        '<form data-form="catadd" class="row"><input type="hidden" name="g" value="' + gi + '"><label class="sr" for="ca' + gi + '">New category in ' + e(g.name) + '</label><input id="ca' + gi + '" name="name" placeholder="New category name" style="flex:1" required><button class="btn sm">Add category</button></form></div>';
+      }).join("") + '<p class="small muted">' + W.cats().length + " categories in " + A.groups.length + " groups. The five groups are fixed brand groups.</p>";
   });
-  W.forms.awardcfg = function (d) {
-    var A = W.S.awards; A.eligibility = d.eligibility; A.shortlistSize = Number(d.shortlistSize); A.judgesPerCategory = Number(d.judgesPerCategory);
-    A.criteria.forEach(function (c, i) { c.name = d["cn" + i]; c.weight = Number(d["cw" + i]) || 0; }); W.log("awards.config", "awards", "saved"); W.save(); W.render(); W.toast("Saved.");
+  function catName(v) { return String(v || "").replace(/\s+/g, " ").trim(); }
+  W.forms.catadd = function (d) {
+    var A = W.S.awards, g = A.groups[Number(d.g)], nm = catName(d.name); if (!g || !nm) return;
+    if (W.cats().some(function (c) { return c.name.toLowerCase() === nm.toLowerCase(); })) { W.toast("That category already exists."); return; }
+    g.cats.push(nm); W.log("category.add", nm, g.name); W.purge("/awards", "categories changed"); W.save(); W.render(); W.toast("Added.");
   };
-  mini("/admin/judges", "A31", "awards", function () {
-    var asg = W.S.judgeAssign, names = Object.keys(asg);
-    return head("Judging panel and conflicts", "Judges are names on a panel, not users: they have no account and no access to this site. An Editor records assignments and conflicts they declare offline (REQ-036, 234).") + W.table(["Judge (name only)", "Assigned", "Conflicts recorded"], names.map(function (j) { return [e(j), (asg[j] || []).map(function (id) { var n = W.find("nominations", id); return e(n.ref + " " + n.nominee); }).join("<br>") || "none", (W.S.judgeCoi[j] || []).map(function (id) { return e(W.find("nominations", id).ref); }).join(", ") || "none"]; })) +
-      '<div class="grid c2"><form class="card stack-s" data-form="assign"><h2>Assign a nomination to a judge</h2>' + W.field("Judge", "judge", { type: "select", options: names }) + W.field("Nomination", "n", { type: "select", options: W.S.nominations.filter(function (n) { return ["assessment", "shortlisted", "finalist", "accepted"].indexOf(n.status) >= 0; }).map(function (n) { return [n.id, n.ref + " " + n.nominee]; }) }) + '<button class="btn">Assign</button></form>' +
-      '<form class="card stack-s" data-form="judgecoi"><h2>Record a conflict a judge declared</h2>' + W.field("Judge", "judge", { type: "select", options: names }) + W.field("Nomination", "n", { type: "select", options: W.S.nominations.map(function (n) { return [n.id, n.ref + " " + n.nominee]; }) }) + W.field("What the judge told us", "why", { type: "textarea", req: true }) + '<button class="btn alt">Record conflict</button></form></div>' +
-      '<form class="card stack-s" data-form="staffcoi"><h2>Staff conflict declaration</h2>' + W.field("Staff member", "who", { value: W.persona() }) + W.field("Nomination", "n", { type: "select", options: W.S.nominations.map(function (n) { return [n.id, n.ref + " " + n.nominee]; }) }) + '<button class="btn alt">Declare</button></form>';
-  });
-  W.forms.assign = function (d) { var a = W.S.judgeAssign[d.judge] = W.S.judgeAssign[d.judge] || []; if (a.indexOf(d.n) < 0) a.push(d.n); W.log("judge.assign", d.n, d.judge); W.save(); W.render(); };
-  W.forms.judgecoi = function (d) {
-    var c = W.S.judgeCoi[d.judge] = W.S.judgeCoi[d.judge] || []; if (c.indexOf(d.n) < 0) c.push(d.n);
-    var sc = W.S.scores[d.n]; if (sc && sc.by && sc.by[d.judge]) delete sc.by[d.judge];
-    W.log("coi.judge", d.n, d.judge + " declared (entered by " + W.persona() + "): " + d.why); W.save(); W.render(); W.toast("Recorded. " + d.judge + " can no longer be scored on this nomination.");
+  W.forms.catrename = function (d) {
+    var A = W.S.awards, g = A.groups[Number(d.g)], old = g && g.cats[Number(d.c)], nm = catName(d.name); if (!old || !nm || nm === old) return;
+    if (W.cats().some(function (c) { return c.name.toLowerCase() === nm.toLowerCase() && c.name !== old; })) { W.toast("That category already exists."); return; }
+    g.cats[Number(d.c)] = nm; W.S.nominations.forEach(function (n) { if (n.category === old) n.category = nm; });
+    W.log("category.rename", old, "to " + nm); W.purge("/awards", "categories changed"); W.save(); W.render(); W.toast("Renamed.");
   };
-  W.forms.staffcoi = function (d) { W.log("coi.staff", d.n, d.who + " declared a conflict"); W.save(); W.toast("Recorded. " + d.who + " is excluded from this nomination."); };
-  mini("/admin/announcements", "A32", "awards", function () {
-    var A = W.S.awards, listed = W.S.nominations.filter(function (n) { return ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0; }), wins = W.S.nominations.filter(function (n) { return n.status === "winner"; });
-    return head("Shortlist and winners", "Shortlist, finalist and winner pages go public through the normal publish step: publish each nominee page, then publish the winners announcement. There is no feature flag for this (D-037, REQ-038). Nothing is visible to visitors until you publish.") +
-      "<h2>Nominee pages</h2>" + W.table(["Ref", "Nominee", "Category", "Stage", "Public", ""], listed.map(function (n) { return [e(n.ref), e(n.nominee), e(n.category), W.stPill(STAT[n.status] || n.status), n.pub ? '<span class="pill ok">published</span>' : '<span class="pill gray">not published</span>', n.pub ? W.btn("Unpublish", "unpubNom", n.id, "sm alt bad") : W.btn("Publish page", "pubNom", n.id, "sm")]; }), "No one is shortlisted yet.") +
-      "<h2>Winners</h2>" + W.table(["Category", "Winner", "Notified"], wins.map(function (n) { return [e(n.category), e(n.nominee), n.notified ? "Yes" : W.btn("Prepare email", "winMail", n.id, "sm alt")]; }), "No winners selected yet. Mark one on the score page or the nomination.") + "<p>" + W.btn(A.published ? "Announcement published" : "Publish winners announcement", "publishWin", "", "", (wins.length && !A.published) ? "" : " disabled") + (A.published ? " " + W.btn("Unpublish announcement", "unpubWin", "", "alt bad") : "") + "</p>" + (A.published ? '<p><a href="#/awards/winners">View public winners page</a></p>' : "");
-  });
-  W.act.pubNom = function (id) { var n = W.find("nominations", id); if (["shortlisted", "finalist", "winner"].indexOf(n.status) < 0) return; n.pub = true; W.log("nomination.publish", n.ref, "nominee page published"); W.save(); W.render(); W.toast("Nominee page published."); };
-  W.act.unpubNom = function (id) { var n = W.find("nominations", id); n.pub = false; W.purge("/awards/nominee/" + n.ref, "nominee page unpublished"); W.log("nomination.unpublish", n.ref, "nominee page unpublished"); W.save(); W.render(); W.toast("Nominee page unpublished."); };
-  W.act.unpubWin = function () { W.S.awards.published = false; W.purge("/awards/winners", "announcement unpublished"); W.log("announcement.unpublish", "awards", ""); W.save(); W.render(); };
-  W.act.winMail = function (id) { var n = W.find("nominations", id); n.notified = true; W.mail(n.nomineeEmail || "Winner", "Congratulations", "You are a winner in " + n.category + ". Private until announcement.", ""); W.save(); W.render(); };
-  W.act.publishWin = function () { var A = W.S.awards; A.winners = W.S.nominations.filter(function (n) { return n.status === "winner"; }).map(function (n) { return { cat: n.category, name: n.nominee, ref: n.ref }; }); A.published = true; W.log("announcement.publish", "awards", A.winners.length + " winners"); W.save(); W.render(); };
+  W.act.catMove = function (a) {
+    var s = a.split("|"), g = W.S.awards.groups[Number(s[0])], i = Number(s[1]), j = i + Number(s[2]); if (!g || j < 0 || j >= g.cats.length) return;
+    var t = g.cats[i]; g.cats[i] = g.cats[j]; g.cats[j] = t; W.log("category.move", t, g.name); W.save(); W.render();
+  };
+  W.act.catRemove = function (a) {
+    var s = a.split("|"), g = W.S.awards.groups[Number(s[0])], name = g && g.cats[Number(s[1])]; if (!name) return;
+    if (catCount(name)) { W.toast("This category has nominations and cannot be removed."); return; }
+    g.cats.splice(Number(s[1]), 1); W.log("category.remove", name, g.name); W.purge("/awards", "categories changed"); W.save(); W.render(); W.toast("Removed.");
+  };
 
   /* ---------- platform ---------- */
-  capRoute("nominations_flag", "/admin/flags", "A26", function () {
-    var F = W.S.flags.nominations;
-    return head("Feature flag", "There is one feature flag: Nominations (D-037). It switches the public nomination form on or off. Turning it ON needs the Administrator and the Venture CEO\u2019s approval reference, and is audited (REQ-194).") +
-      W.table(["Flag", "What it controls", "State", "Approval ref", ""], [["nominations", "The Nominate page. OFF: \u201cNominations open soon\u201d with an email sign-up. ON: the full nomination form.", '<span class="pill ' + (F.on ? "flag-on" : "flag-off") + '">' + (F.on ? "ON" : "OFF") + "</span>", e(F.ref || "\u2014"), F.on ? W.btn("Turn OFF", "flagOff", "nominations", "sm alt") : W.btn("Turn ON\u2026", "flagOnDlg", "nominations", "sm")]]) +
-      '<p class="small muted">Not flags: bulk unpublish by filter replaced the old global switch (D-043); judging is offline and staff enter the scores; shortlist and winner pages are published by staff through the normal publish step; AI drafting belongs to the acquisition pipeline, not the website.</p>';
-  });
-  W.act.flagOnDlg = function (k) { W.openModal("Turn on: " + k, '<form data-form="flagon" class="stack-s"><input type="hidden" name="k" value="' + e(k) + '"><p>Public pages change immediately. Only turn this on with the Venture CEO’s explicit approval.</p>' + W.field("Approval reference (email, minute or ticket)", "ref", { req: true }) + '<button class="btn">Turn ON</button></form>'); };
-  W.forms.flagon = function (d) { W.S.flags[d.k] = { on: true, ref: d.ref }; W.log("flag.on", d.k, "approval: " + d.ref); W.ui.modal = null; W.save(); W.render(); W.toast(d.k + " is ON. Check the Nominate and Awards pages."); };
-  W.act.flagOff = function (k) { W.S.flags[k] = { on: false, ref: "" }; W.log("flag.off", k, ""); W.save(); W.render(); W.toast(k + " is OFF."); };
   capRoute("audit_log", "/admin/audit", "A33", function () {
     var A = W.S.audit, bad = -1, prev = "00000000";
     return head("Audit log", "Append-only. Each row stores the hash of the one before, so tampering is detectable (REQ-051, 188). Exported nightly off-host.") + W.table(["#", "When", "Actor", "Action", "Target", "Detail", "Hash"], A.slice().reverse().slice(0, 60).map(function (a) { return [a.n, e(a.at), e(a.actor), e(a.action), e(a.target), e(a.detail), '<span class="mono">' + e(a.hash) + "</span>"]; }), "No actions yet. Do something as staff.") + "<p>" + W.btn("Verify chain", "verifyChain", "", "alt") + "</p>";
@@ -214,130 +316,16 @@
   W.act.verifyChain = function () { var prev = "00000000", ok = true; W.S.audit.forEach(function (a) { if (a.prev !== prev) ok = false; prev = a.hash; }); W.toast(ok ? "Chain intact: " + W.S.audit.length + " rows verified." : "CHAIN BROKEN: alert raised."); };
   W.act.leaver = function () { W.log("user.deactivate", "Sample Leaver", "same-day deactivation"); W.save(); W.toast("Account deactivated and logged (sample)."); };
   W.act.mfa = function (n) { W.S.users.filter(function (u) { return u.name === n; })[0].mfa = true; W.log("user.mfa", n, "required"); W.save(); W.render(); };
-  mini("/admin/compliance", "A37", "dsr", function () {
-    return head("Compliance", "Processor register, retention and breach log.") + "<h2>Processors (REQ-065)</h2>" + W.table(["Processor", "Role", "Location", "DPA"], W.S.processors.map(function (p) { return [e(p.name), e(p.role), e(p.location), e(p.dpa)]; })) + "<h2>Lawful basis by category of person (REQ-057; Legal's written position requested by 13 Nov)</h2>" + W.table(["Category", "Basis (default)", "Status"], [["Public figures published without consent", "Legitimate interests, right to object", "Awaiting Legal"], ["Profile owners and customers", "Contract / consent", "Awaiting Legal"], ["Nominators and nominees", "Consent / legitimate interests", "Awaiting Legal"], ["Email sign-ups", "Consent (stored with policy version)", "Built"]]) + '<div class="card stack-s"><h2>DPIA and data-protection contact (REQ-072)</h2><p>DPIA: <span class="pill warn">in progress</span> · Contact: <span class="mono">dpo@wiwi.africa (sample)</span></p><p class="small muted">If Legal objects, bulk unpublish by filter is the response (REQ-193, D-043).</p></div>' + "<h2>Retention schedule (REQ-063; defaults pending Legal)</h2>" + W.table(["Data", "Keep for (D-023 defaults; rows marked sample are not decided)", "Then"], [["Subscriber data", "6 years after last payment", "Delete or anonymise"], ["Nominations", "2 years", "Delete"], ["Suppression record", "Indefinitely (name only)", "Keep"], ["Enquiries (sample)", "Not decided", "To decide"]]) + '<h2>Breach log (REQ-066)</h2><form class="card stack-s" data-form="breach">' + W.field("Describe what happened", "d", { type: "textarea", req: true }) + '<button class="btn alt">Log breach and start the response checklist</button></form>' + (W.S.breaches ? W.table(["Logged", "Description"], W.S.breaches.map(function (b) { return [e(b.at), e(b.d)]; })) : "");
-  });
-  W.forms.breach = function (d) { (W.S.breaches = W.S.breaches || []).push({ at: W.TODAY, d: d.d }); W.log("breach.log", "incident", d.d); W.save(); W.render(); W.toast("Logged. Checklist: contain, assess, notify the regulator and affected people within the legal deadline."); };
   mini("/admin/purges", "A48", "purges", function () {
     return head("Purge and unpublish log", "Each unpublish (single or bulk), removal and decline queues a CDN purge (REQ-209). The origin already answers 410 + noindex.") + W.table(["URL", "Why", "Date", "Status"], W.S.purges.map(function (p) { return ['<span class="mono">' + e(p.url) + "</span>", e(p.why), e(p.at), e(p.status)]; }), "Nothing purged yet. Unpublish a profile to see an entry.");
   });
-  mini("/admin/exports", "A41", "exports", function () {
-    return head("Exports", "CSV and open formats for CaromHQ and data portability (REQ-077, 087, 131).") + '<div class="grid c3">' + [["register", "Register with counting-rule status"], ["leads", "Leads"], ["customers", "Customers"], ["nominations", "Nominations"], ["profiles", "All profiles (open format)"], ["enquiries", "Enquiries"]].map(function (x) { return '<div class="card stack-s"><h2>' + e(x[1]) + "</h2>" + W.btn("Download CSV", "dl", x[0], "alt") + "</div>"; }).join("") + '</div><p class="small muted">Exports of personal data are Administrator-only and every export is logged (REQ-069, D-040). Reviewers and all other roles cannot export.</p>';
-  });
-  W.act.dl = function (k) {
-    if (!W.hasCap("exports")) { W.log("export.denied", k, "role " + W.S.role); W.save(); W.toast("Exports of personal data need the exports capability, Administrator by default (REQ-069)."); return; }
-    var S = W.S, map = {
-      register: [["id", "type", "customer", "amount_kobo", "currency", "status", "counts_toward_target", "complimentary"]].concat(S.arrangements.map(function (a) { return [a.id, a.type, (W.find("customers", a.customerId) || {}).name, a.amount, a.currency, W.arrStatus(a), W.counts(a) ? "yes" : "no", a.complimentary ? "yes" : "no"]; })),
-      leads: [["id", "name", "org", "interest", "status"]].concat(S.leads.map(function (l) { return [l.ext, l.name, l.org, l.interest, l.status]; })),
-      customers: [["id", "name", "segment"]].concat(S.customers.map(function (c) { return [c.ext, c.name, c.segment]; })),
-      nominations: [["ref", "nominee", "category", "status"]].concat(S.nominations.map(function (n) { return [n.ref, n.nominee, n.category, n.status]; })),
-      profiles: [["id", "name", "type", "status", "trust"]].concat(S.profiles.map(function (p) { return [p.id, p.name, p.type, p.status, p.trust]; })),
-      enquiries: [["id", "name", "message"]].concat(S.enquiries.map(function (x) { return [x.id, x.name, x.message]; })),
-      prospects: [["id", "name", "source", "status"]].concat((S.prospects || []).map(function (x) { return [x.id, x.name, x.source, x.status]; }))
-    };
-    W.log("export." + k, k, "csv"); W.save(); W.download(k + ".csv", W.csv(map[k] || [["empty"]]));
-  };
   mini("/admin/emails", "A40", "emails", function () {
     return head("Email log", "Every notification the system sends (REQ-094). Provider bounces will be recorded here.") + W.table(["Date", "To", "Subject", "Link"], W.S.emails.map(function (m) { return [e(m.at), e(m.to), e(m.subject), m.link ? '<a href="' + e(m.link) + '">open</a>' : ""]; }), "No emails sent yet.");
   });
-  capRoute("settings", "/admin/settings", "A47", function () {
+  capRoute("settings", "/admin/thresholds", "A47", function () {
     var t = W.S.thresholds;
-    return head("Settings") + '<form class="card stack-s" data-form="settings"><h2>Sprint thresholds</h2>' + W.field("Paid subscriptions needed", "subs", { type: "number", value: t.subs }) + W.field("Confirmed revenue needed (NGN)", "rev", { type: "number", value: t.revenue / 100 }) + "<h2>Default revenue stream per arrangement type</h2>" + Object.keys(W.LISTS.arrTypes).map(function (k) { return W.field(W.LISTS.arrTypes[k], "st_" + k, { type: "select", options: Object.keys(W.LISTS.streams).map(function (s) { return [s, W.LISTS.streams[s]]; }), value: W.LISTS.defaultStream[k] }); }).join("") + '<button class="btn">Save</button></form>';
+    return head("Sprint thresholds", "The targets the dashboard measures progress against. Either one is enough.") + '<form class="card stack-s" data-form="thresholds">' + W.field("Paid subscriptions needed", "subs", { type: "number", value: t.subs }) + W.field("Confirmed revenue needed (NGN)", "rev", { type: "number", value: t.revenue / 100 }) + '<button class="btn">Save</button></form>';
   });
-  W.forms.settings = function (d) { W.S.thresholds = { subs: Number(d.subs), revenue: Math.round(Number(d.rev) * 100) }; Object.keys(W.LISTS.arrTypes).forEach(function (k) { W.LISTS.defaultStream[k] = d["st_" + k]; }); W.log("settings.save", "thresholds", ""); W.save(); W.toast("Saved."); W.render(); };
+  W.forms.thresholds = function (d) { W.S.thresholds = { subs: Number(d.subs), revenue: Math.round(Number(d.rev) * 100) }; W.log("settings.save", "thresholds", ""); W.save(); W.toast("Saved."); W.render(); };
 
-  /* ---------- offline judging: score entry and results (REQ-234) ---------- */
-  var SCORABLE = ["accepted", "assessment", "shortlisted", "finalist", "winner"];
-  function calc(v) { var A = W.S.awards, t = 0; A.criteria.forEach(function (c) { t += (Number(v[c.id]) || 0) * c.weight / 100; }); return t.toFixed(1); }
-  W.calcScore = calc;
-  W.coi = function (judge, nomId) { return (W.S.judgeCoi[judge] || []).indexOf(nomId) >= 0; };
-  W.nomJudges = function (nomId) { return Object.keys(W.S.judgeAssign).filter(function (j) { return (W.S.judgeAssign[j] || []).indexOf(nomId) >= 0; }); };
-  W.nomAverage = function (nomId) { var by = (W.S.scores[nomId] || {}).by || {}, ts = Object.keys(by).map(function (j) { return Number(calc(by[j].v)); }); return ts.length ? (ts.reduce(function (a, b) { return a + b; }, 0) / ts.length).toFixed(1) : "\u2014"; };
-  W.recordScore = function (nomId, judge, v) {
-    if (!W.hasCap("score_entry")) return "only a user with the score_entry capability (Editor or Administrator by default) records scores";
-    if (W.nomJudges(nomId).indexOf(judge) < 0) return judge + " is not assigned to this nomination";
-    if (W.coi(judge, nomId)) return "conflict recorded for " + judge + "; this judge cannot be scored on this nomination";
-    var bad = W.S.awards.criteria.some(function (c) { var x = v[c.id]; return x === "" || x == null || isNaN(Number(x)) || Number(x) < 0 || Number(x) > 10; });
-    if (bad) return "enter a score from 0 to 10 for every criterion";
-    var n = {}; W.S.awards.criteria.forEach(function (c) { n[c.id] = Number(v[c.id]); });
-    var sc = W.S.scores[nomId] = W.S.scores[nomId] || { by: {} }; sc.by[judge] = { v: n, by: W.persona(), at: W.TODAY };
-    W.log("scores.enter", nomId, judge + " scored; entered by " + W.persona()); return "";
-  };
-  mini("/admin/scores", "A51", "scores", function () {
-    var rows = W.S.nominations.filter(function (n) { return SCORABLE.indexOf(n.status) >= 0; });
-    var ranked = rows.slice().sort(function (a, b) { return (a.category === b.category ? 0 : a.category < b.category ? -1 : 1) || (Number(W.nomAverage(b.id)) || 0) - (Number(W.nomAverage(a.id)) || 0); });
-    return head("Scores and results", "Judging is offline. Judges score on paper or by email; an Editor enters their scores here. Judges have no account. No payment, subscription or sponsorship data appears on these screens (REQ-037, 234).") +
-      W.table(["Ref", "Nominee", "Category", "Panel", "Scores in", "Weighted average (/10)", "Status", ""], ranked.map(function (n) { var js = W.nomJudges(n.id), ok = js.filter(function (j) { return !W.coi(j, n.id); }), got = Object.keys((W.S.scores[n.id] || {}).by || {}).length; return [e(n.ref), e(n.nominee), e(n.category), e(js.join(", ") || "no panel yet"), got + " of " + ok.length + (ok.length < js.length ? ' <span class="pill warn">' + (js.length - ok.length) + " conflict</span>" : ""), e(W.nomAverage(n.id)), W.stPill(STAT[n.status] || n.status), '<a class="btn sm" href="#/admin/scores/' + e(n.id) + '">Enter / view scores</a>']; }), "No nominations are ready for scoring.") +
-      '<p class="small muted">Results are sorted by category and score. Shortlist and winner marking happen on each nomination\u2019s score page and reach the public shortlist and winners pages only when staff publish them (Shortlist and winners, D-037).</p>';
-  });
-  mini("/admin/scores/:id", "A52", "scores", function (par) {
-    var n = W.find("nominations", par.id); if (!n) return "<h1>Not found</h1>";
-    var A = W.S.awards, js = W.nomJudges(n.id), by = (W.S.scores[n.id] || {}).by || {}, on = true;
-    var actions = (n.status === "assessment" ? (W.hasCap("nominations") ? W.btn("Shortlist (recorded approver)", "nomStep", n.id + "|shortlist") : '<span class="small muted">Shortlisting needs the nominations capability, Editor or Administrator by default (REQ-202).</span>') : "") + (n.status === "finalist" ? W.btn("Mark winner", "nomStep", n.id + "|winner") : "") + (n.status === "shortlisted" ? '<span class="small muted">Final approval is by the Administrator standing in for the Venture CEO. <a href="#/admin/nominations/' + e(n.id) + '">Open the nomination</a></span>' : "");
-    return '<p><a href="#/admin/scores">\u2190 Scores and results</a></p>' + head(n.ref + ": " + n.nominee, e(n.category)) +
-      '<div class="card"><h2>Evidence</h2><p>' + e(n.evidence) + '</p><p class="small muted">The nominator is not shown. No payment, subscription or sponsorship data is available here.</p></div>' + 
-      (js.length ? '<form class="card stack-s" data-form="scoregrid"><input type="hidden" name="id" value="' + e(n.id) + '"><h2>Scores by judge (0 to 10 per criterion)</h2><div class="tablewrap"><table class="t"><thead><tr><th scope="col">Judge</th>' + A.criteria.map(function (c) { return '<th scope="col">' + e(c.name) + " (" + c.weight + "%)</th>"; }).join("") + '<th scope="col">Weighted total</th></tr></thead><tbody>' + js.map(function (j, ji) {
-        if (W.coi(j, n.id)) return '<tr><th scope="row">' + e(j) + '</th><td colspan="' + (A.criteria.length + 1) + '"><span class="pill warn">Conflict recorded</span> This judge cannot be scored on this nomination (REQ-036).</td></tr>';
-        var sc = by[j] || { v: {} };
-        return '<tr><th scope="row">' + e(j) + "</th>" + A.criteria.map(function (c) { return '<td><label class="sr" for="s_' + ji + "_" + c.id + '">' + e(j + " " + c.name) + '</label><input id="s_' + ji + "_" + c.id + '" name="s_' + ji + "_" + c.id + '" type="number" min="0" max="10" step="1" value="' + (sc.v[c.id] == null ? "" : sc.v[c.id]) + '"' + (on ? "" : " disabled") + ' style="width:5rem"></td>'; }).join("") + "<td>" + (by[j] ? e(calc(sc.v)) : "\u2014") + "</td></tr>";
-      }).join("") + '</tbody></table></div><p><strong>Weighted average of recorded scores: ' + e(W.nomAverage(n.id)) + ' / 10</strong></p><div class="row"><button class="btn"' + (on ? "" : " disabled") + ">Save scores</button>" + actions + '</div><p class="small muted">Each saved score records who entered it and when (audit log). Criteria and weights come from Awards setup.</p></form>' : W.empty("No panel assigned", "Assign judges in the Judging panel screen first.", '<a class="btn" href="#/admin/judges">Judging panel</a>'));
-  });
-  W.forms.scoregrid = function (d) {
-    var js = W.nomJudges(d.id), msgs = [], saved = 0;
-    js.forEach(function (j, ji) {
-      var v = {}, any = false; W.S.awards.criteria.forEach(function (c) { var x = d["s_" + ji + "_" + c.id]; v[c.id] = x; if (x !== "" && x != null) any = true; });
-      if (!any) return;
-      var err = W.recordScore(d.id, j, v); if (err) msgs.push(err); else saved++;
-    });
-    W.save(); W.render(); W.toast(msgs.length ? "Not saved: " + msgs.join("; ") + "." : saved ? saved + " judge score(s) saved and logged." : "Nothing to save.");
-  };
-  /* ---------- roles and permissions preview (REQ-235) ---------- */
-  mini("/admin/roles", "A54", "users_roles", function () {
-    var roles = [["reviewer", "Reviewer"], ["editor", "Editor"], ["admin", "Administrator"]];
-    var grp = "", rows = [];
-    W.CAPS.forEach(function (c) {
-      if (c[2] !== grp) { grp = c[2]; rows.push(['<strong>' + e(grp) + "</strong>", "", "", ""]); }
-      rows.push([e(c[1]) + ' <code class="small">' + e(c[0]) + "</code>"].concat(roles.map(function (r) { return W.hasCap(c[0], r[0], true) ? '<span class="pill ok">Yes</span>' : '<span class="muted">\u2014</span>'; })));
-    });
-    return head("Roles and permissions", "Preview of the role defaults and left menus the WordPress build must enforce and test (REQ-235, 240, 244; D-044, D-045). A role is a default bundle of capabilities; the Administrator can add or remove single capabilities for one user (<a href=\"#/admin/capabilities\">Users and capabilities</a>). There are three staff roles. Visitors have no account.") +
-      W.table(["Capability"].concat(roles.map(function (r) { return r[1]; })), rows) +
-      "<h2>Left menu by role (defaults)</h2>" + W.table(["Role", "Screens in the left menu"], roles.map(function (r) { var m = W.menuFor(r[0], true); return [e(r[1]), m.length + ": " + m.map(e).join(" \u00b7 ")]; })) +
-      '<div class="grid c2"><div class="card stack-s"><h2>Rules</h2><ul><li>Two-factor sign-in is required for every staff role (REQ-047).</li><li>Reviewers see only the review and directory screens. By default they can assign existing terms and bulk unpublish by filter (D-045), but cannot edit, publish, import, edit terms or export.</li><li>Editors edit, publish and unpublish single profiles, but do not bulk unpublish unless the Administrator grants it.</li><li>Judge is not a role. Judges have no account and no access to the site; an Editor enters their scores.</li><li>Only the Administrator installs plugins, changes users, roles or capabilities.</li><li>Exports of personal data are Administrator-only and logged.</li><li>Leavers are deactivated the same day; every change is audited.</li><li>Profile owners, nominators and nominees have no account at all (REQ-229).</li></ul></div><div class="card stack-s"><h2>Try it</h2><p>Use <strong>Preview as</strong> in the top bar to switch between Visitor, Reviewer, Editor and Administrator. Each role gets its own dashboard and left menu. Open a page your role is not allowed to see (for example Taxonomies as Reviewer) to see the 403 page. As Administrator, grant a capability on <a href="#/admin/capabilities">Users and capabilities</a>, switch to that user, and watch the menu change.</p></div></div>';
-  });
-
-  /* ---------- users and capabilities (REQ-244, D-045) ---------- */
-  var CUSERS = [["reviewer", "Sample Reviewer 1"], ["editor", "Sample Editor"], ["admin", "Sample Admin"]];
-  mini("/admin/capabilities", "A60", "users_roles", function () {
-    var out = head("Users and capabilities", "A role is a default bundle of capabilities. The Administrator can add a capability to one user, or take one away, whatever the user\u2019s role: for example give an Editor <code>bulk_unpublish</code>, or a Reviewer <code>edit_profiles</code>. Changes are audited and take effect at once. Switch <strong>Preview as</strong> to that role to see the menu and 403 pages change. Capabilities marked locked stay with Administrators (proposed limit, Q72).");
-    CUSERS.forEach(function (u) {
-      var role = u[0], g = W.S.caps[role], eff = W.CAPS.filter(function (c) { return W.hasCap(c[0], role); }).length, menu = W.menuFor(role).length, isAdmin = role === "admin";
-      var rows = W.CAPS.map(function (c) {
-        var def = W.capDefault(c[0], role), on = W.hasCap(c[0], role), tag = !isAdmin && on && !def ? ' <span class="pill warn">granted</span>' : (!isAdmin && !on && def ? ' <span class="pill bad">revoked</span>' : "");
-        var act = isAdmin ? '<span class="small muted">always</span>' : (c[4] && !on ? '<span class="small muted">locked: proposed limit, Q72</span>' : W.btn(on ? "Revoke" : "Grant", "capToggle", role + "|" + c[0], "sm " + (on ? "bad" : "")));
-        return [e(c[1]) + ' <code class="small">' + e(c[0]) + "</code>", e(c[2]), def ? "Yes" : "\u2014", on ? '<span class="pill ok">Yes</span>' + tag : '<span class="muted">\u2014</span>' + tag, act];
-      });
-      out += '<div class="card stack-s"><div class="row between"><h2>' + e(u[1]) + " \u00b7 " + e(W.roleName(role)) + "</h2>" + (isAdmin ? "" : W.btn("Reset to role defaults", "capReset", role, "sm alt")) + "</div><p class=\"small muted\">" + eff + " of " + W.CAPS.length + " capabilities \u00b7 " + menu + " left-menu items" + (isAdmin ? " \u00b7 the Administrator always has every capability" : " \u00b7 " + g.grant.length + " granted, " + g.revoke.length + " revoked") + ".</p>" + W.table(["Capability", "Group", "Role default", "This user", ""], rows) + "</div>";
-    });
-    return out;
-  });
-  W.act.capToggle = function (a) {
-    if (!W.hasCap("users_roles")) { W.toast("Only the Administrator changes capabilities."); return; }
-    var s = a.split("|"), role = s[0], cap = s[1], c = W.CAPIDX[cap], g = W.S.caps[role]; if (!c || !g || role === "admin") return;
-    var on = W.hasCap(cap, role), def = W.capDefault(cap, role), who = W.PERSONA[role];
-    if (on) {
-      g.grant = g.grant.filter(function (x) { return x !== cap; });
-      if (def && g.revoke.indexOf(cap) < 0) g.revoke.push(cap);
-      W.log("capability.revoke", who, cap);
-    } else {
-      if (c[4]) { W.toast("Locked: " + cap + " stays with Administrators (proposed limit, Q72)."); return; }
-      g.revoke = g.revoke.filter(function (x) { return x !== cap; });
-      if (!def && g.grant.indexOf(cap) < 0) g.grant.push(cap);
-      W.log("capability.grant", who, cap);
-    }
-    W.save(); W.render(); W.toast((on ? "Revoked " : "Granted ") + cap + " " + (on ? "from " : "to ") + who + ". Logged; effective at once.");
-  };
-  W.act.capReset = function (role) {
-    if (!W.hasCap("users_roles")) return;
-    W.S.caps[role] = { grant: [], revoke: [] }; W.log("capability.reset", W.PERSONA[role], "role defaults"); W.save(); W.render(); W.toast(W.PERSONA[role] + " is back to the role defaults.");
-  };
 })();

@@ -169,8 +169,8 @@ html.is-home:not(.tools-hidden) .h-hero-in { padding-top: calc(var(--head-h) + 2
 }
 
 /* awards */
-.h-awards { position: relative; background: var(--red); color: #fff; padding-bottom: var(--s-9); overflow: hidden; }
-.h-marquee { overflow: hidden; border-bottom: 1px solid rgba(255, 255, 255, .36); padding-block: var(--s-3); margin-bottom: var(--s-8); }
+.h-awards { position: relative; background: var(--red); color: #fff; overflow: hidden; }
+.h-marquee { overflow: hidden; padding-block: var(--s-3); }
 .h-marquee-in { display: flex; width: max-content; animation: h-marquee 34s linear infinite; }
 .h-marquee-in span { padding-inline: var(--s-5); font: 400 var(--t-xl)/1.1 var(--font-display); white-space: nowrap; }
 .h-marquee-in span::after { content: "*"; margin-left: var(--s-6); color: var(--orange); }
@@ -328,3 +328,6 @@ html.is-home.at-top .site-head:not(:hover):not(:focus-within) { -webkit-backdrop
 /* The dark fade only belongs behind the transparent header; when the header turns solid (hover or keyboard focus) it goes away. */
 html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:focus-within::before { opacity: 0; }
 @media (hover: none) { html.is-home.at-top .site-head:hover:not(:has(:focus-visible))::before { opacity: 1; } html.is-home.at-top .site-head:focus-within:not(:has(:focus-visible))::before { opacity: 1; } }
+
+/* Events on the home page (REQ-264): the next three upcoming events as a ruled list. */
+.h-events { position: relative; background: var(--c-bg); color: var(--c-text); padding-block: var(--s-8); }

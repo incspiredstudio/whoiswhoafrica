@@ -24,12 +24,14 @@ const NOUI = {
   190: "Build check that fails on hard-coded brand values; not a screen."
 };
 Object.assign(NOUI, {
+  47: "WordPress provides this screen or feature; documented in the docs (D-067).", 57: "WordPress provides this screen or feature; documented in the docs (D-067).", 63: "WordPress provides this screen or feature; documented in the docs (D-067).", 65: "WordPress provides this screen or feature; documented in the docs (D-067).", 66: "WordPress provides this screen or feature; documented in the docs (D-067).", 69: "WordPress provides this screen or feature; documented in the docs (D-067).", 72: "WordPress provides this screen or feature; documented in the docs (D-067).", 77: "WordPress provides this screen or feature; documented in the docs (D-067).", 131: "WordPress provides this screen or feature; documented in the docs (D-067).", 240: "WordPress provides this screen or feature; documented in the docs (D-067).", 245: "WordPress provides this screen or feature; documented in the docs (D-067).",
   136: "Enforced in the acquisition pipeline by the named approver, not in the website admin (D-038).", 137: "Enforced in the acquisition pipeline (D-038); the import dry run (A20) checks the file against the import contract.", 138: "Enforced in the acquisition pipeline (D-038).",
   165: "AI drafting belongs to the acquisition pipeline, not the website (D-037).", 167: "Pipeline drafting rule (acquisition), not a screen.", 169: "Pipeline and provider terms (acquisition), not a screen.",
   191: "No directory-size target on the website or its admin (D-035).", 206: "No review-capacity figure until the pilot measures one (D-035).",
   124: "Claiming is removed (D-036); the requirement is stale.", 150: "Claimed shown to staff as a checkmark (D-059); no public Claimed label and no trust label on profiles (A06, A61).", 25: "Withdrawn with the Verified label (D-059).", 153: "Withdrawn with the Verified label (D-059).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
   257: "Home page curation modes (D-059): documented in the requirements and architecture; the Home page settings screen is drawn when the modes are approved.", 260: "Page copy is edited in the page editor in WordPress (D-059), not in a wireframe screen.",
-  255: "WordPress plugin that cuts out photo backgrounds on import (D-057); a background job with no screen in the wireframe.",   238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
+  197: "Withdrawn (D-066): there is no nominee invitation or response page; staff may send a nomination email to a staff-only contact email.", 36: "Withdrawn (D-064): no judging panel or conflict records; judging happens outside the site.", 37: "Withdrawn (D-064): no score entry or results screens.", 234: "Withdrawn (D-064): no score entry; staff shortlist and publish only.",
+  178: "Withdrawn (D-061): there is no Leads feature. Enquiries land in the Support inbox (A12).", 205: "Withdrawn (D-061): no leads; customers and enquiries keep stable external IDs.", 160: "Withdrawn (D-061): no stale-record workflow or screen.", 93: "Withdrawn (D-061): no prospect lists.", 176: "Withdrawn (D-061): no prospect store.", 261: "Claimant edit flow (My profiles screen); described in the docs, not drawn in the wireframe (D-060).", 255: "Withdrawn (D-060): no background-removal plugin.",   238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
 });
 for (let n = 210; n <= 228; n++) NOUI[n] = "Publish-first rule (D-033) with no screen of its own. The public label and listing rules are in V52 and V56; the staff states are not yet fully in the wireframe.";
 
@@ -37,14 +39,11 @@ for (let n = 210; n <= 228; n++) NOUI[n] = "Publish-first rule (D-033) with no s
 const GAPS = [
   [7, "Filters by profession, organisation type and country were missing", "V03, V04, V05 (country filter lists Nigeria first, then other African countries and pan-African bodies)"],
   [16, "Admin marking of posts/profiles as Sponsored had no named screen", "A06, A24"],
-  [57, "Lawful basis per category of person had no place to be recorded", "A37 (table added)"],
-  [72, "DPIA status and data-protection contact had no place", "A37"],
   [123, "Duplicate warning at submission (not only in review)", "O06 (warning), A04, A21"],
   [129, "Slug change with redirect", "A06 (Public URL card); old URL redirects"],
   [132, "Organisation records compiled from public sources, imported and reviewed", "V10, A04, A20"],
   [135, "Re-sync of source-backed records on request", "A06 (Source sync card)"],
   [145, "Persistent ID and match basis", "A06, A21"],
-  [160, "Stale-record workflow", "A39 (the yearly prompt is an email with a link to the correction request, V39)"],
   [161, "Source changes flagged for review, not overwritten", "A06 (Source sync card)"],
   [171, "Dashboard by type, source, status and age", "A02 (table added)"],
   [172, "Right of reply", "V39 (choose Add a right-of-reply note)"],
@@ -57,8 +56,7 @@ const GAPS = [
 ];
 const PARTIAL = [
   [7, "Achievement / recognition and award-category filters (priority S, not M) are not in the wireframe."],
-  [79, "Search is a simple text match here; ranking and relevance are not designed."],
-  [93, "Prospect lists: CSV export is mocked; import is not."]
+  [79, "Search is a simple text match here; ranking and relevance are not designed."]
 ];
 
 let md = "# WHOISWHO wireframe inventory\n\n";

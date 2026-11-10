@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v12";
+  var KEY = "wiw-wireframe-v19";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -70,24 +70,45 @@
   W.counts = function (a) { var s = W.arrStatus(a); return !a.complimentary && (s === "confirmed" || s === "ended") && W.arrMissing(a).length === 0; };
   /* Profiles cannot be Sponsored (D-055): that label is for stories only. Kept so older call sites read as "none". */
   W.sponsorOf = function () { return null; };
+  /* Paid story placement (REQ-263, D-060): a sponsor pays for a labelled slot for a story, for set dates, on the Home page, the Stories page or both.
+     The slot never changes the order of other stories, search ranking, profiles, Featured, nominations or winners. Payment is agreed offline and recorded in the Register. */
+  W.placementStatus = function (pl) { if (pl.ended) return "ended"; if (pl.start && pl.start > W.TODAY) return "scheduled"; if (pl.end && pl.end < W.TODAY) return "expired"; return "active"; };
+  W.activePlacements = function (where) {
+    return (W.S.placements || []).filter(function (pl) { return W.placementStatus(pl) === "active" && (!where || pl.placement === "Both" || pl.placement === where); }).sort(function (x, y) { return x.start < y.start ? -1 : 1; });
+  };
   W.sponsorOfArticle = function (a) {
-    if (a.sponsor) return a.sponsor;
-    var hit = W.S.arrangements.filter(function (x) { return x.type === "sponsored_post" && x.linkedArticle === a.id && W.arrStatus(x) === "confirmed" && W.inWindow(x); })[0];
-    if (hit) { var c = W.find("customers", hit.customerId); return c ? c.name : "Sponsor"; }
+    var hit = (W.S.placements || []).filter(function (pl) { return pl.storyId === a.id && W.placementStatus(pl) === "active"; })[0];
+    return hit ? hit.sponsor : null;
+  };
+  /* The one story in the paid slot for a surface ("Home" or "Stories"), or null. Only a published story can fill it. */
+  W.slotFor = function (where) {
+    var pls = W.activePlacements(where);
+    for (var i = 0; i < pls.length; i++) { var a = W.find("articles", pls[i].storyId); if (a && a.status === "published") return a; }
     return null;
   };
+  /* Events are their own post type (REQ-262), not stories. An event has a date, a place and an organiser. Registration is on the organiser's site; WHOISWHO takes no payment (D-005). */
+  W.eventState = function (v) { var last = (v.end || v.start || "").slice(0, 10); return last && last < W.TODAY ? "past" : "upcoming"; };
+  W.storyDate = function (a) { return a.date; };
+  W.eventWhen = function (v) {
+    var s = v.start || "", d = W.fmtDate(s.slice(0, 10)), tm = s.length > 10 ? s.slice(11, 16) : "";
+    return d + (tm ? " at " + tm : "") + (v.end ? " to " + W.fmtDate(v.end.slice(0, 10)) : "");
+  };
+  W.eventWhere = function (v) { return v.venue === "Online" ? "Online" : [v.venue, v.city, v.country].filter(Boolean).join(", "); };
+  W.publicEvents = function () { return (W.S.events || []).filter(function (v) { return v.status === "published"; }); };
+  /* Upcoming events, soonest first; past events, most recent first. */
+  W.upcomingEvents = function () { return W.publicEvents().filter(function (v) { return W.eventState(v) === "upcoming"; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; }); };
+  W.pastEvents = function () { return W.publicEvents().filter(function (v) { return W.eventState(v) === "past"; }).sort(function (a, b) { return a.start < b.start ? 1 : -1; }); };
+  /* Stories that link to an event (REQ-265). */
+  W.storiesOfEvent = function (v) { return W.publicArticles().filter(function (a) { return a.relatedEvent === v.id; }); };
   W.publicArticles = function () { return W.S.articles.filter(function (a) { return a.status === "published"; }); };
   W.queue = function () { return W.S.profiles.filter(function (p) { return p.status === "pending" || p.edit || p.compiled; }); };
   W.ok = function (name) { return !!W.S.flags[name].on; };
   W.nomOpen = function () { return W.ok("nominations"); };
   /* Once nominees are announced, nominations for the edition are over: the Nominate page and its links say so, or step aside. */
   W.nomClosed = function () { return !W.nomOpen(); };
-  /* Shortlist, finalist and winner pages go public through the normal publish step (staff press Publish on the nomination). There is no flag (D-037). */
-  W.nomPublic = function (n) { return !!(n && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && n.pub); };
-  W.nomStage = function (n) {
-    var m = { submitted: 2, screening: 4, invited: 4, accepted: 5, assessment: 5, shortlisted: 6, finalist: 7, winner: 9, ineligible: 4, declined: 4 };
-    return m[n.status] || 2;
-  };
+  /* A nomination has a stage (Nominated or Winner) and a status (Live or Not live). Live nominations are public; a Live Winner is public as a winner (D-066). */
+  W.nomPublic = function (n) { return !!(n && n.live); };
+  W.nomWinner = function (n) { return !!(n && n.stage === "winner"); };
 
   /* ---------- html bits ---------- */
   /* Claimed is shown to staff as a checkmark badge, the kind social platforms use (D-057). Public pages never show it (D-054). */
@@ -98,7 +119,7 @@
   W.trustPill = W.vcheck;
   W.PENDING_LABEL = "Compiled automatically from public sources. Human review pending.";
   W.statePill = function (p) { if (p.status === "published" && p.compiled) return '<span class="pill warn" title="Review state (D-033)">' + e(W.PENDING_LABEL) + "</span>"; return p.status === "published" && p.lastReviewed ? '<span class="pill ok" title="Review state (D-033)">Reviewed on ' + e(p.lastReviewed) + "</span>" : ""; };
-  W.spPill = function (name) { return name ? ' <span class="pill sponsored" title="Paid placement disclosure. Not a trust status (REQ-155).">Sponsored · ' + e(name) + "</span>" : ""; };
+  W.spPill = function (name) { return name ? ' <span class="pill sponsored" title="Paid placement disclosure. Not a trust status (REQ-155).">Sponsored by ' + e(name) + "</span>" : ""; };
   W.stPill = function (s) {
     var m = { published: "ok", confirmed: "ok", approved: "ok", pending: "warn", open: "warn", draft: "gray", proposed: "gray", rejected: "bad", unpublished: "bad", suppressed: "bad", cancelled: "bad", ended: "gray", new: "warn", contacted: "gray", qualified: "ok" };
     return '<span class="pill ' + (m[s] || (/awaiting/.test(s) ? "warn" : "gray")) + '">' + e(s) + "</span>";
@@ -170,14 +191,28 @@
   };
   W.qs = function (q) { var s = Object.keys(q).filter(function (k) { return q[k] !== "" && q[k] != null; }).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(q[k]); }).join("&"); return s ? "?" + s : ""; };
 
+  /* One quiet filter bar for every list page (Events, Stories, Directory, Winners). Borderless inline selects submit on change, so there is no Apply button
+     (a visually hidden one stays for no-JS). Right side: the result count and a Clear link that shows only while a filter is on.
+     o = { path, label, keep: html of hidden inputs, search: {name,value,placeholder,label}, controls: [{ name, label, blank, options, value, body }], sort: { name, value, options: [[v, label]] }, count, extra: html, clear: bool } */
+  W.filterBar = function (o) {
+    var sel = function (c) {
+      var body = c.body != null ? c.body : (c.options || []).map(function (x) { var v = Array.isArray(x) ? x[0] : x, l = Array.isArray(x) ? x[1] : x; return '<option value="' + e(v) + '"' + (String(c.value || "") === String(v) ? " selected" : "") + ">" + e(l) + "</option>"; }).join("");
+      return '<label class="fbar-sel' + (c.value ? " is-on" : "") + '"><span class="sr">' + e(c.label) + '</span><select name="' + e(c.name) + '" aria-label="' + e(c.label) + '">' + (c.blank ? '<option value="">' + e(c.blank) + "</option>" : "") + body + "</select></label>";
+    };
+    var search = o.search ? '<label class="fbar-q"><span class="sr">' + e(o.search.label || "Search") + '</span>' + W.ico("search") + '<input type="search" name="' + e(o.search.name) + '" value="' + e(o.search.value || "") + '" placeholder="' + e(o.search.placeholder || "Search") + '"></label>' : "";
+    var sort = o.sort ? sel({ name: o.sort.name, label: "Sort by", value: o.sort.value, options: o.sort.options.map(function (x) { return [x[0], "Sort: " + x[1]]; }) }) : "";
+    return '<form class="fbar" data-filter="' + e(o.path) + '" aria-label="' + e(o.label) + '"><div class="fbar-l">' + (o.keep || "") + search + (o.controls || []).map(sel).join("") + sort + '</div><div class="fbar-r">' + (o.extra || "") +
+      (o.count != null ? '<span class="fbar-n" role="status">' + e(o.count) + "</span>" : "") + (o.clear ? '<a class="fbar-clear" href="' + e(o.path) + '">Clear</a>' : "") + '</div><button class="sr" type="submit">Apply filters</button></form>';
+  };
+
   /* ---------- chrome ---------- */
-  W.NAV = [["Home", "#/"], ["About", "#/about"], ["People", "#/people"], ["Businesses", "#/businesses"], ["Institutions", "#/institutions"], ["Industries", "#/industries"], ["Awards", "#/awards"], ["Stories", "#/stories"], ["Get listed", "#/subscribe"], ["Nominate", "#/nominate"], ["Contact", "#/contact"]];
+  W.NAV = [["Home", "#/"], ["About", "#/about"], ["People", "#/people"], ["Businesses", "#/businesses"], ["Institutions", "#/institutions"], ["Industries", "#/industries"], ["Awards", "#/awards"], ["Stories", "#/stories"], ["Events", "#/events"], ["Get listed", "#/subscribe"], ["Nominate", "#/nominate"], ["Contact", "#/contact"]];
 
   function wfbar(hf) {
     var S = W.S, roles = W.LISTS.roles, staff = S.role !== "visitor";
     return '<div id="wfbar"><div class="wrap"><strong>' + (hf ? "REVIEW TOOLS" : "WIREFRAME") + '</strong><a class="btnlink lead" href="#/design-review">Design review</a><span class="tag">sample data</span>' +
       '<label title="Prototype preview tool only. The real site has no role selector: a user signs in with an email and has one role.">Preview as <select data-change="role" aria-label="Preview as (prototype tool, not part of the real site)">' + Object.keys(roles).map(function (k) { return '<option value="' + k + '"' + (S.role === k ? " selected" : "") + ">" + e(roles[k]) + "</option>"; }).join("") + "</select></label>" +
-      (hf && S.flags.nominations.on ? '<span class="tag">Nominations flag ON</span>' : "") +
+      (hf && S.flags.nominations.on ? '<span class="tag">Nominations open</span>' : "") +
       (hf && staff ? '<a class="btnlink" href="#/admin">Staff console</a><button type="button" data-act="signout">Sign out</button>' : "") +
       '<button type="button" data-act="outbox">Email outbox (' + S.emails.length + ')</button>' +
       '<a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
@@ -186,7 +221,7 @@
   function banners() {
     var S = W.S, out = "";
     var on = Object.keys(S.flags).filter(function (k) { return S.flags[k].on; });
-    if (on.length) out += '<div class="banner flags" role="status"><div class="wrap">Feature flag ON: ' + on.map(function (k) { return "<strong>" + e(k) + "</strong>"; }).join(", ") + '. <a href="#/admin/flags">Manage</a></div></div>';
+    if (on.length) out += '<div class="banner flags" role="status"><div class="wrap">Nominations are open to the public. <a href="#/admin/nominations">Manage</a></div></div>';
     return out;
   }
   function header(cur) {
@@ -203,7 +238,7 @@
     return '<footer class="site-foot"><div class="wrap grid c4"><div><strong>' + e(W.brand.name) + '</strong><p class="small">' + e(W.brand.tagline) + '</p><p class="small">Wireframe. Not a live site.</p></div>' +
       '<div><h2 style="font-size:1rem">Trust and rules</h2><ul><li><a href="#/awards/rules">Awards rules</a></li><li><a href="#/complaints">Complaints and takedown</a></li><li><a href="#/faq">FAQ</a></li></ul></div>' +
       '<div><h2 style="font-size:1rem">Legal</h2><ul><li><a href="#/privacy">Privacy policy</a></li><li><a href="#/terms">Terms</a></li><li><a href="#/cookies">Cookie policy</a></li><li><a href="#/data-rights">Your data rights</a></li></ul></div>' +
-      '<div><h2 style="font-size:1rem">More</h2><ul><li><a href="#/contact">Contact</a></li><li><a href="#/sitemap.xml">Sitemap (preview)</a></li><li><a href="#/unsubscribe">Unsubscribe</a></li><li><button type="button" class="btn alt sm" data-act="cookiePrefs" style="color:var(--c-bar-ink);border-color:var(--c-bar-ink)">Cookie preferences</button></li></ul></div></div></footer>';
+      '<div><h2 style="font-size:1rem">More</h2><ul><li><a href="#/stories">Stories</a></li><li><a href="#/events">Events</a></li><li><a href="#/contact">Contact</a></li><li><a href="#/sitemap.xml">Sitemap (preview)</a></li><li><a href="#/unsubscribe">Unsubscribe</a></li><li><button type="button" class="btn alt sm" data-act="cookiePrefs" style="color:var(--c-bar-ink);border-color:var(--c-bar-ink)">Cookie preferences</button></li></ul></div></div></footer>';
   }
   /* A small card that appears once the visitor has scrolled a little (see motion.js). */
   function cookieBar() {

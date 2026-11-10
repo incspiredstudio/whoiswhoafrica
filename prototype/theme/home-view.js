@@ -17,7 +17,7 @@
   ];
   function story(a, i) {
     var sp = W.sponsorOfArticle(a);
-    return '<a class="h-story" href="#/stories/' + e(a.slug) + '" data-cursor="Read">' + W.img("story", a.seed || W.seedFor(a.slug), 1280, 720, "Placeholder image for the story: " + a.title, "h-story-img") + '<div class="h-story-text"><div class="story-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(a.date)) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h3>" + e(a.title) + "</h3></div></a>";
+    return '<a class="h-story" href="#/stories/' + e(a.slug) + '" data-cursor="Read">' + W.img("story", a.seed || W.seedFor(a.slug), 1280, 720, "Placeholder image for the story: " + a.title, "h-story-img") + '<div class="h-story-text"><div class="story-meta"><b>' + e(a.type) + "</b><span>" + e(W.fmtDate(W.storyDate(a))) + "</span>" + (sp ? W.badge.sponsored(sp) : "") + "</div><h3>" + e(a.title) + "</h3></div></a>";
   }
   function peekData(p) { return ' data-peek-name="' + e(p.name) + '" data-peek-tone="' + (p.type === "individual" ? "orange" : "green") + '"' + (p.photo ? ' data-peek-photo="' + e(p.photo) + '"' : "") + ' data-peek-mark="' + (p.type === "individual" ? "star" : p.type === "business" ? "link" : "spiral") + '"'; }
 
@@ -35,13 +35,20 @@
       '<ul class="hn-grid">' + show.map(function (n, i) { var p = W.profile(n.profileId), g = W.groupOf(n.category); return '<li class="nom-card hn-item" data-group="' + e(W.slugify(g.name)) + '" style="--d:' + i + '"><a class="hn-card" href="#/awards/nominee/' + e(n.ref) + '">' + W.nomPoster(n) + '<span class="hn-body"><span class="hn-cat">' + (n.status === "winner" ? "Winner \u00b7 " : "") + e(n.category) + '</span><span class="hn-name">' + e(n.nominee) + '</span><span class="hn-role">' + e(p ? (p.title || "") + (p.org && p.type === "individual" ? ", " + p.org : "") : "") + "</span></span></a></li>"; }).join("") + "</ul>" +
       '<p class="h-note">Prototype. The nominees and citations are fictional; the portraits are stock placeholders (Freepik).</p></div></section>';
   }
+  /* The next three upcoming events (REQ-264). Events are their own post type, listed here and on the Events page. */
+  function eventsSection() {
+    var up = W.upcomingEvents().slice(0, 3);
+    if (!up.length) return "";
+    return '<section class="h-events" aria-labelledby="hEvTitle"><div class="wrap"><div class="h-sec-head"><p class="h-kicker" id="hEvTitle">Events</p><a class="h-link h-link--dark" href="#/events">All events' + W.ico("arrow") + '</a></div><ul class="ag-list ag-list--home">' + up.map(function (v) { return W.evRow(v, true); }).join("") + "</ul></div></section>";
+  }
   W.route("/", "V01", function () {
     /* On the record: people with a portrait first, then organisations. No trust label picks them (D-055). */
     var pool = W.publicProfiles().filter(function (p) { return !W.isPending(p); });
     var feat = pool.filter(function (p) { return p.photo; }).concat(pool.filter(function (p) { return !p.photo; })).slice(0, 8);
     var arts = W.publicArticles().slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    /* One labelled paid slot leads the rail while a placement is active. The other stories keep their order (REQ-263). */
+    var slot = W.slotFor("Home"), rail = slot ? [slot].concat(arts.filter(function (a) { return a.id !== slot.id; }).slice(0, 5)) : arts.slice(0, 6);
     var A = W.S.awards, nom = W.nomOpen(), stage = W.awardStage();
-    var cta = stage.key === "open" ? ["Nominate someone", "#/nominate"] : stage.key === "soon" ? ["Get notified", "#/nominate"] : stage.key === "nominees" ? ["See the nominees", "#/awards/nominees"] : ["See the winners", "#/awards/winners"];
     return '<div class="home">' +
       '<div class="h-stage" aria-hidden="true"><div class="h-bg"></div><div class="h-canvas"></div></div>' +
       '<section class="h-hero"><div class="h-w-bg" aria-hidden="true"><div class="h-vids">' + [1, 2, 3, 4].map(function (i) { return '<div class="h-vid"><video src="theme/video/hero-' + i + '.mp4" poster="theme/video/hero-' + i + '.jpg" autoplay muted loop playsinline preload="auto" tabindex="-1"></video></div>'; }).join("") + '</div></div>' +
@@ -63,11 +70,14 @@
 
       '<section class="h-doors" aria-label="The directory">' + DOORS.map(function (d, i) { return '<a class="h-door h-rv-clip h-door--' + d.key + '" style="--d:' + i + '" href="' + d.href + '" data-cursor="Browse">' + mark(d.mark, "h-door-mark") + '<span class="h-door-text"><strong>' + e(d.title) + "</strong><span>" + e(d.text) + "</span></span></a>"; }).join("") + "</section>" +
 
-      '<section class="h-awards"><div class="h-marquee" aria-hidden="true"><div class="h-marquee-in">' + [0, 1].map(function () { return "<span>The Maiden Edition</span><span>" + e(stage.label) + "</span>" + A.groups.map(function (g) { return "<span>" + e(g.name) + "</span>"; }).join(""); }).join("") + '</div></div><div class="wrap h-awards-in"><div><p class="h-kicker">Recognition</p><h2 class="h-big h-rv">' + line("WHOISWHO") + line("in Africa:") + line("The Maiden Edition") + '</h2><p class="h-awards-text">Recognising the people and organisations shaping the continent, chosen by independent judges.</p><div class="h-awards-cta"><a class="btn h-magnetic" href="' + cta[1] + '">' + e(cta[0]) + '</a><a class="h-link" href="#/awards">Awards overview' + W.ico("arrow") + '</a></div></div><ul class="h-groups">' + A.groups.map(function (g, i) { return '<li><a href="#/awards#' + W.slugify(g.name) + '"><span class="h-groups-n">0' + (i + 1) + "</span><span>" + e(g.name) + "</span>" + W.ico("arrow") + "</a></li>"; }).join("") + "</ul></div></section>" +
+      /* The awards categories as an endless strip. The red awards block that used to sit under it was removed; the Awards page carries the detail. */
+      '<section class="h-awards" aria-label="Award categories"><div class="h-marquee" aria-hidden="true"><div class="h-marquee-in">' + [0, 1].map(function () { return "<span>The Maiden Edition</span>" + A.groups.map(function (g) { return "<span>" + e(g.name) + "</span>"; }).join(""); }).join("") + '</div></div></section>' +
 
       noms(stage) +
 
-      '<section class="h-stories" id="hStories"><div class="h-stories-pin"><div class="wrap h-sec-head"><p class="h-kicker">Stories from the record</p><a class="h-link h-link--dark" href="#/stories">All stories' + W.ico("arrow") + '</a></div><div class="h-track-wrap" tabindex="0" role="group" aria-label="Latest stories"><div class="h-track" id="hTrack">' + arts.slice(0, 6).map(story).join("") + "</div></div></div></section>" +
+      '<section class="h-stories" id="hStories"><div class="h-stories-pin"><div class="wrap h-sec-head"><p class="h-kicker">Stories from the record</p><a class="h-link h-link--dark" href="#/stories">All stories' + W.ico("arrow") + '</a></div><div class="h-track-wrap" tabindex="0" role="group" aria-label="Latest stories"><div class="h-track" id="hTrack">' + rail.map(story).join("") + "</div></div></div></section>" +
+
+      eventsSection() +
 
       '<section class="h-final"><div class="wrap"><p class="h-kicker">Starting in Nigeria. Built for the continent.</p><h2 class="h-final-title h-rv">' + line("Who should") + line("the continent") + line("<em>know?</em>") + '</h2><div class="h-final-cta"><a class="btn h-magnetic" href="' + (nom ? "#/nominate" : "#/subscribe") + '">' + (nom ? "Nominate someone" : "Get listed") + '</a><a class="h-link" href="#/nominate">' + (nom ? "How nominations work" : "Nominations open soon") + W.ico("arrow") + '</a></div></div></section>' +
 

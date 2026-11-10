@@ -70,11 +70,14 @@ reload(); const a = S().arrangements; check("seed counts", a.filter(W.counts).le
 check("complimentary never counts", !W.counts(a.find((x) => x.id === "arr5")));
 check("a profile is never Sponsored, even with a confirmed arrangement (D-055)", W.sponsorOf(W.profile("b2")) === null);
 W.act.arrEnd("arr1");  check("trust unchanged", W.profile("b2").trust === "verified");
-// leads
-S().role = "editor"; W.forms.lead({ name: "N", org: "O", interest: "x", contact: "c", msg: "m" }); check("lead added", S().leads.length === 4); W.act.leadConv(S().leads[0].id); check("lead converted", S().arrangements.length === 6);
+// enquiries and customers
+S().role = "editor"; W.forms.bizenquiry({ name: "N", org: "O", interest: "Awards sponsorship", contact: "c@example.org", msg: "m" }); check("enquiry lands in the Support inbox", S().enquiries.length === 5 && S().enquiries[0].business && S().enquiries[0].kind === "Awards sponsorship"); ctx.location.hash = "#/admin/inbox"; W.render(); check("inbox shows the enquiry with its kind", /Awards sponsorship/.test(app.innerHTML));
+S().role = "admin"; W.forms.customer({ name: "New Co", segment: "Business", contact: "x" }); check("customer created directly", S().customers.length === 5 && S().customers[S().customers.length - 1].name === "New Co"); check("no leads or prospects state", S().leads === undefined && S().prospects === undefined);
 // nominations
-reload(); S().role = "editor"; W.act.nomStep("n2|screen"); W.act.nomStep("n2|eligible"); check("invited", W.find("nominations", "n2").status === "invited");
-const nn = W.find("nominations", "n2"); W.act.nomDeclineYes(nn.token); check("decline suppresses", W.profile("b1").status === "suppressed" && S().suppression.some((s) => s.name === "Tiderail Payments" || s.name === "Savanna Loop Agritech"));
+reload(); S().role = "editor"; check("no invite UI, no nominee token route and no token on any nomination", !W.act.nomStep && !W.act.nomAccept && !W.act.nomDeclineYes && !W.routes.some((r) => /^\/nominee\//.test(r.pattern)) && S().nominations.every((n) => !("token" in n)));
+ctx.location.hash = "#/admin/nominations/n2"; W.render(); check("nomination detail has no Invite nominee, no Recorded-by line and no Shortlisted hint", !/Invite nominee|Open the nominee link|Recorded by|Shortlisted, Finalist/.test(app.innerHTML));
+check("no old stage names in the admin Nominations screens", (() => { ctx.location.hash = "#/admin/nominations"; W.render(); const a = app.innerHTML; ctx.location.hash = "#/admin/nominations/n2"; W.render(); return !/Submitted|Screened|Shortlisted|Finalist|Ineligible|In assessment|Nominee invited/.test(a + app.innerHTML); })());
+check("no old nomination stage vocabulary anywhere in the prototype source", fs.readdirSync(dir).concat(fs.readdirSync(path.join(dir, "theme")).map((f) => "theme/" + f)).filter((f) => /\.js$/.test(f)).every((f) => { const s = fs.readFileSync(path.join(dir, f), "utf8"); return !/status: "(submitted|screening|shortlisted|finalist|invited|accepted|assessment|ineligible)"|nomStep|nomAccept|nomDeclineYes|pubNom|publishWin|PUBLICABLE|SETTABLE|n\.pub|shortlistBy|finalBy|screenedBy/.test(s); }));
 // D-034: no public accounts
 check("no login/signup/account/judge routes", !W.routes.some((r) => /^\/(login|signup|account|judge|forgot|reset|verify)(\/|$)/.test(r.pattern)), W.routes.filter((r) => /^\/(login|signup|account|judge|forgot|reset|verify)/.test(r.pattern)).map((r) => r.pattern).join());
 check("no owner or judge role", !roles.includes("owner") && !roles.includes("judge"));
@@ -125,11 +128,6 @@ const before = S().audit.length; W.forms.profedit({ id: "b1", name: "Savanna Loo
 check("staff edit goes live at once and is audited", W.profile("b1").title === "New Title" && S().audit.length > before && S().audit.some((a) => a.action === "profile.edit") && cr.status === "closed");
 W.act.rmOk(S().removals[0].id); check("valid removal hides and suppresses", W.profile("ip3").status === "suppressed" && S().suppression.some((x) => x.name === "Halima Osei-Danjuma"));
 // REQ-069: export is Administrator-only and logged
-S().role = "reviewer"; const exp0 = S().audit.length; W.act.dl("profiles"); check("reviewer cannot export", S().audit.some((a) => a.action === "export.denied") && !S().audit.some((a) => a.action === "export.profiles"));
-S().role = "admin"; W.act.dl("profiles"); check("administrator export is logged", S().audit.some((a) => a.action === "export.profiles"));
-ctx.location.hash = "#/admin/exports"; S().role = "reviewer"; W.render(); check("exports screen 403 for reviewer", /403/.test(app.innerHTML));
-S().role = "reviewer"; ctx.location.hash = "#/admin/leads"; W.render(); check("reviewer has no leads screen", /403/.test(app.innerHTML));
-S().role = "editor"; ctx.location.hash = "#/admin/leads"; W.render(); check("editor sees no export button, only the note", /Administrator by default/.test(app.innerHTML) && !/data-arg="leads"/.test(app.innerHTML));
 // D-035: dashboard counts by state, no target numbers, no capacity, role-based
 reload();
 for (const role of Object.keys(W.LISTS.roles)) {
@@ -144,18 +142,18 @@ check("reviewer dashboard hides commercial tiles", !/Sprint target/.test(app.inn
 for (const role of ["admin"]) { S().role = role; ctx.location.hash = "#/admin"; W.render(); check(role + " dashboard shows sprint target and revenue per stream", /Sprint target/.test(app.innerHTML) && /Revenue per stream/.test(app.innerHTML)); }
 for (const role of ["reviewer", "editor"]) { S().role = role; ctx.location.hash = "#/admin"; W.render(); check(role + " dashboard hides the sprint target", !/Sprint target/.test(app.innerHTML)); }
 // D-041: left menu by role
-const REVIEWER_MENU = ["Dashboard", "Review queue", "Duplicates", "Stale records", "Profiles", "Sources", "Suppression list"];
-check("reviewer menu is exactly the seven screens (no Support inbox, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
+const REVIEWER_MENU = ["Dashboard", "Review queue", "Duplicates", "Profiles", "Sources", "Suppression list"];
+check("reviewer menu is exactly the six screens (no Support inbox, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); { const side = (app.innerHTML.match(/<nav class="app-side"[\s\S]*?<\/nav>/) || [""])[0]; const links = [...side.matchAll(/<a href="#[^"]*"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]); check("reviewer left menu renders exactly those links", JSON.stringify(links) === JSON.stringify(REVIEWER_MENU), links.join()); }
-check("administrator menu includes everything", ["Import", "Exports", "Roles and permissions", "Feature flag", "Shortlist and winners"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
+check("administrator menu includes everything", ["Import", "Sprint thresholds", "Award categories"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
 check("no AI drafting, kill switch or corrections screen in any menu; Claims only for those with the capability", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /ai drafting|kill|controlled lists|corrections and removals|reports/i.test(x))) && W.menuFor("editor").includes("Claims") && !W.menuFor("reviewer").includes("Claims"));
 check("Sources is in the Reviewer, Editor and Administrator menus", ["reviewer", "editor", "admin"].every((r) => W.menuFor(r).indexOf("Sources") >= 0));
-check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Leads", "Nominations", "Scores and results"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
-check("Administrator menu includes Register, Customers, Import and Roles and permissions", ["Register", "Customers", "Import", "Roles and permissions", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
+check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Nominations"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
+check("Administrator menu includes Register, Customers, Import and Sprint thresholds", ["Register", "Customers", "Import", "Sprint thresholds", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
 for (const r of ["claim", "ai", "killswitch"]) check("no route /admin/" + r, W.match("#/admin/" + r).r === W.notFound);
-for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/flags"], ["reviewer", "#/admin/roles"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/leads"], ["reviewer", "#/admin/register"], ["editor", "#/admin/import"], ["editor", "#/admin/register"], ["editor", "#/admin/customers"], ["editor", "#/admin/exports"], ["editor", "#/admin/flags"], ["editor", "#/admin/audit"], ["editor", "#/admin/roles"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
-S().role = "admin"; ctx.location.hash = "#/admin/roles"; W.render(); check("roles screen lists the menu per role and the export row", /Left menu by role/.test(app.innerHTML) && /Export personal data/.test(app.innerHTML) && /Taxonomy terms: add and edit/.test(app.innerHTML));
-S().role = "admin"; ctx.location.hash = "#/admin/flags"; W.render(); check("flag screen shows only nominations and no kill switch", /nominations/.test(app.innerHTML) && !/kill/i.test(app.innerHTML) && !/ai_drafting|announcements flag|judging flag/i.test(app.innerHTML));
+for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/register"], ["editor", "#/admin/import"], ["editor", "#/admin/register"], ["editor", "#/admin/customers"], ["editor", "#/admin/audit"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
+for (const h of ["#/admin/flags", "#/admin/announcements"]) { ctx.location.hash = h; W.render(); check("route gone " + h, W.match(h).r === W.notFound); }
+check("no nominations_flag capability and no Feature flag or Shortlist and winners menu items", !W.CAPS.some((c) => c[0] === "nominations_flag") && ["Feature flag", "Shortlist and winners", "Awards setup"].every((x) => W.menuFor("admin").indexOf(x) < 0));
 
 // customer intake by single-use link
 reload(); S().role = "visitor"; W.act.startInvite("demo"); check("intake draft held against link", !!S().intake.demo);
@@ -167,23 +165,54 @@ reload(); S().role = "visitor"; W.act.startInvite("demo"); W.forms.profile({ tok
 // nominator email link
 reload(); S().flags.nominations = { on: true, ref: "x" }; ctx.location.hash = "#/nominate"; W.forms.nom0({ name: "A", email: "a@example.org", rel: "Colleague", ok: "1" }); check("nominator waits for link", W.ui.nom.step === 1 && S().emails[0].link === "#/nominate/verify");
 ctx.location.hash = "#/nominate/verify"; W.render(); check("nominator link verifies", W.ui.nom.d.verified && W.ui.nom.step === 2);
-// offline judging: staff enter scores; conflicts block
+// judging and scoring happen offline: no judge or score screens; staff shortlist and publish without scores
 reload(); S().role = "editor";
-check("score blocked for conflicted judge", W.recordScore("n5", "Sample Judge 2", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("conflict") >= 0 && !(((S().scores.n5 || {}).by || {})["Sample Judge 2"]));
-W.forms.scoregrid({ id: "n5", s_0_k1: 6, s_0_k2: 6, s_0_k3: 6, s_0_k4: 6, s_1_k1: 9, s_1_k2: 9, s_1_k3: 9, s_1_k4: 9 }); const by5 = (S().scores.n5 || {}).by || {};
-check("grid saves allowed judge, drops conflicted judge", by5["Sample Judge 1"] && !by5["Sample Judge 2"] && by5["Sample Judge 1"].by === "Sample Editor");
-check("weighted total", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }) === "7.9", W.calcScore({ k1: 8, k2: 7, k3: 9, k4: 8 }));
-check("score range enforced", W.recordScore("n4", "Sample Judge 1", { k1: 11, k2: 5, k3: 5, k4: 5 }).indexOf("0 to 10") >= 0);
-S().role = "reviewer"; check("reviewer cannot enter scores", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }).indexOf("only a user with the score_entry") === 0);
-S().role = "editor"; check("scores can be entered with no flag", W.recordScore("n4", "Sample Judge 1", { k1: 5, k2: 5, k3: 5, k4: 5 }) === "");
-ctx.location.hash = "#/admin/scores/n5"; W.render(); check("conflict row has no score inputs", app.innerHTML.includes("Conflict recorded") && app.innerHTML.includes('name="s_0_k1"') && !app.innerHTML.includes('name="s_1_k1"'));
-W.forms.judgecoi({ judge: "Sample Judge 1", n: "n4", why: "x" }); check("recording a conflict removes the judge's score", !(((S().scores.n4 || {}).by || {})["Sample Judge 1"]));
-S().role = "admin"; W.find("nominations", "n4").status = "assessment"; W.act.nomStep("n4|shortlist"); check("shortlist via score page flow", W.find("nominations", "n4").status === "shortlisted");
-// shortlist and winners publish through the normal publish step (no flag)
-reload(); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("shortlisted nominee page is not public until staff publish it", /Page not found/.test(app.innerHTML));
-S().role = "editor"; W.act.pubNom("n1"); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("nominee page public after publish", /Nominee/.test(app.innerHTML) && !/Shortlisted/.test(app.innerHTML) && W.nomPublic(W.find("nominations", "n1")));
+check("no judge or score routes", !W.routes.some((r) => /^\/admin\/(judges|scores)/.test(r.pattern)));
+check("no scoring or panel data in state", !("scores" in S()) && !("judgeAssign" in S()) && !("judgeCoi" in S()) && !("judgesPerCategory" in S().awards) && !("shortlistSize" in S().awards));
+check("no score_entry or final_approval capability", !W.CAPS.some((c) => c[0] === "score_entry" || c[0] === "final_approval"));
+check("editor menu has no scores or judging screens", ["Scores and results", "Judging panel and conflicts"].every((x) => W.menuFor("editor").indexOf(x) < 0 && W.menuFor("admin").indexOf(x) < 0));
+for (const h of ["#/admin/scores", "#/admin/judges", "#/admin/scores/n4"]) { ctx.location.hash = h; W.render(); check("route gone " + h, W.match(h).r === W.notFound); }
+S().role = "editor"; W.forms.nomstage({ id: "n4", stage: "winner", live: "1" }); check("a winner can be set live with no scores and no separate approval capability", W.find("nominations", "n4").stage === "winner" && W.find("nominations", "n4").live === true && W.find("nominations", "n4").stageBy === "Sample Editor");
+reload(); S().role = "editor"; ctx.location.hash = "#/admin/awards"; W.render(); check("Award categories screen holds categories only", /Award categories/.test(app.innerHTML) && /data-form="catadd"/.test(app.innerHTML) && !/Eligibility criteria|Published judging criteria|weight|panel|Shortlist size/i.test(app.innerHTML));
+{ const n0 = W.cats().length; W.forms.catadd({ g: "0", name: "Outstanding Mentor" }); check("admin adds a category and the public pages and nomination form read it", W.cats().length === n0 + 1 && W.cats().some((c) => c.name === "Outstanding Mentor"));
+  S().role = "visitor"; ctx.location.hash = "#/awards"; W.render(); check("new category shows on the Awards page", /Outstanding Mentor/.test(app.innerHTML)); S().role = "editor";
+  W.forms.catadd({ g: "0", name: "outstanding mentor" }); check("duplicate category is refused", W.cats().length === n0 + 1);
+  W.forms.catrename({ g: "0", c: String(W.S.awards.groups[0].cats.length - 1), name: "Outstanding Mentor of the Year" }); check("category can be renamed", W.cats().some((c) => c.name === "Outstanding Mentor of the Year") && !W.cats().some((c) => c.name === "Outstanding Mentor"));
+  const g0 = W.S.awards.groups[0]; const last = g0.cats.length - 1; const first = g0.cats[0]; W.act.catMove("0|" + last + "|-1"); check("category can be moved up", g0.cats[last - 1] === "Outstanding Mentor of the Year");
+  W.act.catRemove("0|" + (last - 1)); check("an unused category can be removed", !W.cats().some((c) => c.name === "Outstanding Mentor of the Year") && W.cats().length === n0);
+  const used = W.find("nominations", "n14").category; const gi = W.S.awards.groups.findIndex((g) => g.cats.indexOf(used) >= 0); W.act.catRemove(gi + "|" + W.S.awards.groups[gi].cats.indexOf(used)); check("a category with nominations cannot be removed", W.cats().some((c) => c.name === used)); }
+// Nominations: the open/closed switch replaces the feature flag page (REQ-267)
+reload(); S().role = "admin"; ctx.location.hash = "#/admin/nominations"; W.render(); check("Nominations screen has the Open/Closed switch, add profile and no old curated form", /id="nomSwitch"/.test(app.innerHTML) && /Add profile to nominations/.test(app.innerHTML) && !/Add curated nomination/.test(app.innerHTML));
+W.forms.nomswitch({ to: "open", reason: "Launch" }); check("switch opens nominations and is audited", W.nomOpen() && W.S.audit.some((a) => a.action === "nominations.open"));
+S().role = "visitor"; W.ui.nom = { step: 0, d: {} }; ctx.location.hash = "#/nominate"; W.render(); check("open: the Nominate page shows the form", /data-form="nom0"/.test(app.innerHTML));
+S().role = "admin"; W.forms.nomswitch({ to: "close", reason: "" }); S().role = "visitor"; ctx.location.hash = "#/nominate"; W.render(); check("closed: the Nominate page says closed", !W.nomOpen() && /Nominations are closed/.test(app.innerHTML) && !/data-form="nom0"/.test(app.innerHTML));
+S().role = "editor"; { const pid = W.S.profiles.find((p) => p.status === "published").id; const before = W.S.nominations.length; W.forms.nomprofile({ profile: W.profile(pid).name + " (" + pid + ")", category: W.cats()[0].name, email: "contact.test@example.org", note: "Staff added" });
+  const nn = W.S.nominations[W.S.nominations.length - 1]; check("add profile creates a nomination linked to the profile, Nominated and Not live, with the contact email", W.S.nominations.length === before + 1 && nn.profileId === pid && nn.stage === "nominated" && nn.live === false && nn.nomineeEmail === "contact.test@example.org" && nn.category === W.cats()[0].name);
+  W.forms.nomprofile({ profile: "Nobody (zz9)", category: W.cats()[0].name }); check("a nomination needs an existing profile", W.S.nominations.length === before + 1);
+  W.forms.nomstage({ id: nn.id, stage: "winner", live: "1" }); check("stage and status set with the approver recorded and audited", nn.stage === "winner" && nn.live === true && nn.stageBy === "Sample Editor" && W.S.audit.some((a) => a.action === "nomination.stage"));
+  W.forms.nomstage({ id: nn.id, stage: "banana", live: "1" }); check("only Nominated and Winner are accepted as stages", nn.stage === "winner");
+  W.act.nomLive(nn.id); check("Make not live toggles the status and is audited", nn.live === false && W.S.audit.some((a) => a.action === "nomination.notlive"));
+  const mails0 = W.S.emails.length, audit0 = W.S.audit.length; W.act.nomMail(nn.id);
+  check("Send nomination email goes through the outbox, records who and when, and is audited without the address", W.S.emails.length === mails0 + 1 && W.S.emails[0].to === "contact.test@example.org" && nn.mailedAt === W.TODAY && nn.mailedBy === "Sample Editor" && W.S.audit.length === audit0 + 1 && !JSON.stringify(W.S.audit).includes("contact.test@example.org"));
+  W.forms.nomprofile({ profile: W.profile(pid).name + " (" + pid + ")", category: W.cats()[1].name, note: "No email" }); const n2 = W.S.nominations[W.S.nominations.length - 1]; const m1 = W.S.emails.length; W.act.nomMail(n2.id);
+  ctx.location.hash = "#/admin/nominations/" + n2.id; W.render(); check("without a contact email the send button is disabled and nothing is sent", W.S.emails.length === m1 && /disabled title="Add a contact email first"/.test(app.innerHTML) && /No contact email on file/.test(app.innerHTML));
+  W.forms.nomstage({ id: n2.id, stage: "winner", live: "1" }); const m2 = W.S.emails.length; W.act.winMail(n2.id); check("winner email needs the contact email too", W.S.emails.length === m2 && !n2.notified);
+  W.act.nomMail(nn.id); W.forms.nomstage({ id: nn.id, stage: "winner", live: "1" }); W.act.winMail(nn.id); check("Prepare winner email uses the contact email", nn.notified === true && W.S.emails[0].to === "contact.test@example.org" && /Congratulations/.test(W.S.emails[0].subject));
+  const cnt = W.S.nominations.length; W.act.nomRemoveYes(nn.id); check("Remove deletes the nomination and keeps an audit entry", W.S.nominations.length === cnt - 1 && !W.find("nominations", nn.id) && W.S.audit.some((a) => a.action === "nomination.remove")); }
+ctx.location.hash = "#/admin/nominations/n4"; W.render(); check("nomination detail has stage (Nominated, Winner only) and status selects", /data-form="nomstage"/.test(app.innerHTML) && /<option value="winner"/.test(app.innerHTML) && /<option value="nominated"/.test(app.innerHTML) && (app.innerHTML.match(/name="stage"[\s\S]*?<\/select>/)[0].match(/<option /g) || []).length === 2 && />Live</.test(app.innerHTML) && />Not live</.test(app.innerHTML));
+ctx.location.hash = "#/admin/nominations"; W.render(); check("nominations list shows Ref, Nominee, Category, Stage, Status and filters by category, stage and status", /<th[^>]*>Stage/.test(app.innerHTML) && /<th[^>]*>Status/.test(app.innerHTML) && /name="c"/.test(app.innerHTML) && /name="s"/.test(app.innerHTML) && /name="l"/.test(app.innerHTML) && !/Publish winners announcement/.test(app.innerHTML));
+ctx.location.hash = "#/admin/nominations?l=1&s=winner"; W.render(); check("the list filters by status and stage", /NOM-0003/.test(app.innerHTML) && !/NOM-0007/.test(app.innerHTML) && !/NOM-0004/.test(app.innerHTML));
+ctx.location.hash = "#/admin/nominations/n4"; W.render(); check("nomination screen shows no commercial data", !/payment|subscription|sponsor(ship)? amount|customer/i.test(app.innerHTML.replace(/<div class="infobox">[\s\S]*?<\/div>/, "")));
+// Live status gates every public nomination page; a Live Winner is public as a winner
+reload(); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("a Not live nominee page is not public", /Page not found/.test(app.innerHTML));
+S().role = "editor"; W.act.nomLive("n1"); S().role = "visitor"; ctx.location.hash = "#/awards/nominee/NOM-0001"; W.render(); check("a Live nominee page is public", /Nominee/.test(app.innerHTML) && W.nomPublic(W.find("nominations", "n1")));
+ctx.location.hash = "#/awards/nominees"; W.render(); check("the Nominees page lists the Live nominee", /awards\/nominee\/NOM-0001/.test(app.innerHTML));
+S().role = "editor"; W.act.nomLive("n1"); S().role = "visitor"; ctx.location.hash = "#/awards/nominees"; W.render(); check("making it Not live takes it off the Nominees page", !/awards\/nominee\/NOM-0001/.test(app.innerHTML));
+ctx.location.hash = "#/awards/winners"; W.render(); const wc0 = Number((/(\d+) winners?/.exec(app.innerHTML) || [0, 0])[1]); check("the Winners page lists the seeded Live winners of this edition among the archive", S().nominations.filter((n) => n.live && n.stage === "winner").length === 2 && wc0 > 2 && /Kigali Data Foundry/.test((ctx.location.hash = "#/awards/winners?year=" + W.TODAY.slice(0, 4), W.render(), app.innerHTML)));
+S().role = "editor"; W.act.nomLive("n3"); S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); const wc1 = Number((/(\d+) winners?/.exec(app.innerHTML) || [0, 0])[1]); check("a Not live winner is not on the Winners page", wc1 === wc0 - 1);
+reload(); S().role = "editor"; W.forms.nomprofile({ profile: W.profile("b2").name + " (b2)", category: W.cats()[0].name, email: "secret.contact@example.org" }); S().role = "visitor";
+check("the contact email appears in no public view", ["#/", "#/awards", "#/awards/nominees", "#/awards/winners", "#/awards/nominee/NOM-0003", "#/awards/category/0", "#/nominate", "#/people", "#/profile/tiderail-payments"].every((h) => { ctx.location.hash = h; W.render(); return !/secret\.contact@example\.org|nominee3@example\.org/.test(app.innerHTML); }));
 S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners page lists winners from the start, newest edition first, with filters", /Rift Valley Power/.test(app.innerHTML) && /Mwanga Pay/.test(app.innerHTML) && /<a class="btn sm alt"[^>]*>3</.test(app.innerHTML) && /name="year"/.test(app.innerHTML) && /name="category"/.test(app.innerHTML));
-S().role = "admin"; W.find("nominations", "n1").status = "winner"; W.act.publishWin(); S().role = "visitor"; ctx.location.hash = "#/awards/winners"; W.render(); check("winners page after publish", /Rift Valley Power/.test(app.innerHTML));
 ctx.location.hash = "#/awards/winners?year=2026"; W.render(); check("winners filter by year, oldest edition", /Tiderail Payments/.test(app.innerHTML) && !/Rift Valley Power/.test(app.innerHTML));
 ctx.location.hash = "#/awards/winners?year=2027"; W.render(); check("winners filter by year", /Wanjiru Owusu-Eze/.test(app.innerHTML) && !/Kigali Data Foundry/.test(app.innerHTML) && !/Rift Valley Power/.test(app.innerHTML));
 ctx.location.hash = "#/awards/winners?category=Entrepreneur%20of%20the%20Year"; W.render(); check("winners filter by category", /Adaeze Onyekachi-Mbeki/.test(app.innerHTML) && /Ifeoma Kariuki-Bello/.test(app.innerHTML) && !/Mwanga Pay/.test(app.innerHTML));
@@ -194,10 +223,9 @@ reload(); { let bad = 0; for (const role of Object.keys(W.LISTS.roles)) for (con
 // claims (D-057, replacing the D-036 check): the checkmark is staff-only; the public never sees Claimed, Unclaimed or Verified
 reload(); { let bad = 0; for (const role of Object.keys(W.LISTS.roles)) for (const x of W.INV) { if (!/^#\/(profile|people|businesses|institutions|directory|search|industries|awards|stories|$)/.test(x.route) && !/^#\/?$/.test(x.route)) continue; S().role = role; ctx.location.hash = x.route; W.render(); const t = app.innerHTML; if (role === "visitor" && (/un?claimed/i.test(t.replace(/<[^>]+>/g, " ")) || /class="vcheck/.test(t))) { bad++; console.log("CLAIM LEAK", role, x.id); } } check("visitors never see Claimed, Unclaimed or the Verified checkmark", bad === 0); }
 // role access
-reload(); S().role = "editor"; ctx.location.hash = "#/admin/scores"; W.render(); check("editor opens scores", /Scores and results/.test(app.innerHTML));
-S().role = "reviewer"; ctx.location.hash = "#/admin/scores"; W.render(); check("reviewer cannot open scores", /403/.test(app.innerHTML));
+reload(); S().role = "editor"; ctx.location.hash = "#/admin/nominations"; W.render(); check("editor opens nominations", /Nominations/.test(app.innerHTML));
+S().role = "reviewer"; ctx.location.hash = "#/admin/nominations"; W.render(); check("reviewer cannot open nominations", /403/.test(app.innerHTML));
 S().role = "visitor"; ctx.location.hash = "#/admin"; W.render(); check("visitor gets 403 on admin", /403/.test(app.innerHTML));
-S().role = "admin"; ctx.location.hash = "#/admin/roles"; W.render(); check("roles matrix opens for the Administrator", /Roles and permissions/.test(app.innerHTML) && /Reviewer/.test(app.innerHTML) && /Editor/.test(app.innerHTML) && !/Awards manager|Editor-in-Chief|Sales|Finance/.test(app.innerHTML.replace(/<nav class="app-side"[\s\S]*?<\/nav>/, "")));
 // WordPress-fit tags: every inventory entry has a valid wpScreen and a recommendation
 for (const x of W.INV) {
   check("inventory wpScreen valid " + x.id, ["native", "customised-native", "custom", "n/a (wireframe tool)"].includes(x.wpScreen), x.wpScreen);
@@ -248,7 +276,7 @@ W.forms.approve({ id: "b7", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("approvi
 reload(); S().role = "visitor"; W.ui.nom = { step: 0, d: {} }; W.act.stage("open|#/nominate"); ctx.location.hash = "#/nominate"; W.render(); check("stage open shows the full form", /data-form="nom0"/.test(app.innerHTML) && W.nomOpen());
 W.act.stage("soon|#/nominate"); W.render(); check("nominations switched off: the page says closed and has no sign-up form", /Nominations are closed/.test(app.innerHTML) && !/data-form="signup"/.test(app.innerHTML) && !W.nomOpen());
 W.act.stage("nominees|#/awards/nominees"); ctx.location.hash = "#/awards/nominees"; W.render(); check("stage nominees shows citations", /citation/.test(app.innerHTML) && /Wanjiru Owusu-Eze/.test(app.innerHTML));
-W.act.stage("winners|#/awards/winners"); ctx.location.hash = "#/awards/winners"; W.render(); check("stage winners shows winners", /Winner/.test(app.innerHTML) && S().awards.published);
+W.act.stage("winners|#/awards/winners"); ctx.location.hash = "#/awards/winners"; W.render(); check("stage winners shows winners", /Winner/.test(app.innerHTML) && W.awardStage().key === "winners");
 W.act.stage("soon|#/awards/nominees"); W.render(); check("stage back to soon empties nominees", /Nominees are not published yet/.test(app.innerHTML));
 ctx.location.hash = "#/awards"; W.render(); check("awards page has no nominee strip and a public timeline", !/np-reel/.test(app.innerHTML) && /Nominees announced/.test(app.innerHTML) && !/Shortlisting/.test(app.innerHTML) && /id="categories"/.test(app.innerHTML));
 ctx.location.hash = "#/commercial-terms"; W.render(); check("commercial terms page is gone", /not found|Page not found|404/i.test(app.innerHTML));
@@ -263,7 +291,7 @@ for (const f of W.FLOWS) {
   check("flow start nonempty " + f.t, app.innerHTML.length > 200); if (!/^1\./.test(f.t)) check("flow start not 404 " + f.t, !/Page not found/.test(app.innerHTML));
   check("flow role exists " + f.t, roles.includes(f.role), f.role);
 }
-check("19 flows or fewer", W.FLOWS.length <= 19 && !W.FLOWS.some((f) => /kill/i.test(f.t + f.s.join(" "))));
+check("20 flows or fewer", W.FLOWS.length <= 20 && !W.FLOWS.some((f) => /kill/i.test(f.t + f.s.join(" "))));
 // D-044 role details
 reload(); S().role = "editor"; ctx.location.hash = "#/admin/profiles/b1"; W.render(); check("editor profile screen: edit form, no Verified form, field sources", /data-form="profedit"/.test(app.innerHTML) && !/data-form="verify"/.test(app.innerHTML) && /Fields and their sources/.test(app.innerHTML) && /Source \(URL\)/.test(app.innerHTML));
 ctx.location.hash = "#/admin"; W.render(); check("editor dashboard: support counts, no sprint tile", /open corrections, removals and reports/.test(app.innerHTML) && !/Sprint target/.test(app.innerHTML));
@@ -273,31 +301,120 @@ S().role = "admin"; ctx.location.hash = "#/admin/suppression"; W.render(); check
 S().role = "editor"; check("editor can edit but not bulk unpublish; reviewer can bulk unpublish but not edit (D-045)", W.can("edit") && !W.can("bulk") && (S().role = "reviewer", !W.can("edit") && W.can("bulk") && W.can("assignTerms")));
 S().role = "reviewer"; ctx.location.hash = "#/admin/suppression"; W.render(); check("reviewer sees the suppression list read-only", /Read-only for your role/.test(app.innerHTML));
 check("seed users have only the three staff roles, one role and one unique email each", S().users.every((u) => ["reviewer", "editor", "admin"].includes(u.rk) && typeof u.rk === "string" && /@/.test(u.email)) && new Set(S().users.map((u) => u.email.toLowerCase())).size === S().users.length);
-check("confirmed-by and lead owners are not removed roles", S().arrangements.every((a) => !/Finance|Sales|Eic/.test(a.confirmedBy)) && S().leads.every((l) => !/Sales/.test(l.owner)));
+check("confirmed-by owners are not removed roles", S().arrangements.every((a) => !/Finance|Sales|Eic/.test(a.confirmedBy)));
 // D-045 capabilities (REQ-244)
+// Capability grants are made in WordPress; the prototype only models their effect on menus and screens (REQ-244).
+const tog = (role, cap) => { const g = S().caps[role], on = W.hasCap(cap, role), def = W.capDefault(cap, role); if (on) { g.grant = g.grant.filter((x) => x !== cap); if (def && g.revoke.indexOf(cap) < 0) g.revoke.push(cap); } else { g.revoke = g.revoke.filter((x) => x !== cap); if (!def && g.grant.indexOf(cap) < 0) g.grant.push(cap); } };
 reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("reviewer has no Support inbox by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML));
-S().role = "editor"; W.act.capToggle("reviewer|support_inbox"); check("only the Administrator changes capabilities", !W.hasCap("support_inbox", "reviewer"));
-S().role = "reviewer"; W.act.capToggle("reviewer|support_inbox"); check("a Reviewer cannot grant themselves anything", !W.hasCap("support_inbox", "reviewer"));
-S().role = "admin"; const au0 = S().audit.length; W.act.capToggle("reviewer|support_inbox");
-check("grant support_inbox to a Reviewer: effective, logged", W.hasCap("support_inbox", "reviewer") && S().audit.length === au0 + 1 && S().audit[S().audit.length - 1].action === "capability.grant");
+S().role = "admin"; tog("reviewer", "support_inbox");
+check("a granted capability is effective for a Reviewer", W.hasCap("support_inbox", "reviewer"));
 S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Support inbox") >= 0 && !/403/.test(app.innerHTML));
-S().role = "admin"; W.act.capToggle("reviewer|support_inbox"); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
+S().role = "admin"; tog("reviewer", "support_inbox"); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("revoking the grant brings the 403 back", !W.hasCap("support_inbox", "reviewer") && /403/.test(app.innerHTML));
-S().role = "admin"; W.act.capToggle("editor|support_inbox"); S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
+S().role = "admin"; tog("editor", "support_inbox"); S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("revoking a default takes the screen away from that Editor", W.menuFor("editor").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML) && W.menuFor("editor", true).indexOf("Support inbox") >= 0);
-S().role = "admin"; W.act.capReset("editor"); check("reset to role defaults", W.hasCap("support_inbox", "editor"));
-W.act.capToggle("editor|users_roles"); W.act.capToggle("reviewer|settings"); W.act.capToggle("editor|commercial_register");
 check("locked capabilities (users_roles, settings, commercial_register) are not grantable to others (Q72)", !W.hasCap("users_roles", "editor") && !W.hasCap("settings", "reviewer") && !W.hasCap("commercial_register", "editor"));
-W.act.capToggle("editor|bulk_unpublish"); S().role = "editor";
+tog("editor", "bulk_unpublish"); S().role = "editor";
 ctx.location.hash = "#/admin/profiles?type=individual&origin=import"; W.render(); check("Editor granted bulk_unpublish sees the bulk button", W.can("bulk") && /data-act="bulkDlg"/.test(app.innerHTML));
-S().role = "admin"; W.act.capToggle("editor|bulk_unpublish"); check("revoked again", !W.hasCap("bulk_unpublish", "editor"));
-S().role = "admin"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Users and capabilities screen lists the three sample users", /Sample Reviewer 1/.test(app.innerHTML) && /Sample Editor/.test(app.innerHTML) && /Sample Admin/.test(app.innerHTML) && /proposed limit, Q72/.test(app.innerHTML));
-S().role = "editor"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Editor gets 403 on Users and capabilities", /403/.test(app.innerHTML));
 check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_disputes", "editor") && !W.hasCap("handle_disputes", "reviewer") && /Editor/.test(W.disputeHandlers()));
 
+// events as their own post type, related events, and paid story placement (REQ-262 to REQ-265, D-060)
+{
+  reload(); S().role = "visitor";
+  const html = (h) => { ctx.location.hash = h; W.render(); return app.innerHTML; };
+  const slugsAfter = (h, marker) => { const s = html(h), i = s.indexOf(marker); return i < 0 ? [] : [...s.slice(i).matchAll(/href="#\/stories\/([a-z0-9-]+)"/g)].map((m) => m[1]); };
+  const evs = S().events;
+  check("events are their own collection, not stories: upcoming and past samples exist", evs.length === 4 && evs.filter((v) => W.eventState(v) === "upcoming").length >= 3 && evs.filter((v) => W.eventState(v) === "past").length >= 1 && !S().articles.some((a) => a.type === "Event" || a.ev));
+  const sp = html("#/stories");
+  check("stories page has no Events pill, no upcoming-events strip and no event cards", !/type=Event/.test(sp) && !/>Events</.test(sp.slice(sp.indexOf('class="bl-body"'), sp.indexOf("<footer"))) && !/ev-strip/.test(sp) && !/\/events\//.test(sp.slice(sp.indexOf('class="bl-body"'))));
+  check("events do not appear in search results", !/\/events\//.test(html("#/search?q=forum").slice(html("#/search?q=forum").indexOf("<main"))) && !/Lagos Agri-Finance Forum/.test(html("#/search?q=forum").slice(html("#/search?q=forum").indexOf("<main"))));
+  // events list and event page
+  const el = html("#/events");
+  const order = [...el.matchAll(/href="#\/events\/([a-z0-9-]+)"/g)].map((m) => m[1]).filter((s, i, x) => x.indexOf(s) === i);
+  check("Events list shows upcoming events soonest first, then Past events", order.join(",") === "kigali-data-infrastructure-summit,tema-manufacturing-open-day,lagos-agri-finance-forum-2026,abuja-mediators-roundtable" && /<h2 class="ev-h">Upcoming</.test(el) && /Past events/.test(el), order.join(","));
+  check("Events list filters by city and industry", /name="city"/.test(el) && /name="industry"/.test(el) && !/tema-manufacturing-open-day/.test(html("#/events?city=Lagos")) && /lagos-agri-finance-forum-2026/.test(html("#/events?city=Lagos")));
+  check("Events is in the header, the mobile menu and the footer", /class="nav-link" href="#\/events"/.test(el) && /class="drawer-link" href="#\/events"/.test(el) && /<footer[\s\S]*href="#\/events"/.test(el));
+  const evp = html("#/events/lagos-agri-finance-forum-2026");
+  check("event page shows when, where, organiser and a register link to the organiser's site", /class="ev-card"/.test(evp) && /Eko Convention Hall/.test(evp) && /Lagos Agri-Finance Forum \(sample organiser\)/.test(evp) && /href="https:\/\/example\.org\/lagos-agri-forum" target="_blank" rel="noopener noreferrer"/.test(evp));
+  check("event page takes no payment (D-005)", !/name="(amount|price|card|payment|currency)"/.test(evp) && /takes no payment/.test(evp) && !/<form[^>]*data-form="(pay|buy|ticket)/.test(evp));
+  check("event page lists the stories that link it as Related stories", /Related stories/.test(evp) && /building-for-the-smallholder/.test(evp) && !/Related stories/.test(html("#/events/tema-manufacturing-open-day")));
+  check("Events and the event page do not look like stories: agenda rows and a poster, no story cards, byline, reading time or comments", /class="ev-hero"/.test(el) && /class="ag-row/.test(el) && !/bl-card|bl-grid|bl-meta/.test(el) && /class="ev-poster/.test(evp) && /class="ev-poster-date"/.test(evp) && !/article-head|article-body|article-cover|min read|st-comments|By /.test(evp.slice(evp.indexOf("<main"))));
+  check("Events list has a Next up block and months as headings", /class="ev-next"/.test(el) && /class="ag-month-h"/.test(el));
+  check("the list filters are one quiet bar: inline selects, a count, Clear only while filtered, no boxed form, no visible Apply", [el, html("#/stories"), html("#/people"), html("#/awards/winners")].every((h) => /class="fbar"/.test(h) && /class="fbar-n"/.test(h) && !/bl-filter|win-filters|class="filters"|class="chip"/.test(h.slice(h.indexOf("<main")))) && !/fbar-clear/.test(el) && /fbar-clear/.test(html("#/events?city=Lagos")) && /<button class="sr" type="submit">/.test(el));
+  const past = html("#/events/abuja-mediators-roundtable");
+  check("a past event says it has ended and has no register button", /This event has ended/.test(past) && !/Register on the organiser/.test(past));
+  check("an event is not a story: its old story address is a 404", /404|not found/i.test(html("#/stories/lagos-agri-finance-forum-2026")));
+  // home page
+  const hm = html("#/");
+  const hev = hm.slice(hm.indexOf('class="h-events"'));
+  check("Home has an Events section with the next three upcoming events and an All events link", /class="h-events"/.test(hm) && [...hev.matchAll(/class="ag-link" href="#\/events\/([a-z0-9-]+)"/g)].map((m) => m[1]).join(",") === "kigali-data-infrastructure-summit,tema-manufacturing-open-day,lagos-agri-finance-forum-2026" && /href="#\/events"[^>]*>All events/.test(hev) && !/abuja-mediators/.test(hev.slice(0, hev.indexOf("</section>"))));
+  check("Home red awards block is gone but the endless strip with the award categories stays", /h-marquee/.test(hm) && !/h-awards-in|h-groups|class="h-big h-rv">[^<]*WHOISWHO/.test(hm) && S().awards.groups.every((g) => hm.slice(hm.indexOf("h-marquee")).includes(g.name.replace(/&/g, "&amp;"))) && /The Maiden Edition/.test(hm.slice(hm.indexOf("h-marquee"))));
+  // related event at the end of a story
+  const st1 = html("#/stories/building-for-the-smallholder"), ri = st1.indexOf("ev-rel-card");
+  check("a story that links an event ends with a Related event card to the event page", ri > st1.indexOf("article-body") && ri < st1.indexOf("st-comments") && /href="#\/events\/lagos-agri-finance-forum-2026"/.test(st1.slice(ri - 60, ri + 120)) && !/ev-rel-card/.test(html("#/stories/soil-before-software")));
+  // paid placement
+  const base = html("#/stories"), home = html("#/");
+  check("an active paid slot leads the stories page, labelled Sponsored by the sponsor", /bl-slot/.test(base) && /Sponsored by Amber Coast Insurance/.test(base.slice(base.indexOf("bl-slot"))));
+  check("an active paid slot leads the home rail, labelled", /h-story/.test(home) && /Sponsored by Amber Coast Insurance/.test(home.slice(home.indexOf('id="hTrack"'))));
+  check("a scheduled slot and an expired slot show no label", W.sponsorOfArticle(W.find("articles", "a4")) === null && W.sponsorOfArticle(W.find("articles", "a6")) === null);
+  const withHome = slugsAfter("#/", 'id="hTrack"'), withStories = slugsAfter("#/stories", 'class="bl-mosaic"');
+  const searchWith = slugsAfter("#/search?q=the", "<main"), wins = html("#/awards/winners"), noms = html("#/awards/nominees"), peopleWith = html("#/people");
+  const savedPl = S().placements; S().placements = [];
+  const noHome = slugsAfter("#/", 'id="hTrack"'), noStories = slugsAfter("#/stories", 'class="bl-mosaic"');
+  const notA3 = (x) => x !== "merchant-settlement-spotlight";
+  check("a paid slot does not reorder the other stories on the home page", JSON.stringify(withHome.filter(notA3).slice(0, 5)) === JSON.stringify(noHome.filter(notA3).slice(0, 5)), withHome + " | " + noHome);
+  check("a paid slot does not reorder the other stories on the stories page", JSON.stringify(withStories.filter(notA3)) === JSON.stringify(noStories.filter(notA3)), withStories + " | " + noStories);
+  check("a paid slot does not change search results order", JSON.stringify(searchWith) === JSON.stringify(slugsAfter("#/search?q=the", "<main")));
+  check("a paid slot does not change nominees, winners or the people list", wins === html("#/awards/winners") && noms === html("#/awards/nominees") && peopleWith === html("#/people"));
+  S().placements = savedPl;
+  // dates decide what shows
+  try {
+    W.TODAY = "2026-12-06";
+    check("after the end date the slot and its label are gone", W.sponsorOfArticle(W.find("articles", "a3")) === null);
+    check("a slot shows from its start date", W.sponsorOfArticle(W.find("articles", "a4")) === "Lodestar Building Supplies" && W.slotFor("Home") && W.slotFor("Home").id === "a4" && W.slotFor("Stories") === null);
+    check("an event past its dates moves to past", W.eventState(W.find("events", "ev2")) === "past");
+  } finally { W.TODAY = "2026-11-07"; }
+  // staff: the screens
+  S().role = "editor";
+  const adm = html("#/admin/sponsors"), stf = html("#/admin/stories");
+  check("Story sponsors screen shows status and no money fields", /active/.test(adm) && /scheduled/.test(adm) && /expired/.test(adm) && !/name="(amount|price|currency|method|ref|payment)"/.test(adm));
+  check("Stories screen has no Event type or event fields and has a Related event select", !/<option[^>]*>Event</.test(stf) && !/name="evStart"/.test(stf) && /name="relatedEvent"/.test(stf));
+  check("Story sponsors cannot target an event: events are not in the story list and a forced event id is refused", !/Lagos Agri-Finance Forum/.test(adm) && (() => { const n = S().placements.length; W.forms.placement({ sponsor: "Lodestar Building Supplies", storyId: "ev1", placement: "Both", start: "2027-02-01", end: "2027-02-05" }); return S().placements.length === n; })());
+  // Events screen
+  check("Editor and Administrator have the Events screen and capability; Reviewer does not", W.hasCap("manage_events", "editor") && W.hasCap("manage_events", "admin") && !W.hasCap("manage_events", "reviewer") && W.menuFor("editor", true).includes("Events") && !W.menuFor("reviewer", true).includes("Events"));
+  const evs2 = html("#/admin/events");
+  check("Events screen lists events with publish and unpublish, and a form with all the event fields and no money fields", /Unpublish/.test(evs2) && ["title", "start", "time", "end", "venue", "city", "country", "organiser", "industry", "summary", "image", "regUrl", "price"].every((n) => new RegExp('name="' + n + '"').test(evs2)) && !/name="(amount|currency|method|payment)"/.test(evs2));
+  const ne0 = S().events.length;
+  W.forms.event({ title: "Test event", summary: "x", status: "published", start: "", venue: "V", organiser: "O", regUrl: "https://example.org/x" });
+  check("an event without a start date is refused", S().events.length === ne0);
+  W.forms.event({ title: "Test event", summary: "x", status: "published", start: "2026-12-20", time: "10:00", venue: "Online", organiser: "O", regUrl: "https://example.org/x", price: "Free" });
+  const ne = S().events.find((v) => v.slug === "test-event");
+  check("a new event is saved, upcoming and public, and audit-logged", !!ne && W.eventState(ne) === "upcoming" && W.publicEvents().some((v) => v.id === ne.id) && /test-event/.test(html("#/events")) && S().audit.some((r) => /event\.publish/.test(JSON.stringify(r))));
+  W.forms.story({ title: "Linked story", type: "News", lede: "x", status: "published", date: "2026-11-07", relatedEvent: ne.id });
+  S().role = "visitor";
+  check("a story can link the new event and shows it at the end", /ev-rel-card/.test(html("#/stories/linked-story")) && /Test event/.test(html("#/stories/linked-story")));
+  S().role = "editor"; W.act.evToggle(ne.id);
+  S().role = "visitor";
+  check("unpublishing an event removes it from the list, the Home page and the story's related card, and is audit-logged", !/test-event/.test(html("#/events")) && !/test-event/.test(html("#/")) && !/ev-rel-card/.test(html("#/stories/linked-story")) && /404|not found/i.test(html("#/events/test-event")) && S().audit.some((r) => /event\.unpublish/.test(JSON.stringify(r))));
+  S().role = "editor";
+  const pn = S().placements.length, profBefore = JSON.stringify(S().profiles.map((p) => [p.id, p.trust, p.sponsored, p.status]));
+  W.forms.placement({ sponsor: "Lodestar Building Supplies", storyId: "a1", placement: "Stories", start: "2026-11-05", end: "2026-11-30" });
+  check("a second paid slot on the same page and dates is refused", S().placements.length === pn);
+  W.forms.placement({ sponsor: "Lodestar Building Supplies", storyId: "a7", placement: "Home", start: "2027-01-01", end: "2027-01-10" });
+  check("an unpublished story cannot fill a paid slot", S().placements.length === pn);
+  W.forms.placement({ sponsor: "Lodestar Building Supplies", storyId: "a1", placement: "Home", start: "2026-12-20", end: "2026-12-30" });
+  check("a valid slot is saved and audit-logged", S().placements.length === pn + 1 && S().audit.some((r) => /placement\.add/.test(JSON.stringify(r))));
+  W.act.plEnd("pl1");
+  check("ending a slot removes the label and the slot", W.sponsorOfArticle(W.find("articles", "a3")) === null && W.slotFor("Stories") === null);
+  check("sponsoring a story never changes any profile label or state", profBefore === JSON.stringify(S().profiles.map((p) => [p.id, p.trust, p.sponsored, p.status])));
+  check("Reviewer has neither the Stories nor the Story sponsors screen by default", !W.menuFor("reviewer", true).includes("Stories") && !W.menuFor("reviewer", true).includes("Story sponsors"));
+  S().role = "visitor";
+}
 S().role = "visitor"; S().user = null;
 // audit chain
 let prev = "00000000", okc = true; S().audit.forEach((r) => { if (r.prev !== prev) okc = false; prev = r.hash; }); check("audit chain", okc);
+check("the Roles, Users and capabilities, Exports and Compliance screens are gone (WordPress provides them)", ["#/admin/roles", "#/admin/capabilities", "#/admin/exports", "#/admin/compliance", "#/admin/settings"].every((h) => { S().role = "admin"; ctx.location.hash = h; W.render(); return /not found|404/i.test(app.innerHTML); }));
+check("Sprint thresholds opens for the Administrator at /admin/thresholds", (() => { S().role = "admin"; ctx.location.hash = "#/admin/thresholds"; W.render(); return /Sprint thresholds/.test(app.innerHTML) && !/Default revenue stream/.test(app.innerHTML); })());
 console.log(n + " checks, " + fails + " failures");
 process.exit(fails ? 1 : 0);

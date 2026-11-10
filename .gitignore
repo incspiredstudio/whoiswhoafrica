@@ -22,3 +22,8 @@ acquisition/exports/*
 *.bak
 /backups/
 /*.sql
+
+# Docs site (VitePress)
+docs/node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
