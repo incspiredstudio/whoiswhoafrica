@@ -42,15 +42,40 @@ DECEASED_RUN_ID = "deceased-2026-11-09"
 DECEASED_TARGET = 1000
 DECEASED_FLOOR_PER_COUNTRY = 5
 DECEASED_CAP_PER_COUNTRY = 150
+LEADERS_RUN_ID = "leaders-2026-11-10"
+LEADERS_POOL_PER_COUNTRY = 1500
+# Brief section 4: groups 1-5, 2,000 profiles at most. Unused room moves to groups with spare candidates.
+LEADERS_BUDGET = {"Business leader": 300, "NGO or community leader": 100, "Public-sector leader": 450, "Creative arts": 270, "Sport": 180,
+                  "Academic or professional": 300, "Healthcare": 160, "Finance and investment": 160, "Professional services": 50,
+                  "Chamber of commerce": 30}
+LEADERS_TOTAL = 2000
+LEAD_PROPS = {"P169": "Chief executive officer", "P488": "Chair", "P1075": "Rector", "P1037": "Head"}
+SECTOR_ROOTS = {"Healthcare": ["Q16917", "Q4260475", "Q19644607"],
+                "Finance and investment": ["Q2143354", "Q11691", "Q3487908", "Q1752459", "Q4230006", "Q5266746"],
+                "Professional services": ["Q613142", "Q2781630", "Q2089936", "Q23670565"]}
+SEGMENT_BY_CATEGORY = {"Business": "Business leader", "Media": "Business leader", "Other": "Business leader", "Healthcare": "Business leader",
+                       "Government": "Public-sector leader", "Education": "Academic or professional", "Research": "Academic or professional",
+                       "NGO or association": "NGO or community leader"}
+SEGMENT_BY_FIELD = {"Politics and government": "Public-sector leader", "Science, medicine and academia": "Academic or professional",
+                    "Law": "Academic or professional", "Literature and journalism": "Creative or sports figure", "Music": "Creative or sports figure",
+                    "Film, theatre and broadcasting": "Creative or sports figure", "Visual arts and architecture": "Creative or sports figure",
+                    "Sport": "Creative or sports figure", "Business": "Business leader"}
+EXCLUDED_FIELDS = {"Royalty and traditional rulers": "traditional_ruler", "Religion": "religious_role", "Military": "military_role",
+                   "Activism and liberation": "activism_political_opinion", "Other": "no_clear_field"}
+# Living people: political affiliation is never stored (REQ-140), so party-like memberships and positions are dropped.
+PARTYISH = re.compile(r"\b(party|parti|partido|partij|congress|movement|mouvement|front|rally|rassemblement|alliance|league|union for|union pour|"
+                      r"brotherhood|freemason\w*|masonic|lodge|church|islamic|christian|catholic|muslim)\b", re.I)
+PARTY_ABBR = re.compile(r"\b(ANC|ZANU(?:-PF)?|SWAPO|FRELIMO|MPLA|UNITA|RENAMO|CCM|CHADEMA|NRM|FDC|APC|PDP|FLN|RCD|RDPC|NDC|NPP|ODM|UDA|UPND|"
+                        r"EPRDF|TPLF|RPF|PAIGC|PDCI|RHDP|FPI|PDS|BDP|UDF|DPP|MCP|EFF|DA|IFP)\b")
 # Deceased people are notable for many things, including politics and religion, so those are allowed here.
 # Prominence that comes from crime is not (plan 1.4).
 CRIME = re.compile(r"\b(serial killer|killer|murderer|mass murderer|criminal|gangster|drug lord|drug trafficker|rapist|kidnapper|bandit|terrorist|"
                    r"cannibal|executed for|convicted|fraudster|con artist|hijacker|assassin)\b", re.I)
 PERSON_FIELDS = [
-    ("Royalty and traditional rulers", r"monarch|king|queen|emperor|empress|sultan|pharaoh|emir|oba|ooni|chief|sovereign|ruler|prince|princess|regent|negus|khedive|bey\b|dey\b"),
+    ("Royalty and traditional rulers", r"monarch|king|queen|emperor|empress|sultan|pharaoh|emir|oba|ooni|chief(?! executive| operating| financial| technology| justice| of| scientist| economist| medical| judge| minister| secretary| whip| editor| information| investment| risk| marketing| commercial)|sovereign|ruler|prince|princess|regent|negus|khedive|bey\b|dey\b"),
     ("Politics and government", r"politician|president|prime minister|minister|statesperson|diplomat|ambassador|governor|senator|legislator|mayor|civil servant|head of state|head of government|member of parliament|vice-president"),
     ("Activism and liberation", r"activist|revolutionary|freedom fighter|nationalist|trade unionist|human rights|independence|anti-apartheid|liberation|resistance"),
-    ("Military", r"military|soldier|army|general|officer|marshal|admiral|warrior|commander"),
+    ("Military", r"military|soldier|army|(?<!attorney )(?<!secretary-)(?<!secretary )(?<!director )(?<!director-)(?<!governor-)(?<!solicitor )(?<!auditor )(?<!accountant )(?<!inspector )(?<!registrar )(?<!surveyor )(?<!consul )general(?! manager| counsel| secretary|-secretary| assembly| practitioner| director)|(?:military|army|naval|air force|police) officer|marshal|admiral|warrior|commander"),
     ("Religion", r"cleric|priest|bishop|archbishop|cardinal|imam|pastor|theologian|missionary|saint|religious|pope|prophet|sheikh|marabout|mufti|preacher|nun|monk"),
     ("Science, medicine and academia", r"scientist|physician|academic|professor|historian|economist|engineer|mathematician|philosopher|anthropologist|sociologist|linguist|surgeon|chemist|physicist|biologist|geographer|astronomer|researcher|doctor|educator|teacher|scholar"),
     ("Literature and journalism", r"writer|poet|novelist|author|playwright|journalist|essayist|editor|publisher|dramatist|translator"),
@@ -91,7 +116,8 @@ CATEGORY_RULES = [
     ("Media", re.compile(r"news|media|broadcast|radio|television|newspaper|magazine|publish", re.I)),
     ("Education", re.compile(r"universit|polytechnic|college|school|academic|education|institute of technology", re.I)),
     ("Research", re.compile(r"research|think tank", re.I)),
-    ("Government", re.compile(r"government|ministr|government agency|regulat|federal|parliament|legislat|lower house|upper house|senate|central bank|commission|law enforcement|police|gendarmerie|court|archives|statistic|public institution", re.I)),
+    ("Healthcare", re.compile(r"hospital|clinic|medical cent|health care|healthcare|pharmac|medical facility", re.I)),
+    ("Government", re.compile(r"\bgovernment|ministr|government agency|regulat|federal|parliament|legislat|lower house|upper house|senate|central bank|commission|law enforcement|police|gendarmerie|court|archives|statistic|public institution", re.I)),
 ]
 NON_BUSINESS_OCC = re.compile(
     r"\b(politician|president|vice president|governor|senator|minister|legislator|diplomat|statesperson|party|military|soldier|general|monarch|"
@@ -102,7 +128,7 @@ BUSINESS_WORDS = re.compile(r"\b(entrepreneur|business\w*|founder|co-founder|ceo
 NAME_EXCLUDE = re.compile(r"(\b(war|ponzi|ecclesiastical|mmm|[ée]glise|dioc[èe]se|paroisse|mosqu[ée]e|cath[ée]drale|parti|partido|igreja|mosque|church|militia|rebel|insurgent|evangelical|presbyterian|methodist|baptist|anglican|catholic|adventist|pentecostal|sacred heart|christ|orthodox|coptic|patriarch\w*|islamic|muslim|jesus|bible|theolog\w*|mujahid\w*|jammeh|gaddafi|qaddafi)\b|حزب|مسجد|كنيسة)", re.I)
 NON_AFRICAN = re.compile(r"\b(American|British|English|Scottish|Welsh|Irish|Canadian|Australian|German|French|Italian|Spanish|Dutch|Belgian|Swiss|Swedish|Norwegian|Danish|Finnish|Russian|Ukrainian|Hungarian|Polish|Indian|Pakistani|Chinese|Japanese|Korean|Israeli|Lebanese|Emirati|Saudi|Turkish|Brazilian|Mexican|Portuguese|Greek|Bahamian|Jamaican)\b")
 AFRICAN = re.compile(r"\b(African|Nigerian|Ghanaian|Kenyan|Moroccan|Egyptian|Tunisian|Algerian|Senegalese|Ugandan|Cameroonian|Congolese|Tanzanian|Zimbabwean|Ivorian|Rwandan|Beninese|Guinean|Angolan|Ethiopian|Namibian|Togolese|Sudanese|Zambian|Burkinab[eé]|Libyan|Malagasy|Nigerien|Malian|Somali|Mozambican|Motswana|Batswana|Malawian|Gabonese|Burundian|Chadian|Gambian|Mauritian|Sierra Leonean|Mauritanian|Liberian|Cape Verdean|Eritrean|Seychellois|Swazi|Djiboutian|Comorian|Basotho|Mosotho|Equatoguinean|Bissau-Guinean)\b")
-BIRTH_BITS = re.compile(r"\s*\((?:born|b\.|né|née)?\s*[^()]*\b(?:1[89]|20)\d\d\b[^()]*\)|,?\s*\bborn\b[^,.;]*", re.I)
+BIRTH_BITS = re.compile(r"\s*\((?:born|b\.|né|née)?\s*[^()]*\b(?:1[89]|20)\d\d\b[^()]*\)|,?\s*\bborn\b[^,.;]*|,?\s*\b(?:1[89]|20)\d\d\s*[-–]\s*$", re.I)
 POLITICS = re.compile(r"\b(political candidate|paramount chief|politician|president of|former president|vice president|governor|senator|minister|legislator|statesperson|member of (the )?(house|parliament|national assembly))\b", re.I)
 ALLOWED_IMAGE_MAGIC = [(b"\x89PNG", ".png"), (b"\xff\xd8\xff", ".jpg"), (b"GIF8", ".gif"), (b"\x00\x00\x01\x00", ".ico")]
 
@@ -128,7 +154,7 @@ def db():
     CREATE TABLE IF NOT EXISTS images(qid TEXT, role TEXT, status TEXT, path TEXT, source_url TEXT, licence TEXT, credit TEXT,
       retrieved_at TEXT, PRIMARY KEY(qid, role));
     CREATE TABLE IF NOT EXISTS records(record_id TEXT PRIMARY KEY, type TEXT, qid TEXT, name TEXT, country TEXT, city TEXT,
-      org_type TEXT, org_category TEXT, person_field TEXT, lifespan TEXT, born_in TEXT, died_in TEXT, education TEXT, industry TEXT, website TEXT, website_status TEXT, founded_year TEXT, exchange TEXT, current_title TEXT,
+      org_type TEXT, org_category TEXT, segment TEXT, person_field TEXT, lifespan TEXT, born_in TEXT, died_in TEXT, education TEXT, industry TEXT, website TEXT, website_status TEXT, founded_year TEXT, exchange TEXT, current_title TEXT,
       current_org TEXT, roles TEXT, awards TEXT, sitelinks INT, description TEXT, bio TEXT, site_description TEXT,
       criterion TEXT, criterion_met INT, evidence_url TEXT, wikipedia_lead TEXT,
       photo_path TEXT, photo_source TEXT, photo_licence TEXT, photo_credit TEXT,
@@ -138,6 +164,12 @@ def db():
       confidence TEXT, method TEXT, PRIMARY KEY(record_id, field));
     CREATE TABLE IF NOT EXISTS exclusions(qid TEXT PRIMARY KEY, kind TEXT, reason TEXT);
     CREATE TABLE IF NOT EXISTS fetch_log(at TEXT, url TEXT, status TEXT);
+    CREATE TABLE IF NOT EXISTS person_candidates(qid TEXT PRIMARY KEY, country TEXT, sitelinks INT, source TEXT);
+    CREATE TABLE IF NOT EXISTS leader_links(person_qid TEXT, org_qid TEXT, role TEXT, start_year INT, PRIMARY KEY(person_qid, org_qid, role));
+    CREATE TABLE IF NOT EXISTS person_entities(qid TEXT PRIMARY KEY, data TEXT, retrieved_at TEXT);
+    CREATE TABLE IF NOT EXISTS sector_candidates(qid TEXT PRIMARY KEY, country TEXT, sitelinks INT, sector TEXT);
+    CREATE TABLE IF NOT EXISTS selected_leaders(qid TEXT PRIMARY KEY, kind TEXT, segment TEXT, country TEXT, org_qid TEXT, role TEXT, start_year INT);
+    CREATE TABLE IF NOT EXISTS seeded_leaders(key TEXT PRIMARY KEY);
     """)
     return con
 
@@ -429,6 +461,46 @@ def trim_entity(ent, kind):
                  member_of=item_ids(ent, "P463", True),
                  deceased=bool(claim_values(ent, "P570")))
     return d
+
+
+def wd_year(v):
+    t = v.get("time", "") if isinstance(v, dict) else ""
+    m = re.match(r"([+-])0*(\d+)-", t)
+    return (int(m.group(2)) * (-1 if m.group(1) == "-" else 1)) if m else None
+
+
+def dated_items(ent, prop):
+    out = []
+    for st in ent.get("claims", {}).get(prop, []):
+        dv = st.get("mainsnak", {}).get("datavalue")
+        if not dv or st.get("rank") == "deprecated" or not isinstance(dv["value"], dict) or "id" not in dv["value"]:
+            continue
+        years = []
+        for qp in ("P580", "P582"):
+            q = next((x for x in st.get("qualifiers", {}).get(qp, []) if x.get("datavalue")), None)
+            years.append(wd_year(q["datavalue"]["value"]) if q else None)
+        out.append([dv["value"]["id"], *years])
+    return out
+
+
+def trim_person(ent):
+    """Living people, REQ-139 and REQ-140: no birth data, birthplace, education, family, party or religion is read."""
+    return {
+        "name": best_label(ent),
+        "description": clean_description(ent.get("descriptions", {}).get("en", {}).get("value")),
+        "enwiki": ent.get("sitelinks", {}).get("enwiki", {}).get("title"),
+        "sitelinks": len(ent.get("sitelinks", {})),
+        "website": next(iter(claim_values(ent, "P856", True)), None),
+        "countries": item_ids(ent, "P27"),
+        "image": next(iter(claim_values(ent, "P18")), None),
+        "occupations": item_ids(ent, "P106"),
+        "positions_dated": dated_items(ent, "P39"),
+        "employers": item_ids(ent, "P108", True),
+        "awards": item_ids(ent, "P166"),
+        "boards": item_ids(ent, "P3320", True),
+        "member_of": item_ids(ent, "P463", True),
+        "deceased": bool(claim_values(ent, "P570")),
+    }
 
 
 def api_entities(ids, props):
@@ -793,7 +865,7 @@ def stage_select():
         for k in list(by_country):
             if by_country[k]:
                 order.append(by_country[k].pop(0))
-    caps = {"Education": 0.30, "Government": 0.18, "NGO or association": 0.15, "Research": 0.05, "Media": 0.06, "Other": 0.06, "Business": 1.0}
+    caps = {"Education": 0.30, "Government": 0.18, "NGO or association": 0.15, "Research": 0.05, "Media": 0.06, "Other": 0.06, "Healthcare": 0.06, "Business": 1.0}
     counts = {}
     for o in chosen:
         counts[o[3]] = counts.get(o[3], 0) + 1
@@ -847,6 +919,304 @@ def stage_select():
         print(tuple(r))
 
 
+# ------------------------------------------------------------- living leaders and sector organisations (brief section 4)
+ALIVE = "FILTER NOT EXISTS { ?p wdt:P570 ?d } OPTIONAL { ?p wdt:P569 ?dob } FILTER(!BOUND(?dob) || (YEAR(?dob) < 2006 && YEAR(?dob) > 1925))"
+
+
+def stage_seed_leaders():
+    """DOB is used only inside queries, to keep out minors and people likely to have died; it is never returned or stored."""
+    con = db()
+    load_countries(con)
+    done = {r[0] for r in con.execute("SELECT key FROM seeded_leaders")}
+    for cq, cname in sorted(COUNTRIES.items(), key=lambda x: x[1]):
+        key = "pool:" + cq
+        if key in done:
+            continue
+        rows = sparql(f"""SELECT DISTINCT ?p ?sl WHERE {{ ?p wdt:P27 wd:{cq}; wdt:P31 wd:Q5; wikibase:sitelinks ?sl. FILTER(?sl >= 4) {ALIVE}
+              FILTER(?sl >= 30 || NOT EXISTS {{ ?p wdt:P106 wd:Q937857 }}) }} ORDER BY DESC(?sl) LIMIT {LEADERS_POOL_PER_COUNTRY}""")
+        con.executemany("INSERT OR IGNORE INTO person_candidates VALUES(?,?,?,?)",
+                        [(qid_of(r["p"]["value"]), cname, int(r["sl"]["value"]), "pool") for r in rows])
+        if rows:
+            con.execute("INSERT OR REPLACE INTO seeded_leaders VALUES(?)", (key,))
+        con.commit()
+        print("people", cname, len(rows), flush=True)
+    orgs = dict(con.execute("SELECT s.qid,c.country FROM selected s JOIN candidates c USING(qid) WHERE s.kind='organisation' ORDER BY s.qid").fetchall())
+    ids = list(orgs)
+    pairs = " ".join(f"(p:{x} ps:{x})" for x in LEAD_PROPS)
+    for i in range(0, len(ids), 150):
+        key = f"links:{i}"
+        if key in done:
+            continue
+        vals = " ".join("wd:" + q for q in ids[i:i + 150])
+        rows = sparql(f"""SELECT ?o ?p ?prop ?sl ?start WHERE {{ VALUES ?o {{ {vals} }} VALUES (?prop ?ps) {{ {pairs} }}
+              ?o ?prop ?st. ?st ?ps ?p. FILTER NOT EXISTS {{ ?st pq:P582 ?end }}
+              ?p wdt:P31 wd:Q5; wikibase:sitelinks ?sl. {ALIVE} OPTIONAL {{ ?st pq:P580 ?start }} }}""")
+        for r in rows:
+            p, o, prop = qid_of(r["p"]["value"]), qid_of(r["o"]["value"]), qid_of(r["prop"]["value"])
+            m = re.match(r"-?\d+", r.get("start", {}).get("value", ""))
+            con.execute("INSERT OR REPLACE INTO leader_links VALUES(?,?,?,?)", (p, o, prop, int(m.group(0)) if m else None))
+            con.execute("INSERT OR IGNORE INTO person_candidates VALUES(?,?,?,?)", (p, orgs[o], int(r["sl"]["value"]), "leader"))
+        con.execute("INSERT OR REPLACE INTO seeded_leaders VALUES(?)", (key,))
+        con.commit()
+        print("leader links", i, len(rows), flush=True)
+    if "sectors" not in done:
+        cls = {}
+        for sector, roots in SECTOR_ROOTS.items():
+            for c in sorted(class_set(con, "sector_" + sector.split()[0].lower(), roots)):
+                cls.setdefault(c, sector)
+        names = sorted(cls)
+        countries = " ".join("wd:" + q for q in COUNTRIES)
+        for i in range(0, len(names), 60):
+            vals = " ".join("wd:" + c for c in names[i:i + 60])
+            rows = sparql(f"""SELECT ?o ?t ?c ?sl WHERE {{ VALUES ?t {{ {vals} }} VALUES ?c {{ {countries} }}
+                  ?o wdt:P31 ?t; wdt:P17 ?c; wikibase:sitelinks ?sl. }}""")
+            con.executemany("INSERT OR IGNORE INTO sector_candidates VALUES(?,?,?,?)",
+                            [(qid_of(r["o"]["value"]), COUNTRIES[qid_of(r["c"]["value"])], int(r["sl"]["value"]), cls[qid_of(r["t"]["value"])]) for r in rows])
+            con.commit()
+            print("sector classes", i, len(rows), flush=True)
+        for cq, cname in COUNTRIES.items():
+            for term in ('"chamber of commerce"', '"chambre de commerce"', '"câmara de comércio"'):
+                q = urllib.parse.urlencode({"action": "query", "list": "search", "srsearch": f"{term} haswbstatement:P17={cq}",
+                                            "srlimit": 20, "srnamespace": 0, "format": "json"})
+                st, _, body, _ = http("https://www.wikidata.org/w/api.php?" + q, gap=0.5)
+                if st == 200:
+                    for hit in json.loads(body).get("query", {}).get("search", []):
+                        con.execute("INSERT OR IGNORE INTO sector_candidates VALUES(?,?,?,?)", (hit["title"], cname, 0, "Chamber of commerce"))
+        con.execute("INSERT OR REPLACE INTO seeded_leaders VALUES('sectors')")
+        con.commit()
+    for r in con.execute("SELECT source,COUNT(*) FROM person_candidates GROUP BY 1"):
+        print(tuple(r))
+    for r in con.execute("SELECT sector,COUNT(*) FROM sector_candidates GROUP BY 1"):
+        print(tuple(r))
+
+
+def fetch_labels(con, refs):
+    have = {r[0] for r in con.execute("SELECT qid FROM labels")}
+    refs = sorted(set(refs) - have)
+    print("labels to fetch", len(refs), flush=True)
+    for i in range(0, len(refs), 50):
+        for q, ent in api_entities(refs[i:i + 50], "labels").items():
+            lab = best_label(ent)
+            if lab:
+                con.execute("INSERT OR REPLACE INTO labels VALUES(?,?)", (q, lab))
+        con.commit()
+
+
+def stage_enrich_leaders():
+    con = db()
+    todo = [r[0] for r in con.execute("SELECT qid FROM person_candidates WHERE qid NOT IN (SELECT qid FROM person_entities) ORDER BY sitelinks DESC")]
+    print("people to enrich", len(todo), flush=True)
+    for i in range(0, len(todo), 50):
+        for q, ent in api_entities(todo[i:i + 50], "labels|descriptions|claims|sitelinks").items():
+            if "missing" not in ent:
+                con.execute("INSERT OR REPLACE INTO person_entities VALUES(?,?,?)", (q, json.dumps(trim_person(ent), ensure_ascii=False), now()))
+        con.commit()
+        if i % 1000 == 0:
+            print("people enriched", i, flush=True)
+    todo = [r[0] for r in con.execute("""SELECT qid FROM sector_candidates WHERE qid NOT IN (SELECT qid FROM entities)
+                                         AND (sitelinks >= 1 OR sector='Chamber of commerce')""")]
+    print("sector organisations to enrich", len(todo), flush=True)
+    for i in range(0, len(todo), 50):
+        for q, ent in api_entities(todo[i:i + 50], "labels|descriptions|claims|sitelinks").items():
+            if "missing" not in ent:
+                con.execute("INSERT OR IGNORE INTO entities VALUES(?,?,?,?)", (q, "organisation", json.dumps(trim_entity(ent, "organisation"), ensure_ascii=False), now()))
+        con.commit()
+    refs = set(r[0] for r in con.execute("SELECT org_qid FROM leader_links"))
+    for r in con.execute("SELECT data FROM person_entities"):
+        d = json.loads(r[0])
+        for k in ("countries", "occupations", "employers", "awards", "boards", "member_of"):
+            refs.update(d.get(k) or [])
+        refs.update(x[0] for x in d.get("positions_dated") or [])
+    for r in con.execute("SELECT e.data FROM sector_candidates s JOIN entities e USING(qid)"):
+        d = json.loads(r[0])
+        for k in ("countries", "types", "hq", "industry", "exchange", "parent", "subsidiaries", "products", "member_of"):
+            refs.update(d.get(k) or [])
+    fetch_labels(con, refs)
+
+
+def pick(pool, n, floor=2, cap_share=0.15):
+    """Every country gets its most notable few first, then the rest by score with a cap per country."""
+    pool = sorted(pool, key=lambda x: x[0], reverse=True)
+    cap_n = max(floor, int(n * cap_share))
+    out, per, chosen = [], {}, set()
+    for x in pool:
+        if len(out) >= n:
+            break
+        if per.get(x[2], 0) < floor:
+            out.append(x)
+            chosen.add(x[1])
+            per[x[2]] = per.get(x[2], 0) + 1
+    for x in pool:
+        if len(out) >= n:
+            break
+        if x[1] not in chosen and per.get(x[2], 0) < cap_n:
+            out.append(x)
+            chosen.add(x[1])
+            per[x[2]] = per.get(x[2], 0) + 1
+    return out
+
+
+def stage_select_leaders():
+    con = db()
+    load_countries(con)
+    con.execute("DELETE FROM exclusions WHERE kind IN ('person','sector_org')")
+    suppressed = suppression_set()
+    business = class_set(con, "business", [])
+    taken = {r[0] for r in con.execute("SELECT qid FROM selected")}
+    org_meta = {}
+    for r in con.execute("SELECT e.qid,e.data,c.exchange,c.country FROM entities e JOIN candidates c USING(qid) WHERE e.qid IN (SELECT org_qid FROM leader_links)"):
+        org_meta[r["qid"]] = (org_category(con, json.loads(r["data"]).get("types"), business), r["exchange"], r["country"])
+    holders = {}
+    for p_, o, role, start in con.execute("SELECT person_qid,org_qid,role,start_year FROM leader_links"):
+        holders.setdefault((o, role), []).append((start, p_))
+    current = {}
+    for (o, role), hs in holders.items():  # stale holders are often left without an end date: keep only the latest
+        top = max((x for x, _ in hs if x is not None), default=None)
+        keep = hs if len(hs) == 1 else [h for h in hs if h[0] == top] if top is not None else []
+        if len(keep) == 1 and o in org_meta:
+            current.setdefault(keep[0][1], []).append((o, role, keep[0][0]))
+    role_rank = {r: i for i, r in enumerate(LEAD_PROPS)}
+    pools, link_of = {}, {}
+
+    def exclude(qid, kind, reason):
+        con.execute("INSERT OR REPLACE INTO exclusions VALUES(?,?,?)", (qid, kind, reason))
+
+    for r in con.execute("SELECT pc.qid,pc.country,pe.data FROM person_candidates pc JOIN person_entities pe USING(qid)").fetchall():
+        d, qid = json.loads(r["data"]), r["qid"]
+        desc = d.get("description") or ""
+        occ_text = " ".join(label(con, o) or "" for o in d.get("occupations") or [])
+        text = f"{d.get('name') or ''} {desc} {occ_text}"
+        african = [COUNTRIES[c] for c in d.get("countries") or [] if c in COUNTRIES]
+        links = sorted(current.get(qid, []), key=lambda x: (role_rank[x[1]], -org_meta[x[0]][1]))
+        reason, seg = None, None
+        field = person_field(con, d)
+        if not d.get("name"):
+            reason = "no_english_name"
+        elif d["name"].lower() in suppressed:
+            reason = "suppressed"
+        elif d["name"] in MANUAL_EXCLUDE:
+            reason = "manual_exclusion"
+        elif qid in taken:
+            reason = "already_in_directory"
+        elif d.get("deceased") or re.search(r"\b(\d{1,2}(st|nd|rd|th)[- ]century|late|historical|deceased|ancient|medieval)\b", desc, re.I):
+            reason = "deceased_or_historical"
+        elif not african:
+            reason = "not_african_citizen"
+        elif NON_AFRICAN.search(desc) and not AFRICAN.search(desc):
+            reason = "not_african"
+        elif SENSITIVE.search(text) or CONTACT.search(text) or CRIME.search(text):
+            reason = "sensitive_term"
+        elif PARTYISH.search(desc) or PARTY_ABBR.search(desc):
+            reason = "political_affiliation_in_text"
+        elif re.search(r"\d", d["name"]):
+            reason = "malformed_name"
+        elif field in ("Royalty and traditional rulers", "Religion", "Military"):
+            reason = EXCLUDED_FIELDS[field]
+        elif re.search(r"\b(prince|princess|king|queen|royal|sultan|emir|monarch|crown)\b", desc, re.I):
+            reason = "traditional_ruler"
+        elif re.search(r"\b(coup|junta|warlord|militia|rebel)\b", desc, re.I) or (
+                field != "Politics and government" and re.search(r"\b(military|army|soldier|colonel|lieutenant|captain|brigadier)\b", f"{desc} {occ_text}", re.I)):
+            reason = "military_role"  # heads of state with a military past stay; coup leaders and serving officers do not
+        else:
+            seg = SEGMENT_BY_CATEGORY.get(org_meta[links[0][0]][0]) if links else None
+            seg = "Public-sector leader" if field == "Politics and government" else seg or SEGMENT_BY_FIELD.get(field)
+            if seg == "Business leader" and not links and not BUSINESS_WORDS.search(f"{desc} {occ_text}"):
+                seg = None
+            if not seg:
+                reason = EXCLUDED_FIELDS.get(field, "no_clear_field")
+        if reason:
+            exclude(qid, "person", reason)
+            continue
+        if links and org_meta[links[0][0]][2] in african:
+            country = org_meta[links[0][0]][2]
+        else:
+            country = r["country"] if r["country"] in african else deceased_country(d, african[0])
+        key = "Sport" if seg == "Creative or sports figure" and field == "Sport" else "Creative arts" if seg == "Creative or sports figure" else seg
+        score = (1 if links else 0, 1 if d.get("image") else 0, d.get("sitelinks") or 0)
+        pools.setdefault(key, []).append((score, qid, country, seg))
+        link_of[qid] = links[0] if links else (None, None, None)
+
+    for r in con.execute("SELECT sc.qid,sc.country,sc.sector,e.data FROM sector_candidates sc JOIN entities e USING(qid)").fetchall():
+        d, qid = json.loads(r["data"]), r["qid"]
+        name, text = d.get("name") or "", f"{d.get('name') or ''} {d.get('description') or ''}"
+        type_text = " ".join(label(con, t) or "" for t in d.get("types") or [])
+        reason = None
+        if not name:
+            reason = "no_english_name"
+        elif name.lower() in suppressed or name in MANUAL_EXCLUDE:
+            reason = "suppressed"
+        elif qid in taken:
+            reason = "already_in_directory"
+        elif d.get("dissolved"):
+            reason = "dissolved"
+        elif SENSITIVE.search(text) or CONTACT.search(text) or SENSITIVE.search(type_text) or NAME_EXCLUDE.search(name):
+            reason = "sensitive_term"
+        elif excluded_org_type(con, d.get("types")):
+            reason = "excluded_type"
+        elif country_qid(r["country"]) not in (d.get("countries") or []):
+            reason = "not_in_country"
+        elif r["sector"] == "Chamber of commerce" and (not re.search(r"chamb|c[aâ]mara", name, re.I) or re.search(r"[\[\d]", name)
+                                                      or re.search(r"coin|banknote|token|stamp|medal", d.get("description") or "", re.I)):
+            reason = "not_a_chamber"
+        elif r["sector"] != "Chamber of commerce" and (d.get("sitelinks") or 0) < 1:
+            reason = "no_wikipedia_article"
+        if reason:
+            exclude(qid, "sector_org", reason)
+            continue
+        score = (1 if d.get("exchange") else 0, 1 if d.get("website") else 0, d.get("sitelinks") or 0)
+        pools.setdefault(r["sector"], []).append((score, qid, r["country"], r["sector"]))
+
+    budget = dict(LEADERS_BUDGET)
+    picked = {k: pick(pools.get(k, []), n) for k, n in budget.items()}
+    left = LEADERS_TOTAL - sum(len(v) for v in picked.values())
+    # Spare room goes 50 at a time to the brief's professional groups first; sport only when they run out.
+    order = ["Academic or professional", "Public-sector leader", "Creative arts", "Healthcare", "Business leader",
+             "NGO or community leader", "Finance and investment", "Professional services", "Chamber of commerce", "Sport"]
+    while left > 0:
+        moved = 0
+        for k in order:
+            spare = len(pools.get(k, [])) - len(picked[k])
+            if left <= 0 or spare <= 0 or (k == "Sport" and any(len(pools.get(x, [])) > len(picked[x]) for x in order[:-1])):
+                continue
+            budget[k] += min(50, left, spare)
+            before = len(picked[k])
+            picked[k] = pick(pools[k], budget[k])
+            left -= len(picked[k]) - before
+            moved += len(picked[k]) - before
+        if not moved:
+            break
+    con.execute("DELETE FROM selected_leaders")
+    for k, rows in picked.items():
+        for score, qid, country, seg in rows:
+            if k in SECTOR_ROOTS or k == "Chamber of commerce":
+                con.execute("INSERT INTO selected_leaders VALUES(?,?,?,?,?,?,?)", (qid, "organisation", seg, country, None, None, None))
+            else:
+                o, role, start = link_of[qid]
+                con.execute("INSERT INTO selected_leaders VALUES(?,?,?,?,?,?,?)", (qid, "person", seg, country, o, LEAD_PROPS.get(role), start))
+    con.commit()
+    print("pools", {k: len(v) for k, v in pools.items()})
+    print("picked", {k: len(v) for k, v in picked.items()}, "total", sum(len(v) for v in picked.values()))
+    for r in con.execute("SELECT kind,reason,COUNT(*) FROM exclusions WHERE kind IN ('person','sector_org') GROUP BY 1,2 ORDER BY 3 DESC"):
+        print(tuple(r))
+    for r in con.execute("SELECT country,COUNT(*) n FROM selected_leaders GROUP BY 1 ORDER BY n DESC LIMIT 12"):
+        print(tuple(r))
+
+
+def stage_sites_leaders():
+    con = db()
+    done = {r[0] for r in con.execute("SELECT qid FROM sites")}
+    rows = []
+    for r in con.execute("SELECT l.qid,e.data FROM selected_leaders l JOIN entities e USING(qid) WHERE l.kind='organisation'"):
+        d = json.loads(r["data"])
+        if d.get("website") and r["qid"] not in done:
+            rows.append((r["qid"], d["website"]))
+    print("sector sites to fetch", len(rows), flush=True)
+    with cf.ThreadPoolExecutor(32) as ex:
+        for res in ex.map(fetch_site, rows):
+            con.execute("""INSERT OR REPLACE INTO sites VALUES(:qid,:url,:final_url,:status,:http,:description,:logo_url,:logo_kind,:retrieved_at)""", res)
+    con.commit()
+
+
 # ------------------------------------------------------------- images
 def strip_tags(s):
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", s or ""))).strip()
@@ -897,6 +1267,14 @@ def stage_images():
             jobs[(r["qid"], "photo")] = d["image"]
         if d.get("logo"):
             jobs[(r["qid"], "logo")] = d["logo"]
+    for r in con.execute("""SELECT l.qid, COALESCE(p.data, e.data) data FROM selected_leaders l
+                            LEFT JOIN person_entities p ON p.qid=l.qid AND l.kind='person'
+                            LEFT JOIN entities e ON e.qid=l.qid AND l.kind='organisation'"""):
+        d = json.loads(r["data"]) if r["data"] else {}
+        if d.get("image"):
+            jobs[(r["qid"], "photo")] = d["image"]
+        if d.get("logo"):
+            jobs[(r["qid"], "logo")] = d["logo"]
     done = {(r[0], r[1]) for r in con.execute("SELECT qid,role FROM images WHERE status='ok'")}
     pending = [(k, v) for k, v in jobs.items() if k not in done]
     print("commons images to fetch", len(pending), flush=True)
@@ -921,10 +1299,10 @@ def stage_images():
 def stage_logos():
     con = db()
     site_jobs = [(r["qid"], r["logo_url"], r["logo_kind"]) for r in con.execute(
-        """SELECT s.qid,t.logo_url,t.logo_kind FROM selected s JOIN sites t USING(qid) JOIN entities e USING(qid)
+        """SELECT s.qid,t.logo_url,t.logo_kind FROM (SELECT qid,kind FROM selected UNION SELECT qid,kind FROM selected_leaders) s JOIN sites t USING(qid) JOIN entities e USING(qid)
            WHERE s.kind='organisation' AND t.status='ok' AND t.logo_url IS NOT NULL
              AND json_extract(e.data,'$.logo') IS NULL
-             AND s.qid NOT IN (SELECT qid FROM images WHERE role='logo' AND status='ok')""")]
+             AND s.qid NOT IN (SELECT qid FROM images WHERE role='logo')""")]
     print("site logos to fetch", len(site_jobs), flush=True)
 
     def get_logo(job):
@@ -974,6 +1352,9 @@ def opening(desc):
     first = desc.split(" ", 1)[0]
     if first.lower() in ("a", "an", "the"):
         return desc[0].lower() + desc[1:]
+    if re.match(r"\d+(st|nd|rd|th)\b", first) or re.match(r"(president|prime minister|vice[- ]president|governor|director|secretary|minister|"
+                                                           r"chair\w*|speaker|mayor|head|deputy|first lady)\b.*\bof\b", desc, re.I):
+        return "the " + desc  # "the 12th Governor of Lagos", "the President of Rwanda since 2000"
     if first.lower() in GENERIC_FIRST:
         desc = desc[0].lower() + desc[1:]
     return a_an(desc)
@@ -998,8 +1379,13 @@ def stage_finalise():
     selected_orgs = {r[0] for r in con.execute("SELECT qid FROM selected WHERE kind='organisation'")}
     names_seen = {}
     run1 = {r[0] for r in con.execute("SELECT qid FROM run1_selected")}
+    leaders = {r["qid"]: dict(r) for r in con.execute("SELECT * FROM selected_leaders")}
     rows = con.execute("""SELECT s.qid,s.kind,c.country,c.sitelinks,e.data,e.retrieved_at FROM selected s
-                          JOIN candidates c USING(qid) JOIN entities e USING(qid)""").fetchall()
+                          JOIN candidates c USING(qid) JOIN entities e USING(qid)
+                          UNION ALL SELECT l.qid,'organisation',l.country,0,e.data,e.retrieved_at FROM selected_leaders l
+                          JOIN entities e USING(qid) WHERE l.kind='organisation'
+                          UNION ALL SELECT l.qid,'person',l.country,0,p.data,p.retrieved_at FROM selected_leaders l
+                          JOIN person_entities p USING(qid) WHERE l.kind='person'""").fetchall()
     for r in rows:
         key = (r["kind"], r["country"], re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", json.loads(r["data"])["name"]).lower()))
         names_seen.setdefault(key, []).append(r["qid"])
@@ -1012,7 +1398,8 @@ def stage_finalise():
         at = r["retrieved_at"]
         flags = []
         rec = dict(record_id="wd:" + qid, type=kind, qid=qid, name=d["name"], country=deceased_country(d, r["country"]) if kind == "deceased" else r["country"], sitelinks=d["sitelinks"],
-                   description=d.get("description"), website=d.get("website"), run_id=DECEASED_RUN_ID if kind == "deceased" else RUN_ID if qid in run1 else EXPANSION_RUN_ID, retrieved_at=at,
+                   description=d.get("description"), website=d.get("website"), segment=leaders[qid]["segment"] if qid in leaders else None,
+                   run_id=LEADERS_RUN_ID if qid in leaders else DECEASED_RUN_ID if kind == "deceased" else RUN_ID if qid in run1 else EXPANSION_RUN_ID, retrieved_at=at,
                    wikipedia_lead=("https://en.wikipedia.org/wiki/" + urllib.parse.quote(d["enwiki"].replace(" ", "_"))) if d.get("enwiki") else None)
         prov = {"name": ("wikidata", wd_url, "high", "API"), "country": ("wikidata", wd_url, "high", "API")}
         if d.get("description"):
@@ -1136,6 +1523,71 @@ def stage_finalise():
             for f in ("lifespan", "person_field", "current_title", "roles", "awards", "born_in", "died_in", "education"):
                 if rec.get(f):
                     prov[f] = ("wikidata", wd_url, "medium", "API")
+        elif kind == "person":
+            L = leaders[qid]
+            rec["person_field"] = person_field(con, d)
+            names = lambda key, n: [x for x in (label(con, q) for q in (d.get(key) or [])[:n * 3]) if x and not PARTYISH.search(x) and not PARTY_ABBR.search(x)][:n]
+            occs = names("occupations", 3)
+            positions = []
+            for q, a, b in d.get("positions_dated") or []:
+                lab = label(con, q)
+                if not lab or PARTYISH.search(lab) or PARTY_ABBR.search(lab) or lab in [x.split(" (")[0] for x in positions]:
+                    continue
+                span = f" ({a}–{b})" if a and b and a != b else f" ({a})" if a and b else f" (from {a})" if a else ""
+                positions.append(lab + span)
+            awards, boards, members = names("awards", 8), names("boards", 4), names("member_of", 3)
+            org_name = label(con, L["org_qid"]) if L["org_qid"] else None
+            employer = next(iter(names("employers", 1)), None)
+            if org_name:
+                rec["current_org"], rec["current_title"] = org_name, L["role"]
+            else:
+                rec["current_org"], rec["current_title"] = employer, cap(occs[0]) if occs else None
+            rec["roles"] = json.dumps(positions[:8], ensure_ascii=False)
+            rec["awards"] = json.dumps(awards, ensure_ascii=False)
+            seg = L["segment"]
+            listed_org = bool(L["org_qid"]) and L["org_qid"] in listed
+            if seg in ("Business leader", "NGO or community leader") and org_name:
+                rec["criterion"], rec["criterion_met"] = "I2", 1 if listed_org else 0
+            elif seg == "Public-sector leader":
+                rec["criterion"], rec["criterion_met"] = "I1", 0
+            elif seg == "Academic or professional" and L["role"] in ("Rector", "Head", "Chair"):
+                rec["criterion"], rec["criterion_met"] = "I3", 0
+            elif awards:
+                rec["criterion"], rec["criterion_met"] = "I6", 0
+            else:
+                rec["criterion"], rec["criterion_met"] = "LEAD", 0
+            rec["evidence_url"] = wd_url
+            flags.append("living_person_review_required")
+            if not rec["criterion_met"]:
+                flags.append("criterion_not_confirmed_from_primary_source")
+            if org_name or any("(from " in x for x in positions):
+                flags.append("current_role_not_confirmed")
+            desc_text = d.get("description") or ""
+            country = rec["country"]
+            if desc_text:
+                bio = f"{d['name']} is {opening(desc_text)}."
+                if country not in desc_text and not AFRICAN.search(desc_text):
+                    bio += f" They are from {country}."
+            else:
+                bio = f"{d['name']} is {a_an(occs[0][0].lower() + occs[0][1:]) if occs else 'a public figure'} from {country}."
+            if org_name:
+                bio += f" {L['role']} of {org_name.rstrip('.')}" + (f" (from {L['start_year']})" if L["start_year"] else "") + "."
+            elif employer:
+                bio += f" Works with {employer.rstrip('.')}."
+            if len(occs) > 1:
+                bio += f" Occupations: {join_list([o[0].lower() + o[1:] if not o[:2].isupper() else o for o in occs])}."
+            if positions:
+                bio += f" Positions held: {join_list(positions[:5])}."
+            if boards:
+                bio += f" Board memberships: {join_list(boards)}."
+            if members:
+                bio += f" Member of {join_list(members)}."
+            if awards:
+                bio += f" Awards and honours: {join_list(awards[:6])}."
+            rec["bio"] = bio
+            for f in ("person_field", "current_title", "current_org", "roles", "awards"):
+                if rec.get(f):
+                    prov[f] = ("wikidata", wd_url, "medium", "API")
         else:
             orgs = [(o, label(con, o)) for o in business_founder_orgs(con, qid, founders, business)]
             orgs = [(o, n) for o, n in orgs if n]
@@ -1223,7 +1675,8 @@ def stage_finalise():
             "2_source_url_success": True,
             "3_claim_quotes": "not_applicable_no_ai_text",
             "4_allowlisted_fields_only": True,
-            "5_sensitive_scan": not ((CRIME if kind == "deceased" else SENSITIVE).search(scan_text) or CONTACT.search(scan_text)),
+            "5_sensitive_scan": not ((CRIME if kind == "deceased" else SENSITIVE).search(scan_text) or CONTACT.search(scan_text)
+                                    or (kind == "person" and PARTY_ABBR.search(scan_text))),
             "6_suppression_check": "passed_but_no_list_exists_yet" if not suppression_set() else True,
             "7_duplicates_flagged": "possible_duplicate" in flags,
         }
@@ -1245,7 +1698,8 @@ def stage_finalise():
     print("records", con.execute("SELECT COUNT(*) FROM records").fetchone()[0], "site descriptions dropped", site_clean, "records failed scan", scan_failed)
 
 
-STAGES = dict(seed_deceased=stage_seed_deceased, seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, logos=stage_logos, finalise=stage_finalise)
+STAGES = dict(seed_leaders=stage_seed_leaders, enrich_leaders=stage_enrich_leaders, select_leaders=stage_select_leaders,
+              sites_leaders=stage_sites_leaders, seed_deceased=stage_seed_deceased, seed=stage_seed, enrich=stage_enrich, sites=stage_sites, select=stage_select, images=stage_images, logos=stage_logos, finalise=stage_finalise)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in STAGES:

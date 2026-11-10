@@ -1,6 +1,6 @@
 # Acquisition status
 
-Updated 2026-11-09 by the acquisition session. This session does not own the shared docs.
+Updated 2026-11-11 by the acquisition session. This session does not own the shared docs.
 
 ## Done: all-Africa test run
 Run on your instructions of 2026-11-09: skip Legal; notable entrepreneurs and organisations; local SQL database; filterable HTML table; then 10,000 more, all African countries, longer bios, more facts rather than AI.
@@ -26,6 +26,39 @@ On your instruction: 1,000 notable Africans who have died, from any field, not o
 - **Never read:** party, religion, ethnicity, cause of death and family.
 - **Grouping:** each person is grouped by field: politics, sport, literature, royalty and so on.
 - **Breakdown:** `docs/data-breakdown.md` holds counts only. Regenerate it after every run with `python -I acquisition/pipeline/breakdown.py`.
+
+## Done: living leaders and sector organisations (`leaders-2026-11-10`)
+On your instruction of 2026-11-10: add the brief's groups 1 to 5 (section 4), at most 2,000 profiles.
+
+- **Count:** 1,989 records. 2,000 were selected and 11 failed the final sensitive-term scan.
+  - Living people: 549 creative or sports figures (180 of them in sport), 547 public-sector leaders, 437 academics or professionals, 124 business leaders and 25 NGO or community leaders.
+  - Organisations: 260 healthcare, 26 chambers of commerce and 21 finance and investment.
+  - Total in staging: 13,489.
+- **How people were found:**
+  - The top 1,500 living people per country by number of Wikipedia editions. Footballers count only with 30 or more editions.
+  - Current chief executives, chairs, rectors and heads of the organisations we already hold. Wikidata lists only 337 of these.
+- **Grouping:** a person who leads one of our organisations takes that organisation's category. Otherwise their occupations and positions decide the group. Politicians always count as public-sector leaders.
+- **Per-country limits:** every country gets 2 people per group first, and no country takes more than 15% of a group. Room left by short groups went first to academics, public sector, creative arts and healthcare, and to sport last.
+- **Fields kept (REQ-139):** name, description, title, organisation, positions held with years, boards, memberships and awards.
+- **Never read (REQ-140):** birth date, birthplace, education, family, party, religion and ethnicity. Party-like memberships and positions are dropped, and so is anyone whose description names a party.
+- **Excluded:**
+  - religious and military roles, though heads of state with a military past stay
+  - coup leaders
+  - traditional rulers and royals
+  - activists who lead no organisation, because their activism can reveal political opinion
+  - anyone with a sensitive term
+  - names containing digits
+  - people already in the directory
+- **Criteria:** the plan's I1 (public office), I2 (leads a qualifying organisation), I3 (university head) and I6 (award) are recorded, but none is met yet. Wikidata is not the evidence source the plan names for them. Every living person is flagged `living_person_review_required`.
+- **Gaps:**
+  - Wikidata has few executives and finance firms, and no professional-services firms passed the checks.
+  - Business leaders came to 124 against a target of 300, and finance to 21 against 160. The spare room went to the other groups.
+- **Fixes in the same run:**
+  - A stray control character had stopped the Government category matching plain "government".
+  - Organisations re-categorised: Government 1,986 → 2,015; a new Healthcare category holds 279.
+  - "Director-General" and "chief executive officer" no longer count as military or royalty.
+  - Birth years written as "1992 -" are now stripped.
+- **Known side effect:** for 865 candidates that earlier runs had also considered, this run's exclusion reason replaced the earlier one in the `exclusions` table.
 
 ## Differences from the plan
 | Plan | This run | Why |
@@ -59,3 +92,5 @@ The shared-docs owner should apply these:
 - Add to the plan's research log: `query.wikidata.org/robots.txt` disallows `/sparql` for crawlers, although the WDQS manual documents scripted use under a User-Agent policy.
 - Decide whether deceased notable people are in scope (plan 1.4 excludes them; REQ-139 assumes living people). If yes, add a REQ and a criterion code (this run uses `HIST`).
 - `docs/contracts/import-format.md`: this run's records are not yet in contract format. An export step is still to be written.
+- Living notable people beyond entrepreneurs (run `leaders-2026-11-10`) are collected under plan criteria I1, I2, I3 and I6, using Wikidata as a lead source only. The plan's 300 "individuals" need a REQ that says which groups count, and how creative and sports figures qualify; I6 needs the named-award list.
+- Record the new organisation category Healthcare (brief 4.2) alongside the existing categories.

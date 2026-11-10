@@ -25,12 +25,15 @@ REGIONS = {
                         "Zambia", "Zimbabwe"],
 }
 REGION_OF = {c: r for r, cs in REGIONS.items() for c in cs}
-TYPES = [("organisation", "Organisations"), ("entrepreneur", "Entrepreneurs"), ("deceased", "Notable people (deceased)")]
+TYPES = [("organisation", "Organisations"), ("entrepreneur", "Entrepreneurs"), ("person", "Notable people (living)"),
+         ("deceased", "Notable people (deceased)")]
 WEBSITE = {"ok": "Reached", "no_website": "No website listed", "unreachable": "Unreachable", "http_error": "Site returned an error",
            "bad_url": "Domain not found or invalid", "robots_blocked": "Not fetched: blocked by robots.txt", "not_checked": "Not checked"}
 CRITERIA = {"O1": "O1: listed on a stock exchange", "O5": "O5: has a Wikipedia article (via Wikidata)",
             "E1": "E1: founder of a listed company", "LEAD": "Lead: E1 or E2 not yet shown",
-            "HIST": "Historical figure: outside the plan criteria"}
+            "HIST": "Historical figure: outside the plan criteria",
+            "I1": "I1: public office (shown on Wikidata, to confirm)", "I2": "I2: leads an organisation (met if it is listed)",
+            "I3": "I3: university head or academic body (to confirm)", "I6": "I6: has awards (to check against the named-award list)"}
 
 
 def region(country):
@@ -121,7 +124,7 @@ def main():
     w("## 4. Organisations by category")
     w("")
     w("The category comes from the organisation's Wikidata type. Rules are checked in this order and the first match wins: "
-      "NGO or association, Media, Education, Research, Government, then Business if the type is a kind of business, else Other.")
+      "NGO or association, Media, Education, Research, Healthcare, Government, then Business if the type is a kind of business, else Other.")
     w("")
     cats = q("""SELECT org_category, COUNT(*), SUM(website_status='ok'), SUM(logo_path IS NOT NULL), SUM(photo_path IS NOT NULL)
                 FROM records WHERE type='organisation' GROUP BY 1 ORDER BY 2 DESC""")
@@ -145,6 +148,23 @@ def main():
         rows.append([f"Other titles ({len(rest)})", fmt(sum(n for _, n in rest))])
     w(table(["Title", "Records"], rows))
     w("")
+
+    w("## 5a. Brief audience groups (run `leaders-2026-11-10`)")
+    w("")
+    w("Groups from the brief, section 4. Living people are grouped by the organisation they lead, if Wikidata names them as its "
+      "chief executive, chair, rector or head. Otherwise they are grouped by field, as in section 6. Sector organisations are "
+      "grouped by their Wikidata type.")
+    w("")
+    segs = q("""SELECT type, segment, COUNT(*), SUM(photo_path IS NOT NULL OR logo_path IS NOT NULL), SUM(criterion_met)
+                FROM records WHERE segment IS NOT NULL GROUP BY 1, 2 ORDER BY 1 DESC, 3 DESC""")
+    w(table(["Type", "Group", "Records", "With image", "Meet a plan criterion"],
+            [[dict(TYPES).get(t, t), g, fmt(n), fmt(i), fmt(m)] for t, g, n, i, m in segs], ["---", "---", "---:", "---:", "---:"])
+      if segs else "No records from this run yet.")
+    w("")
+    fields = q("SELECT person_field, COUNT(*) n FROM records WHERE type='person' GROUP BY 1 ORDER BY n DESC")
+    if fields:
+        w("**Living people by field:** " + ", ".join(f"{f or '(none)'} {fmt(n)}" for f, n in fields) + ".")
+        w("")
 
     w("## 6. Notable people (deceased) by field")
     w("")
