@@ -11,8 +11,8 @@
     professions: ["Executive", "Founder", "Academic", "Legal", "Medical", "Creative", "Public servant"],
     roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", admin: "Administrator" },
     streams: { subscription: "Subscription", media: "Media / editorial", sponsorship: "Sponsorship" },
-    arrTypes: { sponsored_post: "Sponsored post", sponsored_profile: "Sponsored profile", media_package: "Media / editorial package", awards_sponsorship: "Awards sponsorship", other: "Other" },
-    defaultStream: { sponsored_post: "media", sponsored_profile: "subscription", media_package: "media", awards_sponsorship: "sponsorship", other: "subscription" },
+    arrTypes: { sponsored_post: "Sponsored post", media_package: "Media / editorial package", awards_sponsorship: "Awards sponsorship", other: "Other" },
+    defaultStream: { sponsored_post: "media", media_package: "media", awards_sponsorship: "sponsorship", other: "subscription" },
     stages: ["Category definition", "Nominations", "Evidence collection", "Eligibility screening", "Independent assessment", "Shortlisting", "Final judging and approval", "Winner notification", "Public announcement", "Awards presentation"]
   };
 
@@ -190,7 +190,7 @@
       { id: "c4", name: "Ngozi Balogun-Mensah", segment: "Individual", contact: "Ngozi Balogun-Mensah", ext: "CUS-0004", profileId: "p-a" }
     ];
     S.arrangements = [
-      { id: "arr1", type: "sponsored_profile", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
+      { id: "arr1", type: "media_package", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
       { id: "arr2", type: "sponsored_post", customerId: "c3", linkedProfile: "", linkedArticle: "a3", amount: 5000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "2026-11-04", end: "2026-12-04", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "media", notes: "Awaiting payment.", consent: false },
       { id: "arr3", type: "awards_sponsorship", customerId: "c3", linkedProfile: "", amount: 100000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-05", end: "2027-03-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "sponsorship", notes: "Sample awards sponsorship. Has no effect on nominations or judging.", consent: false },
       { id: "arr4", type: "media_package", customerId: "c2", linkedProfile: "", amount: 8000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, cancelled: false, endedManual: false, stream: "media", notes: "Proposed.", consent: false },
@@ -260,7 +260,7 @@
     var vp = S.profiles.filter(function (p) { return p.trust === "verified" && p.status === "published" && !p.compiled; })[0];
     if (vp) { vp.claimed = true; vp.claimedAt = "2026-10-20"; vp.manager = "editor@example.test"; }
     var cp = S.profiles.filter(function (p) { return p.status === "published" && !p.compiled && p.trust !== "verified" && p.type === "individual"; })[0];
-    S.claims = cp ? [{ id: "CLM-0001", profileId: cp.id, name: "Sample Claimant", relationship: "The person named on this profile", email: "claimant@example.test", phone: "", role: "", evidence: "Sample: my staff page on the company website lists me with this title.", status: "new", at: "2026-11-08", by: "", reason: "" }] : [];
+    S.claims = cp ? [{ id: "CLM-0001", profileId: cp.id, name: "Sample Claimant", relationship: "The person named on this profile", email: "claimant@example.test", phone: "", role: "", evidence: "Sample: my staff page on the company website lists me with this title.", consent: true, status: "new", at: "2026-11-08", due: "2026-11-13", remindAt: "2026-11-11", by: "", reason: "" }] : [];
     S.processors = [
       { name: "Web hosting (cPanel host)", role: "Hosts site and database", location: "TBC (Q26)", dpa: "Not yet" },
       { name: "Email provider", role: "Transactional email", location: "TBC", dpa: "Not yet" },

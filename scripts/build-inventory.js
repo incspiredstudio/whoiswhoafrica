@@ -20,14 +20,15 @@ const NOUI = {
   52: "Lives in prototype/tokens.js (name) and prototype/theme/tokens.css (design values); not a screen.", 53: "Formatting (UTF-8, NGN, WAT) applies across screens; visible in the register and dates.", 54: "Capacity target for hosting.", 55: "Browser support target.", 56: "Staging and CI.",
   78: "Analytics service; loads only after consent (banner V46).", 80: "Object storage behind a CDN; a build property.", 95: "Runbook document.",
   96: "Delivery date.", 98: "Delivery date; the templates are V09 to V11.", 101: "Delivery date.", 103: "Delivery date.", 104: "Delivery volume (Q1).",
-  108: "Staff sign-in is A01. Password reset and session list are WordPress defaults, not designed here (D-034: no public login).",
+  108: "Staff sign-in is the WordPress login (the wireframe screen A01 was removed). Password reset and session list are WordPress defaults, not designed here (D-034: no public login).",
   190: "Build check that fails on hard-coded brand values; not a screen."
 };
 Object.assign(NOUI, {
   136: "Enforced in the acquisition pipeline by the named approver, not in the website admin (D-038).", 137: "Enforced in the acquisition pipeline (D-038); the import dry run (A20) checks the file against the import contract.", 138: "Enforced in the acquisition pipeline (D-038).",
   165: "AI drafting belongs to the acquisition pipeline, not the website (D-037).", 167: "Pipeline drafting rule (acquisition), not a screen.", 169: "Pipeline and provider terms (acquisition), not a screen.",
   191: "No directory-size target on the website or its admin (D-035).", 206: "No review-capacity figure until the pilot measures one (D-035).",
-  124: "Claiming is removed (D-036); the requirement is stale.", 150: "Verified shown to staff as a checkmark (D-057); no public Claimed or Unclaimed label (A06, A61).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
+  124: "Claiming is removed (D-036); the requirement is stale.", 150: "Claimed shown to staff as a checkmark (D-059); no public Claimed label and no trust label on profiles (A06, A61).", 25: "Withdrawn with the Verified label (D-059).", 153: "Withdrawn with the Verified label (D-059).", 152: "Claiming is removed (D-036); the requirement is stale.", 174: "Disputes escalate through the Support inbox (A12) to the Editor-in-Chief.",
+  257: "Home page curation modes (D-059): documented in the requirements and architecture; the Home page settings screen is drawn when the modes are approved.", 260: "Page copy is edited in the page editor in WordPress (D-059), not in a wireframe screen.",
   255: "WordPress plugin that cuts out photo backgrounds on import (D-057); a background job with no screen in the wireframe.",   238: "Future item, not designed or built now (D-033 as amended).", 230: "Request to claim removed (D-036).", 231: "Claim verification screen removed (D-036).", 232: "Replaced by the Support inbox and direct staff edits (D-040).", 192: "Sourcing runs in the acquisition pipeline."
 });
 for (let n = 210; n <= 228; n++) NOUI[n] = "Publish-first rule (D-033) with no screen of its own. The public label and listing rules are in V52 and V56; the staff states are not yet fully in the wireframe.";

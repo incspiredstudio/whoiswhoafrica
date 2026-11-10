@@ -81,7 +81,7 @@
   W.ok = function (name) { return !!W.S.flags[name].on; };
   W.nomOpen = function () { return W.ok("nominations"); };
   /* Once nominees are announced, nominations for the edition are over: the Nominate page and its links say so, or step aside. */
-  W.nomClosed = function () { return !W.nomOpen() && (!!W.S.awards.published || W.S.nominations.some(W.nomPublic)); };
+  W.nomClosed = function () { return !W.nomOpen(); };
   /* Shortlist, finalist and winner pages go public through the normal publish step (staff press Publish on the nomination). There is no flag (D-037). */
   W.nomPublic = function (n) { return !!(n && ["shortlisted", "finalist", "winner"].indexOf(n.status) >= 0 && n.pub); };
   W.nomStage = function (n) {
@@ -90,10 +90,10 @@
   };
 
   /* ---------- html bits ---------- */
-  /* Verified is shown to staff as a checkmark badge, the kind social platforms use (D-057). Public pages never show it (D-054). */
+  /* Claimed is shown to staff as a checkmark badge, the kind social platforms use (D-057). Public pages never show it (D-054). */
   W.vcheck = function (p, big) {
-    if (!p || p.trust !== "verified") return "";
-    return '<span class="vcheck' + (big ? " vcheck--lg" : "") + '" title="Verified' + (p.claimed ? " and claimed" : "") + '. Staff only, never bought (REQ-150)."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 1.8l2.4 1.9 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 12l-1.9 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 22.9l-2.4-1.9-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 12l1.9-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3z"/><path fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M7.6 12.3l3 3 5.8-6.2"/></svg><span class="sr">Verified' + (p.claimed ? ", claimed" : "") + "</span></span>";
+    if (!p || !p.claimed) return "";
+    return '<span class="vcheck' + (big ? " vcheck--lg" : "") + '" title="Claimed. Staff only, never bought (REQ-150)."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 1.8l2.4 1.9 3-.3 1.2 2.8 2.8 1.2-.3 3L22.9 12l-1.9 2.4.3 3-2.8 1.2-1.2 2.8-3-.3L12 22.9l-2.4-1.9-3 .3-1.2-2.8-2.8-1.2.3-3L1.1 12l1.9-2.4-.3-3 2.8-1.2 1.2-2.8 3 .3z"/><path fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M7.6 12.3l3 3 5.8-6.2"/></svg><span class="sr">Verified' + (p.claimed ? ", claimed" : "") + "</span></span>";
   };
   W.trustPill = W.vcheck;
   W.PENDING_LABEL = "Compiled automatically from public sources. Human review pending.";
@@ -171,7 +171,7 @@
   W.qs = function (q) { var s = Object.keys(q).filter(function (k) { return q[k] !== "" && q[k] != null; }).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(q[k]); }).join("&"); return s ? "?" + s : ""; };
 
   /* ---------- chrome ---------- */
-  W.NAV = [["Home", "#/"], ["About", "#/about"], ["People", "#/people"], ["Businesses", "#/businesses"], ["Institutions", "#/institutions"], ["Industries", "#/industries"], ["Awards", "#/awards"], ["Stories", "#/stories"], ["Get Featured", "#/subscribe"], ["Nominate", "#/nominate"], ["Contact", "#/contact"]];
+  W.NAV = [["Home", "#/"], ["About", "#/about"], ["People", "#/people"], ["Businesses", "#/businesses"], ["Institutions", "#/institutions"], ["Industries", "#/industries"], ["Awards", "#/awards"], ["Stories", "#/stories"], ["Get listed", "#/subscribe"], ["Nominate", "#/nominate"], ["Contact", "#/contact"]];
 
   function wfbar(hf) {
     var S = W.S, roles = W.LISTS.roles, staff = S.role !== "visitor";
@@ -180,7 +180,7 @@
       (hf && S.flags.nominations.on ? '<span class="tag">Nominations flag ON</span>' : "") +
       (hf && staff ? '<a class="btnlink" href="#/admin">Staff console</a><button type="button" data-act="signout">Sign out</button>' : "") +
       '<button type="button" data-act="outbox">Email outbox (' + S.emails.length + ')</button>' +
-      '<a class="btnlink" href="#/staff/signin">Staff sign in (wp-admin preview)</a><a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
+      '<a class="btnlink" href="#/inventory">Inventory</a><a class="btnlink" href="#/state">State</a>' +
       '<button type="button" data-act="reset">Reset sample data</button>' + (hf ? '<button type="button" data-act="toolsToggle">Hide tools</button>' : "") + "</div></div>";
   }
   function banners() {
@@ -303,7 +303,7 @@
   W.act.toolsToggle = function () { W.ui.toolsHidden = !W.toolsHidden(); W.render(); };
   W.act.reset = function () { W.reset(); W.ui = { flows: false, notes: false, nav: false, modal: null, nom: { step: 0, d: {} }, img: "", toolsHidden: W.ui.toolsHidden }; location.hash = "#/"; W.render(); W.toast("Sample data reset."); };
   W.act.role = function (v) { W.S.role = v; var pu = (W.S.users || []).filter(function (u) { return u.rk === v; })[0]; W.S.user = pu ? pu.email : null; W.save(); var area = W.cur && W.cur.r.opts.area; if (v !== "visitor" && area !== "staff") location.hash = "#/admin"; else if (v === "visitor" && area === "staff") location.hash = "#/"; else W.render(); };
-  W.act.signout = function () { W.S.role = "visitor"; W.S.user = null; W.ui.staffStep = 0; W.ui.staffErr = ""; W.save(); W.toast("Signed out."); location.hash = "#/"; W.render(); };
+  W.act.signout = function () { W.S.role = "visitor"; W.S.user = null; W.save(); W.toast("Signed out."); location.hash = "#/"; W.render(); };
   W.act.consent = function (v) { W.S.consent = v; W.save(); W.render(); W.toast(v === "all" ? "Analytics accepted. Consent stored with timestamp and policy version." : "Essential cookies only."); };
   W.act.cookiePrefs = function () { W.S.consent = null; W.save(); W.render(); };
   W.act.outbox = function () {

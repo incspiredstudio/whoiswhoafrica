@@ -49,7 +49,6 @@
   function railInit() {
     clearInterval(railT); railT = 0; railOff = reduced();
     var r = railEl(); if (!r) return;
-    var pp = document.querySelector(".h-rail-pp"); if (pp && railOff) { pp.setAttribute("aria-pressed", "true"); pp.setAttribute("aria-label", "Start automatic scrolling"); }
     var hold = function () { railPause = Date.now() + 7000; };
     ["pointerdown", "touchstart", "wheel", "focusin"].forEach(function (t) { r.addEventListener(t, hold, { passive: true }); });
     railT = setInterval(function () {
@@ -58,11 +57,6 @@
       railStep(1);
     }, 3200);
   }
-  W.act.railNav = function (dir) { railPause = Date.now() + 7000; railStep(parseInt(dir, 10) || 1); };
-  W.act.railToggle = function (arg, btn) {
-    railOff = !railOff; btn = btn || document.querySelector(".h-rail-pp"); if (!btn) return;
-    btn.setAttribute("aria-pressed", railOff ? "true" : "false"); btn.setAttribute("aria-label", railOff ? "Start automatic scrolling" : "Pause automatic scrolling");
-  };
   /* Confetti on the winners page: one short burst when the page is opened, in the brand colours (read from the tokens). Off for reduced motion. */
   function confetti() {
     if (reduced() || document.getElementById("confetti")) return;
@@ -180,6 +174,26 @@
   document.addEventListener("input", function (ev) { if (ev.target && ev.target.id === "sovq") { var r = document.getElementById("sovRes"); if (r) r.innerHTML = W.searchPanelResults(ev.target.value); } });
   document.addEventListener("click", function (ev) { if (!ev.target.closest) return; var o = ev.target.closest(".sov"); if (o && (ev.target === o || ev.target.closest(".sov a"))) W.act.searchClose(true); });
   window.addEventListener("hashchange", function () { if (document.querySelector(".sov.open")) W.act.searchClose(true); document.body.style.overflow = ""; });
+  /* Menu sections in the mobile drawer open and close with a height and fade animation instead of snapping. */
+  document.addEventListener("click", function (ev) {
+    var s = ev.target.closest && ev.target.closest(".drawer summary"); if (!s) return;
+    var d = s.parentElement, list = d.querySelector("ul"); if (!list || reduced() || !list.animate) return;
+    ev.preventDefault();
+    if (d._anim) { d._anim.cancel(); d._anim = null; }
+    var opts = { duration: 300, easing: "cubic-bezier(.2,.7,.2,1)" };
+    list.style.overflow = "hidden"; list.style.boxSizing = "border-box";
+    if (!d.open) {
+      d.classList.remove("is-closing"); d.open = true;
+      var h = list.offsetHeight, pb = parseFloat(getComputedStyle(list).paddingBottom) || 0;
+      d._anim = list.animate([{ height: "0px", paddingBottom: "0px", opacity: 0 }, { height: h + "px", paddingBottom: pb + "px", opacity: 1 }], opts);
+      d._anim.onfinish = function () { d._anim = null; list.style.overflow = ""; list.style.boxSizing = ""; };
+    } else {
+      var h2 = list.offsetHeight, pb2 = parseFloat(getComputedStyle(list).paddingBottom) || 0;
+      d.classList.add("is-closing");
+      d._anim = list.animate([{ height: h2 + "px", paddingBottom: pb2 + "px", opacity: 1 }, { height: "0px", paddingBottom: "0px", opacity: 0 }], opts);
+      d._anim.onfinish = function () { d._anim = null; d.open = false; d.classList.remove("is-closing"); list.style.overflow = ""; list.style.boxSizing = ""; };
+    }
+  });
   /* ---------- mobile drawer ---------- */
   W.act.drawer = function (how) {
     var d = document.getElementById("drawer"); if (!d) return;

@@ -51,49 +51,23 @@
     return head("Suppression list", "Permanent. No import or sync can bring these back. There is no remove button on purpose (REQ-147, 207)." + (edit ? "" : " Read-only for your role.")) + W.table(["Name", "Reason type", "Date", "Detail"], W.S.suppression.map(function (s) { return [e(s.name), e(s.kind), e(s.at), e(s.reason)]; })) + (edit ? '<form class="card stack-s" data-form="supp"><h2>Add manually</h2>' + W.field("Name", "name", { req: true }) + W.field("Reason", "reason", { req: true }) + '<button class="btn">Add</button></form>' : '<p class="small muted">A valid removal request adds a name here automatically (Support inbox). Adding by hand is for the Administrator; a valid removal handled by an Editor adds the name automatically.</p>');
   });
   W.forms.supp = function (d) { W.S.suppression.unshift({ id: W.uid("sp"), name: d.name, kind: "Manual", at: W.TODAY, reason: d.reason }); W.log("suppression.add", d.name, d.reason); W.save(); W.render(); };
-  var TAXFIELD = { industries: "industry", cities: "city", countries: "country", orgTypes: "orgType", professions: "profession" };
-  function taxCount(k, name) { return W.S.profiles.filter(function (p) { return p[TAXFIELD[k]] === name; }).length; }
-  mini("/admin/taxonomy/:tax", "A57", "taxonomy", function (par) {
-    var k = par.tax, def = W.TAXES[k]; if (!def) return "<h1>Not found</h1>";
-    var T = W.S.tax[k], hier = def[2];
-    var rows = [];
-    if (hier) { W.LISTS.countries.forEach(function (c) { T.filter(function (t) { return t.parent === c; }).forEach(function (t) { rows.push([t, false]); }); }); T.filter(function (t) { return W.LISTS.countries.indexOf(t.parent) < 0; }).forEach(function (t) { rows.push([t, false]); }); } else T.forEach(function (t) { rows.push([t, false]); });
-    return head(def[0], "A custom taxonomy in WordPress, managed on its native term screen (D-039, REQ-009). Editors and Administrators add and edit terms. Reviewers can only assign existing terms to a profile. Preview of the native screen.") +
-      '<div class="grid side"><form class="card stack-s" data-form="taxadd"><h2>Add new ' + e(def[1].toLowerCase()) + '</h2><input type="hidden" name="k" value="' + e(k) + '">' + W.field("Name", "name", { req: true, hint: "The name as it shows on the site." }) + W.field("Slug", "slug", { hint: "Optional. The URL-friendly version of the name." }) + (hier ? W.field("Parent country", "parent", { type: "select", options: W.LISTS.countries, blank: "None", value: "Nigeria" }) : "") + '<button class="btn">Add new ' + e(def[1].toLowerCase()) + '</button></form>' +
-      '<div class="stack"><div class="tablewrap"><table class="t"><thead><tr><th scope="col">Name</th><th scope="col">Slug</th><th scope="col">' + (hier ? "Parent" : "Description") + '</th><th scope="col">Count</th><th scope="col"></th></tr></thead><tbody>' + rows.map(function (r) { var t = r[0]; return "<tr><td>" + (t.parent && hier ? "\u2014 " : "") + "<strong>" + e(t.name) + "</strong></td><td class=\"mono\">" + e(t.slug) + "</td><td>" + (hier ? e(t.parent || "\u2014") : "\u2014") + "</td><td>" + taxCount(k, t.name) + "</td><td>" + W.btn("Edit", "taxEdit", k + "|" + t.slug, "sm alt") + " " + W.btn("Delete", "taxDel", k + "|" + t.slug, "sm alt bad") + "</td></tr>"; }).join("") + '</tbody></table></div><p class="small muted">Count = profiles using the term. A term in use cannot be deleted until its profiles are reassigned. Terms are used by profile forms, filters and the import check.</p></div></div>';
-  });
-  function taxTerm(a) { var s = a.split("|"); return { k: s[0], t: W.S.tax[s[0]].filter(function (x) { return x.slug === s[1]; })[0] }; }
-  W.forms.taxadd = function (d) {
-    var T = W.S.tax[d.k], name = d.name.trim();
-    if (T.some(function (t) { return t.name.toLowerCase() === name.toLowerCase(); })) { W.toast("That term already exists."); return; }
-    T.push({ name: name, slug: W.slugify(d.slug || name), parent: d.parent || "" }); W.syncLists(); W.log("taxonomy.add", d.k, name); W.save(); W.render(); W.toast("Term added: " + name + ". Profile forms, filters and the import check now accept it.");
-  };
-  W.act.taxEdit = function (a) { var x = taxTerm(a); W.openModal("Edit term", '<form data-form="taxsave" class="stack-s"><input type="hidden" name="k" value="' + e(x.k) + '"><input type="hidden" name="old" value="' + e(x.t.slug) + '">' + W.field("Name", "name", { req: true, value: x.t.name }) + W.field("Slug", "slug", { value: x.t.slug }) + (W.TAXES[x.k][2] ? W.field("Parent country", "parent", { type: "select", options: W.LISTS.countries, blank: "None", value: x.t.parent }) : "") + '<button class="btn">Update</button></form>'); };
-  W.forms.taxsave = function (d) {
-    var x = taxTerm(d.k + "|" + d.old), before = x.t.name, f = TAXFIELD[d.k];
-    W.S.profiles.forEach(function (p) { if (p[f] === before) p[f] = d.name.trim(); });
-    x.t.name = d.name.trim(); x.t.slug = W.slugify(d.slug || d.name); if (d.parent !== undefined) x.t.parent = d.parent;
-    W.syncLists(); W.log("taxonomy.edit", d.k, before + " to " + x.t.name); W.ui.modal = null; W.save(); W.render(); W.toast("Term updated.");
-  };
-  W.act.taxDel = function (a) {
-    var x = taxTerm(a); if (taxCount(x.k, x.t.name)) { W.toast("In use by " + taxCount(x.k, x.t.name) + " profile(s). Reassign them first."); return; }
-    W.S.tax[x.k] = W.S.tax[x.k].filter(function (t) { return t !== x.t; }); W.syncLists(); W.log("taxonomy.delete", x.k, x.t.name); W.save(); W.render(); W.toast("Term deleted.");
-  };
-
   /* ---------- claims (D-057) ---------- */
   mini("/admin/claims", "A61", "review_claims", function () {
-    var rows = (W.S.claims || []).map(function (c) {
-      var p = W.profile(c.profileId), act = c.status === "new" ? W.btn("Approve", "claimOk", c.id, "sm") + " " + W.btn("Reject", "claimNo", c.id, "sm alt") : "";
-      return [e(c.id), p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "(removed)", e(c.name) + '<br><span class="muted small">' + e(c.relationship) + "</span>", e(c.email), '<span class="small">' + e(c.evidence) + "</span>", W.stPill(c.status === "new" ? "pending" : c.status === "approved" ? "approved" : "rejected") + (c.reason ? '<br><span class="muted small">' + e(c.reason) + "</span>" : ""), e(c.at), act];
+    var cards = (W.S.claims || []).map(function (c) {
+      var p = W.profile(c.profileId), open = c.status === "new", late = open && c.due && c.due < W.TODAY, soon = open && c.remindAt && c.remindAt <= W.TODAY;
+      var act = open ? '<div class="row">' + W.btn("Approve", "claimOk", c.id, "sm") + " " + W.btn("Reject", "claimNo", c.id, "sm alt") + "</div>" : "";
+      return '<article class="card stack-s"><div class="row between"><h2 style="margin:0">' + e(c.id) + " · " + (p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "(removed)") + "</h2>" + W.stPill(open ? "pending" : c.status === "approved" ? "approved" : "rejected") + "</div>" +
+        '<dl class="kv"><div><dt>Claimant</dt><dd>' + e(c.name) + '</dd></div><div><dt>Relationship</dt><dd>' + e(c.relationship) + '</dd></div><div><dt>Role</dt><dd>' + e(c.role || "—") + '</dd></div><div><dt>Work email</dt><dd>' + e(c.email) + '</dd></div><div><dt>Phone</dt><dd>' + e(c.phone || "—") + '</dd></div><div><dt>Consent to be contacted</dt><dd>' + (c.consent === false ? "No" : "Yes") + '</dd></div><div><dt>Received</dt><dd>' + e(c.at) + '</dd></div><div><dt>Decide by</dt><dd>' + e(c.due || "—") + (late ? " <strong>(overdue)</strong>" : soon ? " (reminder sent)" : "") + '</dd></div></dl>' +
+        '<div><strong>How they can be checked</strong><p>' + e(c.evidence) + "</p></div>" + (c.reason ? '<p class="small muted">Decision note: ' + e(c.reason) + "</p>" : "") + act + "</article>";
     });
-    return head("Claims", "Requests from a person or organisation to claim a profile. Approving sets Claimed and Verified (shown to staff as a checkmark) and lets you assign a user to keep the profile up to date (REQ-251 to 253).") + (rows.length ? W.table(["ID", "Profile", "Claimant", "Email", "Evidence", "Status", "Received", ""], rows) : W.empty("No claims", "Claims from the public form appear here."));
+    return head("Claims", "Requests from a person or organisation to claim a profile. Each claim must be decided within 5 days; reviewers and administrators get a reminder on day 3 and again when it is overdue (REQ-256). Approving sets the profile Claimed (a checkmark for staff, and the Claim button disappears from the public page) and lets you assign a user to keep it up to date (REQ-251 to 253).") + (cards.length ? '<div class="stack">' + cards.join("") + "</div>" : W.empty("No claims", "Claims from the public form appear here."));
   });
   W.act.claimOk = function (id) {
     var c = (W.S.claims || []).filter(function (x) { return x.id === id; })[0], p = c && W.profile(c.profileId); if (!c || !p || !W.can("review_claims")) return;
-    if (W.isPending(p)) { W.toast("Review the profile first: a pending profile cannot be Verified (REQ-226)."); return; }
-    c.status = "approved"; c.by = W.persona(); p.claimed = true; p.claimedAt = W.TODAY; p.trust = "verified";
-    p.history.push({ at: W.TODAY, by: W.persona(), what: "Claim approved; set Claimed and Verified" });
-    W.log("claim.approve", p.id, id + " approved; Verified set"); W.mail(c.email, "Your claim is approved", "You can now ask us to update the profile for " + p.name + ".", ""); W.save(); W.render(); W.toast("Claim approved. Assign a user on the profile if needed.");
+    if (W.isPending(p)) { W.toast("Review the profile first: a pending profile cannot be claimed (REQ-226)."); return; }
+    c.status = "approved"; c.by = W.persona(); p.claimed = true; p.claimedAt = W.TODAY;
+    p.history.push({ at: W.TODAY, by: W.persona(), what: "Claim approved; profile is Claimed" });
+    W.log("claim.approve", p.id, id + " approved; Claimed set"); W.mail(c.email, "Your claim is approved", "You can now ask us to update the profile for " + p.name + ".", ""); W.save(); W.render(); W.toast("Claim approved. Assign a user on the profile if needed.");
   };
   W.act.claimNo = function (id) {
     var c = (W.S.claims || []).filter(function (x) { return x.id === id; })[0]; if (!c || !W.can("review_claims")) return;
@@ -142,7 +116,7 @@
     return a;
   }
   mini("/admin/register/new", "A16", "register", function () {
-    var a = { id: "new", type: "sponsored_profile", customerId: W.S.customers[0].id, amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, stream: "subscription", linkedProfile: "", notes: "", consent: false };
+    var a = { id: "new", type: "media_package", customerId: W.S.customers[0].id, amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, stream: "subscription", linkedProfile: "", notes: "", consent: false };
     return '<p><a href="#/admin/register">← Register</a></p>' + head("New arrangement") + arrForm(a, true);
   });
   mini("/admin/register/:id", "A16", "register", function (par) {
@@ -152,7 +126,7 @@
   W.forms.arr = function (d) {
     if (d.id === "new") { var n = readArr(d, { id: W.uid("arr"), cancelled: false, endedManual: false }); W.S.arrangements.push(n); W.log("arrangement.create", n.id, n.type); W.save(); W.go("#/admin/register/" + n.id); return; }
     var a = W.find("arrangements", d.id), before = W.arrStatus(a); var n2 = readArr(d, a); Object.assign(a, n2);
-    W.log("arrangement.edit", a.id, "reason: " + d.reason + "; " + before + " to " + W.arrStatus(a)); W.save(); W.render(); W.toast("Saved. Status is now " + W.arrStatus(a) + "; Verified and Featured unchanged.");
+    W.log("arrangement.edit", a.id, "reason: " + d.reason + "; " + before + " to " + W.arrStatus(a)); W.save(); W.render(); W.toast("Saved. Status is now " + W.arrStatus(a) + "; Claimed and Featured unchanged.");
   };
   W.act.arrEnd = function (id) { var a = W.find("arrangements", id); a.endedManual = true; W.log("arrangement.end", id, "ended by admin"); W.save(); W.render(); W.toast("Ended. The Sponsored label it set is removed automatically; nothing is deleted."); };
   W.act.arrCancel = function (id) { var a = W.find("arrangements", id); a.cancelled = true; W.log("arrangement.cancel", id, "recorded; refund handled offline and recorded by an Administrator"); W.save(); W.render(); };
@@ -160,22 +134,6 @@
     return head("Sponsors", "Records admins attach to awards, categories and pages (REQ-186). Sponsor name is shown as a disclosure only.") + W.table(["Sponsor", "Link", "Logo", "Attached to"], W.S.sponsors.map(function (s) { return [e(s.name), e(s.link), e(s.logo), e(s.attached.join("; ") || "nothing")]; })) + '<form class="card stack-s" data-form="sponsor2"><h2>Add sponsor</h2>' + W.field("Name", "name", { req: true }) + W.field("Link", "link") + W.field("Attach to", "to", { type: "select", options: ["Awards: Maiden Edition", "Category page", "Stories page", "Not yet"] }) + '<button class="btn">Add</button></form>';
   });
   W.forms.sponsor2 = function (d) { W.S.sponsors.push({ id: W.uid("s"), name: d.name, link: d.link, logo: "Logo placeholder", attached: d.to === "Not yet" ? [] : [d.to] }); W.log("sponsor.add", d.name, d.to); W.save(); W.render(); };
-
-  /* ---------- articles ---------- */
-  mini("/admin/articles", "A24", "articles", function () {
-    return '<div class="row between"><h1>Articles</h1><a class="btn" href="#/admin/articles/new">New article</a></div>' + W.table(["Title", "Type", "Status", "Date", "Sponsored", ""], W.S.articles.map(function (a) { return [e(a.title), e(a.type), W.stPill(a.status), e(a.date), e(W.sponsorOfArticle(a) || "—"), '<a class="btn sm alt" href="#/admin/articles/' + e(a.id) + '">Edit</a>']; }));
-  });
-  function artForm(a) {
-    return '<form class="card stack-s" data-form="article"><input type="hidden" name="id" value="' + e(a.id) + '">' + W.field("Title", "title", { req: true, value: a.title }) + W.field("Type", "type", { type: "select", options: ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"], value: a.type }) + W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, value: a.industry }) + W.field("Author", "author", { value: a.author || W.persona() }) + W.ph("Hero image") + W.field("Body", "body", { type: "textarea", value: a.body }) + W.field("Tags", "tags", { value: a.tags || "" }) + W.field("SEO title and description", "seo", { value: a.seo || "" }) + W.field("Linked profiles", "profiles", { type: "select", options: W.S.profiles.filter(W.isPublic).map(function (p) { return [p.id, p.name]; }), blank: "None", value: (a.profiles || [])[0] || "" }) + W.field("Sponsor (shows a visible Sponsored label)", "sponsor", { value: a.sponsor || "" }) + W.field("Status", "status", { type: "select", options: ["draft", "scheduled", "published"], value: a.status }) + W.field("Publish date", "date", { type: "date", value: a.date }) + '<button class="btn">Save</button></form>';
-  }
-  mini("/admin/articles/new", "A24", "articles", function () { return '<p><a href="#/admin/articles">← Articles</a></p>' + head("New article") + artForm({ id: "new", title: "", type: "Feature", industry: W.LISTS.industries[0], body: "", status: "draft", date: W.TODAY, profiles: [] }); });
-  mini("/admin/articles/:id", "A24", "articles", function (p) { var a = W.find("articles", p.id); return a ? '<p><a href="#/admin/articles">← Articles</a></p>' + head("Edit article") + artForm(a) : "<h1>Not found</h1>"; });
-  W.forms.article = function (d) {
-    var a = d.id === "new" ? { id: W.uid("a"), slug: "sample-article-" + W.uid(""), author: d.author } : W.find("articles", d.id);
-    Object.assign(a, { title: d.title, type: d.type, industry: d.industry, author: d.author, body: d.body, tags: d.tags, seo: d.seo, profiles: d.profiles ? [d.profiles] : [], sponsor: d.sponsor || null, status: d.status, date: d.date });
-    if (d.id === "new") W.S.articles.push(a); W.log("article." + d.status, a.id, a.title); if (d.status !== "published") W.purge("/stories/" + a.slug, "article not public");
-    W.save(); W.go("#/admin/articles"); W.toast("Saved as " + d.status + ".");
-  };
 
   /* ---------- awards ---------- */
   var STAT = { submitted: "Submitted", screening: "In screening", invited: "Nominee invited", accepted: "Nominee accepted", assessment: "Independent assessment", shortlisted: "Shortlisted", finalist: "Finalist (approved)", winner: "Winner", ineligible: "Ineligible", declined: "Declined (suppressed)" };
@@ -254,24 +212,6 @@
     return head("Audit log", "Append-only. Each row stores the hash of the one before, so tampering is detectable (REQ-051, 188). Exported nightly off-host.") + W.table(["#", "When", "Actor", "Action", "Target", "Detail", "Hash"], A.slice().reverse().slice(0, 60).map(function (a) { return [a.n, e(a.at), e(a.actor), e(a.action), e(a.target), e(a.detail), '<span class="mono">' + e(a.hash) + "</span>"]; }), "No actions yet. Do something as staff.") + "<p>" + W.btn("Verify chain", "verifyChain", "", "alt") + "</p>";
   });
   W.act.verifyChain = function () { var prev = "00000000", ok = true; W.S.audit.forEach(function (a) { if (a.prev !== prev) ok = false; prev = a.hash; }); W.toast(ok ? "Chain intact: " + W.S.audit.length + " rows verified." : "CHAIN BROKEN: alert raised."); };
-  capRoute("users_roles", "/admin/users", "A34", function () {
-    return head("Users and roles", "Only staff have accounts. There are three staff roles: Reviewer, Editor and Administrator. Judge is not a role, and the public are visitors with no account (D-044). Two-factor sign-in is required for every one (REQ-047, 083, 235). Only the Administrator manages users.") + W.table(["User", "Email", "Role (one per user)", "Two-factor", "Last seen", ""], W.S.users.map(function (u) { var me = u.email === W.S.user; return [e(u.name) + (me ? ' <span class="pill gray">you</span>' : ""), e(u.email), e(W.roleName(u.rk)), u.mfa ? '<span class="pill ok">on</span>' : '<span class="pill bad">OFF</span>', e(u.last), (u.mfa ? "" : W.btn("Require two-factor", "mfa", u.name, "sm") + " ") + (me ? '<span class="small muted">cannot change your own role</span>' : ["reviewer", "editor", "admin"].filter(function (r) { return r !== u.rk; }).map(function (r) { return W.btn("Make " + W.roleName(r), "setRole", u.email + "|" + r, "sm alt"); }).join(" "))]; })) + '<form class="card stack-s" data-form="addUser" style="max-width:28rem"><h2>Add user</h2><p class="small muted">An email address belongs to exactly one user, and a user has exactly one role (REQ-245). Capability grants are separate (Users and capabilities).</p>' + W.field("Name", "name", { req: true }) + W.field("Email", "email", { type: "email", req: true }) + W.field("Role (one)", "role", { type: "select", options: [["reviewer", "Reviewer"], ["editor", "Editor"], ["admin", "Administrator"]] }) + (W.ui.userErr ? '<p class="err" role="alert">' + e(W.ui.userErr) + "</p>" : "") + '<button class="btn">Add user</button></form>' + '<p><a class="btn alt" href="#/admin/roles">See what each role can open</a> <a class="btn alt" href="#/admin/capabilities">Users and capabilities</a> ' + W.btn("Deactivate a leaver (sample)", "leaver", "", "alt") + '</p><p class="small muted">Leavers are deactivated the same day and the change is audited (REQ-235). Front-end registration is closed (REQ-229).</p>';
-  });
-  W.forms.addUser = function (d) {
-    var em = String(d.email || "").trim().toLowerCase();
-    if (!W.hasCap("users_roles")) { W.toast("Only the Administrator manages users."); return; }
-    if (W.S.users.some(function (u) { return u.email.toLowerCase() === em; })) { W.ui.userErr = "This email already belongs to a user; an email can have only one role."; W.render(); return; }
-    W.ui.userErr = "";
-    W.S.users.push({ name: d.name.trim(), email: em, rk: d.role, mfa: false, last: "never" });
-    W.log("user.add", em, "role " + W.roleName(d.role) + "; two-factor required at first sign-in"); W.save(); W.render(); W.toast("User added with one role. Two-factor is enforced at first sign-in.");
-  };
-  W.act.setRole = function (a) {
-    var s = a.split("|"), u = W.S.users.filter(function (x) { return x.email === s[0]; })[0];
-    if (!u || !W.hasCap("users_roles")) return;
-    if (u.email === W.S.user) { W.toast("You cannot change your own role."); return; }
-    var was = u.rk; u.rk = s[1];
-    W.log("user.role", u.email, W.roleName(was) + " to " + W.roleName(u.rk) + " (replaces the old role; capability grants stay)"); W.save(); W.render(); W.toast(u.name + " now has the single role " + W.roleName(u.rk) + ".");
-  };
   W.act.leaver = function () { W.log("user.deactivate", "Sample Leaver", "same-day deactivation"); W.save(); W.toast("Account deactivated and logged (sample)."); };
   W.act.mfa = function (n) { W.S.users.filter(function (u) { return u.name === n; })[0].mfa = true; W.log("user.mfa", n, "required"); W.save(); W.render(); };
   mini("/admin/compliance", "A37", "dsr", function () {

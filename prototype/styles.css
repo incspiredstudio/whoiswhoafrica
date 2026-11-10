@@ -172,3 +172,8 @@ table.t tr:last-child td{border-bottom:0}
 .vcheck{display:inline-flex;vertical-align:-.2em;color:var(--blue,#0e71fe)}
 .vcheck svg{width:1.15em;height:1.15em;display:block}
 .vcheck--lg svg{width:1.4rem;height:1.4rem}
+
+/* Key/value list used on the Claims screen. */
+dl.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .6rem 1.2rem; margin: 0; }
+dl.kv dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #666; }
+dl.kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }

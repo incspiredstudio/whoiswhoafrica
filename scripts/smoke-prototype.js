@@ -85,7 +85,7 @@ for (const x of ["#/login", "#/signup", "#/account", "#/judge", "#/forgot"]) { r
 check("claim routes exist (D-057)", W.match("#/claim/oyo-crest-university").r !== W.notFound && W.match("#/admin/claims").r !== W.notFound);
 check("claims are held in state, one new and one claimed profile (D-057)", Array.isArray(S().claims) && S().claims.some((c) => c.status === "new") && S().profiles.some((p) => p.claimed && p.manager));
 // claim flow (D-057): approve sets Claimed and Verified; assign a user; the checkmark shows to staff only
-reload(); S().role = "editor"; S().user = "editor@example.test"; { const c = S().claims.find((x) => x.status === "new"), p = W.profile(c.profileId); W.act.claimOk(c.id); check("approving a claim sets Claimed and Verified", c.status === "approved" && p.claimed === true && p.trust === "verified"); ctx.location.hash = "#/admin/profiles/" + p.id; W.render(); check("staff profile shows the checkmark and the assign form", /class="vcheck/.test(app.innerHTML) && /name="manager"/.test(app.innerHTML)); ctx.location.hash = "#/profile/" + p.slug; S().role = "visitor"; W.render(); check("public profile shows no checkmark and offers Claim this profile", !/vcheck/.test(app.innerHTML) && /Claim this profile/.test(app.innerHTML)); }
+reload(); S().role = "editor"; S().user = "editor@example.test"; { const c = S().claims.find((x) => x.status === "new"), p = W.profile(c.profileId); W.act.claimOk(c.id); check("approving a claim sets Claimed only", c.status === "approved" && p.claimed === true && p.trust !== "verified"); ctx.location.hash = "#/admin/profiles/" + p.id; W.render(); check("staff profile shows the checkmark and the assign form", /class="vcheck/.test(app.innerHTML) && /name="manager"/.test(app.innerHTML)); ctx.location.hash = "#/profile/" + p.slug; S().role = "visitor"; W.render(); check("a claimed profile shows no checkmark and no Claim button to visitors", !/vcheck/.test(app.innerHTML) && !/Claim this profile/.test(app.innerHTML)); ctx.location.hash = "#/profile/bonny-reach-logistics"; W.render(); check("an unclaimed profile offers Claim this profile", /Claim this profile/.test(app.innerHTML)); }
 // D-037: the only feature flag is nominations
 check("only the nominations flag exists", Object.keys(S().flags).join() === "nominations");
 check("no flags screen entries for the removed flags", W.match("#/admin/ai").r === W.notFound);
@@ -109,10 +109,7 @@ W.forms.profterms({ id: "b1", industry: "Technology" }); check("reviewer assigns
 reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/review/b5"; W.render(); check("review screen shows each field's source URL and retrieval date, read-only", /Source \(URL\)/.test(app.innerHTML) && /Retrieved/.test(app.innerHTML) && /example\.org\/sources\//.test(app.innerHTML) && !/Approve source|Reject source/.test(app.innerHTML));
 // D-039: taxonomies are native term screens; Reviewers cannot edit terms
 check("controlled lists screen gone", W.match("#/admin/lists").r === W.notFound);
-reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/taxonomy/cities"; W.render(); check("reviewer gets 403 on taxonomy", /403/.test(app.innerHTML));
-S().role = "editor"; ctx.location.hash = "#/admin/taxonomy/cities"; W.render(); check("editor opens cities taxonomy with Ghana as parent", /Add new city/.test(app.innerHTML) && /Accra/.test(app.innerHTML) && /Ghana/.test(app.innerHTML));
-W.forms.taxadd({ k: "cities", name: "Kumasi", slug: "", parent: "Ghana" }); check("editor adds a city term", W.LISTS.cities.indexOf("Kumasi") >= 0 && S().tax.cities.find((t) => t.name === "Kumasi").parent === "Ghana");
-W.forms.taxadd({ k: "industries", name: "Mining", slug: "" }); W.forms.impdry({ csv: W.ui.imp.csv, src: "x.csv" }); check("import dry run accepts a term once an Editor adds it", W.ui.imp.rows.every((r) => !/not a term/.test(r.why)));
+S().tax.industries.push({ name: "Mining", slug: "mining", parent: "" }); W.syncLists(); W.forms.impdry({ csv: W.ui.imp.csv, src: "x.csv" }); check("import dry run accepts a term once an Editor adds it", W.ui.imp.rows.every((r) => !/not a term/.test(r.why)));
 check("country list is Nigeria-first and has other African countries and pan-African bodies", W.LISTS.countries[0] === "Nigeria" && W.LISTS.countries.length > 3 && W.LISTS.countries.some((c) => /Pan-African/.test(c)));
 reload(); S().role = "visitor"; ctx.location.hash = "#/businesses"; W.render(); check("country filter is enabled and offers other countries", /Ghana/.test(app.innerHTML) && !/Nigeria only/i.test(app.innerHTML));
 // D-040: correction, removal and report land in the Support inbox; staff edit directly; no separate screen
@@ -150,13 +147,13 @@ for (const role of ["reviewer", "editor"]) { S().role = role; ctx.location.hash 
 const REVIEWER_MENU = ["Dashboard", "Review queue", "Duplicates", "Stale records", "Profiles", "Sources", "Suppression list"];
 check("reviewer menu is exactly the seven screens (no Support inbox, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); { const side = (app.innerHTML.match(/<nav class="app-side"[\s\S]*?<\/nav>/) || [""])[0]; const links = [...side.matchAll(/<a href="#[^"]*"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]); check("reviewer left menu renders exactly those links", JSON.stringify(links) === JSON.stringify(REVIEWER_MENU), links.join()); }
-check("administrator menu includes everything", ["Import", "Taxonomies", "Exports", "Roles and permissions", "Feature flag", "Shortlist and winners"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
+check("administrator menu includes everything", ["Import", "Exports", "Roles and permissions", "Feature flag", "Shortlist and winners"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
 check("no AI drafting, kill switch or corrections screen in any menu; Claims only for those with the capability", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /ai drafting|kill|controlled lists|corrections and removals|reports/i.test(x))) && W.menuFor("editor").includes("Claims") && !W.menuFor("reviewer").includes("Claims"));
 check("Sources is in the Reviewer, Editor and Administrator menus", ["reviewer", "editor", "admin"].every((r) => W.menuFor(r).indexOf("Sources") >= 0));
-check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Leads", "Articles", "Nominations", "Scores and results"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Users and roles", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
-check("Administrator menu includes Register, Customers, Import and Users and roles", ["Register", "Customers", "Import", "Users and roles", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
+check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Leads", "Nominations", "Scores and results"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
+check("Administrator menu includes Register, Customers, Import and Roles and permissions", ["Register", "Customers", "Import", "Roles and permissions", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
 for (const r of ["claim", "ai", "killswitch"]) check("no route /admin/" + r, W.match("#/admin/" + r).r === W.notFound);
-for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/taxonomy/industries"], ["reviewer", "#/admin/flags"], ["reviewer", "#/admin/roles"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/leads"], ["reviewer", "#/admin/register"], ["editor", "#/admin/import"], ["editor", "#/admin/register"], ["editor", "#/admin/customers"], ["editor", "#/admin/users"], ["editor", "#/admin/exports"], ["editor", "#/admin/flags"], ["editor", "#/admin/audit"], ["editor", "#/admin/roles"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
+for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/flags"], ["reviewer", "#/admin/roles"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/leads"], ["reviewer", "#/admin/register"], ["editor", "#/admin/import"], ["editor", "#/admin/register"], ["editor", "#/admin/customers"], ["editor", "#/admin/exports"], ["editor", "#/admin/flags"], ["editor", "#/admin/audit"], ["editor", "#/admin/roles"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
 S().role = "admin"; ctx.location.hash = "#/admin/roles"; W.render(); check("roles screen lists the menu per role and the export row", /Left menu by role/.test(app.innerHTML) && /Export personal data/.test(app.innerHTML) && /Taxonomy terms: add and edit/.test(app.innerHTML));
 S().role = "admin"; ctx.location.hash = "#/admin/flags"; W.render(); check("flag screen shows only nominations and no kill switch", /nominations/.test(app.innerHTML) && !/kill/i.test(app.innerHTML) && !/ai_drafting|announcements flag|judging flag/i.test(app.innerHTML));
 
@@ -249,7 +246,7 @@ S().role = "reviewer"; check("pending organisations are in the review queue", W.
 W.forms.approve({ id: "b7", c0: 1, c1: 1, c2: 1, c3: 1, c4: 1 }); check("approving clears the pending state", !W.isPending(W.profile("b7")) && W.profile("b7").lastReviewed === W.TODAY); S().role = "visitor";
 // awards stages from the design review switch
 reload(); S().role = "visitor"; W.ui.nom = { step: 0, d: {} }; W.act.stage("open|#/nominate"); ctx.location.hash = "#/nominate"; W.render(); check("stage open shows the full form", /data-form="nom0"/.test(app.innerHTML) && W.nomOpen());
-W.act.stage("soon|#/nominate"); W.render(); check("stage soon shows the sign-up form", /data-form="signup"/.test(app.innerHTML) && !W.nomOpen());
+W.act.stage("soon|#/nominate"); W.render(); check("nominations switched off: the page says closed and has no sign-up form", /Nominations are closed/.test(app.innerHTML) && !/data-form="signup"/.test(app.innerHTML) && !W.nomOpen());
 W.act.stage("nominees|#/awards/nominees"); ctx.location.hash = "#/awards/nominees"; W.render(); check("stage nominees shows citations", /citation/.test(app.innerHTML) && /Wanjiru Owusu-Eze/.test(app.innerHTML));
 W.act.stage("winners|#/awards/winners"); ctx.location.hash = "#/awards/winners"; W.render(); check("stage winners shows winners", /Winner/.test(app.innerHTML) && S().awards.published);
 W.act.stage("soon|#/awards/nominees"); W.render(); check("stage back to soon empties nominees", /Nominees are not published yet/.test(app.innerHTML));
@@ -268,7 +265,7 @@ for (const f of W.FLOWS) {
 }
 check("19 flows or fewer", W.FLOWS.length <= 19 && !W.FLOWS.some((f) => /kill/i.test(f.t + f.s.join(" "))));
 // D-044 role details
-reload(); S().role = "editor"; ctx.location.hash = "#/admin/profiles/b1"; W.render(); check("editor profile screen: edit form, labels and field sources", /data-form="profedit"/.test(app.innerHTML) && /data-form="verify"/.test(app.innerHTML) && /Fields and their sources/.test(app.innerHTML) && /Source \(URL\)/.test(app.innerHTML));
+reload(); S().role = "editor"; ctx.location.hash = "#/admin/profiles/b1"; W.render(); check("editor profile screen: edit form, no Verified form, field sources", /data-form="profedit"/.test(app.innerHTML) && !/data-form="verify"/.test(app.innerHTML) && /Fields and their sources/.test(app.innerHTML) && /Source \(URL\)/.test(app.innerHTML));
 ctx.location.hash = "#/admin"; W.render(); check("editor dashboard: support counts, no sprint tile", /open corrections, removals and reports/.test(app.innerHTML) && !/Sprint target/.test(app.innerHTML));
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); check("reviewer dashboard: no support counts", !/open corrections, removals and reports/.test(app.innerHTML));
 S().role = "editor"; ctx.location.hash = "#/admin/suppression"; W.render(); check("editor sees the suppression list read-only", /Read-only for your role/.test(app.innerHTML) && !/data-form="supp"/.test(app.innerHTML));
@@ -278,15 +275,15 @@ S().role = "reviewer"; ctx.location.hash = "#/admin/suppression"; W.render(); ch
 check("seed users have only the three staff roles, one role and one unique email each", S().users.every((u) => ["reviewer", "editor", "admin"].includes(u.rk) && typeof u.rk === "string" && /@/.test(u.email)) && new Set(S().users.map((u) => u.email.toLowerCase())).size === S().users.length);
 check("confirmed-by and lead owners are not removed roles", S().arrangements.every((a) => !/Finance|Sales|Eic/.test(a.confirmedBy)) && S().leads.every((l) => !/Sales/.test(l.owner)));
 // D-045 capabilities (REQ-244)
-reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render();
-check("reviewer has no Articles by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Articles") < 0 && /403/.test(app.innerHTML));
-S().role = "editor"; W.act.capToggle("reviewer|stories"); check("only the Administrator changes capabilities", !W.hasCap("stories", "reviewer"));
-S().role = "reviewer"; W.act.capToggle("reviewer|stories"); check("a Reviewer cannot grant themselves anything", !W.hasCap("stories", "reviewer"));
-S().role = "admin"; const au0 = S().audit.length; W.act.capToggle("reviewer|stories");
-check("grant stories to a Reviewer: effective, logged", W.hasCap("stories", "reviewer") && S().audit.length === au0 + 1 && S().audit[S().audit.length - 1].action === "capability.grant");
-S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Articles") >= 0 && !/403/.test(app.innerHTML));
-S().role = "admin"; W.act.capToggle("reviewer|stories"); S().role = "reviewer"; ctx.location.hash = "#/admin/articles"; W.render();
-check("revoking the grant brings the 403 back", !W.hasCap("stories", "reviewer") && /403/.test(app.innerHTML));
+reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
+check("reviewer has no Support inbox by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML));
+S().role = "editor"; W.act.capToggle("reviewer|support_inbox"); check("only the Administrator changes capabilities", !W.hasCap("support_inbox", "reviewer"));
+S().role = "reviewer"; W.act.capToggle("reviewer|support_inbox"); check("a Reviewer cannot grant themselves anything", !W.hasCap("support_inbox", "reviewer"));
+S().role = "admin"; const au0 = S().audit.length; W.act.capToggle("reviewer|support_inbox");
+check("grant support_inbox to a Reviewer: effective, logged", W.hasCap("support_inbox", "reviewer") && S().audit.length === au0 + 1 && S().audit[S().audit.length - 1].action === "capability.grant");
+S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Support inbox") >= 0 && !/403/.test(app.innerHTML));
+S().role = "admin"; W.act.capToggle("reviewer|support_inbox"); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
+check("revoking the grant brings the 403 back", !W.hasCap("support_inbox", "reviewer") && /403/.test(app.innerHTML));
 S().role = "admin"; W.act.capToggle("editor|support_inbox"); S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("revoking a default takes the screen away from that Editor", W.menuFor("editor").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML) && W.menuFor("editor", true).indexOf("Support inbox") >= 0);
 S().role = "admin"; W.act.capReset("editor"); check("reset to role defaults", W.hasCap("support_inbox", "editor"));
@@ -299,39 +296,6 @@ S().role = "admin"; ctx.location.hash = "#/admin/capabilities"; W.render(); chec
 S().role = "editor"; ctx.location.hash = "#/admin/capabilities"; W.render(); check("Editor gets 403 on Users and capabilities", /403/.test(app.innerHTML));
 check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_disputes", "editor") && !W.hasCap("handle_disputes", "reviewer") && /Editor/.test(W.disputeHandlers()));
 
-// staff sign-in has no role selector; role comes from the account (REQ-245, D-048)
-S().role = "visitor"; S().user = null; ctx.location.hash = "#/staff/signin"; W.ui.staffStep = 0; W.ui.staffErr = ""; W.render();
-check("staff sign-in step 1 has email and password and no role selector", /name="email"/.test(app.innerHTML) && /name="password"/.test(app.innerHTML) && !/name="role"/.test(app.innerHTML) && !/Role \(wireframe only\)/.test(app.innerHTML));
-check("sign-in lists the sample accounts", /Wireframe sample accounts/.test(app.innerHTML) && /reviewer@example\.test/.test(app.innerHTML));
-W.forms.staff0({ email: "reviewer@example.test", password: "wrong" });
-check("wrong password is refused with a generic message", W.ui.staffStep === 0 && /Email or password is incorrect/.test(app.innerHTML) && S().role === "visitor");
-W.forms.staff0({ email: "nobody@example.test", password: W.SAMPLE_PW });
-check("unknown email is refused with the same generic message", W.ui.staffStep === 0 && /Email or password is incorrect/.test(app.innerHTML));
-W.forms.staff0({ email: "Editor@Example.test", password: W.SAMPLE_PW });
-check("right email and password go to the two-factor step", W.ui.staffStep === 1 && S().role === "visitor");
-W.forms.staff1({ code: "111111" });
-check("wrong code is refused and no role is set", S().role === "visitor" && /code is wrong/.test(app.innerHTML));
-W.forms.staff1({ code: "000000" });
-check("role is resolved from the email (Editor)", S().role === "editor" && S().user === "editor@example.test" && W.persona() === "Sample Editor");
-W.act.signout(); check("sign out returns to Visitor", S().role === "visitor" && S().user === null);
-W.forms.staff0({ email: "admin@example.test", password: W.SAMPLE_PW }); W.forms.staff1({ code: "000000" });
-check("role is resolved from the email (Administrator)", S().role === "admin");
-ctx.location.hash = "#/admin"; W.render();
-check("no signed-in staff screen has a role selector for the user's own role", !/name="role"/.test(app.innerHTML));
-ctx.location.hash = "#/admin/users"; W.render();
-check("Users and roles shows emails and an Add user form with one role", /admin@example\.test/.test(app.innerHTML) && /data-form="addUser"/.test(app.innerHTML) && (app.innerHTML.match(/name="role"/g) || []).length === 1);
-const nUsers = S().users.length;
-W.forms.addUser({ name: "Sample New", email: "EDITOR@example.test", role: "reviewer" });
-check("duplicate email is refused (case-insensitive) with the one-role message", S().users.length === nUsers && /already belongs to a user; an email can have only one role/.test(app.innerHTML));
-W.forms.addUser({ name: "Sample New", email: "new.user@example.test", role: "reviewer" });
-const nu = S().users.filter((u) => u.email === "new.user@example.test");
-check("a new user is added with exactly one role and two-factor not yet enrolled", S().users.length === nUsers + 1 && nu.length === 1 && nu[0].rk === "reviewer" && typeof nu[0].rk === "string" && nu[0].mfa === false);
-W.act.setRole("new.user@example.test|editor");
-check("changing a user's role replaces it (one role) and is audit-logged", nu[0].rk === "editor" && S().audit.some((a) => a.action === "user.role" && a.target === "new.user@example.test"));
-W.act.setRole("admin@example.test|reviewer");
-check("an Administrator cannot change their own role", S().users.filter((u) => u.email === "admin@example.test")[0].rk === "admin");
-S().role = "editor"; S().user = "editor@example.test"; W.act.setRole("new.user@example.test|admin");
-check("a non-Administrator cannot change roles", nu[0].rk === "editor");
 S().role = "visitor"; S().user = null;
 // audit chain
 let prev = "00000000", okc = true; S().audit.forEach((r) => { if (r.prev !== prev) okc = false; prev = r.hash; }); check("audit chain", okc);

@@ -191,8 +191,8 @@ html.is-home:not(.tools-hidden) .h-hero-in { padding-top: calc(var(--head-h) + 2
 .h-stories { padding-block: var(--s-8); overflow: hidden; }
 .h-track-wrap { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding-inline: var(--gutter); }
 .h-track { display: flex; gap: var(--s-4); width: max-content; }
-.h-story { flex: none; width: min(78vw, 22rem); scroll-snap-align: center; display: grid; align-content: start; gap: var(--s-3); color: inherit; text-decoration: none; }
-.h-story figure { margin: 0; aspect-ratio: 4 / 5; }
+.h-story { flex: none; width: min(82vw, 26rem); scroll-snap-align: center; display: grid; align-content: start; gap: var(--s-3); color: inherit; text-decoration: none; }
+.h-story figure { margin: 0; aspect-ratio: 16 / 9; }
 .h-story:hover img { transform: scale(1.05); }
 .h-story h3 { font-size: var(--t-xl); line-height: 1.08; transition: color var(--m-fast); }
 .h-story-text { display: grid; gap: var(--s-2); }
@@ -203,8 +203,8 @@ html.is-home:not(.tools-hidden) .h-hero-in { padding-top: calc(var(--head-h) + 2
   .home-live .h-stories-pin { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
   .home-live .h-track-wrap { overflow: visible; }
   .home-live .h-track { will-change: transform; gap: var(--s-6); }
-  .home-live .h-story { width: clamp(20rem, 26vw, 28rem); }
-  .home-live .h-story figure { aspect-ratio: auto; height: min(58svh, 40rem); }
+  .home-live .h-story { width: clamp(24rem, 32vw, 34rem); }
+  .home-live .h-story figure { aspect-ratio: 16 / 9; }
 }
 
 /* final */
@@ -293,13 +293,38 @@ html.is-home:not(.tools-hidden) .h-hero-in { padding-top: calc(var(--head-h) + 2
 .h-peek img.h-peek-photo { position: absolute; inset: 0; right: auto; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; filter: none; opacity: 1; }
 .h-peek--photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(20, 20, 20, .78), transparent 55%); }
 .h-peek--photo span { z-index: 1; color: #fff; }
-/* Rail controls: previous, pause/play, next (phones and tablets only). */
-.h-rail-ctl { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-4); }
-.h-rail-btn { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--charcoal-900); border-radius: 50%; background: transparent; color: var(--charcoal-900); cursor: pointer; }
-.h-rail-btn .ico { width: 1.1rem; height: 1.1rem; }
-.h-rail-btn--prev .ico { transform: scaleX(-1); }
-.h-rail-btn:hover { background: var(--charcoal-900); color: #fff; }
-.h-rail-btn:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 3px; }
-.h-rail-pp-i { width: .7rem; height: .85rem; border-inline: 3px solid currentColor; }
-.h-rail-pp[aria-pressed="true"] .h-rail-pp-i { width: 0; height: 0; border: 0; border-block: .45rem solid transparent; border-left: .75rem solid currentColor; margin-left: .15rem; }
-@media (min-width: 64rem) { .h-rail-ctl { display: none; } }
+/* Phones: the four hero videos sit in two rows of two, with no hover widening. */
+@media (max-width: 47.99rem) {
+  .h-vids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 2px; }
+  .h-vids:hover .h-vid, .h-vids .h-vid:hover { flex-grow: 0; }
+  .h-vid video, .h-vid:hover video { left: 0; width: 100%; transform: none; }
+  .h-vid:hover video { filter: saturate(.8) contrast(.95) brightness(.7); }
+}
+
+/* Header over the hero: a soft dark fade behind it keeps the white logo readable on bright video, and it changes state smoothly. */
+html.is-home.at-top .site-head::before { opacity: 1; }
+html.is-home .site-head { background: color-mix(in srgb, var(--c-surface) 92%, transparent); }
+html.is-home.at-top .site-head:not(:hover):not(:focus-within) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* Touch screens keep "hover" after a tap, which turned the header solid over the hero. Use keyboard focus only. */
+@media (hover: none) {
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) { background: transparent; border-color: transparent; color: var(--c-on-dark); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .logo, html.is-home.at-top .site-head:not(:has(:focus-visible)) .nav-link, html.is-home.at-top .site-head:not(:has(:focus-visible)) .icon-btn { color: var(--c-on-dark); }
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .icon-btn { border-color: var(--c-line-on-dark); }
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .search-link, html.is-home.at-top .site-head:not(:has(:focus-visible)) .menu-btn { border-color: transparent; }
+}
+
+/* Nominees on phones: a tighter heading, a short readable paragraph, a full-width button, no group filter. */
+@media (max-width: 47.99rem) {
+  .h-noms { padding-block: var(--s-8); }
+  .h-noms-head { gap: var(--s-4); margin-bottom: var(--s-6); }
+  .h-noms .h-big { font-size: clamp(2.5rem, 12vw, 3.25rem); line-height: .98; margin-top: var(--s-2); }
+  .h-noms-side { gap: var(--s-4); max-width: none; justify-items: stretch; }
+  .h-noms-side p { font-size: var(--t-base); line-height: 1.5; color: var(--c-on-dark-muted); max-width: 28em; }
+  .h-noms-side .btn { justify-content: center; width: 100%; min-height: 3.25rem; }
+  .h-nom-filter { display: none; }
+  .hn-grid { gap: var(--s-6) var(--s-3); }
+}
+
+/* The dark fade only belongs behind the transparent header; when the header turns solid (hover or keyboard focus) it goes away. */
+html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:focus-within::before { opacity: 0; }
+@media (hover: none) { html.is-home.at-top .site-head:hover:not(:has(:focus-visible))::before { opacity: 1; } html.is-home.at-top .site-head:focus-within:not(:has(:focus-visible))::before { opacity: 1; } }

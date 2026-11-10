@@ -13,6 +13,16 @@
 <link rel="stylesheet" id="css-home" href="theme/home.css" media="not all">
 <link rel="stylesheet" id="css-tools" href="tools.css" media="not all">
 <script src="tokens.js"></script>
+<script>
+/* On the home page the header starts transparent over the hero. Set that state before anything is drawn, and hold the header's
+   transitions until the page has settled, so a refresh never shows a solid header that fades away. */
+(function () {
+  var r = document.documentElement, h = location.hash;
+  if (h === "" || h === "#" || h === "#/") { r.classList.add("is-home", "hdr-init"); if ((window.scrollY || 0) < 60) r.classList.add("at-top"); }
+  function done() { requestAnimationFrame(function () { requestAnimationFrame(function () { r.classList.remove("hdr-init"); }); }); }
+  window.addEventListener("load", done); setTimeout(done, 6000);
+})();
+</script>
 </head>
 <body>
 <div id="app"><noscript><p style="padding:1rem">This prototype needs JavaScript. It has no server and no build step.</p></noscript></div>

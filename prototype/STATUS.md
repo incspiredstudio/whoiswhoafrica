@@ -55,3 +55,12 @@ Home page rebuilt to an Awwwards-level concept: one particle stage morphs Africa
 - Claiming returns (D-057): public "Claim this profile" form (V57), staff Claims screen (A61), Verified shown to staff as a checkmark, an assigned user per claimed profile. State key is now `wiw-wireframe-v12`. REQ-251 to 253; open Q92 to Q94.
 - Search across profiles and stories is now a requirement (REQ-254). The WordPress build needs a background-removal plugin for imported profile photos (REQ-255, Q95).
 - Smoke test: 3005 checks, 0 failures. Inventory: 128 entries, 0 unexplained.
+
+## 2026-11-10: backend clean-up (D-059)
+- Removed: "Sponsored profile" arrangement type and the profile Sponsored form; wireframe screens A01 (sign-in), A24 (articles), A34 (users and roles), A57 (taxonomy terms); A58 folded into A06. The Sponsors screen is now "Story sponsors". Flows 18 and 19 removed (17 flows now). Public copy says "Get listed", not "featured".
+- Claimed replaces Verified: the staff checkmark means Claimed; approving a claim sets Claimed only; the Verified checklist form is gone; the public Claim button is hidden once a profile is claimed (and /claim shows "Already claimed").
+- Claims screen shows every form field, a decide-by date (5 days) and reminder status.
+- Nominations: the switch alone decides open or closed ("Nominations are closed", no sign-up form).
+- Stories: comments section (design illustration of wpDiscuz; submissions are held "awaiting moderation").
+- Docs: D-059; REQ-025 and 153 withdrawn; REQ-150, 179, 183, 184, 252, 253 amended; new REQ-256 to 260 (claim reminders, home page curation, comments, nominations switch, page editor); capability `wiw_curate_home`; Q93 answered; Q97, Q98 new; architecture 4.4. Not drawn in the wireframe: the Home page settings screen (REQ-257).
+- Smoke: 2,879 checks, 0 failures (the count fell because the removed screens' checks went). Inventory: 123 entries, 0 unexplained.

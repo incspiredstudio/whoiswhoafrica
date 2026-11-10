@@ -161,7 +161,7 @@
       '</ul></div><div class="mega-col"><h2>Categories</h2><ul>' + W.S.awards.groups.map(function (g) { return plain("#/awards#" + W.slugify(g.name), g.name); }).join("") + plain("#/awards#categories", "All categories") + '</ul></div><div class="mega-col"><h2>The rules</h2><ul>' + plain("#/awards/rules", "Eligibility and judging") + "</ul></div></div></div>";
     var ab = '<div class="mega" id="mega-about"><div class="wrap mega-grid"><div class="mega-col mega-col--wide"><h2>' + e(W.brand.name) + '</h2><ul class="grid grid--2">' +
       megaLink("#/about", "About", "What we are building, and why") + megaLink("#/faq", "FAQ", "Listings, corrections and removal") + megaLink("#/contact", "Contact", "Reach the team") +
-      '</ul></div><div class="mega-col"><h2>Work with us</h2><ul>' + plain("#/subscribe", "Get listed or featured") + "</ul></div></div></div>";
+      '</ul></div><div class="mega-col"><h2>Work with us</h2><ul>' + plain("#/subscribe", "Get listed") + "</ul></div></div></div>";
     return dir + aw + ab;
   }
   function megaBtn(id, label, current) { return '<li><button type="button" class="nav-link" data-act="mega" data-arg="' + id + '" aria-expanded="false" aria-controls="' + id + '"' + (current ? ' data-current="true"' : "") + ">" + e(label) + W.ico("chevron") + "</button></li>"; }
@@ -195,7 +195,7 @@
       drawerGroup("Awards", [["#/awards", "Awards overview"], ["#/nominate", nomLabel()], ["#/awards/nominees", "Nominees"], ["#/awards/winners", "Winners"], ["#/awards/rules", "Eligibility and judging"]]) +
       '<a class="drawer-link" href="#/stories">Stories</a>' +
       drawerGroup("About", [["#/about", "About"], ["#/faq", "FAQ"], ["#/contact", "Contact"]]) +
-      '<a class="drawer-link" href="#/subscribe">Get listed or featured</a></div>';
+      '<a class="drawer-link" href="#/subscribe">Get listed</a></div>';
   }
 
   /* ---------- footer, cookie ---------- */

@@ -258,6 +258,15 @@ The capability list and the default role mapping are kept in one place only: `do
 
 Capabilities that cannot be granted to a non-Administrator (proposed: users and capabilities, settings, the register, plugin install; Q72) are enforced by a `user_has_cap` filter, not only by the screen. The Reviewer's bulk-unpublish capability can unpublish one profile through the filter, so a Reviewer can act in an emergency without edit rights. The Reviewer menu is exactly: Dashboard (review tiles), Review queue, Duplicates, Stale records, Profiles, Sources (read-only), Suppression list (read-only); it grows only by grants (REQ-240, 244).
 
+### 4.4 Backend choices made after the public redesign (D-059)
+
+- **Native WordPress, nothing custom:** articles are posts (scheduling, revisions, trash; Featured is the sticky flag), users and roles are core, taxonomy terms are native term screens, sign-in is the WordPress login with a two-factor plugin. The wireframe no longer draws these.
+- **Claims:** each claim stores every form field, a received date and a decide-by date (received plus 5 days). A scheduled job (the queue, REQ-205) emails `wiw_review_claims` holders on day 3, day 4 and daily once overdue, and writes each email to the email log. Approving sets `claimed` on the profile; the public template hides the Claim button when it is set. There is no Verified state. Edits to a claimed profile are saved as a pending revision and published only when a Reviewer or Administrator approves it; the editor cannot approve their own change.
+- **Home and stories curation (REQ-257):** a Home page settings screen holds one setting per block: mode (Latest, Random, Manual, Pinned then fill), item count and the pinned item IDs. The block reads eligible items through the `PublicProfile` and `PublicStory` read models, so a hidden or unreviewed item can never appear. Random uses a seed that changes once a day and the result is cached, so the page stays fast and cache friendly. Saving purges the cache. Capability `wiw_curate_home`, Editor and Administrator by default and grantable to any role.
+- **Comments (REQ-258):** wpDiscuz on stories only. Guest comments with name, email and a consent tick; all held for moderation; Gravatar off; honeypot, rate limit and Akismet. Comment data is added to the PII catalogue, the data-rights export and erase, and the processor register.
+- **Page copy (REQ-260):** About, FAQ, rules and legal pages are ordinary pages edited in the chosen page editor (Q98). The FAQ is a repeatable block. Brand values stay in the tokens file.
+- **Nominations switch (REQ-259):** the one feature flag decides open or closed; nothing derives the state from other data.
+
 ---
 
 ## 5. Module and route outline, and auth

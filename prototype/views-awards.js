@@ -169,15 +169,10 @@
   }
   W.route("/nominate", "V22", function (p, q, m) {
     if (W.nomClosed()) {
-      var won = W.awardStage().key === "winners";
-      return W.band({ tone: "purple", eyebrow: W.brand.edition, title: "Nominations have closed", lede: "Nominations for this edition are over. " + (won ? "The winners are announced." : "The nominees are announced, and the judges are scoring them.") }) +
-        '<section class="section"><div class="wrap"><div class="nm-closed"><a class="btn" href="' + (won ? "#/awards/winners" : "#/awards/nominees") + '">' + (won ? "See the winners" : "See the nominees") + '</a><a class="btn alt" href="#/awards/rules">Read the rules</a><a class="btn alt" href="#/awards">Awards overview</a></div></div></section>' + nominateInfo();
-    }
-    if (!W.nomOpen()) {
-      var done = q.signed === "1";
-      return W.band({ tone: "purple", eyebrow: W.brand.edition, title: "Nominations open soon", lede: "The rules and eligibility page come first. Leave your email and we will tell you when nominations open." }) +
-        '<section class="section"><div class="wrap form-grid"><div class="form-aside prose"><h2 style="margin-top:0">While you wait</h2><ul><li><a href="#/awards">Read the awards overview</a></li><li><a href="#/awards/rules">See the rules and criteria</a></li><li><a href="#/directory">Browse the directory</a></li></ul><p class="small muted">Anyone can nominate. There is no fee, and no account is needed.</p></div>' +
-        (done ? '<div class="okbox" role="status"><h2 style="font-size:var(--t-xl)">Thank you</h2><p>Check your email to confirm. We recorded your consent with policy version 0.1.</p></div>' : '<form class="form" data-form="signup"><h2 style="font-size:var(--t-xl)">Tell me when nominations open</h2>' + W.field("Email", "email", { type: "email", req: true }) + W.field('I agree to receive one email when nominations open. I can unsubscribe at any time. <a href="#/privacy">Privacy notice</a>', "consent", { type: "checkbox", req: true }) + W.bot() + '<button class="btn">Notify me</button></form>') + "</div></section>" + nominateInfo();
+      /* The Nominations switch (A26) decides open or closed. What follows (nominees, winners) is published content. */
+      var st = W.awardStage().key, won = st === "winners", noms = st === "nominees";
+      return W.band({ tone: "purple", eyebrow: W.brand.edition, title: "Nominations are closed", lede: won ? "The winners are announced." : noms ? "The nominees are announced, and the judges are scoring them." : "We are not taking nominations at the moment. The rules and the criteria stay here." }) +
+        '<section class="section"><div class="wrap"><div class="nm-closed">' + (won ? '<a class="btn" href="#/awards/winners">See the winners</a>' : noms ? '<a class="btn" href="#/awards/nominees">See the nominees</a>' : "") + '<a class="btn alt" href="#/awards/rules">Read the rules</a><a class="btn alt" href="#/awards">Awards overview</a></div></div></section>' + nominateInfo();
     }
     m.inv = "N01";
     var n = W.ui.nom, d = n.d, body = "";

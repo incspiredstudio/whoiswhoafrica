@@ -10,8 +10,8 @@
     ["view_profiles", "Profiles: view and filter by source, import batch, type and state", "Directory", "RE"], ["assign_terms", "Assign existing taxonomy terms to a profile", "Directory", "RE"],
     ["view_sources", "Sources (read-only)", "Directory", "RE"], ["view_suppression", "Suppression list: view (read-only)", "Directory", "RE"],
     ["bulk_unpublish", "Bulk unpublish by filter, and restore a batch", "Directory", "R"],
-    ["edit_profiles", "Edit a profile directly; set Verified", "Editing", "E"], ["publish_profiles", "Publish a profile", "Editing", "E"], ["unpublish_profile", "Unpublish and restore a single profile", "Editing", "E"],
-    ["review_claims", "Claims: review a request, set Claimed and Verified, assign the profile manager", "Editing", "E"], ["stories", "Stories (articles)", "Editing", "E"], ["sponsored_label", "Sponsored label and sponsors", "Editing", "E"], ["edit_terms", "Taxonomy terms: add and edit", "Editing", "E"],
+    ["edit_profiles", "Edit a profile directly", "Editing", "E"], ["publish_profiles", "Publish a profile", "Editing", "E"], ["unpublish_profile", "Unpublish and restore a single profile", "Editing", "E"],
+    ["review_claims", "Claims: review a request, set Claimed, assign the profile manager", "Editing", "E"], ["stories", "Stories (articles)", "Editing", "E"], ["sponsored_label", "Story sponsors and the Sponsored label (stories only)", "Editing", "E"], ["edit_terms", "Taxonomy terms: add and edit", "Editing", "E"],
     ["support_inbox", "Support inbox: enquiries, corrections, removals, reports", "Inbox", "E"], ["handle_disputes", "Handle disputes and removal requests (a valid removal adds to the suppression list)", "Inbox", "E"],
     ["leads", "Leads and prospects", "Commercial", "E"],
     ["nominations", "Nominations, screening, panel and conflicts, shortlist and winners publishing", "Awards", "E"], ["score_entry", "Score entry", "Awards", "E"],
@@ -64,17 +64,14 @@
   W.forms.note = function (d) { (W.S.notes[d.key] = W.S.notes[d.key] || []).push({ text: d.text, by: W.persona(), at: W.TODAY }); W.log("note.add", d.key, "internal note"); W.save(); W.render(); };
 
   /* ---------- shell ---------- */
-  var TAXMENU = Object.keys(W.TAXES).map(function (k) { return [W.TAXES[k][0], "/admin/taxonomy/" + k, "edit_terms"]; });
   var MENU = [
     ["Overview", [["Dashboard", "/admin", "*"]]],
     ["Review", [["Review queue", "/admin/review", "review_queue"], ["Duplicates", "/admin/duplicates", "duplicates"], ["Stale records", "/admin/stale", "stale_records"]]],
     ["Directory", [["Profiles", "/admin/profiles", "view_profiles"], ["Sources", "/admin/sources", "view_sources"], ["Import", "/admin/import", "imports"], ["Prospects", "/admin/prospects", "leads"], ["Suppression list", "/admin/suppression", "view_suppression"], ["Claims", "/admin/claims", "review_claims"]]],
-    ["Taxonomies", TAXMENU],
     ["Inbox", [["Support inbox", "/admin/inbox", "support_inbox"], ["Data requests", "/admin/dsr", "data_requests"]]],
-    ["Commercial", [["Leads", "/admin/leads", "leads"], ["Customers", "/admin/customers", "commercial_register"], ["Register", "/admin/register", "commercial_register"], ["Sponsors", "/admin/sponsors", "sponsored_label"]]],
-    ["Content", [["Articles", "/admin/articles", "stories"]]],
+    ["Commercial", [["Leads", "/admin/leads", "leads"], ["Customers", "/admin/customers", "commercial_register"], ["Register", "/admin/register", "commercial_register"], ["Story sponsors", "/admin/sponsors", "sponsored_label"]]],
     ["Awards", [["Nominations", "/admin/nominations", "nominations"], ["Awards setup", "/admin/awards", "nominations"], ["Scores and results", "/admin/scores", "score_entry"], ["Judging panel and conflicts", "/admin/judges", "nominations"], ["Shortlist and winners", "/admin/announcements", "nominations"]]],
-    ["Platform", [["Feature flag", "/admin/flags", "nominations_flag"], ["Audit log", "/admin/audit", "audit_log"], ["Users and roles", "/admin/users", "users_roles"], ["Roles and permissions", "/admin/roles", "users_roles"], ["Users and capabilities", "/admin/capabilities", "users_roles"], ["Compliance", "/admin/compliance", "data_requests"], ["Purge log", "/admin/purges", "audit_log"], ["Exports", "/admin/exports", "exports"], ["Email log", "/admin/emails", "audit_log"], ["Settings", "/admin/settings", "settings"]]]
+    ["Platform", [["Feature flag", "/admin/flags", "nominations_flag"], ["Audit log", "/admin/audit", "audit_log"], ["Roles and permissions", "/admin/roles", "users_roles"], ["Users and capabilities", "/admin/capabilities", "users_roles"], ["Compliance", "/admin/compliance", "data_requests"], ["Purge log", "/admin/purges", "audit_log"], ["Exports", "/admin/exports", "exports"], ["Email log", "/admin/emails", "audit_log"], ["Settings", "/admin/settings", "settings"]]]
   ];
   /* The left menu each user sees, from effective capabilities (D-041, D-044, D-045). The Administrator sees everything. */
   W.menuFor = function (role, defaultsOnly) { var out = []; MENU.forEach(function (g) { g[1].forEach(function (i) { if (i[2] === "*" || W.hasCap(i[2], role, defaultsOnly)) out.push(i[0]); }); }); return out; };
@@ -89,24 +86,6 @@
   };
 
   /* ---------- sign in (staff, with MFA) ---------- */
-  W.SAMPLE_PW = "sample-pass";
-  W.ui.staffStep = 0; W.ui.staffUser = "";
-  W.route("/staff/signin", "A01", function () {
-    var s = W.ui.staffStep, hint = '<div class="card" style="max-width:28rem"><h2 style="font-size:1rem">Wireframe sample accounts</h2><p class="small muted">The role comes from the account. There is no role selector: an email belongs to one user, and a user has one role (REQ-245).</p><ul class="small"><li><code>reviewer@example.test</code> (Reviewer)</li><li><code>editor@example.test</code> (Editor)</li><li><code>admin@example.test</code> (Administrator)</li></ul><p class="small">Sample password for all: <code>' + W.SAMPLE_PW + '</code> · two-factor code: <code>000000</code></p></div>';
-    return '<div class="wrap section"><h1>Staff sign in</h1>' + (s === 0 ? '<form class="card stack-s" data-form="staff0" style="max-width:28rem">' + W.field("Work email", "email", { type: "email", req: true }) + W.field("Password", "password", { type: "password", req: true }) + (W.ui.staffErr ? '<p class="err" role="alert">' + e(W.ui.staffErr) + "</p>" : "") + '<button class="btn">Continue</button></form>' : '<form class="card stack-s" data-form="staff1" style="max-width:28rem"><p>Enter the 6-digit code from your authenticator app (two-factor is required for staff, REQ-047). <span class="muted small">Wireframe code: 000000</span></p>' + W.field("Code", "code", { req: true, attrs: 'inputmode="numeric"' }) + (W.ui.staffErr ? '<p class="err" role="alert">' + e(W.ui.staffErr) + "</p>" : "") + '<button class="btn">Sign in</button></form>') + hint + "</div>";
-  });
-  W.forms.staff0 = function (d) {
-    var u = (W.S.users || []).filter(function (x) { return x.email.toLowerCase() === String(d.email || "").trim().toLowerCase(); })[0];
-    if (!u || d.password !== W.SAMPLE_PW) { W.ui.staffErr = "Email or password is incorrect."; W.render(); return; }
-    W.ui.staffUser = u.email; W.ui.staffStep = 1; W.ui.staffErr = ""; W.render();
-  };
-  W.forms.staff1 = function (d) {
-    if (d.code.trim() !== "000000") { W.ui.staffErr = "That code is wrong."; W.render(); return; }
-    var u = (W.S.users || []).filter(function (x) { return x.email === W.ui.staffUser; })[0];
-    if (!u) { W.ui.staffStep = 0; W.ui.staffErr = "Email or password is incorrect."; W.render(); return; }
-    W.S.role = u.rk; W.S.user = u.email; W.ui.staffStep = 0; W.ui.staffErr = ""; W.log("auth.signin", u.email, "two-factor passed"); W.save(); W.go("#/admin");
-  };
-
   /* ---------- dashboard ---------- */
   function supportOpen() { var S = W.S; return S.corrections.concat(S.removals, S.reports).filter(function (x) { return x.status === "open" || x.status === "awaiting email check"; }).length; }
   mini("/admin", "A02", null, function () {
@@ -218,7 +197,7 @@
     var v = W.vis(p), pub = W.can("unpublish");
     return ['<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name || "(untitled)") + "</a>", e(p.type), e(W.srcOf(p)), e(p.batch || "\u2014"), W.stPill(p.status), W.trustPill(p) || "\u2014", v === "public" ? "Page (200)" : v === "gone" ? "410 + noindex" : "404", pub ? (p.status === "published" ? W.btn("Unpublish", "unpubDlg", p.id, "sm bad") : p.status === "unpublished" ? W.btn("Restore", "restore", p.id, "sm") : "") : ""];
   }
-  var PCOLS = ["Name", "Type", "Source", "Batch", "Status", "Verified", "Visitors see", ""];
+  var PCOLS = ["Name", "Type", "Source", "Batch", "Status", "Claimed", "Visitors see", ""];
   function bulkKey(q) { return [q.src || "", q.type || "", q.batch || "", q.status || "", q.origin || "", q.q || ""].join("~"); }
   function bulkQ(a) { var x = String(a).split("~"); return { src: x[0], type: x[1], batch: x[2], status: x[3], origin: x[4], q: x[5] }; }
   function bulkTargets(q) { return W.profFilter(q).filter(function (p) { return p.status === "published"; }); }
@@ -289,12 +268,10 @@
   mini("/admin/profiles/:id", "A06", "profiles", function (par) {
     var p = W.profile(par.id); if (!p) return "<h1>Not found</h1>";
     var arrs = W.S.arrangements.filter(function (a) { return a.linkedProfile === p.id; }), auditRows = W.S.audit.filter(function (a) { return a.target === p.id; });
-    return '<p><a href="#/admin/profiles">← Profiles</a></p><div class="row between"><h1>' + e(p.name) + (p.trust === "verified" ? " " + W.vcheck(p, true) : "") + '</h1><div class="row"><a class="btn alt" href="#/profile/' + e(p.slug) + '">Preview as visitor</a>' + (W.can("publish") ? (p.status === "published" ? W.btn("Unpublish", "unpubDlg", p.id, "bad") : p.status === "unpublished" ? W.btn("Restore", "restore", p.id) : "") : "") + "</div></div>" +
+    return '<p><a href="#/admin/profiles">← Profiles</a></p><div class="row between"><h1>' + e(p.name) + (p.claimed ? " " + W.vcheck(p, true) : "") + '</h1><div class="row"><a class="btn alt" href="#/profile/' + e(p.slug) + '">Preview as visitor</a>' + (W.can("publish") ? (p.status === "published" ? W.btn("Unpublish", "unpubDlg", p.id, "bad") : p.status === "unpublished" ? W.btn("Restore", "restore", p.id) : "") : "") + "</div></div>" +
       '<div class="tagrow">' + W.stPill(p.status) + W.trustPill(p) + W.statePill(p) + ' <span class="pill gray">origin: ' + e(W.origin(p)) + '</span> <span class="pill gray">source: ' + e(W.srcOf(p)) + '</span>' + (p.batch ? ' <span class="pill gray">batch: ' + e(p.batch) + "</span>" : "") + "</div>" + (W.can("edit") ? editCard(p) : termsCard(p)) + (W.can("edit") ? (
-      '<div class="card stack-s"><h2>Claim and profile manager</h2>' + (p.claimed ? '<p class="small">Claimed on ' + e(p.claimedAt || "") + '. Verified is set with the claim.</p>' : '<p class="small muted">Not claimed. A claim arrives from the public form and is reviewed on the <a href="#/admin/claims">Claims</a> screen.</p>') + (p.claimed && W.can("review_claims") ? '<form data-form="assignMgr" class="stack-s"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Assigned user", "manager", { type: "select", options: (W.S.users || []).map(function (u) { return [u.email, u.name + " (" + W.roleName(u.rk) + ")"]; }), blank: "Nobody", value: p.manager || "", hint: "This user may update this profile only. Each change goes to the review queue before it is published (REQ-253)." }) + '<button class="btn alt sm">Save</button></form>' : (p.claimed ? '<p class="small">Assigned user: ' + e(p.manager || "nobody") + "</p>" : "")) + '</div>' +
-      '<div class="grid c2"><div class="card stack-s"><h2>Verified (staff only)</h2><p class="small muted">Verified is a staff checklist and is not shown on public pages. It cannot be bought. Payment is never an input (REQ-153, 183, 184, D-036, D-055).</p><form data-form="verify" class="stack-s"><input type="hidden" name="id" value="' + e(p.id) + '"><fieldset><legend>Verified checklist (' + e(p.type) + ")</legend>" + ["Identity or registration checked against evidence", "Contact route confirmed", "Public sources match the profile", "No unresolved complaints"].map(function (c, i) { return '<label class="check"><input type="checkbox" name="v' + i + '"> ' + e(c) + "</label>"; }).join("") + W.field("Evidence reference", "evidence") + W.field("Payment status (not used)", "pay", { value: "Not an input", attrs: "disabled" }) + '</fieldset><button class="btn">Set Verified</button></form>' +
-      '<form data-form="unverify" class="stack-s"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.btn("Remove label", "trustReset", p.id, "sm alt") + "</form></div>" +
-      '<div class="card stack-s"><h2>Arrangements</h2><p class="small">Linked arrangements: ' + (arrs.length ? arrs.map(function (a) { return '<a href="#/admin/register/' + e(a.id) + '">' + e(a.id) + "</a> (" + e(W.arrStatus(a)) + ", " + e(a.start || "") + " to " + e(a.end || "") + ")"; }).join(", ") : "none") + '</p><p class="small muted">A paid arrangement never changes how a profile looks to the public. Only stories can be Sponsored (D-055).</p></div></div>' +
+      '<div class="card stack-s"><h2>Claim and profile manager</h2>' + (p.claimed ? '<p class="small">Claimed on ' + e(p.claimedAt || "") + '. Staff see a checkmark; the Claim button is hidden on the public page.</p>' : '<p class="small muted">Not claimed. A claim arrives from the public form and is reviewed on the <a href="#/admin/claims">Claims</a> screen.</p>') + (p.claimed && W.can("review_claims") ? '<form data-form="assignMgr" class="stack-s"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Assigned user", "manager", { type: "select", options: (W.S.users || []).map(function (u) { return [u.email, u.name + " (" + W.roleName(u.rk) + ")"]; }), blank: "Nobody", value: p.manager || "", hint: "This user may update this profile only. Every change to a claimed profile must be approved by a Reviewer or Administrator before it is public (REQ-253)." }) + '<button class="btn alt sm">Save</button></form>' : (p.claimed ? '<p class="small">Assigned user: ' + e(p.manager || "nobody") + "</p>" : "")) + '</div>' +
+      '<div class="grid c2">' + '<div class="card stack-s"><h2>Arrangements</h2><p class="small">Linked arrangements: ' + (arrs.length ? arrs.map(function (a) { return '<a href="#/admin/register/' + e(a.id) + '">' + e(a.id) + "</a> (" + e(W.arrStatus(a)) + ", " + e(a.start || "") + " to " + e(a.end || "") + ")"; }).join(", ") : "none") + '</p><p class="small muted">A paid arrangement never changes how a profile looks to the public. Only stories can be Sponsored (D-055).</p></div></div>' +
       '<div class="grid c2"><form class="card stack-s" data-form="slug"><h2>Public URL</h2><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Slug", "slug", { value: p.slug, hint: "Changing it creates a redirect from the old URL." }) + '<p class="small muted">Redirects: ' + e((p.redirects || []).join(", ") || "none") + '</p><button class="btn alt">Save slug</button></form><div class="card stack-s"><h2>Source sync</h2><p class="small">' + (p.qid ? "Wikidata ID " + e(p.qid) + "." : "Linked to a source record (sample).") + ' Changes from a source are flagged for review, never overwritten (REQ-135, 161).</p>' + W.btn("Check source for changes (sample)", "srcSync", p.id, "alt sm") + "</div></div>" +
       '<div class="grid c2"><form class="card stack-s" data-form="vis"><h2>Contact and enquiries (set on request)</h2><input type="hidden" name="id" value="' + e(p.id) + '"><p class="small muted">Nobody has a login. A request arrives through the correction form into the Support inbox and staff set this here (REQ-018, 060, D-040). Default: nothing public beyond the enquiry form.</p>' + W.field("Show website", "website", { type: "checkbox", value: (p.public || {}).website }) + W.field("Show email", "email", { type: "checkbox", value: (p.public || {}).email }) + W.field("Show phone", "phone", { type: "checkbox", value: (p.public || {}).phone }) + W.field("Allow enquiries", "enq", { type: "checkbox", value: p.enquiries }) + W.field("Requested by (name or email)", "by", { req: true }) + '<button class="btn alt">Save</button></form><div class="card stack-s"><h2>Send views and sources on request (REQ-236)</h2><p class="small">Send the view count and the sources used, as asked. Views: <strong>' + e(p.views) + "</strong> (view count only). Sources: " + e((p.facts || []).map(function (f) { return f.src || "none"; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join("; ") || "none") + ".</p>" + W.btn("Email this to the requester (sample)", "ownerInfo", p.id, "alt sm") + "</div></div>") : '<p class="small muted">Labels, the Sponsored label, the URL, contact settings and edits are for Editors and Administrators. Reviewers can view the profile and assign existing taxonomy terms.</p>') +
       factsCard(p) +
@@ -339,22 +316,16 @@
     W.save(); W.render(); W.toast("Saved. " + (p.status === "published" ? "The public page changed at once. " : "") + "The edit is in the audit log.");
   };
   function trust(p, to, why) { var from = p.trust || "none"; p.trust = to; (p.trustLog = p.trustLog || []).push(W.TODAY + " " + from + " → " + (to || "none") + " by " + W.persona() + ": " + why); W.log("trust.set", p.id, from + " to " + (to || "none") + ": " + why); }
-  W.forms.verify = function (d) {
-    var p = W.profile(d.id); if (![0, 1, 2, 3].every(function (i) { return d["v" + i]; })) { W.toast("Tick every checklist item. Payment is not an input."); return; }
-    trust(p, "verified", "checklist passed; evidence " + (d.evidence || "n/a")); W.save(); W.render(); W.toast("Set to Verified.");
-  };
   W.forms.assignMgr = function (d) {
     var p = W.profile(d.id); if (!p || !W.can("review_claims")) return;
     var was = p.manager || ""; p.manager = d.manager || "";
     p.history.push({ at: W.TODAY, by: W.persona(), what: "Assigned user: " + (p.manager || "nobody") });
     W.log("profile.manager", p.id, (was || "nobody") + " to " + (p.manager || "nobody")); W.save(); W.render(); W.toast("Assigned user saved.");
   };
-  W.act.trustReset = function (id) { var p = W.profile(id); trust(p, "", "label removed by staff"); W.save(); W.render(); };
   W.forms.vis = function (d) { var p = W.profile(d.id); p.public = { website: !!d.website, email: !!d.email, phone: !!d.phone }; p.enquiries = !!d.enq; p.history.push({ at: W.TODAY, by: W.persona(), what: "Contact visibility / enquiries set on request from " + d.by }); W.log("profile.visibility", p.id, "request from " + d.by + "; enquiries " + (p.enquiries ? "on" : "off")); W.save(); W.render(); W.toast("Saved. The enquiry button on the public profile " + (p.enquiries ? "is on." : "is hidden.")); };
   W.act.ownerInfo = function (id) { var p = W.profile(id); W.mail("Requester for " + p.name, "Your " + W.brand.name + " profile: views and sources", "Views: " + p.views + ". Sources are listed on the profile record.", ""); W.log("owner.info", id, "view count and sources sent"); W.save(); W.toast("Sent. See the email outbox."); };
   W.forms.slug = function (d) { var p = W.profile(d.id), s = d.slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-"); if (s && s !== p.slug) { (p.redirects = p.redirects || []).push(p.slug); p.slug = s; p.history.push({ at: W.TODAY, by: W.persona(), what: "Slug changed; redirect created" }); W.purge("/profile/" + p.redirects[p.redirects.length - 1], "slug change"); W.log("slug.change", p.id, s); W.save(); W.render(); W.toast("Saved. The old URL redirects to the new one."); } };
   W.act.srcSync = function (id) { var p = W.profile(id); p.edit = Object.assign(p.edit || {}, { title: (p.title || "Role") + " (source changed)" }); W.log("source.sync", id, "change flagged"); W.save(); W.toast("A source change was found and queued for review instead of overwriting."); W.render(); };
-  W.forms.sponsor = function (d) { var p = W.profile(d.id); p.sponsored = d.name || null; W.log("sponsored.set", p.id, d.name || "cleared"); W.save(); W.render(); W.toast("Sponsored label updated. Status unchanged."); };
 
   /* ---------- inbox, reports, corrections, dsr ---------- */
   W.dueText = function (due, status) {
