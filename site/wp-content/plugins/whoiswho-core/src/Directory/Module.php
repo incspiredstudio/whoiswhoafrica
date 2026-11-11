@@ -27,5 +27,14 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		add_action(
+			'init',
+			static function (): void {
+				( new ProfileType() )->register();
+				( new Taxonomies() )->register();
+				( new PlaceSeeder() )->maybe_seed();
+			},
+			5
+		);
 	}
 }
