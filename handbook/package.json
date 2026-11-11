@@ -1,0 +1,13 @@
+{
+  "name": "whoiswho-handbook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev --host --port 5174",
+    "build": "vitepress build",
+    "preview": "vitepress preview --host --port 5174"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}
