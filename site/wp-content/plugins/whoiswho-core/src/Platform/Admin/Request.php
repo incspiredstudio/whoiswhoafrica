@@ -61,6 +61,26 @@ final class Request {
 	}
 
 	/**
+	 * A list of whole numbers (for example checkboxes or a multi-select), or an empty list.
+	 *
+	 * @param string $key Name.
+	 * @return array<int, int>
+	 */
+	public function ints( string $key ): array {
+		$value = $this->values[ $key ] ?? array();
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $value as $item ) {
+			if ( is_scalar( $item ) ) {
+				$out[] = (int) $item;
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * The nonce sent with the request.
 	 */
 	public function nonce(): string {
