@@ -1,0 +1,1566 @@
+{
+  "milestone": "M5",
+  "issues": [
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_041_profile_page_lcp_within_2500ms_on_throttled_4g",
+        "test_REQ_041_directory_page_lcp_within_2500ms_on_throttled_4g",
+        "test_REQ_042_page_weight_within_budget"
+      ],
+      "notes": "Run after the public templates from M1 and M2 exist; the generator should add those keys as depends once the other plan files are final. The budget numbers are a proposal (docs gap: theme-acceptance says none is written).",
+      "key": "M5-PRF-01",
+      "title": "Set the performance budget and a Lighthouse LCP and CLS check",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-041",
+        "REQ-042"
+      ],
+      "summary": "Measure the finished shell on a throttled-4G mid-range Android profile and write down the numeric budget the theme-acceptance page says is missing; add a repeatable Lighthouse check.",
+      "scope": [
+        "Define the agreed LCP test: device profile, throttling, pages (home, directory list, profile, story) and run count",
+        "Add a Lighthouse CI run on the local build with budgets for LCP, CLS, page weight and script size",
+        "Record the measured baseline and the numeric budget; ask the shared-docs owner to add it to docs/theme/theme-acceptance.md open points"
+      ],
+      "acceptance": [
+        "On a throttled-4G mid-range Android profile a profile page reaches LCP at or under 2.5 seconds in the agreed test",
+        "Directory list page reaches LCP at or under 2.5 seconds in the same test",
+        "The agreed test method is written down and repeatable by one command",
+        "A numeric budget for page weight and script size is proposed from the measurement and recorded",
+        "The Lighthouse check fails the build when a budget is exceeded"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/perf/**",
+        "site/lighthouserc.json"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-PRF-01"
+      ],
+      "tests": [
+        "test_REQ_042_images_have_srcset_and_modern_format",
+        "test_REQ_042_lcp_image_not_lazy_loaded",
+        "test_REQ_080_original_file_kept_after_resize"
+      ],
+      "notes": "Prototype reference: home route (hero videos), directory and profile routes. Work is in the parent theme; the child holds brand tokens only.",
+      "key": "M5-PRF-02",
+      "title": "Verify and tune responsive images and modern formats",
+      "area": "theme",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-042",
+        "REQ-080"
+      ],
+      "summary": "Make sure every public image is served resized, in a modern format, lazy-loaded where below the fold, with the LCP image not lazy-loaded, and originals kept in the media library.",
+      "scope": [
+        "Check registered image sizes and srcset/sizes output on profile, story card, event and directory templates",
+        "Serve WebP or AVIF with a fallback; originals kept (REQ-080)",
+        "Lazy-load below-the-fold images; never lazy-load the LCP image; set width and height to avoid layout shift",
+        "Fonts load so text shows at once (font-display)",
+        "Hero videos on the home page do not delay first view; poster images are sized"
+      ],
+      "acceptance": [
+        "Images are resized and in modern formats (REQ-042)",
+        "Originals are kept in the WordPress media library (REQ-080)",
+        "Fonts are loaded in a way that shows text at once",
+        "Video loads without delaying the first view",
+        "The theme adds JavaScript only where a page needs it",
+        "No image causes layout shift (CLS within the budget)"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/components.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**",
+        "site/tests/e2e/perf/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-PRF-01"
+      ],
+      "tests": [
+        "test_REQ_208_visibility_matrix_with_cache_plugin",
+        "test_REQ_217_noindex_header_survives_cache",
+        "test_REQ_054_staff_pages_bypass_cache"
+      ],
+      "notes": "Docs gap: no cache plugin is named. Config and tests are prepared locally; installation on the live host happens in the migration issues. If the host offers an object cache, note it (Q82).",
+      "key": "M5-PRF-03",
+      "title": "Configure page caching for public pages only",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-041",
+        "REQ-054",
+        "REQ-217"
+      ],
+      "summary": "Launch checklist item 6: public anonymous pages are cached and staff pages are not, without ever caching a non-public profile or a form token.",
+      "scope": [
+        "Choose and configure the cache plugin (Q82: a cache plugin is enough unless measurement says otherwise); record it in the dependency register",
+        "Cache anonymous GET pages for named public paths only; bypass on staff cookies, previews and form pages that carry time-based tokens",
+        "Verify cache headers and purge on unpublish, so a removed profile returns 410 at once",
+        "Re-run the guard visibility matrix with the cache plugin on (adding any plugin re-runs the matrix)",
+        "Document settings in the runbook"
+      ],
+      "acceptance": [
+        "Public pages are cached and staff pages are not",
+        "A profile unpublished by staff returns 410 immediately, not a cached 200",
+        "The visibility matrix passes with the cache plugin active",
+        "A pending-review profile response keeps its X-Robots-Tag noindex header through the cache",
+        "Public forms still work on cached pages (time-based token, not a nonce)"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/launch-checklist.md",
+        "docs/plugins/third-party.md",
+        "docs/plugins/guard.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/deploy/cache/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-PRF-03"
+      ],
+      "tests": [
+        "test_REQ_054_fifty_concurrent_users_no_errors"
+      ],
+      "notes": "REQ-054 numbers are assumed targets. Response-time pass criteria are not in the docs; propose and confirm with the owner.",
+      "key": "M5-PRF-04",
+      "title": "Check the concurrency and volume target on the local build",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-054"
+      ],
+      "summary": "A light check that the cached site holds 50 concurrent users and a 100,000 page views a month profile. Load testing beyond this is out of scope.",
+      "scope": [
+        "Script 50 concurrent anonymous users across home, directory, profile and search",
+        "Record response times and error rate",
+        "Record the result; repeat against staging in the rehearsal"
+      ],
+      "acceptance": [
+        "50 concurrent users produce no errors and stay within the agreed response time on the local build",
+        "The result is recorded in the runbook as the baseline",
+        "Staging is re-checked in the rehearsal (M5-LCH-04)"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "site/tests/perf/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_043_axe_no_violations_key_pages_all_widths"
+      ],
+      "notes": "Docs gap: theme-acceptance open points say the list of tested widths and devices is not final and the prototype audit script is not kept; this issue proposes 360/768/1280/1600. Runs after the M1 to M4 templates exist.",
+      "key": "M5-A11-01",
+      "title": "Run axe on every public page at 360, 768 and 1280 px",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040"
+      ],
+      "summary": "An automated WCAG 2.1 AA sweep with axe inside Playwright for the pages named in the acceptance criteria, extended to every public template at the four theme widths.",
+      "scope": [
+        "Playwright specs that load home, directory, profile, story, events, nominate, claim, correct, remove, report, get listed, contact, search, 404 and 410 at 360, 768, 1280 and 1600 px",
+        "Run axe with WCAG 2.1 AA tags on each and fail on any violation",
+        "Cover states: nominations switch on and off, claimed profile, past event, no-results"
+      ],
+      "acceptance": [
+        "axe reports no violations on the home, directory, profile, story, nominate and form pages at 360, 768 and 1280 px",
+        "axe reports no violations at 1600 px for every template",
+        "Text contrast meets AA for every colour pair including text over video and colour blocks",
+        "Page language is set and confirmation and error messages are announced",
+        "Zoom to 200 percent loses no content or function"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/a11y/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_043_keyboard_reaches_every_control",
+        "test_REQ_043_reduced_motion_no_autoadvance",
+        "test_REQ_040_no_horizontal_scroll_at_360"
+      ],
+      "notes": "Prototype reference: all public routes in prototype/ (the prototype audit script is not in the repo).",
+      "key": "M5-A11-02",
+      "title": "Test keyboard use, focus, reduced motion and 360 px overflow",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040"
+      ],
+      "summary": "End-to-end checks of the behaviours axe cannot prove.",
+      "scope": [
+        "Tab through every public page: each control reachable, focus ring visible, drawer and dialogs trap Tab and return focus",
+        "Skip link reaches main; one h1; landmarks present",
+        "Emulate prefers-reduced-motion: no reveals, smooth scroll, autoscroll or confetti",
+        "Emulate data saver or slow connection: static home",
+        "Scripts disabled: every page readable and every link works",
+        "Assert no horizontal scroll at 360 px on every page"
+      ],
+      "acceptance": [
+        "Keyboard-only use reaches every interactive control with a visible focus state",
+        "The drawer and dialogs trap Tab and return focus on close",
+        "Reduced-motion visitors get no auto-advancing motion",
+        "No public page scrolls horizontally at 360 px",
+        "With scripts disabled every page is readable and every link works",
+        "The home page shows its static version with data saver or a very slow connection",
+        "A skip link reaches main"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/tests/e2e/a11y/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-A11-01",
+        "M5-A11-02"
+      ],
+      "tests": [
+        "test_REQ_043_all_findings_closed_axe_clean",
+        "test_REQ_190_no_brand_values_outside_tokens_file"
+      ],
+      "notes": "Size is a ceiling; if findings are many, split by template into follow-up issues labelled type:discovered.",
+      "key": "M5-A11-03",
+      "title": "Fix accessibility and responsive findings in the theme",
+      "area": "theme",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040",
+        "REQ-055"
+      ],
+      "summary": "Close every finding from the automated and manual passes so the Every page checklist passes at four widths.",
+      "scope": [
+        "Fix each finding with a test that failed first",
+        "Re-run the sweeps until clean",
+        "Re-run the theme-leak check (no brand values outside the child tokens file)"
+      ],
+      "acceptance": [
+        "All \"Every page\" items in the theme acceptance checklist pass at 360, 768, 1280 and 1600 px",
+        "No brand colour or font appears outside the child theme tokens file (REQ-052, REQ-190)",
+        "Touch targets are large enough and hover-only behaviour has a touch equivalent"
+      ],
+      "docs": [
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**",
+        "site/wp-content/themes/whoiswho-child/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-A11-03"
+      ],
+      "tests": [],
+      "notes": "docs/verify-*.md is the qa area per CLAUDE.md; qa writes the file from the human result.",
+      "key": "M5-A11-04",
+      "title": "Manual screen reader and real device pass",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-055"
+      ],
+      "summary": "A person tests with a screen reader and on real phones, since touch, motion feel and video playback are manual in the acceptance page.",
+      "scope": [
+        "Screen reader pass (NVDA or VoiceOver) on home, directory, profile, a form and its done page",
+        "Real mid-range Android over 4G: touch targets, drawer, video autoplay, cookie card",
+        "Latest two versions of Chrome, Safari, Edge, Firefox and Android Chrome: smoke each key page",
+        "Record findings as issues"
+      ],
+      "acceptance": [
+        "A screen reader user can use every public page",
+        "Confirmation and error messages are announced",
+        "Browser smoke passes on the latest two versions of Chrome, Safari, Edge, Firefox and Android Chrome",
+        "Findings are logged as issues and fixed or accepted by the owner"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "docs/verify-accessibility.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "playwright.config projects chromium and webkit-mobile"
+      ],
+      "notes": "Firefox and Edge are covered by the manual pass (M5-A11-04). Docs do not say whether CI also runs them.",
+      "key": "M5-A11-05",
+      "title": "Run the Playwright suite on a WebKit mobile profile and Chromium",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-055",
+        "REQ-040"
+      ],
+      "summary": "Configure the CI browser matrix named in testing-and-ci: Chromium and a WebKit mobile profile.",
+      "scope": [
+        "Playwright projects for Chromium desktop, Chromium phone-sized, WebKit mobile",
+        "Wire into the CI gate \"Playwright smoke tests and axe\""
+      ],
+      "acceptance": [
+        "The same Playwright specs pass on Chromium and a WebKit mobile profile",
+        "CI runs unit, integration, architecture and end-to-end tests on every pull request"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "site/playwright.config.ts",
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_046_security_headers_on_public_response",
+        "test_REQ_046_security_headers_on_error_pages",
+        "test_REQ_046_http_redirects_to_https"
+      ],
+      "notes": "Header implementation is in guard (M0); this issue is verification only.",
+      "key": "M5-SEC-01",
+      "title": "Test HTTPS and security headers on every response",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-046"
+      ],
+      "summary": "A header test that proves the agreed headers on public, staff and error responses.",
+      "scope": [
+        "Assert HSTS, nonce-based CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy and frame-ancestors none",
+        "Assert HTTP redirects to HTTPS (run on staging)",
+        "Assert headers on 404, 410 and 500"
+      ],
+      "acceptance": [
+        "Every response sets HTTPS-only and the agreed security headers",
+        "The 500 page shows no technical detail",
+        "410 carries noindex and no reason"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_046_registration_closed_and_application_passwords_off",
+        "test_REQ_229_rest_requires_staff_login",
+        "test_REQ_047_login_lockout_after_repeated_failures",
+        "test_REQ_046_xmlrpc_disabled",
+        "test_REQ_046_user_enumeration_blocked"
+      ],
+      "notes": "The uploads PHP block is server config; that test runs against staging. The go-live firewall (Cloudflare free tier or a security plugin, Q85) is not decided in the docs; it is a decision in M5-LCH-05.",
+      "key": "M5-SEC-02",
+      "title": "Verify live hardening: file edit, XML-RPC, registration, REST, enumeration",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-046",
+        "REQ-047",
+        "REQ-229"
+      ],
+      "summary": "Launch checklist item 5 as tests that can be run against local, staging and live.",
+      "scope": [
+        "DISALLOW_FILE_EDIT and DISALLOW_FILE_MODS set; auto plugin updates off",
+        "XML-RPC off; registration off with no default role; no application passwords; no front-end login link",
+        "Core REST requires a signed-in staff user; users REST route and author query blocked; user sitemaps off; uniform login errors",
+        "Login attempts limited; directory listing off; PHP not executable in uploads",
+        "No sign in or sign up offered to visitors anywhere"
+      ],
+      "acceptance": [
+        "File editing is off, XML-RPC is off, registration is off and login limits are on",
+        "No registration or login route is exposed to visitors",
+        "User enumeration is blocked",
+        "There is no public REST route",
+        "PHP does not run in the uploads folder"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/plugins/guard.md",
+        "docs/build/launch-checklist.md"
+      ],
+      "files": [
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_127_disallowed_type_refused",
+        "test_REQ_127_oversize_file_refused",
+        "test_REQ_127_evidence_not_served_inline"
+      ],
+      "notes": "Docs gap: REQ-127 says files are scanned but no scanner is named; verify what earlier milestones chose and record it.",
+      "key": "M5-SEC-03",
+      "title": "Verify upload type, size and scan checks",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-127"
+      ],
+      "summary": "Prove that every upload path refuses the wrong type or size and handles evidence files safely.",
+      "scope": [
+        "Disallowed type and oversize refused on claim, correction, nomination and media upload paths",
+        "Images re-encoded server-side; evidence limited to JPG, PNG, PDF; stored outside web root; never served inline",
+        "Scan hook runs on evidence files (verify mechanism)"
+      ],
+      "acceptance": [
+        "An uploaded file with a disallowed type or over the size limit is refused",
+        "Evidence files are stored outside the web root and never served inline",
+        "Uploaded files are type-checked and scanned"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/plugins/trust.md"
+      ],
+      "files": [
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_122_every_public_form_rate_limited",
+        "test_REQ_081_every_public_form_has_bot_challenge",
+        "test_REQ_233_scanner_get_does_not_consume_link"
+      ],
+      "notes": "Run after all form issues in M1 to M4.",
+      "key": "M5-SEC-04",
+      "title": "Verify rate limits and the bot challenge on every public form",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-122",
+        "REQ-081",
+        "REQ-233"
+      ],
+      "summary": "One matrix test across all public forms for throttles per IP and per email or link token, the bot challenge and uniform responses.",
+      "scope": [
+        "Forms: enquiry, contact, get listed, claim, correct, remove, report, nominate, newsletter, comment, data request",
+        "Assert throttle message after too many attempts, bot challenge present and labelled, uniform responses, a scanner GET does not consume a link"
+      ],
+      "acceptance": [
+        "Every public form is rate-limited per IP and per email or link token (REQ-122)",
+        "Every public form has a labelled bot check (REQ-081)",
+        "A rate limit message appears on Nominate after too many submissions",
+        "Responses to public forms are uniform and do not reveal what exists"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/features/get-listed-enquiries.md",
+        "docs/features/corrections-removals-reports.md"
+      ],
+      "files": [
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_046_ci_fails_on_high_severity_finding"
+      ],
+      "notes": "Contradiction: Q81 answer says no cap on plugin count while its suggested rule says 15; treated as no cap. The register is a docs page (shared docs), so register edits go through the shared-docs owner.",
+      "key": "M5-SEC-05",
+      "title": "Pre-launch dependency audit, secret scan and plugin vulnerability check",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-046",
+        "REQ-065"
+      ],
+      "summary": "Confirm CI fails on high findings, run the full audit and a WordPress plugin vulnerability check, and confirm the dependency register matches the installed plugins.",
+      "scope": [
+        "composer audit and npm audit --audit-level=high clean",
+        "Secret scan clean on full history",
+        "Check every installed third-party plugin against a vulnerability database (verify mechanism)",
+        "Compare installed plugins to the processor and dependency register in the docs"
+      ],
+      "acceptance": [
+        "A high-severity dependency finding fails the build",
+        "No secret is found in the repository history",
+        "Every installed plugin is in the dependency register and was approved by the Administrator"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/build/testing-and-ci.md",
+        "docs/plugins/third-party.md"
+      ],
+      "files": [
+        "site/composer.json",
+        "site/composer.lock"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_047_staff_cannot_reach_admin_without_2fa",
+        "test_REQ_047_password_reset_does_not_bypass_2fa",
+        "test_REQ_047_recovery_code_single_use"
+      ],
+      "notes": "Which two-factor plugin is used is in docs/plugins/third-party.md; confirm. The 60-minute idle timeout is marked verify in security.md.",
+      "key": "M5-SEC-06",
+      "title": "Test two-factor enforcement, recovery codes and lockout",
+      "area": "qa",
+      "feature": "roles-audit-and-admin",
+      "size": "S",
+      "reqs": [
+        "REQ-047"
+      ],
+      "summary": "Prove no staff account can use wp-admin without two-factor, and that password reset never bypasses it.",
+      "scope": [
+        "A new staff user is forced to enrol before first use of wp-admin",
+        "Recovery codes work once; lockout after repeated failures",
+        "Password reset does not bypass two-factor; idle timeout",
+        "Per role: Reviewer, Editor, Administrator"
+      ],
+      "acceptance": [
+        "No staff account can sign in without two-factor",
+        "Recovery codes and lockout work",
+        "A password reset never bypasses two-factor"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/security.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-SEC-06"
+      ],
+      "tests": [],
+      "notes": "Q102 (claimant access through a limited Profile manager user) is open; if accepted, those users are included.",
+      "key": "M5-HUM-01",
+      "title": "Enrol two-factor for every staff user and record evidence",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-047"
+      ],
+      "summary": "Launch checklist item 4: the Administrator confirms every live staff account has two-factor, with evidence.",
+      "scope": [
+        "List all staff users on the live site (Reviewer, Editor, Administrator, and any Profile manager if Q102 is accepted)",
+        "Each enrols and keeps their own recovery codes",
+        "Evidence: a screenshot or plugin report showing no account without two-factor"
+      ],
+      "acceptance": [
+        "No staff account can sign in without two-factor",
+        "Evidence is attached to the launch checklist item",
+        "Accounts of anyone who has left are removed"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "Retention figures come from the suggested answer to Q83, accepted in D-060. Docs differ: platform-quality says daily backups of database and uploads; the launch checklist says weekly files. Weekly uploads backups do not meet a 24 h recovery point for new uploads; flagged for the owner.",
+      "key": "M5-OPS-01",
+      "title": "Set up cPanel backups with an off-server copy",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-049"
+      ],
+      "summary": "Launch checklist item 1.",
+      "scope": [
+        "Daily database and weekly file backups in cPanel, kept 14 daily and 8 weekly",
+        "One off-server copy downloaded weekly",
+        "If cPanel cannot do it, a backup plugin (record in the dependency register)",
+        "Backup check visible in wp-admin"
+      ],
+      "acceptance": [
+        "A backup is taken daily",
+        "Daily database and weekly file backups run, with a copy kept off the server",
+        "Database and uploads are both covered"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/launch-checklist.md",
+        "docs/questions.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-OPS-01"
+      ],
+      "tests": [],
+      "notes": "Contradiction: architecture 6.5 says restore test before launch and monthly; Q83 and the launch checklist say quarterly. Used quarterly (newer, D-060).",
+      "key": "M5-OPS-02",
+      "title": "Run and document a full restore test",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-049"
+      ],
+      "summary": "Launch checklist item 2: restore a backup to a copy of the site and confirm it works, with the time taken checked against RTO 8 h.",
+      "scope": [
+        "Restore database and uploads from the cPanel backup to a copy",
+        "Smoke check the restored site, including the visibility matrix on a sample",
+        "Record steps and elapsed time in the runbook; repeat every quarter"
+      ],
+      "acceptance": [
+        "A documented restore has been run successfully before launch",
+        "The restore fits the 8-hour recovery time and the backup age fits the 24-hour recovery point",
+        "A quarterly repeat is scheduled"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/launch-checklist.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "The 1,000-record test uses the import from M1, so the import must exist first. Q87 is the only open WordPress-build question; it does not block building.",
+      "key": "M5-OPS-03",
+      "title": "Check the live host limits and record them (Q87)",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-045",
+        "REQ-237"
+      ],
+      "summary": "Close Q87: check the live cPanel host against the list in the deployment page and write each result into the runbook. A failure leads to a fix or the VPS fallback.",
+      "scope": [
+        "PHP version (current), memory (at least 256 MB), execution time",
+        "A database and user; uploads folder writable; inodes and disk for the media library",
+        "WP-Cron or a cPanel cron every minute runs jobs (DISABLE_WP_CRON decision)",
+        "SMTP sends and the hourly mail cap",
+        "TRIGGER privilege for the audit-log triggers (ADR-013)",
+        "A 1,000-record import in chunks; 410 behaviour",
+        "Record the result; if it fails, decide fix or VPS and tell the owner"
+      ],
+      "acceptance": [
+        "PHP version, memory, cron, inodes and disk are recorded in the runbook",
+        "TRIGGER privilege result is recorded, and if absent the periodic off-server audit-log copy is in place",
+        "A 1,000-record import in chunks completes within the time limit",
+        "Q87 is marked answered in docs/questions.md by the shared-docs owner"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/deployment.md",
+        "docs/open-questions.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "DNS is changed by whoever controls the domain; the owner may need to do it.",
+      "key": "M5-OPS-04",
+      "title": "Set up and verify email deliverability: SPF, DKIM, DMARC",
+      "area": "human",
+      "feature": "email-and-notifications",
+      "size": "S",
+      "reqs": [
+        "REQ-061"
+      ],
+      "summary": "Launch checklist item 7: the site can send mail that reaches inboxes.",
+      "scope": [
+        "SPF, DKIM, DMARC DNS records for the sending domain on cPanel SMTP",
+        "Send test messages from the site (enquiry acknowledgement, a signed link, a newsletter sample) to Gmail, Outlook and one other",
+        "Check the one-click unsubscribe and the hourly cap (batch bulk nominee mail)"
+      ],
+      "acceptance": [
+        "SPF, DKIM and DMARC are set",
+        "A test message from the site reaches an inbox, not spam",
+        "Every marketing message has one-click unsubscribe",
+        "Results are recorded in the runbook"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/deployment.md",
+        "docs/features/email-and-notifications.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_050_form_failure_logged_without_pii",
+        "test_REQ_050_failed_job_raises_admin_alert",
+        "test_REQ_078_view_counts_not_public"
+      ],
+      "notes": "M0 lists platform quality basics, so this may be partly built; this issue closes gaps and tests. Assumption: the person named in the runbook is the Administrator. An external uptime monitor is optional and later.",
+      "key": "M5-OPS-05",
+      "title": "Add monitoring hooks, failure alerts and the view-count report check",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-050",
+        "REQ-045",
+        "REQ-078"
+      ],
+      "summary": "Make errors, failed jobs and form failures reach the person named in the runbook, without personal data in logs.",
+      "scope": [
+        "Hooks for form-submission failures and PHP errors that write structured, ID-only logs with a request ID and 30-day retention",
+        "Failed-job alert and backup-age check in wp-admin",
+        "Alert delivery to the named person (email)",
+        "Confirm daily view counts appear only in the staff weekly report",
+        "Optional uptime monitor documented for later"
+      ],
+      "acceptance": [
+        "An uptime or form-failure event reaches the person named in the runbook",
+        "Logs hold IDs only, no names or emails",
+        "Failed-job alerts and a backup check appear in wp-admin",
+        "Daily view counts appear in the staff report only"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/plugins/platform.md",
+        "docs/build/deployment.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/**",
+        "site/tests/Unit/**",
+        "site/tests/Integration/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_062_no_nonessential_cookie_before_consent",
+        "test_REQ_248_cookie_card_after_scroll",
+        "test_REQ_078_analytics_counts_visits_after_consent"
+      ],
+      "notes": "The analytics tool is not named in the docs (\"cookieless and first-party by default\"); confirm in third-party.md.",
+      "key": "M5-OPS-06",
+      "title": "Verify analytics load no non-essential cookie before consent",
+      "area": "qa",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-078",
+        "REQ-062",
+        "REQ-248"
+      ],
+      "summary": "Cookie and analytics consent check for launch.",
+      "scope": [
+        "Fresh browser: no non-essential cookie or script before Accept",
+        "Decline keeps it off; Accept enables first-party analytics",
+        "The cookie card appears only after a little scroll, or at once on a short page"
+      ],
+      "acceptance": [
+        "Analytics load no non-essential cookie before consent",
+        "The cookie notice appears after a little scroll with Decline and Accept",
+        "No non-essential script runs before Accept"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/tests/e2e/privacy/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-OPS-02",
+        "M5-OPS-03",
+        "M5-OPS-04"
+      ],
+      "tests": [],
+      "notes": "docs/runbook.md is infra area per CLAUDE.md conventions but lives in docs/, a shared-docs path; the shared-docs owner must allow the write. Breach deadlines depend on Legal (deferred, D-051).",
+      "key": "M5-OPS-07",
+      "title": "Complete the operations runbook",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-095",
+        "REQ-066"
+      ],
+      "summary": "Launch checklist item 15: deploy, rollback, restore, incident handling, bulk unpublish, key rotation, VPS move and the breach procedure written down and walked through once.",
+      "scope": [
+        "Sections: deploy, rollback (code, database, bad import, bad publication), backup and restore, incident handling, breach response (detect, log, notify regulator and people within the legal deadline), bulk unpublish and restore by batch, key rotation (SMTP, signing keys, salts, backup passphrase), move to a VPS, quarterly tasks",
+        "Insert the results of the host-limit, restore and email checks",
+        "Name the alert contact",
+        "A second person follows the runbook once to prove it"
+      ],
+      "acceptance": [
+        "Deploy, rollback, restore and incident handling are written down",
+        "The breach-response procedure exists as an offline runbook procedure with no log screen (REQ-066)",
+        "Key rotation steps are written",
+        "The runbook names the person who receives alerts",
+        "The runbook includes the host limits recorded for Q87"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/launch-checklist.md",
+        "docs/build/deployment.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "docs/runbook.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "Potential contradiction: core minor updates automatic vs \"automatic plugin updates off\"; read as core only. Dependabot file location depends on where .github/ lives (shared-docs path).",
+      "key": "M5-OPS-08",
+      "title": "Set up the plugin and update policy in the runbook and tooling",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-046",
+        "REQ-065"
+      ],
+      "summary": "Launch checklist item 9, and the tooling that supports item 8: updates are tried locally first, applied weekly, security fixes within 48 hours.",
+      "scope": [
+        "Write the policy: core minor and security auto-update; other updates local first, applied weekly by the Administrator; security fixes within 48 hours; major core after a local test",
+        "Dependabot weekly; automatic plugin updates off; updates ship through the pipeline",
+        "Checklist for the weekly custom-plugin review (code diff review, tests, dependency register)",
+        "A visibility-matrix re-run whenever a plugin is added"
+      ],
+      "acceptance": [
+        "Core, plugin and theme updates are tried locally first and applied weekly; security fixes within 48 hours",
+        "The weekly custom-plugin review has a written checklist",
+        "Dependabot runs weekly",
+        "Adding a plugin re-runs the visibility matrix"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/security.md",
+        "docs/plugins/third-party.md",
+        "docs/questions.md"
+      ],
+      "files": [
+        "docs/runbook.md",
+        "site/.github/dependabot.yml"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-OPS-08"
+      ],
+      "tests": [],
+      "notes": "Read \"custom plugins\" as whoiswho-core, whoiswho-guard and any custom code; confirm whether third-party plugins are also in the weekly review.",
+      "key": "M5-HUM-02",
+      "title": "Schedule the weekly custom-plugin review",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-046"
+      ],
+      "summary": "Launch checklist item 8 (D-060): a recurring weekly review of the custom plugins is on the calendar with an owner.",
+      "scope": [
+        "Create the recurring calendar entry with the Administrator as owner and a backup person",
+        "Add the first review date"
+      ],
+      "acceptance": [
+        "A recurring weekly review of the custom plugins is on the calendar",
+        "An owner and a backup are named in the runbook"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/questions.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_063_retention_job_anonymises_expired_data",
+        "test_REQ_063_pii_catalogue_is_complete",
+        "test_REQ_158_overdue_removal_is_flagged",
+        "test_REQ_147_suppressed_person_not_reimported"
+      ],
+      "notes": "Legal retention periods are deferred (D-051, Q21 defaults). Verification only; the features are built in M3.",
+      "key": "M5-OPS-09",
+      "title": "Verify privacy and retention controls for launch",
+      "area": "qa",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-063",
+        "REQ-057",
+        "REQ-059",
+        "REQ-158",
+        "REQ-147"
+      ],
+      "summary": "Pre-launch verification of the privacy controls that touch real people: retention job, PII catalogue completeness, data-request due dates and suppression.",
+      "scope": [
+        "Retention job deletes or anonymises expired data per schedule in a dry run",
+        "Test that fails if a personal-data column or meta key is missing from whoiswho-core/config/pii.php",
+        "Data requests show due dates; removals show a countdown; breaches flagged",
+        "Suppression blocks re-import",
+        "Confirm the processor and dependency register and the lawful basis register in the docs are current (Awaiting Legal is acceptable per D-051)"
+      ],
+      "acceptance": [
+        "A scheduled job deletes or anonymises data when it expires",
+        "A test fails if a personal-data column is missing from the catalogue",
+        "Breaches of the 1-business-day acknowledge, 2-business-day hide and 7-day correction targets are flagged",
+        "A suppressed person is never re-imported",
+        "No stored field exists for the never-stored data classes (home address, date of birth and so on)"
+      ],
+      "docs": [
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/features/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/tests/Integration/Privacy/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_208_visibility_matrix_bare_install",
+        "test_REQ_209_unpublished_profile_returns_410",
+        "test_REQ_210_direct_status_write_is_refused_and_logged",
+        "test_REQ_217_pending_profile_has_noindex_and_no_sitemap_entry"
+      ],
+      "notes": "Reuses the M1 matrix tests; this issue runs them with the production plugin set and records the result for the checklist.",
+      "key": "M5-LCH-01",
+      "title": "Launch safeguards pass: nothing unreviewed is public",
+      "area": "qa",
+      "feature": "directory-and-profiles",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-209",
+        "REQ-210",
+        "REQ-217"
+      ],
+      "summary": "Launch checklist item 10: run the full visibility matrix and the launch safeguards on the staging copy built from the real import before it goes live.",
+      "scope": [
+        "Visibility matrix: one profile per state on every surface (page, lists, search, sitemap, core sitemaps, feeds, REST, oEmbed, shortlinks, attachment pages, author archives, previews, share image, cache headers)",
+        "On the staging data: count profiles per state; every public individual is Published - reviewed; sitemap lists only reviewed profiles",
+        "Pending-review organisations show the label, 200, noindex, no schema",
+        "Bulk unpublish and restore by batch rehearsed; 410 returns at once",
+        "Direct status writes refused and logged"
+      ],
+      "acceptance": [
+        "Nothing unreviewed is public",
+        "The sitemap lists only public profiles",
+        "A Published - review pending profile returns 200 with noindex, no sitemap entry, feed entry or schema",
+        "Unpublished profiles return 410 with noindex and no reason",
+        "Profiles show no trust label, no Claimed mark and no Sponsored (REQ-150, REQ-155) and no cover image (REQ-247)"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/plugins/guard.md",
+        "docs/features/directory-and-profiles.md",
+        "docs/concepts/publication-states.md"
+      ],
+      "files": [
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_208_find_sample_command_reports_tagged_items"
+      ],
+      "notes": "Assumption: sample content is tagged by a marker set by M0 fixtures; if not, the seed tooling must add one. Docs gap: no page defines how sample content is marked. Prototype photographs are sample only (Q99) and edition years are placeholders (Q100).",
+      "key": "M5-LCH-02",
+      "title": "Add a command that finds sample content",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-208",
+        "REQ-052"
+      ],
+      "summary": "Make \"no sample content remains\" testable: sample items are tagged and a command lists any left.",
+      "scope": [
+        "php bin/wiw.php content:find-sample lists sample-tagged profiles, stories, events, winners, categories, media and editor-page placeholders, and years with the placeholder marker",
+        "Return a non-zero exit code if any is found, for use in the migration smoke checks",
+        "Also flag editor-page draft notes still present"
+      ],
+      "acceptance": [
+        "The command reports every sample item and exits non-zero while any remain",
+        "On a clean site it exits zero",
+        "Draft notes on legal pages are reported"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/plugins/platform.md",
+        "docs/features/editable-pages-and-copy.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/**",
+        "site/bin/**",
+        "site/tests/Integration/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-LCH-02"
+      ],
+      "tests": [],
+      "notes": "Q99: prototype photographs are samples only; real licensed photographs are needed first.",
+      "key": "M5-HUM-03",
+      "title": "Remove sample content from the live site",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-208"
+      ],
+      "summary": "Launch checklist item 11, owned by the Editor: no sample profile, photograph, winner or year remains.",
+      "scope": [
+        "Run the find-sample command on staging and again on live after migration",
+        "Delete or replace every item; enter the real edition in Awards admin (Q100)",
+        "Replace sample photographs with licensed real ones or remove"
+      ],
+      "acceptance": [
+        "No sample profile, photograph, winner or year remains on the live site",
+        "The find-sample command exits zero on staging and on live",
+        "The nominees and winners pages show the \"not published\" state until real data is published"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/questions.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "Q99 says the assets are licensed; this collects the evidence. Docs gap: where the licence register lives is not stated; proposed docs/brand/licences.md.",
+      "key": "M5-HUM-04",
+      "title": "Confirm licences for every photograph, video and font",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-052"
+      ],
+      "summary": "Launch checklist item 12, owned by Brand: every asset on the live site has a licence on file.",
+      "scope": [
+        "List every photograph, video, the logo and fonts (Repline) used on the live site",
+        "Obtain and file the licence for each, including Freepik photographs and the hero videos",
+        "Remove anything without a licence",
+        "Record the licence register in the docs (no payment details)"
+      ],
+      "acceptance": [
+        "Every photograph, video and font on the live site has a licence on file",
+        "Unlicensed assets are removed",
+        "The licence list is reviewed by Brand"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/brand/",
+        "docs/questions.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [],
+      "notes": "Contradiction: Legal is deferred (D-051) and does not block the build, yet the launch checklist gates launch on Legal approval of these pages.",
+      "key": "M5-HUM-05",
+      "title": "Get the legal pages approved and remove draft notes",
+      "area": "human",
+      "feature": "editable-pages-and-copy",
+      "size": "M",
+      "reqs": [
+        "REQ-057",
+        "REQ-158"
+      ],
+      "summary": "Launch checklist item 13, owned by Legal: the privacy notice, terms and the complaints and takedown pages are approved.",
+      "scope": [
+        "Legal reviews the privacy notice, terms, complaints and takedown pages, and the lawful basis register statuses",
+        "The Editor edits the pages in the block editor and removes the draft notes"
+      ],
+      "acceptance": [
+        "The privacy notice, terms and the complaints and takedown pages have no draft note",
+        "The complaints page states the response targets: acknowledge in 1 business day, hide in 2, resolve corrections in 7 days",
+        "The lawful basis register is updated to the Legal position, or stays marked awaiting Legal with the owner informed"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/features/editable-pages-and-copy.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_273_deploy_check_fails_when_child_theme_inactive"
+      ],
+      "notes": "Depends on M5-LCH-02 for the sample check. Release building (artifact with pinned core, lockfile plugins, production autoloader, version stamp) is assumed done in M0 infra.",
+      "key": "M5-LCH-03",
+      "title": "Write the deploy smoke-check script",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "M",
+      "reqs": [
+        "REQ-273",
+        "REQ-208",
+        "REQ-046"
+      ],
+      "summary": "The post-migration smoke checks from deployment.md, scripted so staging and live are checked the same way.",
+      "scope": [
+        "Check the child theme whoiswho-child is active and the parent present (REQ-273)",
+        "Check migrations ran, wp-config loads the secrets file, file edit off, registration off",
+        "Check the sample-content command exits zero, the sitemap lists only public profiles, 410 behaviour, home 200, cron running, a test mail",
+        "Output a pass or fail list suitable for the runbook"
+      ],
+      "acceptance": [
+        "The deploy script checks that the child theme is active and the parent is present",
+        "A failed check exits non-zero and names the check",
+        "The same script runs against staging and live"
+      ],
+      "docs": [
+        "docs/build/deployment.md",
+        "docs/build/launch-checklist.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/deploy/**",
+        "site/bin/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-LCH-03",
+        "M5-LCH-01",
+        "M5-OPS-03"
+      ],
+      "tests": [
+        "staging smoke run recorded"
+      ],
+      "notes": "Q90: one-way migration to a staging copy, then switch; after go-live the live site is never overwritten. Architecture is \"proposed v2 until Gate 2\": confirm approval first. Needs host access from the owner.",
+      "key": "M5-LCH-04",
+      "title": "Rehearse the go-live migration on a staging copy",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "L",
+      "reqs": [
+        "REQ-056",
+        "REQ-103"
+      ],
+      "summary": "Launch checklist item 14: move the finished local site to a staging copy on the host following architecture section 8, and check it before the real switch.",
+      "scope": [
+        "Build the release artifact; copy the code; import the database and uploads; set wp-config and the secrets file outside the web root; run forward-only migrations; run the smoke script",
+        "Search and replace URLs; if staging is public, noindex and password protect it (D-029: real data only after the import safeguards pass, Q64)",
+        "Time every step; write the exact sequence and a rollback into the runbook",
+        "Run the Playwright smoke, axe and header tests against staging",
+        "Test rollback: restore the pre-migration dump"
+      ],
+      "acceptance": [
+        "The local site was moved to a staging copy on the host and checked before the switch",
+        "A staging environment mirrors production (REQ-056)",
+        "Smoke script, header test and the visibility matrix pass on staging",
+        "The migration steps with timings are in the runbook",
+        "Rollback to the pre-deploy dump was rehearsed",
+        "A staging site that is public is not indexable and follows D-029"
+      ],
+      "docs": [
+        "docs/architecture.md",
+        "docs/build/deployment.md",
+        "docs/build/launch-checklist.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/deploy/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_056_traceability_script_fails_on_untested_requirement"
+      ],
+      "notes": "docs/traceability.md is a qa-area file in a shared docs folder; the shared-docs owner must allow it. Mixed area paths: if the script and the doc cannot be one pull request, split the doc into a qa-owned follow-up.",
+      "key": "M5-TRC-01",
+      "title": "Maintain the traceability matrix and run the independent verify step",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "L",
+      "reqs": [
+        "REQ-056",
+        "REQ-095"
+      ],
+      "summary": "docs/traceability.md maps each non-withdrawn requirement to its issue, pull request, test and a verified flag, so nothing is missed. An independent verify step audits the result against the requirements before go-live.",
+      "scope": [
+        "Generate the table from issues, PR bodies and test names (REQ ids in test names) with a script; fail on a non-withdrawn requirement with no issue or test",
+        "Keep it updated through each milestone, not only at the end",
+        "Run the independent verify step per docs/build/testing-and-ci.md; raise gaps as type:discovered issues",
+        "Exclude ACQUISITION-scope requirements (verified in acquisition/)"
+      ],
+      "acceptance": [
+        "Every non-withdrawn SITE and BOTH requirement has an issue, a pull request, a test and a verified flag",
+        "Gaps are raised as issues, not ignored",
+        "The verify step is run by a reviewer, not the author",
+        "Withdrawn requirements are listed as withdrawn, not missing"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/requirements.md"
+      ],
+      "files": [
+        "docs/traceability.md",
+        "site/bin/**",
+        "site/tests/Arch/**"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [],
+      "tests": [
+        "test_REQ_056_ci_pipeline_runs_all_gates"
+      ],
+      "notes": ".github/ is a shared-docs path, so workflow edits go through the shared-docs owner. Mostly done in M0; this is the launch audit and gap closing.",
+      "key": "M5-CI-01",
+      "title": "Confirm all CI gates, coverage and the theme-leak check are enforced",
+      "area": "infra",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-056",
+        "REQ-046",
+        "REQ-190"
+      ],
+      "summary": "Make the pipeline from testing-and-ci.md real before launch: every gate runs on every pull request and a failing gate blocks the merge.",
+      "scope": [
+        "Gates in order: lint, static analysis, PHPUnit plus architecture tests with a coverage threshold for src/, asset build, Playwright and axe, dependency audit, secret scan, PR cites REQ and Closes #N",
+        "Branch protection requires them",
+        "The theme-leak and child-theme-active checks run in CI"
+      ],
+      "acceptance": [
+        "CI runs unit, integration, architecture and end-to-end tests, linting and static analysis on every pull request",
+        "A high-severity dependency finding fails the build",
+        "The PR check fails without REQ ids and a Closes #N line",
+        "The check that fails if brand colours or fonts appear outside the tokens file runs in CI"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "site/composer.json",
+        "site/package.json"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-OPS-01",
+        "M5-OPS-02",
+        "M5-OPS-03",
+        "M5-OPS-04",
+        "M5-OPS-07",
+        "M5-OPS-08",
+        "M5-HUM-01",
+        "M5-HUM-02",
+        "M5-HUM-03",
+        "M5-HUM-04",
+        "M5-HUM-05",
+        "M5-LCH-01",
+        "M5-LCH-04",
+        "M5-SEC-02",
+        "M5-PRF-03"
+      ],
+      "tests": [],
+      "notes": "Only a separate reviewer step marks work done (CLAUDE.md): the author of the evidence cannot verify it.",
+      "key": "M5-LCH-07",
+      "title": "Verify every launch checklist item from its evidence",
+      "area": "qa",
+      "feature": "platform-quality",
+      "size": "S",
+      "reqs": [
+        "REQ-095",
+        "REQ-056"
+      ],
+      "summary": "The independent reviewer step for launch: each of the 15 items in the launch checklist is verified from its evidence, not from someone saying it is done.",
+      "scope": [
+        "A table in docs/verify-launch.md with the 15 items, the evidence link and the verifier",
+        "Fail any item without evidence"
+      ],
+      "acceptance": [
+        "All 15 items have evidence",
+        "Items needing a person are tracked as closed issues",
+        "Cache plugin is configured and public pages are cached while staff pages are not",
+        "Security settings applied: file editing off, XML-RPC off, registration off, login limits on"
+      ],
+      "docs": [
+        "docs/build/launch-checklist.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M5-LCH-04",
+        "M5-LCH-07",
+        "M5-TRC-01",
+        "M5-SEC-04",
+        "M5-A11-04",
+        "M5-CI-01"
+      ],
+      "tests": [],
+      "notes": "The 31 Jan 2027 date is a ceiling; per CLAUDE.md speed rule finish as early as possible. REQ-103 still says \"enquiry journey\", which refers to the pre-pivot commercial model; the sponsored story deal journey is the nearest equivalent (docs wording may be stale). Agents must not run this issue.",
+      "key": "M5-LCH-05",
+      "title": "Perform the live migration with the owner approval",
+      "area": "human",
+      "feature": "platform-quality",
+      "size": "L",
+      "reqs": [
+        "REQ-103",
+        "REQ-045"
+      ],
+      "summary": "Go live per docs/architecture.md section 8 and docs/build/deployment.md. This step needs the owner explicit approval and is never started by an agent alone.",
+      "scope": [
+        "Owner approves in writing (comment on this issue) after reviewing the checklist, the traceability matrix and the staging rehearsal",
+        "Freeze content; take a full backup; migrate as rehearsed; run the smoke script on live",
+        "Switch DNS or the document root; confirm HTTPS and headers; optionally submit the sitemap to search consoles",
+        "Decide the firewall (Cloudflare free tier or a security plugin, Q85 at go-live)",
+        "Watch the first 24 hours; the live site is never overwritten after go-live (Q90)"
+      ],
+      "acceptance": [
+        "The owner approval is recorded on the issue before any live change",
+        "Every item of the launch checklist has its evidence",
+        "The smoke script passes on live and the sample-content command exits zero",
+        "The website and admin register operate in production (REQ-103, ceiling 31 Jan 2027)",
+        "A pre-migration backup exists and rollback is documented",
+        "The Q87 answer and checklist evidence are recorded by the shared-docs owner"
+      ],
+      "docs": [
+        "docs/architecture.md",
+        "docs/build/deployment.md",
+        "docs/build/launch-checklist.md"
+      ],
+      "files": [
+        "docs/verify-launch.md"
+      ]
+    },
+    {
+      "milestone": "M5",
+      "priority": "M",
+      "depends": [
+        "M1-IMP-04"
+      ],
+      "tests": [
+        "test_REQ_221_hash_mismatch_is_refused",
+        "test_REQ_212_import_refuses_record_without_provenance",
+        "test_REQ_207_import_skips_suppressed_person",
+        "test_REQ_237_dry_run_writes_nothing",
+        "test_REQ_148_imported_individuals_are_not_public"
+      ],
+      "notes": "Human plus plugin: the human runs and reviews; plugin fixes are raised as separate plugin issues, so area stays human. M1-IMP-04 is an assumed key for the import runner issue; update once the M1 file is final. Real batch data stays in acquisition/data and is never committed. The contract has unknowns being settled at Gate 2.",
+      "key": "M5-ACQ-01",
+      "title": "Acquisition import dry run with a real first batch",
+      "area": "human",
+      "feature": "import-and-sources",
+      "size": "M",
+      "reqs": [
+        "REQ-237",
+        "REQ-212",
+        "REQ-221",
+        "REQ-148",
+        "REQ-207"
+      ],
+      "summary": "The first real batch from the acquisition pipeline goes through the import on staging as a dry run, then a real import there, before any live import.",
+      "scope": [
+        "The acquisition side hands over a batch in the contract format (docs/contracts/import-format.md); neither side reads the other folders",
+        "An Administrator runs the dry run in wp-admin (or CLI) and reviews the diff",
+        "Check refusals: hash mismatch, suppression hit, missing provenance, forbidden field, under-18 guard",
+        "Import on staging, check the review queue, undo the batch, import again (idempotent)",
+        "Report findings; plugin defects become issues for the import module (type:discovered)",
+        "A 1,000-record chunked run if the batch is large enough (see M5-OPS-03)"
+      ],
+      "acceptance": [
+        "A dry run shows a diff and writes nothing",
+        "Records that fail verification are refused with the reason logged",
+        "What is imported equals what was drafted, confirmed by recomputed content hash",
+        "Re-importing never overwrites a reviewed field",
+        "A suppressed person is not imported",
+        "Imported organisations are Published - review pending and individuals are not public, and all appear in the review queue",
+        "Undoing the batch removes it and restores the prior state"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/**",
+        "site/tests/Integration/Import/**"
+      ]
+    }
+  ]
+}

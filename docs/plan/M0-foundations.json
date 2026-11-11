@@ -1,0 +1,3628 @@
+{
+  "milestone": "M0",
+  "issues": [
+    {
+      "key": "M0-INF-01",
+      "milestone": "M0",
+      "depends": [],
+      "tests": [
+        "Spec: tests/e2e/scaffold.spec.ts is added by M0-QAX-01; this issue is proved by a CI-style script `composer validate --strict` and `npm ci` run in the PR"
+      ],
+      "notes": "First issue; nothing else can start before it. Front-loads every composer dependency the plugin issues need (Action Scheduler, php-parser) because composer.json is infra-owned and plugin agents may not edit it. PHP version and the WordPress version are marked \"verify\" in the docs: record what was chosen in the PR. Whether to ship WordPress core through composer (johnpbloch/wordpress-core) or a committed download is a proposal; composer is preferred so the lockfile pins it.",
+      "title": "Scaffold the site/ project (WordPress core, composer, npm, folders)",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-056",
+        "REQ-046"
+      ],
+      "summary": "Creates the empty, installable `site/` project every later issue builds in: pinned WordPress core, composer and npm manifests with the script names the CI will call, and the folder skeleton for the plugin, the guard, the two themes, tests and tooling.",
+      "scope": [
+        "site/composer.json: pinned WordPress core (current stable, PHP 8.3 target, verify), wpackagist repository, PHPUnit, PHPCS with WordPress standards, PHPStan with WordPress extension, nikic/php-parser (for architecture tests), Action Scheduler as a library; production autoloader optimisation",
+        "composer scripts named exactly: lint, analyse, test (accepts --filter and --testsuite), audit",
+        "site/package.json with scripts build, lint:js, lint:css and Playwright as a dev dependency; lockfiles committed",
+        "Folder skeleton with placeholder files only: wp-content/plugins/whoiswho-core, wp-content/mu-plugins, wp-content/themes/whoiswho, wp-content/themes/whoiswho-child, bin, config, tests/{Unit,Integration,Arch,Visibility,Security,e2e}, deploy",
+        "site/.gitignore (vendor, node_modules, built assets, uploads, wp-config secrets, any .env*), site/.editorconfig, short site/README.md stating how to install and which issue owns which area",
+        "Root CLAUDE.md names are verified against the scripts created (report any mismatch in the PR; do not edit CLAUDE.md)"
+      ],
+      "acceptance": [
+        "`composer install` and `npm ci` succeed from a clean clone of `site/`",
+        "WordPress core is pinned to an exact version in the lockfile",
+        "`composer lint`, `composer analyse`, `composer test` and `npm run build` exist and exit 0 on empty suites (placeholders are replaced by the later INF issues)",
+        "The three code packages and both themes have their folders at the paths named in CLAUDE.md",
+        "No secrets, no `.env*` file and no personal data are committed"
+      ],
+      "docs": [
+        "docs/build/index.md",
+        "docs/build/stack.md",
+        "docs/build/testing-and-ci.md",
+        "docs/architecture.md",
+        "docs/plugins/third-party.md"
+      ],
+      "files": [
+        "site/composer.json",
+        "site/composer.lock",
+        "site/package.json",
+        "site/package-lock.json",
+        "site/.gitignore",
+        "site/.editorconfig",
+        "site/README.md"
+      ]
+    },
+    {
+      "key": "M0-INF-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: tests/e2e/smoke-home.spec.ts (written in M0-QAX-01) loads the site on the started environment"
+      ],
+      "notes": "CLAUDE.md says wp-env needs Docker (verify). If Docker is unavailable on the owner machine, the fallback becomes the main path; raise it in the PR.",
+      "title": "Set up the local environment (wp-env) with a plain PHP fallback",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-056"
+      ],
+      "summary": "A one-command local WordPress with the plugin, guard and both themes mapped in, a separate test instance for PHPUnit, a mail catcher, and a documented fallback for machines without Docker.",
+      "scope": [
+        "site/.wp-env.json: PHP 8.3, mappings for whoiswho-core, mu-plugins, whoiswho and whoiswho-child, test environment, WP_DEBUG on locally",
+        "npm scripts env:start, env:stop, env:reset (seed: site title, pretty permalinks, the child theme activated, a first Administrator created from environment variables, never from a committed password)",
+        "A mail catcher (Mailpit or equivalent) wired so wp_mail is visible locally",
+        "Fallback instructions and a script for local PHP plus MariaDB without Docker",
+        "Short note in site/README.md on running Playwright against the local URL"
+      ],
+      "acceptance": [
+        "`npx wp-env start` brings up WordPress on a local URL with the child theme active and the parent theme present",
+        "A test environment exists that PHPUnit can use without touching the development database",
+        "A message sent with wp_mail appears in the mail catcher",
+        "The fallback path is documented and has been followed once, with the result noted in the PR"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/build/deployment.md",
+        "docs/build/stack.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/.wp-env.json",
+        "site/deploy/local/**",
+        "site/package.json"
+      ]
+    },
+    {
+      "key": "M0-INF-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: CI job `lint` (no PHPUnit test)"
+      ],
+      "notes": "Rules for escaping, nonces and prepared SQL come from the WordPress standard; the CLAUDE.md WordPress rules (no eval, no raw $_GET/$_POST outside validators) are also enforced in M0-PLG-25.",
+      "title": "Add PHPCS with the WordPress coding standards (composer lint)",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-056",
+        "REQ-046"
+      ],
+      "summary": "CI gate 1: coding standards for plugin, guard and both themes.",
+      "scope": [
+        "phpcs.xml.dist using WordPress-Extra and WordPress-Docs, PHPCompatibility for the target PHP, text domain and prefix rules (`wiw_`, `WIW_`, namespace WhoIsWho)",
+        "Paths: plugin, mu-plugins, both themes, bin, tests; excludes vendor and built assets",
+        "composer lint and composer lint:fix"
+      ],
+      "acceptance": [
+        "`composer lint` runs and passes on the scaffold",
+        "A deliberate violation (unescaped output, raw superglobal) makes it fail, shown in the PR",
+        "The same command runs in CI (wired by M0-INF-07)"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/build/security.md",
+        "docs/build/roles-in-code.md"
+      ],
+      "files": [
+        "site/phpcs.xml.dist",
+        "site/composer.json"
+      ]
+    },
+    {
+      "key": "M0-INF-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: CI job `analyse` (no PHPUnit test)"
+      ],
+      "notes": "The docs say \"level agreed at M0\": this issue makes that agreement. Escalate to the owner only if two levels are equally defensible.",
+      "title": "Add PHPStan with the WordPress extension (composer analyse)",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-056",
+        "REQ-046"
+      ],
+      "summary": "CI gate 2: static analysis. The level is agreed here and written down.",
+      "scope": [
+        "phpstan.neon.dist with szepeviktor/phpstan-wordpress (verify), paths for plugin, mu-plugins, themes and bin",
+        "Pick and justify the level (proposal: start at 6, raise per module) and record it in the PR and in the runbook skeleton",
+        "A baseline file only if needed, with a rule that it never grows"
+      ],
+      "acceptance": [
+        "`composer analyse` passes on the scaffold",
+        "The chosen level is written in phpstan.neon.dist and recorded for the runbook",
+        "A type error introduced on purpose fails the command (shown in the PR)"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/phpstan.neon.dist",
+        "site/phpstan-baseline.neon",
+        "site/composer.json"
+      ]
+    },
+    {
+      "key": "M0-INF-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-02"
+      ],
+      "tests": [
+        "Spec: a sample `test_REQ_056_phpunit_bootstraps_wordpress` in tests/Unit proves the bootstrap (written first in this PR)"
+      ],
+      "notes": "CLAUDE.md puts tests/Unit|Integration|Arch under the plugin area; this issue writes only the shared bootstrap and config so plugin issues can add tests. The harness helpers for the role-by-capability matrix are added in M0-PLG-05.",
+      "title": "Configure PHPUnit on the WordPress test suite with an Arch testsuite",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-056",
+        "REQ-208"
+      ],
+      "summary": "CI gate 3: PHPUnit running against a real WordPress test install, with separate suites so one can run alone.",
+      "scope": [
+        "phpunit.xml.dist with suites Unit, Integration, Arch, Visibility, Security; the WordPress test bootstrap loading whoiswho-core and the guard",
+        "tests/bootstrap.php, a base TestCase with helpers (create user with a role, create user with a granted capability, assert 200 or 403)",
+        "composer test, `composer test -- --filter REQ_208` and `composer test -- --testsuite Arch` all work",
+        "Coverage threshold for the plugin src/ (starts low, enforced in CI, raised per milestone)",
+        "Empty suites must not fail the gate"
+      ],
+      "acceptance": [
+        "`composer test` runs all suites against the test environment",
+        "`composer test -- --filter REQ_208` selects a test by REQ number",
+        "`composer test -- --testsuite Arch` runs only architecture tests",
+        "A coverage report is produced and a threshold failure fails the command",
+        "The suite does not read or write any `.env*` file"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/architecture.md",
+        "docs/plugins/index.md"
+      ],
+      "files": [
+        "site/phpunit.xml.dist",
+        "site/tests/bootstrap.php",
+        "site/tests/TestCase.php",
+        "site/composer.json"
+      ]
+    },
+    {
+      "key": "M0-INF-06",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: CI job `build` (no PHPUnit test)"
+      ],
+      "notes": "Keeps the theme small and server-rendered; the prototype uses plain CSS and JS files, so a thin pipeline is enough.",
+      "title": "Set up the asset build pipeline (npm run build) and lint for JS and CSS",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-056",
+        "REQ-042"
+      ],
+      "summary": "CI gate 4: one build command that compiles theme assets with hashed names and a manifest, plus linters.",
+      "scope": [
+        "Build tool config under site/build/ (proposal: esbuild or @wordpress/scripts; pick the smaller)",
+        "Entry points are declared by theme issues; the tool reads them from a config file",
+        "Output to a git-ignored build folder with a manifest the theme reads for cache-busting",
+        "Stylelint and ESLint configs; no framework runtime, no jQuery on the front end",
+        "Image optimisation step is out of scope: WordPress generates sizes (REQ-042 is satisfied by the media library settings in THM issues)"
+      ],
+      "acceptance": [
+        "`npm run build` succeeds on an empty entry list and on the sample entry",
+        "Output filenames carry a content hash and a manifest maps names to files",
+        "Lint scripts fail on a deliberate error"
+      ],
+      "docs": [
+        "docs/build/stack.md",
+        "docs/build/testing-and-ci.md",
+        "docs/theme/motion-and-performance.md"
+      ],
+      "files": [
+        "site/build/**",
+        "site/package.json",
+        "site/.eslintrc.json",
+        "site/.stylelintrc.json"
+      ]
+    },
+    {
+      "key": "M0-INF-07",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-03",
+        "M0-INF-04",
+        "M0-INF-05",
+        "M0-INF-06",
+        "M0-QAX-01"
+      ],
+      "tests": [
+        "Spec: workflow run on a test PR; evidence is the run link in the PR body"
+      ],
+      "notes": "Merge to main of the CI workflow happens on a branch; the Playwright job depends on the QAX-01 harness. Deploy is not a CI step: going live is a manual migration (docs/build/deployment.md).",
+      "title": "Create the CI workflow with all merge gates",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-056",
+        "REQ-046"
+      ],
+      "summary": "One GitHub Actions workflow that runs every gate from docs/build/testing-and-ci.md in order on each pull request, passing on empty suites.",
+      "scope": [
+        ".github/workflows/ci.yml with fixed job names: lint, analyse, test, build, e2e, audit, secrets, pr-body",
+        "MariaDB service, PHP 8.3, Node, composer and npm caches",
+        "Gate order: PHPCS, PHPStan, PHPUnit (all suites, coverage threshold), asset build, Playwright with axe, composer audit and npm audit --audit-level=high, secret scan, PR body check",
+        "PR body check: the body cites at least one REQ id and contains `Closes #N` (the repo already has .github/pull_request_template.md; do not change it)",
+        "Required-check names listed in the PR so the owner can set branch protection",
+        "Do not touch .github/workflows/pages.yml"
+      ],
+      "acceptance": [
+        "A pull request touching site/ runs all eight gates and they pass on the scaffold",
+        "A PR without a REQ id or `Closes #N` fails the pr-body gate",
+        "A high severity advisory fails the audit gate",
+        "Job names are stable and documented so traceability tooling can reference them"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/build/deployment.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "key": "M0-INF-08",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-07"
+      ],
+      "tests": [
+        "Spec: CI `secrets` job; evidence is a failing run on a seeded fake key (not merged)"
+      ],
+      "notes": "Use only fake test strings when proving the scanner.",
+      "title": "Add secret scanning, Dependabot and the weekly vulnerability scan",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-046"
+      ],
+      "summary": "Supply chain and secret hygiene: a scanner in CI and as a pre-commit hook, weekly dependency updates, and a weekly scheduled audit.",
+      "scope": [
+        "Secret scanner (gitleaks or equivalent) in CI and as an optional pre-commit hook script",
+        ".github/dependabot.yml for composer, npm and github-actions, weekly",
+        "Scheduled weekly workflow running composer audit and npm audit",
+        "Allowlist file for false positives that is reviewed in PRs"
+      ],
+      "acceptance": [
+        "A fake key committed on a test branch fails the secret gate",
+        "Dependabot opens update PRs weekly",
+        "The weekly scan runs on a schedule and on demand",
+        "`.env*` files are ignored and never scanned by agents"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/security-weekly.yml",
+        "site/deploy/hooks/**"
+      ]
+    },
+    {
+      "key": "M0-INF-09",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: CI job `audit` covers it; no PHPUnit test"
+      ],
+      "notes": "Every later issue that adds a plugin depends on this one.",
+      "title": "Pin third-party plugins through composer and the lockfile",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-046",
+        "REQ-217"
+      ],
+      "summary": "Third-party plugins are installed only from the lockfile at exact versions, never from wp-admin.",
+      "scope": [
+        "wpackagist (or an equivalent) repository and installer-paths in composer.json so plugins land in wp-content/plugins and are git-ignored",
+        "A written rule in site/README.md: how to add a plugin (steps from docs/plugins/third-party.md: job, personal data, visibility matrix, pin, record)",
+        "Verify the pin mechanism (the docs say \"verify\") and record the result in the PR",
+        "Zero plugins installed by this issue"
+      ],
+      "acceptance": [
+        "`composer install` installs plugins into wp-content/plugins from exact versions",
+        "Plugins are absent from git history",
+        "File modification stays disabled so wp-admin cannot update them (checked once M0-INF-11 lands)",
+        "The mechanism for plugins not on wordpress.org is described or declared unsupported"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/build/deployment.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/composer.json",
+        "site/composer.lock",
+        "site/README.md"
+      ]
+    },
+    {
+      "key": "M0-INF-10",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-09",
+        "M0-INF-07"
+      ],
+      "tests": [
+        "Spec: node or phpunit-free script tests in scripts/__tests__; evidence in the PR"
+      ],
+      "notes": "Architecture section 6 mentions \"an allowlist check in CI\". Dependency: the plugins job joins the CI workflow created in M0-INF-07 (edit the file in a follow-up commit on the same PR).",
+      "title": "Add a plugin allowlist check that blocks SEO, payment and account plugins",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-217",
+        "REQ-046",
+        "REQ-229"
+      ],
+      "summary": "A CI check that fails when an installed or locked plugin is not on the approved list or is of a forbidden kind.",
+      "scope": [
+        "scripts/check-plugins (PHP or Node) reading the lockfile and wp-content/plugins; allowlist file site/config/plugin-allowlist.json starting with Action Scheduler (library)",
+        "Forbidden kinds from docs/plugins/third-party.md: SEO, public login or membership, payment or checkout, AI drafting, page builders that output public templates",
+        "A failing message that points to the approval steps and the visibility matrix rerun",
+        "Job `plugins` added to ci.yml"
+      ],
+      "acceptance": [
+        "An SEO plugin added to composer.json fails the check",
+        "A plugin on the allowlist passes",
+        "The allowlist change needs a PR that cites the third-party page",
+        "The check also fails if the allowlist and the lockfile disagree on versions"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/plugins/guard.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "scripts/check-plugins.*",
+        "site/config/plugin-allowlist.json",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "key": "M0-INF-11",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: tests/Security/config template check run as PHPUnit `test_REQ_046_wp_config_has_no_secrets_and_disables_file_edit` (qa runs it; infra writes it first in this PR)"
+      ],
+      "notes": "Agents never read .env*; the owner creates the real file. Names in .env.example must match what later issues read (SMTP in M0-EML-01, signing keys in M0-PLG-17 and M0-PLG-18). Wording of the key names is a proposal.",
+      "title": "Create the wp-config template, secrets file loader and .env.example",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-046",
+        "REQ-204"
+      ],
+      "summary": "A committed wp-config.php that holds no secrets and loads a secrets file kept outside the web root, with production hardening constants and a names-only example file.",
+      "scope": [
+        "site/wp-config.php template that loads the secrets file from a path outside the web root (path from one server variable, with a documented local default), fails closed with a plain message if it is missing",
+        "Hardening constants: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS in production, automatic updates off, WP_DEBUG off in production, FORCE_SSL_ADMIN, DISABLE_WP_CRON switch, table prefix, salts from the secrets file",
+        ".env.example listing names only (never values): database, WordPress salts, SMTP host, port, user and password, signed-link signing key, form-token signing key, backup passphrase, healthz token; optional and commented: Cloudflare API token and zone, Turnstile site and secret key, Sentry DSN",
+        "Document the file mode (600) and where the owner creates the file on the host",
+        "Rotation steps for each key are listed in the runbook skeleton (M0-INF-14)"
+      ],
+      "acceptance": [
+        "No secret value exists in the template or in .env.example",
+        "WordPress boots locally with the secrets file placed outside the web root",
+        "In production mode file editing and file modification are disabled",
+        "Missing secrets file gives a plain error with no path or credential detail",
+        "The secrets file and any .env* are ignored by git and never read by agents"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/build/deployment.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/wp-config.php",
+        "site/.env.example",
+        "site/tests/Security/ConfigTemplateTest.php"
+      ]
+    },
+    {
+      "key": "M0-INF-12",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-11",
+        "M0-INF-09",
+        "M0-THM-02",
+        "M0-PLG-01"
+      ],
+      "tests": [
+        "Spec: deploy script self-test `deploy/tests/build-release.test.sh`; evidence in PR"
+      ],
+      "notes": "REQ-273 requires the deploy script to check that the child is active and the parent present; the \"child is active\" half needs a running site and is done in M0-INF-13.",
+      "title": "Build the release artifact script (core, plugins, themes, autoloader)",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-273",
+        "REQ-056"
+      ],
+      "summary": "A repeatable script that assembles the release: pinned core, locked plugins, both themes, the production autoloader, built assets and a version stamp.",
+      "scope": [
+        "deploy/build-release (shell or PHP) producing a versioned artifact in a git-ignored folder",
+        "Contents per docs/build/deployment.md: core, plugins and themes from the lockfile, production composer autoloader, built assets, version stamp",
+        "The artifact contains both themes; the script fails if the child theme `whoiswho-child` or its parent `whoiswho` is missing, or if the child does not declare `Template: whoiswho`",
+        "No dev dependencies, no tests, no .env*, no secrets in the artifact"
+      ],
+      "acceptance": [
+        "Running the script on a clean checkout yields an artifact that boots under the local environment",
+        "The artifact contains the parent and the child theme and the check fails if one is missing",
+        "The artifact holds no dev dependencies or secrets file",
+        "A version stamp is readable by the health check"
+      ],
+      "docs": [
+        "docs/build/deployment.md",
+        "docs/architecture.md",
+        "docs/theme/index.md"
+      ],
+      "files": [
+        "site/deploy/build-release*",
+        "site/deploy/tests/**"
+      ]
+    },
+    {
+      "key": "M0-INF-13",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-12",
+        "M0-PLG-03"
+      ],
+      "tests": [
+        "Spec: deploy/tests/migrate-live-dry-run.test.sh; evidence in PR"
+      ],
+      "notes": "The architecture and CLAUDE.md call this \"go-live migration\" (not CI deploy). TRIGGER privilege, SMTP, cron and restore checks are human tasks at go-live (M5). The dump encryption uses the backup passphrase from the secrets file.",
+      "title": "Write the go-live migration script with dump, migrate and smoke checks",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-056",
+        "REQ-273",
+        "REQ-095"
+      ],
+      "summary": "The repeatable script for the go-live migration: copy code, import database and uploads, place configuration, run the forward-only migrations through the plugin CLI, run smoke checks, and roll back by redeploying the previous artifact. Not needed to start building; run on the live host only after the owner approves.",
+      "scope": [
+        "deploy/migrate-live with a dry-run mode that targets a local copy",
+        "Steps in order per docs/build/deployment.md: copy code (rsync or SSH, cPanel file manager variant documented), import database and uploads, set wp-config and the secrets file outside the web root, automatic pre-migration database dump, `php bin/wiw.php migrate`, smoke checks",
+        "Smoke checks: home 200, /healthz ok, child theme active and parent present (REQ-273), registration closed, no application passwords route, a disallowed profile fixture returns 404 or 410 (when present)",
+        "Production migrations run only through this script, never by hand",
+        "Rollback section: redeploy the previous artifact, restore the pre-deploy dump; the optional releases/<timestamp> plus `current` symlink layout is scripted behind a flag",
+        "The live-host checks table from docs/build/deployment.md is reproduced as a checklist file the script prints; results are written to the runbook by a human"
+      ],
+      "acceptance": [
+        "A dry run against the local environment completes and prints each step",
+        "A pre-migration dump is taken automatically before migrations run in production mode",
+        "Smoke checks fail the run when the child theme is not active",
+        "The script refuses to run migrations in production unless invoked through itself",
+        "Rollback steps are scripted or documented and have been rehearsed once locally"
+      ],
+      "docs": [
+        "docs/build/deployment.md",
+        "docs/build/launch-checklist.md",
+        "docs/architecture.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/deploy/migrate-live*",
+        "site/deploy/tests/**"
+      ]
+    },
+    {
+      "key": "M0-INF-14",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01"
+      ],
+      "tests": [
+        "Spec: markdown headings check in CI `lint` job (script); no PHPUnit test"
+      ],
+      "notes": "docs/runbook.md is a shared-docs path; CLAUDE.md conventions assign it to the infra area. Confirm with the shared-docs owner before the first write.",
+      "title": "Add the operations runbook skeleton (docs/runbook.md)",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-095"
+      ],
+      "summary": "The runbook with its headings and the facts already known, so each later issue can append its own procedure.",
+      "scope": [
+        "docs/runbook.md with sections: deploy, rollback, backup restore, incidents, bulk unpublish, key rotation, moving to a VPS, live-host check results (table), local environment, PHP and PHPStan levels, who receives alerts",
+        "Each section lists its owner issue (for example restore test: M5) and says \"TODO\" only where a later issue fills it",
+        "Key rotation list taken from docs/build/security.md (SMTP, signing keys, backup passphrase, salts)"
+      ],
+      "acceptance": [
+        "The runbook has every section named in docs/build/deployment.md",
+        "No secret values appear",
+        "Each empty section names the issue that completes it"
+      ],
+      "docs": [
+        "docs/build/deployment.md",
+        "docs/build/security.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "docs/runbook.md"
+      ]
+    },
+    {
+      "key": "M0-INF-15",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-04",
+        "M0-INF-07"
+      ],
+      "tests": [
+        "Spec: scripts/__tests__/check-brand-values.test.js; evidence in PR"
+      ],
+      "notes": "Fonts and the primary colour are working choices (licences unconfirmed); the check reads whatever the tokens file declares.",
+      "title": "Add the CI check that fails on brand values outside the tokens file",
+      "area": "infra",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-052",
+        "REQ-190",
+        "REQ-273"
+      ],
+      "summary": "The theme-leak check: build fails if a brand colour, font name or brand string appears anywhere except the child tokens file and the theme brand configuration.",
+      "scope": [
+        "scripts/check-brand-values reading the token values from the child tokens file and the brand config, then scanning both themes, templates, CSS, JS and the plugin for those literals",
+        "Also fails if a brand value is edited in the parent theme",
+        "Allow-list for the tokens file, the brand config and the fonts folder",
+        "Added as a job to ci.yml"
+      ],
+      "acceptance": [
+        "A hard-coded #ffa600 in a template fails the check",
+        "The same colour in the child tokens file passes",
+        "A brand name literal outside the brand configuration fails",
+        "A change to brand values in the parent theme fails"
+      ],
+      "docs": [
+        "docs/theme/theme-settings.md",
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "scripts/check-brand-values.*",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "key": "M0-QAX-01",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-02"
+      ],
+      "tests": [
+        "tests/e2e/smoke-home.spec.ts",
+        "tests/e2e/helpers.spec.ts"
+      ],
+      "notes": "Prototype route reference for widths: `#/design-review` lists every public page to check at 360, 768 and 1280 px. The 2FA test bypass must be reviewed by the security-minded reviewer; flagged as a risk if the 2FA plugin offers no test hook (see M0-PLG-26).",
+      "title": "Set up Playwright with axe, width projects and a staff-login helper",
+      "area": "qa",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040",
+        "REQ-055",
+        "REQ-056"
+      ],
+      "summary": "CI gate 5: the end-to-end and accessibility harness every theme and plugin issue will reuse.",
+      "scope": [
+        "site/playwright.config.ts: Chromium plus a WebKit mobile profile (REQ-055 latest two versions are a manual and CI matrix note), base URL from the local environment",
+        "Viewport projects or fixture for 360, 768, 1280 and 1600 px",
+        "axe-core fixture `expectNoA11yViolations(page)`",
+        "Staff login helper that signs in a seeded test user and completes the two-factor step in the test environment only (documented bypass that cannot exist in production config)",
+        "Helpers: assertNoHorizontalScroll(page), assertKeyboardReach(page), setReducedMotion(page), disableScripts",
+        "One smoke spec: tests/e2e/smoke-home.spec.ts loading / and /wp-login.php and running axe"
+      ],
+      "acceptance": [
+        "`npx playwright test` runs and passes on the local environment",
+        "The smoke spec runs at 360, 768, 1280 and 1600 px",
+        "axe reports violations as test failures",
+        "The two-factor bypass is available only when an explicit test constant is set and is refused otherwise",
+        "Reports and traces are CI artifacts"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "site/playwright.config.ts",
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-01",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-01",
+        "M0-INF-05"
+      ],
+      "tests": [
+        "test_REQ_235_plugin_boots_and_registers_all_module_bootstraps",
+        "test_REQ_056_deactivation_keeps_data"
+      ],
+      "notes": "The architecture names the plugin structure but not the container; a minimal registry is a proposal. Domain classes (StateMachine, PublicProfile, etc.) are M1.",
+      "title": "Create the whoiswho-core plugin skeleton and module folders",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-235",
+        "REQ-056"
+      ],
+      "summary": "The empty but loadable plugin: bootstrap, PSR-4 autoloading, the nine module folders, a tiny service container, activation and deactivation hooks, and the config folder.",
+      "scope": [
+        "whoiswho-core.php plugin header, version constant, minimum PHP and WordPress checks with a clear admin notice",
+        "PSR-4 namespace WhoIsWho\\Core\\ mapped to src/ with folders Directory, Review, Import, Trust, Commerce, Content, Awards, Compliance, Platform (each with a module bootstrap class and nothing else)",
+        "A small service registry (no heavy DI framework) used by module bootstraps; each module registers hooks in one place",
+        "config/ folder; uninstall.php that deletes nothing without an explicit setting (data is never dropped by default)",
+        "Activation and deactivation hooks call a Platform activation service that later issues extend",
+        "Action Scheduler loaded as a library from composer"
+      ],
+      "acceptance": [
+        "The plugin activates on a clean install without notices or errors",
+        "The nine module folders exist at the paths in CLAUDE.md",
+        "Deactivating the plugin removes no data",
+        "A missing PHP version shows a plain admin notice and the plugin does not run"
+      ],
+      "docs": [
+        "docs/plugins/index.md",
+        "docs/plugins/platform.md",
+        "docs/build/roles-in-code.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/whoiswho-core.php",
+        "site/wp-content/plugins/whoiswho-core/src/**/Module.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/**",
+        "site/wp-content/plugins/whoiswho-core/config/**",
+        "site/wp-content/plugins/whoiswho-core/uninstall.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-01"
+      ],
+      "tests": [
+        "test_REQ_056_migrations_run_in_order_and_are_idempotent",
+        "test_REQ_056_failed_migration_does_not_advance_version",
+        "test_REQ_056_production_migrate_requires_deploy_flag"
+      ],
+      "notes": "Table migrations for each module are written by that module's issues. Nothing else writes migrations.",
+      "title": "Build the forward-only migration framework",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-056",
+        "REQ-051"
+      ],
+      "summary": "Versioned, forward-only, expand-then-contract migrations that only the plugin area writes, run by one runner.",
+      "scope": [
+        "src/Platform/Migrations: Migration interface (version, description, up), ordered discovery from a migrations folder, a schema version option, a lock so two runs cannot overlap",
+        "No down() method. Destructive steps must be in a separate later migration and are flagged `contract` so CI can list them",
+        "A helper for dbDelta-style table creation with utf8mb4 and InnoDB, using $wpdb->prepare for any variable",
+        "Migration may declare the personal-data columns it adds, read by the PII catalogue test (M0-PLG-22)",
+        "Hook for a pre-migration dump in production (the deploy script does the dump; the runner refuses to run in production unless a flag from the deploy script is present)",
+        "Idempotent: re-running does nothing"
+      ],
+      "acceptance": [
+        "Pending migrations run in order and record their version",
+        "Re-running applies nothing",
+        "A migration that throws leaves the version unchanged and reports the error without personal data",
+        "There is no way to run a down migration",
+        "In production mode migrate refuses to run unless started by the deploy script"
+      ],
+      "docs": [
+        "docs/build/data-model.md",
+        "docs/build/deployment.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Migrations/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-02"
+      ],
+      "tests": [
+        "test_REQ_056_cli_migrate_command_runs_pending_migrations",
+        "test_REQ_056_cli_refuses_web_context"
+      ],
+      "notes": "The architecture says bin/wiw.php may be used for import as well; that command is M1.",
+      "title": "Add bin/wiw.php with a command registry and the migrate command",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-056",
+        "REQ-095"
+      ],
+      "summary": "The CLI entry point that loads WordPress without a web request and runs commands such as `php bin/wiw.php migrate`.",
+      "scope": [
+        "site/bin/wiw.php bootstrap (locates wp-load, refuses to run from the web), a command registry in src/Platform/Cli, exit codes, output with identifiers only",
+        "Command `migrate` calling the migration runner; `--dry-run` lists pending migrations",
+        "Help text listing registered commands; later issues register theirs (jobs:run in M0-PLG-15, audit:verify in M0-PLG-07, import in M1)"
+      ],
+      "acceptance": [
+        "`php bin/wiw.php migrate` applies pending migrations locally",
+        "`php bin/wiw.php` with no arguments lists commands",
+        "It exits non-zero on failure",
+        "It refuses to run over HTTP"
+      ],
+      "docs": [
+        "docs/build/deployment.md",
+        "docs/architecture.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/bin/wiw.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Cli/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-01"
+      ],
+      "tests": [
+        "test_REQ_235_role_bundles_match_documented_defaults",
+        "test_REQ_229_registration_is_closed_and_default_role_is_empty",
+        "test_REQ_235_builtin_roles_are_removed_on_activation",
+        "test_REQ_244_catalogue_sync_keeps_custom_grants"
+      ],
+      "notes": "Docs gap: docs/plugins/platform.md shows only seven capability rows; the one authoritative list is in docs/requirements.md (\"Capabilities and default role mapping\"); this issue follows the requirements list, as the docs instruct. Capability for the Email log, Purge log and Sprint thresholds screens is not named anywhere (see M0-EML-03, M0-PLG-13, M0-PLG-16). REQ-083, 108 and 109 cited by docs/plugins/platform.md are withdrawn and are not cited here.",
+      "title": "Register the capability catalogue and the three role bundles",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-235",
+        "REQ-229",
+        "REQ-244",
+        "REQ-239",
+        "REQ-240"
+      ],
+      "summary": "Creates the roles `wiw_reviewer` and `wiw_editor`, gives the Administrator every `wiw_*` capability, removes WordPress's other default roles, and closes registration, all from one capability config that mirrors the requirements list.",
+      "scope": [
+        "config/capabilities.php: every capability in \"Capabilities and default role mapping\" with source (core or plugin), default per role and a `fixed` flag; withdrawn ones (`wiw_set_trust_labels`, `wiw_manage_leads`) are NOT included",
+        "Includes the generated profile capabilities (edit_wiw_profiles, read_private_wiw_profiles and so on) and story/term/upload core capabilities so bundles are complete before the profile type exists in M1",
+        "Activation and a versioned sync migration that adds missing capabilities to roles without removing grants the Administrator added later",
+        "Removes subscriber, contributor, author and editor roles on activation; default_role empty; users_can_register off",
+        "Administrator role gets every wiw_* capability including new ones on update",
+        "A single reader class `CapabilityCatalogue` that screens and tests use"
+      ],
+      "acceptance": [
+        "The Reviewer, Editor and Administrator capabilities equal the documented defaults",
+        "Built-in subscriber, contributor, author and editor roles are gone after activation",
+        "default_role is empty and registration is closed",
+        "A capability added to the config reaches Administrator on the next version sync without removing custom grants",
+        "The capability list is not copied into code comments or other docs"
+      ],
+      "docs": [
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/roles-in-code.md",
+        "docs/plugins/platform.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/requirements.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Capabilities/**",
+        "site/wp-content/plugins/whoiswho-core/config/capabilities.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-04",
+        "M0-INF-05"
+      ],
+      "tests": [
+        "test_REQ_240_hidden_menu_screen_also_returns_403_by_direct_url",
+        "test_REQ_235_screen_without_capability_cannot_be_registered",
+        "test_REQ_244_granted_capability_adds_menu_and_revoked_restores_403",
+        "test_REQ_240_action_requires_nonce_and_capability"
+      ],
+      "notes": "The Reviewer menu content (Dashboard, Review queue, Duplicates, Profiles, Sources, Suppression list) is built by M1 issues; this issue supplies the mechanism only.",
+      "title": "Add the screen registrar, deny-by-default checks and the authorisation matrix harness",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-240",
+        "REQ-235",
+        "REQ-244"
+      ],
+      "summary": "The one way every admin screen and action is registered under a named capability, so a hidden menu is also a 403 by URL, plus the reusable test harness that checks every role against every screen.",
+      "scope": [
+        "`Platform\\Admin\\ScreenRegistry`: register(slug, title, capability, callback); menu items follow the user's effective capabilities; direct URL without the capability returns 403",
+        "`Platform\\Admin\\ActionGuard`: verifies a nonce and a named capability on admin-post and AJAX actions; deny by default; no raw superglobals (a request-reader value object)",
+        "Top-level WHOISWHO menu and a hidden-by-default rule: a screen without a registered capability does not appear",
+        "Test harness in tests/: data provider over roles (reviewer, editor, administrator, a user with a granted capability, a user with a revoked one) and screens, asserting 200 or 403",
+        "Reviewer default menu test hook: menu equals the list derived from capabilities (the actual screens arrive in M1; the harness takes the expected list from a fixture)"
+      ],
+      "acceptance": [
+        "A screen registered under a capability is hidden and returns 403 to a user without it",
+        "An action without a valid nonce or without the capability is refused",
+        "Granting a capability to one user changes that user's menu immediately and revoking it restores the 403",
+        "The matrix harness can be reused by any module with one line per screen",
+        "There is no way to register a screen without a capability"
+      ],
+      "docs": [
+        "docs/build/roles-in-code.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/plugins/platform.md",
+        "docs/features/roles-audit-and-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Admin/**",
+        "site/tests/Integration/Support/AuthorisationMatrix.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-06",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-02"
+      ],
+      "tests": [
+        "test_REQ_051_audit_log_chain_detects_tampering",
+        "test_REQ_051_every_row_has_actor_time_action_target_and_values",
+        "test_REQ_051_concurrent_appends_keep_chain_valid",
+        "test_REQ_188_batch_writes_one_row_per_subject_plus_batch_row"
+      ],
+      "notes": "DB triggers and the off-server export are separate (M0-PLG-08). The mapping of staff actions to audit action names is each module's job; the audit-action list could be a constants class owned here (proposal).",
+      "title": "Implement AuditLogger with the append-only hash chain and its table",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-051",
+        "REQ-188",
+        "REQ-228"
+      ],
+      "summary": "The only writer of `wiw_audit_log`: append-only rows, each carrying the previous row's hash so any alteration is detectable.",
+      "scope": [
+        "Migration for `wiw_audit_log` (id, at, actor_id, action, subject_type, subject_id, old JSON, new JSON, reason, prev_hash, hash)",
+        "`Platform\\Audit\\AuditLogger::log(action, subject, old, new, reason)`, no update or delete methods",
+        "Hash = SHA-256 over prev_hash plus a canonical serialisation of the row; appends use a lock/transaction so concurrent writes keep a single chain",
+        "`verify()` returns intact or the id of the first broken row",
+        "Batch helper writing one row per subject plus one batch row (for later bulk unpublish)",
+        "Old/new values pass through the PII catalogue scrubber interface once M0-PLG-22 lands (until then, callers pass identifiers)",
+        "Registered in the PII catalogue as a table that holds no PII beyond ids and values supplied by callers"
+      ],
+      "acceptance": [
+        "Every audited action writes one row with actor, time, action, target and old and new values or reason",
+        "Verify reports intact on an untouched log",
+        "Verify fails and names the row when a row is altered in a test",
+        "No class other than AuditLogger writes to the table (architecture test in M0-PLG-24)",
+        "Concurrent appends keep a valid chain"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/build/roles-in-code.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/architecture.md",
+        "docs/adr/ADR-013-audit-log.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Audit/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*audit*"
+      ]
+    },
+    {
+      "key": "M0-PLG-07",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-05",
+        "M0-PLG-06",
+        "M0-PLG-03"
+      ],
+      "tests": [
+        "test_REQ_051_audit_screen_requires_wiw_view_audit",
+        "test_REQ_051_verify_action_reports_broken_row",
+        "test_REQ_051_audit_verify_command_exits_non_zero_when_broken"
+      ],
+      "notes": "Prototype admin audit screen is wireframe only; see the admin pages doc. Look and feel is plain wp-admin.",
+      "title": "Add the Audit log screen, verify action and audit:verify command",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-051",
+        "REQ-188"
+      ],
+      "summary": "Administrators can read the log and verify the chain from wp-admin or the command line.",
+      "scope": [
+        "Admin screen \"Audit log\" under `wiw_view_audit` with paging and filters by actor, action and date, read only",
+        "A \"Verify chain\" action (nonce, capability) showing intact or the first broken row",
+        "`php bin/wiw.php audit:verify`",
+        "Viewing is itself not audited; verifying and exporting are"
+      ],
+      "acceptance": [
+        "Only a user with wiw_view_audit sees the screen (Administrator by default); a Reviewer gets 403",
+        "Verify chain reports intact on an untouched log and fails when a row is altered in a test",
+        "The screen offers no edit or delete control",
+        "The command exits non-zero on a broken chain"
+      ],
+      "docs": [
+        "docs/pages/admin/audit-and-compliance.md",
+        "docs/plugins/platform.md",
+        "docs/features/roles-audit-and-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Audit/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Cli/AuditVerify.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-08",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-06",
+        "M0-PLG-15"
+      ],
+      "tests": [
+        "test_REQ_051_triggers_block_update_and_delete_when_privileged",
+        "test_REQ_051_missing_trigger_privilege_does_not_fail_migration",
+        "test_REQ_051_nightly_export_job_records_last_run"
+      ],
+      "notes": "The live host TRIGGER check is a human task at go-live (M5). Where the export is stored and how it leaves the server is not specified in the docs: proposal is a private directory outside the web root that the owner downloads; confirm.",
+      "title": "Add audit-log immutability triggers and the off-server export job",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-051"
+      ],
+      "summary": "Where the database account allows it, triggers block UPDATE and DELETE on the audit table; either way a periodic export keeps a copy off the server.",
+      "scope": [
+        "A migration step that creates BEFORE UPDATE and BEFORE DELETE triggers when the TRIGGER privilege exists, and records whether it succeeded (no failure of the migration if it does not)",
+        "A status flag read by the Audit log screen and the health check: triggers on or off",
+        "A nightly job that writes a signed export of new rows to a private location for the owner to download or sync off the host; the job never emails personal data",
+        "Runbook note appended by the PR describing the export and restore"
+      ],
+      "acceptance": [
+        "With the privilege, an UPDATE or DELETE on the table fails",
+        "Without the privilege, migrations still pass and the screen shows \"triggers off\"",
+        "The export job runs on the job runner and records its last run",
+        "Export contents carry no more than the table holds"
+      ],
+      "docs": [
+        "docs/adr/ADR-013-audit-log.md",
+        "docs/build/security.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Audit/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*audit_triggers*"
+      ]
+    },
+    {
+      "key": "M0-PLG-09",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-04",
+        "M0-PLG-06"
+      ],
+      "tests": [
+        "test_REQ_244_capability_grant_and_revoke_are_audited",
+        "test_REQ_244_role_edit_is_audited",
+        "test_REQ_188_sensitive_capability_use_is_logged"
+      ],
+      "notes": "Preventing a self-grant and non-grantable capabilities is enforced in the guard (M0-GRD-04); this issue only records what happens.",
+      "title": "Audit every capability grant, revoke and sensitive capability use",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-244",
+        "REQ-188",
+        "REQ-051"
+      ],
+      "summary": "Every change to a user's or role's capabilities writes an audit row, whichever screen made it, and use of sensitive capabilities is logged.",
+      "scope": [
+        "Listeners on user capability changes (user meta writes), role capability changes (roles option) and role creation or deletion, including those made by the role-editor plugin, resolving the acting user",
+        "A diff of capabilities (granted, revoked) as old and new values",
+        "`AuditLogger::logUse()` helper and a list of sensitive capabilities (wiw_export_data, wiw_manage_capabilities, wiw_toggle_nominations, wiw_manage_register, wiw_edit_suppression, wiw_bulk_unpublish, wiw_run_imports) that modules call on use",
+        "Grants outside an authenticated Administrator context (CLI) are logged with actor \"system\" and a reason"
+      ],
+      "acceptance": [
+        "Granting and revoking a capability each write an audit row with actor, subject user, old and new values",
+        "Creating a role and editing a role's capabilities are audited",
+        "Granting a capability to one user changes that user's menu immediately (with M0-PLG-05) and writes a row",
+        "Sensitive capability use is logged through logUse"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/build/roles-in-code.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Capabilities/Audit/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-10",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-04",
+        "M0-PLG-05",
+        "M0-PLG-06"
+      ],
+      "tests": [
+        "test_REQ_235_deactivation_ends_sessions_and_is_audited",
+        "test_REQ_235_deactivated_user_cannot_sign_in"
+      ],
+      "notes": "The docs do not say whether deactivation is a flag or a role removal; proposal: a user meta flag so the account and its audit history remain.",
+      "title": "Add same-day staff deactivation that ends sessions and is audited",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-235",
+        "REQ-051"
+      ],
+      "summary": "A leaver can be deactivated so they cannot sign in, all their sessions end and the change is audited.",
+      "scope": [
+        "Deactivate and reactivate action on the Users list (nonce, `edit_users` core fixed capability) setting an account flag checked at authentication",
+        "Destroy all sessions for the user on deactivation",
+        "Audit row with actor, subject and reason",
+        "Deactivated users are excluded from recipients of staff notifications"
+      ],
+      "acceptance": [
+        "A deactivated user cannot sign in",
+        "Deactivating ends the user's existing sessions at once",
+        "Each deactivation and reactivation writes an audit row",
+        "Only a user with the fixed user-management capability can do it"
+      ],
+      "docs": [
+        "docs/features/roles-audit-and-admin.md",
+        "docs/build/roles-in-code.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Users/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-11",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-06",
+        "M0-PLG-04"
+      ],
+      "tests": [
+        "test_REQ_188_setting_change_requires_capability_and_is_audited",
+        "test_REQ_052_brand_values_cannot_be_stored_as_settings",
+        "test_REQ_194_settings_are_stored_with_autoload_off"
+      ],
+      "notes": "Contradiction to resolve: docs/plugins/platform.md says response targets and the pending-label wording are \"fixed in code\", but docs/architecture.md section 4 and docs/build/data-model.md list SLA targets and the pending-label wording among the options. This issue builds the mechanism; the M1 issues owning those values should follow platform.md unless the owner decides otherwise.",
+      "title": "Build the settings service (typed options, autoload off, audited)",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-194",
+        "REQ-188",
+        "REQ-052"
+      ],
+      "summary": "One service reads and writes plugin settings: typed, defaulted, validated, stored with autoload off, and every change audited. Brand values are refused.",
+      "scope": [
+        "`Platform\\Settings\\SettingsService` with a registry of known keys (type, default, validator, capability required to change, audited yes or no)",
+        "Options stored with autoload off; unknown keys are refused",
+        "Writes require a named capability and write an audit row with old and new values",
+        "A guard against brand values: keys named like colours, fonts or brand names are refused (brand values live in the child tokens file and brand config)",
+        "Read API used by theme helpers and other modules"
+      ],
+      "acceptance": [
+        "A setting cannot be changed without its named capability",
+        "Each change writes an audit row with old and new values",
+        "Options are stored with autoload off",
+        "An unregistered key cannot be written",
+        "No brand value (colour, font, brand name) can be stored as a setting"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/theme/theme-settings.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Settings/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-12",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-11",
+        "M0-PLG-04"
+      ],
+      "tests": [
+        "test_REQ_194_nominations_flag_defaults_off",
+        "test_REQ_194_toggle_requires_fixed_capability_and_is_audited",
+        "test_REQ_194_only_one_feature_flag_exists",
+        "test_REQ_259_helper_returns_closed_when_flag_off"
+      ],
+      "notes": "The only feature flag is Nominations (REQ-194). Sprint tracking (REQ-272) is a setting, not a feature flag: see M0-PLG-13.",
+      "title": "Add the Nominations flag, defaulting off, with an audited toggle service",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-194",
+        "REQ-259",
+        "REQ-188"
+      ],
+      "summary": "The single feature flag: whether the public nomination form is open. Read through the settings service; changed only by `wiw_toggle_nominations` with an optional reason.",
+      "scope": [
+        "`NominationsFlag::isOpen()` (default closed) and `setOpen(bool, ?reason)` requiring the fixed capability `wiw_toggle_nominations`",
+        "Every change writes an audit row with who, when and the optional reason; no approval reference",
+        "A theme-facing helper function `wiw_nominations_open()` registered by the plugin so templates never read options directly",
+        "No other feature flag exists; a test fails if a second flag key is registered",
+        "The toggle screen (\"Nominations page: Open / Closed\") itself is built in M4 on the Nominations screen; this issue ships the service only"
+      ],
+      "acceptance": [
+        "The flag defaults to off on a clean install",
+        "Only a user with wiw_toggle_nominations (Administrator, fixed) can change it",
+        "Every change is audited with who, when and the optional reason",
+        "Editors can read the state but not change it",
+        "Registering a second feature flag fails a test"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/platform.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Settings/NominationsFlag.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Settings/functions.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-13",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-11",
+        "M0-PLG-05"
+      ],
+      "tests": [
+        "test_REQ_272_sprint_tracking_defaults_on_and_hides_screen_when_off",
+        "test_REQ_181_thresholds_are_audited_and_administrator_only",
+        "test_REQ_181_revenue_threshold_is_integer_kobo"
+      ],
+      "notes": "Docs gap: REQ-272 and docs/theme/theme-settings.md call Sprint tracking a \"theme setting\", but docs/plugins/platform.md puts the Sprint thresholds screen in the plugin and the data model keeps settings out of the theme. This issue stores it in the plugin settings service and the theme reads it through a helper; confirm. The capability for the Sprint thresholds screen is not named in the requirements list: proposal `manage_options` (fixed, Administrator).",
+      "title": "Add the Sprint tracking setting and the Sprint thresholds screen",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-272",
+        "REQ-181"
+      ],
+      "summary": "The sprint thresholds (10 counted deals and NGN 5m as integer kobo) are the only settings screen, shown only while Sprint tracking is on (default on).",
+      "scope": [
+        "Setting `sprint_tracking` (default on, Administrator, audited)",
+        "Settings `sprint_count_threshold` and `sprint_revenue_threshold_minor` (kobo plus currency NGN)",
+        "Admin screen \"Sprint thresholds\", Administrator only, audited changes, hidden and 403 while sprint tracking is off, without deleting stored thresholds",
+        "A helper `sprint_tracking_on()` for the dashboard card built in M3"
+      ],
+      "acceptance": [
+        "Sprint tracking defaults on",
+        "Turning it off hides the Sprint thresholds screen and the dashboard card without deleting the thresholds",
+        "Only the Administrator can change either; each change is audited",
+        "The thresholds are stored as integers and currency, not floats",
+        "No profile-count target or progress bar is created anywhere"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/theme/theme-settings.md",
+        "docs/plugins/commerce.md",
+        "docs/features/sponsored-content-and-commercial-register.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Settings/Sprint/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-14",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-05",
+        "M0-PLG-04"
+      ],
+      "tests": [
+        "test_REQ_239_reviewer_dashboard_shows_no_commercial_tiles",
+        "test_REQ_239_no_tile_type_offers_a_target_or_progress_bar",
+        "test_REQ_239_tile_follows_effective_capability"
+      ],
+      "notes": "Weekly report (REQ-088) and the dashboards' real tiles come from the owning modules in later milestones.",
+      "title": "Build the role-based dashboard framework and tile registry",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-239",
+        "REQ-240",
+        "REQ-235"
+      ],
+      "summary": "The Dashboard screen with a registry of tiles; each tile declares the capability that shows it, so Reviewers see review tiles, Editors add support and nominations counts and Administrators add commercial tiles.",
+      "scope": [
+        "Dashboard registered under `wiw_view_dashboard_review`; tile registry `register(id, title, capability, renderer)`",
+        "Tile types are counts or lists only; no target, goal or progress-bar tile type exists (REQ-239)",
+        "Commercial tiles require `wiw_view_dashboard_commercial`",
+        "Placeholder tiles so the harness has data; real tiles are added by later modules",
+        "Tiles follow effective capabilities (a granted capability shows its tile)"
+      ],
+      "acceptance": [
+        "The Reviewer dashboard shows no commercial tiles",
+        "The Administrator dashboard can show commercial tiles",
+        "The dashboard shows plain counts by state and no directory-size target or progress bar",
+        "A tile appears or disappears when the capability is granted or revoked"
+      ],
+      "docs": [
+        "docs/pages/admin/index.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/plugins/platform.md",
+        "docs/requirements.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Dashboard/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-15",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-03",
+        "M0-INF-01"
+      ],
+      "tests": [
+        "test_REQ_050_failed_job_retries_then_is_reported",
+        "test_REQ_209_high_priority_group_runs_before_normal",
+        "test_REQ_050_run_respects_time_budget",
+        "test_REQ_050_jobs_run_command_processes_due_jobs"
+      ],
+      "notes": "Action Scheduler is a composer library (decided, Q79); installed in M0-INF-01. Job timing depends on traffic unless a real cron is added (documented risk).",
+      "title": "Build the job runner on Action Scheduler with budget, retries and heartbeat",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-050",
+        "REQ-209",
+        "REQ-075"
+      ],
+      "summary": "One facade for queued and scheduled jobs (purge, email, import chunks, reminders, retention) that works on WP-Cron or a real cron, with a time budget, retries and a heartbeat the health check reads.",
+      "scope": [
+        "`Platform\\Jobs\\JobRunner`: enqueue(name, args, priority, delay), schedule recurring, a high-priority group for purge, retry with backoff and a maximum, failure recorded with identifiers only",
+        "Time budget per run so shared hosting does not time out; resumable chunks via an args cursor",
+        "`php bin/wiw.php jobs:run` runs due jobs once (usable from a cPanel cron when DISABLE_WP_CRON is set)",
+        "Heartbeat option updated each run; failed-job admin notice for Administrators",
+        "Registry of recurring jobs that modules add (claim reminders, retention, view-count roll-up and so on come in later milestones)"
+      ],
+      "acceptance": [
+        "A queued job runs and a failing job retries up to the maximum then shows as failed in an admin notice",
+        "A run stops at the time budget and the rest runs next time",
+        "`php bin/wiw.php jobs:run` processes due jobs",
+        "The heartbeat is updated on each run",
+        "Logs carry job ids, not personal data"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/build/deployment.md",
+        "docs/adr/ADR-011-queues-and-scheduling.md",
+        "docs/plugins/third-party.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Jobs/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Cli/JobsRun.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-16",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-15",
+        "M0-PLG-02",
+        "M0-PLG-05"
+      ],
+      "tests": [
+        "test_REQ_209_unpublish_event_queues_high_priority_purge_after_commit",
+        "test_REQ_209_fake_client_receives_expected_urls",
+        "test_REQ_209_null_client_still_logs_purge",
+        "test_REQ_121_staff_responses_are_not_publicly_cacheable"
+      ],
+      "notes": "Docs gap: `wiw_purge_log` is shown as a screen (\"Purge log\") in docs/plugins/platform.md but has no table in docs/build/data-model.md, and no capability is named for it; proposal: `wiw_view_audit`. The 410 handler is an M1 issue.",
+      "title": "Add the cache purge service with a null client, fake and purge log",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-209",
+        "REQ-121"
+      ],
+      "summary": "The queued, high-priority purge hook that later unpublish flows call. Without a CDN the client does nothing; a fake client proves what would be purged; every purge is logged.",
+      "scope": [
+        "`Platform\\Cache\\PurgeService` interface with `NullClient` (default), `FakeClient` for tests, and a documented place for an optional Cloudflare client (not built: Cloudflare is optional)",
+        "Action hook `wiw_content_unpublished(subject_type, subject_id, urls)` queues a high-priority job after the transaction commits",
+        "Table `wiw_purge_log` (time, subject type and id, urls count, result) and an Administrator screen \"Purge log\"",
+        "Cache headers helper: short lifetimes (at most 120 seconds, 60 for lists and search) for anonymous GET only; bypass on staff cookies and for any non-public response",
+        "The URL set to purge for a profile (page, lists, sitemap) is supplied by the caller in M1"
+      ],
+      "acceptance": [
+        "Firing the unpublish hook queues a purge job that runs after commit",
+        "The fake client records exactly the URLs passed",
+        "Without a CDN configured the Null client runs and the purge log still records the event",
+        "Staff and non-public responses carry no public cache lifetime",
+        "The Purge log screen is limited to a named capability and is read only"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/adr/ADR-006-caching-and-unpublish.md",
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Cache/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*purge_log*"
+      ]
+    },
+    {
+      "key": "M0-PLG-17",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-18",
+        "M0-PLG-22"
+      ],
+      "tests": [
+        "test_REQ_233_link_expires_and_cannot_be_reused",
+        "test_REQ_233_scanner_style_get_does_not_consume_link",
+        "test_REQ_233_token_is_stored_only_as_hash",
+        "test_REQ_122_link_attempts_are_rate_limited"
+      ],
+      "notes": "Prototype: single-use link pages in `prototype/views-links.js` (routes listed in `#/design-review` under \"Single-use link pages\"). The theme page is M0-THM-13. Per-purpose handlers (verify correction, nomination, claim) are written by M1, M3 and M4 issues.",
+      "title": "Build the signed-link service and the /link/{token} route",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-233",
+        "REQ-122",
+        "REQ-081"
+      ],
+      "summary": "Single-use, expiring, hashed links used for email verification and similar actions: GET shows a page, only POST consumes the link so email scanners cannot burn it.",
+      "scope": [
+        "Migration for `wiw_signed_links` (token_hash, purpose, subject type and id, email [PII], expires_at, used_at, revoked_at)",
+        "32 random bytes, only the hash stored, bound to one purpose and record, default expiry 14 days (shorter per purpose), no personal data in the URL",
+        "Routes `GET /link/{token}` (shows the confirmation page) and `POST /link/{token}` (consumes the link and runs the purpose handler); handlers register per purpose",
+        "A used, revoked or expired link shows \"expired or already used\" with a uniform response that does not reveal which",
+        "Rate limiting per IP and token; staff can revoke or reissue (service API; UI later)",
+        "A retention job removes spent links (hook for the retention schedule)",
+        "Registered in the PII catalogue"
+      ],
+      "acceptance": [
+        "A GET of a link does not consume it",
+        "A link works once on POST, then shows the expired-or-used page",
+        "A link expires after the configured period",
+        "Only the hash of the token is stored",
+        "No name or email appears in a link URL",
+        "Rate limiting applies to attempts per IP and per token"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/features/corrections-removals-reports.md",
+        "docs/build/security.md",
+        "docs/features/email-and-notifications.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Links/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*signed_links*"
+      ]
+    },
+    {
+      "key": "M0-PLG-18",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-01",
+        "M0-INF-11"
+      ],
+      "tests": [
+        "test_REQ_122_rate_limit_blocks_after_threshold_per_ip_and_per_email",
+        "test_REQ_122_limiter_stores_no_raw_ip_or_email",
+        "test_REQ_081_form_token_rejects_too_fast_and_expired_submissions"
+      ],
+      "notes": "The actual limits per form are set by the form issues in M1 and M3.",
+      "title": "Add the rate limiter and the time-based form token",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-122",
+        "REQ-081",
+        "REQ-046"
+      ],
+      "summary": "The shared throttles and the form token that replaces a nonce on public forms, because public pages may be cached.",
+      "scope": [
+        "`Platform\\Forms\\RateLimiter` keyed by hashed IP and by hashed email or link token; sliding window; stores no raw IP or email",
+        "`FormToken`: signed, time-based token embedded in public forms, rejected if too fast (bot), too old or tampered; signing key from the secrets file",
+        "Uniform responses: a limited or invalid submission returns the same shape as a normal one for lookups that could enumerate records",
+        "Configurable limits per form type in code, not in settings"
+      ],
+      "acceptance": [
+        "Exceeding the per-IP or per-email limit blocks further submissions for the window",
+        "A form submitted instantly or after the token lifetime is rejected",
+        "No raw IP or email is stored by the limiter",
+        "Responses do not reveal whether a record exists"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/plugins/compliance.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Forms/RateLimiter.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Forms/FormToken.php"
+      ]
+    },
+    {
+      "key": "M0-PLG-19",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-18"
+      ],
+      "tests": [
+        "test_REQ_081_honeypot_rejects_bot_submission",
+        "test_REQ_122_validator_enforces_length_limits_and_unicode_names",
+        "test_REQ_081_bot_challenge_is_swappable"
+      ],
+      "notes": "The theme markup for the form field and the bot check is M0-THM-12.",
+      "title": "Add the validator base, honeypot and bot-challenge interface",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-081",
+        "REQ-122",
+        "REQ-046"
+      ],
+      "summary": "The one-validator-per-form pattern, Unicode-safe input rules, a honeypot and an interface for the bot challenge so Turnstile can be added with Cloudflare without code changes elsewhere.",
+      "scope": [
+        "`Platform\\Forms\\Validator` base: required, length limits, Unicode-safe names, email, with a request-reader so no raw superglobals are used outside validators",
+        "Honeypot field and time check combined with FormToken",
+        "`BotChallenge` interface with a `NullChallenge` (honeypot only) and a documented Turnstile adapter slot (not enabled without Cloudflare)",
+        "Failure monitoring hook that fires an event with ids only (REQ-050)"
+      ],
+      "acceptance": [
+        "A filled honeypot rejects the submission",
+        "Validation is server-side only with length limits",
+        "Names with non-ASCII letters validate",
+        "Only validators read request data (checked by the architecture test in M0-PLG-25)",
+        "The bot challenge can be swapped without changing form code"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/plugins/third-party.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Forms/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-20",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-15"
+      ],
+      "tests": [
+        "test_REQ_050_healthz_shows_no_detail_without_token",
+        "test_REQ_050_stale_job_heartbeat_reports_unhealthy"
+      ],
+      "notes": "Uptime monitor itself is optional and later (REQ-045).",
+      "title": "Add the /healthz endpoint (database, job heartbeat, disk)",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-050",
+        "REQ-045"
+      ],
+      "summary": "A health endpoint that says ok or not ok and, only with a token, shows detail.",
+      "scope": [
+        "`GET /healthz` returns status for database, job heartbeat age and free disk; no detail without the token from the secrets file",
+        "Returns the release version stamp when the token is present",
+        "Not cacheable, no personal data, listed in the guard allowlist for routes"
+      ],
+      "acceptance": [
+        "Without a token the response is only ok or not ok",
+        "With the token it lists database, job heartbeat and disk",
+        "A stale heartbeat reports not ok",
+        "The response is never cached"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/build/deployment.md",
+        "docs/features/platform-quality.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Health/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-21",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-22"
+      ],
+      "tests": [
+        "test_REQ_050_log_lines_contain_ids_not_personal_data",
+        "test_REQ_050_logs_older_than_30_days_are_removed"
+      ],
+      "notes": "Sentry or an uptime monitor are optional and later; this issue only leaves the hook.",
+      "title": "Add structured logging with IDs only and PII scrubbing",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-050",
+        "REQ-069"
+      ],
+      "summary": "A logger every module uses: JSON lines with a request id, identifiers only, scrubbing driven by the PII catalogue, and 30-day retention.",
+      "scope": [
+        "`Platform\\Log\\Logger` with levels, request id, context limited to ids; a scrubber that redacts any value matching catalogued personal-data keys",
+        "Error handler that never prints details to visitors (plain 500; see M0-THM-13)",
+        "30-day retention job on the job runner",
+        "Events for form-submission failures and job failures for the monitoring hook"
+      ],
+      "acceptance": [
+        "No log line contains a person's name or email in a test that logs a record with PII",
+        "Each line carries a request id",
+        "Logs older than 30 days are removed by the retention job",
+        "A failed form submission emits an event with ids only"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/features/platform-quality.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Log/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-22",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-02"
+      ],
+      "tests": [
+        "test_REQ_063_every_personal_column_is_in_the_pii_catalogue",
+        "test_REQ_069_catalogue_lists_export_strategy_for_each_entry"
+      ],
+      "notes": "Retention classes and the retention job itself are M3 (privacy). This issue ships the format and the guard test.",
+      "title": "Create the PII catalogue (config/pii.php) and its completeness test",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-063",
+        "REQ-069",
+        "REQ-050"
+      ],
+      "summary": "The single file that lists every personal-data table column and post-meta key, plus a test that fails when a migration or meta registration adds personal data that is not listed.",
+      "scope": [
+        "config/pii.php format: entries with kind (table column or meta key), name, class (PII, financial, public-after-approval), retention class, export and erase strategy",
+        "`PiiCatalogue` reader used by logging, retention, export and the data-request flow",
+        "A test that parses migrations (declared columns from M0-PLG-02) and registered meta and fails when a column marked personal is missing from the catalogue or a column name matches personal patterns (email, name, phone, ip) but is not classified",
+        "Entries for the M0 tables: `wiw_signed_links.email`, `wiw_email_events` recipient reference, `wiw_notes.body` (maybe), `wiw_audit_log` values"
+      ],
+      "acceptance": [
+        "The catalogue lists every personal-data column present in the migrations",
+        "A new migration that adds an unlisted personal column fails the test",
+        "The catalogue file is the only place the list lives",
+        "The scrubber and retention job read the catalogue"
+      ],
+      "docs": [
+        "docs/build/data-model.md",
+        "docs/architecture.md",
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/config/pii.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Pii/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-23",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-06",
+        "M0-PLG-22"
+      ],
+      "tests": [
+        "test_REQ_187_note_is_never_returned_by_public_read_models",
+        "test_REQ_188_adding_a_note_is_audited"
+      ],
+      "notes": "Screens that show notes belong to the modules that own the record (profiles, commerce, awards).",
+      "title": "Add the internal notes service (wiw_notes), never public",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-187",
+        "REQ-188"
+      ],
+      "summary": "The shared notes table and service that profiles, customers and nominations will attach notes to.",
+      "scope": [
+        "Migration for `wiw_notes` (notable type and id, body, author, created_at)",
+        "`NotesService::add/list` requiring the calling module's capability; notes writes go through AuditLogger",
+        "A public read model rule: no note field is ever exposed; an architecture-test hook (M0-PLG-25) forbids reading the table from templates",
+        "Catalogue entry for the body (may hold personal data)"
+      ],
+      "acceptance": [
+        "Notes can be attached to a record type and id",
+        "Adding a note writes an audit row",
+        "No public template or read model can read a note",
+        "The notes body is in the PII catalogue"
+      ],
+      "docs": [
+        "docs/plugins/platform.md",
+        "docs/build/data-model.md",
+        "docs/features/roles-audit-and-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Notes/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*notes*"
+      ]
+    },
+    {
+      "key": "M0-PLG-24",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-01",
+        "M0-PLG-06",
+        "M0-INF-05"
+      ],
+      "tests": [
+        "test_REQ_199_awards_never_references_commerce",
+        "test_REQ_184_commerce_never_writes_claimed_or_featured",
+        "test_REQ_210_only_state_machine_writes_pub_state",
+        "test_REQ_051_only_audit_logger_writes_audit_table"
+      ],
+      "notes": "Tool choice (custom php-parser rules versus PHPat or Deptrac) is a proposal; php-parser is installed in M0-INF-01. Boundaries come from CLAUDE.md and docs/plugins/index.md.",
+      "title": "Build the architecture test harness and module boundary rules",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-199",
+        "REQ-184",
+        "REQ-210",
+        "REQ-051"
+      ],
+      "summary": "The Arch testsuite that keeps the module rules true as code grows: Awards never references Commerce, commercial code never writes the Claimed mark or Featured flag, only the state machine writes publication state, only AuditLogger writes the audit table.",
+      "scope": [
+        "A harness in tests/Arch using php-parser to read every file under src/ (rules written as small classes, one file per rule)",
+        "Rule: nothing under src/Awards references src/Commerce (use, new, static calls, SQL table names of Commerce tables, joins)",
+        "Rule: src/Commerce and the Sponsored label code never write the Claimed mark or Featured flag keys",
+        "Rule: only src/Review/StateMachine writes the `pub_state` field or sets a profile post status to publish (vacuous until M1, with a fixture proving the rule fails when violated)",
+        "Rule: only src/Platform/Audit/AuditLogger writes `wiw_audit_log` (INSERT or $wpdb->insert on the table, SQL strings)",
+        "Each rule has a fixture violation to prove it can fail; rules run under `composer test -- --testsuite Arch`"
+      ],
+      "acceptance": [
+        "A fixture where Awards references Commerce fails the Awards rule",
+        "A fixture that updates wiw_audit_log outside AuditLogger fails the audit rule",
+        "A fixture that writes pub_state outside StateMachine fails the state rule",
+        "All rules pass on the real code at this point",
+        "`composer test -- --testsuite Arch` runs them alone"
+      ],
+      "docs": [
+        "docs/build/roles-in-code.md",
+        "docs/plugins/index.md",
+        "docs/build/testing-and-ci.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/tests/Arch/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-25",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-24",
+        "M0-PLG-05"
+      ],
+      "tests": [
+        "test_REQ_208_templates_use_read_models_only",
+        "test_REQ_240_every_registered_screen_has_a_capability",
+        "test_REQ_046_no_raw_superglobals_outside_validators",
+        "test_REQ_046_no_eval_or_dynamic_code",
+        "test_REQ_046_no_payment_or_gateway_code"
+      ],
+      "notes": "D-005 (no payment processing) has no REQ of its own since REQ-048, 070, 073 are withdrawn; REQ-046 is cited for security hygiene. The theme-leak check for brand values is an infra check (M0-INF-15), not here.",
+      "title": "Add architecture rules for read models, capabilities, superglobals, eval and payments",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-046",
+        "REQ-240",
+        "REQ-052"
+      ],
+      "summary": "The remaining enforced rules from CLAUDE.md as architecture tests.",
+      "scope": [
+        "Rule: public templates in both themes read profiles and stories only through the `PublicProfile` and `PublicStory` read models (no get_post_meta or WP_Query on the profile type); scans theme files for the profile type name",
+        "Rule: every admin screen and action is registered through ScreenRegistry or ActionGuard under a named capability (a test lists all registered screens and fails on one without a capability)",
+        "Rule: no raw $_GET, $_POST or $_REQUEST outside validator classes and the request reader",
+        "Rule: no eval, create_function, or backtick execution",
+        "Rule: no payment, card or gateway code: forbidden package names in composer.lock, forbidden strings (stripe, paystack, flutterwave, paypal SDK calls) outside docs",
+        "Rule: no direct SQL string concatenation with variables (must use $wpdb->prepare)"
+      ],
+      "acceptance": [
+        "Each rule has a fixture that proves it can fail",
+        "A template calling get_post_meta on the profile type fails",
+        "A screen registered without a capability fails",
+        "A payment SDK in composer.lock fails",
+        "All rules pass on the real code"
+      ],
+      "docs": [
+        "docs/build/roles-in-code.md",
+        "docs/plugins/index.md",
+        "docs/build/security.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/tests/Arch/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-26",
+      "milestone": "M0",
+      "depends": [
+        "M0-HUM-01",
+        "M0-INF-09",
+        "M0-PLG-04"
+      ],
+      "tests": [
+        "test_REQ_047_staff_without_second_factor_cannot_reach_admin",
+        "test_REQ_047_enforcement_applies_to_new_custom_role",
+        "Spec: tests/e2e/two-factor.spec.ts"
+      ],
+      "notes": "Product not named in the docs (\"Chosen kind; product not yet named\"): M0-HUM-01 approves it. composer.json is infra-owned; the infra change is a one-line require raised as a linked PR or an issue comment. WordPress has no built-in two-factor, so enforcement may need a shim in this plugin; verify enforcement and lockout locally, as the third-party page says.",
+      "title": "Install and enforce the two-factor plugin for every staff user",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-047",
+        "REQ-235"
+      ],
+      "summary": "The chosen maintained two-factor plugin, enforced for all roles before first use of wp-admin, with recovery codes. Lockout is in M0-GRD-05.",
+      "scope": [
+        "Pin the approved plugin through composer (M0-INF-09 mechanism)",
+        "Enforcement: every user with any role, including roles the Administrator creates later, must set up a second factor before reaching wp-admin; recovery codes issued",
+        "Settings applied by code on activation, not by hand",
+        "Test-environment-only hook for Playwright login (see M0-QAX-01) that cannot exist in production",
+        "Add the plugin to docs/plugins/third-party.md status through a note in the PR (docs are not edited here)"
+      ],
+      "acceptance": [
+        "A user cannot reach any wp-admin screen without completing two-factor",
+        "Recovery codes are available at setup",
+        "A newly created custom role is also enforced",
+        "The visibility matrix (M0-QAX-03) is re-run with the plugin installed and passes",
+        "The plugin is pinned by lockfile and appears in the allowlist"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/build/security.md",
+        "docs/build/roles-in-code.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/TwoFactor/**",
+        "site/composer.json",
+        "site/config/plugin-allowlist.json"
+      ]
+    },
+    {
+      "key": "M0-PLG-27",
+      "milestone": "M0",
+      "depends": [
+        "M0-HUM-01",
+        "M0-INF-09",
+        "M0-GRD-04",
+        "M0-PLG-09"
+      ],
+      "tests": [
+        "test_REQ_244_role_editor_requires_wiw_manage_capabilities",
+        "test_REQ_235_fixed_capability_cannot_be_granted_to_non_administrator",
+        "test_REQ_244_self_grant_is_refused"
+      ],
+      "notes": "Decided kind (Q86), product unnamed: approved in M0-HUM-01. Not drawn in the prototype (D-067).",
+      "title": "Install the role-editor plugin limited to the Administrator",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-244",
+        "REQ-235"
+      ],
+      "summary": "The per-user capability and role screen is a maintained plugin, reachable only with `wiw_manage_capabilities`, and every change it makes is audited and cannot cross the non-grantable list.",
+      "scope": [
+        "Pin the approved plugin",
+        "Restrict its menu and actions to `wiw_manage_capabilities` (Administrator only, fixed)",
+        "Hide capabilities on the fixed list from its UI where the plugin allows, and prove the guard blocks them if the UI does not",
+        "Confirm grants and role edits made through it produce audit rows (M0-PLG-09)",
+        "Add to the allowlist"
+      ],
+      "acceptance": [
+        "Only the Administrator can open the capability screen",
+        "Granting a fixed capability to a non-Administrator has no effect",
+        "A grant made through the plugin writes an audit row",
+        "A user cannot grant themselves a capability and cannot change their own role",
+        "The visibility matrix passes with the plugin installed"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/roles-in-code.md",
+        "docs/features/roles-audit-and-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/RoleEditor/**",
+        "site/config/plugin-allowlist.json"
+      ]
+    },
+    {
+      "key": "M0-PLG-28",
+      "milestone": "M0",
+      "depends": [
+        "M0-HUM-01",
+        "M0-PLG-19"
+      ],
+      "tests": [
+        "test_REQ_081_spam_checker_defaults_to_null_and_sends_nothing",
+        "test_REQ_122_akismet_adapter_sends_minimum_fields_only"
+      ],
+      "notes": "Docs: \"Akismet or an equivalent ... Confirm before use\". Proposal: call the Akismet HTTP API from the adapter rather than installing the plugin, so there is one fewer plugin. Key name belongs in .env.example (add via an infra issue comment).",
+      "title": "Add the spam-check interface with an Akismet adapter held behind approval",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-081",
+        "REQ-122"
+      ],
+      "summary": "A SpamChecker interface that forms call; the default is the honeypot and rate limits, with an Akismet adapter that stays off until the owner approves sending data to a third party.",
+      "scope": [
+        "`SpamChecker` interface, `NullSpamChecker`, `AkismetSpamChecker` using the Akismet API key from the secrets file",
+        "The adapter is disabled unless the setting is on and the key exists; when on, only the minimum fields are sent",
+        "A processor-register entry note for the PR (the register itself is M3)",
+        "Visibility matrix rerun if the Akismet plugin is installed rather than the API called directly"
+      ],
+      "acceptance": [
+        "By default no data leaves the site for spam checking",
+        "The adapter sends only message content, IP and user agent when enabled, and nothing else",
+        "A spam verdict marks the submission without revealing it to the sender",
+        "Enabling is audited"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/plugins/compliance.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Forms/Spam/**"
+      ]
+    },
+    {
+      "key": "M0-PLG-29",
+      "milestone": "M0",
+      "depends": [
+        "M0-HUM-01",
+        "M0-INF-09",
+        "M0-PLG-16",
+        "M0-GRD-03",
+        "M0-QAX-03"
+      ],
+      "tests": [
+        "test_REQ_209_cache_plugin_does_not_serve_unpublished_url",
+        "test_REQ_121_staff_responses_bypass_cache",
+        "Spec: tests/e2e/cache-visibility.spec.ts"
+      ],
+      "notes": "CONTRADICTION: docs/build/stack.md and Q82 (D-060) say \"A cache plugin: Decided\", but docs/plugins/third-party.md lists \"Page-cache plugin: None planned / Not planned ... a cache plugin is a leak risk\". Needs an owner ruling in M0-HUM-01. If \"no plugin\", close this issue and rely on the origin 410 and short cache headers from M0-PLG-16.",
+      "title": "Set up and configure the page-cache plugin for anonymous public pages only",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "S",
+      "size": "M",
+      "reqs": [
+        "REQ-209",
+        "REQ-121",
+        "REQ-217"
+      ],
+      "summary": "The cache plugin the stack page lists as decided (D-060, Q82), configured so it can never serve a non-public page or a staff page, and purged by the purge service.",
+      "scope": [
+        "Pin the approved cache plugin",
+        "Cache only anonymous GET responses on named public paths; bypass on any staff or signed-in cookie, on query strings, on non-200 responses, on noindex pages marked not public",
+        "Lifetimes at most 120 seconds, 60 for lists and search",
+        "Wire the plugin's purge to the PurgeService so unpublish clears the cached URL at once",
+        "Run the visibility matrix (M0-QAX-03) with the plugin on and record the result"
+      ],
+      "acceptance": [
+        "A staff-cookie request is never served from cache",
+        "A profile that changes to a non-public state returns 404 or 410 immediately even with the cache on",
+        "The visibility matrix passes with the cache plugin enabled",
+        "Cached lifetimes do not exceed 120 seconds (60 for lists and search)"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/build/stack.md",
+        "docs/plugins/guard.md",
+        "docs/adr/ADR-006-caching-and-unpublish.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Cache/PageCache/**",
+        "site/config/plugin-allowlist.json"
+      ]
+    },
+    {
+      "key": "M0-GRD-01",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-05"
+      ],
+      "tests": [
+        "test_REQ_208_guard_loads_without_core_plugin",
+        "test_REQ_208_wiw_hidden_status_is_not_public"
+      ],
+      "notes": "Docs say the guard depends on Review (StateMachine) and Directory (read models) and calls them; those are M1, so the first guard issues use only generic hooks.",
+      "title": "Create the whoiswho-guard must-use plugin skeleton",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-208",
+        "REQ-046"
+      ],
+      "summary": "A must-use plugin loaded before ordinary plugins, so it keeps holding if the core plugin or a third-party plugin misbehaves.",
+      "scope": [
+        "site/wp-content/mu-plugins/whoiswho-guard.php loader and a whoiswho-guard/ folder with a small autoloader, no dependency on whoiswho-core",
+        "Registers the non-public custom post status `wiw_hidden`",
+        "A registry of \"guarded post types\" that other issues add to (profile type in M1)",
+        "Owns no data, tables or admin screens",
+        "Boots even when whoiswho-core is inactive, and does not call it"
+      ],
+      "acceptance": [
+        "The guard loads on every request and cannot be deactivated from wp-admin",
+        "It registers wiw_hidden and no table or option",
+        "It loads without whoiswho-core present",
+        "A test in the Visibility suite confirms the guard filters are attached"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/plugins/index.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard.php",
+        "site/wp-content/mu-plugins/whoiswho-guard/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01",
+        "M0-INF-11"
+      ],
+      "tests": [
+        "test_registration_closed_and_application_passwords_off",
+        "test_REQ_229_default_role_is_empty_even_if_option_changed",
+        "test_REQ_046_xmlrpc_is_off",
+        "test_REQ_046_file_modification_is_disabled_in_production"
+      ],
+      "notes": "Both the guard (this issue) and Platform (M0-PLG-04) touch registration. Division: Platform sets the initial options on activation; the guard forces them every request.",
+      "title": "Guard hardening: file editing, updates, XML-RPC, application passwords, registration",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-046",
+        "REQ-229"
+      ],
+      "summary": "Makes the install-level hardening impossible to switch off from wp-admin.",
+      "scope": [
+        "Assert DISALLOW_FILE_EDIT and DISALLOW_FILE_MODS in production (define if missing, show a staff notice if config disagrees)",
+        "Automatic updates off for core, plugins and themes (filters)",
+        "XML-RPC off: filter and a 403 on xmlrpc.php, pingbacks removed",
+        "Application passwords off",
+        "`users_can_register` forced off and `default_role` forced empty by option filters, regardless of the database value",
+        "No front-end login link rendered; wp-login stays for staff",
+        "A note for directory listing and PHP-in-uploads: server configuration checked in the live host checklist, not code"
+      ],
+      "acceptance": [
+        "Front-end registration, XML-RPC and application passwords are disabled and stay disabled if the options are changed in the database",
+        "Plugins and themes cannot be edited or installed from wp-admin in production",
+        "Automatic updates are off",
+        "No page shows a sign in or sign up link to a visitor"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/build/security.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/concepts/no-accounts-model.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Hardening/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01"
+      ],
+      "tests": [
+        "test_REQ_229_rest_requires_staff_login",
+        "test_REQ_229_user_enumeration_is_blocked",
+        "test_REQ_208_hidden_content_absent_from_feeds_oembed_and_core_sitemaps",
+        "test_REQ_208_shortlinks_and_previews_match_real_url_answer"
+      ],
+      "notes": "The guard emits sitemap.xml, robots.txt, canonical, Open Graph and structured data: that belongs to the SEO issues in M1 (it needs the read models). Full REQ-208 matrix with real profile states is M1.",
+      "title": "Guard: lock REST to staff, block user enumeration, close feeds, oEmbed and archives",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-229",
+        "REQ-208",
+        "REQ-046",
+        "REQ-217"
+      ],
+      "summary": "Closes the WordPress surfaces that could leak a non-public record or reveal staff accounts.",
+      "scope": [
+        "Core REST requires a signed-in staff user; no public REST route; the users route is never public",
+        "Block ?author= enumeration, user sitemaps and author archive pages; generic login errors",
+        "Feeds, core sitemaps and oEmbed turned off for hidden content and for guarded post types",
+        "Attachment pages not public",
+        "Preview, `?p=ID` and `?page_id=ID` shortlinks return the same answer as the real page: 404 or 410 for anything not public",
+        "Core search does not return guarded types",
+        "The same rules apply to `wiw_hidden` content so the matrix can be proved in M0 without profiles"
+      ],
+      "acceptance": [
+        "An anonymous request to /wp-json returns 401 or 403 on every route",
+        "?author=1 and the users route reveal nothing",
+        "Feeds, core sitemaps and oEmbed return no entry for hidden content",
+        "Attachment and author archive pages are not public",
+        "A shortlink to hidden content returns the same status as its real URL",
+        "Core search never returns a guarded type"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/build/security.md",
+        "docs/features/seo-sharing-and-sitemaps.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Surfaces/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01",
+        "M0-PLG-04"
+      ],
+      "tests": [
+        "test_REQ_235_fixed_capability_cannot_be_granted_to_non_administrator",
+        "test_REQ_244_user_cannot_grant_self_a_capability",
+        "test_REQ_245_second_role_is_refused",
+        "test_REQ_235_guard_fixed_list_matches_catalogue"
+      ],
+      "notes": "CONTRADICTION: docs/plugins/platform.md says the `user_has_cap` filter lives in the Platform module, while docs/build/roles-in-code.md and docs/plugins/third-party.md say the guard enforces the non-grantable list. This plan puts the filter in the guard (the safety rule that must hold even if the core plugin fails) and keeps the catalogue (with the fixed flags) in Platform; the test keeps them in sync.",
+      "title": "Guard: enforce fixed capabilities, self-grant and one-role-per-user rules",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-235",
+        "REQ-244",
+        "REQ-245"
+      ],
+      "summary": "A `user_has_cap` filter that makes the non-grantable list true whatever is stored, plus the rules that stop privilege escalation.",
+      "scope": [
+        "Fixed list in the guard (user and role management, settings, plugin and theme installation, `wiw_manage_register`, `wiw_manage_capabilities`, `wiw_toggle_nominations`): returns false for any non-Administrator even if a grant is stored",
+        "A user cannot grant themselves a capability and cannot change their own role",
+        "Adding a second role to a user is refused; one unique email per user; sign-in has no role selector",
+        "Single-profile emergency unpublish by a Reviewer holding `wiw_bulk_unpublish` through a meta capability mapped in M1 (the filter hook is added here, the mapping when profiles exist)",
+        "Enforcement independent of whoiswho-core being active, with the fixed list duplicated in the guard and compared with the catalogue in a test"
+      ],
+      "acceptance": [
+        "Granting a fixed capability to a non-Administrator has no effect",
+        "A user cannot grant themselves a capability and cannot change their own role",
+        "Adding a second role to a user is refused",
+        "The guard list and the plugin catalogue agree (test)"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/build/roles-in-code.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/features/roles-audit-and-admin.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Capabilities/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01"
+      ],
+      "tests": [
+        "test_REQ_047_five_failed_logins_lock_the_account",
+        "test_REQ_047_weak_password_is_refused",
+        "test_REQ_047_login_errors_are_generic"
+      ],
+      "notes": "Docs: idle timeout \"60 minutes in wp-admin (verify)\". Lockout may overlap the chosen two-factor plugin; check before building (M0-HUM-01).",
+      "title": "Guard: login lockout, strong passwords, idle timeout and generic errors",
+      "area": "plugin",
+      "feature": "roles-audit-and-admin",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-047",
+        "REQ-235"
+      ],
+      "summary": "The parts of REQ-047 a two-factor plugin does not cover: lockout after repeated failures, strong passwords and a session idle timeout.",
+      "scope": [
+        "Lock the account after five failed attempts (window and unlock rules documented; unlock by Administrator or timeout)",
+        "Strong password rule for every staff account",
+        "Idle timeout in wp-admin (60 minutes, verify)",
+        "Generic login error messages that do not reveal whether an account exists",
+        "Session revocation on role or capability change and on deactivation",
+        "Lockout events logged with account id only (no email)"
+      ],
+      "acceptance": [
+        "Five failed attempts lock the account",
+        "Weak passwords are refused",
+        "An idle session in wp-admin ends after the configured period",
+        "Login errors do not distinguish unknown user from wrong password"
+      ],
+      "docs": [
+        "docs/features/roles-audit-and-admin.md",
+        "docs/build/security.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Authentication/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-06",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01"
+      ],
+      "tests": [
+        "test_REQ_046_every_response_carries_security_headers",
+        "test_REQ_046_csp_blocks_inline_script_without_nonce",
+        "Spec: tests/e2e/security-headers.spec.ts"
+      ],
+      "notes": "Embedded video and third-party sources on the home page (M2) and analytics (M5) need CSP entries: each issue adds its own to the one config. Docs do not say whether HSTS preload is wanted.",
+      "title": "Guard: HTTPS redirect and security headers with a CSP nonce API",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-046"
+      ],
+      "summary": "Every response is HTTPS-only and carries the agreed security headers; the theme can ask for a CSP nonce for its one inline script.",
+      "scope": [
+        "HTTP to HTTPS redirect and secure cookies in production",
+        "Headers: HSTS, a nonce-based Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, frame-ancestors none",
+        "A function `wiw_csp_nonce()` for inline scripts (used by the header-state script in M0-THM-07)",
+        "wp-admin gets a compatible policy (report-only first if the admin breaks) and staff pages are never cacheable",
+        "Allowed script and style sources are listed in one config (fonts and analytics sources added later)"
+      ],
+      "acceptance": [
+        "Every response sets HSTS, nosniff, Referrer-Policy, Permissions-Policy and a CSP",
+        "The CSP blocks an inline script without the nonce",
+        "The theme's inline script runs with the nonce",
+        "wp-admin still works with the policy"
+      ],
+      "docs": [
+        "docs/build/security.md",
+        "docs/features/platform-quality.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Headers/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-07",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01"
+      ],
+      "tests": [
+        "test_REQ_127_disallowed_type_is_refused",
+        "test_REQ_127_renamed_php_file_is_refused",
+        "test_REQ_127_image_is_reencoded_and_metadata_stripped"
+      ],
+      "notes": "Docs gap: REQ-127 says \"scanned\" but no scanner is chosen. PHP not running in uploads is a server setting (live-host checklist).",
+      "title": "Guard: upload type and size checks with server-side image re-encoding",
+      "area": "plugin",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-127",
+        "REQ-046"
+      ],
+      "summary": "Uploads are checked for type and size and images are re-encoded, so a disguised file cannot get in.",
+      "scope": [
+        "Allowlist of image types for the media library; evidence files limited to JPG, PNG and PDF (the private storage for evidence is M3)",
+        "Verify real MIME type from content, not the extension; size limit",
+        "Re-encode accepted images server-side and strip metadata",
+        "Refuse everything else with a plain message",
+        "Document the \"scanned\" part of REQ-127: the docs do not name a scanner; leave a `FileScanner` interface with a null implementation and a note"
+      ],
+      "acceptance": [
+        "A file with a disallowed type or over the size limit is refused",
+        "A PHP file renamed to .jpg is refused",
+        "Accepted images are re-encoded and metadata stripped",
+        "Original files remain in the media library (REQ-080)"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/build/security.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Uploads/**"
+      ]
+    },
+    {
+      "key": "M0-GRD-08",
+      "milestone": "M0",
+      "depends": [
+        "M0-GRD-01",
+        "M0-PLG-06"
+      ],
+      "tests": [
+        "test_REQ_210_direct_status_write_is_refused_and_logged",
+        "test_REQ_210_token_from_state_machine_allows_change"
+      ],
+      "notes": "The guard \"depends on Review\" (docs). To avoid a circular build, the token contract is defined here and the StateMachine implements against it in M1.",
+      "title": "Guard: refuse and log status writes that bypass the state machine",
+      "area": "plugin",
+      "feature": "review-and-publishing",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-210",
+        "REQ-208"
+      ],
+      "summary": "The generic `wp_insert_post_data` choke point: for guarded types, any change of post status that does not carry the state machine's token is refused and logged.",
+      "scope": [
+        "A token API (`StateChangeToken`) that only a caller in the Review module can obtain (the StateMachine itself is M1)",
+        "Filter `wp_insert_post_data` refusing changes to the post status of guarded post types without the token, covering wp-admin, REST, XML-RPC, imports and bulk edit",
+        "Refusals are logged through AuditLogger (when the core plugin is active) or the logger fallback, with actor and attempted change",
+        "A test post type registered in the test suite proves the filter"
+      ],
+      "acceptance": [
+        "A direct status change on a guarded type is refused and logged",
+        "The refusal covers quick edit, bulk edit and REST",
+        "A change carrying a valid token is allowed",
+        "Only the Review module can mint a token (architecture test, vacuous until M1)"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/plugins/review.md",
+        "docs/adr/ADR-005-publication-model.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/src/Status/**"
+      ]
+    },
+    {
+      "key": "M0-THM-01",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-06"
+      ],
+      "tests": [
+        "Spec: tests/e2e/theme-structure.spec.ts",
+        "test_REQ_273_parent_theme_is_present_and_not_the_active_theme"
+      ],
+      "notes": "Prototype reference: `prototype/theme/` (site.css, components.js). The prototype is HTML and JS rendered in the browser; the theme re-implements it as server-rendered PHP.",
+      "title": "Create the parent theme whoiswho skeleton",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-273",
+        "REQ-044"
+      ],
+      "summary": "The parent theme: templates, patterns, components, motion and the token structure, with no brand values and no product logic.",
+      "scope": [
+        "style.css header, functions.php bootstrap that loads inc/ files, theme.json (structure only, no brand values), text domain",
+        "Folders: templates, template-parts, patterns, inc, assets, emails",
+        "Theme supports: title tag, responsive embeds off, html5, post thumbnails; emoji and embed scripts removed",
+        "A rule file in the theme README that templates read data only through the plugin read models and never decide visibility",
+        "The parent is never activated alone (a notice if it is)"
+      ],
+      "acceptance": [
+        "The theme is valid and is found by WordPress as a parent",
+        "No colour, font or brand name literal exists in the parent (leak check M0-INF-15 passes)",
+        "No template calls get_post_meta or WP_Query for profiles",
+        "Activating the parent alone shows a notice and does not break the site"
+      ],
+      "docs": [
+        "docs/theme/index.md",
+        "docs/theme/templates.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ]
+    },
+    {
+      "key": "M0-THM-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-01"
+      ],
+      "tests": [
+        "test_REQ_273_child_is_active_and_extends_parent",
+        "test_REQ_273_template_override_in_child_wins_over_parent"
+      ],
+      "notes": "Theme tests run against the child as the active theme so what the visitor sees is what is tested.",
+      "title": "Create the active child theme whoiswho-child skeleton",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-273"
+      ],
+      "summary": "The active theme that holds brand values and site-specific overrides.",
+      "scope": [
+        "style.css with `Template: whoiswho`, functions.php enqueuing parent then child",
+        "Folders: assets (tokens, fonts, logo), config (brand), templates and template-parts for overrides",
+        "A helper that reports whether the child is active and extends the parent (used by tests and the deploy script)",
+        "The local environment activates the child (M0-INF-02 seed)"
+      ],
+      "acceptance": [
+        "The child is the active theme and extends the parent",
+        "Deleting an override in the child falls back to the parent template",
+        "A check function reports child active and parent present",
+        "The child holds no copy of parent templates by default"
+      ],
+      "docs": [
+        "docs/theme/index.md",
+        "docs/build/deployment.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho-child/**"
+      ]
+    },
+    {
+      "key": "M0-THM-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-01"
+      ],
+      "tests": [
+        "Spec: tests/e2e/tokens.spec.ts checks computed custom properties exist",
+        "test_REQ_190_parent_tokens_contain_no_brand_literals"
+      ],
+      "notes": "Open design question: theme.json colour palette entries need values; generating child theme.json from the tokens file keeps one source (proposal). Prototype reference: `prototype/theme/tokens.css`.",
+      "title": "Define the token structure in the parent and wire it to theme.json",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-052",
+        "REQ-190",
+        "REQ-273"
+      ],
+      "summary": "The parent defines which tokens exist and neutral defaults; brand values arrive in the child.",
+      "scope": [
+        "tokens.base.css listing semantic tokens with neutral placeholder values: `--c-bg`, `--c-text`, `--c-cta`, `--c-link`, `--c-line`, `--c-focus`, type scale (fluid `--t-*`), spacing `--s-1`..`--s-9`, widths `--w-page`, `--w-text`, `--head-h`, radii `--r-*`, shadows `--sh-*`, motion `--m-*` and easings, label tokens",
+        "theme.json maps palette, font families and spacing to those CSS variables so the block editor and CSS agree (no literal brand values in theme.json: proposal is a build step that generates child theme.json from the child tokens file, built in M0-THM-04)",
+        "Documentation comment at the top of the file stating that brand values live only in the child"
+      ],
+      "acceptance": [
+        "Every token used by the prototype's `prototype/theme/tokens.css` has a name here",
+        "Parent holds no brand colour or font literal",
+        "theme.json references variables only",
+        "Pages use semantic tokens, not raw palette values"
+      ],
+      "docs": [
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/index.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/assets/css/tokens.base.css",
+        "site/wp-content/themes/whoiswho/theme.json"
+      ]
+    },
+    {
+      "key": "M0-THM-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-02",
+        "M0-THM-03",
+        "M0-INF-06"
+      ],
+      "tests": [
+        "Spec: tests/e2e/brand-tokens.spec.ts",
+        "test_REQ_190_child_tokens_file_is_the_only_brand_value_source"
+      ],
+      "notes": "Prototype: `prototype/theme/tokens.css`, `prototype/theme/fonts/`, `prototype/theme/assets/`. Font licences are unconfirmed (M0-HUM-03) and the primary colour is a working choice: do not block on either.",
+      "title": "Port the brand tokens, fonts and logo into the child theme",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-052",
+        "REQ-190",
+        "REQ-273",
+        "REQ-040"
+      ],
+      "summary": "The brand values themselves, in the child: colours, fonts, spacing and logo, ported from the prototype tokens file unchanged.",
+      "scope": [
+        "assets/css/tokens.css in the child, ported from `prototype/theme/tokens.css` (seven guide colours and derived tints, Repline for headlines at 400, Montreal at 300/400/500/700, fluid sizes, spacing, radii, shadows, motion)",
+        "Self-hosted woff2 fonts with `font-display: swap`; no italics",
+        "Logo files from the supplied assets and the mask approach for the header wordmark and icon (masks as files or inline, tested without file:// limits)",
+        "Brand mark webp files (star, comb, link, spiral) and pattern tile",
+        "A build step that generates the child theme.json palette and font families from this file",
+        "Orange is the primary colour; red for links and accents is a working choice"
+      ],
+      "acceptance": [
+        "The child tokens file defines every colour, font and spacing value the pages use",
+        "Fonts are served from the theme with `font-display: swap`",
+        "Replacing the logo means replacing the asset, not editing a template",
+        "No brand value is outside the tokens file (leak check)",
+        "The generated theme.json matches the tokens file"
+      ],
+      "docs": [
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/index.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho-child/assets/**",
+        "site/wp-content/themes/whoiswho-child/theme.json"
+      ]
+    },
+    {
+      "key": "M0-THM-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-02"
+      ],
+      "tests": [
+        "test_REQ_052_brand_strings_come_from_brand_config",
+        "Spec: tests/e2e/brand-config.spec.ts"
+      ],
+      "notes": "In the prototype these live in `prototype/tokens.js` as `W.brand`.",
+      "title": "Add the brand configuration and helper in the child theme",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-052",
+        "REQ-190"
+      ],
+      "summary": "The one place for the brand name, long-form name, edition name, legal trading name, tagline and domain.",
+      "scope": [
+        "config/brand.php in the child with: brand name WHOISWHO, long-form Who Is Who In Africa, edition \"WHOISWHO in Africa: The Maiden Edition\", legal trading name whoiswhoafrica, tagline \"Influence. Achievement. Legacy.\", domain wiwi.africa",
+        "A helper `wiw_brand($key)` used by templates, email templates and share cards",
+        "Templates and plugin code never hard-code these strings"
+      ],
+      "acceptance": [
+        "The brand name appears in one place and templates read it through the helper",
+        "Changing a value in the config changes it everywhere",
+        "A literal brand string in a template fails the leak check",
+        "Values match docs/theme/theme-settings.md"
+      ],
+      "docs": [
+        "docs/theme/theme-settings.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho-child/config/brand.php",
+        "site/wp-content/themes/whoiswho-child/inc/brand.php"
+      ]
+    },
+    {
+      "key": "M0-THM-07",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-04",
+        "M0-GRD-06"
+      ],
+      "tests": [
+        "Spec: tests/e2e/enqueue-and-csp.spec.ts",
+        "Spec: tests/e2e/no-header-flash.spec.ts"
+      ],
+      "notes": "Prototype: the inline script in `prototype/index.html` and `prototype/theme/motion.js`. `site/build/entries.json` belongs to infra: add the entry list via a line in the PR to infra; flagged. A numeric page-weight and script budget is not written down yet (docs open point); set one from the finished shell.",
+      "title": "Build the asset enqueue pipeline with manifest, preloads and the header-state script",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-041",
+        "REQ-042",
+        "REQ-043",
+        "REQ-046"
+      ],
+      "summary": "How CSS and JS reach the page: tokens, base, components, per-template enqueue, fonts, and the one inline script that sets the header state before first paint.",
+      "scope": [
+        "Enqueue tokens (child) then base and components (parent), with hashed names from the build manifest",
+        "Per-template conditional enqueue; scripts deferred; no jQuery on the front end; the theme adds JavaScript only where a page needs it",
+        "Preload the headline font and the main text font; fonts show text at once",
+        "The inline header-state script sets `is-home` and `at-top` classes before first paint and carries the CSP nonce from `wiw_csp_nonce()`",
+        "Image sizes registered for cards and posters, modern formats and lazy loading by default (REQ-042)",
+        "Both stylesheet sets are not needed; public site only"
+      ],
+      "acceptance": [
+        "Pages load tokens, base and components CSS in order from the manifest",
+        "The header-state script runs under the CSP with the nonce and prevents a flash on refresh",
+        "No page loads jQuery or an unneeded script",
+        "Images carry sizes and lazy loading",
+        "Fonts load with `font-display: swap`"
+      ],
+      "docs": [
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/inc/enqueue.php",
+        "site/wp-content/themes/whoiswho/inc/images.php",
+        "site/wp-content/themes/whoiswho/assets/js/header-state.js",
+        "site/build/entries.json"
+      ]
+    },
+    {
+      "key": "M0-THM-08",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-07"
+      ],
+      "tests": [
+        "Spec: tests/e2e/base-layout.spec.ts (axe at 360, 768, 1280, 1600)",
+        "test_REQ_044_templates_render_without_javascript"
+      ],
+      "notes": "Prototype routes: `#/` (home), `#/about`, `#/design-review` for the page list. Whether the theme is a block theme or a classic PHP theme is not stated; the docs say \"server-rendered PHP templates\" with theme.json and block patterns: this plan builds a classic PHP theme using theme.json.",
+      "title": "Build the base templates, layout wrapper and document structure",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-044",
+        "REQ-040",
+        "REQ-043"
+      ],
+      "summary": "The templates every page uses: front-page stub, page, single, archive and index, wrapper, skip link, landmarks and heading rules.",
+      "scope": [
+        "index, front-page (stub; the home is M2), page, single, archive templates that render through template parts",
+        "Document structure: `lang`, document title, one `h1`, skip link to `main`, header, main and footer landmarks",
+        "The Page band part (eyebrow, title, lede, optional tone colour)",
+        "Layout container widths from tokens; mobile first with breakpoints at 640, 768 and 1024 px",
+        "Templates never read profile or story data directly"
+      ],
+      "acceptance": [
+        "Every page is readable and indexable without JavaScript",
+        "A skip link reaches `main`; landmarks and heading order are correct; one `h1`",
+        "No horizontal scroll at 360 px",
+        "No template contains logic about whether a record is public"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/template-parts/**",
+        "site/wp-content/themes/whoiswho/index.php"
+      ]
+    },
+    {
+      "key": "M0-THM-09",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-08",
+        "M0-PLG-12"
+      ],
+      "tests": [
+        "Spec: tests/e2e/header.spec.ts",
+        "Spec: tests/e2e/nominate-link-visibility.spec.ts",
+        "Spec: tests/e2e/drawer-keyboard.spec.ts"
+      ],
+      "notes": "Prototype: `prototype/theme/site.css`, `prototype/theme/components.js` (header and drawer), route `#/`. Menu wording: the docs list Directory, Awards, Stories, Events, About in templates.md and omit Events in theme-settings.md (older text); this plan follows templates.md. Mega menu content for each group is not specified beyond group names; take it from the prototype.",
+      "title": "Build the header, mega menu, drawer and Nominate-link rule",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-259",
+        "REQ-043",
+        "REQ-040",
+        "REQ-229"
+      ],
+      "summary": "The sticky translucent header with five groups, search icon and a \"Get listed\" button, a mega menu on wide screens and an animated drawer on phones.",
+      "scope": [
+        "Groups: Directory, Awards, Stories, Events (a plain link to /events), About; search icon; \"Get listed\" button; menus are WordPress menus for order and wording",
+        "Mega menu at 1024 px and up; drawer on phones built from `details` elements that animate open and close, chevron turns, items rise in",
+        "Transparent over the home hero only (`html.is-home.at-top`), solid elsewhere; hover or focus never turns it grey or white by mistake",
+        "Nominate links are hidden in the header, drawer and footer while `wiw_nominations_open()` is false; shown when open",
+        "Drawer and dialogs trap Tab and return focus on close",
+        "No sign in, sign up or account menu",
+        "Search panel opened from the icon (the results are M2)"
+      ],
+      "acceptance": [
+        "No flash of a wrong header on load or refresh, on desktop or phone",
+        "The header is transparent over the home hero only and solid elsewhere",
+        "Drawer sections animate without snapping",
+        "The Nominate link is absent while the Nominations flag is off and present when it is on",
+        "Keyboard users reach every control with a visible focus ring; the drawer traps Tab",
+        "Nothing offers sign in or sign up"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/pages/public/index.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/template-parts/header/**",
+        "site/wp-content/themes/whoiswho/assets/js/header.js",
+        "site/wp-content/themes/whoiswho/assets/css/header.css"
+      ]
+    },
+    {
+      "key": "M0-THM-10",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-08",
+        "M0-PLG-12"
+      ],
+      "tests": [
+        "Spec: tests/e2e/footer.spec.ts"
+      ],
+      "notes": "The cookie notice itself (REQ-062, REQ-248: appears after a little scroll, Decline and Accept, no non-essential script before Accept) is left to the privacy milestone (M3) as it needs consent storage and analytics; it is not in M0. Confirm that another milestone file covers it.",
+      "title": "Build the footer shell and cookie preferences placeholder",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-259",
+        "REQ-062",
+        "REQ-043"
+      ],
+      "summary": "The footer: an Events link, trust and legal links, the Cookie preferences button and the brand line.",
+      "scope": [
+        "Footer sections Trust and rules, Legal, More, with WordPress menus for ordering",
+        "Nominate hidden while closed",
+        "A Cookie preferences button wired to an event the privacy issue (M3) will handle; present but inert until then",
+        "Brand line from the brand configuration"
+      ],
+      "acceptance": [
+        "The footer shows an Events link and legal links",
+        "Nominate is absent while the flag is off",
+        "The Cookie preferences button is keyboard reachable",
+        "Footer text comes from the brand config"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/theme/theme-settings.md",
+        "docs/features/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/template-parts/footer/**",
+        "site/wp-content/themes/whoiswho/assets/css/footer.css"
+      ]
+    },
+    {
+      "key": "M0-THM-11",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-07"
+      ],
+      "tests": [
+        "Spec: tests/e2e/a11y-base.spec.ts",
+        "Spec: tests/e2e/reduced-motion.spec.ts"
+      ],
+      "notes": "Prototype: `prototype/theme/site.css` for focus and touch rules; the prototype's ad hoc Puppeteer audit is not in the repository, so the audit is rebuilt in M0-QAX-04.",
+      "title": "Add the accessibility base: focus, motion, utilities and focus trap",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040",
+        "REQ-055"
+      ],
+      "summary": "The CSS and JS foundations that make every later template pass WCAG 2.1 AA.",
+      "scope": [
+        "Focus ring tokens (`--c-focus`, orange on dark), visible on every control",
+        "Reduced-motion handling: with `prefers-reduced-motion: reduce` there are no reveals, smooth scroll, autoscroll or confetti and the page is complete",
+        "Visually-hidden and skip-link utilities, minimum touch target sizes, hover rules inside `(hover: none)` where needed",
+        "A small focus-trap module for the drawer and dialogs that returns focus on close",
+        "A live-region helper (`role=status`) for confirmations and errors",
+        "Zoom to 200 percent loses nothing",
+        "Breakpoints 640, 768, 1024 px mobile first"
+      ],
+      "acceptance": [
+        "axe reports no violations at 360, 768, 1280 and 1600 px on the base templates",
+        "Every control is keyboard reachable with a visible focus ring",
+        "Reduced motion shows a complete page without reveals or smooth scroll",
+        "Zoom to 200 percent loses no content or function",
+        "Confirmation and error messages are announced"
+      ],
+      "docs": [
+        "docs/theme/responsive-and-accessibility.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/motion-and-performance.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/assets/css/a11y.css",
+        "site/wp-content/themes/whoiswho/assets/js/focus-trap.js",
+        "site/wp-content/themes/whoiswho/assets/js/live-region.js"
+      ]
+    },
+    {
+      "key": "M0-THM-12",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-11",
+        "M0-PLG-19"
+      ],
+      "tests": [
+        "Spec: tests/e2e/form-parts.spec.ts (axe)",
+        "test_REQ_081_form_part_contains_honeypot_and_token"
+      ],
+      "notes": "Prototype: `W.field` and `W.bot` in `prototype/theme/components.js`; the done page route `#/done`. Profile and story cards are built by M1 and M2 theme issues, not here.",
+      "title": "Build the shared template parts: form field, bot check, notices, done page",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-081",
+        "REQ-043",
+        "REQ-058"
+      ],
+      "summary": "The parts every public form and confirmation uses, so later form issues only compose them.",
+      "scope": [
+        "Form field part: label, input, hint attached with `aria-describedby`, error state, select and textarea variants",
+        "Bot check part: honeypot and a labelled control, plus the hidden form token field from `FormToken`",
+        "Privacy notice slot at the point of collection (REQ-058 text comes from the privacy issues)",
+        "Notices part: pending-review label, Sponsored notice, draft note, staff preview banner (markup only; the logic is in the plugin)",
+        "Done page part: title, a sentence, a reference and a way back",
+        "Button and link styles: `.btn` with outline and small variants"
+      ],
+      "acceptance": [
+        "Every field has a label and its hint is attached",
+        "The bot check is a labelled control",
+        "Errors and confirmations are announced",
+        "The done page shows a reference and a way back",
+        "Parts contain no brand literal"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/template-parts/forms/**",
+        "site/wp-content/themes/whoiswho/assets/css/forms.css"
+      ]
+    },
+    {
+      "key": "M0-THM-13",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-12",
+        "M0-PLG-17"
+      ],
+      "tests": [
+        "Spec: tests/e2e/system-pages.spec.ts",
+        "Spec: tests/e2e/link-page.spec.ts"
+      ],
+      "notes": "Prototype routes V12 (Gone), V13 (Not found), V14 (Server error) and the single-use link pages listed in `#/design-review`. The 410 status itself is emitted by the M1 removal flow.",
+      "title": "Build the system pages: 404, 410, 500 and the single-use link pages",
+      "area": "theme",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-121",
+        "REQ-233",
+        "REQ-209"
+      ],
+      "summary": "The pages the plugin and guard answer with when something is missing, gone, broken, or a link is spent.",
+      "scope": [
+        "404 with search and directory links",
+        "410 Gone for removed profiles: an explanation and links to the directory and the complaints policy, no reason shown",
+        "500: plain text page with no technical detail",
+        "Link landing page for GET `/link/{token}` with a POST button, and the \"expired or already used\" page",
+        "Templates take a status from the plugin or guard and never decide it"
+      ],
+      "acceptance": [
+        "A missing URL shows the 404 page with search and directory links",
+        "A removed profile URL shows the 410 page with no reason",
+        "A server error shows plain text with no technical detail",
+        "The link page requires a POST to consume the link and shows \"expired or already used\" for a spent one",
+        "All pass axe at four widths"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/pages/public/trust-legal-and-data-rights.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/404.php",
+        "site/wp-content/themes/whoiswho/templates/410.php",
+        "site/wp-content/themes/whoiswho/templates/500.php",
+        "site/wp-content/themes/whoiswho/templates/link.php",
+        "site/wp-content/themes/whoiswho/template-parts/system/**"
+      ]
+    },
+    {
+      "key": "M0-THM-14",
+      "milestone": "M0",
+      "depends": [
+        "M0-THM-11"
+      ],
+      "tests": [
+        "Spec: tests/e2e/motion-switches.spec.ts"
+      ],
+      "notes": "Prototype: `prototype/theme/motion.js`, `prototype/theme/hero-geo.js`. The home hero videos and 3D stage are M2.",
+      "title": "Port the motion base: reveals, smooth scroll gating and safe-motion switches",
+      "area": "theme",
+      "feature": "theme",
+      "priority": "S",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-041",
+        "REQ-044"
+      ],
+      "summary": "Motion added on top of finished markup, with every switch that turns it off.",
+      "scope": [
+        "Reveal-on-scroll module using IntersectionObserver; everything is simply visible without it",
+        "Smooth wheel scrolling only with a fine pointer and without reduced motion; touch and keyboard stay native",
+        "Switches: `prefers-reduced-motion`, data saver or 2G (home shows its static version), no script, no IntersectionObserver",
+        "Token-based durations and easings only",
+        "No animation blocks reading or input"
+      ],
+      "acceptance": [
+        "With reduced motion on there are no reveals, no smooth scroll, no autoscroll and the page is complete",
+        "With scripts disabled every page is readable and every link works",
+        "With data saver on, motion choreography is skipped",
+        "Animations never block reading or input"
+      ],
+      "docs": [
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/components.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/assets/js/motion.js",
+        "site/wp-content/themes/whoiswho/assets/css/motion.css"
+      ]
+    },
+    {
+      "key": "M0-EML-01",
+      "milestone": "M0",
+      "depends": [
+        "M0-PLG-01",
+        "M0-INF-11"
+      ],
+      "tests": [
+        "test_REQ_075_wp_mail_uses_smtp_settings_from_secrets",
+        "test_REQ_075_missing_smtp_credentials_do_not_fall_back_silently"
+      ],
+      "notes": "A small SMTP plugin is only used if this cannot be done without one (docs). SPF, DKIM and DMARC are DNS tasks: M0-EML-06.",
+      "title": "Send mail through the cPanel SMTP account on wp_mail",
+      "area": "plugin",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-075",
+        "REQ-204"
+      ],
+      "summary": "wp_mail uses the host SMTP credentials from the secrets file; locally mail goes to the catcher.",
+      "scope": [
+        "`phpmailer_init` hook reading SMTP host, port, user and password from the secrets file names in .env.example",
+        "From address on the sending domain; Reply-To rules; fail closed in production if credentials are missing (no silent fallback to PHP mail)",
+        "Local environment sends to the mail catcher",
+        "No credentials in logs or errors",
+        "Per-hour sending cap setting recorded for bulk mail (hosts cap messages per hour)"
+      ],
+      "acceptance": [
+        "A message sent in production mode goes through the configured SMTP account",
+        "Missing credentials produce a staff-visible error, not an unlogged send",
+        "Locally the message appears in the catcher",
+        "No credential appears in logs"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/plugins/platform.md",
+        "docs/adr/ADR-008-email.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Mail/Transport.php"
+      ]
+    },
+    {
+      "key": "M0-EML-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-EML-01",
+        "M0-PLG-15",
+        "M0-PLG-22"
+      ],
+      "tests": [
+        "test_REQ_075_every_send_is_logged_with_event_and_result",
+        "test_REQ_094_staff_notice_goes_to_capability_holders_only",
+        "test_REQ_050_log_holds_recipient_reference_not_address",
+        "test_REQ_233_email_link_contains_no_personal_data"
+      ],
+      "notes": "Docs gap: the email log \"recipient reference\" is not defined; proposal is a keyed hash or a record id. REQ-094 says \"enquiry received (to sales)\" while the feature page says \"to staff\"; this plan uses the capability holder `wiw_receive_enquiries` (REQ-018).",
+      "title": "Build the notification service with templates, queue and send log",
+      "area": "plugin",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-075",
+        "REQ-094",
+        "REQ-050",
+        "REQ-233"
+      ],
+      "summary": "The service every feature calls to send an event email: a template per event, queued sending with retries, recipient resolution by capability, and a log row for every send.",
+      "scope": [
+        "`Platform\\Mail\\Notifier::send(event, recipient, context)` with an event registry (id, template, audience: public address, holders of a capability, Administrators only)",
+        "Queued through the JobRunner with retries; failure recorded",
+        "Migration for `wiw_email_events` (message id, event, recipient reference not the address, type sent or bounce or complaint, result, time); table registered in the PII catalogue",
+        "Recipient resolver for staff notices: holders of a named capability, excluding deactivated users (REQ-256 reminders reuse it in M3)",
+        "Links in emails are made through the signed-link service; no name or email in a URL",
+        "Plain text and simple HTML alternatives for each template; the HTML layout is M0-EML-04",
+        "The event list from docs is registered as constants with placeholder templates; modules fill their templates"
+      ],
+      "acceptance": [
+        "Every send appears in the log with time, event and result; a failed send shows as failed",
+        "Sends are queued and retried",
+        "No email or log line puts a person's name or email in a URL",
+        "Renewal and expiry reminder events go only to Administrators (audience rule)",
+        "Staff notices go to holders of the named capability only"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/plugins/platform.md",
+        "docs/adr/ADR-008-email.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Mail/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/*email_events*"
+      ]
+    },
+    {
+      "key": "M0-EML-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-EML-02",
+        "M0-PLG-05",
+        "M0-PLG-06"
+      ],
+      "tests": [
+        "test_REQ_075_email_log_requires_capability",
+        "test_REQ_075_recording_a_bounce_is_audited"
+      ],
+      "notes": "Docs gap: no capability is named for the Email log (Administrator-only per the feature page); proposal `wiw_view_audit`. Bounces are found by staff and recorded by hand (REQ-075); no automatic webhook is built.",
+      "title": "Add the Email log screen and staff-recorded bounces and complaints",
+      "area": "plugin",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-075",
+        "REQ-051"
+      ],
+      "summary": "Administrators can read every message sent and record bounces or complaints they find.",
+      "scope": [
+        "Admin screen \"Email log\" listing time, event, recipient reference and result, filters by event and result",
+        "Action \"Record bounce\" and \"Record complaint\" on a row, nonce and capability checked, audited",
+        "Failed sends highlighted",
+        "Read only otherwise; exports of the log are `wiw_export_data` and logged (later)"
+      ],
+      "acceptance": [
+        "Only the named capability sees the screen; a Reviewer gets 403",
+        "A failed send shows as failed",
+        "Recording a bounce writes an audit row and an email event",
+        "The screen shows no message body or full address"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/pages/admin/audit-and-compliance.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Mail/Admin/**"
+      ]
+    },
+    {
+      "key": "M0-EML-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-EML-02",
+        "M0-THM-04"
+      ],
+      "tests": [
+        "test_REQ_075_email_layout_has_text_and_html_variants",
+        "test_REQ_052_email_templates_have_no_brand_literals"
+      ],
+      "notes": "There is no email design in the prototype beyond the event list; wording of each message belongs to the feature issues.",
+      "title": "Build the base email templates in the theme (HTML and plain text)",
+      "area": "theme",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-075",
+        "REQ-043",
+        "REQ-052"
+      ],
+      "summary": "One brand-consistent layout every message uses, with a plain text twin, one purpose per message and no personal data in links.",
+      "scope": [
+        "emails/layout.html.php and layout.txt.php in the parent theme, with brand values drawn from the child tokens through a generated inline-style map (no literals)",
+        "Blocks: header, a single call-to-action button, footer with the legal trading name from the brand config, a marketing-only unsubscribe block (visible only when the message class is marketing)",
+        "A preview screen or WP-CLI command to render each template with sample data",
+        "Accessible HTML (contrast, alt text, text-first)"
+      ],
+      "acceptance": [
+        "Every template renders as HTML and plain text",
+        "No brand literal exists in the email templates",
+        "Links in the examples contain no personal data",
+        "The unsubscribe block appears only for marketing messages"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/emails/**",
+        "site/wp-content/themes/whoiswho-child/config/email-style.php"
+      ]
+    },
+    {
+      "key": "M0-EML-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-EML-02",
+        "M0-PLG-17"
+      ],
+      "tests": [
+        "test_REQ_061_marketing_message_is_refused_without_consent",
+        "test_REQ_061_marketing_message_carries_unsubscribe_headers"
+      ],
+      "notes": "The consent table `wiw_consents` and opt-in capture are M3 and M2 (newsletter). The unsubscribe page template (V45 `/unsubscribe`) is a theme issue in the newsletter milestone.",
+      "title": "Add marketing-mail plumbing: one-click unsubscribe and a consent gate",
+      "area": "plugin",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-061"
+      ],
+      "summary": "Marketing messages cannot be sent without consent and always carry a one-click unsubscribe; the consent store itself arrives with privacy in M3.",
+      "scope": [
+        "Message class flag `marketing`; the Notifier refuses a marketing message unless a `ConsentChecker` interface says the recipient opted in (default implementation denies)",
+        "`List-Unsubscribe` and `List-Unsubscribe-Post` headers with a signed unsubscribe link; one click then a confirmation page (template in M2 newsletter)",
+        "Transactional messages are never blocked by this gate"
+      ],
+      "acceptance": [
+        "A marketing message to someone without consent is not sent and the refusal is logged",
+        "Every marketing message carries one-click unsubscribe headers and link",
+        "Unsubscribing is honoured on the next send"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/features/newsletter.md",
+        "docs/features/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Mail/Marketing/**"
+      ]
+    },
+    {
+      "key": "M0-EML-06",
+      "milestone": "M0",
+      "depends": [],
+      "tests": [],
+      "notes": "Not a blocker for building: local development uses the mail catcher. Needed before the live-host check.",
+      "title": "Create the sending mailbox and set SPF, DKIM and DMARC for wiwi.africa",
+      "area": "human",
+      "feature": "email-and-notifications",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-204",
+        "REQ-075"
+      ],
+      "summary": "Someone with cPanel and DNS access creates the mail account the site sends from and sets the domain records; result recorded in the runbook.",
+      "scope": [
+        "Create the cPanel mail account for sending (name agreed with the owner)",
+        "Set SPF, DKIM and DMARC on the sending domain and send a test to a mail checker",
+        "Record the hourly send cap of the host",
+        "Put the SMTP credentials into the secrets file on the host (never in the repo or in chat)"
+      ],
+      "acceptance": [
+        "A test message passes SPF, DKIM and DMARC checks for the sending domain",
+        "The hourly send cap is written in the runbook",
+        "The secrets file holds the credentials and no repo file does"
+      ],
+      "docs": [
+        "docs/features/email-and-notifications.md",
+        "docs/build/deployment.md",
+        "docs/build/launch-checklist.md"
+      ],
+      "files": []
+    },
+    {
+      "key": "M0-HUM-01",
+      "milestone": "M0",
+      "depends": [],
+      "tests": [],
+      "notes": "Unblocks M0-PLG-26, M0-PLG-27, M0-PLG-28 and M0-PLG-29. Product names: a candidate list for each is a proposal for the owner, not a decision (for example the official Two Factor plugin, a user role editor plugin, Akismet, a page-cache plugin with a purge API).",
+      "title": "Approve the third-party plugin choices and the plugin vetting rule",
+      "area": "human",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-047",
+        "REQ-244",
+        "REQ-081"
+      ],
+      "summary": "The docs name only the kind of plugin for two-factor, role editor, spam checking and caching. The owner approves one product for each, the vetting rule, and settles the cache plugin contradiction.",
+      "scope": [
+        "Pick or approve the two-factor plugin (with recovery codes and enforcement for every role)",
+        "Pick or approve the role-editor plugin",
+        "Decide whether Akismet is allowed to receive form data, or only the honeypot and rate limits are used",
+        "Rule on the page-cache plugin: docs/build/stack.md and Q82 say decided; docs/plugins/third-party.md says none planned",
+        "State the vetting rule for plugins (maintenance, size, licence, data handling): an open question in docs/questions.md",
+        "Confirm none touches personal data without a processor register entry"
+      ],
+      "acceptance": [
+        "Each of the four products (or \"none\") is written in the PR comment or the questions file",
+        "The vetting rule is written down",
+        "The cache contradiction is resolved one way",
+        "The owner confirmed the choices"
+      ],
+      "docs": [
+        "docs/plugins/third-party.md",
+        "docs/build/stack.md",
+        "docs/questions.md"
+      ],
+      "files": []
+    },
+    {
+      "key": "M0-HUM-03",
+      "milestone": "M0",
+      "depends": [],
+      "tests": [],
+      "notes": "Not a blocker for building; a blocker for launch (M5).",
+      "title": "Confirm font licences and supply web font files for self-hosting",
+      "area": "human",
+      "feature": "theme",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-052"
+      ],
+      "summary": "Repline and Montreal are used by the prototype but their licences are not confirmed (Repline came from a local download). The licence must allow self-hosted web use before launch.",
+      "scope": [
+        "Confirm licences and licensed web use for both typefaces",
+        "Supply woff2 files and the licence text if the prototype files are not acceptable",
+        "Confirm the primary brand colour (orange is the working choice)"
+      ],
+      "acceptance": [
+        "A licence covering web use exists for both fonts, or replacements are chosen",
+        "The final woff2 files are in the child theme assets (M0-THM-04 follow-up)",
+        "The primary colour is confirmed or kept as working"
+      ],
+      "docs": [
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/theme-settings.md"
+      ],
+      "files": []
+    },
+    {
+      "key": "M0-QAX-02",
+      "milestone": "M0",
+      "depends": [
+        "M0-QAX-01",
+        "M0-GRD-02",
+        "M0-GRD-03",
+        "M0-GRD-05",
+        "M0-GRD-06",
+        "M0-PLG-26"
+      ],
+      "tests": [
+        "test_REQ_046_security_headers_on_every_response",
+        "test_REQ_229_no_registration_or_login_route_for_visitors",
+        "test_REQ_047_two_factor_required",
+        "test_REQ_235_role_capability_matrix_matches_defaults"
+      ],
+      "notes": "QA writes no feature code; if a test fails because the feature is wrong, file a `type:discovered` issue.",
+      "title": "Write the security and authentication test suite for the foundations",
+      "area": "qa",
+      "feature": "platform-quality",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-046",
+        "REQ-047",
+        "REQ-229",
+        "REQ-235"
+      ],
+      "summary": "Independent tests that prove the hardening, two-factor enforcement, lockout, closed registration and headers on a running site.",
+      "scope": [
+        "tests/Security PHPUnit tests for headers, no registration or login route exposed to visitors, XML-RPC off, application passwords off, REST needs staff login, enumeration blocked",
+        "Playwright specs: two-factor required before wp-admin, five failed logins lock the account, security headers on public and admin responses",
+        "Role-by-capability matrix run for Reviewer, Editor and Administrator against the screens that exist (with a granted and a revoked case)",
+        "A header test that fails if a response lacks any agreed header"
+      ],
+      "acceptance": [
+        "A user cannot reach any wp-admin screen without two-factor",
+        "Five failed attempts lock the account",
+        "Front-end registration, enumeration and application passwords are disabled",
+        "Each role's menu equals the list derived from its capabilities; a screen outside the user's capabilities returns 403",
+        "Granting a fixed capability to a non-Administrator has no effect"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/build/security.md",
+        "docs/features/roles-audit-and-admin.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/tests/Security/**",
+        "site/tests/e2e/security-*.spec.ts"
+      ]
+    },
+    {
+      "key": "M0-QAX-03",
+      "milestone": "M0",
+      "depends": [
+        "M0-QAX-01",
+        "M0-GRD-03"
+      ],
+      "tests": [
+        "test_REQ_208_visibility_matrix_bare_install",
+        "test_REQ_217_hidden_fixture_has_no_sitemap_entry_and_is_noindex"
+      ],
+      "notes": ".github/workflows/ci.yml belongs to infra; this issue adds only a job via a PR to infra or a comment. The full REQ-208 matrix with one profile per state is completed in M1.",
+      "title": "Build the visibility-matrix harness and the rerun-per-plugin CI job",
+      "area": "qa",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-217",
+        "REQ-209"
+      ],
+      "summary": "The reusable matrix that requests one fixture per publication state on every surface, so the same matrix can run in M1 with real profiles and after every plugin is added.",
+      "scope": [
+        "tests/Visibility harness: a surface list (page, lists, search, sitemap.xml, core sitemaps, feeds, REST, oEmbed, shortlinks, attachment pages, author archives, previews, share image, cache headers) and a fixture factory per state",
+        "Runs now against `wiw_hidden` fixtures; M1 plugs in profile states",
+        "A CI job `visibility` that runs the matrix; the plugin allowlist change process requires it to pass (documented)",
+        "Assertions: response status, noindex header, absence from listings, label presence where required"
+      ],
+      "acceptance": [
+        "The matrix runs on a bare install and passes for hidden content",
+        "Adding a surface to the list is one line",
+        "The CI job runs on every PR touching plugins, guard or themes",
+        "The matrix runs again after each third-party plugin is added (documented in the PR template note)"
+      ],
+      "docs": [
+        "docs/plugins/guard.md",
+        "docs/build/testing-and-ci.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/features/seo-sharing-and-sitemaps.md"
+      ],
+      "files": [
+        "site/tests/Visibility/**",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "key": "M0-QAX-04",
+      "milestone": "M0",
+      "depends": [
+        "M0-QAX-01",
+        "M0-THM-09",
+        "M0-THM-10",
+        "M0-THM-11"
+      ],
+      "tests": [
+        "Spec: tests/e2e/every-page.spec.ts",
+        "Spec: tests/e2e/theme-child-active.spec.ts",
+        "Spec: tests/e2e/no-accounts-ui.spec.ts"
+      ],
+      "notes": "The prototype audit covered 72 routes at 360, 390, 768 and 1280 px; docs say the script is not kept. Docs also say pages are checked at 360, 768, 1280 and 1600 px while the platform-quality feature page says 360, 768, 1280: this plan uses all four.",
+      "title": "Write the theme base e2e and accessibility specs at four widths",
+      "area": "qa",
+      "feature": "theme",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-043",
+        "REQ-040",
+        "REQ-273",
+        "REQ-259",
+        "REQ-229"
+      ],
+      "summary": "Independent checks of the \"Every page\" list in docs/theme/theme-acceptance.md for the shell the theme issues build, replacing the ad hoc Puppeteer audit that was never committed.",
+      "scope": [
+        "Specs for: axe at 360, 768, 1280 and 1600, no horizontal scroll at 360, keyboard reach with visible focus, drawer focus trap, skip link, landmarks and one h1, reduced motion, scripts disabled, no header flash",
+        "Child is the active theme and extends the parent",
+        "Nominate link absent when the flag is off and present when it is on",
+        "No page offers sign in or sign up, no profile cover image, no trust label on any page",
+        "A route list file so M1 and M2 theme issues add their pages in one line (reads like the prototype `#/design-review` list)"
+      ],
+      "acceptance": [
+        "The \"Every page\" accessibility, responsive, motion and header checklist items are each covered by a spec",
+        "The specs run in CI on Chromium and a WebKit mobile profile",
+        "A failing axe rule fails the build",
+        "Routes are listed in one file"
+      ],
+      "docs": [
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "key": "M0-QAX-05",
+      "milestone": "M0",
+      "depends": [
+        "M0-QAX-01",
+        "M0-THM-08"
+      ],
+      "tests": [
+        "Spec: tests/e2e/perf-budget.spec.ts"
+      ],
+      "notes": "Docs open point: \"A numeric budget for page weight and script size is not written down yet\". The 2.5 s LCP target is an assumption (REQ-041). The real profile and directory pages arrive in M1.",
+      "title": "Add a Lighthouse budget for LCP and CLS on the local build",
+      "area": "qa",
+      "feature": "platform-quality",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-041",
+        "REQ-042"
+      ],
+      "summary": "A repeatable performance check on the shell with a numeric budget agreed from a measurement.",
+      "scope": [
+        "Lighthouse CI or Playwright tracing against the base templates with a throttled 4G mid-range Android profile",
+        "Record the measured baseline, then set the numeric budgets for LCP (target 2.5 s or better), CLS and script size; write the numbers in the PR for the owner",
+        "A non-blocking job at first, blocking once a budget is agreed"
+      ],
+      "acceptance": [
+        "A repeatable run produces LCP and CLS for the base templates",
+        "A numeric page-weight and script budget is proposed from the measurement",
+        "The job is wired into CI"
+      ],
+      "docs": [
+        "docs/features/platform-quality.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/motion-and-performance.md"
+      ],
+      "files": [
+        "site/tests/e2e/perf/**"
+      ]
+    },
+    {
+      "key": "M0-QAX-06",
+      "milestone": "M0",
+      "depends": [
+        "M0-INF-07"
+      ],
+      "tests": [
+        "Spec: tooling test with fixtures in scripts/__tests__"
+      ],
+      "notes": "docs/traceability.md is a qa-area file per CLAUDE.md conventions but lives in docs/ (shared): confirm the owner agrees. The existing plan generator `scripts/plan-issues.js` is separate.",
+      "title": "Create the REQ to issue to test traceability generator",
+      "area": "qa",
+      "feature": "platform-quality",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-056"
+      ],
+      "summary": "A script that lists every REQ with its issue, pull request and tests by reading test names, so verification can prove nothing was missed.",
+      "scope": [
+        "scripts or tests tooling that scans `test_REQ_<n>_` names and Playwright spec headers, the plan JSON files and merged PR bodies, and writes docs/traceability.md",
+        "Flags a non-withdrawn REQ with no test and a test citing a withdrawn or missing REQ",
+        "Runs in CI as a report (non-blocking until M5)"
+      ],
+      "acceptance": [
+        "The generated table shows each REQ with its issue keys and test names",
+        "A test that cites a withdrawn REQ is listed as a problem",
+        "The output is deterministic"
+      ],
+      "docs": [
+        "docs/build/testing-and-ci.md",
+        "docs/requirements.md"
+      ],
+      "files": [
+        "docs/traceability.md",
+        "scripts/traceability.*"
+      ]
+    }
+  ]
+}

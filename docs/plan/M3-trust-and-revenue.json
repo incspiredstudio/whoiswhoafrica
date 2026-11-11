@@ -1,0 +1,2929 @@
+{
+  "milestone": "M3",
+  "issues": [
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Migrations and pii.php are shared with other issues in the plugin area; add only new files or new entries.",
+      "key": "M3-CLM-01",
+      "title": "Add claim table, claimed profile fields and PII entries",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-251",
+        "REQ-252",
+        "REQ-253"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22",
+        "M1-DIR-01"
+      ],
+      "summary": "Creates the profile claim storage (not named wiw_claims, which is the import fact-claims table) and adds the claimed, claimed-at and manager-user fields to the profile state row.",
+      "scope": [
+        "Forward-only migration for wiw_profile_claims: reference (CLM-0001 style), profile, relationship, name, role, work email, phone, evidence, consent, status (new, approved, rejected), received, decide-by (received + 5 days), last reminder, decided by, decided at, reason",
+        "Additive migration on the profile state row: claimed, claimed_at, manager_user_id",
+        "Trust\\ClaimRepository with typed Claim value object; status transitions only through the Trust module",
+        "Register every personal-data column (name, email, phone, evidence) in whoiswho-core/config/pii.php"
+      ],
+      "acceptance": [
+        "Migration is additive and runs twice without error",
+        "A claim row stores every field of the claim form, a received date and a decide-by date exactly 5 days after receipt",
+        "Claim reference is unique and sequential (CLM-0001 style)",
+        "Name, work email, phone and evidence are in the PII catalogue and the catalogue test passes",
+        "The table name does not clash with the import fact-claims table"
+      ],
+      "tests": [
+        "test_REQ_251_claim_row_stores_every_form_field",
+        "test_REQ_256_decide_by_is_received_plus_five_days",
+        "test_REQ_252_claim_table_pii_columns_in_catalogue"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/plugins/trust.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Small additive edit to the PublicProfile read model (claimable flag) stays inside the plugin area. CONTRADICTION: REQ-226 says a claim or correction moves a pending profile to the top of the review queue, while the claims feature page says a claim on a pending profile is refused. This issue follows the feature page and the Trust plugin page (refuse). Needs confirmation.",
+      "key": "M3-CLM-02",
+      "title": "Build claim submission service and endpoint",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-251",
+        "REQ-226",
+        "REQ-122",
+        "REQ-081",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-CLM-01",
+        "M0-PLG-18",
+        "M0-EML-02",
+        "M3-PRV-01",
+        "M1-DIR-02"
+      ],
+      "summary": "Takes a claim from the public form without an account, validates it, refuses profiles still pending review, and tells the claimant and the claim reviewers.",
+      "scope": [
+        "POST /claim/{slug} handler with one validator: relationship (the person or an authorised representative), name, valid work email, evidence and consent required; role and phone optional",
+        "Refuse a claim on a Published (review pending) profile with a message to review first; an already claimed profile returns the Already claimed result",
+        "Bot challenge, per-IP and per-email throttle and time-based form token from the platform form-protection service",
+        "Send the claimant an acknowledgement email and notify every holder of wiw_review_claims; store consent with timestamp and policy version",
+        "Expose claimable and claimed-state flags on PublicProfile for templates (Claimed itself is never rendered publicly)"
+      ],
+      "acceptance": [
+        "The claim form rejects a submission with no relationship, name, valid email, evidence or consent",
+        "A submitted claim appears in the Claims screen data with every field entered and a decide-by date five days after receipt",
+        "The claimant receives an acknowledgement email",
+        "A claim on a pending-review profile is refused with a message to review first",
+        "Posting a claim for a claimed profile returns Already claimed and creates no claim",
+        "After the rate limit further claim submissions are refused with a try-later message",
+        "No account or login is needed to submit a claim"
+      ],
+      "tests": [
+        "test_REQ_251_claim_form_creates_claim_without_account",
+        "test_REQ_251_claim_rejected_without_required_fields",
+        "test_REQ_226_pending_profile_cannot_be_claimed",
+        "test_REQ_251_claimant_receives_acknowledgement",
+        "test_REQ_122_claim_form_is_rate_limited"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/plugins/trust.md",
+        "docs/plugins/directory.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/PublicProfile*.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The wording of the approval and rejection emails is not in the docs (copy question).",
+      "key": "M3-CLM-03",
+      "title": "Implement claim approve and reject decisions",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-252",
+        "REQ-150",
+        "REQ-184",
+        "REQ-183",
+        "REQ-188"
+      ],
+      "depends": [
+        "M3-CLM-01",
+        "M3-CLM-02",
+        "M0-PLG-06",
+        "M0-EML-02"
+      ],
+      "summary": "Decides a claim. Approval sets Claimed (a staff-only mark) and nothing else; rejection needs a reason and emails the claimant.",
+      "scope": [
+        "Trust\\ClaimDecision service: approve sets claimed and claimed date, records the deciding user, offers the assign step, emails the claimant",
+        "Reject requires a reason, stores it, emails the claimant, leaves the Claim button visible",
+        "Both decisions write an audit row through AuditLogger with actor and reason; neither can be triggered by payment or an arrangement",
+        "Approval sets no trust label and does not touch publication state; Claimed is never written by Commerce",
+        "PublicProfile, cards, share tags, feeds and sitemaps never expose Claimed"
+      ],
+      "acceptance": [
+        "Approving a claim sets the profile Claimed and does not set any trust label",
+        "After approval the public profile output has no Claim button and /claim/{slug} returns the Already claimed state",
+        "Rejecting a claim without a reason is refused; with a reason it emails the claimant and the profile stays claimable",
+        "The public site never shows the Claimed mark on any page, card, share preview or feed (plugin output level)",
+        "Approve and reject each write an audit row with actor and reason"
+      ],
+      "tests": [
+        "test_REQ_252_approval_sets_claimed_and_hides_public_claim_button",
+        "test_REQ_252_rejection_requires_reason",
+        "test_REQ_252_rejection_emails_claimant_and_keeps_button",
+        "test_REQ_150_claimed_badge_not_in_public_output",
+        "test_REQ_184_payment_never_sets_claimed",
+        "test_REQ_188_claim_decision_writes_audit_row"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/plugins/trust.md",
+        "docs/concepts/trust-and-labels.md",
+        "docs/build/roles-in-code.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype route #/admin/claims (A61).",
+      "key": "M3-CLM-04",
+      "title": "Build the Claims admin screen",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-252",
+        "REQ-256"
+      ],
+      "depends": [
+        "M3-CLM-03",
+        "M0-PLG-04"
+      ],
+      "summary": "Shows reviewers one card per claim with everything the claimant entered, the decide-by date and the reminder state, with approve and reject.",
+      "scope": [
+        "Claims screen under wiw_review_claims (deny by default, 403 otherwise, nonce on actions)",
+        "One card per claim: relationship, name, role, work email, phone, evidence, consent, status, received, decide-by, overdue marker, last reminder",
+        "Approve and Reject (reason required) actions calling ClaimDecision; filter by status"
+      ],
+      "acceptance": [
+        "The Claims screen shows every field the claimant entered, the received date and the decide-by date",
+        "An overdue claim is marked overdue and shows the reminder status",
+        "A user without wiw_review_claims gets 403 and no menu entry",
+        "Rejecting without a reason shows an error and changes nothing",
+        "Editor and Administrator can open the screen by default; Reviewer cannot unless granted"
+      ],
+      "tests": [
+        "test_REQ_252_claims_screen_shows_every_form_field",
+        "test_REQ_256_claims_screen_marks_overdue_claim",
+        "test_REQ_252_claims_screen_requires_wiw_review_claims"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/plugins/trust.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The prototype lets staff assign any existing staff user.",
+      "key": "M3-CLM-05",
+      "title": "Add Claim and profile manager card, badge and assign control",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-252",
+        "REQ-253",
+        "REQ-150"
+      ],
+      "depends": [
+        "M3-CLM-03",
+        "M1-DIR-03",
+        "M0-PLG-06"
+      ],
+      "summary": "Shows claim status on the profile screen, a staff-only checkmark badge in the Profiles list, and lets a claim reviewer assign one ordinary staff user to a claimed profile.",
+      "scope": [
+        "Claim and profile manager card on the profile screen (claim status and date; assign control only for wiw_review_claims and only when claimed)",
+        "Checkmark badge, like a verified tick, on claimed profiles in the Profiles list and the profile screen, staff only",
+        "Assign service sets manager_user_id (one user per profile), audited; unassign supported",
+        "Assignee picker lists ordinary staff users only (no public accounts)"
+      ],
+      "acceptance": [
+        "Approving a claim shows the checkmark to staff in the Profiles list and the profile screen",
+        "The assign control is visible only to holders of wiw_review_claims and only for a claimed profile",
+        "Assigning or changing the assigned user writes an audit row with actor",
+        "No public template renders the badge or the assigned user"
+      ],
+      "tests": [
+        "test_REQ_252_claimed_profile_shows_checkmark_in_staff_list",
+        "test_REQ_253_assign_sets_manager_user_and_audits",
+        "test_REQ_150_claimed_badge_not_in_public_output"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/plugins/trust.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Admin/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The dashboard shell is assumed to exist (M0) and accept tiles by capability. DOCS GAP: the boundaries of due soon (proposed: from day 3 to the decide-by date) are not defined.",
+      "key": "M3-CLM-06",
+      "title": "Add claim reminder job and dashboard claim counts",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-256",
+        "REQ-075"
+      ],
+      "depends": [
+        "M3-CLM-01",
+        "M0-PLG-15",
+        "M0-EML-02",
+        "M0-PLG-14"
+      ],
+      "summary": "Emails claim reviewers before and after the five-day deadline and shows open, due-soon and overdue counts on the dashboard.",
+      "scope": [
+        "Scheduled reminder job: one email on day 3, one on day 4, then one a day while overdue, to every holder of wiw_review_claims; records the last reminder on the claim",
+        "Deciding a claim stops reminders; every reminder is written to the email log",
+        "Dashboard tiles: open, due soon and overdue claims, for holders of wiw_review_claims",
+        "Job is idempotent (re-running within a day sends nothing twice) and reusable for corrections, removals and data requests"
+      ],
+      "acceptance": [
+        "Reminder emails go out on day 3 and day 4 after receipt to every holder of wiw_review_claims, then daily while overdue, and stop once the claim is decided",
+        "Each reminder appears in the email log",
+        "The dashboard shows counts for open, due soon and overdue claims",
+        "A user granted wiw_review_claims receives reminders and a user who loses it stops receiving them"
+      ],
+      "tests": [
+        "test_REQ_256_reminders_sent_day_3_day_4_and_daily_when_overdue",
+        "test_REQ_256_decision_stops_reminders",
+        "test_REQ_256_reminder_job_is_idempotent_within_a_day",
+        "test_REQ_256_dashboard_counts_open_due_soon_overdue",
+        "test_REQ_075_reminders_written_to_email_log"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/plugins/trust.md",
+        "docs/plugins/platform.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: the limited role has no named capability in the requirements capability list. Proposed wiw_edit_assigned_profiles must be added to that list by the shared-docs owner (CLAUDE.md rule). Q102 is open.",
+      "key": "M3-CLM-07",
+      "title": "Enforce assigned-profiles-only editing and field limits",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "L",
+      "reqs": [
+        "REQ-253",
+        "REQ-261",
+        "REQ-244"
+      ],
+      "depends": [
+        "M3-CLM-05",
+        "M0-PLG-04",
+        "M1-DIR-01"
+      ],
+      "summary": "Makes sure an assigned user can open and edit only the profiles assigned to them, and only the descriptive fields, links, contact details and photograph.",
+      "scope": [
+        "map_meta_cap rule on the profile: edit, read and delete are allowed to an assigned user only where manager_user_id matches; other profiles answer 403",
+        "Field allowlist for assigned users: descriptive text, links, contact details, photograph; status, slug, Claimed, arrangements and labels are never writable by them",
+        "Capability for the limited role (proposal: wiw_edit_assigned_profiles plus read and upload_files) added to the capability list and its tests; no fourth default role ships",
+        "Fixture role Profile manager used in tests only; the Administrator creates it in production"
+      ],
+      "acceptance": [
+        "An assigned user can open and edit only their assigned profiles; editing another profile is refused with 403",
+        "An assigned user cannot change status, slug, Claimed, arrangements or labels",
+        "No fourth default role is registered by the plugin",
+        "The menu for the limited role contains only My profiles and what its capabilities allow"
+      ],
+      "tests": [
+        "test_REQ_253_assigned_user_can_edit_only_assigned_profiles",
+        "test_REQ_253_assigned_user_gets_403_on_other_profile",
+        "test_REQ_261_assigned_user_cannot_change_status_slug_claimed_or_labels",
+        "test_REQ_244_no_fourth_default_role_ships"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/roles-in-code.md",
+        "docs/plugins/trust.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Capabilities/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The pending revision mechanism is proposed in the docs. Storage (custom table or revision post with a pending status) is not chosen.",
+      "key": "M3-CLM-08",
+      "title": "Hold edits to claimed profiles as pending revisions",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "L",
+      "reqs": [
+        "REQ-253",
+        "REQ-261",
+        "REQ-226"
+      ],
+      "depends": [
+        "M3-CLM-07",
+        "M1-REV-01",
+        "M1-REV-03"
+      ],
+      "summary": "Every change an assigned user makes to a claimed profile is saved as a pending revision, the live profile is untouched, and the previous version is kept.",
+      "scope": [
+        "PendingRevision store: proposed field values, author, time, status (pending, approved, returned), return note",
+        "A write by an assigned user on a claimed profile is stored as a pending revision instead of updating the live profile",
+        "Approve publishes through the normal profile version path (previous version kept); return sets status with a note",
+        "Approver must hold wiw_review_records and must not be the author",
+        "A correction applied by staff on a claimed profile is also held for approval (REQ-253), with the hint on the correction screen",
+        "Publication state is still written only by Review\\StateMachine"
+      ],
+      "acceptance": [
+        "An edit by the assigned user is not public until a Reviewer or Administrator approves it",
+        "The approver cannot be the author",
+        "The previous version of the profile is kept after approval",
+        "Approve and return each write an audit row with actor and reason",
+        "Saving as the assigned user leaves the live public profile unchanged"
+      ],
+      "tests": [
+        "test_REQ_253_assigned_user_edit_is_pending_and_not_public",
+        "test_REQ_253_author_cannot_approve_own_revision",
+        "test_REQ_253_approval_keeps_previous_version",
+        "test_REQ_253_return_with_note_leaves_live_profile_unchanged",
+        "test_REQ_188_pending_revision_decisions_audited"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/plugins/trust.md",
+        "docs/plugins/review.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**",
+        "site/wp-content/plugins/whoiswho-core/src/Review/PendingRevision*.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The prototype only shows a hint that edits need approval.",
+      "key": "M3-CLM-09",
+      "title": "Show pending claimed-profile edits in the review queue",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-253",
+        "REQ-261"
+      ],
+      "depends": [
+        "M3-CLM-08",
+        "M1-REV-02"
+      ],
+      "summary": "Adds pending edits to claimed profiles to the review queue, with a field diff, approve and return-with-note, and emails the editor with the outcome.",
+      "scope": [
+        "Review queue item type Pending edit to a claimed profile showing a before and after diff",
+        "Approve and Return with a note; both emailed to the assigned user and audited",
+        "Reviewer and Administrator see it by default (wiw_review_records); the author sees it as Pending in My profiles"
+      ],
+      "acceptance": [
+        "A pending edit appears in the review queue with what changed",
+        "Approving or returning emails the assigned user the outcome",
+        "A returned edit shows the note to the author in My profiles",
+        "Only a holder of wiw_review_records other than the author can act on the item"
+      ],
+      "tests": [
+        "test_REQ_253_pending_edit_listed_in_review_queue_with_diff",
+        "test_REQ_261_assigned_user_emailed_on_approval_or_return",
+        "test_REQ_253_review_queue_hides_actions_from_author"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/review-and-publishing.md",
+        "docs/plugins/review.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: how the account reaches the claimant and whether one user may hold several profiles is open (Q102). The prototype has no My profiles screen. Build with a list that supports several profiles.",
+      "key": "M3-CLM-10",
+      "title": "Build the My profiles screen for assigned users",
+      "area": "plugin",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-261",
+        "REQ-253",
+        "REQ-047"
+      ],
+      "depends": [
+        "M3-CLM-07",
+        "M3-CLM-08",
+        "M0-PLG-26"
+      ],
+      "summary": "Gives the claimant a wp-admin My profiles list and edit form limited to their assigned profiles, with two-factor sign-in.",
+      "scope": [
+        "My profiles admin screen listing only assigned profiles with status Published or Pending review",
+        "Edit form for descriptive text, links, contact details and the photograph; Save submits for review and the live profile does not change",
+        "All other admin menus hidden for the limited role; direct URLs return 403",
+        "Two-factor required for this role (uses the M0 two-factor setup)"
+      ],
+      "acceptance": [
+        "The assigned user sees a My profiles list with only their assigned profiles and each shows Published or Pending",
+        "They can edit descriptive text, links, contact details and the photograph and cannot change status, slug, Claimed, arrangements or labels",
+        "Saving submits the change for review and the live profile does not change",
+        "Signing in as this role requires two-factor",
+        "Direct access to other admin screens answers 403"
+      ],
+      "tests": [
+        "test_REQ_261_my_profiles_lists_only_assigned_profiles",
+        "test_REQ_261_save_submits_for_review_and_live_profile_unchanged",
+        "test_REQ_047_limited_role_requires_two_factor",
+        "test_REQ_261_limited_role_cannot_open_other_admin_screens"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/plugins/trust.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Trust/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype route #/claim/:slug (V57), #/done?kind=claim (V41).",
+      "key": "M3-CLM-11",
+      "title": "Build claim form, done and Already claimed pages",
+      "area": "theme",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-251",
+        "REQ-252",
+        "REQ-058",
+        "REQ-156"
+      ],
+      "depends": [
+        "M3-CLM-02",
+        "M0-THM-12"
+      ],
+      "summary": "The public /claim/:slug form page, its acknowledgement and the Already claimed page.",
+      "scope": [
+        "claim template at /claim/:slug using the shared form field, bot check and privacy notice parts; fields as in the Trust plugin page",
+        "Done page kind=claim with a reference and a way back; Already claimed page with a link to suggest a correction; unknown slug gives 404",
+        "Validation errors, rate-limit message and the review-first refusal message from the plugin"
+      ],
+      "acceptance": [
+        "The form shows relationship, name, role, work email, phone (optional), how we can check it and a consent tick with a privacy notice link",
+        "A claimed profile shows Already claimed with a link to suggest a correction at /claim/:slug",
+        "A pending-review profile shows the review-first message instead of the form",
+        "The page works without JavaScript"
+      ],
+      "tests": [
+        "claim-form.spec.ts",
+        "test_REQ_251_claim_template_has_required_fields",
+        "test_REQ_252_already_claimed_page_links_to_correction"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/theme/templates.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/components.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/claim*",
+        "site/wp-content/themes/whoiswho/parts/claim*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Edits the profile template written in M1; keep the change to the rail part.",
+      "key": "M3-CLM-12",
+      "title": "Show or hide the Claim button in the profile rail",
+      "area": "theme",
+      "feature": "claims",
+      "size": "S",
+      "reqs": [
+        "REQ-156",
+        "REQ-252",
+        "REQ-226"
+      ],
+      "depends": [
+        "M3-CLM-11",
+        "M3-CLM-02",
+        "M1-DIR-04"
+      ],
+      "summary": "Renders Claim this profile in the right rail only when the read model says the profile can be claimed.",
+      "scope": [
+        "Claim button part in the profile right rail driven only by the PublicProfile claimable flag",
+        "No Claimed wording, badge or class in any public template, card or share markup",
+        "Record the build decision: the button is hidden for pending-review profiles (the templates page leaves this open; REQ-226 refuses the claim)"
+      ],
+      "acceptance": [
+        "A claimed profile page has no Claim this profile button",
+        "A pending-review profile page does not offer the claim form",
+        "Every other published reviewed profile shows the button"
+      ],
+      "tests": [
+        "claim-button.spec.ts",
+        "test_REQ_252_claimed_profile_has_no_claim_button"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/theme/templates.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/profile-rail*",
+        "site/wp-content/themes/whoiswho/templates/profile*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-CLM-13",
+      "title": "Test claims end to end and Claimed never public",
+      "area": "qa",
+      "feature": "claims",
+      "size": "M",
+      "reqs": [
+        "REQ-150",
+        "REQ-252",
+        "REQ-253",
+        "REQ-256"
+      ],
+      "depends": [
+        "M3-CLM-04",
+        "M3-CLM-06",
+        "M3-CLM-09",
+        "M3-CLM-10",
+        "M3-CLM-11",
+        "M3-CLM-12"
+      ],
+      "summary": "Playwright and PHPUnit visibility tests across the claim journey and a site-wide check that the Claimed mark never leaks.",
+      "scope": [
+        "E2E: submit claim, staff approve, button gone, Already claimed page, My profiles edit, review approval by another user",
+        "Visibility test crawling profile pages, cards, share tags, sitemap, feeds and search for any Claimed marker as visitor",
+        "Role matrix rows for wiw_review_claims and the limited role (200 or 403)",
+        "Accessibility checks on the claim form"
+      ],
+      "acceptance": [
+        "The public site never shows the Claimed mark on any page, card, share preview or feed",
+        "The full claim journey passes for a claimant, a claim reviewer and a second approver",
+        "The role matrix confirms Reviewer 403 and Editor 200 on Claims by default",
+        "Claim form passes the accessibility scan"
+      ],
+      "tests": [
+        "claims-journey.spec.ts",
+        "test_REQ_150_claimed_marker_absent_from_all_public_surfaces",
+        "test_REQ_253_role_matrix_claims_and_limited_role"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/build/testing-and-ci.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/tests/e2e/claims/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "S",
+      "notes": "docs/runbook.md is in the infra area.",
+      "key": "M3-CLM-14",
+      "title": "Document the Profile manager role recipe in the runbook",
+      "area": "infra",
+      "feature": "claims",
+      "size": "S",
+      "reqs": [
+        "REQ-253",
+        "REQ-244"
+      ],
+      "depends": [
+        "M3-CLM-07"
+      ],
+      "summary": "Writes the step-by-step Administrator recipe for creating the limited Profile manager role and the claimant user, since no fourth role ships.",
+      "scope": [
+        "Runbook section: create the role by copying a role in the role-editor plugin, which capabilities to tick, assign the profile, enforce two-factor",
+        "Checklist for the claim reviewer after approval",
+        "Note the audit rows each step produces"
+      ],
+      "acceptance": [
+        "The runbook lists each capability the limited role needs and the ones it must not have",
+        "Following the recipe on a clean site produces a user who sees only My profiles"
+      ],
+      "tests": [
+        "test_REQ_253_runbook_recipe_role_matches_capability_list"
+      ],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "docs/runbook.md"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "S",
+      "notes": "Q102 is open. The evidence standard is described as open on the claims pages.",
+      "key": "M3-CLM-15",
+      "title": "Decide claim evidence standard and claimant account delivery",
+      "area": "human",
+      "feature": "claims",
+      "size": "S",
+      "reqs": [],
+      "depends": [],
+      "summary": "A person decides what evidence is enough to approve a claim, who approves it, and how a claimant receives their wp-admin account (Q102).",
+      "scope": [
+        "Confirm or change the suggested evidence default: official website page naming the claimant, a registration number or a signed letter, approved by an Editor, two people for a high-profile organisation",
+        "Confirm how the account is delivered and whether one user may hold several profiles",
+        "Record answers in docs/questions.md via the shared-docs owner"
+      ],
+      "acceptance": [
+        "Evidence standard and approver rule are written down",
+        "Account delivery process for claimants is written down"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/claims.md",
+        "docs/plugins/trust.md",
+        "docs/questions.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Assumes M1 builds the wiw_support_items table with typed items (corrections, removals, reports). If it does not, this issue creates it and M1 should depend on it.",
+      "key": "M3-ENQ-01",
+      "title": "Create the Enquiry item type and intake service",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-177",
+        "REQ-039",
+        "REQ-018",
+        "REQ-205"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M0-EML-02",
+        "M0-PLG-22"
+      ],
+      "summary": "Adds the Enquiry item type to the support items so Get listed, contact and profile enquiries all become Enquiries items with a reference such as ENQ-0004.",
+      "scope": [
+        "Enquiry type on wiw_support_items: name, organisation, interest, contact, message, status (new, read, closed), owner, internal notes, time, source (get-listed, contact, profile), profile id for profile enquiries",
+        "Reference generator ENQ-0001 style, stable external id and change timestamp (REQ-205)",
+        "Acknowledgement email with the reference and a staff notification to holders of wiw_support_inbox",
+        "Personal-data columns registered in the PII catalogue",
+        "No due date on enquiries"
+      ],
+      "acceptance": [
+        "Creating an Enquiry stores the entered fields, a reference and a created time",
+        "An acknowledgement email with the reference is sent to the sender",
+        "Enquiry has no due date and no price, package or tier field",
+        "Contact data columns are in the PII catalogue"
+      ],
+      "tests": [
+        "test_REQ_177_enquiry_item_stores_fields_and_reference",
+        "test_REQ_177_enquiry_sends_acknowledgement",
+        "test_REQ_205_enquiry_has_external_id_and_change_timestamp",
+        "test_REQ_177_enquiry_has_no_price_or_package_field"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The Commerce plugin page puts POST /subscribe in Commerce, while the Enquiries screen sits in Compliance; routes follow the Commerce page.",
+      "key": "M3-ENQ-02",
+      "title": "Add Get listed and contact form endpoints",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-177",
+        "REQ-039",
+        "REQ-081",
+        "REQ-122",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-ENQ-01",
+        "M0-PLG-18",
+        "M3-PRV-01"
+      ],
+      "summary": "Handles POST /subscribe and POST /contact with validation, bot protection and rate limits, creating Enquiries items.",
+      "scope": [
+        "POST /subscribe validator: name, email or phone, consent required; interest from the fixed list (listing a profile, sponsored story, media or editorial work, awards sponsorship, not sure)",
+        "POST /contact validator: name, email, message and bot challenge",
+        "Per-IP and per-email throttle with a try-later message; consent stored with policy version",
+        "Return the reference to the done page; no prices, packages or checkout in any output"
+      ],
+      "acceptance": [
+        "Submitting the Get listed form creates an Enquiries item of type Enquiry with the entered fields and a reference, and sends an acknowledgement",
+        "The Get listed form refuses a submission without name, contact or consent",
+        "Submitting the contact form creates a general Enquiries item and shows Message sent",
+        "After the rate limit, further submissions from one IP or email are refused with a try-later message"
+      ],
+      "tests": [
+        "test_REQ_177_get_listed_creates_enquiry_with_reference",
+        "test_REQ_177_get_listed_refuses_missing_name_contact_or_consent",
+        "test_REQ_039_contact_creates_general_enquiry",
+        "test_REQ_122_forms_refuse_after_rate_limit",
+        "test_REQ_081_forms_require_bot_challenge"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/plugins/commerce.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/get-listed-and-contact.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The Contact and enquiries card with the off switch is assumed built in M1 (profile screen). If missing, this issue adds only the read-model flag.",
+      "key": "M3-ENQ-03",
+      "title": "Relay enquiries to a profile owner without exposing contacts",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-018",
+        "REQ-122",
+        "REQ-081"
+      ],
+      "depends": [
+        "M3-ENQ-01",
+        "M0-PLG-18",
+        "M1-DIR-02"
+      ],
+      "summary": "A visitor can send an enquiry about a profile; staff receive it and the owner is never exposed.",
+      "scope": [
+        "POST handler for the profile enquiry creating an Enquiry item linked to the profile",
+        "Never render or return the owner email or phone in the page, response or confirmation",
+        "Per-IP rate limit with a try-later message; bot challenge",
+        "Respect the per-profile enquiries-off switch (set by staff on the owner request, logged) through PublicProfile; when off the handler refuses"
+      ],
+      "acceptance": [
+        "A profile enquiry reaches staff and never exposes the owner email or phone in the page or the confirmation",
+        "After several enquiries in a short time the visitor is asked to try later",
+        "When enquiries are switched off for a profile the request is refused and the switch change is audited"
+      ],
+      "tests": [
+        "test_REQ_018_profile_enquiry_never_exposes_owner_contact",
+        "test_REQ_018_profile_enquiry_rate_limited",
+        "test_REQ_018_enquiries_off_switch_refuses_and_is_audited"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/PublicProfile*.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype route #/admin/inbox (A12). DOCS GAP: wiw_receive_enquiries is listed as an Administrator-grantable capability but what it gates (for example who receives notification emails) is not stated.",
+      "key": "M3-ENQ-04",
+      "title": "Build the Enquiries admin screen",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-089",
+        "REQ-177",
+        "REQ-187",
+        "REQ-244"
+      ],
+      "depends": [
+        "M3-ENQ-01",
+        "M0-PLG-04"
+      ],
+      "summary": "The staff list where Editors work enquiries: read, owner, status, notes and age.",
+      "scope": [
+        "Enquiries screen under wiw_support_inbox (Editor, Administrator by default) listing reference, name, organisation, interest, source, age, status, owner",
+        "Open an item: full detail, mark read, set owner and status, internal notes (never public), audited changes",
+        "Filter by status and source"
+      ],
+      "acceptance": [
+        "An Enquiry item can be assigned an owner and status",
+        "Notes on an enquiry are internal and never public",
+        "A user without wiw_support_inbox gets 403",
+        "The list shows each item with its age and no due date"
+      ],
+      "tests": [
+        "test_REQ_089_enquiries_screen_lists_items_with_age",
+        "test_REQ_177_enquiry_owner_and_status_can_be_set",
+        "test_REQ_089_enquiries_screen_requires_wiw_support_inbox",
+        "test_REQ_187_enquiry_notes_not_public"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/admin/support-and-requests.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Admin/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-ENQ-05",
+      "title": "Add customers table and customer service",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-205",
+        "REQ-112",
+        "REQ-187"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22",
+        "M0-PLG-06"
+      ],
+      "summary": "Creates the customers record used by enquiries and sponsored story deals, with stable external IDs for a later CaromHQ link.",
+      "scope": [
+        "Migration for wiw_customers: external id (stable), name, segment, contact (personal data), notes, created and changed timestamps",
+        "Commerce\\CustomerRepository and service with a create-from-enquiry method",
+        "Register contact columns in the PII catalogue; internal notes on customers (never public)",
+        "Audit customer creation and edit without personal data"
+      ],
+      "acceptance": [
+        "A customer has a stable external ID and change timestamps",
+        "Customer contact fields are in the PII catalogue",
+        "Creating or editing a customer writes an audit row without personal data"
+      ],
+      "tests": [
+        "test_REQ_205_customer_has_stable_external_id_and_change_timestamps",
+        "test_REQ_205_customer_contact_in_pii_catalogue",
+        "test_REQ_188_customer_changes_audited_without_pii"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/plugins/commerce.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "CONTRADICTION: the Get listed feature page says an Editor can create a customer from an enquiry, while Commercial and sponsors, the Commerce plugin page and the Get listed page doc make Customers a wiw_manage_register (Administrator, fixed) screen. Built as wiw_manage_register; needs a decision (an Editor action limited to creating a customer record without money fields would be a third option). Customers is illustration only in the prototype (A14, #/admin/customers).",
+      "key": "M3-ENQ-06",
+      "title": "Build the Customers screen and create-from-enquiry action",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-205",
+        "REQ-177",
+        "REQ-187"
+      ],
+      "depends": [
+        "M3-ENQ-04",
+        "M3-ENQ-05"
+      ],
+      "summary": "Staff list of customers with the create customer action from an Enquiry.",
+      "scope": [
+        "Customers screen: list, add, edit, notes, search; shows linked enquiries",
+        "Create customer from an Enquiry item (copies name, organisation and contact) and link them",
+        "Issue invitation or consent link action wired in M3-ENQ-08"
+      ],
+      "acceptance": [
+        "An Enquiry item can be used to create a customer and the customer links back to it",
+        "Customers list shows external ID, name and segment",
+        "Users without the capability get 403"
+      ],
+      "tests": [
+        "test_REQ_205_customer_created_from_enquiry_links_back",
+        "test_REQ_177_customers_screen_requires_capability"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/plugins/commerce.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/Admin/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The gate calls Review\\StateMachine through its API (only StateMachine writes state). REQ-023 (complimentary listing excluded from paid counts) is WITHDRAWN and not cited, although the feature pages and wireframe inventory still mention it.",
+      "key": "M3-ENQ-07",
+      "title": "Add complimentary listing consent records and publish gate",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-175",
+        "REQ-233",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-PRV-01",
+        "M0-PLG-17",
+        "M1-REV-01"
+      ],
+      "summary": "A complimentary listing cannot be published without a stored consent from the customer given on a single-use link page.",
+      "scope": [
+        "Consent purpose complimentary_listing in the consent service, stored against the customer or profile with timestamp and policy version",
+        "Consent link use: issue, redeem once, expire, revoke, stored hashed, no personal data in the URL (platform signed link service)",
+        "Publication gate: the state machine refuses to publish a complimentary-flagged customer profile without a consent record",
+        "A person who declines is recorded and the profile stays unpublished"
+      ],
+      "acceptance": [
+        "A complimentary listing cannot be published without a stored consent record",
+        "A consent link works once, expires, is bound to one purpose and one record and carries no personal data in the URL",
+        "A second use of a link shows Link expired or already used",
+        "Consent is stored with timestamp and policy version"
+      ],
+      "tests": [
+        "test_REQ_175_complimentary_listing_cannot_publish_without_consent",
+        "test_REQ_233_consent_link_is_single_use_and_bound_to_record",
+        "test_REQ_175_consent_stored_with_timestamp_and_policy_version"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/plugins/compliance.md",
+        "docs/plugins/review.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype O23, O06, O07, O09. The page doc says images are checked for size, type and scan; what the scan is (malware or content) is not defined. Staff may instead enter the profile for the customer (REQ-085); that is an M1 profile-editing path.",
+      "key": "M3-ENQ-08",
+      "title": "Add invitation link issuing and customer intake backend",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "L",
+      "reqs": [
+        "REQ-013",
+        "REQ-014",
+        "REQ-233",
+        "REQ-141",
+        "REQ-122"
+      ],
+      "depends": [
+        "M3-ENQ-06",
+        "M3-ENQ-07",
+        "M3-PRV-02",
+        "M0-PLG-17",
+        "M1-REV-02"
+      ],
+      "summary": "Lets an Administrator issue an invitation link and lets the customer fill in their own profile through it; the submission waits for review.",
+      "scope": [
+        "Issue invitation or consent link action on Customers (Administrator), emailed link, audited",
+        "Handlers for /invite/:token: draft held against the link, one validator per form, image type and size limits and file checks, expires, one submission",
+        "Free-text scan via the shared scanner blocks phone, email, age and sensitive words in profile free text",
+        "Submit creates a profile in the review queue; nothing is public until a reviewer approves it",
+        "Expired or used link returns the expired result with a request-a-new-link action"
+      ],
+      "acceptance": [
+        "An invitation link opens the profile form once; a second use shows Link expired or already used",
+        "The profile form blocks a submission containing a phone number, email, age or sensitive word in free text",
+        "A submitted customer profile is not public until a reviewer approves it",
+        "Uploaded images beyond size or type limits are refused",
+        "Issuing a link writes an audit row without personal data"
+      ],
+      "tests": [
+        "test_REQ_233_invitation_link_second_use_shows_expired",
+        "test_REQ_141_intake_blocks_contact_details_age_and_sensitive_words",
+        "test_REQ_014_customer_profile_not_public_until_approved",
+        "test_REQ_013_intake_enforces_image_type_and_size",
+        "test_REQ_013_intake_saves_draft_against_link"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/plugins/compliance.md",
+        "docs/plugins/review.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "S",
+      "notes": "REQ-077 carries priority Q16 (open question) in the requirements; kept as should-have.",
+      "key": "M3-ENQ-09",
+      "title": "Export customers and enquiries to CSV",
+      "area": "plugin",
+      "feature": "get-listed-enquiries",
+      "size": "S",
+      "reqs": [
+        "REQ-077",
+        "REQ-205",
+        "REQ-069",
+        "REQ-087"
+      ],
+      "depends": [
+        "M3-ENQ-04",
+        "M3-ENQ-06"
+      ],
+      "summary": "Administrator-only CSV export of customers and enquiries with external IDs so a CaromHQ link can be added later.",
+      "scope": [
+        "List-table export action on Customers and Enquiries needing wiw_export_data",
+        "Columns include external id and change timestamp; each export is audited",
+        "CSV import left for later and noted in the runbook"
+      ],
+      "acceptance": [
+        "Export needs wiw_export_data and an Editor or Reviewer cannot run it",
+        "Each export writes an audit row",
+        "Exported rows carry the external ID and change timestamp"
+      ],
+      "tests": [
+        "test_REQ_077_customer_export_requires_capability_and_is_logged",
+        "test_REQ_205_export_includes_external_id_and_change_timestamp"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/plugins/commerce.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype route #/subscribe (V24).",
+      "key": "M3-ENQ-10",
+      "title": "Build the Get listed page",
+      "area": "theme",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-177",
+        "REQ-120",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-ENQ-02",
+        "M0-THM-12"
+      ],
+      "summary": "The /subscribe enquiry page: explanatory side text and the form, with the done page and reference.",
+      "scope": [
+        "get-listed template: side text (create or improve a listing, sponsored stories always labelled, media and editorial work, awards sponsorship) and the form with consent tick and privacy notice",
+        "Done page kind=enquiry: Enquiry received with a reference such as ENQ-0004 and the line that nothing is charged on this site",
+        "No price, package, tier, cart or checkout wording anywhere"
+      ],
+      "acceptance": [
+        "No page on the site shows a price, package or checkout",
+        "The form shows name, organisation, interested in, email or phone, anything else and a consent tick",
+        "Errors show for missing name, contact or consent",
+        "The done page shows the reference and that terms are agreed offline"
+      ],
+      "tests": [
+        "get-listed.spec.ts",
+        "test_REQ_120_get_listed_page_has_no_price_or_package_text"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/get-listed*",
+        "site/wp-content/themes/whoiswho-child/templates/get-listed*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype route #/contact (V26, V27).",
+      "key": "M3-ENQ-11",
+      "title": "Build the Contact page",
+      "area": "theme",
+      "feature": "get-listed-enquiries",
+      "size": "S",
+      "reqs": [
+        "REQ-039",
+        "REQ-081",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-ENQ-02",
+        "M0-THM-12"
+      ],
+      "summary": "The /contact page with the short form and side links to common alternatives.",
+      "scope": [
+        "contact template: name, email, message, bot challenge, privacy notice",
+        "Side panel linking to correct or remove a profile, Get listed, complaints and takedown, and your data rights",
+        "Message sent done state"
+      ],
+      "acceptance": [
+        "The page says a person reads every message and that the quickest way to change a profile is the correction form",
+        "Sending a message shows Message sent",
+        "The side panel shows the four alternative links"
+      ],
+      "tests": [
+        "contact.spec.ts"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/contact*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype V43 and V47.",
+      "key": "M3-ENQ-12",
+      "title": "Build the profile enquiry form and off state",
+      "area": "theme",
+      "feature": "get-listed-enquiries",
+      "size": "S",
+      "reqs": [
+        "REQ-018",
+        "REQ-081"
+      ],
+      "depends": [
+        "M3-ENQ-03",
+        "M1-DIR-04"
+      ],
+      "summary": "The Send an enquiry form on each profile, with the try-later and switched-off states.",
+      "scope": [
+        "Enquiry form part in the profile (relay message, never shows owner contact)",
+        "Switched-off state replaces the form with a plain statement",
+        "Rate-limit try-later message and a confirmation without any owner contact"
+      ],
+      "acceptance": [
+        "The confirmation never shows the owner email or phone",
+        "When enquiries are off the page says so instead of showing the button",
+        "After several enquiries the visitor sees a try-later message"
+      ],
+      "tests": [
+        "profile-enquiry.spec.ts",
+        "test_REQ_018_profile_enquiry_markup_has_no_owner_contact"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/profile-enquiry*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype O23, O22, O06, O09, O24. The expired page may already exist from M1 (confirm and expired templates); reuse it.",
+      "key": "M3-ENQ-13",
+      "title": "Build invitation and consent pages",
+      "area": "theme",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-013",
+        "REQ-175",
+        "REQ-233",
+        "REQ-141"
+      ],
+      "depends": [
+        "M3-ENQ-08",
+        "M3-ENQ-07",
+        "M0-THM-12"
+      ],
+      "summary": "The /invite/:token profile form and /consent/:token consent page, with the expired-or-used page.",
+      "scope": [
+        "invite template: profile form with a draft held against the link, upload feedback on type and size, free-text validation messages, submit confirmation",
+        "consent template: explains the complimentary listing and records agree or decline",
+        "Expired or already used page: Link expired or already used with a button to ask the team for a new link"
+      ],
+      "acceptance": [
+        "A second use of an invitation link shows Link expired or already used",
+        "The form shows field errors when free text contains a phone, email, age or sensitive word",
+        "The consent page records consent and says the profile is not public until a reviewer approves"
+      ],
+      "tests": [
+        "invite-flow.spec.ts",
+        "consent-flow.spec.ts"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/pages/public/get-listed-and-contact.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/invite*",
+        "site/wp-content/themes/whoiswho/templates/consent*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-ENQ-14",
+      "title": "Test Get listed, contact and enquiry flows",
+      "area": "qa",
+      "feature": "get-listed-enquiries",
+      "size": "M",
+      "reqs": [
+        "REQ-177",
+        "REQ-018",
+        "REQ-233",
+        "REQ-120"
+      ],
+      "depends": [
+        "M3-ENQ-04",
+        "M3-ENQ-10",
+        "M3-ENQ-11",
+        "M3-ENQ-12",
+        "M3-ENQ-13"
+      ],
+      "summary": "End-to-end and visibility tests across the enquiry forms and invitation links.",
+      "scope": [
+        "E2E for Get listed, contact, profile enquiry, invitation link, consent link",
+        "Crawl test that no page contains price, package, cart or checkout",
+        "Test that owner email and phone never appear in any enquiry response",
+        "Rate-limit and bot challenge tests"
+      ],
+      "acceptance": [
+        "No page on the site shows a price, package or checkout",
+        "A profile enquiry never exposes the owner email or phone",
+        "Submissions are refused after the rate limit with a try-later message",
+        "An invitation link second use shows expired"
+      ],
+      "tests": [
+        "enquiries.spec.ts",
+        "test_REQ_120_no_price_package_or_checkout_on_any_public_page",
+        "test_REQ_018_owner_contact_absent_from_enquiry_responses"
+      ],
+      "docs": [
+        "docs/features/get-listed-enquiries.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/enquiries/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Deals link a story and a customer, not a profile. See M3-COM-03 on REQ-226.",
+      "key": "M3-COM-01",
+      "title": "Create deal and placement tables",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-021",
+        "REQ-112",
+        "REQ-179",
+        "REQ-205"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22",
+        "M3-ENQ-05"
+      ],
+      "summary": "Storage for sponsored story deals (one type) and their placements, with money as integer minor units.",
+      "scope": [
+        "Migration for wiw_arrangements: type fixed to sponsored_post, customer, story, amount (integer kobo), currency (default NGN), method, reference, date received, confirmed by, agreed and cancelled flags, notes, external id",
+        "Migration for wiw_placements: deal, story, sponsor name, slot (Home, Stories or Both), start, end, ended flag",
+        "Repositories and value objects; no column for a deal type choice or a profile id",
+        "Register payment reference, amounts and contact columns in the PII catalogue (FIN and PII marks); never joined to awards tables"
+      ],
+      "acceptance": [
+        "Amounts are stored as integers with a currency code",
+        "The only deal type that exists is sponsored_post",
+        "No schema relation links deals to nominations, winners or profiles",
+        "New columns are in the PII catalogue"
+      ],
+      "tests": [
+        "test_REQ_179_only_sponsored_post_deal_type_exists",
+        "test_REQ_112_amount_stored_as_integer_minor_units",
+        "test_REQ_199_no_schema_link_from_deals_to_awards"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/plugins/commerce.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-02",
+      "title": "Compute deal status and the counting rule",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-022",
+        "REQ-179",
+        "REQ-269",
+        "REQ-180"
+      ],
+      "depends": [
+        "M3-COM-01"
+      ],
+      "summary": "Derives each deal status from its fields and slot and applies the sprint counting rule, including what is missing.",
+      "scope": [
+        "Status computed, never typed: cancelled; else by placement (live, scheduled, ended); else needs payment, needs story or ready to schedule",
+        "Counting rule: agreed, not cancelled, and payment complete (amount, currency, method, reference, date received, named confirmed-by admin)",
+        "Missing-fields report for the deal page; Payment not recorded flag for scheduled and live unpaid deals",
+        "Four-step progress model (deal agreed, payment recorded, story ready, placement) and next step",
+        "Counted deals total and confirmed revenue for the dashboard"
+      ],
+      "acceptance": [
+        "A deal status is derived from its fields and slot; no input accepts a typed status",
+        "A deal missing any of amount, currency, method, reference, date received or confirmed-by does not count toward the sprint target, and the missing fields are listed",
+        "Removing a required field stops the deal counting",
+        "The progress model returns four steps and the next step for each status"
+      ],
+      "tests": [
+        "test_REQ_269_deal_status_follows_steps",
+        "test_REQ_022_incomplete_payment_record_does_not_count",
+        "test_REQ_022_removing_required_field_stops_deal_counting",
+        "test_REQ_269_next_step_for_each_status",
+        "test_REQ_180_revenue_counts_only_counted_deals"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/plugins/commerce.md",
+        "docs/pages/admin/commercial-and-sponsors.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: a deal has no profile field, yet REQ-226 and the feature page say a pending-review profile cannot be linked to a deal. Implemented as a defensive guard on any profile reference plus a test; needs confirmation of what a link means.",
+      "key": "M3-COM-03",
+      "title": "Enforce money field access and deal validation",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-086",
+        "REQ-239",
+        "REQ-179",
+        "REQ-226",
+        "REQ-183"
+      ],
+      "depends": [
+        "M3-COM-02",
+        "M0-PLG-04",
+        "M0-PLG-06"
+      ],
+      "summary": "Makes sure only the Administrator can see or change money fields, rejects card-like numbers and audits changes.",
+      "scope": [
+        "Handlers refuse any money change (amount, currency, method, reference, date, confirmed-by, create deal, cancel) from a user without wiw_manage_register; the screen hides them too",
+        "Fixed capability enforced by the platform user_has_cap filter",
+        "Digit-pattern guard rejects card-like numbers in the reference field",
+        "Deal service refuses a link to any pending-review profile",
+        "Audit rows for create, amount change, payment, cancel without personal data"
+      ],
+      "acceptance": [
+        "A new deal needs a customer and an agreed amount; amounts are stored as integers",
+        "An Editor sees no amount, currency, method, reference or confirmed-by and cannot record a payment or create a deal",
+        "A card-like number in the reference field is rejected",
+        "A pending-review profile cannot be linked to a deal",
+        "Every money step writes an audit row without personal data"
+      ],
+      "tests": [
+        "test_REQ_269_editor_sees_no_money_fields_and_cannot_record_payment",
+        "test_REQ_179_card_like_number_in_reference_is_rejected",
+        "test_REQ_226_pending_profile_cannot_be_linked_to_deal",
+        "test_REQ_086_amount_change_is_audited",
+        "test_REQ_239_money_capability_fixed_to_administrator"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/plugins/commerce.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/roles-in-code.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype A18 Sponsored stories.",
+      "key": "M3-COM-04",
+      "title": "Build the Sponsored stories list and New sponsored story",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "L",
+      "reqs": [
+        "REQ-269",
+        "REQ-179",
+        "REQ-021",
+        "REQ-086"
+      ],
+      "depends": [
+        "M3-COM-03",
+        "M3-ENQ-06"
+      ],
+      "summary": "The staff list of deals with progress dots, status, next step and filters, plus the one-page New sponsored story form for steps 1 and 2.",
+      "scope": [
+        "Sponsored stories list: sponsor, story, amount (Administrator only), four progress dots, status, next step, status filter",
+        "New sponsored story page covering steps 1 and 2: pick or add a customer on the spot, amount, currency, note, optional payment record",
+        "Deal page steps 1 and 2 (agree and record payment) for wiw_manage_register; no deal type choice in the form",
+        "Editor sees the list without amounts"
+      ],
+      "acceptance": [
+        "The only deal type that can be created is the sponsored post; the form has no type choice",
+        "The list shows each deal progress as four steps and its next step, and filters by status",
+        "A new deal needs a customer and an agreed amount",
+        "An Editor opens the list and sees no amount",
+        "A customer can be created on the spot from the form"
+      ],
+      "tests": [
+        "test_REQ_179_deal_form_has_no_type_choice",
+        "test_REQ_269_list_shows_four_steps_next_step_and_filters_by_status",
+        "test_REQ_269_new_deal_requires_customer_and_amount",
+        "test_REQ_269_editor_list_has_no_amounts"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/plugins/commerce.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/Admin/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Depends on the stories module from M2 (assumed key M2-STO-01).",
+      "key": "M3-COM-05",
+      "title": "Add deal steps 3 and 4: story choice and placement",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "L",
+      "reqs": [
+        "REQ-269",
+        "REQ-263",
+        "REQ-182",
+        "REQ-188"
+      ],
+      "depends": [
+        "M3-COM-04",
+        "M2-STO-01"
+      ],
+      "summary": "Lets Editors choose or create the story for a deal and schedule, end or rebook its labelled slot.",
+      "scope": [
+        "Step 3: choose an existing story (a draft may be chosen); Create the story opens the Stories screen with the deal noted and links the saved story to the deal",
+        "Step 4: slot Home, Stories or Both with start and end dates; End now; Schedule again after ended; needs wiw_set_sponsored",
+        "No slot until the story is published; a second slot on the same page and dates is refused; an unpaid deal can be scheduled and shows Payment not recorded",
+        "Every step writes an audit row without personal data",
+        "Events cannot be chosen as the story"
+      ],
+      "acceptance": [
+        "A draft story can be chosen for a deal, but no slot can be scheduled until it is published",
+        "Create the story opens the Stories screen with the deal noted, and the saved story is linked to the deal",
+        "An Editor can do steps 3 and 4 but sees no money and cannot record a payment or create a deal",
+        "A second slot on the same page and dates is refused",
+        "A slot can be scheduled for a deal with no payment record and the deal page shows Payment not recorded",
+        "Every step (create, payment, story, schedule, end, cancel) writes an audit row without personal data",
+        "No event can be sponsored"
+      ],
+      "tests": [
+        "test_REQ_263_slot_requires_published_story",
+        "test_REQ_263_overlapping_slot_on_same_page_is_refused",
+        "test_REQ_263_unpaid_deal_can_be_scheduled_with_warning",
+        "test_REQ_269_create_story_links_story_to_deal",
+        "test_REQ_182_event_cannot_be_chosen_for_a_slot",
+        "test_REQ_188_deal_steps_audited_without_pii"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/plugins/commerce.md",
+        "docs/plugins/content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-06",
+      "title": "Run placement jobs and the Sponsored label service",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-182",
+        "REQ-155",
+        "REQ-116",
+        "REQ-263",
+        "REQ-184"
+      ],
+      "depends": [
+        "M3-COM-05",
+        "M0-PLG-15",
+        "M2-STO-01"
+      ],
+      "summary": "Moves placements from scheduled to active to expired and adds or removes the Sponsored label and slot on a story.",
+      "scope": [
+        "Scheduled job moves each placement by its dates; label service writes only the story sponsor name and period",
+        "Label and slot are removed when the slot ends, expires or the deal is cancelled; nothing is deleted",
+        "Label service can never write a profile column, Claimed or Featured; stories only",
+        "PublicStory exposes sponsor name and active state; the slot never reorders unsponsored stories or search"
+      ],
+      "acceptance": [
+        "A sponsored story shows the Sponsored badge and sponsor name between the slot dates and none after",
+        "The label and slot go automatically when a slot ends or a deal is cancelled; no story is deleted",
+        "The label service cannot write any profile column",
+        "A slot never changes the order of other stories or search results"
+      ],
+      "tests": [
+        "test_REQ_182_label_applies_only_between_start_and_end",
+        "test_REQ_182_label_service_cannot_write_profile_columns",
+        "test_REQ_116_label_removed_when_placement_ends_or_deal_cancelled",
+        "test_REQ_183_slot_does_not_reorder_unsponsored_stories_or_search"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/plugins/commerce.md",
+        "docs/plugins/content.md",
+        "docs/concepts/independence-and-money.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Content/PublicStory*.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Share markup is emitted by the guard plugin, not the theme (templates.md rule).",
+      "key": "M3-COM-07",
+      "title": "Add Sponsored label to story share previews",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-026",
+        "REQ-155",
+        "REQ-182"
+      ],
+      "depends": [
+        "M3-COM-06",
+        "M1-SEO-01"
+      ],
+      "summary": "Adds Sponsored by [name] to a sponsored story share preview through the guard plugin share tags and nothing on profiles.",
+      "scope": [
+        "Guard share-tag filter adds the label while the placement is active",
+        "No Sponsored text in any profile share preview",
+        "Label removed when the placement ends"
+      ],
+      "acceptance": [
+        "A sponsored story shows the Sponsored badge and sponsor name on its share preview between the slot dates, and none after",
+        "No profile page, card or share preview shows Sponsored"
+      ],
+      "tests": [
+        "test_REQ_026_sponsored_story_share_preview_has_label",
+        "test_REQ_155_profile_share_preview_never_has_sponsored"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-08",
+      "title": "Add cancel, refund note and internal notes to deals",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-086",
+        "REQ-115",
+        "REQ-187",
+        "REQ-188"
+      ],
+      "depends": [
+        "M3-COM-05"
+      ],
+      "summary": "Cancels a deal, ends its slot and records refunds as notes, with internal notes on deals and customers.",
+      "scope": [
+        "Cancel action for wiw_manage_register ends the slot and removes the label",
+        "A refund is handled offline and recorded as a note by an Administrator",
+        "Internal notes on deals and customers never public",
+        "Audit for amount change, payment and cancel"
+      ],
+      "acceptance": [
+        "Cancelling a deal ends its slot and removes the label",
+        "A refund is recorded as a note only; no payment processing exists",
+        "Notes are never rendered publicly"
+      ],
+      "tests": [
+        "test_REQ_086_cancel_deal_ends_slot_and_is_audited",
+        "test_REQ_115_refund_recorded_as_note_only",
+        "test_REQ_187_deal_notes_never_public"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/plugins/commerce.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype A02 and A44 (#/admin).",
+      "key": "M3-COM-09",
+      "title": "Add commercial dashboard tiles and slots ending list",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-181",
+        "REQ-189",
+        "REQ-239",
+        "REQ-116",
+        "REQ-272"
+      ],
+      "depends": [
+        "M3-COM-02",
+        "M3-COM-06",
+        "M0-PLG-14",
+        "M0-PLG-11"
+      ],
+      "summary": "Shows the Administrator the count of counted deals, confirmed revenue and slots ending in 30 days.",
+      "scope": [
+        "Tiles for counted deals and confirmed revenue under wiw_view_dashboard_commercial, hidden from Editor and Reviewer",
+        "Sprint card respects the Sprint tracking setting (REQ-272)",
+        "List of live slots ending within 30 days with no automatic action against any sponsor"
+      ],
+      "acceptance": [
+        "The Administrator dashboard shows the count of counted deals and confirmed revenue; an Editor and a Reviewer do not see them",
+        "A dashboard list shows slots ending in 30 days and no automatic action is taken against a sponsor",
+        "With Sprint tracking off the sprint card is hidden and nothing is deleted"
+      ],
+      "tests": [
+        "test_REQ_181_dashboard_shows_counted_deals_and_revenue_to_admin_only",
+        "test_REQ_189_slots_ending_in_30_days_listed_without_action",
+        "test_REQ_272_sprint_card_hidden_when_tracking_off"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/theme/theme-settings.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype A47, #/admin/thresholds.",
+      "key": "M3-COM-10",
+      "title": "Build the Sprint thresholds screen",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-181",
+        "REQ-180",
+        "REQ-272",
+        "REQ-188"
+      ],
+      "depends": [
+        "M3-COM-09",
+        "M0-PLG-11",
+        "M0-PLG-06"
+      ],
+      "summary": "The only settings screen: the two sprint targets, Administrator only, audited, shown while Sprint tracking is on.",
+      "scope": [
+        "Screen with counted paid deals (default 10) and confirmed revenue (default NGN 5,000,000, stored as integer kobo)",
+        "Stored as options through the settings service (autoload off)",
+        "Hidden when sprint_tracking is off, without deleting thresholds",
+        "Each change audited with old and new value; Administrator only"
+      ],
+      "acceptance": [
+        "Only the Administrator sees or changes it",
+        "Every change is audited with the old and new value",
+        "Turning Sprint tracking off hides the screen and keeps the thresholds"
+      ],
+      "tests": [
+        "test_REQ_181_thresholds_default_to_10_and_5m_naira",
+        "test_REQ_181_threshold_change_audited_with_old_and_new",
+        "test_REQ_272_thresholds_screen_hidden_when_tracking_off"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/commercial-and-sponsors.md",
+        "docs/theme/theme-settings.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/Admin/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "CONTRADICTION: the docs put the sponsor record in Commerce and show it on the Awards page, yet Awards must never reference Commerce. Proposal: the PublicSponsor read model lives outside Commerce (Content or Platform). Needs a decision before M4.",
+      "key": "M3-COM-11",
+      "title": "Add sponsor records for Supported by disclosure",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-186",
+        "REQ-199",
+        "REQ-183"
+      ],
+      "depends": [
+        "M3-COM-01",
+        "M0-PLG-04"
+      ],
+      "summary": "Sponsor name, logo and link records that can be attached to awards and pages as a disclosure only.",
+      "scope": [
+        "wiw_sponsor post type: name, logo, link; admin on the Sponsored stories screen",
+        "Attach to a page or an award category as a disclosure with no commercial fields",
+        "Neutral PublicSponsor read model with name, logo and link only, so Awards reads sponsors without referencing Commerce",
+        "Disclosure note that sponsors do not choose or influence nominees or winners"
+      ],
+      "acceptance": [
+        "A sponsor record has only name, logo and link",
+        "Sponsors shown on the awards pages carry no commercial data and have no effect on nominations or winners",
+        "No Awards class references Commerce (architecture test)"
+      ],
+      "tests": [
+        "test_REQ_186_sponsor_record_has_name_logo_link_only",
+        "test_REQ_199_awards_reads_sponsors_without_referencing_commerce"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/plugins/commerce.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/commercial-and-sponsors.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**",
+        "site/wp-content/plugins/whoiswho-core/src/Content/PublicSponsor*.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-12",
+      "title": "Export sponsored story deals to CSV",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-087",
+        "REQ-069",
+        "REQ-077"
+      ],
+      "depends": [
+        "M3-COM-02"
+      ],
+      "summary": "List-table CSV export of deals with the counting status, needing wiw_export_data and audited.",
+      "scope": [
+        "Export action on the deals list",
+        "Each row includes the counting status and what is missing",
+        "Audit row per export without personal data"
+      ],
+      "acceptance": [
+        "A deal export needs wiw_export_data, includes counting status, and writes an audit row"
+      ],
+      "tests": [
+        "test_REQ_087_deal_export_requires_capability_and_is_logged",
+        "test_REQ_087_export_includes_counting_status"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-13",
+      "title": "Add firewall architecture tests for Commerce",
+      "area": "plugin",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-199",
+        "REQ-183",
+        "REQ-184"
+      ],
+      "depends": [
+        "M3-COM-06",
+        "M3-CLM-03"
+      ],
+      "summary": "Automated tests that payment never reaches awards, Claimed, Featured or search order.",
+      "scope": [
+        "Arch test: Awards namespace never references Commerce; no query joins deals to nominations or winners",
+        "Arch test: Commerce and the label service never write Claimed or a story Featured flag",
+        "Behaviour test: creating, editing, ending or cancelling a deal leaves every Claimed mark, Featured flag, search order and nomination unchanged",
+        "Test that no awards screen or export includes a commercial field",
+        "Tests tolerate the Awards module not existing yet and are extended in M4"
+      ],
+      "acceptance": [
+        "Creating, editing, ending or cancelling any deal leaves every profile Claimed mark, every story Featured flag, every search order and every nomination unchanged",
+        "No awards screen or export contains a commercial field",
+        "Awards never references Commerce"
+      ],
+      "tests": [
+        "test_REQ_199_awards_module_has_no_reference_to_commerce",
+        "test_REQ_184_commercial_change_never_alters_a_profile",
+        "test_REQ_184_commerce_never_writes_claimed_or_featured",
+        "test_REQ_183_deal_changes_leave_search_order_unchanged",
+        "test_REQ_199_no_commercial_field_in_awards_screens_or_exports"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/build/roles-in-code.md",
+        "docs/build/testing-and-ci.md",
+        "docs/concepts/independence-and-money.md"
+      ],
+      "files": [
+        "site/tests/Arch/**",
+        "site/tests/Integration/Commerce/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype routes #/stories (V16), #/stories/:slug (V17), #/ (V01).",
+      "key": "M3-COM-14",
+      "title": "Show Sponsored badge, notice and slot on stories",
+      "area": "theme",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-155",
+        "REQ-182",
+        "REQ-263",
+        "REQ-026"
+      ],
+      "depends": [
+        "M3-COM-06",
+        "M2-STO-02"
+      ],
+      "summary": "Theme output for sponsored stories: badge on cards and pages, the in-story notice and the labelled slot on Home and Stories.",
+      "scope": [
+        "Sponsored badge and sponsor name on story cards and story pages, distinct from any other label",
+        "In-story notice stating the sponsor has no say over labels or awards",
+        "Labelled slot card on Home and on the Stories page for an active placement; never reorders unsponsored cards",
+        "No Sponsored output on profiles or events"
+      ],
+      "acceptance": [
+        "A sponsored story shows the Sponsored badge and sponsor name on its card and page between the slot dates, and none after",
+        "The slot card appears on the chosen surface only",
+        "No profile page, card or share preview shows Sponsored, and no event shows it"
+      ],
+      "tests": [
+        "sponsored-story.spec.ts",
+        "test_REQ_155_sponsored_markup_absent_from_profile_templates"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/theme/templates.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/public/home.md",
+        "docs/theme/components.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/sponsored*",
+        "site/wp-content/themes/whoiswho/templates/single-story*",
+        "site/wp-content/themes/whoiswho/templates/stories*",
+        "site/wp-content/themes/whoiswho/templates/front-page*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The Awards template is built in M4; this issue provides only the block.",
+      "key": "M3-COM-15",
+      "title": "Add the Supported by block pattern",
+      "area": "theme",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-186",
+        "REQ-199"
+      ],
+      "depends": [
+        "M3-COM-11"
+      ],
+      "summary": "A reusable Supported by block with the no-influence note, to be placed on the Awards pages in M4.",
+      "scope": [
+        "Block pattern reading the PublicSponsor read model; absent when there are no sponsors",
+        "Disclosure note that sponsors do not choose or influence nominees or winners",
+        "Token-only styling"
+      ],
+      "acceptance": [
+        "The block is absent when no sponsors exist",
+        "The block shows name, logo, link and the note and nothing commercial"
+      ],
+      "tests": [
+        "supported-by.spec.ts"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/pages/public/awards.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/patterns/supported-by*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: REQ-272 is a Theme requirement but controls plugin admin screens; the plugin must not depend on the theme, so the settings service is the shared store.",
+      "key": "M3-COM-16",
+      "title": "Add the Sprint tracking theme setting",
+      "area": "theme",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "S",
+      "reqs": [
+        "REQ-272",
+        "REQ-188"
+      ],
+      "depends": [
+        "M0-PLG-11",
+        "M0-THM-02"
+      ],
+      "summary": "The Theme settings switch that shows or hides the sprint card and Sprint thresholds screen.",
+      "scope": [
+        "Theme settings control: Sprint tracking (sprint_tracking, default on), Administrator only, audited through the plugin settings service",
+        "Value stored via the platform settings service so the plugin reads it without depending on the theme"
+      ],
+      "acceptance": [
+        "Only the Administrator can change it and each change is audited",
+        "Off hides the dashboard sprint card and the Sprint thresholds screen without deleting data",
+        "Default is on"
+      ],
+      "tests": [
+        "test_REQ_272_sprint_tracking_default_on_and_admin_only",
+        "test_REQ_272_toggle_audited"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/theme/theme-settings.md",
+        "docs/pages/admin/commercial-and-sponsors.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/inc/settings*",
+        "site/wp-content/themes/whoiswho-child/inc/settings*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-COM-17",
+      "title": "Test the sponsored story journey and visibility",
+      "area": "qa",
+      "feature": "sponsored-content-and-commercial-register",
+      "size": "M",
+      "reqs": [
+        "REQ-269",
+        "REQ-263",
+        "REQ-239",
+        "REQ-155"
+      ],
+      "depends": [
+        "M3-COM-05",
+        "M3-COM-07",
+        "M3-COM-09",
+        "M3-COM-14",
+        "M3-COM-13"
+      ],
+      "summary": "End-to-end tests of a deal from agreement to ended slot, plus role visibility.",
+      "scope": [
+        "E2E: Administrator creates and pays a deal, Editor picks story and schedules, visitor sees label, slot ends",
+        "Editor and Reviewer role checks: no amounts, no dashboard tiles",
+        "Check that no profile or event shows Sponsored and no public page has prices",
+        "Time-travelled dates for slot start and end"
+      ],
+      "acceptance": [
+        "A sponsored story shows the badge and sponsor name between the slot dates, and none after",
+        "Editor and Reviewer never see revenue or amounts",
+        "No event or profile shows Sponsored"
+      ],
+      "tests": [
+        "sponsored-journey.spec.ts",
+        "test_REQ_239_role_visibility_of_commercial_figures"
+      ],
+      "docs": [
+        "docs/features/sponsored-content-and-commercial-register.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/commerce/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Possible overlap: the M2 newsletter needs consent records and may already create wiw_consents. If so, reduce this issue to what is missing and depend on the earlier key.",
+      "key": "M3-PRV-01",
+      "title": "Build the consent recorder and consent table",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-061",
+        "REQ-063"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22",
+        "M0-PLG-11"
+      ],
+      "summary": "Stores who agreed to what, with policy version and time, so every form can record consent.",
+      "scope": [
+        "Migration and service for wiw_consents: subject email, purpose, policy version, granted and revoked times",
+        "Policy version setting read through the settings service",
+        "API used by claim, enquiry, data-rights, invitation and newsletter forms",
+        "Marketing consent is a separate purpose from any other consent"
+      ],
+      "acceptance": [
+        "Consent forms store a timestamp and policy version",
+        "Marketing email consent is separate from other consents",
+        "Consent columns are in the PII catalogue"
+      ],
+      "tests": [
+        "test_REQ_058_consent_stores_timestamp_and_policy_version",
+        "test_REQ_061_marketing_consent_is_separate_purpose",
+        "test_REQ_058_consents_in_pii_catalogue"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "M1 import or review may already implement the REQ-141 scan for stubs; if a scanner exists this issue only exposes it for forms. Wiring it to the nomination form belongs to M4.",
+      "key": "M3-PRV-02",
+      "title": "Build the free-text sensitive data scanner",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-067",
+        "REQ-141",
+        "REQ-068"
+      ],
+      "depends": [
+        "M0-PLG-04"
+      ],
+      "summary": "A shared scanner that blocks phone numbers, emails, addresses, ages and sensitive keywords in free text on intake and later nomination forms.",
+      "scope": [
+        "Compliance\\FreeTextScanner with pattern rules: phones, emails, ages, addresses, sensitive categories (health, religion, politics, ethnicity, biometrics, criminal records, sexual life, trade-union membership)",
+        "Validator hook returns field-level errors asking the person to remove the text",
+        "Keyword lists in config so Legal can adjust; no personal data logged",
+        "Reusable by invitation intake now and nominations in M4"
+      ],
+      "acceptance": [
+        "Free text containing an age, phone number or sensitive keyword is blocked on intake and nomination forms",
+        "The scanner reports which field and rule failed without logging the text",
+        "The sensitive keyword list is configuration, not code"
+      ],
+      "tests": [
+        "test_REQ_141_scanner_blocks_phone_email_age_and_sensitive_word",
+        "test_REQ_067_sensitive_keyword_list_is_configurable",
+        "test_REQ_141_scanner_logs_no_text"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/config/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: the due-date length for data requests is not stated (only corrections 7 days and removals 2 business days). Proposal 30 days, to be confirmed by Legal. The brief for this plan says data requests live in Requests and reports from M1; if M1 already built this intake, drop this issue.",
+      "key": "M3-PRV-03",
+      "title": "Add data-rights intake with due dates",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-059",
+        "REQ-081",
+        "REQ-122",
+        "REQ-233"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M0-PLG-17",
+        "M0-PLG-18",
+        "M3-PRV-01"
+      ],
+      "summary": "POST /data-rights creates a data request with a due date and a confirmation email, with email ownership confirmed by a single-use link.",
+      "scope": [
+        "Validator: request type (access, correction, erasure, objection, portability), name, email, details, bot challenge",
+        "Creates a data_request support item with a due date and sends a confirmation email with the reference",
+        "Email ownership confirmed by a single-use signed link; the request counts once confirmed",
+        "Bridge to WordPress core Privacy tools for access and erasure; the custom part adds due dates and the other types",
+        "The Requests and reports list is built in M1; this issue adds only the intake"
+      ],
+      "acceptance": [
+        "Submitting a data request on /data-rights creates a request with a due date and a confirmation email",
+        "The requester email is confirmed by a single-use link",
+        "Rate limit and bot challenge apply"
+      ],
+      "tests": [
+        "test_REQ_059_data_request_has_due_date_and_confirmation_email",
+        "test_REQ_233_data_request_confirm_link_single_use",
+        "test_REQ_122_data_request_rate_limited"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md",
+        "docs/pages/public/trust-legal-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "DOCS GAP: the feature acceptance item lists nomination, newsletter and comment records, which do not exist until M2 and M4. This issue covers the registry and M3 tables; wpDiscuz and nominations must be added by their own milestone issues.",
+      "key": "M3-PRV-04",
+      "title": "Register exporters and erasers for all personal data",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "L",
+      "reqs": [
+        "REQ-059",
+        "REQ-063",
+        "REQ-064"
+      ],
+      "depends": [
+        "M3-PRV-03",
+        "M3-PRV-07",
+        "M3-ENQ-01",
+        "M3-CLM-01",
+        "M3-ENQ-05"
+      ],
+      "summary": "Exports and erases (or anonymises) every record held for one email address, driven by the PII catalogue.",
+      "scope": [
+        "Registry of exporters and erasers keyed from the catalogue, plugged into WordPress core Privacy tools",
+        "Handlers for enquiries and support items, claims, customers, consents, signed links and the email log in this milestone",
+        "Registry accepts nomination and wpDiscuz comment handlers added by M4, and the newsletter handler from M2",
+        "Erase anonymises where a legal or audit need remains; audit log untouched; suppression records name only kept"
+      ],
+      "acceptance": [
+        "A data export for one email address includes enquiry, claim, support, customer and consent records for it",
+        "An erase request removes or anonymises them",
+        "Export and erase handlers are registered for every catalogue table that holds personal data",
+        "Nomination, newsletter and comment handlers are added when those tables exist (tracked for M2 and M4)"
+      ],
+      "tests": [
+        "test_REQ_059_data_request_export_lists_all_pii_for_email",
+        "test_REQ_059_erase_removes_or_anonymises_records",
+        "test_REQ_059_every_catalogue_table_has_export_and_erase_handler"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-PRV-05",
+      "title": "Restrict and audit personal-data exports",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-069",
+        "REQ-087"
+      ],
+      "depends": [
+        "M0-PLG-04",
+        "M0-PLG-06",
+        "M3-PRV-04"
+      ],
+      "summary": "Bulk personal-data export is Administrator-only and logged; Reviewers cannot export.",
+      "scope": [
+        "Capability check wiw_export_data on core Tools > Export and the list-table export actions",
+        "Every export writes an audit row with actor and scope, without personal data",
+        "Reviewer and Editor menus show no export"
+      ],
+      "acceptance": [
+        "A Reviewer cannot download personal-data exports",
+        "An Administrator export is audited"
+      ],
+      "tests": [
+        "test_REQ_069_reviewer_cannot_export_personal_data",
+        "test_REQ_069_administrator_export_is_audited"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Retention periods are defaults awaiting Legal (Q21). The subscriber rule (6 years after last payment) has no subject today because no payments are recorded for subscribers; flagged for the shared-docs owner.",
+      "key": "M3-PRV-06",
+      "title": "Run the retention job from the schedule",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-063",
+        "REQ-233"
+      ],
+      "depends": [
+        "M3-PRV-07",
+        "M0-PLG-15",
+        "M0-PLG-17"
+      ],
+      "summary": "Deletes expired signed links and anonymises data past its retention date, driven by the PII catalogue and a retention config.",
+      "scope": [
+        "config/retention.php with the defaults: signed links 14 days (48 hours for nominator and requester checks), logs 30 days with IDs only, nominations 2 years, subscriber data 6 years after last payment, suppression kept indefinitely, audit log kept",
+        "Scheduled job deletes or anonymises by catalogue class and logs what it did with counts only",
+        "Dry-run mode and idempotent runs"
+      ],
+      "acceptance": [
+        "The retention job deletes expired signed links and anonymises data past its retention date, and logs what it did without personal data",
+        "Suppression records and the audit log are never purged",
+        "Retention values come from config, not code"
+      ],
+      "tests": [
+        "test_REQ_063_retention_job_removes_expired_data",
+        "test_REQ_063_retention_never_purges_suppression_or_audit",
+        "test_REQ_063_retention_log_has_no_pii"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/config/retention.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Per CLAUDE.md, new PII columns are added to the catalogue by the issue that creates them; this one is the completeness check.",
+      "key": "M3-PRV-07",
+      "title": "Complete the PII catalogue and its failing test",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-063",
+        "REQ-065",
+        "REQ-059"
+      ],
+      "depends": [
+        "M3-CLM-01",
+        "M3-ENQ-01",
+        "M3-ENQ-05",
+        "M3-COM-01",
+        "M3-PRV-01"
+      ],
+      "summary": "Makes sure every personal-data column and meta key in the plugin is listed, and that a test fails if one is missing.",
+      "scope": [
+        "Fill config/pii.php for all M3 tables: claims, support items, customers, arrangements (FIN), consents, signed links",
+        "Architecture test scanning migrations and registered meta keys for personal-data columns and failing if absent from the catalogue",
+        "Class marks PII, SENS, FIN, PUB per the catalogue conventions"
+      ],
+      "acceptance": [
+        "A test fails when a table or meta key holding personal data is missing from the PII catalogue",
+        "Every M3 table that holds personal data has an entry"
+      ],
+      "tests": [
+        "test_REQ_063_missing_pii_column_fails_the_build",
+        "test_REQ_063_every_m3_personal_column_is_catalogued"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/build/data-model.md",
+        "docs/plugins/compliance.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/tests/Arch/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The log scrubber itself is assumed to be created in M0.",
+      "key": "M3-PRV-08",
+      "title": "Test that logs and errors hold IDs but no personal data",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-063",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-PRV-03",
+        "M3-CLM-02",
+        "M3-ENQ-02",
+        "M0-PLG-22"
+      ],
+      "summary": "Proves the M3 flows write no names or emails to logs, errors or audit details.",
+      "scope": [
+        "Fixtures submit claims, enquiries and data requests with distinctive names and emails",
+        "Assert logs, error messages and audit details contain only IDs",
+        "Fix any leak found in M3 code"
+      ],
+      "acceptance": [
+        "Logs and error messages contain IDs but no names or emails"
+      ],
+      "tests": [
+        "test_REQ_063_logs_and_errors_contain_ids_not_names_or_emails"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/platform.md",
+        "docs/build/security.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/**",
+        "site/tests/Integration/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Open: whether analytics need an Administrator screen or stay in code (theme-settings open point). Prototype cookie card in the shell.",
+      "key": "M3-PRV-09",
+      "title": "Build the cookie notice and consent gating",
+      "area": "theme",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-248",
+        "REQ-062",
+        "REQ-058"
+      ],
+      "depends": [
+        "M0-THM-12"
+      ],
+      "summary": "The small cookie card with Decline and Accept and the footer Cookie preferences control, with analytics gated by the choice.",
+      "scope": [
+        "Card appears after a little scroll, or at once on a page too short to scroll; Decline and Accept; keyboard and screen reader friendly; respects reduced motion",
+        "Choice stored in a first-party cookie; footer Cookie preferences reopens it",
+        "Non-essential scripts (analytics) load only after Accept; none after Decline",
+        "Server-side helper so templates can ask whether a purpose was accepted"
+      ],
+      "acceptance": [
+        "No non-essential cookie or analytics script loads before Accept; Decline keeps them off",
+        "The cookie card appears after a small scroll, or immediately on a short page, with Decline and Accept; the footer link reopens it",
+        "The card passes the accessibility scan"
+      ],
+      "tests": [
+        "cookie-notice.spec.ts",
+        "test_REQ_062_analytics_script_absent_before_accept"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/theme/theme-settings.md",
+        "docs/theme/components.md",
+        "docs/pages/public/trust-legal-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/cookie*",
+        "site/wp-content/themes/whoiswho/assets/js/cookie*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Retrofits the shared form part from M0; each form template is owned by its feature issue.",
+      "key": "M3-PRV-10",
+      "title": "Add privacy notice and consent tick to every personal-data form",
+      "area": "theme",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-081"
+      ],
+      "depends": [
+        "M0-THM-12",
+        "M3-PRV-01"
+      ],
+      "summary": "Makes the shared form parts show a privacy notice link at every point of collection and a consent tick with policy version on consent forms.",
+      "scope": [
+        "Privacy notice part linking /privacy, used by every public form; consent tick part with a hidden policy-version field",
+        "Check script listing every form template and failing the build if one lacks the part",
+        "Applies to claim, Get listed, contact, enquiry, data-rights, invitation and consent forms, and later newsletter and nomination forms"
+      ],
+      "acceptance": [
+        "Every form that collects personal data shows a privacy notice link",
+        "Consent forms send a timestamp and policy version to the plugin"
+      ],
+      "tests": [
+        "privacy-notice.spec.ts",
+        "test_REQ_058_every_public_form_template_includes_privacy_notice"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/theme/components.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/form*",
+        "site/wp-content/themes/whoiswho/parts/privacy*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype V50 #/data-rights; its due date is fixed sample text.",
+      "key": "M3-PRV-11",
+      "title": "Build the Your data rights page",
+      "area": "theme",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-059",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-PRV-03",
+        "M3-PRV-10"
+      ],
+      "summary": "The /data-rights page and form for access, correction, erasure, objection and portability requests.",
+      "scope": [
+        "data-rights template: request type, name, email, details, bot challenge, privacy notice",
+        "Done state with reference and due date",
+        "Text pointing to the profile forms as the fastest route for a profile"
+      ],
+      "acceptance": [
+        "Submitting a data request on /data-rights shows a reference and says a confirmation email was sent",
+        "The page links to the profile correction and removal forms"
+      ],
+      "tests": [
+        "data-rights.spec.ts"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/pages/public/trust-legal-and-data-rights.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/data-rights*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Prototype V29, V30, V31 (#/privacy, #/terms, #/cookies). Editable page copy belongs to M4; this issue provides only what REQ-100 needs.",
+      "key": "M3-PRV-12",
+      "title": "Add the legal page template and draft note",
+      "area": "theme",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-100",
+        "REQ-120",
+        "REQ-248"
+      ],
+      "depends": [
+        "M0-THM-12"
+      ],
+      "summary": "A page template for Privacy, Terms and Cookie policy with the Draft note for Legal and a Cookie preferences link.",
+      "scope": [
+        "legal page template with page band and editable body blocks",
+        "Draft note block shown until Legal supplies wording",
+        "Cookie policy offers the Cookie preferences control"
+      ],
+      "acceptance": [
+        "Privacy, Terms and Cookie policy render with the draft note",
+        "Cookie policy offers a Cookie preferences control"
+      ],
+      "tests": [
+        "legal-pages.spec.ts"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/pages/public/trust-legal-and-data-rights.md",
+        "docs/theme/blocks-and-patterns.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/page-legal*",
+        "site/wp-content/themes/whoiswho/patterns/draft-note*"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Final wording comes from Legal (human task M3-PRV-14).",
+      "key": "M3-PRV-13",
+      "title": "Seed legal pages and the policy version",
+      "area": "plugin",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-100",
+        "REQ-120",
+        "REQ-058"
+      ],
+      "depends": [
+        "M3-PRV-01",
+        "M3-PRV-12"
+      ],
+      "summary": "Creates the Privacy, Terms, Cookie policy and Your data rights pages with draft sample text and the policy version, so terms exist before customer data is collected.",
+      "scope": [
+        "Migration or installer that creates the pages at /privacy, /terms, /cookies and /data-rights (and /complaints if not seeded in M1) with the prototype draft text",
+        "Policy version option bumped when a page changes",
+        "No public commercial terms page"
+      ],
+      "acceptance": [
+        "Terms and Privacy Policy are published before any customer data is collected",
+        "No page states prices, packages or commercial terms"
+      ],
+      "tests": [
+        "test_REQ_100_terms_and_privacy_pages_exist_and_are_published",
+        "test_REQ_120_no_commercial_terms_page"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/pages/public/trust-legal-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "Legal review is deferred and does not block the build (D-016, D-051). Today in the repo is 11 Nov 2026, so the 21 Nov ceiling is close.",
+      "key": "M3-PRV-14",
+      "title": "Get Legal wording and publish Terms and Privacy by 21 Nov 2026",
+      "area": "human",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-100",
+        "REQ-057"
+      ],
+      "depends": [],
+      "summary": "A person gets final Privacy, Terms, Cookie policy and Complaints wording from Legal, or confirms the draft stands, and approves publishing before customer data is collected.",
+      "scope": [
+        "Send the draft pages to Legal",
+        "Confirm the lawful-basis position for public figures (REQ-057) and record it in the lawful-basis register",
+        "Approve the publication date (ceiling 21 Nov 2026)"
+      ],
+      "acceptance": [
+        "Terms and Privacy approved for publication",
+        "Legal basis position recorded in the lawful-basis register"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "The register is a document, not a screen (D-067). The data-model page still lists a wiw_processors table; that conflicts with D-067.",
+      "key": "M3-PRV-15",
+      "title": "Complete the processor register and data processing agreements",
+      "area": "human",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-065"
+      ],
+      "depends": [],
+      "summary": "A person confirms hosting, mail and analytics locations and the status of each data-processing agreement and updates the processor register document.",
+      "scope": [
+        "Confirm host and mail locations (Q26, Q87)",
+        "Record DPA status for hosting, mail, analytics and any added service such as the comments plugin email",
+        "Keep the register in docs/concepts/privacy-and-data-rights.md"
+      ],
+      "acceptance": [
+        "The processor register lists hosting, mail and each added service with location and DPA status"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/concepts/privacy-and-data-rights.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "If Legal objects, bulk unpublish is the planned answer.",
+      "key": "M3-PRV-16",
+      "title": "Run the DPIA and name a data-protection contact",
+      "area": "human",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-072"
+      ],
+      "depends": [],
+      "summary": "A person completes the data-protection impact assessment and names a contact, in parallel with the build.",
+      "scope": [
+        "Complete the DPIA",
+        "Name the data-protection contact",
+        "Update the launch checklist"
+      ],
+      "acceptance": [
+        "DPIA completed and contact named, tracked on the launch checklist"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/build/launch-checklist.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M3",
+      "priority": "S",
+      "notes": "Defaults stand until Legal answers.",
+      "key": "M3-PRV-17",
+      "title": "Confirm the retention schedule with Legal",
+      "area": "human",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-063"
+      ],
+      "depends": [],
+      "summary": "A person confirms or changes the retention defaults so the retention job config can be finalised.",
+      "scope": [
+        "Review subscriber data, nominations, suppression, signed links, logs and import file defaults",
+        "Record the answer (Q21)"
+      ],
+      "acceptance": [
+        "Retention schedule confirmed in writing"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/questions.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "docs/runbook.md is in the infra area (CLAUDE.md).",
+      "key": "M3-PRV-18",
+      "title": "Write the breach-response procedure in the runbook",
+      "area": "infra",
+      "feature": "privacy-and-data-rights",
+      "size": "S",
+      "reqs": [
+        "REQ-066"
+      ],
+      "depends": [],
+      "summary": "An offline breach-response procedure with a contain, assess, notify checklist and a dated incident section without personal data.",
+      "scope": [
+        "Runbook section: detection, logging, notice to the regulator and affected people within the legal deadline",
+        "Incident log template without personal data"
+      ],
+      "acceptance": [
+        "The runbook contains the breach procedure and checklist",
+        "There is no breach-log screen"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/concepts/privacy-and-data-rights.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "docs/runbook.md"
+      ]
+    },
+    {
+      "milestone": "M3",
+      "priority": "M",
+      "notes": "",
+      "key": "M3-PRV-19",
+      "title": "Test consent, cookies, data rights and exports end to end",
+      "area": "qa",
+      "feature": "privacy-and-data-rights",
+      "size": "M",
+      "reqs": [
+        "REQ-062",
+        "REQ-059",
+        "REQ-069",
+        "REQ-058",
+        "REQ-100"
+      ],
+      "depends": [
+        "M3-PRV-04",
+        "M3-PRV-05",
+        "M3-PRV-09",
+        "M3-PRV-10",
+        "M3-PRV-11",
+        "M3-PRV-13",
+        "M3-PRV-08"
+      ],
+      "summary": "Playwright and PHPUnit tests that cover the privacy acceptance list across the site.",
+      "scope": [
+        "Cookie gating: network assertions before and after Accept and after Decline",
+        "Every public form shows a privacy link; consent rows carry version and time",
+        "Data-rights flow with export and erase for one email",
+        "Reviewer cannot export; Administrator export audited",
+        "Terms and Privacy pages exist before forms are enabled"
+      ],
+      "acceptance": [
+        "No non-essential cookie or analytics script loads before Accept; Decline keeps them off",
+        "Every form that collects personal data shows a privacy notice link",
+        "A data export for one email address includes the records for it and an erase removes or anonymises them",
+        "A Reviewer cannot download personal-data exports"
+      ],
+      "tests": [
+        "privacy.spec.ts",
+        "test_REQ_059_export_and_erase_roundtrip",
+        "test_REQ_069_export_role_matrix"
+      ],
+      "docs": [
+        "docs/features/privacy-and-data-rights.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/e2e/privacy/**",
+        "site/tests/Security/**"
+      ]
+    }
+  ]
+}

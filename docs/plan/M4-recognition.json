@@ -1,0 +1,1879 @@
+{
+  "milestone": "M4",
+  "issues": [
+    {
+      "key": "M4-AWD-01",
+      "title": "Create the Awards tables and migration",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-034",
+        "REQ-266",
+        "REQ-267",
+        "REQ-268"
+      ],
+      "depends": [],
+      "summary": "Adds the forward-only migration for editions, award categories, nominations and the nomination change log, so every later Awards issue has its data.",
+      "scope": [
+        "Migration for wiw_editions (year or edition, dates, wording)",
+        "wiw_award_categories (group, order, archived flag, five seeded award groups)",
+        "wiw_nominations (nominator personal data nullable for staff-added, linked profile, category, evidence or note, stage, status, source public form or staff-added, optional Contact email, email-sent by and at)",
+        "wiw_nomination_changes (stage, status and removal changes with the staff member)",
+        "No foreign key or join to any commercial table"
+      ],
+      "acceptance": [
+        "New nominations default to stage Nominated and status Not live (schema default)",
+        "Stage allows only Nominated or Winner; status only Live or Not live; no Ineligible, Declined, Shortlisted or Finalist value exists",
+        "No column or table for judges, conflicts or scores exists",
+        "No commercial table is referenced by any Awards table",
+        "Migration is forward-only and additive"
+      ],
+      "tests": [
+        "test_REQ_034_new_nomination_defaults_to_nominated_and_not_live",
+        "test_REQ_034_stage_and_status_accept_only_the_defined_values",
+        "test_REQ_202_schema_has_no_judge_conflict_or_score_columns"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**"
+      ],
+      "notes": "Migration folder path assumed (M0 sets it). Retention hooks for the nominator personal data belong to the M3 privacy issues; the Contact email is handled in M4-AWD-08."
+    },
+    {
+      "key": "M4-AWD-02",
+      "title": "Build the Award categories service and screen",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-266",
+        "REQ-200",
+        "REQ-031"
+      ],
+      "depends": [
+        "M4-AWD-01"
+      ],
+      "summary": "Lets an Editor or Administrator add, rename, reorder and remove categories under the five award groups, with removal blocked while nominations exist.",
+      "scope": [
+        "CategoryService: add, rename, reorder, remove, archive",
+        "Award categories admin screen under wiw_manage_awards, deny by default, nonce on actions",
+        "Removal refused with a message when any nomination uses the category",
+        "Every change goes through AuditLogger",
+        "Cache purge so the Awards page, Nominate guidance and home marquee read the new list"
+      ],
+      "acceptance": [
+        "An Editor or Administrator can add, rename and reorder a category",
+        "Removing a category that has nominations is refused with a message; removing an empty category works; both are audited",
+        "The five award groups are shown and categories sit under them",
+        "The Award categories screen holds categories only (no eligibility or criteria fields)",
+        "A user without wiw_manage_awards cannot open the screen or post to it"
+      ],
+      "tests": [
+        "test_REQ_266_category_with_nominations_cannot_be_removed",
+        "test_REQ_266_category_change_is_audited_and_shows_on_the_awards_page",
+        "test_REQ_200_award_categories_screen_requires_wiw_manage_awards",
+        "test_REQ_200_eligibility_text_is_not_a_category_setting"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "Uses AuditLogger and capability registration from M0."
+    },
+    {
+      "key": "M4-AWD-03",
+      "title": "Add the Nominations flag service and audited toggle",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-194",
+        "REQ-259"
+      ],
+      "depends": [],
+      "summary": "Implements the single feature flag, read through the settings service, defaulting off, changeable only by an Administrator with every change audited.",
+      "scope": [
+        "Nominations flag read via the M0 settings service, default off",
+        "Toggle handler requiring wiw_toggle_nominations (fixed, Administrator only)",
+        "Audit row with actor, time and an optional reason; no approval reference",
+        "Read-only state for an Editor"
+      ],
+      "acceptance": [
+        "The flag defaults to off on a fresh install",
+        "Only an Administrator can turn it on or off; an Editor sees the state read-only and a post is refused",
+        "Each change is an audit row with who, when and the optional reason",
+        "It is the only feature flag; no other flag exists"
+      ],
+      "tests": [
+        "test_REQ_194_nominations_flag_defaults_off_and_only_administrator_toggles_with_audit",
+        "test_REQ_267_editor_sees_the_toggle_read_only",
+        "test_REQ_194_nominations_is_the_only_feature_flag"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "Needs the M0 settings service and AuditLogger (their keys are in the M0 file, not referenced here because they are not known to this author)."
+    },
+    {
+      "key": "M4-AWD-04",
+      "title": "Build NominationService: add profile, stage, status, remove",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-267",
+        "REQ-202",
+        "REQ-034",
+        "REQ-226",
+        "REQ-198"
+      ],
+      "depends": [
+        "M4-AWD-01"
+      ],
+      "summary": "The domain service behind the Nominations screen: create a staff-added nomination from an existing profile, switch stage and status, remove, and record each change with the staff member.",
+      "scope": [
+        "Add profile to nominations from an existing reviewed or pending-review profile plus category and optional note; no free-text name",
+        "Stage switch Nominated/Winner and status switch Live/Not live, each written to wiw_nomination_changes and AuditLogger with the actor",
+        "Refuse Live for a pending-review profile (REQ-226)",
+        "Remove after a confirmation token, audited",
+        "Setting Live builds the public nominee page and purges the cache; Live plus Winner puts the nomination on the Winners page"
+      ],
+      "acceptance": [
+        "A new nomination, from the form or added by staff, starts Nominated and Not live",
+        "Add profile offers only existing profiles and creates a nomination linked to the chosen profile and category",
+        "A staff member can set stage and status without any score and each change shows the approver in the audit log",
+        "A nomination cannot be set Live for a pending-review profile",
+        "Removal requires confirmation and is audited; there is no Ineligible, Declined, Shortlisted or Finalist stage"
+      ],
+      "tests": [
+        "test_REQ_267_add_profile_creates_a_nomination_linked_to_the_profile",
+        "test_REQ_202_stage_and_status_changes_record_the_approver_without_a_score",
+        "test_REQ_267_nomination_cannot_be_set_live_for_a_pending_review_profile",
+        "test_REQ_202_remove_requires_confirmation_and_is_audited",
+        "test_REQ_034_new_staff_added_nomination_starts_nominated_and_not_live"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "The Awards module must write nothing to a profile pub_state (only Review\\StateMachine does). Reads profiles through the Directory read API."
+    },
+    {
+      "key": "M4-AWD-05",
+      "title": "Build the Nominations admin screen: list, toggle, controls",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-267",
+        "REQ-194",
+        "REQ-031",
+        "REQ-202"
+      ],
+      "depends": [
+        "M4-AWD-03",
+        "M4-AWD-04"
+      ],
+      "summary": "The one screen that runs the awards: the Open/Closed toggle, the filterable list, stage and status controls and Remove with confirmation. Replaces any Feature flag screen and Shortlist and winners page.",
+      "scope": [
+        "\"Nominations page: Open / Closed\" toggle at the top, read-only for Editors",
+        "List with filter by stage, status, category and source",
+        "Stage control, status control and Remove with a confirmation step, thin handlers calling NominationService",
+        "No Feature flag screen and no Shortlist and winners menu item",
+        "Menus follow effective capabilities"
+      ],
+      "acceptance": [
+        "The screen shows the toggle; an Administrator can change it and an Editor sees it read-only",
+        "There is no Feature flag screen and no Shortlist and winners page in the menu",
+        "A staff member can set stage and status and remove a nomination with confirmation, all audited",
+        "A Live nominee shows on the Nominees page, a Live winner on the Winners page, a Not live nomination nowhere",
+        "A user without wiw_manage_awards cannot open the screen"
+      ],
+      "tests": [
+        "test_REQ_194_toggle_visible_on_nominations_screen_and_read_only_for_editor",
+        "test_REQ_267_no_feature_flag_or_shortlist_screen_in_the_menu",
+        "test_REQ_267_nominations_screen_requires_wiw_manage_awards",
+        "test_REQ_202_stage_status_controls_call_nomination_service"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/Admin/**"
+      ],
+      "notes": "Admin sub-folder name assumed. Split list and controls if it grows."
+    },
+    {
+      "key": "M4-AWD-06",
+      "title": "Add the Add profile to nominations form with Contact email",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-267",
+        "REQ-268"
+      ],
+      "depends": [
+        "M4-AWD-04",
+        "M4-AWD-05"
+      ],
+      "summary": "The staff form that links a profile and a category to a new nomination, with an optional staff-only Contact email.",
+      "scope": [
+        "Profile picker limited to existing profiles (search by name), category picker, optional note, optional Contact email",
+        "One validator for the form; nonce and capability check",
+        "Contact email stored on the nomination and shown only to staff"
+      ],
+      "acceptance": [
+        "Add profile to nominations offers only existing profiles; there is no free-text name field",
+        "The new nomination is linked to the chosen profile and category and starts Nominated and Not live",
+        "The optional Contact email is never shown on a public page, in an export or in a log",
+        "A pending-review profile can be added but not set Live"
+      ],
+      "tests": [
+        "test_REQ_267_add_profile_offers_only_existing_profiles",
+        "test_REQ_268_contact_email_is_not_in_public_output_exports_or_logs",
+        "test_REQ_267_add_profile_form_validates_and_checks_nonce"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/Admin/**"
+      ]
+    },
+    {
+      "key": "M4-AWD-07",
+      "title": "Build the Nomination detail screen",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-031",
+        "REQ-196",
+        "REQ-202"
+      ],
+      "depends": [
+        "M4-AWD-04",
+        "M4-AWD-05"
+      ],
+      "summary": "Shows one nomination: nominator, nominee, evidence, change history, duplicate warnings and internal notes, for staff only.",
+      "scope": [
+        "Detail screen under wiw_manage_awards",
+        "Change history from wiw_nomination_changes",
+        "Duplicate warnings from the submission pipeline",
+        "Internal notes field",
+        "Control to link a public-form nomination to an existing profile (see notes)"
+      ],
+      "acceptance": [
+        "Nominator, nominee, evidence and change history are visible to staff only",
+        "Duplicate warnings are shown to staff without revealing who nominated whom to anyone else",
+        "Internal notes are never public and never in exports"
+      ],
+      "tests": [
+        "test_REQ_031_nomination_detail_requires_wiw_manage_awards",
+        "test_REQ_202_change_history_shows_staff_member_for_each_change"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/Admin/**"
+      ],
+      "notes": "GAP: the wiw_nominations table in docs/plugins/awards.md has no column for internal notes although the Nomination detail screen lists them. Assumed a notes column; confirm in the data model. The link-to-profile control is an assumption (see M4-AWD-10 notes)."
+    },
+    {
+      "key": "M4-AWD-08",
+      "title": "Register the Contact email in the PII catalogue and erasure",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-268",
+        "REQ-064"
+      ],
+      "depends": [
+        "M4-AWD-01",
+        "M4-AWD-04"
+      ],
+      "summary": "Treats the nomination Contact email as personal data: catalogued, removed by retention and by an erasure request, and kept out of logs, exports and errors.",
+      "scope": [
+        "Add the Contact email column to whoiswho-core/config/pii.php",
+        "Retention job removes it; erasure request removes it with the nomination",
+        "Log and error scrubbing check",
+        "Export builder excludes it"
+      ],
+      "acceptance": [
+        "The Contact email is in the PII catalogue",
+        "It is removed by retention and by an erasure request",
+        "It never appears in a public page, an export, a log or an error message"
+      ],
+      "tests": [
+        "test_REQ_268_contact_email_is_in_the_pii_catalogue_and_erased_with_the_nomination",
+        "test_REQ_268_contact_email_is_not_in_public_output_exports_or_logs",
+        "test_REQ_268_retention_removes_the_contact_email"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/features/privacy-and-data-rights.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/config/pii.php",
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "Relies on the M3 retention and data-rights engine; if it is not built yet, deliver the catalogue entry and an erase method that M3 calls."
+    },
+    {
+      "key": "M4-AWD-09",
+      "title": "Send nomination email and winner email from the Nominations screen",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "S",
+      "size": "M",
+      "reqs": [
+        "REQ-268",
+        "REQ-038"
+      ],
+      "depends": [
+        "M4-AWD-04",
+        "M4-AWD-05",
+        "M4-AWD-08"
+      ],
+      "summary": "Staff can send a plain, link-free nomination email, or a winner email on a winner row, to the Contact email, with who and when recorded and no address in the audit entry.",
+      "scope": [
+        "Send nomination email action offered only when a Contact email exists",
+        "Send winner email action on a Winner row, same address",
+        "Plain message with no link, through Platform mail",
+        "Record sender and time on the nomination; audit entry without the address",
+        "Nonce and capability check (wiw_manage_awards)"
+      ],
+      "acceptance": [
+        "Send nomination email is offered only when a Contact email exists",
+        "Sending records who sent it and when, and the audit entry holds no email address",
+        "The winner email goes to the same Contact email and is recorded the same way",
+        "The email contains no link and asks nothing of the nominee"
+      ],
+      "tests": [
+        "test_REQ_268_send_nomination_email_requires_a_contact_email_and_records_sender_and_time",
+        "test_REQ_268_audit_entry_for_nomination_email_holds_no_address",
+        "test_REQ_268_winner_email_uses_the_contact_email",
+        "test_REQ_038_winner_email_contains_no_link"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md",
+        "docs/features/email-and-notifications.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "GAP: the wording of the nomination and winner emails is not in the docs; propose copy and mark it for Brand and Legal review. Check host mail rate caps (third-party page) before sending in bulk."
+    },
+    {
+      "key": "M4-AWD-10",
+      "title": "Build the nominator submission and verification service",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-030",
+        "REQ-196",
+        "REQ-233"
+      ],
+      "depends": [
+        "M4-AWD-01",
+        "M4-AWD-04"
+      ],
+      "summary": "The server side of the six-step nomination form: step state, signed single-use link verification, and creation of the nomination as Nominated and Not live.",
+      "scope": [
+        "Submission service with step validation (details, verify email, nominee, category and evidence, conflict declaration, review and submit)",
+        "Verification email with a signed single-use link through the Platform signed-link service",
+        "A nomination cannot be submitted until the link is opened; the link works once; expired or used state",
+        "Reference issued on submit; nominator data stored privately; no account created",
+        "Nominee email, if given, stored as the Contact email"
+      ],
+      "acceptance": [
+        "A nomination cannot be submitted until the nominator email link is opened; the link works once",
+        "A submitted nomination starts Nominated and Not live",
+        "No account or login is created for the nominator",
+        "Nominator details are not visible on any public page",
+        "The submission only runs while the Nominations flag is on"
+      ],
+      "tests": [
+        "test_REQ_196_nominator_email_verified_by_single_use_link",
+        "test_REQ_233_expired_or_used_nominator_link_shows_expired_state",
+        "test_REQ_259_submission_refused_while_nominations_closed",
+        "test_REQ_030_submission_stores_nominee_category_evidence_and_conflict_declaration"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "GAP: the public form takes a free-text nominee name (step 3) while staff must pick an existing profile (REQ-267) and Live needs a profile (REQ-198, 226). The docs do not say how a public nomination gets linked to a profile. Assumed staff link it on the Nomination detail screen before it can go Live; confirm. Also REQ-030 asks for a conflict-of-interest declaration although judging is offline; it is stored as nominator-supplied text only."
+    },
+    {
+      "key": "M4-AWD-11",
+      "title": "Add duplicate warning, rate limit and free-text scan to nominations",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-196",
+        "REQ-122",
+        "REQ-030"
+      ],
+      "depends": [
+        "M4-AWD-10"
+      ],
+      "summary": "Protects the nomination form: a duplicate warning that allows continuing, a per-device and per-email rate limit, and a scan that blocks contact details and sensitive words in evidence.",
+      "scope": [
+        "Duplicate check on normalised nominee name, organisation and category, including suppressed names",
+        "Warning but continue allowed; staff merge without revealing who nominated whom",
+        "Rate limit per IP and per email using the Platform throttle, message \"Too many nominations from this device\"",
+        "Evidence scan blocking phone numbers, emails, ages, health, religion, politics and allegations with a message",
+        "Bot challenge hook"
+      ],
+      "acceptance": [
+        "A nomination naming an already nominated or suppressed person shows a duplicate warning but can continue",
+        "Evidence containing a phone number, email address or sensitive word is blocked with a message",
+        "Too many nominations from one device show \"Too many nominations from this device\"",
+        "The bot challenge is required on the final step"
+      ],
+      "tests": [
+        "test_REQ_196_duplicate_nomination_is_detected",
+        "test_REQ_196_suppressed_name_shows_warning_but_can_continue",
+        "test_REQ_122_nomination_rate_limit_per_ip_and_email",
+        "test_REQ_196_evidence_with_contact_data_or_sensitive_words_is_blocked"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "The sensitive word list is not defined in the docs; propose a config list and mark it for review. Bot challenge: Cloudflare Turnstile exists only if Cloudflare is added, so fall back to a honeypot plus rate limit."
+    },
+    {
+      "key": "M4-AWD-12",
+      "title": "Hide a nomination and suppress the name on an upheld removal",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-198",
+        "REQ-147",
+        "REQ-207"
+      ],
+      "depends": [
+        "M4-AWD-04"
+      ],
+      "summary": "When a removal request from a nominee is upheld, the nomination is hidden and the name is added to the suppression list.",
+      "scope": [
+        "Listener on the Compliance removal-upheld event",
+        "Hide the nomination and add the name to the suppression list through the Compliance API",
+        "Audit entry"
+      ],
+      "acceptance": [
+        "A valid removal hides the nomination and adds the name to the suppression list",
+        "A suppressed name shows a duplicate warning on a new nomination"
+      ],
+      "tests": [
+        "test_REQ_198_upheld_removal_of_a_nominee_adds_to_suppression_list",
+        "test_REQ_207_suppressed_nominee_never_reappears_on_nominee_pages"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "Needs the M1 corrections-removals-reports event (key not referenced because it is in another file)."
+    },
+    {
+      "key": "M4-AWD-13",
+      "title": "Build PublicNominee and PublicWinner read models and routes",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-033",
+        "REQ-198",
+        "REQ-064",
+        "REQ-226"
+      ],
+      "depends": [
+        "M4-AWD-04"
+      ],
+      "summary": "Public read models and routes for nominee, category and winner data built only from Live nominations and reviewed profiles, so templates never touch the tables.",
+      "scope": [
+        "Read models PublicNominee, nominee list and PublicWinner",
+        "Routes /awards/category/{n}, /awards/nominees, /awards/nominee/{ref}, /awards/winners",
+        "404 to visitors for a Not live nomination, preview flag for staff",
+        "Never exposes the nominator or the Contact email",
+        "A pending-review profile cannot appear on a nominee page"
+      ],
+      "acceptance": [
+        "A nominee page returns 404 to visitors while the nomination is Not live and never names the nominator",
+        "A nomination and its nominator are not visible on any public page while Not live",
+        "A pending-review profile cannot appear on a nominee page",
+        "A Live nominee shows on the Nominees page and a Live winner on the Winners page; Not live shows nowhere",
+        "Nominee pages are built from the reviewed profile and its sourced facts"
+      ],
+      "tests": [
+        "test_REQ_198_not_live_nomination_is_never_public",
+        "test_REQ_064_nominator_is_never_in_public_output",
+        "test_REQ_226_pending_review_profile_never_on_a_nominee_page",
+        "test_REQ_033_live_nominee_and_live_winner_appear_on_their_pages"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "The nominee ref format is not specified; propose an opaque short ref, not the nomination id."
+    },
+    {
+      "key": "M4-AWD-14",
+      "title": "Build the winners query with filters, search and URL state",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-246"
+      ],
+      "depends": [
+        "M4-AWD-13"
+      ],
+      "summary": "The winners query across every edition, newest first, with filters by year, group, category, type and country, search by name, category or citation, and sort.",
+      "scope": [
+        "Query over Live plus Winner nominations across editions",
+        "Filters: year (with counts), group, category, winner type person or organisation, country; sort Newest first or Name A to Z",
+        "Search by name, category or citation",
+        "Twelve per page grouped by year; filters read from the URL"
+      ],
+      "acceptance": [
+        "The winners page filters by year, group, category, type and country, searches by name, category or citation, and keeps filters in the URL",
+        "Winners of every edition are listed newest first",
+        "A winner with a public profile links to it"
+      ],
+      "tests": [
+        "test_REQ_246_winners_filter_by_year_group_category_type_country",
+        "test_REQ_246_winners_search_by_name_category_or_citation",
+        "test_REQ_246_winners_filters_round_trip_through_the_url"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "The years in the prototype (2026 to 2028) are unconfirmed sample data. The citation field is not in the wiw_nominations listing; assumed stored on the nomination."
+    },
+    {
+      "key": "M4-AWD-15",
+      "title": "Build the Awards stage read model for buttons and menus",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-259",
+        "REQ-033",
+        "REQ-194"
+      ],
+      "depends": [
+        "M4-AWD-03",
+        "M4-AWD-13"
+      ],
+      "summary": "Derives the public stage (Winners announced, Nominees announced, Nominations open, Closed) from the flag and from what is Live, so theme and blocks only read it.",
+      "scope": [
+        "AwardsStage read model with the four stages and their button label and link",
+        "Used by the Awards overview, Nominate page, nav label and home page",
+        "No new setting or flag"
+      ],
+      "acceptance": [
+        "With the switch off, the Nominate links are removed from menus and the nav label reads \"Nominations closed\"",
+        "The main button follows the stage: See the winners, See the nominees, Nominate someone",
+        "The home page has no awards button and the Awards and Nominate pages follow the stage"
+      ],
+      "tests": [
+        "test_REQ_259_stage_read_model_follows_flag_and_live_items",
+        "test_REQ_259_menus_drop_nominate_link_when_closed"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ],
+      "notes": "CONTRADICTION: the public docs say the overview label and button for the closed state are \"Nominations open soon\" and \"Get notified\" (older text, REQ-106 and REQ-195) while REQ-259 says \"Nominations are closed\" with no sign-up. This plan follows REQ-259; REQ-106 and REQ-195 need amending."
+    },
+    {
+      "key": "M4-AWD-16",
+      "title": "Export nominations with wiw_export_data, no commercial or contact data",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "awards-and-nominations",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-031",
+        "REQ-199",
+        "REQ-268"
+      ],
+      "depends": [
+        "M4-AWD-04",
+        "M4-AWD-08"
+      ],
+      "summary": "A nominations export for the Administrator that excludes the Contact email and any commercial field.",
+      "scope": [
+        "Export action under wiw_export_data (Administrator only)",
+        "Column allowlist: no Contact email, no commercial data",
+        "Audited"
+      ],
+      "acceptance": [
+        "The nominations export needs wiw_export_data, which stays with the Administrator",
+        "No export shows payment, subscription, sponsorship or customer data",
+        "The Contact email is not in the export"
+      ],
+      "tests": [
+        "test_REQ_031_nominations_export_requires_wiw_export_data",
+        "test_REQ_199_nominations_export_has_no_commercial_fields",
+        "test_REQ_268_contact_email_not_in_nominations_export"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/admin/awards-admin.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Awards/**"
+      ]
+    },
+    {
+      "key": "M4-AWD-17",
+      "title": "Add Awards architecture and boundary tests",
+      "milestone": "M4",
+      "area": "qa",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-199",
+        "REQ-183",
+        "REQ-194"
+      ],
+      "depends": [
+        "M4-AWD-04",
+        "M4-AWD-05",
+        "M4-AWD-13"
+      ],
+      "summary": "Architecture and boundary tests proving the Awards module never references Commerce and no Awards screen or export shows commercial data.",
+      "scope": [
+        "Arch test: nothing in src/Awards references src/Commerce",
+        "Test that Awards screens and exports contain no commercial field",
+        "Test that creating or ending an arrangement changes no nomination status",
+        "Capability matrix test for wiw_manage_awards, wiw_toggle_nominations, wiw_export_data"
+      ],
+      "acceptance": [
+        "No Awards screen or export shows any commercial field (automated test)",
+        "Creating or ending an arrangement does not change any nomination status",
+        "Awards never references Commerce (architecture test)"
+      ],
+      "tests": [
+        "test_REQ_199_awards_module_has_no_reference_to_commerce",
+        "test_REQ_183_no_awards_screen_or_export_shows_commercial_fields",
+        "test_REQ_199_arrangement_changes_do_not_change_nomination_status",
+        "test_REQ_194_awards_capability_matrix"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/Arch/**",
+        "site/tests/Security/**"
+      ],
+      "notes": "The arrangement test needs Commerce from M3; if not merged yet, mark it skipped with a pointer to the Commerce issue."
+    },
+    {
+      "key": "M4-AWD-18",
+      "title": "Write Playwright specs for Awards visibility and nomination flow",
+      "milestone": "M4",
+      "area": "qa",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-198",
+        "REQ-259",
+        "REQ-246",
+        "REQ-196"
+      ],
+      "depends": [
+        "M4-AWD-25",
+        "M4-AWD-26",
+        "M4-AWD-27",
+        "M4-AWD-28",
+        "M4-AWD-29"
+      ],
+      "summary": "End to end and accessibility checks for the public Awards pages across the closed, open, nominees and winners states.",
+      "scope": [
+        "Spec: closed state, open state, six-step form with a fake mail link",
+        "Spec: Not live nomination 404 and nominator never shown",
+        "Spec: winners filters in the URL; confetti skipped under reduced motion",
+        "axe checks on every Awards route"
+      ],
+      "acceptance": [
+        "With the switch off /nominate shows \"Nominations are closed\", no form and no sign-up, and the guidance is still shown",
+        "With the switch on /nominate shows the six-step form",
+        "Confetti plays once on load and does not play when reduced motion is requested",
+        "A Not live nomination shows nowhere"
+      ],
+      "tests": [
+        "tests/e2e/awards-nominate.spec.ts",
+        "tests/e2e/awards-public.spec.ts",
+        "tests/e2e/awards-winners.spec.ts"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/tests/e2e/awards-*.spec.ts"
+      ]
+    },
+    {
+      "key": "M4-AWD-25",
+      "title": "Build the Awards overview and rules pages",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-032",
+        "REQ-033",
+        "REQ-200",
+        "REQ-266"
+      ],
+      "depends": [
+        "M4-AWD-15",
+        "M4-AWD-02"
+      ],
+      "summary": "The /awards overview and /awards/rules pages: hero, where we are timeline, categories by group, how judging works and the sponsors note.",
+      "scope": [
+        "Hero with stage-following button and counts",
+        "Five-step public timeline with the current step marked Now",
+        "Categories in the five brand-coloured groups, each linking to its category page with a nominee count once public",
+        "How judging works and rules as page copy from the editor (no data)",
+        "Supported by block with the independence note"
+      ],
+      "acceptance": [
+        "The overview shows the edition, where it stands, the categories and how judging works",
+        "Categories come from the Award categories screen, not page copy",
+        "Eligibility and judging text is page copy edited in the page editor",
+        "The rules page says there is no public voting and that payment never affects outcomes"
+      ],
+      "tests": [
+        "tests/e2e/awards-public.spec.ts::overview",
+        "tests/e2e/awards-public.spec.ts::rules"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/patterns/**"
+      ],
+      "notes": "Prototype routes: /awards and /awards/rules. Work in the parent theme; only brand values go in the child."
+    },
+    {
+      "key": "M4-AWD-26",
+      "title": "Build the category, nominees and nominee pages",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-033",
+        "REQ-198",
+        "REQ-064"
+      ],
+      "depends": [
+        "M4-AWD-13"
+      ],
+      "summary": "The category page, the nominees page with group tabs, and the nominee page with the On the record extract.",
+      "scope": [
+        "Category page: group, winner if published, nominees, how judged, other categories in the group",
+        "Nominees page grouped by award group with tabs and counts",
+        "Nominee page: portrait, category, citation, On the record extract linking to the profile, other nominees; no nominator",
+        "Empty states"
+      ],
+      "acceptance": [
+        "A category page lists its Live nominees and winner and shows an empty state otherwise",
+        "The nominees page lists public nominees by group",
+        "A nominee page never names the nominator and returns 404 for Not live",
+        "Staff preview banner on a non-public nominee"
+      ],
+      "tests": [
+        "tests/e2e/awards-public.spec.ts::category",
+        "tests/e2e/awards-public.spec.ts::nominees",
+        "tests/e2e/awards-public.spec.ts::nominee-404"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/parts/**"
+      ],
+      "notes": "Prototype routes: /awards/category/:i, /awards/nominees, /awards/nominee/:ref. CONTRADICTION: the prototype empty states say nominees appear \"after the nominee's own consent\" and \"Nobody is listed without their consent\", but D-066 and the Awards docs say the site collects no nominee consent. Use neutral wording (\"Nominees are not published yet\") and fix the docs."
+    },
+    {
+      "key": "M4-AWD-27",
+      "title": "Build the winners page with filters and confetti",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-246",
+        "REQ-033",
+        "REQ-034"
+      ],
+      "depends": [
+        "M4-AWD-14"
+      ],
+      "summary": "The /awards/winners page with the quiet filter bar, grouped results and a one-time confetti that respects reduced motion.",
+      "scope": [
+        "Filter bar: search, year, group, category, country, winner is, sort, count and Clear link",
+        "Twelve per page grouped by year; link to profile where public",
+        "Confetti once on load in brand colours; skipped for prefers-reduced-motion",
+        "Filters in the URL"
+      ],
+      "acceptance": [
+        "The winners page filters by year, group, category, type and country and keeps filters in the URL",
+        "Confetti plays once on load and does not play when reduced motion is requested",
+        "Works at 360 px width and passes axe"
+      ],
+      "tests": [
+        "tests/e2e/awards-winners.spec.ts"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/assets/**"
+      ],
+      "notes": "Prototype route: /awards/winners."
+    },
+    {
+      "key": "M4-AWD-28",
+      "title": "Build the Nominate page, closed and open states with guidance",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-259",
+        "REQ-250",
+        "REQ-194",
+        "REQ-030"
+      ],
+      "depends": [
+        "M4-AWD-15",
+        "M4-PGE-04"
+      ],
+      "summary": "The /nominate page: closed state with links, open state hosting the form, and the guidance section shown either way.",
+      "scope": [
+        "Closed: \"Nominations are closed\" with links to winners or nominees if published, the rules and the overview; no form and no sign-up",
+        "Open: the six-step form mount point",
+        "Guidance: how it works, who can be nominated, criteria, categories, what to have ready, short answers; categories read from the Award categories screen",
+        "Menu items and nav label follow the stage (Nominate links removed while closed)"
+      ],
+      "acceptance": [
+        "With the switch off, /nominate shows \"Nominations are closed\", no form and no sign-up; the guidance is still shown",
+        "With the switch on, /nominate shows the six-step form",
+        "The guidance adds no data collection",
+        "The nav label reads \"Nominations closed\" while closed"
+      ],
+      "tests": [
+        "tests/e2e/awards-nominate.spec.ts::closed",
+        "tests/e2e/awards-nominate.spec.ts::open"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/templates.md",
+        "docs/theme/blocks-and-patterns.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/parts/**"
+      ],
+      "notes": "Prototype route: /nominate. Guidance text is page copy (M4-PGE-04)."
+    },
+    {
+      "key": "M4-AWD-29",
+      "title": "Build the six-step nomination form and its result pages",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-030",
+        "REQ-196",
+        "REQ-233",
+        "REQ-122"
+      ],
+      "depends": [
+        "M4-AWD-10",
+        "M4-AWD-11",
+        "M4-AWD-28"
+      ],
+      "summary": "The six-step form (details, verify email, nominee, category and evidence, conflict declaration, review and submit) and the verify, done, expired and rate-limited states.",
+      "scope": [
+        "Six steps with progress, privacy tick, nominee type, optional nominee email, category select, evidence and optional link",
+        "Duplicate warning and evidence block messages",
+        "Conflict declaration step; review summary with bot challenge",
+        "/nominate/verify (expired or used link page), /nominate/done with reference, \"Too many nominations from this device\" state",
+        "Accessible errors and focus handling"
+      ],
+      "acceptance": [
+        "The form has six steps in the documented order",
+        "Verifying the email link works once and an expired or used link shows the expired page",
+        "Evidence containing contact details is blocked with a message; a duplicate warning allows continuing",
+        "The visitor gets a reference and \"Nomination submitted\""
+      ],
+      "tests": [
+        "tests/e2e/awards-nominate.spec.ts::six-steps",
+        "tests/e2e/awards-nominate.spec.ts::expired-link",
+        "tests/e2e/awards-nominate.spec.ts::too-many"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/components.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/assets/**"
+      ],
+      "notes": "Prototype routes: /nominate (N01 to N05), /nominate/verify, /nominate/done. If L is too large, split steps 1 to 3 from steps 4 to 6."
+    },
+    {
+      "key": "M4-AWD-30",
+      "title": "Add the home Awards marquee and nominees blocks",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "awards-and-nominations",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-033",
+        "REQ-259"
+      ],
+      "depends": [
+        "M4-AWD-02",
+        "M4-AWD-13"
+      ],
+      "summary": "The home page marquee of category names and the nominees block, which appear and change with the stage; no awards button on the home page.",
+      "scope": [
+        "Awards categories marquee reading from the Award categories screen",
+        "Nominees grid block, shown only once nominees are public",
+        "No awards button on the home page"
+      ],
+      "acceptance": [
+        "The home page shows the award categories in the marquee and has no awards button",
+        "The nominees block appears only when nominees are public"
+      ],
+      "tests": [
+        "tests/e2e/awards-public.spec.ts::home-marquee"
+      ],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/pages/public/awards.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/pages/public/home.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/patterns/**",
+        "site/wp-content/themes/whoiswho/parts/**"
+      ],
+      "notes": "The home template belongs to the M2 Home issues; this issue adds the two blocks only and must not edit the home template."
+    },
+    {
+      "key": "M4-AWD-31",
+      "title": "Confirm awards programme details and align stale requirement text",
+      "milestone": "M4",
+      "area": "human",
+      "feature": "awards-and-nominations",
+      "priority": "M",
+      "size": "S",
+      "reqs": [],
+      "depends": [],
+      "summary": "A person confirms the unsettled programme details and fixes the older requirement text so the build matches.",
+      "scope": [
+        "Confirm editions and years (2026 to 2028 are sample), the proposed category list and groups",
+        "Supply eligibility, judging criteria, governance and conflict-of-interest text (Venture CEO)",
+        "Amend REQ-106 and REQ-195 to the REQ-259 behaviour (no sign-up while closed)",
+        "Decide how a public nomination is linked to a profile (see M4-AWD-10 notes)",
+        "Approve the nomination and winner email wording",
+        "Remove \"after the nominee's own consent\" wording from the pages docs"
+      ],
+      "acceptance": [
+        "The decisions are recorded in docs/questions.md or docs/decisions.md",
+        "REQ-106 and REQ-195 text matches REQ-259"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/awards-and-nominations.md",
+        "docs/plugins/awards.md",
+        "docs/pages/public/awards.md"
+      ],
+      "files": [],
+      "notes": "Owner: shared-docs owner for the requirement edits."
+    },
+    {
+      "key": "M4-CMT-01",
+      "title": "Configure wpDiscuz and core comments for stories only",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "comments",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-258",
+        "REQ-229"
+      ],
+      "depends": [],
+      "summary": "Installs and configures wpDiscuz so only stories take guest comments, all held for moderation, with a name, email and consent tick and no accounts.",
+      "scope": [
+        "Add wpDiscuz as a pinned dependency with an activation check in whoiswho-core",
+        "Comments open on the story type only; closed on profiles, events and pages",
+        "Force moderation on (WordPress default moderation); guests need name, a valid email and the consent tick; no login or registration",
+        "Turn off Gravatar; commenter email never in HTML; notification emails to commenters opt-in only",
+        "Held until approved by a user with moderate_comments",
+        "Proposed default: comments close 90 days after publication, no comments on Sponsored stories (open question)"
+      ],
+      "acceptance": [
+        "A story page shows the comments section; a profile page and an ordinary page do not",
+        "Submitting without a name, a valid email or the consent tick is refused",
+        "A submitted comment does not appear to other visitors until approved",
+        "No Gravatar request is made by the page",
+        "A comment containing the commenter email never appears in the public HTML"
+      ],
+      "tests": [
+        "test_REQ_258_comment_is_held_until_approved",
+        "test_REQ_258_comments_closed_on_profiles_and_pages",
+        "test_REQ_258_comment_requires_name_email_and_consent",
+        "test_REQ_258_no_gravatar_request",
+        "test_REQ_258_commenter_email_never_in_public_html"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/plugins/content.md",
+        "docs/plugins/third-party.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Comments/**"
+      ],
+      "notes": "wpDiscuz is third-party: pin the version and list it in the processor register (M4-CMT-02). Needs the M2 Stories issue for the story post type (key not referenced here). Sponsored story comments need a Legal decision. Note: the task brief says WordPress default moderation; REQ-258 and the docs say wpDiscuz, which this plan follows with core moderation underneath."
+    },
+    {
+      "key": "M4-CMT-02",
+      "title": "Add comment data to the PII catalogue, export and erase flow",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "comments",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-258",
+        "REQ-059"
+      ],
+      "depends": [
+        "M4-CMT-01"
+      ],
+      "summary": "Makes commenter data subject to retention and data-rights: catalogued, exported, erased or anonymised, and listed with its processor.",
+      "scope": [
+        "Add wpDiscuz tables and comment meta to whoiswho-core/config/pii.php",
+        "Export by email address includes that address comments; erase request removes or anonymises them",
+        "Retention schedule entry and processor register entry for wpDiscuz and any spam service",
+        "Comments kept while the story is public and erased on request (proposed default)"
+      ],
+      "acceptance": [
+        "A data export for an email address includes that address comments",
+        "An erase request removes or anonymises them",
+        "wpDiscuz tables are listed in the PII catalogue, processor register and retention schedule"
+      ],
+      "tests": [
+        "test_REQ_258_export_for_email_includes_comments",
+        "test_REQ_258_erase_request_removes_or_anonymises_comments",
+        "test_REQ_258_wpdiscuz_tables_are_in_the_pii_catalogue"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/plugins/content.md",
+        "docs/features/privacy-and-data-rights.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/config/pii.php",
+        "site/wp-content/plugins/whoiswho-core/src/Content/Comments/**",
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**"
+      ],
+      "notes": "Hooks into the M3 data-rights engine; if it is not built yet, expose exporter and eraser callbacks through the WordPress privacy tools API first. The processor register and retention schedule are not in the Compliance docs in a named file: assumed config files in the plugin."
+    },
+    {
+      "key": "M4-CMT-03",
+      "title": "Add comment spam protection: honeypot, rate limit and Akismet switch",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "comments",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-258",
+        "REQ-122"
+      ],
+      "depends": [
+        "M4-CMT-01"
+      ],
+      "summary": "Spam-like submissions are never published and a flood from one IP is refused.",
+      "scope": [
+        "Honeypot field on the comment form",
+        "Rate limit per IP using the Platform throttle",
+        "Akismet or an equivalent filter behind a setting, off until the processor decision is made",
+        "Flagged comments go to spam, not the queue"
+      ],
+      "acceptance": [
+        "A spam-like submission (honeypot filled, or flagged by the filter) is not published",
+        "More than the rate limit from one IP in a short time is refused"
+      ],
+      "tests": [
+        "test_REQ_258_honeypot_comment_is_not_published",
+        "test_REQ_258_comment_rate_limit_per_ip_is_enforced"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/plugins/content.md",
+        "docs/plugins/third-party.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Comments/**"
+      ],
+      "notes": "Akismet sends data to a third party and is only \"Proposed\" in the third-party page; keep it disabled until M4-CMT-07 records the decision."
+    },
+    {
+      "key": "M4-CMT-04",
+      "title": "Set moderation capability and moderator notice for comments",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "comments",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-258"
+      ],
+      "depends": [
+        "M4-CMT-01"
+      ],
+      "summary": "Only Editors and Administrators can moderate; a Reviewer cannot. Moderators are notified of a new held comment.",
+      "scope": [
+        "Confirm moderate_comments is held by Editor and Administrator only",
+        "Notify moderators on a new held comment through Platform mail with no commenter email in the body"
+      ],
+      "acceptance": [
+        "A user with moderate_comments can approve and remove comments; a Reviewer without it cannot",
+        "The moderator notice contains no commenter email"
+      ],
+      "tests": [
+        "test_REQ_258_reviewer_cannot_moderate_comments",
+        "test_REQ_258_editor_can_approve_and_remove_comments",
+        "test_REQ_258_moderator_notice_has_no_commenter_email"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Comments/**"
+      ],
+      "notes": "GAP: CLAUDE.md lists which staff actions go through AuditLogger and comment moderation is not on the list; assumed not audited. Confirm."
+    },
+    {
+      "key": "M4-CMT-05",
+      "title": "Style the comments block on the story template",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "comments",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-258"
+      ],
+      "depends": [
+        "M4-CMT-01"
+      ],
+      "summary": "The comments section on the story page: approved list with avatar initial, name, time and text, the Leave a comment form, and the note under it, styled to the brand tokens over wpDiscuz output.",
+      "scope": [
+        "Comments list with initials (no Gravatar), name, time, text",
+        "Leave a comment form with name, email, consent tick and the note that comments are checked before they appear",
+        "Thank-you message \"Thank you. Your comment will appear once it is approved.\"",
+        "CSS for wpDiscuz output using tokens only; keyboard and screen-reader labels"
+      ],
+      "acceptance": [
+        "A story page shows the comments section; profile and ordinary pages do not",
+        "After approval, the comment appears with the commenter name and no email",
+        "The form shows the moderation note and the thank-you message after posting",
+        "No brand value is hard-coded outside the tokens"
+      ],
+      "tests": [
+        "tests/e2e/comments.spec.ts"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/pages/public/stories.md",
+        "docs/theme/components.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/assets/**"
+      ],
+      "notes": "Prototype route: /stories/:slug (a design illustration with two sample comments)."
+    },
+    {
+      "key": "M4-CMT-06",
+      "title": "Write Playwright specs for the comment flow",
+      "milestone": "M4",
+      "area": "qa",
+      "feature": "comments",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-258"
+      ],
+      "depends": [
+        "M4-CMT-02",
+        "M4-CMT-03",
+        "M4-CMT-04",
+        "M4-CMT-05"
+      ],
+      "summary": "End to end test of a guest comment from submission through moderation to public display, plus accessibility.",
+      "scope": [
+        "Submit, see thank-you, confirm hidden from another visitor, approve as Editor, confirm visible without email",
+        "Refusals for missing name, email or consent",
+        "Spam honeypot and rate limit",
+        "axe on the story page with comments"
+      ],
+      "acceptance": [
+        "A submitted comment does not appear to other visitors until approved",
+        "After approval, the comment appears with the commenter name and no email",
+        "Submitting without a name, a valid email or the consent tick is refused"
+      ],
+      "tests": [
+        "tests/e2e/comments.spec.ts"
+      ],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/tests/e2e/comments.spec.ts"
+      ]
+    },
+    {
+      "key": "M4-CMT-07",
+      "title": "Decide the open comment questions and approve the processor",
+      "milestone": "M4",
+      "area": "human",
+      "feature": "comments",
+      "priority": "S",
+      "size": "S",
+      "reqs": [],
+      "depends": [],
+      "summary": "A person settles the open items so the defaults can be confirmed or changed.",
+      "scope": [
+        "Who moderates (Editors proposed)",
+        "How many days comments stay open (90 proposed)",
+        "Retention of comments",
+        "Whether Sponsored stories take comments (Legal)",
+        "Approve Akismet or an equivalent as a processor and confirm wpDiscuz update and licence terms"
+      ],
+      "acceptance": [
+        "Each decision is recorded in docs/questions.md or docs/decisions.md"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/comments.md",
+        "docs/plugins/third-party.md"
+      ],
+      "files": []
+    },
+    {
+      "key": "M4-PGE-01",
+      "title": "Create the theme block patterns for editable pages",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-260"
+      ],
+      "depends": [],
+      "summary": "Registers the ready-made block patterns so staff edit content while the theme owns structure.",
+      "scope": [
+        "Page hero, Purpose band, Pull statement and prose, Three pillars (colours fixed), Link list, Check list, Closing call, Legal section with optional draft note, Guidance section",
+        "Patterns registered in the parent theme and using tokens only",
+        "Locked parts (forms, labels, header, footer, hero videos) are not blocks"
+      ],
+      "acceptance": [
+        "An editor can insert each pattern and edit only the documented editable parts",
+        "Patterns render in the design system at 360 px and on desktop",
+        "The Three pillars colours are fixed to the brand blocks"
+      ],
+      "tests": [
+        "tests/e2e/pages-patterns.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/templates.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/patterns/**",
+        "site/wp-content/themes/whoiswho/assets/**"
+      ],
+      "notes": "Pattern names are proposals (blocks-and-patterns open point); settle at build. Prototype routes: /about, /faq, /complaints, /privacy."
+    },
+    {
+      "key": "M4-PGE-02",
+      "title": "Build the FAQ block with groups and questions",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-260"
+      ],
+      "depends": [
+        "M4-PGE-01"
+      ],
+      "summary": "A repeatable question-and-answer block with groups, the first question open and the rest collapsed, links chosen by page so renames do not break them.",
+      "scope": [
+        "Group block with heading containing question blocks (title and rich answer)",
+        "First question open, others collapsed, accessible disclosure markup",
+        "Answer links by page chooser",
+        "Reorder by dragging groups and questions",
+        "FAQ structured data off by default, switchable"
+      ],
+      "acceptance": [
+        "A new FAQ question added in the editor appears on /faq under its group, and groups can be reordered",
+        "The first question opens and the rest are collapsed",
+        "Answers can link to pages by choosing them"
+      ],
+      "tests": [
+        "tests/e2e/pages-faq.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/blocks/**",
+        "site/wp-content/themes/whoiswho/patterns/**"
+      ],
+      "notes": "FAQ structured data is an open point (not decided). Editor help text should say that a change to a deadline in settings must be mirrored in the FAQ answers."
+    },
+    {
+      "key": "M4-PGE-03",
+      "title": "Build dynamic blocks: figures, stage button, categories, edition",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-260",
+        "REQ-052"
+      ],
+      "depends": [
+        "M4-PGE-01",
+        "M4-AWD-15"
+      ],
+      "summary": "Dynamic blocks that show data the system knows and cannot be typed over.",
+      "scope": [
+        "Figures (counts of public profiles, industries, countries, stories, calculated)",
+        "Awards stage button following the stage read model",
+        "Awards categories (groups and categories linking to pages)",
+        "Edition label from settings",
+        "Judging criteria stays page copy, not a block"
+      ],
+      "acceptance": [
+        "Figures show calculated counts and cannot be typed over",
+        "The stage button label and link follow the stage",
+        "The categories block reads the Award categories screen",
+        "The edition name comes from settings"
+      ],
+      "tests": [
+        "tests/e2e/pages-dynamic-blocks.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/plugins/awards.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/blocks/**"
+      ],
+      "notes": "Profile rail, Story track, Nominees grid and Newsletter sign-up blocks are in the same doc table but belong to Home, Stories and Newsletter issues (M2); the Nominees grid is built in M4-AWD-30. Figures needs counts from Directory and Content read models (M1, M2)."
+    },
+    {
+      "key": "M4-PGE-04",
+      "title": "Build page templates and draft notes for the editable pages",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-260",
+        "REQ-120",
+        "REQ-250",
+        "REQ-203"
+      ],
+      "depends": [
+        "M4-PGE-01",
+        "M4-PGE-02"
+      ],
+      "summary": "Page templates that render editable content for About, FAQ, Awards rules, Complaints and takedown, Privacy, Terms, Cookies and the Nominate guidance, with removable Draft copy notes.",
+      "scope": [
+        "Templates for /about, /faq, /awards/rules, /complaints, /privacy, /terms, /cookies and the guidance section on /nominate",
+        "\"Draft copy for review\" and \"Draft sample text\" notes as deletable blocks, not template code",
+        "Page images show stored licence and attribution where an open-licence image is used",
+        "Title, description and share image editable per page"
+      ],
+      "acceptance": [
+        "Draft copy pages show the \"Draft copy for review\" note until it is removed in the editor",
+        "The Nominate guidance adds no data collection",
+        "There is no public commercial terms page",
+        "Open-licence images on pages show licence and attribution"
+      ],
+      "tests": [
+        "tests/e2e/pages-templates.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/pages/public/trust-legal-and-data-rights.md",
+        "docs/theme/templates.md",
+        "docs/theme/blocks-and-patterns.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/templates/**",
+        "site/wp-content/themes/whoiswho/parts/**"
+      ],
+      "notes": "Cookie notice and data-rights forms are separate issues (M3). Image licence storage is defined in the media issues (M1)."
+    },
+    {
+      "key": "M4-PGE-05",
+      "title": "Port the brand tokens into the child theme tokens file",
+      "milestone": "M4",
+      "area": "theme",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-190",
+        "REQ-052",
+        "REQ-273"
+      ],
+      "depends": [],
+      "summary": "The child theme holds every brand value (colours, fonts, spacing, logo, names) in one tokens file that overrides the parent defaults.",
+      "scope": [
+        "Child tokens file from prototype/theme/tokens.css with the seven guide colours, semantic tokens, label colours, fluid type and spacing",
+        "Fonts self-hosted with font-display swap; logo and mark assets",
+        "Brand name, long-form name, edition name, legal trading name and tagline in the tokens file only",
+        "Child is the active theme and extends the parent"
+      ],
+      "acceptance": [
+        "Changing a colour or font token changes it on every page without editing a template",
+        "The child is the active theme and extends the parent",
+        "Brand values are not edited in the parent theme"
+      ],
+      "tests": [
+        "tests/e2e/theme-tokens.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/index.md",
+        "docs/build/stack.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho-child/**"
+      ],
+      "notes": "Overlaps the M0 theme skeleton and tokens issue; if M0 already ports the tokens, narrow this issue to missing values and the brand name constants. Font licences are unconfirmed (M4-PGE-11)."
+    },
+    {
+      "key": "M4-PGE-06",
+      "title": "Add a build check that fails on hard-coded brand values",
+      "milestone": "M4",
+      "area": "infra",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-190"
+      ],
+      "depends": [
+        "M4-PGE-05"
+      ],
+      "summary": "A lint step in CI that fails when a colour, font or brand name appears outside the child tokens file.",
+      "scope": [
+        "Script scanning templates, patterns, CSS and PHP for hex colours, font-family names and brand strings outside the tokens file",
+        "Wired into the npm or composer lint script and CI",
+        "Allowlist for the tokens file and logo assets"
+      ],
+      "acceptance": [
+        "A build check fails when a colour, font or brand name is hard-coded outside the tokens file"
+      ],
+      "tests": [
+        "test_REQ_190_hardcoded_brand_value_fails_the_check"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/build/testing-and-ci.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": [
+        "scripts/check-brand-values.js",
+        ".github/workflows/**"
+      ]
+    },
+    {
+      "key": "M4-PGE-07",
+      "title": "Add the configuration strings settings for Legal wording",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-216",
+        "REQ-260"
+      ],
+      "depends": [],
+      "summary": "Plugin options for wording Legal may need to change, starting with the pending-review label, read by profile pages, cards and share previews.",
+      "scope": [
+        "Option for the pending-review label (\"Compiled automatically from public sources. Human review pending.\") on the Settings screen, autoload off",
+        "Read through the settings service by every surface that shows the label",
+        "Administrator-only change, audited"
+      ],
+      "acceptance": [
+        "Changing the pending-review label setting changes the label on every pending profile page, card and share preview",
+        "Only an Administrator can change it"
+      ],
+      "tests": [
+        "test_REQ_216_label_setting_changes_label_on_page_card_and_share_preview",
+        "test_REQ_216_label_setting_requires_administrator"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/theme-settings.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Settings/**"
+      ],
+      "notes": "May already be delivered by the M1 directory issues; if so keep only the audit and capability tests. The list of other Legal-changeable strings is not in the docs."
+    },
+    {
+      "key": "M4-PGE-08",
+      "title": "Set page-editing capability defaults and tests",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-260"
+      ],
+      "depends": [],
+      "summary": "Pages are editable by Editor and Administrator and not by a Reviewer, with the grant recorded in the capability matrix.",
+      "scope": [
+        "Map core edit_pages and publish_pages to Editor and Administrator by default",
+        "Reviewer has neither",
+        "Add to the capability matrix test",
+        "Menu hides Pages for users without it"
+      ],
+      "acceptance": [
+        "A user with page-editing capability can edit and publish About, FAQ, rules and legal pages; a Reviewer without it cannot"
+      ],
+      "tests": [
+        "test_REQ_260_editor_can_edit_and_publish_pages",
+        "test_REQ_260_reviewer_cannot_edit_pages"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/pages/admin/roles-and-capabilities.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Roles/**"
+      ],
+      "notes": "GAP: the capability list states no page default (blocks-and-patterns open points). Proposed Editor and Administrator; the shared-docs owner must add it to the matrix in docs/architecture.md."
+    },
+    {
+      "key": "M4-PGE-09",
+      "title": "Keep page URLs stable, redirect changed slugs and keep revisions",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-260"
+      ],
+      "depends": [],
+      "summary": "Editing a page never changes its URL, a changed slug redirects the old one, and revisions keep author and time.",
+      "scope": [
+        "Ensure page revisions are enabled and not disabled by the guard plugin",
+        "Old-slug redirect (301) for pages",
+        "Protect fixed routes (/about, /faq, /awards/rules, /nominate and so on) from accidental slug change or deletion"
+      ],
+      "acceptance": [
+        "Editing a page does not change its URL, and a changed slug redirects the old URL",
+        "Edited pages keep revision history with author and time"
+      ],
+      "tests": [
+        "test_REQ_260_changed_slug_redirects_old_url",
+        "test_REQ_260_page_revisions_keep_author_and_time",
+        "test_REQ_260_editing_a_page_keeps_its_url"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/plugins/guard.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Pages/**",
+        "site/wp-content/mu-plugins/**"
+      ],
+      "notes": "The guard mu-plugin is in the plugin area per CLAUDE.md. Protecting fixed routes is an assumption."
+    },
+    {
+      "key": "M4-PGE-10",
+      "title": "Seed the starter pages from the prototype copy",
+      "milestone": "M4",
+      "area": "plugin",
+      "feature": "editable-pages-and-copy",
+      "priority": "S",
+      "size": "M",
+      "reqs": [
+        "REQ-260",
+        "REQ-120"
+      ],
+      "depends": [
+        "M4-PGE-04"
+      ],
+      "summary": "A seed command that creates the public pages with draft copy from the prototype so staff only edit.",
+      "scope": [
+        "bin command creating About, FAQ with groups, Awards rules, Complaints, Privacy, Terms, Cookies and Nominate guidance as pages using the patterns",
+        "Idempotent; never overwrites edited pages",
+        "Draft notes included until final copy exists"
+      ],
+      "acceptance": [
+        "Seeded pages exist at their fixed routes and render with draft notes",
+        "Running the seed twice changes nothing",
+        "No commercial terms page is created"
+      ],
+      "tests": [
+        "test_REQ_260_seed_is_idempotent_and_does_not_overwrite_edits",
+        "test_REQ_120_no_commercial_terms_page_is_seeded"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/pages/public/trust-legal-and-data-rights.md"
+      ],
+      "files": [
+        "site/bin/**",
+        "site/wp-content/plugins/whoiswho-core/src/Content/Pages/**"
+      ],
+      "notes": "Prototype text is sample copy and legal text is placeholder until Legal supplies it. Pages live in the database, so the migration to the live host carries the edited copy. Read prototype/ for the text but do not edit it."
+    },
+    {
+      "key": "M4-PGE-11",
+      "title": "Supply final copy and legal text, and confirm font licences",
+      "milestone": "M4",
+      "area": "human",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-052",
+        "REQ-120"
+      ],
+      "depends": [],
+      "summary": "People outside the build supply the final words and licences.",
+      "scope": [
+        "Brand: tagline, mission, vision and values for About",
+        "Legal: Privacy, Terms, Cookie policy, Complaints wording",
+        "Venture CEO: governance and conflict-of-interest text for the rules",
+        "Confirm Repline and Montreal font licences",
+        "Confirm the primary brand colour"
+      ],
+      "acceptance": [
+        "Final copy is entered in the page editor and the Draft copy for review notes are removed",
+        "Font licences are recorded"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/brand-and-tokens.md",
+        "docs/pages/public/trust-legal-and-data-rights.md"
+      ],
+      "files": [],
+      "notes": "Legal review is currently deferred (D-016, Q35)."
+    },
+    {
+      "key": "M4-PGE-12",
+      "title": "Write Playwright specs for editable pages",
+      "milestone": "M4",
+      "area": "qa",
+      "feature": "editable-pages-and-copy",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-260",
+        "REQ-190"
+      ],
+      "depends": [
+        "M4-PGE-04",
+        "M4-PGE-08",
+        "M4-PGE-09",
+        "M4-PGE-06"
+      ],
+      "summary": "End to end checks that staff can edit, reorder and publish pages and that brand tokens apply everywhere.",
+      "scope": [
+        "Editor edits About and publishes; Reviewer cannot",
+        "Add and reorder FAQ question and group",
+        "Slug change redirect and revision history",
+        "Token change applies to every page"
+      ],
+      "acceptance": [
+        "A user with page-editing capability can edit and publish About, FAQ, rules and legal pages; a Reviewer without it cannot",
+        "A new FAQ question appears on /faq under its group",
+        "Changing a colour or font token changes it on every page without editing a template"
+      ],
+      "tests": [
+        "tests/e2e/pages-editing.spec.ts"
+      ],
+      "docs": [
+        "docs/features/editable-pages-and-copy.md",
+        "docs/theme/blocks-and-patterns.md"
+      ],
+      "files": [
+        "site/tests/e2e/pages-*.spec.ts"
+      ]
+    }
+  ]
+}

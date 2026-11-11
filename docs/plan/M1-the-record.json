@@ -1,0 +1,3730 @@
+{
+  "milestone": "M1",
+  "issues": [
+    {
+      "key": "M1-DIR-01",
+      "title": "Register profile type, taxonomies and hidden status",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-009"
+      ],
+      "depends": [
+        "M0-INF-01",
+        "M0-PLG-04"
+      ],
+      "summary": "Registers the wiw_profile post type, the controlled-list taxonomies and the non-public wiw_hidden post status that every non-public state will use.",
+      "scope": [
+        "Register wiw_profile: no archive, no feed, no REST, excluded from core search, no core permalink (plugin rewrite comes in DIR-04)",
+        "Register wiw_industry, wiw_sector, wiw_profession, wiw_org_type and hierarchical wiw_place with ISO code as term meta",
+        "Register custom post status wiw_hidden (non-public, not queryable)",
+        "Map term capabilities: Reviewers assign existing terms only; Editors and Administrators add terms in native term screens",
+        "Seed place terms: Nigeria first, other African countries, pan-African bodies (cities added as needed)"
+      ],
+      "acceptance": [
+        "wiw_profile is not reachable through the core REST API, feeds, archives or core search",
+        "The five taxonomies exist and are managed on the native term screens",
+        "A Reviewer can assign an existing term to a profile but cannot create, edit or delete terms",
+        "An Editor can add a term",
+        "Countries are top-level wiw_place terms with an ISO code, cities sit beneath them",
+        "A post with status wiw_hidden is never returned by a public core query"
+      ],
+      "tests": [
+        "test_REQ_003_profile_type_has_no_archive_feed_or_rest",
+        "test_REQ_009_taxonomies_registered_with_native_term_screens",
+        "test_REQ_009_reviewer_assigns_but_cannot_manage_terms",
+        "test_REQ_009_place_taxonomy_countries_with_iso_code"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/build/data-model.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "Seed values for the controlled lists (industry, sector, profession, org type) are an open point (contract U5); this issue registers the taxonomies and the place seed only. The import mapping step (M1-IMP-06) handles unknown terms."
+    },
+    {
+      "key": "M1-DIR-02",
+      "title": "Add profile state, version and provenance tables",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-123",
+        "REQ-125",
+        "REQ-142",
+        "REQ-242"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22"
+      ],
+      "summary": "Forward-only migrations and repositories for wiw_profile_state, wiw_profile_versions and wiw_field_provenance, indexed for the staff filters.",
+      "scope": [
+        "Migration for wiw_profile_state: pub_state, entity_type, tier, origin (import, customer, complimentary, nominee), source, import batch, content hash, importer, reviewer and review date, claimed flag and date, assigned user",
+        "Migration for wiw_profile_versions (append-only: author, how created, reason, time, approval status column for pending revisions, old and new values)",
+        "Migration for wiw_field_provenance (field, source URL, retrieval date, confidence, method, source hash)",
+        "Indexes for source, batch, type, state and origin filters",
+        "Repositories with no public write path for pub_state (only Review\\StateMachine will call the state writer, see M1-REV-01)",
+        "PII catalogue entries for any personal-data column"
+      ],
+      "acceptance": [
+        "Migrations run forward-only on a clean database and on a database from the M0 migration",
+        "wiw_profile_state has one row per profile with the columns named in the data model",
+        "wiw_profile_versions rejects updates and deletes (append-only)",
+        "Provenance rows hold source URL, retrieval date, confidence and method for each field",
+        "The source, batch, type and state filter queries use an index"
+      ],
+      "tests": [
+        "test_REQ_125_versions_table_is_append_only",
+        "test_REQ_142_provenance_row_requires_source_date_confidence_method",
+        "test_REQ_242_state_row_stores_source_and_batch",
+        "test_REQ_123_state_table_filters_use_indexes"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Migrations/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**"
+      ],
+      "notes": "Q82 (D-053): the architecture proposes the state lookup table; M1-DIR-12 measures it at 10,000 profiles. If the measurement says native meta suffices, this issue is revised before M1-DIR-06."
+    },
+    {
+      "key": "M1-DIR-03",
+      "title": "Enforce per-type field allowlists and forbidden attributes",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-139",
+        "REQ-140",
+        "REQ-143",
+        "REQ-068",
+        "REQ-142"
+      ],
+      "depends": [
+        "M1-DIR-01",
+        "M1-DIR-02"
+      ],
+      "summary": "One allowlist per entity type so a forbidden attribute has nowhere to be stored, and one validator that refuses unsourced or low-confidence facts.",
+      "scope": [
+        "Allowlists for organisation, individual and entrepreneur per contract sections 4.1 and 4.2 (config file)",
+        "Post meta registered only from the allowlist; no field exists for home address, phone, personal email, family, date of birth or age, health, religion, politics, ethnicity, finances, allegations or personal social handles",
+        "Profile field validator: field must have provenance, confidence not low, value within type rules",
+        "Individual profiles reject any contact detail field",
+        "No age or date-of-birth field anywhere, so the under-18 rule is by policy and seed only"
+      ],
+      "acceptance": [
+        "An individual profile stores only name, current title and organisation, industry, public-record roles, published awards, official website and bio",
+        "Writing a forbidden attribute key is refused; no meta key exists for it",
+        "A field with no source or low confidence cannot be saved as published content",
+        "An individual profile has no email or phone field",
+        "Allowlists differ for organisation and individual/entrepreneur"
+      ],
+      "tests": [
+        "test_REQ_139_individual_profile_stores_only_allowlisted_fields",
+        "test_REQ_140_forbidden_attributes_have_no_storage",
+        "test_REQ_142_field_without_source_is_refused",
+        "test_REQ_143_low_confidence_field_cannot_be_published",
+        "test_REQ_068_no_age_or_date_of_birth_field_exists"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/config/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Directory/**"
+      ],
+      "notes": "Contract U13: the under-18 check in REQ-212 has nothing to check because age cannot be stored. Covered only by the acquisition seed rule; raised as a human decision in M1-IMP-17."
+    },
+    {
+      "key": "M1-DIR-04",
+      "title": "Serve profile URLs with unique slugs and old-slug redirects",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-003",
+        "REQ-006"
+      ],
+      "depends": [
+        "M1-DIR-01"
+      ],
+      "summary": "The plugin owns /profile/{slug}: slug generation from the name with a collision suffix, a rewrite and handler, and a redirect from a previous slug.",
+      "scope": [
+        "Rewrite rules and template-redirect handler for /profile/{slug}",
+        "Slug generated from the name (diacritics transliterated), collision suffix, stable once published",
+        "Changing a slug records the old slug and answers 301 from it (core old-slug mechanism or an equivalent, see notes)",
+        "Handler asks the read model and state policy for the response and passes 200, 404 or 410 to the theme",
+        "Unknown slug gives 404"
+      ],
+      "acceptance": [
+        "Each profile has a stable /profile/{slug} URL",
+        "Two profiles with the same name get distinct slugs",
+        "Changing a slug makes the old URL redirect to the new one",
+        "An unknown slug returns 404"
+      ],
+      "tests": [
+        "test_REQ_003_profile_slug_generated_with_collision_suffix",
+        "test_REQ_006_old_slug_redirects_to_new_slug",
+        "test_REQ_006_unknown_slug_returns_404"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "REQ-129 (slug redirect) is WITHDRAWN as native WordPress behaviour but the feature page still requires the redirect; REQ-006 is cited here. Core old-slug redirects work only for core-queried types, so a custom handler is likely needed."
+    },
+    {
+      "key": "M1-DIR-05",
+      "title": "Build the PublicProfile read model",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-208",
+        "REQ-139",
+        "REQ-144",
+        "REQ-133",
+        "REQ-060",
+        "REQ-247",
+        "REQ-216",
+        "REQ-006"
+      ],
+      "depends": [
+        "M1-DIR-03",
+        "M1-DIR-04",
+        "M1-REV-02"
+      ],
+      "summary": "The only way a template or form can read a profile: returns data only when the state allows it, only allowlisted fields, and produces the label, noindex flag and share-preview data.",
+      "scope": [
+        "PublicProfile::find(slug) returns an object only for the two Published states (staff preview returns the object plus a visibility note)",
+        "Exposes allowlisted fields only; facts without a source and retrieval date are omitted",
+        "Never returns an email or phone for an individual; contact switches default private (REQ-060)",
+        "Produces pending-review label text (one fixed configuration value), noindex flag, reviewed-on date and share-preview data (name, title, organisation, image)",
+        "Image: portrait or logo only; no cover or banner field exists on the model",
+        "Exposes the claimed flag only as a boolean for hiding the Claim button (never the badge)",
+        "Related organisation link resolves at read time and is returned only if that organisation is public",
+        "Architecture test: no template calls get_post_meta or WP_Query on wiw_profile"
+      ],
+      "acceptance": [
+        "A profile in a non-public state gives no object to a public caller",
+        "A pending profile object carries the label and noindex flag",
+        "Every key fact carries a source and retrieval date, and a fact without a source is not in the object",
+        "No email or phone is returned for an individual",
+        "The model has no cover or banner image property",
+        "A person linked to an organisation that is not public shows no organisation link",
+        "The architecture test fails if a template reads profile meta or queries the type directly"
+      ],
+      "tests": [
+        "test_REQ_208_hides_unreviewed_profiles_from_every_surface",
+        "test_REQ_144_fact_without_source_is_not_returned",
+        "test_REQ_060_contact_details_private_by_default",
+        "test_REQ_247_profile_page_has_no_cover_image",
+        "test_REQ_216_pending_profile_carries_label_and_noindex",
+        "test_REQ_139_read_model_returns_allowlisted_fields_only",
+        "test_REQ_208_related_organisation_hidden_when_not_public",
+        "test_REQ_208_templates_do_not_query_profile_type_directly"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Arch/**"
+      ],
+      "notes": "Contract U7 (a person to organisation link that must not leak) is resolved here as read-time resolution, matching docs/plugins/import.md."
+    },
+    {
+      "key": "M1-DIR-06",
+      "title": "Add list queries, filters and industry counts",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-007",
+        "REQ-218",
+        "REQ-208",
+        "REQ-009"
+      ],
+      "depends": [
+        "M1-DIR-05"
+      ],
+      "summary": "Public list queries for the five lists: reviewed profiles only, filters from the URL, sort, 16 per page, plus industry counts for the industries index.",
+      "scope": [
+        "PublicProfileList query service: type scope (All, People, Entrepreneurs, Businesses, Institutions), reviewed profiles only",
+        "Filters: industry, country, city (all lists); profession (People, Entrepreneurs); organisation type (Businesses, Institutions); inapplicable filters ignored safely",
+        "Sort: Name A to Z, Recently updated; never by payment",
+        "Pagination of 16 and result count",
+        "Industry counts of reviewed profiles; industry page data (stories added in M2)",
+        "No direct profile WP_Query from templates"
+      ],
+      "acceptance": [
+        "Each of the five lists returns 16 profiles per page",
+        "Filters apply from the URL and a filtered URL returns the same set in a new session",
+        "Profession is accepted only on People and Entrepreneurs; organisation type only on Businesses and Institutions",
+        "A pending-review profile never appears in a list or industry count",
+        "Sorting never uses a commercial signal"
+      ],
+      "tests": [
+        "test_REQ_007_list_returns_sixteen_per_page",
+        "test_REQ_007_filters_apply_from_url_parameters",
+        "test_REQ_007_profession_filter_only_on_people_lists",
+        "test_REQ_218_pending_profile_never_listed",
+        "test_REQ_208_industry_counts_exclude_non_public"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "The per-list search box and /search are M2. The header search box is a theme slot until then."
+    },
+    {
+      "key": "M1-DIR-07",
+      "title": "Relay profile enquiries without exposing the owner",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-018",
+        "REQ-060",
+        "REQ-122"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M1-COR-02",
+        "M1-DIR-05"
+      ],
+      "summary": "POST /enquire/{slug} stores an Enquiry item and forwards it to staff so the owner email and phone are never public.",
+      "scope": [
+        "Endpoint validates with one validator and uses the form protections from M1-COR-02",
+        "Creates an Enquiry item in wiw_support_items linked to the profile; sends a staff notification through the mailer",
+        "Refuses the post when enquiries are switched off for the profile",
+        "Never writes an owner contact detail into any response",
+        "Refused after repeated sends from one IP or email, and refused when the bot challenge is unsolved"
+      ],
+      "acceptance": [
+        "A valid enquiry creates an item and a staff notification",
+        "The profile page, response and email never contain an owner email or phone",
+        "After the rate limit the next send shows a \"try later\" message and creates no item",
+        "An unsolved bot challenge is refused",
+        "When enquiries are off the endpoint refuses and the page says so"
+      ],
+      "tests": [
+        "test_REQ_018_enquiry_relayed_without_exposing_owner_email",
+        "test_REQ_122_enquiry_refused_after_rate_limit",
+        "test_REQ_018_enquiry_refused_when_bot_challenge_unsolved",
+        "test_REQ_060_enquiry_refused_when_switched_off"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/plugins/compliance.md",
+        "docs/features/email-and-notifications.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Enquiry/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "The Enquiries admin screen and the Get listed forms belong to M3. This issue creates the item only. Email template wording belongs to the email feature."
+    },
+    {
+      "key": "M1-DIR-08",
+      "title": "Count daily profile views for the staff report",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-236"
+      ],
+      "depends": [
+        "M1-DIR-05",
+        "M0-PLG-15"
+      ],
+      "summary": "A daily roll-up of profile views, bots filtered, no IP stored, so staff can answer a subject who asks for the view count.",
+      "scope": [
+        "Count a view on a successful public profile response without storing an IP address or identifier",
+        "Filter known bots",
+        "wiw_view_counts_daily migration and a daily roll-up job",
+        "Expose the count read-only on the Profile screen history panel"
+      ],
+      "acceptance": [
+        "A profile view increments the daily count",
+        "A bot user agent does not increment it",
+        "No IP address is stored in the table or logs",
+        "A 404 or 410 is not counted"
+      ],
+      "tests": [
+        "test_REQ_236_view_count_increments_without_storing_ip",
+        "test_REQ_236_bot_views_are_not_counted"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Analytics/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "Analytics beyond a view count are out of scope (REQ-020)."
+    },
+    {
+      "key": "M1-DIR-09",
+      "title": "Build the staff Profiles list screen",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-091",
+        "REQ-242",
+        "REQ-208",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-DIR-02",
+        "M1-DIR-05",
+        "M0-PLG-04"
+      ],
+      "summary": "The wp-admin Profiles list, filterable and groupable by source, batch, type, state, origin and name, showing what visitors currently see for each row. Prototype A05, #/admin/profiles.",
+      "scope": [
+        "Custom list table over wiw_profile_state: columns for name, type, state, origin, source, batch, claimed mark (staff only), visible-to-visitors status (page, gone, not public)",
+        "Filters and group-by for source, batch, type, state, origin and name; filter state kept in the URL",
+        "Capability check read_private_wiw_profiles; deny by default",
+        "Row action to unpublish one profile (needs wiw_unpublish_profiles; wired in M1-REV-03)",
+        "A host slot for the bulk unpublish action (built in M1-REV-10) that acts on the filtered set"
+      ],
+      "acceptance": [
+        "The Profiles list filters and groups by source, batch, type and state",
+        "Each row shows what visitors currently see",
+        "The Claimed checkmark shows to staff only",
+        "A user without the read capability gets 403",
+        "The filter set is available to the bulk action host"
+      ],
+      "tests": [
+        "test_REQ_242_profiles_list_filters_by_source_and_batch",
+        "test_REQ_208_profiles_list_shows_visitor_status_per_row",
+        "test_REQ_244_profiles_list_denies_without_capability"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "Native list table customised (\"customised-native\" in the inventory)."
+    },
+    {
+      "key": "M1-DIR-10",
+      "title": "Add direct profile edit with reason, versions and audit",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-125",
+        "REQ-188",
+        "REQ-232",
+        "REQ-143",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-DIR-02",
+        "M1-DIR-03",
+        "M1-COR-01",
+        "M0-PLG-06"
+      ],
+      "summary": "The Profile screen core: edit fields with a mandatory reason, write a version and an audit row, assign terms, and optionally close an open correction. Prototype A06, #/admin/profiles/b2.",
+      "scope": [
+        "Edit form for name, title, organisation, website, industry, country, city, profession or organisation type, biography, achievements",
+        "Reason (or request reference) required; save writes a wiw_profile_versions row (author, time, reason, old and new) and a row through AuditLogger",
+        "A published unclaimed profile changes publicly at once; an edit by the assigned user of a claimed profile is routed to a pending revision (M1-REV-11)",
+        "\"This resolves the open item\" select that closes the linked correction",
+        "Term assignment (assign_terms) and term creation limited by capability",
+        "Nonce, capability and one validator on the handler; handler calls a domain service"
+      ],
+      "acceptance": [
+        "Editing a published profile requires a reason",
+        "A save creates a version with author and time and writes an audit row",
+        "The public page changes at once for an unclaimed profile",
+        "Choosing an open correction closes it on save",
+        "An edit that tries to store a field outside the allowlist is refused",
+        "A Reviewer cannot save field edits (no edit_wiw_profiles)"
+      ],
+      "tests": [
+        "test_REQ_125_edit_writes_version_with_reason",
+        "test_REQ_188_profile_edit_writes_audit_row",
+        "test_REQ_232_edit_closes_linked_correction",
+        "test_REQ_244_reviewer_cannot_edit_profile_fields",
+        "test_REQ_125_edit_without_reason_is_refused"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Edit/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "Claim approval and user assignment are M3."
+    },
+    {
+      "key": "M1-DIR-11",
+      "title": "Add Profile screen panels for contact, slug, history and notes",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-060",
+        "REQ-018",
+        "REQ-161",
+        "REQ-187",
+        "REQ-125"
+      ],
+      "depends": [
+        "M1-DIR-10",
+        "M1-DIR-04"
+      ],
+      "summary": "The rest of the Profile screen: status and marks, contact and enquiry switches, public URL, fields with their sources, source sync, revision history and internal notes.",
+      "scope": [
+        "Status and marks panel: state, origin, source, batch, Claimed checkmark (staff only)",
+        "Contact and enquiries panel: per-detail public switches (default private) and an enquiries on/off switch, needs edit_wiw_profiles, each change audited",
+        "Public URL panel: change slug with redirect (M1-DIR-04)",
+        "Fields and their sources panel: read-only source URL, retrieval date, confidence, method (wiw_view_sources)",
+        "Source sync panel: a changed source shows as flagged, never overwritten",
+        "Revision history and internal notes (wiw_notes table, never public, PII catalogue entry)",
+        "Empty placeholders for the Claim and Arrangements panels that M3 fills"
+      ],
+      "acceptance": [
+        "Contact details are private until a staff member switches one on and the change is audited",
+        "Switching enquiries off makes the public form refuse",
+        "Changing the slug leaves a working redirect",
+        "The fields panel shows each field source and retrieval date and has no edit control",
+        "Notes are never returned by any public read model",
+        "Revision history lists author, time and reason"
+      ],
+      "tests": [
+        "test_REQ_060_contact_switch_default_private_and_audited",
+        "test_REQ_018_enquiry_switch_off_hides_form",
+        "test_REQ_187_internal_notes_never_public",
+        "test_REQ_161_changed_source_is_flagged_not_applied"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/directory.md",
+        "docs/pages/admin/profiles-and-claims.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "The claim and arrangement panels stay empty or read-only until Trust and Commerce ship in M3."
+    },
+    {
+      "key": "M1-DIR-12",
+      "title": "Measure list queries at 10,000 profiles",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "directory-and-profiles",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-040",
+        "REQ-007"
+      ],
+      "depends": [
+        "M1-DIR-06"
+      ],
+      "summary": "A timed test that settles Q82: whether the profile state lookup table is needed, against the performance budget.",
+      "scope": [
+        "Seed generator for 10,000 fictional profiles across all types and states",
+        "Timed run of the list, filter and industry count queries on the state table and on native meta",
+        "Record the result on the issue as a recommendation for the shared-docs owner"
+      ],
+      "acceptance": [
+        "Result figures are attached to the issue",
+        "The list query time at 10,000 profiles is within the budget agreed in the issue"
+      ],
+      "tests": [
+        "test_REQ_040_list_query_within_budget_at_10000_profiles"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/build/data-model.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/Performance/**"
+      ],
+      "notes": "Q82 is an open question. The shared-docs owner records the answer; this issue edits no docs."
+    },
+    {
+      "key": "M1-DIR-13",
+      "title": "Build profile card and pending-review label components",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-216",
+        "REQ-155",
+        "REQ-247"
+      ],
+      "depends": [
+        "M0-THM-01",
+        "M0-THM-02",
+        "M1-DIR-05"
+      ],
+      "summary": "Shared theme components: the profile card used on lists (and later home and search) and the pending-review label with its states on page, card and share preview.",
+      "scope": [
+        "Profile card: poster (portrait or logo, else monogram), industry, name, role; no trust label, no Sponsored label",
+        "Pending-review label component reading its text from PublicProfile",
+        "No cover or banner image anywhere",
+        "Colours, fonts and spacing come from the child theme tokens only"
+      ],
+      "acceptance": [
+        "The card shows no Verified, Featured, Sponsored or Claimed mark",
+        "The pending label shows on a pending card and a pending page and never on a reviewed profile",
+        "The card has no cover image",
+        "The card works at 360 px and is keyboard focusable with a visible focus state"
+      ],
+      "tests": [
+        "spec: tests/e2e/profile-card.spec.ts",
+        "spec: tests/e2e/pending-label.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/components.md",
+        "docs/theme/brand-and-tokens.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/template-parts/**",
+        "site/wp-content/themes/whoiswho/assets/**"
+      ],
+      "notes": "Prototype: #/directory (card), #/profile/deltaline-cold-chain (V56 label). Brand values live only in the child theme tokens file."
+    },
+    {
+      "key": "M1-DIR-14",
+      "title": "Build the five directory list templates",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-001",
+        "REQ-007",
+        "REQ-218",
+        "REQ-208"
+      ],
+      "depends": [
+        "M1-DIR-06",
+        "M1-DIR-13"
+      ],
+      "summary": "The directory template with a type argument for All, People, Entrepreneurs, Businesses and Institutions, with tabs and a header band. Prototype V52, V03, V53, V04, V05.",
+      "scope": [
+        "Template directory for /directory, /people, /entrepreneurs, /businesses, /institutions",
+        "Tabs linking the five lists with the current one marked",
+        "Header band with a title and a search box slot (live in M2)",
+        "Empty state with a clear-filters action",
+        "Results from PublicProfileList only; 16 per page with pagination controls"
+      ],
+      "acceptance": [
+        "Each of the five lists loads and shows 16 profiles per page",
+        "A pending profile is never named on a list",
+        "The tabs mark the current list",
+        "A no-results state offers Clear filters"
+      ],
+      "tests": [
+        "spec: tests/e2e/directory-lists.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/directory, #/people, #/entrepreneurs, #/businesses, #/institutions."
+    },
+    {
+      "key": "M1-DIR-15",
+      "title": "Build the filter bar and shareable filter URLs",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-007",
+        "REQ-040",
+        "REQ-043"
+      ],
+      "depends": [
+        "M1-DIR-14"
+      ],
+      "summary": "The quiet filter bar: filters apply at once, live in the address, announce the count, with a Clear link, sort and a grid or list switch.",
+      "scope": [
+        "Filters: industry, country, city; profession on People and Entrepreneurs; organisation type on Businesses and Institutions",
+        "Applies on change with no Apply button, with a no-JavaScript form fallback",
+        "A filter that is on is underlined; a Clear link shows only while a filter is on",
+        "Result count announced through a live region",
+        "Sort: Name A to Z, Recently updated; grid or list switch",
+        "Filtered and sorted views output a canonical to the unfiltered list (tag emitted by M1-SEO-01)"
+      ],
+      "acceptance": [
+        "A filtered list URL opened in a new browser shows the same filtered result",
+        "The Clear link is absent when no filter is on",
+        "The match count is announced when filters change",
+        "Filters work with JavaScript off",
+        "No horizontal scroll at 360 px"
+      ],
+      "tests": [
+        "spec: tests/e2e/directory-filters.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype: filter bar on #/people and #/directory."
+    },
+    {
+      "key": "M1-DIR-16",
+      "title": "Build the industries index and industry page",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-007",
+        "REQ-009"
+      ],
+      "depends": [
+        "M1-DIR-06",
+        "M1-DIR-13"
+      ],
+      "summary": "Templates for /industries and /industries/:name. Prototype V06, V07.",
+      "scope": [
+        "Industries index with a public count per industry",
+        "Industry page with reviewed profiles and a stories block that is absent until stories exist (M2)",
+        "Empty state for an industry with no profiles"
+      ],
+      "acceptance": [
+        "An industry with no public profiles renders an empty state",
+        "Counts include reviewed profiles only",
+        "The stories block is absent, not empty, until M2 provides PublicStory"
+      ],
+      "tests": [
+        "spec: tests/e2e/industries.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/industries and #/industries/Technology."
+    },
+    {
+      "key": "M1-DIR-17",
+      "title": "Build the profile page shell: header, about, type sections",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-247",
+        "REQ-082"
+      ],
+      "depends": [
+        "M1-DIR-05",
+        "M1-DIR-13"
+      ],
+      "summary": "The profile template for individuals, entrepreneurs, businesses and institutions. Prototype V09, V10, V11, V54.",
+      "scope": [
+        "Header: portrait or logo (single image), name, title and organisation, city, country, industry, type",
+        "About section with the biography",
+        "Type sections: ventures, mandate and history, career, education, milestones, leadership, products and services, achievements, media; each appears only when it has content",
+        "No cover or banner image; no email or phone for an individual",
+        "Social and web links as plain links, no platform API calls",
+        "Two-column layout with a right rail slot, stacked at 360 px"
+      ],
+      "acceptance": [
+        "The page renders every type with only the sections that have content",
+        "No cover or banner image renders",
+        "An individual profile never renders an email or phone",
+        "Social links are plain links",
+        "The page has no horizontal scroll at 360, 768 and 1280 px"
+      ],
+      "tests": [
+        "spec: tests/e2e/profile-page.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/profile/tunde-achebe-wanjala (V09), #/profile/savanna-loop-agritech (V10), #/profile/oyo-crest-university (V11)."
+    },
+    {
+      "key": "M1-DIR-18",
+      "title": "Build key facts, sources, related blocks and right rail",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-144",
+        "REQ-133",
+        "REQ-142",
+        "REQ-156",
+        "REQ-006"
+      ],
+      "depends": [
+        "M1-DIR-17"
+      ],
+      "summary": "The facts table with a source and retrieval date beside each fact, the related stories and award panel slots, and the right rail with the Something wrong actions.",
+      "scope": [
+        "Key facts table: each fact shows a source link and retrieval date; a fact without a source is not rendered",
+        "Right rail: contact (enquiry form trigger or switched-off notice) and Something wrong actions: Claim (hidden when claimed or pending), Suggest a correction, Request removal, Report",
+        "Related stories block, absent until M2",
+        "Award panel block, absent until M4 provides a published nomination",
+        "The share preview panel is not rendered on the live page"
+      ],
+      "acceptance": [
+        "Every key fact shows a source and a retrieval date",
+        "A fact without a source is not rendered",
+        "The four actions link to /claim, /correct, /remove and the report dialog",
+        "The Claim button is hidden when the profile is claimed or pending review",
+        "Related stories and award blocks are absent, not empty, when there is no data"
+      ],
+      "tests": [
+        "spec: tests/e2e/profile-facts-and-actions.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "templates.md leaves open whether to hide Claim on pending profiles; REQ-226 says a pending profile cannot be claimed, so hide it. The claim form is M3."
+    },
+    {
+      "key": "M1-DIR-19",
+      "title": "Render profile states and the staff preview banner",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-216",
+        "REQ-208",
+        "REQ-209"
+      ],
+      "depends": [
+        "M1-DIR-17",
+        "M1-REV-02"
+      ],
+      "summary": "Template behaviour for each state: reviewed, pending (label and correct or remove link), removed (410 template), hidden (404 for visitors, preview banner for staff). Prototype V15, V56, V12.",
+      "scope": [
+        "Pending label with a link to correct or remove (noindex output belongs to the guard, M1-SEO-01)",
+        "\"Reviewed on <date>\" for reviewed profiles",
+        "Staff preview banner explaining what visitors would get for a non-public profile",
+        "The theme never decides visibility; it renders what the plugin returns",
+        "Not-found and gone views use the error templates (M1-SEO-09)"
+      ],
+      "acceptance": [
+        "A pending profile shows the label and a correct or remove link",
+        "A reviewed profile shows the Reviewed on date",
+        "Staff see a preview banner on a non-public profile; visitors get 404",
+        "The theme contains no state logic (architecture check)"
+      ],
+      "tests": [
+        "spec: tests/e2e/profile-states.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/profile/harmattan-grid-energy (V15), #/profile/deltaline-cold-chain (V56)."
+    },
+    {
+      "key": "M1-DIR-20",
+      "title": "Build the enquiry form UI and switched-off state",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-018",
+        "REQ-122"
+      ],
+      "depends": [
+        "M1-DIR-07",
+        "M1-DIR-18"
+      ],
+      "summary": "The enquiry form in the profile right rail, its rate-limit message, challenge slot and the enquiries-off state. Prototype V43, V47.",
+      "scope": [
+        "Form with name, email, message, consent text, challenge slot and time-based form token field",
+        "Accessible errors; \"try later\" message when rate limited",
+        "Switched-off state replaces the form with a notice",
+        "Confirmation view with a reference"
+      ],
+      "acceptance": [
+        "The form never shows the owner email or phone",
+        "The switched-off state shows the notice and no form",
+        "The rate-limit message appears and no success state is shown"
+      ],
+      "tests": [
+        "spec: tests/e2e/enquiry-form.spec.ts"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype route #/profile/ngozi-balogun-mensah (V43, V47)."
+    },
+    {
+      "key": "M1-DIR-21",
+      "title": "Test profile and list pages for accessibility and layout",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-040",
+        "REQ-041",
+        "REQ-043",
+        "REQ-247"
+      ],
+      "depends": [
+        "M1-DIR-15",
+        "M1-DIR-18",
+        "M1-DIR-19"
+      ],
+      "summary": "Playwright and axe checks over the lists and profile pages at 360, 768 and 1280 px.",
+      "scope": [
+        "Axe scan of each list and each profile type and state at three widths",
+        "Horizontal-scroll check, no cover image check, no email or phone for an individual check",
+        "Largest Contentful Paint measured in CI against the 2.5 s target (REQ-041, an assumed target), reported but not blocking until M5"
+      ],
+      "acceptance": [
+        "Profile and list pages pass the automated accessibility check at 360, 768 and 1280 px with no horizontal scroll",
+        "No profile page renders a cover or banner image",
+        "No individual profile renders an email or phone"
+      ],
+      "tests": [
+        "spec: tests/e2e/a11y-directory.spec.ts",
+        "test_REQ_247_profile_page_has_no_cover_image"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "key": "M1-DIR-22",
+      "title": "Confirm the pending label wording and stub photograph rule",
+      "milestone": "M1",
+      "area": "human",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-216",
+        "REQ-162"
+      ],
+      "depends": [],
+      "summary": "A named person, with Legal, confirms the exact pending-review label text and the rule that stub profiles show no photograph unless owner-supplied or licensed.",
+      "scope": [
+        "Confirm or change \"Compiled automatically from public sources. Human review pending.\"",
+        "Confirm no photograph on stub profiles until the images question (Q34) is decided"
+      ],
+      "acceptance": [
+        "The wording is recorded on the issue and handed to the shared-docs owner",
+        "The photograph rule is recorded"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [],
+      "notes": "REQ-159 (notify the subject when a stub is created) waits on Legal and is out of scope."
+    },
+    {
+      "key": "M1-REV-01",
+      "title": "Implement the publication state machine",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-210",
+        "REQ-208",
+        "REQ-209",
+        "REQ-123"
+      ],
+      "depends": [
+        "M1-DIR-01",
+        "M1-DIR-02",
+        "M0-PLG-06"
+      ],
+      "summary": "Review\\StateMachine: the only code that writes pub_state and the matching post status, in one transaction, with the six states and their allowed transitions.",
+      "scope": [
+        "Six states: Imported (not public), Published (review pending), Published (reviewed), Unpublished, Rejected, Removed and suppressed",
+        "Transition table with allowed moves and a mandatory reason for unpublish, reject and bulk actions",
+        "One transaction sets pub_state and post status (wiw_hidden for every state except the two Published), adds or deletes the search row hook, writes audit rows through AuditLogger",
+        "wp_insert_post_data guard refuses any write that changes post status or pub_state outside the StateMachine and logs the refusal",
+        "Initial-state entry point for import and customer-created profiles",
+        "After commit, fires a state-changed event that queues purge jobs (M1-SEO-07)",
+        "Architecture test: only Review\\StateMachine writes pub_state and publish status"
+      ],
+      "acceptance": [
+        "A profile has exactly one publication state",
+        "Only Review\\StateMachine changes pub_state; a direct write is refused and logged",
+        "A state change sets pub_state, post status and audit rows in one transaction, and rolls back together",
+        "A disallowed transition is refused",
+        "Unpublish, reject and bulk actions without a reason are refused",
+        "Only the two Published states are public (post status publish); the other four use wiw_hidden"
+      ],
+      "tests": [
+        "test_REQ_210_only_state_machine_changes_pub_state",
+        "test_REQ_210_direct_status_write_is_refused_and_logged",
+        "test_REQ_210_state_change_is_atomic",
+        "test_REQ_209_transition_without_reason_is_refused",
+        "test_REQ_208_only_published_states_use_public_status"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/review.md",
+        "docs/concepts/publication-states.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Review/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Arch/**"
+      ],
+      "notes": "ADR-005 holds the publication model. The importer and reviewer columns are written on state change by the machine."
+    },
+    {
+      "key": "M1-REV-02",
+      "title": "Add the state response policy used by every surface",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-209",
+        "REQ-217",
+        "REQ-218"
+      ],
+      "depends": [
+        "M1-DIR-02"
+      ],
+      "summary": "One table that answers, for any state, the HTTP status, robots rule, and whether the profile may appear in pages, lists, search, sitemap, feeds, structured data and share cards, read from the database and never a cache.",
+      "scope": [
+        "StatePolicy value object: status 200, 404 or 410; noindex; in_lists; in_search; in_sitemap; has_schema; share_card; label",
+        "Reviewed: 200, indexable, everywhere. Pending: 200, noindex, search with label only, no list, no sitemap, no schema. Unpublished and Removed: 410 noindex. Rejected and Imported: 404",
+        "Used by PublicProfile, list queries, the guard and the sitemap so no surface keeps its own rule",
+        "Reads state from the database on every request"
+      ],
+      "acceptance": [
+        "A profile in each of the six states returns the response the state table says",
+        "The policy is the only place that maps state to visibility",
+        "A cached copy never overrides the database state"
+      ],
+      "tests": [
+        "test_REQ_208_state_policy_matches_state_table",
+        "test_REQ_209_unpublished_and_removed_return_410",
+        "test_REQ_217_pending_is_200_noindex_not_in_sitemap",
+        "test_REQ_218_pending_not_in_lists_but_in_search"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/review.md",
+        "docs/theme/seo-and-sharing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Review/**"
+      ],
+      "notes": "Pure logic, no WordPress hooks, so the matrix test in M1-SEO-11 can reuse it."
+    },
+    {
+      "key": "M1-REV-03",
+      "title": "Add approve, reject, unpublish and restore transitions",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-222",
+        "REQ-148",
+        "REQ-209",
+        "REQ-217",
+        "REQ-226"
+      ],
+      "depends": [
+        "M1-REV-01",
+        "M1-REV-02",
+        "M1-SEO-07"
+      ],
+      "summary": "The approve flow in one step, reject with a reason, single-profile unpublish and restore, the importer-cannot-approve rule and the cannot-claim-while-pending rule.",
+      "scope": [
+        "Approve: set reviewed with date and reviewer, remove noindex, add sitemap and schema eligibility and queue the cache purge in the same step",
+        "Reject: not public; a live profile becomes 410; reason required",
+        "Unpublish one profile (wiw_unpublish_profiles; a Reviewer reaches it through wiw_bulk_unpublish for emergencies); restore a reversible unpublish back to 200",
+        "The approver must not be the person who imported the record (REQ-148)",
+        "Claimability predicate: a pending-review profile cannot be claimed or linked to an arrangement until reviewed (REQ-226)",
+        "Every action audited with reason and actor"
+      ],
+      "acceptance": [
+        "Approving a pending profile makes it reviewed, removes noindex, adds it to the sitemap and queues a purge in one action",
+        "Rejecting a live profile makes it return 410",
+        "The user who imported a record cannot approve it",
+        "An unpublished profile returns 410 and restoring it returns 200",
+        "A pending profile fails the claimability predicate",
+        "Every transition writes an audit row with reason"
+      ],
+      "tests": [
+        "test_REQ_222_approve_is_one_flow",
+        "test_REQ_222_reject_live_profile_returns_410",
+        "test_REQ_148_importer_cannot_approve_own_import",
+        "test_REQ_209_unpublish_returns_410_with_noindex",
+        "test_REQ_209_restore_returns_200",
+        "test_REQ_226_pending_profile_cannot_be_claimed"
+      ],
+      "docs": [
+        "docs/features/directory-and-profiles.md",
+        "docs/plugins/review.md",
+        "docs/pages/admin/review-and-publishing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "The claim flow itself is M3; this issue exposes the predicate (Review\\Claimability) it will call."
+    },
+    {
+      "key": "M1-REV-04",
+      "title": "Build the Review queue list and review dashboard tiles",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-084",
+        "REQ-222",
+        "REQ-239",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-REV-03",
+        "M1-DIR-09"
+      ],
+      "summary": "The Review queue screen lists items to review (new profiles, flagged changes, customer submissions, pending revisions) with the default order, and the dashboard review tiles show counts by state. Prototype A03, #/admin/review.",
+      "scope": [
+        "Queue list: new profiles, edits to published ones, FLAGGED_CHANGE items, customer submissions marked submitted, pending revisions on claimed profiles",
+        "Default order: pilot first, then organisations, then individuals (Q31); claims and corrections rise to the top",
+        "Assign to me; AI-drafted and edited items marked",
+        "Dashboard tiles: counts of imported, pending review, reviewed, published (wiw_view_dashboard_review)",
+        "Capability wiw_review_records to open items; deny by default"
+      ],
+      "acceptance": [
+        "The queue lists each type of item named above",
+        "Order follows the default rule",
+        "A user without wiw_review_records cannot open a queue item",
+        "The review tiles show counts by state for Reviewer, Editor and Administrator"
+      ],
+      "tests": [
+        "test_REQ_084_queue_lists_flagged_changes_and_pending_revisions",
+        "test_REQ_222_queue_default_order",
+        "test_REQ_239_review_tiles_show_counts_by_state",
+        "test_REQ_244_queue_denies_without_capability"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/pages/admin/review-and-publishing.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "Q31 (default order) is stated in the docs as decided; confirm in the build. The wider role dashboards are M0 or M3."
+    },
+    {
+      "key": "M1-REV-05",
+      "title": "Build the Review item screen with field diff and sources",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-084",
+        "REQ-132",
+        "REQ-141",
+        "REQ-142",
+        "REQ-143",
+        "REQ-148",
+        "REQ-163"
+      ],
+      "depends": [
+        "M1-REV-04",
+        "M1-IMP-07",
+        "M1-IMP-08"
+      ],
+      "summary": "The review item: field-level diff, each claim beside its source URL and retrieval date, the verification report, the free-text scan flags, a neutral checklist and approve, edit or reject with a reason. Prototype A04, #/admin/review/b5.",
+      "scope": [
+        "Field-level diff of the proposed change against the current profile",
+        "Each claim shown with source URL, retrieval date, confidence and method; claims and passages read from the admin-only tables",
+        "Verification report and free-text scan flags; a record failing the scan stays blocked until cleared",
+        "Five-point neutral checklist: no allegations, litigation or rumours; no opinion or praise; no personal life, family, health or finances; every fact dated and sourced; professional facts only",
+        "Approve (M1-REV-03), edit (reason required) or reject (reason required); approver cannot be the importer, with an on-screen message",
+        "A fact with low confidence or no source cannot be published"
+      ],
+      "acceptance": [
+        "The review queue shows each claim with its source URL and retrieval date",
+        "The approver cannot be the importer and sees why",
+        "A low-confidence or unsourced fact cannot be published from this screen",
+        "A record flagged by the free-text scan cannot be approved until cleared",
+        "Approve and reject both require the action to be audited"
+      ],
+      "tests": [
+        "test_REQ_084_review_item_shows_claim_with_source_and_date",
+        "test_REQ_148_approve_blocked_for_importer_with_message",
+        "test_REQ_143_unsourced_fact_cannot_be_published_from_review",
+        "test_REQ_141_flagged_record_blocked_until_cleared"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/pages/admin/review-and-publishing.md",
+        "docs/features/import-and-sources.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "Prototype A04. AI-drafted summary display before review is Q46 (contract U10), treated as hidden until review in this issue; confirm in M1-IMP-17."
+    },
+    {
+      "key": "M1-REV-06",
+      "title": "Track review throughput, queue age and rejection reasons",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-149"
+      ],
+      "depends": [
+        "M1-REV-03"
+      ],
+      "summary": "Records the data that REQ-149 asks for: throughput, queue age and rejection reasons, shown to Reviewers and Administrators.",
+      "scope": [
+        "Store reviewer, time to decision and rejection reason code on every decision",
+        "Read-only metrics panel on the Review queue: decisions per week, oldest item age, reasons count",
+        "No personal data beyond staff user ids"
+      ],
+      "acceptance": [
+        "Each approval and rejection records time to decision and a reason",
+        "The metrics panel shows throughput, queue age and rejection reason counts"
+      ],
+      "tests": [
+        "test_REQ_149_decision_records_time_and_reason",
+        "test_REQ_149_metrics_panel_counts_rejection_reasons"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/pages/admin/review-and-publishing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Metrics/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "Docs say \"tracked\" but name no screen; this issue adds a minimal panel. Flagged in the M1 report."
+    },
+    {
+      "key": "M1-REV-07",
+      "title": "Add the duplicates matcher",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-123",
+        "REQ-145",
+        "REQ-146"
+      ],
+      "depends": [
+        "M1-DIR-02",
+        "M1-DIR-03"
+      ],
+      "summary": "Finds probable duplicates by registration number, Wikidata ID, and a normalised name plus organisation plus location, writing pairs with a score to wiw_duplicates. Individuals are never merged automatically.",
+      "scope": [
+        "wiw_duplicates migration: pair, score, basis, status",
+        "Matcher on rc_number, wikidata_qid and normalised name plus organisation plus location (diacritics folded)",
+        "Runs at import and on demand; a probable duplicate is flagged on the review queue",
+        "No automatic merge for individuals or entrepreneurs; organisations also need a human in this version"
+      ],
+      "acceptance": [
+        "A pair sharing a registration number or Wikidata ID is flagged",
+        "A near-name pair with the same organisation and location is flagged with a score",
+        "The matcher never merges two individuals automatically",
+        "A flagged pair keeps both profiles"
+      ],
+      "tests": [
+        "test_REQ_146_individuals_are_never_auto_merged",
+        "test_REQ_145_match_on_registration_number",
+        "test_REQ_145_match_on_normalised_name_org_location",
+        "test_REQ_123_probable_duplicate_flagged_for_review"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/features/import-and-sources.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Duplicates/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Review/**"
+      ]
+    },
+    {
+      "key": "M1-REV-08",
+      "title": "Build the Duplicates screen with human merge",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-123",
+        "REQ-145",
+        "REQ-146",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-REV-07",
+        "M1-REV-04"
+      ],
+      "summary": "Side-by-side review of probable duplicates where a staff member merges by hand or marks not a duplicate. Prototype A21, #/admin/duplicates.",
+      "scope": [
+        "Side-by-side fields with sources for both profiles",
+        "Merge keeps the chosen field values, redirects the old slug, records a version and an audit row",
+        "Mark not a duplicate; reason required",
+        "Capability wiw_resolve_duplicates"
+      ],
+      "acceptance": [
+        "A reviewer can merge two profiles by hand and the old URL redirects",
+        "Merging writes a version and an audit row",
+        "Marking not a duplicate stores a reason",
+        "A user without wiw_resolve_duplicates gets 403"
+      ],
+      "tests": [
+        "test_REQ_146_merge_is_by_human_action_only",
+        "test_REQ_123_merge_writes_version_and_audit",
+        "test_REQ_244_duplicates_screen_denies_without_capability"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/pages/admin/review-and-publishing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "Prototype route #/admin/duplicates."
+    },
+    {
+      "key": "M1-REV-09",
+      "title": "Add the bulk unpublish and restore service",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-193",
+        "REQ-209",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-REV-01",
+        "M1-SEO-07",
+        "M0-PLG-15"
+      ],
+      "summary": "Unpublishes every published profile matching a filter in chunked jobs, with one batch row, one audit row per profile and one for the batch, and a restore for that batch.",
+      "scope": [
+        "wiw_bulk_actions migration: filter, reason, count, actor, time, restored time",
+        "Service that takes a filter (source, batch, type, state, origin, name), counts matches, requires a reason and a confirmed count",
+        "Chunked jobs of a few hundred profiles through the StateMachine; each becomes 410 with noindex, leaves search and sitemap, queues a purge and writes a purge-log entry",
+        "One audit row per profile plus one for the batch",
+        "Restore reverses one batch and only restores profiles still unpublished by that batch",
+        "Includes published profiles only; capability wiw_bulk_unpublish"
+      ],
+      "acceptance": [
+        "A bulk unpublish by filter produces 410 for every match",
+        "The audit log gets one row per profile plus one for the batch",
+        "Restore this batch returns those profiles to 200",
+        "Restore does not touch a profile that was unpublished separately or by another batch",
+        "Only published profiles are included",
+        "An Editor without the capability is refused"
+      ],
+      "tests": [
+        "test_REQ_193_bulk_unpublish_writes_one_audit_row_per_profile",
+        "test_REQ_193_restore_batch_only_restores_profiles_unpublished_by_it",
+        "test_REQ_209_bulk_unpublish_returns_410_with_noindex",
+        "test_REQ_193_editor_cannot_bulk_unpublish_without_capability",
+        "test_REQ_193_bulk_unpublish_includes_published_profiles_only"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/review.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Bulk/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ]
+    },
+    {
+      "key": "M1-REV-10",
+      "title": "Build the bulk unpublish interface on the Profiles list",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-193",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-REV-09",
+        "M1-DIR-09"
+      ],
+      "summary": "The bulk action on the Profiles list: live match count, mandatory reason, confirmation with the count and first five names, and a Recent bulk actions list with Restore this batch. Prototype A05.",
+      "scope": [
+        "Bulk unpublish control acting on the current filtered set",
+        "Live count of matching published profiles; reason required",
+        "Confirmation dialog shows the count and the first five names",
+        "Recent bulk actions list with a Restore this batch action",
+        "Visible only with wiw_bulk_unpublish (Reviewer and Administrator by default)"
+      ],
+      "acceptance": [
+        "The Reviewer and the Administrator can bulk unpublish; an Editor cannot unless granted",
+        "The confirmation shows the match count and the first five names",
+        "Recent bulk actions lists each batch with Restore this batch"
+      ],
+      "tests": [
+        "test_REQ_193_bulk_control_hidden_without_capability",
+        "test_REQ_193_confirmation_shows_count_and_first_five_names"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/review.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "Edits two folders in the plugin area; keep the Directory change limited to the host slot created in M1-DIR-09."
+    },
+    {
+      "key": "M1-REV-11",
+      "title": "Hold edits to claimed profiles as pending revisions",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "directory-and-profiles",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-253",
+        "REQ-125"
+      ],
+      "depends": [
+        "M1-DIR-10",
+        "M1-REV-03"
+      ],
+      "summary": "An edit to a claimed profile by its assigned user is saved as a pending revision, not public until a Reviewer or Administrator approves; the author cannot approve it.",
+      "scope": [
+        "Edit path checks the claimed flag and the assigned user on wiw_profile_state; assigned-user edits become wiw_profile_versions rows with approval status pending",
+        "Previous version kept; approval publishes the revision, purges and notifies the assigned user (mailer)",
+        "The author cannot approve their own change",
+        "Review queue shows pending revisions (M1-REV-04); a correction applied to a claimed profile also waits for approval"
+      ],
+      "acceptance": [
+        "An edit by the assigned user of a claimed profile is not public until approved",
+        "The person who made the change cannot approve it",
+        "The previous version is kept",
+        "Approval publishes the revision and queues a purge",
+        "An edit by a Reviewer or Administrator holding wiw_review_records on an unclaimed profile goes live at once with a reason"
+      ],
+      "tests": [
+        "test_REQ_253_claimed_profile_edit_waits_for_approval",
+        "test_REQ_253_editor_cannot_approve_own_change",
+        "test_REQ_253_approval_publishes_revision_and_purges",
+        "test_REQ_125_previous_version_is_kept"
+      ],
+      "docs": [
+        "docs/plugins/review.md",
+        "docs/pages/admin/profiles-and-claims.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Review/Revisions/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Review/**"
+      ],
+      "notes": "The claim approval, the assigned-user creation and My profiles are M3 (Trust). This issue uses the claimed flag and assigned user columns already on wiw_profile_state, so it can be tested with a fixture. The title of the feature is directory-and-profiles; keep Review rules here."
+    },
+    {
+      "key": "M1-REV-12",
+      "title": "Test review flows end to end",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-084",
+        "REQ-148",
+        "REQ-222",
+        "REQ-193"
+      ],
+      "depends": [
+        "M1-REV-05",
+        "M1-REV-08",
+        "M1-REV-10"
+      ],
+      "summary": "Playwright flows for review, duplicates and bulk unpublish with fictional records.",
+      "scope": [
+        "Review queue to approve: pending organisation becomes reviewed, noindex gone, sitemap entry present",
+        "Importer blocked from approving; a second reviewer approves",
+        "Duplicate merge by hand",
+        "Bulk unpublish by filter shows count and names, 410 for each, then restore the batch"
+      ],
+      "acceptance": [
+        "The approve flow changes the page, sitemap and header in one action",
+        "The importer is blocked and another reviewer succeeds",
+        "Bulk unpublish then Restore this batch returns the pages to 200"
+      ],
+      "tests": [
+        "spec: tests/e2e/review-flows.spec.ts"
+      ],
+      "docs": [
+        "docs/pages/admin/review-and-publishing.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "key": "M1-IMP-01",
+      "title": "Read an export bundle and check its manifest",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-237",
+        "REQ-212"
+      ],
+      "depends": [
+        "M0-INF-01",
+        "M0-PLG-02"
+      ],
+      "summary": "Opens a bundle (manifest.json and records.jsonl), checks the contract version, record count, per-type counts and records_sha256, and refuses the whole bundle on any manifest mismatch.",
+      "scope": [
+        "Bundle reader for UTF-8 NFC JSON Lines, streaming, no full load into memory",
+        "Manifest check: accepted contract versions list, record_count, counts, records_sha256 over the bytes of records.jsonl",
+        "Whole-bundle refusal codes CONTRACT_VERSION and MANIFEST_MISMATCH with a plain reason",
+        "wiw_import_batches migration (batch id, contract version, file hash, settings snapshot, status, progress cursor)",
+        "Manifest must not name any person; a manifest carrying a name is refused"
+      ],
+      "acceptance": [
+        "A bundle with a bad manifest hash or unknown contract version is refused whole, with a reason",
+        "Record counts in the manifest must match the file",
+        "A batch row records the contract version and file hash"
+      ],
+      "tests": [
+        "test_REQ_237_bad_manifest_hash_refuses_whole_bundle",
+        "test_REQ_237_unknown_contract_version_refused",
+        "test_REQ_212_manifest_counts_must_match_records"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Import/**"
+      ],
+      "notes": "Contract U2: the contract fixes JSON Lines, REQ-237 mentions CSV or REST. This plan builds file upload and command line only (docs/plugins/import.md), no REST and no CSV."
+    },
+    {
+      "key": "M1-IMP-02",
+      "title": "Recompute the RFC 8785 content hash",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-221"
+      ],
+      "depends": [
+        "M0-INF-01"
+      ],
+      "summary": "A canonical JSON hasher that reproduces content_hash exactly as the contract defines it.",
+      "scope": [
+        "Select only the fields marked In hash in contract section 3",
+        "Normalise strings to Unicode NFC, serialise with RFC 8785 JSON Canonicalization, SHA-256 of the UTF-8 bytes, prefix sha256:",
+        "Test vector from contract section 15 reproduces sha256:90f04fe6...",
+        "Library choice pinned in composer.json by infra if a new dependency is needed (ask in the issue)"
+      ],
+      "acceptance": [
+        "The contract worked example hashes to its stated content_hash",
+        "A changed field changes the hash",
+        "Strings are NFC-normalised before hashing"
+      ],
+      "tests": [
+        "test_REQ_221_worked_example_hash_matches",
+        "test_REQ_221_hash_changes_when_field_changes",
+        "test_REQ_221_strings_normalised_to_nfc"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/contracts/import-format.md",
+        "docs/plugins/import.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Hash/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Import/**"
+      ],
+      "notes": "Section 8 hash is a test vector that depends on key ordering and number formatting; the sample is the only vector available. Flagged in the M1 report."
+    },
+    {
+      "key": "M1-IMP-03",
+      "title": "Validate records against the contract allowlists",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-140",
+        "REQ-142",
+        "REQ-143",
+        "REQ-212",
+        "REQ-214"
+      ],
+      "depends": [
+        "M1-IMP-02",
+        "M1-DIR-03"
+      ],
+      "summary": "The per-record validator: schema, allowlisted fields per entity type, provenance on every field, confidence not low, a passing verification report, hash recomputation and empty images.",
+      "scope": [
+        "Schema check with unknown fields refused (SCHEMA); forbidden attribute fields refused (FORBIDDEN_FIELD)",
+        "Every field has at least one provenance entry; UNSOURCED_FIELD and LOW_CONFIDENCE refusals",
+        "Verification report must have all seven checks passing (VERIFICATION_FAILED); duplicates may be clear or flagged",
+        "Recomputed hash must equal content_hash (HASH_MISMATCH)",
+        "Non-empty images array refused (IMAGE_NOT_ALLOWED) until the images decision",
+        "No organisation field may name a person",
+        "A failing record is refused and the rest continue"
+      ],
+      "acceptance": [
+        "A record with a forbidden field, a low-confidence or unsourced field, a failed verification report or a hash mismatch is refused and the rest still import",
+        "A record with a state, publish, visibility or status field is refused",
+        "An image array that is not empty is refused",
+        "Each refusal returns exactly one contract code",
+        "A refused record produces no profile and no partial write"
+      ],
+      "tests": [
+        "test_REQ_140_forbidden_field_is_refused",
+        "test_REQ_143_field_without_provenance_is_refused",
+        "test_REQ_143_low_confidence_field_is_refused",
+        "test_REQ_221_content_hash_mismatch_is_refused",
+        "test_REQ_212_failed_verification_report_is_refused",
+        "test_REQ_212_non_empty_images_refused"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Validation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Import/**"
+      ]
+    },
+    {
+      "key": "M1-IMP-04",
+      "title": "Scan free-text fields for personal data and sensitive terms",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-141"
+      ],
+      "depends": [
+        "M1-IMP-03"
+      ],
+      "summary": "Scans free-text fields (summary, mandate, bios) for phone numbers, emails, addresses, ages and sensitive terms; a failing record is blocked until a person clears it.",
+      "scope": [
+        "Pattern scanner for phones, emails, street addresses, ages and sensitive-term list (config file)",
+        "A flagged record gets the Imported not public state with a blocked flag and its flags shown on the review item",
+        "Clearing the block is a reviewer action with an audit row",
+        "Scanner never logs the matched text"
+      ],
+      "acceptance": [
+        "Free-text with a phone number, email, address, age or sensitive term is flagged",
+        "A flagged record cannot be approved until cleared",
+        "Clearing writes an audit row",
+        "Logs contain no matched personal data"
+      ],
+      "tests": [
+        "test_REQ_141_free_text_phone_number_is_flagged",
+        "test_REQ_141_flagged_record_blocked_until_cleared",
+        "test_REQ_141_scan_does_not_log_matched_text"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Scan/**",
+        "site/wp-content/plugins/whoiswho-core/config/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Import/**"
+      ],
+      "notes": "The sensitive-term list is not defined in the docs; a starter list is proposed in the issue and confirmed by Legal (M1-IMP-17)."
+    },
+    {
+      "key": "M1-IMP-05",
+      "title": "Assign state on import and add the import-everything switch",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-210",
+        "REQ-216",
+        "REQ-148"
+      ],
+      "depends": [
+        "M1-REV-01",
+        "M0-PLG-11"
+      ],
+      "summary": "WordPress, not the pipeline, sets the state, using the contract section 9 rules in order, and the Administrator-only setting that holds everything not public.",
+      "scope": [
+        "Rule order, first match wins: setting on, probable duplicate, individual or entrepreneur, then Imported not public; otherwise an organisation becomes Published review pending with label and noindex",
+        "\"Import everything as not public\" setting: Administrator only, audited, default on until launch safeguards pass; snapshot stored on the batch",
+        "Importer recorded on the state row for the importer-cannot-approve rule",
+        "State set through the StateMachine only"
+      ],
+      "acceptance": [
+        "An organisation lands as Published (review pending) with the label and a noindex header",
+        "An individual lands as Imported (not public)",
+        "With the setting on, no record becomes public",
+        "Only an Administrator can change the setting and the change is audited",
+        "The pipeline has no way to set state: a record with a state field is refused"
+      ],
+      "tests": [
+        "test_REQ_216_organisation_lands_as_pending_with_label",
+        "test_REQ_210_individual_lands_as_imported_not_public",
+        "test_REQ_210_setting_on_makes_nothing_public",
+        "test_REQ_148_importer_recorded_on_state_row"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/State/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "The setting control sits on the Import screen (M1-IMP-12); this issue is the logic and storage."
+    },
+    {
+      "key": "M1-IMP-06",
+      "title": "Map taxonomy values from imports to the site lists",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-009",
+        "REQ-212"
+      ],
+      "depends": [
+        "M1-DIR-01",
+        "M1-IMP-03"
+      ],
+      "summary": "Controlled-list values in a record (industry, sector, org type, city) are matched to the site terms; unknown values go through a mapping step before apply.",
+      "scope": [
+        "Lookup of known terms by slug and alias",
+        "Unknown values listed in the dry run as needing a mapping; the Administrator maps or skips them",
+        "A saved mapping is reused on later imports",
+        "Apply refuses a record with an unmapped controlled value"
+      ],
+      "acceptance": [
+        "A record with an unknown term shows as needing a mapping in the dry run",
+        "Mappings are stored and reused",
+        "An unmapped value is not written to the profile"
+      ],
+      "tests": [
+        "test_REQ_009_unknown_term_requires_mapping_before_apply",
+        "test_REQ_009_mapping_is_reused_on_next_import"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Mapping/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Contract U5 asks who owns the controlled list values; this issue assumes the site owns them and the pipeline learns them by mapping."
+    },
+    {
+      "key": "M1-IMP-07",
+      "title": "Store claims, passages and verification reports admin-only",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-142",
+        "REQ-166",
+        "REQ-208"
+      ],
+      "depends": [
+        "M1-DIR-02"
+      ],
+      "summary": "Tables for the pipeline claims, source passages and verification report, shown only to reviewers and never public, subject to retention.",
+      "scope": [
+        "wiw_claims, wiw_passages, wiw_verification migrations (named distinct from profile claims in Trust)",
+        "Repository with no public read path; excluded from every public read model and from REST",
+        "Register each in the PII catalogue and the retention schedule input",
+        "Quote check: a claim quote must appear exactly in its passage"
+      ],
+      "acceptance": [
+        "Claim, passage and verification data is never returned by any public surface",
+        "A claim whose quote is not in its passage is refused",
+        "Tables are listed in the PII or retention catalogue"
+      ],
+      "tests": [
+        "test_REQ_166_claim_quote_must_appear_in_passage",
+        "test_REQ_208_claims_and_passages_never_public"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Contract U11 (how long passages are kept) is open; retention length is set by M3 privacy work. REQ-166 is a pipeline requirement referenced by the contract."
+    },
+    {
+      "key": "M1-IMP-08",
+      "title": "Apply records in resumable chunks with result codes",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-237",
+        "REQ-161",
+        "REQ-221",
+        "REQ-207",
+        "REQ-242"
+      ],
+      "depends": [
+        "M1-IMP-03",
+        "M1-IMP-05",
+        "M1-IMP-06",
+        "M1-IMP-07",
+        "M1-DIR-04",
+        "M1-DIR-02",
+        "M1-COR-11",
+        "M0-PLG-15"
+      ],
+      "summary": "Applies validated records by stable record_id in steps of 25 to 50, resuming after a timeout, with CREATED, UNCHANGED, UPDATED, FLAGGED_CHANGE or refusal results.",
+      "scope": [
+        "Create or update by record_id; map record_id to post id; slug generated by the site with collision suffix",
+        "Same record_id and hash gives UNCHANGED; changed hash on an unreviewed record gives UPDATED as a new version and re-sets state; changed hash on a reviewed record gives FLAGGED_CHANGE and no overwrite",
+        "Write fields, provenance, source and batch on the profile, through the StateMachine for state",
+        "Suppression check against the live list: SUPPRESSED refusal and no profile created",
+        "Chunked job on Action Scheduler with a cursor stored on the batch; a timeout resumes from the last chunk without duplicates",
+        "wiw_import_results migration: record id and code per record, no field values",
+        "Related organisation reference stored by record_id and resolved at read time"
+      ],
+      "acceptance": [
+        "Importing the same bundle twice leaves all records UNCHANGED",
+        "Re-importing a changed record that was reviewed does not change reviewed fields and raises FLAGGED_CHANGE on the review queue",
+        "A suppressed name is refused as SUPPRESSED and no profile is created",
+        "A time-out part-way resumes from the last chunk without duplicating records",
+        "A refused record does not stop the rest",
+        "Every created profile carries source and batch"
+      ],
+      "tests": [
+        "test_REQ_237_apply_resumes_after_timeout",
+        "test_REQ_237_second_import_of_same_bundle_is_all_unchanged",
+        "test_REQ_161_reviewed_field_change_is_flagged_not_overwritten",
+        "test_REQ_207_suppressed_record_is_skipped_on_import",
+        "test_REQ_242_import_tags_source_and_batch"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Apply/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Contract U3 and Q26: the chunk size (25 to 50) is tuned on the live host in M5. Contract U6 resolved: the site generates slugs and keeps record_id to post id."
+    },
+    {
+      "key": "M1-IMP-09",
+      "title": "Add the dry run with per-record diff",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-237",
+        "REQ-141",
+        "REQ-207"
+      ],
+      "depends": [
+        "M1-IMP-03",
+        "M1-IMP-04",
+        "M1-IMP-06",
+        "M1-COR-11"
+      ],
+      "summary": "Validates every record and shows the result code and a field-level diff without writing anything.",
+      "scope": [
+        "Dry run engine reuses the validator and matcher; no write to profile, state, version or provenance tables",
+        "Per record: result code, field-level diff, flags (duplicate, free-text scan, unmapped term)",
+        "Summary counts by code; suppressed names checked against the live list",
+        "Result stored on the batch so Confirm applies exactly what was previewed (same file hash)"
+      ],
+      "acceptance": [
+        "The dry run writes nothing",
+        "It shows the result code and a field-level diff for each record",
+        "Apply refuses if the file hash differs from the one previewed"
+      ],
+      "tests": [
+        "test_REQ_237_dry_run_writes_nothing",
+        "test_REQ_237_dry_run_shows_code_and_field_diff_per_record",
+        "test_REQ_237_apply_refuses_if_file_changed_since_dry_run"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/DryRun/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ]
+    },
+    {
+      "key": "M1-IMP-10",
+      "title": "Undo an import batch",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-237"
+      ],
+      "depends": [
+        "M1-IMP-08"
+      ],
+      "summary": "Removes records created by a batch that are still unreviewed, reverts unreviewed updates and keeps reviewed records.",
+      "scope": [
+        "Undo through the StateMachine and version history, audited",
+        "Records created by the batch and not reviewed are removed; unreviewed updates are reverted to the previous version",
+        "Reviewed records are kept and listed in the undo result",
+        "Undo of a batch with reviewed records is allowed for the rest (contract U14 default)"
+      ],
+      "acceptance": [
+        "A batch can be undone for records not yet reviewed",
+        "Reviewed records are not removed by an undo",
+        "Undo writes an audit row with the counts"
+      ],
+      "tests": [
+        "test_REQ_237_undo_removes_unreviewed_only",
+        "test_REQ_237_undo_reverts_unreviewed_updates",
+        "test_REQ_237_undo_keeps_reviewed_records"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Undo/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Contract U14 asks what undo does once some records are reviewed; this issue implements the docs rule (keep reviewed) and the decision is confirmed in M1-IMP-17."
+    },
+    {
+      "key": "M1-IMP-11",
+      "title": "Write the audit row and the import result for acquisition",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-228",
+        "REQ-237"
+      ],
+      "depends": [
+        "M1-IMP-08",
+        "M0-PLG-06"
+      ],
+      "summary": "Every import writes an audit row, and an import result is produced for acquisition with counts by code and no field values or names.",
+      "scope": [
+        "Audit row through AuditLogger: person, batch, file hash, record counts, states set",
+        "Import result per contract section 12: batch_id, the importer role (not name), timestamp, counts by code, [record_id, code] per record",
+        "Result is downloadable by Administrators and contains no field values",
+        "Transport of the result is a download in this version (contract U9 open)"
+      ],
+      "acceptance": [
+        "Every import writes an audit row with person, batch, file hash, counts and states",
+        "The exported result has no field values and no person names",
+        "The result lists counts by code and record_id with code"
+      ],
+      "tests": [
+        "test_REQ_228_import_writes_audit_row_with_counts_and_hash",
+        "test_REQ_237_result_export_has_no_field_values"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Result/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ]
+    },
+    {
+      "key": "M1-IMP-12",
+      "title": "Build the Import screen",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-237",
+        "REQ-092",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-IMP-08",
+        "M1-IMP-09",
+        "M1-IMP-10",
+        "M1-IMP-11"
+      ],
+      "summary": "The wp-admin Import screen: upload, dry run, diff and result per record, confirm, progress, undo and history, plus the import-everything-as-not-public switch. Prototype A20, #/admin/import.",
+      "scope": [
+        "Upload bundle (to a private directory outside the web root; file size limit message)",
+        "Dry run view with filters by result code; mapping step for unknown terms",
+        "Confirm starts the chunked job; progress and resume status",
+        "Undo and history of batches",
+        "Switch for \"import everything as not public\" visible only to Administrators",
+        "Capability wiw_run_imports; nonce on every action; deny by default"
+      ],
+      "acceptance": [
+        "A named Administrator can upload, dry run, read the diff and import",
+        "A user without wiw_run_imports gets 403",
+        "The switch is visible to Administrators only",
+        "Progress is shown and a resumed import continues",
+        "The upload is stored outside the web root"
+      ],
+      "tests": [
+        "test_REQ_237_import_screen_denies_without_capability",
+        "test_REQ_092_upload_stored_outside_web_root",
+        "test_REQ_237_import_screen_runs_dry_run_before_apply"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/pages/admin/review-and-publishing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Prototype route #/admin/import (A20). Files with personal data are encrypted at rest and deleted after a retention period (docs/plugins/import.md); the retention job belongs to M3 privacy, this issue only stores the upload date."
+    },
+    {
+      "key": "M1-IMP-13",
+      "title": "Add the command line import",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-237"
+      ],
+      "depends": [
+        "M1-IMP-08",
+        "M0-PLG-03"
+      ],
+      "summary": "php bin/wiw.php import (or WP-CLI if present) runs the same dry run and apply for files placed in the private import directory.",
+      "scope": [
+        "Subcommands: dry-run, apply, undo, status",
+        "Reads only from the private import directory outside the web root",
+        "Records the person as a named staff user supplied by flag and checks they hold wiw_run_imports",
+        "Same audit rows and results as the screen"
+      ],
+      "acceptance": [
+        "The command line produces the same result codes as the screen",
+        "It refuses to run without a named user holding wiw_run_imports",
+        "It reads only from the private import directory"
+      ],
+      "tests": [
+        "test_REQ_237_cli_requires_named_user_with_capability",
+        "test_REQ_237_cli_matches_screen_results"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/build/deployment.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Cli/**",
+        "site/bin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ]
+    },
+    {
+      "key": "M1-IMP-14",
+      "title": "Build the Sources snapshot and read-only Sources screen",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-243",
+        "REQ-136",
+        "REQ-242"
+      ],
+      "depends": [
+        "M1-IMP-08",
+        "M1-DIR-09"
+      ],
+      "summary": "The wiw_sources snapshot fed by each manifest and the read-only Sources screen with counts per source. Prototype A59, #/admin/sources.",
+      "scope": [
+        "wiw_sources migration; rows created or updated from the manifest sources array (source_id and name)",
+        "Screen: profile count, last import, errors and removals per source, link to the Profiles list filtered by that source",
+        "No add, edit, approve, reject or publish control and no handler for them",
+        "Capability wiw_view_sources"
+      ],
+      "acceptance": [
+        "The Sources screen shows profile count, last import, errors and removals per source, with a link to the filtered list",
+        "It has no edit controls",
+        "A user without wiw_view_sources gets 403"
+      ],
+      "tests": [
+        "test_REQ_243_sources_screen_has_no_write_actions",
+        "test_REQ_243_sources_screen_links_to_filtered_profiles_list",
+        "test_REQ_136_manifest_sources_update_snapshot"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/plugins/import.md",
+        "docs/pages/admin/review-and-publishing.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Import/Sources/**",
+        "site/wp-content/plugins/whoiswho-core/src/Import/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Import/**"
+      ],
+      "notes": "Contract U8 (which side holds the approved source list) is open; this issue treats the manifest as the only source of names."
+    },
+    {
+      "key": "M1-IMP-15",
+      "title": "Add contract fixtures and the import contract test",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-237",
+        "REQ-221",
+        "REQ-142"
+      ],
+      "depends": [
+        "M1-IMP-08"
+      ],
+      "summary": "A contract test suite using fictional bundles built from the worked example in contract section 15, one fixture per refusal code.",
+      "scope": [
+        "Fixture bundle generator producing valid and invalid records for every refusal code",
+        "Golden valid bundle from the section 15 example with its hash",
+        "Contract test runs dry run and apply on the golden bundle and asserts result codes",
+        "Fixtures contain no personal data"
+      ],
+      "acceptance": [
+        "The golden bundle imports with CREATED and then UNCHANGED",
+        "Each refusal code has a failing fixture that produces exactly that code",
+        "Fixtures contain no personal data"
+      ],
+      "tests": [
+        "test_REQ_237_golden_bundle_imports_then_unchanged",
+        "test_REQ_221_each_refusal_code_has_a_failing_fixture"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/tests/Contract/**",
+        "site/tests/fixtures/import/**"
+      ],
+      "notes": "The plugin docs mention a sample bundle in the contract folder but docs/contracts holds only the contract file. This issue builds the fixtures from section 15; flagged in the M1 report."
+    },
+    {
+      "key": "M1-IMP-16",
+      "title": "Test a 1,000-record import within host limits",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "import-and-sources",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-237"
+      ],
+      "depends": [
+        "M1-IMP-12",
+        "M1-IMP-15"
+      ],
+      "summary": "A timed run of a 1,000-record fictional bundle through dry run and apply under constrained PHP time and memory limits.",
+      "scope": [
+        "Fixture generator for 1,000 records",
+        "Run under max_execution_time and memory settings that match the live host profile in docs/architecture.md section 8",
+        "Report time per chunk and total"
+      ],
+      "acceptance": [
+        "1,000 records import within the host limits, resuming across time-outs"
+      ],
+      "tests": [
+        "test_REQ_237_thousand_records_import_within_limits"
+      ],
+      "docs": [
+        "docs/features/import-and-sources.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/tests/Performance/**"
+      ],
+      "notes": "Real tuning happens on the live host in M5 (Q26)."
+    },
+    {
+      "key": "M1-IMP-17",
+      "title": "Decide the open import contract unknowns",
+      "milestone": "M1",
+      "area": "human",
+      "feature": "import-and-sources",
+      "priority": "M",
+      "size": "S",
+      "reqs": [],
+      "depends": [],
+      "summary": "A named decision-maker confirms the defaults this plan assumes for the contract unknowns U2, U5, U8 to U14 so the contract can move from 1.0-draft to 1.0 and acquisition can confirm.",
+      "scope": [
+        "Confirm transport is file upload and command line only (U2)",
+        "Confirm that the site owns the controlled-list values (U5) and the approved-source list authority (U8)",
+        "Decide encrypted transfer and retention of bundles and snapshots (U9, U11)",
+        "Confirm AI summary stays hidden until review (U10, Q46)",
+        "Decide how the under-18 risk is covered when no age is stored (U13)",
+        "Confirm undo semantics once some records are reviewed (U14)",
+        "Confirm the sensitive-term starter list with Legal"
+      ],
+      "acceptance": [
+        "Each decision is recorded on the issue and passed to the shared-docs owner",
+        "The acquisition side confirms any change to the contract"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/contracts/import-format.md",
+        "docs/features/import-and-sources.md"
+      ],
+      "files": [],
+      "notes": "REQ ids are not cited because this is a decision task."
+    },
+    {
+      "key": "M1-SEO-01",
+      "title": "Emit page title, description, canonical and share tags from the guard",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-006",
+        "REQ-044",
+        "REQ-217"
+      ],
+      "depends": [
+        "M0-GRD-01",
+        "M1-DIR-05",
+        "M1-REV-02"
+      ],
+      "summary": "The guard plugin writes every SEO tag from the public read model so a non-public profile can never be described to a crawler.",
+      "scope": [
+        "Title, meta description, canonical, Open Graph and share-card tags for profile, directory list and industry pages using the proposed patterns in docs/theme/seo-and-sharing.md",
+        "Brand name and edition from theme settings, never typed in a template",
+        "Canonical: filtered and sorted list views point to the unfiltered list; paginated lists carry their own; profile canonical uses the current slug",
+        "Pending profiles get a robots meta tag noindex and the pending label in card text",
+        "Share card: name, title or industry, image (portrait or logo, else generic brand card), no trust label and no Sponsored label",
+        "Search results, done pages, token pages, claim, correction, removal and data-rights forms get noindex",
+        "No SEO plugin is installed; nothing else may emit these tags"
+      ],
+      "acceptance": [
+        "Every public profile has a unique title, meta description, canonical URL and Open Graph tags",
+        "A pending-review profile has a robots meta tag with noindex",
+        "Sharing a profile URL gives a card with the person name, title and image and no trust or Sponsored label",
+        "A filtered list canonical points to the unfiltered list",
+        "Pages reached by single-use links and the forms carry noindex"
+      ],
+      "tests": [
+        "test_REQ_006_profile_has_unique_title_description_canonical_og",
+        "test_REQ_217_pending_profile_has_robots_meta_noindex",
+        "test_REQ_006_share_card_has_no_trust_or_sponsored_label",
+        "test_REQ_044_filtered_list_canonical_points_to_unfiltered",
+        "test_REQ_217_form_and_token_pages_are_noindex"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/plugins/guard.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Seo/**",
+        "site/tests/Integration/Guard/**"
+      ],
+      "notes": "Title and description patterns are proposals (seo-and-sharing.md open points); build them as written and let the shared-docs owner confirm. Story and award tags are added in M2 and M4."
+    },
+    {
+      "key": "M1-SEO-02",
+      "title": "Output Person and Organization structured data",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-006",
+        "REQ-139",
+        "REQ-140",
+        "REQ-217"
+      ],
+      "depends": [
+        "M1-SEO-01"
+      ],
+      "summary": "schema.org Person for individuals and entrepreneurs and Organization for businesses and institutions, from allowlisted fields only, and none at all for pending profiles.",
+      "scope": [
+        "Person: name, current title and organisation, industry, public-record roles, published awards, official website",
+        "Organization: public facts that each have a source",
+        "Never an email, phone, address, age or any forbidden attribute",
+        "No structured data on a pending or non-public page, including anything another plugin tries to add (output filtered)"
+      ],
+      "acceptance": [
+        "Profile pages output valid schema.org Person or Organization markup",
+        "Pending-review profiles output none",
+        "No forbidden field appears in the markup"
+      ],
+      "tests": [
+        "test_REQ_006_reviewed_profile_outputs_valid_person_or_organization",
+        "test_REQ_217_pending_profile_outputs_no_structured_data",
+        "test_REQ_140_structured_data_has_no_forbidden_field"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/tests/Integration/Guard/**"
+      ],
+      "notes": "Event, Article and breadcrumb markup are proposals for later milestones."
+    },
+    {
+      "key": "M1-SEO-03",
+      "title": "Generate the sitemap from the public read model",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-121",
+        "REQ-208",
+        "REQ-209",
+        "REQ-217"
+      ],
+      "depends": [
+        "M1-DIR-06",
+        "M1-REV-02",
+        "M0-GRD-01"
+      ],
+      "summary": "/sitemap.xml lists core pages and reviewed profiles from the same read model as pages and lists, cached five minutes and purged on state change. Core WordPress sitemaps are disabled.",
+      "scope": [
+        "Sitemap index and part files built on request from the public read model; reviewed profiles, core pages (published stories added in M2)",
+        "Cached five minutes; purge on unpublish, removal, suppression and approval",
+        "Core wp-sitemap and user sitemaps disabled",
+        "Pending, unpublished, removed, suppressed, draft and hidden items never appear"
+      ],
+      "acceptance": [
+        "The sitemap lists reviewed profiles, published stories and core pages only",
+        "A pending-review profile is absent from the sitemap",
+        "A removed profile leaves the sitemap in the same step",
+        "The sitemap cache is purged on a state change",
+        "No author or user sitemap exists"
+      ],
+      "tests": [
+        "test_REQ_208_sitemap_lists_reviewed_profiles_only",
+        "test_REQ_217_pending_profile_not_in_sitemap",
+        "test_REQ_209_removed_profile_leaves_sitemap_in_same_step",
+        "test_REQ_121_core_sitemaps_and_user_sitemaps_disabled"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/plugins/guard.md",
+        "docs/plugins/directory.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/tests/Integration/Guard/**"
+      ],
+      "notes": "Story entries are added by the Stories issues in M2."
+    },
+    {
+      "key": "M1-SEO-04",
+      "title": "Serve robots.txt that allows pending profile URLs",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-121",
+        "REQ-217"
+      ],
+      "depends": [
+        "M1-SEO-03"
+      ],
+      "summary": "robots.txt allows all and points to the sitemap; it never disallows pending-review URLs because crawlers must read the page to see noindex.",
+      "scope": [
+        "Dynamic robots.txt from the guard: allow all, Sitemap line",
+        "No Disallow rule for profile paths",
+        "Core robots filters locked so another plugin cannot add disallows for profiles"
+      ],
+      "acceptance": [
+        "robots.txt allows all and points to the sitemap",
+        "robots.txt does not disallow pending-review URLs"
+      ],
+      "tests": [
+        "test_REQ_121_robots_txt_allows_all_and_lists_sitemap",
+        "test_REQ_217_robots_txt_does_not_disallow_pending_urls"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/tests/Integration/Guard/**"
+      ]
+    },
+    {
+      "key": "M1-SEO-05",
+      "title": "Send state-aware status and robots headers",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-209",
+        "REQ-217",
+        "REQ-208"
+      ],
+      "depends": [
+        "M1-REV-02",
+        "M1-DIR-04",
+        "M0-GRD-01"
+      ],
+      "summary": "On every profile request the guard reads the state from the database and answers 200 with or without noindex, 404 or 410 with noindex, and tells caches not to override it.",
+      "scope": [
+        "Pending: 200 with X-Robots-Tag noindex",
+        "Unpublished and Removed and suppressed: 410 with X-Robots-Tag noindex; restoring returns 200",
+        "Rejected, Imported and unknown: 404",
+        "Cache-Control that lets a CDN honour purge and never serve a stale state",
+        "Header written at the response layer so a theme or plugin cannot omit it"
+      ],
+      "acceptance": [
+        "A Published (review pending) profile returns 200 with an X-Robots-Tag noindex header",
+        "A removed profile returns 410 with X-Robots-Tag noindex",
+        "Restoring a reversible unpublish returns 200 again",
+        "A response always reflects the database state, not a cache"
+      ],
+      "tests": [
+        "test_REQ_217_pending_returns_200_with_noindex_header",
+        "test_REQ_209_removed_returns_410_with_noindex_header",
+        "test_REQ_209_restore_returns_200_again",
+        "test_REQ_208_status_read_from_database_not_cache"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/plugins/guard.md",
+        "docs/plugins/review.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/tests/Integration/Guard/**"
+      ]
+    },
+    {
+      "key": "M1-SEO-06",
+      "title": "Close core surfaces that could leak a profile",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-209"
+      ],
+      "depends": [
+        "M0-GRD-01",
+        "M1-DIR-01"
+      ],
+      "summary": "Feeds, REST, oEmbed, shortlinks, attachment and author pages, user enumeration and previews cannot show a non-public profile, and no plugin can add an entry for one.",
+      "scope": [
+        "Disable or filter feeds, REST routes and oEmbed for wiw_profile and its attachments",
+        "?p=ID shortlinks and attachment pages redirect or 404; author archives and user enumeration blocked",
+        "Preview links for profiles require staff capability",
+        "A final output filter strips any URL or entry for a non-public profile from third-party feeds and sitemaps"
+      ],
+      "acceptance": [
+        "A pending-review profile is absent from feeds, REST, oEmbed and shortlinks",
+        "No plugin adds an author sitemap, user enumeration or a feed entry for a non-public profile",
+        "Staff previews need a capability"
+      ],
+      "tests": [
+        "test_REQ_208_profile_absent_from_feeds_rest_oembed_shortlink",
+        "test_REQ_208_author_pages_and_user_enumeration_closed",
+        "test_REQ_208_preview_requires_staff_capability"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/plugins/guard.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/whoiswho-guard/**",
+        "site/tests/Integration/Guard/**"
+      ],
+      "notes": "M0 may already close some of these in the guard skeleton; extend, do not duplicate."
+    },
+    {
+      "key": "M1-SEO-07",
+      "title": "Queue cache purges on state changes",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-209",
+        "REQ-217"
+      ],
+      "depends": [
+        "M1-REV-01",
+        "M0-PLG-16"
+      ],
+      "summary": "Listens to the state-changed event and queues high-priority purge jobs for the profile page, list pages, industry page, sitemap and share image, with a broad purge above a threshold.",
+      "scope": [
+        "URL set builder for a profile: page, list pages it appears on, industry page, sitemap, share image",
+        "Queue purge jobs through the M0 purge service on unpublish, removal, suppression, approval and bulk actions",
+        "Broad purge when a batch exceeds the threshold",
+        "Purge-log entry per purge and per unpublish event"
+      ],
+      "acceptance": [
+        "A removed profile queues a purge job",
+        "Approving a pending profile purges in the same action",
+        "A bulk unpublish above the threshold queues one broad purge"
+      ],
+      "tests": [
+        "test_REQ_209_removal_queues_purge_job",
+        "test_REQ_217_approval_queues_purge_in_same_step",
+        "test_REQ_209_bulk_above_threshold_queues_broad_purge"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/plugins/platform.md",
+        "docs/plugins/review.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Purge/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Directory/**"
+      ],
+      "notes": "With no CDN yet the purge clears the local page cache only; queue design follows ADR-006."
+    },
+    {
+      "key": "M1-SEO-08",
+      "title": "Build the Purge log screen",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-209",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-SEO-07",
+        "M0-PLG-04"
+      ],
+      "summary": "A read-only screen of cache purges and unpublish events, shared with Platform. Prototype A48, #/admin/purges.",
+      "scope": [
+        "List of purges and unpublish events with time, subject, reason and status",
+        "Filter by date and status",
+        "Capability to view set in the roles matrix; deny by default"
+      ],
+      "acceptance": [
+        "The Purge log lists purges and unpublish events",
+        "A user without the capability gets 403"
+      ],
+      "tests": [
+        "test_REQ_209_purge_log_lists_unpublish_events",
+        "test_REQ_244_purge_log_denies_without_capability"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/pages/admin/audit-and-compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Admin/PurgeLog/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Platform/**"
+      ],
+      "notes": "The capability name for the Purge log is not stated in the docs; proposed wiw_view_purge_log, to be confirmed. Flagged in the M1 report."
+    },
+    {
+      "key": "M1-SEO-09",
+      "title": "Build the 404, 410 and 500 pages",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-121",
+        "REQ-209"
+      ],
+      "depends": [
+        "M0-THM-01"
+      ],
+      "summary": "Error templates with navigation, search and directory links, no technical detail. Prototype V12, V13, V14.",
+      "scope": [
+        "404: not found with search and directory links",
+        "410: removed with an explanation and links to the directory and the complaints policy, no reason shown",
+        "500: plain text, no technical detail",
+        "Header and footer present on all three"
+      ],
+      "acceptance": [
+        "404, 410 and 500 pages render with navigation and no technical detail",
+        "The 410 page links to the complaints policy"
+      ],
+      "tests": [
+        "spec: tests/e2e/error-pages.spec.ts"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/profile/emeka-diallo-hassan (V12), #/profile/not-a-real-slug (V13), #/error (V14)."
+    },
+    {
+      "key": "M1-SEO-10",
+      "title": "Serve responsive profile images and a brand fallback card",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-042",
+        "REQ-247",
+        "REQ-162"
+      ],
+      "depends": [
+        "M1-DIR-13"
+      ],
+      "summary": "Profile portraits and logos are served resized in modern formats with width and height, and a generic brand card covers profiles with no image.",
+      "scope": [
+        "Image helper with srcset, sizes, width and height attributes and modern formats (WebP or AVIF when available)",
+        "Monogram placeholder for a profile with no photograph or logo in the page and card",
+        "Generic brand share card asset as the fallback for the share image (path read by the guard)",
+        "No cover or banner size is registered"
+      ],
+      "acceptance": [
+        "Portraits and logos are served in resized modern formats",
+        "A profile with no image shows the placeholder and uses the brand card when shared",
+        "No cover or banner image size exists"
+      ],
+      "tests": [
+        "spec: tests/e2e/profile-images.spec.ts"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/theme/motion-and-performance.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "No images can be imported yet (contract section 10); the helper handles owner-supplied or licensed photographs when they exist. The share image fallback is an open point in seo-and-sharing.md."
+    },
+    {
+      "key": "M1-SEO-11",
+      "title": "Test every profile state on every surface",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-208",
+        "REQ-209",
+        "REQ-217",
+        "REQ-218"
+      ],
+      "depends": [
+        "M1-SEO-03",
+        "M1-SEO-05",
+        "M1-SEO-06",
+        "M1-DIR-06"
+      ],
+      "summary": "The visibility matrix test: one profile per state requested on page, lists, home slot, industry page, search, sitemap, core sitemaps, feeds, REST, oEmbed, shortlinks and previews.",
+      "scope": [
+        "Fixture builder that creates a profile in each of the six states",
+        "Matrix asserts status and presence per the state table in docs/theme/seo-and-sharing.md",
+        "Runs in the default test suite and as a Playwright smoke on the built site"
+      ],
+      "acceptance": [
+        "Each response matches the state table (200, 404 or 410) and the profile appears only where allowed",
+        "A Published (review pending) profile has the noindex header and meta, and no sitemap, feed or structured-data entry",
+        "A pending profile appears in search with its label but not on lists, home or industry pages"
+      ],
+      "tests": [
+        "test_REQ_208_state_matrix_on_every_surface",
+        "test_REQ_218_pending_profile_in_search_but_not_in_lists",
+        "test_REQ_209_removed_profile_410_across_surfaces"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/plugins/review.md"
+      ],
+      "files": [
+        "site/tests/Visibility/**"
+      ],
+      "notes": "Search is M2; the search surface assertion is enabled when M2 lands and marked skipped with a reason until then."
+    },
+    {
+      "key": "M1-SEO-12",
+      "title": "Test markup, robots, approval and share cards in the browser",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "seo-sharing-and-sitemaps",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-006",
+        "REQ-217",
+        "REQ-121"
+      ],
+      "depends": [
+        "M1-SEO-02",
+        "M1-SEO-04",
+        "M1-REV-03",
+        "M1-DIR-19"
+      ],
+      "summary": "End-to-end checks that approval flips noindex, markup and sitemap together, and that robots and share cards behave.",
+      "scope": [
+        "Approve a pending profile and assert noindex removed, schema added, sitemap entry added and purge queued",
+        "Validate Person and Organization JSON-LD output against a schema checker",
+        "Open Graph tags and card text for reviewed and pending profiles",
+        "robots.txt allows pending URLs"
+      ],
+      "acceptance": [
+        "Approving a pending profile removes noindex, adds the sitemap entry and markup, and purges the cache in one action",
+        "The share card for a pending profile carries the label",
+        "404, 410 and 500 pages render with navigation"
+      ],
+      "tests": [
+        "spec: tests/e2e/seo-approval.spec.ts",
+        "test_REQ_217_approval_flips_noindex_markup_sitemap"
+      ],
+      "docs": [
+        "docs/features/seo-sharing-and-sitemaps.md",
+        "docs/theme/seo-and-sharing.md"
+      ],
+      "files": [
+        "site/tests/e2e/**"
+      ]
+    },
+    {
+      "key": "M1-COR-01",
+      "title": "Add the support items table and item types",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-089",
+        "REQ-270",
+        "REQ-271",
+        "REQ-158"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-22"
+      ],
+      "summary": "wiw_support_items with typed items (Enquiry, Correction, Removal, Report, Complaint, Data request), status, owner, due date and a business-day due-date calculator.",
+      "scope": [
+        "Migration and repository for wiw_support_items: profile, type, requester name, relationship, email, message, status, owner, due date, hashed IP; PII catalogue entries",
+        "Reference generator for the received page",
+        "Due date rules: acknowledge 1 business day, corrections resolve 7 days, valid removal hide within 2 business days",
+        "Business-day calculator in the WAT time zone",
+        "Breach flag computed from due date and status"
+      ],
+      "acceptance": [
+        "A correction item gets a due date 7 days out",
+        "A removal item gets a 2 business day countdown",
+        "The requester email and name are in the PII catalogue",
+        "The IP is stored only as a hash"
+      ],
+      "tests": [
+        "test_REQ_158_correction_due_date_is_seven_days",
+        "test_REQ_158_removal_due_in_two_business_days",
+        "test_REQ_158_item_past_due_is_flagged_breach",
+        "test_REQ_089_support_item_pii_in_catalogue"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Compliance/**"
+      ],
+      "notes": "Business-day rules do not say whether Nigerian public holidays count. This issue treats Monday to Friday as business days and keeps the calendar in one config value; confirm in M1-COR-18."
+    },
+    {
+      "key": "M1-COR-02",
+      "title": "Protect public forms with token, throttle and bot challenge",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-122",
+        "REQ-081"
+      ],
+      "depends": [
+        "M0-PLG-11",
+        "M0-GRD-01"
+      ],
+      "summary": "One reusable form-protection service for enquiry, correction, removal and report: time-based form token, per-IP and per-email throttles and a bot challenge.",
+      "scope": [
+        "Time-based form token (not a WordPress nonce, because pages are cached)",
+        "Per-IP and per-email or per-link-token throttles with a \"try later\" response and no item created",
+        "Cloudflare Turnstile verification behind an interface (architecture says Turnstile) with a stub for tests",
+        "Uniform responses so the form does not reveal whether a profile or email exists",
+        "Hashed IPs only"
+      ],
+      "acceptance": [
+        "Submitting more than the rate limit from one IP shows a try later message and creates no item",
+        "A submission without a solved challenge is refused",
+        "A stale or missing form token is refused",
+        "Responses do not reveal whether an email exists"
+      ],
+      "tests": [
+        "test_REQ_122_over_limit_shows_try_later_and_creates_no_item",
+        "test_REQ_081_unsolved_challenge_refused",
+        "test_REQ_122_missing_form_token_refused"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/architecture.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Forms/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Compliance/**"
+      ],
+      "notes": "Check whether M0 platform quality already provides this service; if so, reduce this issue to wiring. Turnstile needs Cloudflare, which is optional until go-live (docs/architecture.md); the plan assumes a Turnstile key is available locally or a fallback honeypot is accepted, see M1-COR-18."
+    },
+    {
+      "key": "M1-COR-03",
+      "title": "Confirm requester email by single-use signed link",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-233",
+        "REQ-232",
+        "REQ-157"
+      ],
+      "depends": [
+        "M0-PLG-17",
+        "M1-COR-01"
+      ],
+      "summary": "The /confirm/{token} flow that makes a request count: single-use, expiring, and a used or expired link changes nothing.",
+      "scope": [
+        "Issue a signed link (purpose, subject, expiry) through the M0 signed link service on correction, removal and report submit",
+        "/confirm/{token}: GET does not consume the link; a confirming POST consumes it (prefetch safe)",
+        "Until confirmed the item shows \"email not confirmed\"; on confirmation the item becomes visible to staff and the requester sees the received page",
+        "Used or expired links show the expired-or-used page and change nothing"
+      ],
+      "acceptance": [
+        "Until the requester opens the verification link the item shows \"email not confirmed\"",
+        "The link works once and expires",
+        "Opening a used or expired link shows the expired-or-used page and changes nothing",
+        "A GET does not consume the link"
+      ],
+      "tests": [
+        "test_REQ_233_signed_link_is_single_use_and_get_does_not_consume_it",
+        "test_REQ_232_correction_needs_verified_email_before_counting",
+        "test_REQ_233_expired_link_shows_expired_page_and_changes_nothing"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Confirm/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "The docs say the item reaches staff only after the click, yet the Corrections list shows \"email not confirmed\" for unconfirmed items. Treat unconfirmed items as visible to staff with that label. Also the prototype confirms on page open; GET-does-not-consume implies a button. Flagged."
+    },
+    {
+      "key": "M1-COR-04",
+      "title": "Handle correction submissions",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-157",
+        "REQ-158",
+        "REQ-232",
+        "REQ-018",
+        "REQ-060"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M1-COR-02",
+        "M1-COR-03",
+        "M1-DIR-05",
+        "M0-EML-01"
+      ],
+      "summary": "POST /correct/{slug}: who you are, what you need, which part, the new value, evidence and email; creates a Correction item due in 7 days and acknowledges by email.",
+      "scope": [
+        "One validator for the form: relationship (the person, a representative, someone else), what you need (correct a fact, add a right-of-reply note, change public contact details, switch enquiries on or off, request view count and sources), field, new value, evidence, email",
+        "Creates a Correction item due 7 days out; sends a verification link when the requester says they are the person or their representative; \"someone else\" goes in directly",
+        "Acknowledgement email through the mailer",
+        "Refuses non-public profile slugs with the same response as an unknown slug"
+      ],
+      "acceptance": [
+        "A correction form submission creates an item on the Corrections screen with a due date 7 days out",
+        "A requester who says they are the subject gets a verification link",
+        "Nothing changes publicly until staff act",
+        "The form refuses over the rate limit"
+      ],
+      "tests": [
+        "test_REQ_157_correction_submission_creates_item_due_in_seven_days",
+        "test_REQ_232_subject_request_sends_verification_link",
+        "test_REQ_157_correction_does_not_change_profile"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Corrections/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Right-of-reply note and view-count requests are accepted as request types only; REQ-172 (right of reply on a profile) is should-have and out of scope."
+    },
+    {
+      "key": "M1-COR-05",
+      "title": "Handle removal requests",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-147",
+        "REQ-157",
+        "REQ-158"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M1-COR-02",
+        "M1-COR-03",
+        "M0-EML-01"
+      ],
+      "summary": "POST /remove/{slug}: who you are, why and email; creates a Removal item with a two business day countdown and acknowledges by email.",
+      "scope": [
+        "One validator: relationship, reason, email",
+        "Item type Removal with due date from the business-day calculator",
+        "Verification link; until confirmed the item shows \"email not confirmed\"",
+        "Pressing Request removal never creates a data request"
+      ],
+      "acceptance": [
+        "A removal submission creates an item of type Removal with a countdown to two business days",
+        "A removal request creates an item on Requests and reports, not on Corrections",
+        "The requester receives an acknowledgement"
+      ],
+      "tests": [
+        "test_REQ_158_removal_submission_creates_removal_item_with_countdown",
+        "test_REQ_157_removal_lands_on_requests_and_reports_not_corrections"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/directory-and-profiles.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Removals/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ]
+    },
+    {
+      "key": "M1-COR-06",
+      "title": "Handle profile reports",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-090",
+        "REQ-157",
+        "REQ-270"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M1-COR-02",
+        "M1-COR-03"
+      ],
+      "summary": "The Report dialog endpoint: any visitor picks a reason (inaccurate, defamatory or harmful, privacy, copyright, other) and details; creates a Report item.",
+      "scope": [
+        "One validator: reason and details; email optional but verified by link when given",
+        "Creates a Report item on Requests and reports",
+        "No account or payment needed"
+      ],
+      "acceptance": [
+        "A Report lets any visitor choose a reason and creates an item in the inbox",
+        "A Report item has kind Report and a due date"
+      ],
+      "tests": [
+        "test_REQ_090_report_creates_item_with_reason",
+        "test_REQ_270_report_appears_in_requests_and_reports"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Reports/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Whether a report must have a verified email is not stated; the docs only say any visitor can report. Plan allows an anonymous report. Flagged."
+    },
+    {
+      "key": "M1-COR-07",
+      "title": "Track deadlines, breaches and reminders",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-158",
+        "REQ-174"
+      ],
+      "depends": [
+        "M1-COR-01",
+        "M0-PLG-15",
+        "M0-EML-01"
+      ],
+      "summary": "A scheduled job flags items nearing or past their due date to the inbox owners and routes unresolved disputes to the Administrator.",
+      "scope": [
+        "Daily job flags items nearing and past due, emails the holders of the relevant capability",
+        "Breach flag appears in the Due column of the lists",
+        "Unresolved dispute escalates to the Administrator (REQ-174)",
+        "Shares the reminder scheduler with claim reminders (M3)"
+      ],
+      "acceptance": [
+        "An item past its target shows a breach flag",
+        "Owners are reminded before the due date",
+        "An unresolved dispute is escalated to the Administrator"
+      ],
+      "tests": [
+        "test_REQ_158_overdue_item_shows_breach_flag",
+        "test_REQ_158_reminder_job_emails_owners",
+        "test_REQ_174_unresolved_dispute_escalates_to_administrator"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Deadlines/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Reminder timing (how long before due) is not stated; proposed one day before and daily after. Flagged."
+    },
+    {
+      "key": "M1-COR-08",
+      "title": "Build the Corrections screen and item detail",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-271",
+        "REQ-157",
+        "REQ-158",
+        "REQ-253",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-COR-04",
+        "M1-DIR-10",
+        "M1-REV-11"
+      ],
+      "summary": "The Corrections list and detail with Apply, Mark resolved and Decline with a reason. Prototype A64 #/admin/corrections and A65 #/admin/corrections/cr2.",
+      "scope": [
+        "List: reference, profile, suggestion, received, due, status; filter by status; breach flag",
+        "Detail: everything the requester sent, including evidence and contact, staff only",
+        "Apply opens the profile for direct edit (M1-DIR-10) with the request reference as the reason; for a claimed profile the edit waits for approval (hint shown)",
+        "Mark resolved and Decline with a reason that is never public",
+        "Audit rows for apply, resolve and decline; the requester is emailed when resolved",
+        "Capabilities wiw_support_inbox and wiw_handle_disputes"
+      ],
+      "acceptance": [
+        "A correction form submission appears on the Corrections screen",
+        "Apply opens the profile for a direct edit with a required reason",
+        "For a claimed profile the edit waits for approval",
+        "Decline requires a reason that is never public",
+        "Editing a profile to resolve a correction creates a version, writes an audit row and closes the linked item"
+      ],
+      "tests": [
+        "test_REQ_271_corrections_list_shows_due_and_status",
+        "test_REQ_253_apply_on_claimed_profile_waits_for_approval",
+        "test_REQ_157_decline_requires_private_reason",
+        "test_REQ_232_apply_closes_linked_item",
+        "test_REQ_244_corrections_screen_denies_without_capability"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Admin/Corrections/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Prototype routes #/admin/corrections and #/admin/corrections/cr2."
+    },
+    {
+      "key": "M1-COR-09",
+      "title": "Build the Requests and reports screen and item detail",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "L",
+      "reqs": [
+        "REQ-270",
+        "REQ-059",
+        "REQ-090",
+        "REQ-158",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-COR-05",
+        "M1-COR-06"
+      ],
+      "summary": "One list of data requests, removals and reports with kind and status filters, and detail with the staff actions for each kind. Prototype A35 #/admin/dsr and A66 #/admin/dsr/rm1.",
+      "scope": [
+        "List with Kind column (Data request, Removal, Report), filters by kind and status, due date and breach flag",
+        "Removal actions: Valid: hide and suppress (M1-COR-10) or Not valid with a reason",
+        "Report actions: Hide the profile now, dismiss, resolve",
+        "Data request: close when fulfilled (the forms and Privacy tools integration are M3); list includes them",
+        "Escalation of a dispute to the Administrator",
+        "Capability wiw_handle_requests, deciding needs wiw_handle_disputes; deny by default"
+      ],
+      "acceptance": [
+        "A removal request or a report creates an item on Requests and reports with its due date and the Kind column value",
+        "A data-rights submission appears in the same list as a Data request",
+        "A user without wiw_handle_requests gets a 403",
+        "A Reviewer can hide a reported profile from the item"
+      ],
+      "tests": [
+        "test_REQ_270_list_shows_kind_status_and_due_date",
+        "test_REQ_270_requests_screen_returns_403_without_capability",
+        "test_REQ_090_reviewer_can_hide_profile_from_report",
+        "test_REQ_059_data_request_listed_with_removals_and_reports"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Admin/Requests/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Docs conflict: a Reviewer should hide a reported profile at once (feature page) but wiw_unpublish_profiles is Editor and Administrator, and wiw_handle_requests is Editor and Administrator; a Reviewer reaches it through wiw_bulk_unpublish. This issue lets a holder of wiw_bulk_unpublish or wiw_unpublish_profiles hide from a report; confirm in M1-COR-18. Prototype routes #/admin/dsr and #/admin/dsr/rm1."
+    },
+    {
+      "key": "M1-COR-10",
+      "title": "Take a profile down on a valid removal and suppress it",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-209",
+        "REQ-147",
+        "REQ-207",
+        "REQ-158"
+      ],
+      "depends": [
+        "M1-REV-03",
+        "M1-COR-11",
+        "M1-COR-09",
+        "M1-SEO-07"
+      ],
+      "summary": "Choosing \"Valid: hide and suppress\" moves the profile to Removed and suppressed through the StateMachine in the same request, adds the suppression entry and queues the purge.",
+      "scope": [
+        "Transition to Removed and suppressed through StateMachine with the request reference as reason",
+        "410 with noindex immediately; removed from sitemap and search; purge queued",
+        "Suppression entry added automatically",
+        "Requester emailed; audit rows for the state change and the suppression"
+      ],
+      "acceptance": [
+        "Choosing Valid makes the profile return 410 with X-Robots-Tag noindex within the same request, removes it from the sitemap and search, queues a cache purge and adds a suppression entry",
+        "After suppression, re-importing the same record does not recreate or republish it",
+        "The removal handled by an Editor still adds the entry"
+      ],
+      "tests": [
+        "test_REQ_209_valid_removal_returns_410_in_same_request",
+        "test_REQ_147_valid_removal_adds_suppression_entry",
+        "test_REQ_207_reimport_after_suppression_does_not_recreate",
+        "test_REQ_158_removal_hides_profile_within_two_business_days"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Removals/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ]
+    },
+    {
+      "key": "M1-COR-11",
+      "title": "Add the suppression list service",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-207",
+        "REQ-147"
+      ],
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-06",
+        "M0-PLG-22"
+      ],
+      "summary": "wiw_suppression with normalised name, identifiers and reason, a matcher used by import and nominations, and rules that nothing but an Administrator edits it by hand.",
+      "scope": [
+        "Migration and PII catalogue entries; permanent, never purged by retention",
+        "Matcher: exact match on any external id, or normalised name plus entity type; a name match with a different external id is treated as a match until a person decides",
+        "Add entry automatically from a valid removal; manual add or remove needs wiw_edit_suppression",
+        "Every change audited; reason text never leaves the site"
+      ],
+      "acceptance": [
+        "A suppressed name is matched by external id or by normalised name and type",
+        "Only a user with wiw_edit_suppression can add or remove an entry by hand",
+        "Suppression entries are not removed by the retention job",
+        "Reason text is not part of any export"
+      ],
+      "tests": [
+        "test_REQ_207_suppression_matches_by_id_or_normalised_name",
+        "test_REQ_207_only_administrator_edits_suppression_manually",
+        "test_REQ_207_suppression_cannot_be_bypassed_by_import",
+        "test_REQ_207_suppression_not_purged_by_retention"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/features/import-and-sources.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Suppression/**",
+        "site/wp-content/plugins/whoiswho-core/migrations/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Compliance/**"
+      ],
+      "notes": "It also covers declined nominees (M4 calls this service)."
+    },
+    {
+      "key": "M1-COR-12",
+      "title": "Build the Suppression list screen",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-207",
+        "REQ-147",
+        "REQ-244"
+      ],
+      "depends": [
+        "M1-COR-11"
+      ],
+      "summary": "A list of suppressed names, readable by Reviewers and Editors, editable by hand only by an Administrator. Prototype A22, #/admin/suppression.",
+      "scope": [
+        "Read-only list with name, type, added by, added on (reason visible to staff only)",
+        "Manual add and remove for wiw_edit_suppression only",
+        "Capability wiw_view_suppression to view; deny by default"
+      ],
+      "acceptance": [
+        "A Reviewer and an Editor can view the list but not change it",
+        "Only a user with wiw_edit_suppression can add or remove an entry by hand"
+      ],
+      "tests": [
+        "test_REQ_207_reviewer_can_view_but_not_edit_suppression",
+        "test_REQ_207_administrator_can_add_manual_entry"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Admin/Suppression/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Docs conflict: the support page says there is no remove button on purpose, while the acceptance list says a user with wiw_edit_suppression can add or remove by hand. This issue builds Add and a Remove behind the capability with a mandatory reason; confirm in M1-COR-18."
+    },
+    {
+      "key": "M1-COR-13",
+      "title": "Export the suppression snapshot for acquisition",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "S",
+      "reqs": [
+        "REQ-207"
+      ],
+      "depends": [
+        "M1-COR-11"
+      ],
+      "summary": "A snapshot of suppression entries per contract section 11 that an Administrator downloads for the acquisition side before each run.",
+      "scope": [
+        "Snapshot fields: snapshot_id, generated_at, entries with suppression_id, entity_type, name, external_ids",
+        "No reason text in the file",
+        "Download needs an Administrator capability, is logged in the audit log, file marked as personal data"
+      ],
+      "acceptance": [
+        "The snapshot has the fields in contract section 11 and no reason text",
+        "Each download is audited"
+      ],
+      "tests": [
+        "test_REQ_207_snapshot_has_no_reason_text",
+        "test_REQ_207_snapshot_download_is_audited"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/contracts/import-format.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Suppression/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ],
+      "notes": "Transport and encryption between machines (contract U9) are open; this issue is a logged download only."
+    },
+    {
+      "key": "M1-COR-14",
+      "title": "Log information sent to a subject on request",
+      "milestone": "M1",
+      "area": "plugin",
+      "feature": "corrections-removals-reports",
+      "priority": "S",
+      "size": "S",
+      "reqs": [
+        "REQ-236"
+      ],
+      "depends": [
+        "M1-COR-09",
+        "M1-DIR-08"
+      ],
+      "summary": "A staff action that records when status, view count, sources or enquiries are sent to a subject, with the data taken from what staff already see.",
+      "scope": [
+        "Action on a correction or data item: send information (status, view count, sources used, enquiries) by the inbox email",
+        "Each such request logged with who sent what kind of information",
+        "No new data collected"
+      ],
+      "acceptance": [
+        "Each information request is logged",
+        "The email contains only data staff already see"
+      ],
+      "tests": [
+        "test_REQ_236_information_request_is_logged",
+        "test_REQ_236_info_email_uses_existing_data_only"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Compliance/Info/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Compliance/**"
+      ]
+    },
+    {
+      "key": "M1-COR-15",
+      "title": "Build the correction and removal forms",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-157",
+        "REQ-156",
+        "REQ-122"
+      ],
+      "depends": [
+        "M1-COR-04",
+        "M1-COR-05",
+        "M1-DIR-18"
+      ],
+      "summary": "Public templates for /correct/:slug and /remove/:slug. Prototype V39, V40.",
+      "scope": [
+        "Correction form fields per the public page doc; removal form fields",
+        "Accessible errors, challenge slot and form token field",
+        "Rate-limit try later message",
+        "noindex forms"
+      ],
+      "acceptance": [
+        "Both forms are keyboard and screen reader usable at 360 px",
+        "A refused submission shows an accessible message and creates no success state",
+        "The forms are noindex"
+      ],
+      "tests": [
+        "spec: tests/e2e/correction-removal-forms.spec.ts"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/correct/savanna-loop-agritech (V39) and #/remove/halima-osei-danjuma (V40)."
+    },
+    {
+      "key": "M1-COR-16",
+      "title": "Build the report dialog, received and expired-link pages",
+      "milestone": "M1",
+      "area": "theme",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-090",
+        "REQ-233",
+        "REQ-157"
+      ],
+      "depends": [
+        "M1-COR-06",
+        "M1-COR-03",
+        "M1-DIR-18"
+      ],
+      "summary": "The Report dialog on the profile, the Received page with a reference and the Link expired or already used page. Prototype V44, V41, V51.",
+      "scope": [
+        "Report dialog: reason list and details, focus trap and escape to close, works without JavaScript as a page",
+        "Generic done page with a reference and the response promises",
+        "Confirm page with a confirm button (POST) and the expired-or-used state",
+        "Link to the Complaints and takedown page (content is the M3 trust and legal work)"
+      ],
+      "acceptance": [
+        "The Report dialog creates an item and shows the received page with a reference",
+        "An expired or used link shows the expired-or-used page",
+        "The dialog is keyboard accessible"
+      ],
+      "tests": [
+        "spec: tests/e2e/report-and-received.spec.ts"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/pages/public/directory-and-profiles.md",
+        "docs/pages/public/trust-legal-and-data-rights.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/**"
+      ],
+      "notes": "Prototype routes #/profile/palmline-media-house (V44), #/done?kind=correction&ref=cr1 (V41), #/confirm/t-cl4 (V51)."
+    },
+    {
+      "key": "M1-COR-17",
+      "title": "Test correction, removal and report flows end to end",
+      "milestone": "M1",
+      "area": "qa",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "M",
+      "reqs": [
+        "REQ-157",
+        "REQ-158",
+        "REQ-209",
+        "REQ-207",
+        "REQ-193"
+      ],
+      "depends": [
+        "M1-COR-08",
+        "M1-COR-10",
+        "M1-COR-15",
+        "M1-COR-16"
+      ],
+      "summary": "Playwright and integration flows across the public forms and staff screens.",
+      "scope": [
+        "Correction to confirm link to Apply with reason, the item closes and the page changes",
+        "Removal to Valid hide and suppress: 410 with noindex, sitemap gone, purge queued, re-import refused",
+        "Report to hide",
+        "Rate limit shows try later and creates no item",
+        "Expired link shows the expired page",
+        "Capability matrix: Reviewer and Administrator can bulk unpublish, Editor cannot"
+      ],
+      "acceptance": [
+        "Each acceptance item in the corrections feature page has a passing test",
+        "The 410 check runs within the same request as the decision"
+      ],
+      "tests": [
+        "spec: tests/e2e/corrections-flows.spec.ts",
+        "test_REQ_209_valid_removal_flow_end_to_end"
+      ],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [
+        "site/tests/e2e/**",
+        "site/tests/Security/**"
+      ]
+    },
+    {
+      "key": "M1-COR-18",
+      "title": "Confirm response promises, business-day calendar and bot challenge",
+      "milestone": "M1",
+      "area": "human",
+      "feature": "corrections-removals-reports",
+      "priority": "M",
+      "size": "S",
+      "reqs": [],
+      "depends": [],
+      "summary": "A named person (with Legal) confirms the details the docs leave open so the public promises are safe to publish.",
+      "scope": [
+        "Confirm whether Nigerian public holidays count as non-business days",
+        "Confirm the Cloudflare Turnstile key or an accepted fallback before go-live",
+        "Confirm that a Reviewer may hide a reported profile (which capability) and whether Remove on the suppression list exists",
+        "Confirm that a report may be anonymous",
+        "Confirm reminder timing for due items"
+      ],
+      "acceptance": [
+        "Each answer is recorded on the issue and passed to the shared-docs owner"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/corrections-removals-reports.md",
+        "docs/pages/admin/support-and-requests.md"
+      ],
+      "files": [],
+      "notes": "REQ ids are not cited because this is a decision task."
+    }
+  ]
+}

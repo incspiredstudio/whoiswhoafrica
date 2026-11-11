@@ -1,0 +1,2602 @@
+{
+  "milestone": "M2",
+  "issues": [
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-01",
+        "M1-REV-01",
+        "M1-DIR-02"
+      ],
+      "notes": "ADR-010 proposes the table; the ADR is the source for column design. Assumes M1 did not already create wiw_profile_search; if M1 created a profile-only table, turn this issue into an extension of it. Boundary: only Review\\StateMachine writes pub_state, so the indexer listens to its events and never writes state.",
+      "key": "M2-SRC-01",
+      "title": "Create the search index table and profile indexer",
+      "area": "plugin",
+      "feature": "search",
+      "size": "M",
+      "reqs": [
+        "REQ-254",
+        "REQ-208",
+        "REQ-079"
+      ],
+      "summary": "Build the flattened FULLTEXT table wiw_profile_search and the indexer that adds or removes a profile row in the same step as its publication state changes, so only public profiles are ever searchable.",
+      "scope": [
+        "Forward-only migration creating wiw_profile_search (InnoDB FULLTEXT) with item type, item id, name, organisation, title, industry, bio text, url, a pending-review flag and a name-sort key",
+        "Indexer service Directory\\SearchIndexer with upsert and remove for a profile, called from the StateMachine state-change hook, suppression, bulk unpublish and import apply (hook only; no state writes)",
+        "Index only the two Published states; Published (review pending) rows carry the pending flag",
+        "Removal writes a Purge log entry through Platform when a profile leaves search",
+        "Full rebuild command in bin/wiw.php (search:rebuild) that reads only through PublicProfile"
+      ],
+      "acceptance": [
+        "The index is built from public states only and never contains a non-public item",
+        "A profile in each non-public state (Imported, Unpublished, Rejected, Removed and suppressed) has no row",
+        "Publishing adds the row and unpublishing, suppressing and bulk unpublishing remove it in the same step, with no cache delay on the origin",
+        "A Published (review pending) profile has a row with the pending flag set",
+        "The rebuild command leaves the same rows as incremental updates",
+        "A removal that affects search is recorded in the Purge log"
+      ],
+      "tests": [
+        "test_REQ_254_index_never_contains_non_public_profiles",
+        "test_REQ_208_unpublish_removes_profile_from_index_in_same_step",
+        "test_REQ_208_bulk_unpublish_and_suppress_remove_index_rows",
+        "test_REQ_216_pending_review_profile_is_indexed_with_pending_flag",
+        "test_REQ_254_rebuild_matches_incremental_index"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Search/**",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Migrations/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Search/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-SRC-01",
+        "M2-STO-02"
+      ],
+      "notes": "Event exclusion test name is taken from docs/plugins/content.md.",
+      "key": "M2-SRC-02",
+      "title": "Index published stories and keep them in sync",
+      "area": "plugin",
+      "feature": "search",
+      "size": "M",
+      "reqs": [
+        "REQ-254",
+        "REQ-208",
+        "REQ-027"
+      ],
+      "summary": "Add story rows to the same search index, written from the published state only and removed the moment a story is unpublished, scheduled, trashed or deleted.",
+      "scope": [
+        "Content-module listener on transition_post_status, trash and delete for stories that calls SearchIndexer",
+        "Story row holds title, body text, type, industry, url and a sponsored flag read through PublicStory",
+        "Never index drafts, scheduled or removed stories; never index events (wiw_event)",
+        "Rebuild command covers stories"
+      ],
+      "acceptance": [
+        "A word in a published story title returns the story in the Stories group",
+        "A draft story, a scheduled story and an unpublished story are never returned",
+        "Unpublishing or trashing a story removes it at once, with no cache delay on the origin",
+        "An event is never in the index",
+        "A Sponsored story keeps its sponsored flag in the index so the result can show the label"
+      ],
+      "tests": [
+        "test_REQ_254_published_story_is_indexed",
+        "test_REQ_254_draft_scheduled_and_trashed_stories_are_not_indexed",
+        "test_REQ_262_events_are_not_in_search",
+        "test_REQ_182_indexed_story_carries_sponsored_flag"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md",
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Search/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Search/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-SRC-01",
+        "M2-SRC-02"
+      ],
+      "notes": "The paid-arrangement test needs Commerce data (M3). In M2 write it against a fixture that sets a sponsor on a story and a customer record on a profile; M3 re-runs it with real deals.",
+      "key": "M2-SRC-03",
+      "title": "Build the search query service with grouped, ordered results",
+      "area": "plugin",
+      "feature": "search",
+      "size": "M",
+      "reqs": [
+        "REQ-008",
+        "REQ-254",
+        "REQ-183",
+        "REQ-208"
+      ],
+      "summary": "One query service returns Profiles and Stories groups with a total count, name matches first then relevance, and nothing else influencing order.",
+      "scope": [
+        "Directory\\Search\\SearchService::search(query) returning grouped results and a count",
+        "Ranking: exact and prefix name match first, then FULLTEXT relevance, then name; no payment, label, customer or sponsored input",
+        "Empty query and no-match results as distinct states in the return value",
+        "Exclude profiles from core WordPress search (query filter in the plugin; guard verifies)",
+        "Query string is prepared with $wpdb->prepare and length-limited; rate limited per IP",
+        "Stories group is ordered by relevance then publishing order"
+      ],
+      "acceptance": [
+        "A search for a public person name returns that profile first in the Profiles group",
+        "The result count equals the number of profiles plus stories returned",
+        "A Published (review pending) profile is returned and flagged so the result shows the pending label",
+        "A Sponsored story result carries its Sponsored flag and sponsor name",
+        "Core WordPress search does not return profiles",
+        "The header panel and the search page use this one service and return identical results for the same query"
+      ],
+      "tests": [
+        "test_REQ_254_search_returns_only_public_items",
+        "test_REQ_008_name_match_ranks_first",
+        "test_REQ_254_result_count_equals_profiles_plus_stories",
+        "test_REQ_218_pending_profile_is_found_with_label_flag",
+        "test_REQ_183_paid_arrangement_does_not_change_result_order",
+        "test_REQ_208_core_search_does_not_return_profiles"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/Search/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Search/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Search/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-SRC-03"
+      ],
+      "notes": "The feature page says the target is set in the build plan but none is written. Proposal: p95 under 300 ms on the CI database; confirm with the human owner.",
+      "key": "M2-SRC-04",
+      "title": "Add the 10,000-profile search performance test",
+      "area": "qa",
+      "feature": "search",
+      "size": "S",
+      "reqs": [
+        "REQ-079",
+        "REQ-254"
+      ],
+      "summary": "Generate a 10,000-profile dataset and measure search time so the build plan can fix the target and CI can guard it.",
+      "scope": [
+        "Fixture generator for 10,000 public profiles and several hundred stories (synthetic, no personal data)",
+        "Timing test run against the real MariaDB service in CI, recording the p95 and failing above the agreed threshold",
+        "Record the measured time in the test README for the infra owner"
+      ],
+      "acceptance": [
+        "Search on a 10,000-profile dataset returns within the target measured at build",
+        "The target and measured result are written down where the build plan can find them"
+      ],
+      "tests": [
+        "test_REQ_079_search_on_10000_profiles_returns_within_target"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/adr/ADR-010-search.md",
+        "docs/build/testing-and-ci.md"
+      ],
+      "files": [
+        "site/tests/Performance/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-SRC-03",
+        "M0-THM-01",
+        "M1-DIR-09",
+        "M2-STO-09"
+      ],
+      "notes": "Prototype route #/search (V08, V38). The header shell is M0; this issue adds the panel behaviour and markup. The per-list narrowing box is a separate issue (M2-SRC-06). Search noindex is inferred from the SEO page (\"Search results\" are in its excluded list).",
+      "key": "M2-SRC-05",
+      "title": "Search page template, header panel and result cards",
+      "area": "theme",
+      "feature": "search",
+      "size": "M",
+      "reqs": [
+        "REQ-008",
+        "REQ-254",
+        "REQ-182"
+      ],
+      "summary": "Build the /search template, the full-screen header search panel and the result cards with empty, results and no-results states.",
+      "scope": [
+        "Template search.php reading SearchService only, never WP_Query",
+        "Header search icon and panel that submits to /search; works without scripts as a plain GET form",
+        "Results grouped under Profiles then Stories with the count, using the profile card and the story card (Sponsored label on sponsored stories)",
+        "Empty state \"Type a name, organisation or keyword\" with the public-only note; no-results state with the browse-the-directory button",
+        "Pending-review result keeps its label",
+        "Plain page title, no share image, search result pages noindex"
+      ],
+      "acceptance": [
+        "An empty search shows the prompt text",
+        "A search with no matches shows the no-results text and a link to the directory",
+        "A Sponsored story result shows the Sponsored label",
+        "A pending-review profile result shows its label",
+        "The header panel and the search page return identical results for the same query",
+        "Results show no event",
+        "Prototype behaviour (V08, V38) is matched at 360, 768, 1280 and 1600 px with axe passing"
+      ],
+      "tests": [
+        "search-page.spec.ts (Playwright)",
+        "test_REQ_254_search_template_reads_only_the_search_service"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/search.php",
+        "site/wp-content/themes/whoiswho/parts/search-*",
+        "site/wp-content/themes/whoiswho/assets/search/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M1-DIR-09",
+        "M2-STO-08"
+      ],
+      "notes": "The directory list query is M1 (PublicProfile list queries). If M1 did not add a text-narrow parameter, raise a type:discovered issue. Prototype: directory lists V52, V03, V53, V04, V05.",
+      "key": "M2-SRC-06",
+      "title": "Add the per-list narrowing box to directory lists",
+      "area": "theme",
+      "feature": "search",
+      "size": "S",
+      "reqs": [
+        "REQ-008",
+        "REQ-254"
+      ],
+      "summary": "Each directory list gets its own narrowing box inside the shared filter bar that filters only that list and works with the other filters.",
+      "scope": [
+        "Search field first in the filter bar of /directory, /people, /entrepreneurs, /businesses, /institutions",
+        "Writes q to the address, works with other filters, visually hidden Apply for no-script use",
+        "Clearly distinct from the site search (label and behaviour)"
+      ],
+      "acceptance": [
+        "The list box narrows only that list and does not search stories",
+        "It combines with the other filters and is shareable through the address",
+        "The result count is announced"
+      ],
+      "tests": [
+        "directory-list-search.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/filter-bar*",
+        "site/wp-content/themes/whoiswho/directory*",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-SRC-05",
+        "M2-SRC-03"
+      ],
+      "notes": "Extends the M1 visibility matrix test; do not replace it.",
+      "key": "M2-SRC-07",
+      "title": "End-to-end and visibility tests for search",
+      "area": "qa",
+      "feature": "search",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-254",
+        "REQ-183",
+        "REQ-209"
+      ],
+      "summary": "Prove through the browser and the visibility matrix that search never exposes a non-public item and is never ordered by payment.",
+      "scope": [
+        "Add search to the visibility matrix: one profile per state and one story per state",
+        "Playwright journeys: name search, story word search, empty, no results, header parity",
+        "Unpublish a profile then search again with no delay"
+      ],
+      "acceptance": [
+        "Each non-public profile state is absent from search results",
+        "Draft, scheduled and unpublished stories are absent",
+        "Unpublishing a profile removes it from the next search",
+        "Creating a paid arrangement does not change any result order (automated test)"
+      ],
+      "tests": [
+        "test_REQ_208_visibility_matrix_search_surface",
+        "test_REQ_209_removed_profile_leaves_search_at_once",
+        "test_REQ_183_arrangement_does_not_change_search_order",
+        "search-journeys.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/search.md",
+        "docs/plugins/directory.md",
+        "docs/pages/public/search.md",
+        "docs/adr/ADR-010-search.md",
+        "docs/theme/seo-and-sharing.md"
+      ],
+      "files": [
+        "site/tests/Visibility/**",
+        "site/tests/e2e/search/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-PLG-01",
+        "M0-PLG-04"
+      ],
+      "notes": "DOCS CONFLICT: docs/build/data-model.md proposes a wiw_story custom post type; docs/plugins/content.md, docs/features/stories.md and D-059 say native posts with Featured as sticky. This plan follows the native-post reading. Resolve before starting. The prototype has no editor screen because WordPress provides it.",
+      "key": "M2-STO-01",
+      "title": "Story type taxonomy, fields and story editor meta box",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "M",
+      "reqs": [
+        "REQ-027",
+        "REQ-028",
+        "REQ-029"
+      ],
+      "summary": "Give core posts the story fields: type, industry, hero image support, SEO fields and linked profiles, so stories are blog articles written in the native editor.",
+      "scope": [
+        "Register the story type taxonomy (interview, feature, spotlight, opinion, announcement, news) and attach the industry taxonomy to posts",
+        "Meta box for linked profiles (picker that lists only public profiles) and registered meta for SEO title and description",
+        "Reading-time helper (word count at 180 words a minute, two-minute minimum)",
+        "Capability checks: core story capabilities create, schedule and publish; users without them cannot"
+      ],
+      "acceptance": [
+        "A story can be created, scheduled and published by a user with the core story capabilities; a user without them cannot",
+        "Story type is one of the six values and is required",
+        "Reading time is word count at about 180 words a minute with a two-minute minimum",
+        "A profile picker offers public profiles only"
+      ],
+      "tests": [
+        "test_REQ_027_editor_can_create_schedule_and_publish_story",
+        "test_REQ_027_reviewer_cannot_publish_story",
+        "test_REQ_029_reading_time_has_two_minute_minimum",
+        "test_REQ_028_story_links_only_public_profiles_in_picker"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Stories/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-01",
+        "M1-DIR-02"
+      ],
+      "notes": "Sponsored data comes through M2-STO-05.",
+      "key": "M2-STO-02",
+      "title": "Build the PublicStory read model and list queries",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "L",
+      "reqs": [
+        "REQ-027",
+        "REQ-029",
+        "REQ-257",
+        "REQ-208",
+        "REQ-265"
+      ],
+      "summary": "The only way public code reads stories: published only, allowlisted fields, filtered lists and ordering with Featured first.",
+      "scope": [
+        "Content\\PublicStory single read: type, industry, author, date, cover, body, lede, reading time, linked public profiles only, related event while published, sponsor label if present, three other stories",
+        "List query by type and industry with paging, newest first, Featured (sticky) first on the stories page",
+        "Returns nothing for draft, scheduled, trashed or removed stories; exposes a staff-preview flag for logged-in staff",
+        "Architecture test: public templates never call WP_Query or get_post_meta for stories",
+        "Stories for a profile and stories for an industry queries"
+      ],
+      "acceptance": [
+        "The stories list is newest first with Featured first",
+        "Filtering by type and by industry narrows the list; an empty result is distinguishable from an error",
+        "A linked profile that is not public is not returned",
+        "A draft or scheduled story returns nothing to a visitor and a preview flag to staff",
+        "The order of unsponsored stories is identical with and without an active placement"
+      ],
+      "tests": [
+        "test_REQ_029_list_filters_by_type_and_industry",
+        "test_REQ_257_featured_stories_come_first",
+        "test_REQ_208_public_story_hides_draft_and_scheduled",
+        "test_REQ_028_non_public_linked_profile_is_omitted",
+        "test_REQ_263_placement_does_not_reorder_unsponsored_stories",
+        "test_REQ_208_templates_read_stories_only_through_public_story"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/build/data-model.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/PublicStory.php",
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Arch/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-01",
+        "M0-PLG-04",
+        "M0-PLG-06"
+      ],
+      "notes": "DOCS CONTRADICTION: docs/pages/public/stories.md says the label comes from a live placement; docs/pages/admin/curation-and-content.md says Sponsored is \"set by hand or by a linked arrangement\". Build only the capability gate and leave the write path to Commerce (M3); needs a ruling.",
+      "key": "M2-STO-03",
+      "title": "Featured flag and Sponsored capability rules on stories",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "S",
+      "reqs": [
+        "REQ-155",
+        "REQ-182",
+        "REQ-184",
+        "REQ-188"
+      ],
+      "summary": "Enforce who can set Featured and Sponsored on a story and keep both flags off profiles.",
+      "scope": [
+        "Featured is the sticky flag and requires edit_others_posts",
+        "Sponsored fields on a story are writable only by the Commerce label service and require wiw_set_sponsored for manual changes",
+        "No Featured or Sponsored field or UI on profiles",
+        "Changes to Featured and Sponsored go through AuditLogger"
+      ],
+      "acceptance": [
+        "Marking a story Sponsored requires wiw_set_sponsored; marking it Featured requires edit_others_posts",
+        "A paid arrangement never changes a story Featured flag",
+        "No profile page, card or share preview ever shows Sponsored or Featured",
+        "Featured and Sponsored changes appear in the audit log"
+      ],
+      "tests": [
+        "test_REQ_182_sponsored_requires_wiw_set_sponsored",
+        "test_REQ_257_featured_requires_edit_others_posts",
+        "test_REQ_184_arrangement_does_not_change_featured",
+        "test_REQ_155_profile_has_no_sponsored_or_featured_field",
+        "test_REQ_188_featured_and_sponsored_changes_are_audited"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Stories/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-02",
+        "M1-SEO-01",
+        "M0-GRD-01"
+      ],
+      "notes": "This issue spans the plugin and mu-plugin folders, which are the same code area (plugin) in CLAUDE.md. The guard owner should be told.",
+      "key": "M2-STO-04",
+      "title": "Story visibility: 404, staff preview and sitemap entry",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "M",
+      "reqs": [
+        "REQ-208",
+        "REQ-044",
+        "REQ-027"
+      ],
+      "summary": "Draft, scheduled and removed stories return 404 to visitors, show staff a preview banner, and the sitemap lists published stories only.",
+      "scope": [
+        "Routing for /stories and /stories/:slug including old-slug redirects",
+        "404 for non-published stories to visitors, preview data for staff",
+        "Guard: keep non-published stories out of feeds, REST, oEmbed, attachment and author archives",
+        "Register published stories in the sitemap source (same read model as pages)"
+      ],
+      "acceptance": [
+        "A draft or scheduled story returns 404 to a visitor and is absent from search and the sitemap",
+        "Staff opening a draft see a preview banner marker from the read model",
+        "A published story is in the sitemap and leaves it when unpublished"
+      ],
+      "tests": [
+        "test_REQ_208_draft_story_returns_404_and_is_not_in_sitemap",
+        "test_REQ_208_scheduled_story_not_in_feeds_or_rest",
+        "test_REQ_044_published_story_is_in_sitemap"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/features/seo-sharing-and-sitemaps.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/mu-plugins/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-02"
+      ],
+      "notes": "Placement tables wiw_placements and the slot status job belong to Commerce (M3). This issue keeps the contract; M3 must implement SponsoredSource. The task limits rendering here to what stories need.",
+      "key": "M2-STO-05",
+      "title": "Sponsored label and slot read side for stories",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "M",
+      "reqs": [
+        "REQ-026",
+        "REQ-182",
+        "REQ-263",
+        "REQ-116"
+      ],
+      "summary": "PublicStory exposes the Sponsored label and the active-slot placement so the theme can render them; the placement records and the deal screen are built in M3.",
+      "scope": [
+        "Interface Content\\SponsoredSource with a null implementation and a fixture implementation for tests",
+        "PublicStory returns sponsor name and an active flag only between a placement start and end dates; after the end date the label and slot go and the story stays",
+        "List query accepts a surface (home or stories) and returns the slot story separately from the ordered list, so it never reorders other items",
+        "Architecture test: Content never writes sponsor data and Commerce is read through the interface only"
+      ],
+      "acceptance": [
+        "A sponsored story appears in its labelled slot on the chosen surface (Home, Stories or Both) only between its start and end dates",
+        "When a placement end date passes the label and slot are removed without deleting the story",
+        "The order of unsponsored stories is identical with and without an active placement",
+        "An event cannot be returned as a slot"
+      ],
+      "tests": [
+        "test_REQ_263_slot_appears_only_between_dates",
+        "test_REQ_263_placement_expires_and_removes_label",
+        "test_REQ_263_placement_does_not_reorder_unsponsored_stories",
+        "test_REQ_182_sponsored_story_shows_label_on_card_and_share_preview"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/plugins/commerce.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Stories/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-05",
+        "M1-SEO-02"
+      ],
+      "notes": "Article schema is a \"Proposal\" in docs/theme/seo-and-sharing.md, not a requirement; keep it small.",
+      "key": "M2-STO-06",
+      "title": "Share preview and structured data for stories",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "S",
+      "reqs": [
+        "REQ-182",
+        "REQ-026",
+        "REQ-044"
+      ],
+      "summary": "The guard emits title, description, share card and Article data for stories, and says \"Sponsored\" in the share text while a placement is live.",
+      "scope": [
+        "Story title and lede in title, description and Open Graph",
+        "Share preview text states Sponsored with the sponsor name while active",
+        "Article structured data for published stories only",
+        "No markup for a draft, scheduled or removed story"
+      ],
+      "acceptance": [
+        "A story with a Sponsored label shows the badge and sponsor name on its share preview",
+        "A non-published story emits no markup",
+        "Article data matches the visible headline, date, author and image"
+      ],
+      "tests": [
+        "test_REQ_182_sponsored_story_shows_label_on_card_and_share_preview",
+        "test_REQ_044_unpublished_story_emits_no_markup"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/features/seo-sharing-and-sitemaps.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Seo/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-STO-02",
+        "M1-DIR-02"
+      ],
+      "notes": "Touches the Directory module for a read accessor only; coordinate with the M1 owner. Priority S as REQ-028 is should-have.",
+      "key": "M2-STO-07",
+      "title": "List the related stories on a profile page",
+      "area": "plugin",
+      "feature": "stories",
+      "size": "S",
+      "reqs": [
+        "REQ-028"
+      ],
+      "summary": "PublicProfile gains a related-stories accessor so a profile page lists the published stories that link to it.",
+      "scope": [
+        "Query stories linked to a profile, published only, newest first, limited count",
+        "Invalidate the cache when a story links, unlinks or changes state"
+      ],
+      "acceptance": [
+        "A profile page lists the stories that link to it",
+        "A draft story does not appear on the profile"
+      ],
+      "tests": [
+        "test_REQ_028_profile_lists_published_linked_stories",
+        "test_REQ_028_draft_story_is_not_listed_on_profile"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Directory/PublicProfile*",
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-THM-01",
+        "M0-THM-02"
+      ],
+      "notes": "The prototype filter bar is in prototype/theme/components.js and site.css (section comment \"filter bar\"). If M1 directory theme work already built this component, close this issue as done and keep the key for traceability.",
+      "key": "M2-STO-08",
+      "title": "Shared minimal filter bar component",
+      "area": "theme",
+      "feature": "stories",
+      "size": "M",
+      "reqs": [
+        "REQ-029",
+        "REQ-264"
+      ],
+      "summary": "One quiet filter bar for every list page: borderless inline lists, count, optional sort, Clear only while a filter is on, applied at once with a no-script fallback.",
+      "scope": [
+        "Reusable template part and small script that accept filter definitions",
+        "Filters write to the address; visually hidden Apply button keeps it working without JavaScript",
+        "Active filter gets an orange underline; count announced to assistive technology; keyboard focus ring",
+        "Story types as plain text tabs with an underline on the current one",
+        "Used by Stories, Events, directory lists and Winners"
+      ],
+      "acceptance": [
+        "Choosing a value applies it at once and writes it to the address",
+        "The form works with scripts disabled",
+        "Clear appears only while a filter is on",
+        "Every list has an accessible name and the result count is announced",
+        "Passes axe at 360, 768, 1280 and 1600 px"
+      ],
+      "tests": [
+        "filter-bar.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/filter-bar*",
+        "site/wp-content/themes/whoiswho/assets/filter-bar/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-02",
+        "M2-STO-05",
+        "M2-STO-08",
+        "M0-THM-02"
+      ],
+      "notes": "Prototype route #/stories (V16). A cover-image crop control per story is out of scope. The Sponsored label is a dashed purple label with square corners, never styled like a status. REQ-249 says \"one lead story\" while the page docs describe a three-tile mosaic; this plan follows the page docs and the feature page.",
+      "key": "M2-STO-09",
+      "title": "Stories page template: mosaic, grid, cards and slot",
+      "area": "theme",
+      "feature": "stories",
+      "size": "L",
+      "reqs": [
+        "REQ-029",
+        "REQ-249",
+        "REQ-026",
+        "REQ-263",
+        "REQ-257"
+      ],
+      "summary": "Build /stories as a magazine layout: no hero, masthead with type tabs and industry filter, a three-tile mosaic, a three-column grid, a dark sign-up block, then more grid.",
+      "scope": [
+        "Template stories.php reading PublicStory only",
+        "Masthead with type tabs and industry filter using the shared filter bar; no Events filter or strip",
+        "Mosaic of one large and two small tiles and a three-column grid of the next six, then the sign-up block, then the rest",
+        "Story card: type, date, reading time, headline, one-line lede, author; 16:9 image crop registered as an image size",
+        "Labelled Sponsored slot in the mosaic or grid for an active placement set to Stories or Both",
+        "\"No stories match\" state with a clear-filters action",
+        "Sign-up block filled by M2-NWS-07"
+      ],
+      "acceptance": [
+        "The stories page lists published stories newest first (Featured first) and shows type, date, reading time, headline, lede and author on each card",
+        "Filtering by type and by industry narrows the list; a filter with no matches shows \"No stories match\" and offers to clear filters",
+        "A story with a Sponsored label shows the badge and sponsor name on its card",
+        "A sponsored story appears in its labelled slot only between its dates",
+        "Cover images in tiles render at a 16:9 crop on desktop and phone",
+        "The Stories page has no Events filter and no upcoming-events strip",
+        "No horizontal scroll at 360 px; reduced motion leaves a complete page"
+      ],
+      "tests": [
+        "stories-list.spec.ts (Playwright)",
+        "stories-list-a11y.spec.ts (Playwright with axe)"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/stories.php",
+        "site/wp-content/themes/whoiswho/parts/story-*",
+        "site/wp-content/themes/whoiswho/assets/stories/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-02",
+        "M2-STO-05",
+        "M2-STO-04",
+        "M0-THM-02",
+        "M2-EVT-07"
+      ],
+      "notes": "Prototype route #/stories/:slug (V17). Comments (REQ-258, wpDiscuz) are M4; this issue only leaves the region. The Sponsored notice wording differs slightly between docs/features/stories.md and docs/pages/public/stories.md; use the page wording and confirm with Legal.",
+      "key": "M2-STO-10",
+      "title": "Single story template with sponsored notice and related blocks",
+      "area": "theme",
+      "feature": "stories",
+      "size": "L",
+      "reqs": [
+        "REQ-026",
+        "REQ-027",
+        "REQ-028",
+        "REQ-182",
+        "REQ-265"
+      ],
+      "summary": "Build /stories/:slug with type, date, industry, optional Sponsored badge and notice, cover, body, pull quote, On the record profiles, Related event card and More stories.",
+      "scope": [
+        "Template single-story.php reading PublicStory only",
+        "Sponsored badge with sponsor name and the in-story notice: paid for by the sponsor, did not write it, no influence over any label or award",
+        "Wide cover image, body, pull quote block style",
+        "On the record block showing only public linked profiles",
+        "Related event card at the end when the linked event is published",
+        "More stories (three others)",
+        "Staff preview banner for draft or scheduled; 404 for visitors",
+        "Comments region reserved as a hook where wpDiscuz is added in M4"
+      ],
+      "acceptance": [
+        "A story linked to a public profile shows that profile; linked to a non-public profile it shows nothing for it",
+        "A story with a linked published event shows the Related event card at the end; unlinking removes it",
+        "A Sponsored story shows the badge, sponsor name and the notice",
+        "A draft or scheduled story returns 404 to a visitor and a banner to staff",
+        "Cover images render at a 16:9 crop",
+        "Passes axe at the four widths"
+      ],
+      "tests": [
+        "single-story.spec.ts (Playwright)",
+        "test_REQ_265_story_shows_related_event_only_while_published"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/features/events.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/single-story.php",
+        "site/wp-content/themes/whoiswho/parts/story-*",
+        "site/wp-content/themes/whoiswho/assets/stories/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-STO-07",
+        "M1-DIR-10"
+      ],
+      "notes": "Prototype profile routes V09 to V11.",
+      "key": "M2-STO-11",
+      "title": "Related stories list on the profile template",
+      "area": "theme",
+      "feature": "stories",
+      "size": "S",
+      "reqs": [
+        "REQ-028"
+      ],
+      "summary": "Add the related stories section to the profile page, rendered only when stories exist.",
+      "scope": [
+        "Section using the story card compact form",
+        "Not rendered when there are none",
+        "Confirms no Sponsored or Featured marker appears on the profile page itself"
+      ],
+      "acceptance": [
+        "A profile page lists the stories that link to it",
+        "The section is absent when there are none",
+        "No profile page, card or share preview ever shows Sponsored or Featured"
+      ],
+      "tests": [
+        "profile-related-stories.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/profile-stories*",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-STO-09",
+        "M2-STO-10",
+        "M2-STO-04",
+        "M2-STO-03"
+      ],
+      "notes": "",
+      "key": "M2-STO-12",
+      "title": "End-to-end tests for stories",
+      "area": "qa",
+      "feature": "stories",
+      "size": "M",
+      "reqs": [
+        "REQ-027",
+        "REQ-029",
+        "REQ-182",
+        "REQ-263",
+        "REQ-155"
+      ],
+      "summary": "Cover the stories acceptance list through the browser and the visibility matrix.",
+      "scope": [
+        "Journeys: browse, filter, read, sponsored story, expired placement, draft 404",
+        "Visibility matrix rows for story states",
+        "Check no profile surface carries Sponsored or Featured"
+      ],
+      "acceptance": [
+        "Every acceptance item on the Stories feature page has at least one named test",
+        "Placement expiry leaves the story published without label",
+        "Order with and without a placement is identical"
+      ],
+      "tests": [
+        "test_REQ_263_placement_expiry_in_browser",
+        "test_REQ_155_no_profile_surface_shows_sponsored_or_featured",
+        "stories-journeys.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/stories.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/tests/e2e/stories/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-PLG-01",
+        "M0-PLG-04"
+      ],
+      "notes": "Capability wiw_manage_events must exist in the M0 matrix; if not, add it to the docs/architecture.md matrix and its test. Docs do not say whether /events/:slug uses the CPT rewrite or the plugin handler; CPT rewrite proposed (templates archive-event and single-event imply it). The proposed field names are set when built.",
+      "key": "M2-EVT-01",
+      "title": "Register the wiw_event post type and its fields",
+      "area": "plugin",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-262",
+        "REQ-244"
+      ],
+      "summary": "Events are their own content type with the fields the requirement lists, mapped to the wiw_manage_events capability.",
+      "scope": [
+        "Register wiw_event with slug events, REST off, no feed, block editor, scheduling and revisions",
+        "Meta: start (required), end (optional), venue or Online flag, city, country (required unless Online), organiser, summary or body, image, registration link (external URL), price note (text)",
+        "Attach the industry taxonomy",
+        "Capability mapping so wiw_manage_events controls create, edit, publish and delete",
+        "One validator for the event form; registration link must be an https URL; price note is plain text",
+        "No sponsor, Featured or sticky fields on events"
+      ],
+      "acceptance": [
+        "An Editor can create, schedule and publish an event with start, venue or Online, city, country, organiser, industry, registration link and price note",
+        "Without wiw_manage_events the Events screen returns 403; granting it to a Reviewer opens it",
+        "An event has no Sponsored or Featured field"
+      ],
+      "tests": [
+        "test_REQ_244_wiw_manage_events_is_grantable",
+        "test_REQ_262_event_requires_start_and_city_unless_online",
+        "test_REQ_262_registration_link_must_be_external_https",
+        "test_REQ_263_event_has_no_sponsor_field"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Events/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Events/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-01"
+      ],
+      "notes": "The time zone for upcoming or past is not stated; proposal: the site time zone.",
+      "key": "M2-EVT-02",
+      "title": "Build the PublicEvent read model",
+      "area": "plugin",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-262",
+        "REQ-264",
+        "REQ-265"
+      ],
+      "summary": "The only way public code reads events: computes upcoming or past and returns lists, the next three, and the stories that link an event.",
+      "scope": [
+        "Upcoming until end date, or start date if no end; past events stay published",
+        "List: upcoming soonest first, then past newest first, filters by city and industry, month grouping data",
+        "nextUpcoming(3)",
+        "Related stories: published stories linking the event only",
+        "Returns nothing for draft, scheduled or removed events",
+        "Registration shown only for an upcoming event with a link"
+      ],
+      "acceptance": [
+        "/events lists upcoming events first, soonest first, then past events, and can be filtered by city and industry",
+        "A past event shows \"Past event\" and no registration button, and is not unpublished",
+        "The Event page lists the published stories that link to it, and omits drafts",
+        "A draft, scheduled or removed event returns nothing"
+      ],
+      "tests": [
+        "test_REQ_262_event_is_past_after_end_date",
+        "test_REQ_262_event_without_end_uses_start_date",
+        "test_REQ_264_events_list_orders_upcoming_first",
+        "test_REQ_264_home_shows_next_three_upcoming_events",
+        "test_REQ_265_event_lists_only_published_linked_stories",
+        "test_REQ_262_draft_event_has_no_public_data"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/PublicEvent.php",
+        "site/wp-content/plugins/whoiswho-core/src/Content/Events/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Events/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Events/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-01",
+        "M0-PLG-06",
+        "M0-PLG-16"
+      ],
+      "notes": "The prototype has no Events admin screen; built from docs/pages/admin/events.md. The audit scope list in CLAUDE.md does not name events; auditing them follows docs/pages/admin/events.md (\"Every change is audited\").",
+      "key": "M2-EVT-03",
+      "title": "Events admin screen: list, filters, editor, audit",
+      "area": "plugin",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-262",
+        "REQ-244",
+        "REQ-051"
+      ],
+      "summary": "The Events screen where staff create, schedule, publish and unpublish events, with audited changes and cache purge.",
+      "scope": [
+        "List with title, start date, city, status (Draft, Scheduled, Published) and Upcoming or Past; filters by status, city and industry",
+        "Editor meta box with required-field messages",
+        "Capability check wiw_manage_events on every screen and action, deny by default; nonce verification",
+        "Audit every create, publish, unpublish and trash through AuditLogger",
+        "Saving a published event purges its page, the Events list and the Home page section"
+      ],
+      "acceptance": [
+        "An Editor can create, schedule and publish an event",
+        "The list can be filtered by status, city and industry",
+        "Without wiw_manage_events the Events screen returns 403",
+        "Every change is audited",
+        "Saving a published event purges its public page, the Events list and the Home section; unpublishing returns 404 and removes it from the sitemap"
+      ],
+      "tests": [
+        "test_REQ_244_events_screen_returns_403_without_capability",
+        "test_REQ_262_event_changes_are_audited",
+        "test_REQ_262_saving_event_purges_list_and_home_section"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Events/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Events/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-EVT-02",
+        "M2-STO-01"
+      ],
+      "notes": "Docs say the picker needs edit_posts and wiw_manage_events \"to see the event list\". An Editor holds both. Proposal: the picker lists published events for anyone who can edit the story. Confirm.",
+      "key": "M2-EVT-04",
+      "title": "Related event field on the story editor",
+      "area": "plugin",
+      "feature": "events",
+      "size": "S",
+      "reqs": [
+        "REQ-265"
+      ],
+      "summary": "A story can link one published event through related_event_id; the link shows only while both are published.",
+      "scope": [
+        "Meta field related_event_id with a picker of published events",
+        "PublicStory returns the event only while it is published; unlinking removes it",
+        "Event unpublish clears no data but hides the card"
+      ],
+      "acceptance": [
+        "A story can link one event; its page shows a Related event card at the end",
+        "Unlinking removes the card",
+        "The card is not shown when the event is a draft or unpublished"
+      ],
+      "tests": [
+        "test_REQ_265_story_shows_related_event_only_while_published",
+        "test_REQ_265_unlinking_removes_related_event",
+        "test_REQ_265_only_published_events_selectable"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Stories/RelatedEvent*",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Events/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-02",
+        "M1-SEO-01",
+        "M1-SEO-02",
+        "M0-GRD-01"
+      ],
+      "notes": "The docs list the Event field names only; online attendance mode and offers are not specified, and no offers markup should be emitted (no price is collected).",
+      "key": "M2-EVT-05",
+      "title": "Event structured data, sitemap and noindex rules",
+      "area": "plugin",
+      "feature": "events",
+      "size": "S",
+      "reqs": [
+        "REQ-262",
+        "REQ-264",
+        "REQ-208"
+      ],
+      "summary": "The guard emits Event structured data that matches the visible details, the sitemap lists published events, and non-published events say nothing.",
+      "scope": [
+        "Event JSON-LD: name, start, end, location or online, organiser, image",
+        "No markup, sitemap entry or feed item for a draft, scheduled or removed event",
+        "Sitemap section for published events",
+        "Visibility matrix gets an event row"
+      ],
+      "acceptance": [
+        "A published event has Event structured data that matches the visible details",
+        "A draft or scheduled event has none",
+        "A draft, scheduled or removed event returns 404 and has no sitemap entry",
+        "Events do not appear in site search results"
+      ],
+      "tests": [
+        "test_REQ_262_published_event_emits_matching_structured_data",
+        "test_REQ_262_draft_event_has_no_structured_data",
+        "test_REQ_264_published_event_is_in_sitemap_draft_is_not",
+        "test_REQ_262_events_are_not_in_search"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/seo-and-sharing.md",
+        "docs/features/seo-sharing-and-sitemaps.md"
+      ],
+      "files": [
+        "site/wp-content/mu-plugins/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Seo/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-EVT-02",
+        "M0-PLG-16",
+        "M0-PLG-15"
+      ],
+      "notes": "The docs cap public HTML cache at 120 seconds, so the job is a refinement.",
+      "key": "M2-EVT-06",
+      "title": "Cache purge and rollover for events",
+      "area": "plugin",
+      "feature": "events",
+      "size": "S",
+      "reqs": [
+        "REQ-262",
+        "REQ-264"
+      ],
+      "summary": "Pages that show upcoming and past status are purged when an event changes and when an event passes its end, so a past event loses its register button without an edit.",
+      "scope": [
+        "Purge the event page, the Events list and the Home page section on save, publish, unpublish and trash",
+        "Scheduled job that purges the affected URLs when an event end (or start) time passes"
+      ],
+      "acceptance": [
+        "A past event shows \"Past event\" and no registration button without being edited",
+        "Unpublishing returns 404 on the event page"
+      ],
+      "tests": [
+        "test_REQ_262_event_rollover_purges_cache",
+        "test_REQ_262_unpublish_purges_event_url"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Events/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Events/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-02",
+        "M0-THM-02"
+      ],
+      "notes": "Prototype routes #/events (V58) and #/events/:slug (V59). The prototype notes that events still sit inside Stories until its next pass, so also verify the look against docs/pages/public/events.md.",
+      "key": "M2-EVT-07",
+      "title": "Event components: agenda row, poster, details card, related",
+      "area": "theme",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-264",
+        "REQ-265",
+        "REQ-262"
+      ],
+      "summary": "Build the event pieces used across the Events pages, Home and stories: agenda row, compact row, Next up block, poster header, details card, Related event card and Related stories list.",
+      "scope": [
+        "Agenda row with orange date block, display-type title, place and organiser, status tag, optional image and arrow; hover slides and turns charcoal; past rows muted",
+        "Compact row for Home",
+        "Poster header (orange upcoming, charcoal past) with date at poster size",
+        "Details card: When, Where, Organiser, Cost, Register link opening in a new tab; past shows \"This event has ended\"",
+        "Related event card (date, title, place, link) and Related stories plain list",
+        "Block patterns registered; not the story card or article template"
+      ],
+      "acceptance": [
+        "A past event shows \"Past event\" and no registration button",
+        "The registration link opens the external address in a new tab and the site collects no payment or registration",
+        "Hover motion is absent under reduced motion and the pieces still read in full",
+        "No author, reading time, cover image or comments appears on an event"
+      ],
+      "tests": [
+        "event-components.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/event-*",
+        "site/wp-content/themes/whoiswho/patterns/event-*",
+        "site/wp-content/themes/whoiswho/assets/events/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-07",
+        "M2-STO-08"
+      ],
+      "notes": "Prototype route #/events (V58).",
+      "key": "M2-EVT-08",
+      "title": "Events list template (archive-event)",
+      "area": "theme",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-264"
+      ],
+      "summary": "Build /events: orange header band with Next up block, the shared filter bar, upcoming events grouped by month, then past events muted.",
+      "scope": [
+        "Template archive-event.php reading PublicEvent only",
+        "Header band, Next up block (absent when none), filter bar City and Industry, count, Clear",
+        "Upcoming grouped by month soonest first; past grouped by month newest first with Past tag",
+        "Empty states: \"No upcoming events match\" with clear-filters; no upcoming events says so and past events still show"
+      ],
+      "acceptance": [
+        "/events lists upcoming events first, soonest first, then past events, and can be filtered by city and industry",
+        "Next up is absent when no event matches",
+        "An empty filter result offers clear-filters",
+        "Filters live in the address",
+        "The Stories page has no Events filter and no upcoming-events strip"
+      ],
+      "tests": [
+        "events-list.spec.ts (Playwright)",
+        "events-list-a11y.spec.ts (Playwright with axe)"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/archive-event.php",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-07",
+        "M2-EVT-05"
+      ],
+      "notes": "Prototype route #/events/:slug (V59).",
+      "key": "M2-EVT-09",
+      "title": "Event page template (single-event)",
+      "area": "theme",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-264",
+        "REQ-265",
+        "REQ-262"
+      ],
+      "summary": "Build /events/:slug: poster, sticky details card, summary and body, Related stories and More events.",
+      "scope": [
+        "Template single-event.php reading PublicEvent only",
+        "Poster with duotone image on wide screens; details card sticky on wide screens and above the text on phones",
+        "Related stories list (absent when none) and More events agenda rows",
+        "404 for non-published; staff preview banner; structured data comes from the guard, no markup in the theme"
+      ],
+      "acceptance": [
+        "/events/:slug shows the details block and body",
+        "A past event shows \"Past event\" and no registration button and is not unpublished",
+        "The Event page lists the published stories that link to it, omitting drafts",
+        "No registration or payment is collected"
+      ],
+      "tests": [
+        "event-page.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/single-event.php",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-THM-01"
+      ],
+      "notes": "Confirm with the M0 theme-settings design whether menu items are theme-settings menus or fixed parts.",
+      "key": "M2-EVT-10",
+      "title": "Add the Events link to the header and footer",
+      "area": "theme",
+      "feature": "events",
+      "size": "S",
+      "reqs": [
+        "REQ-264"
+      ],
+      "summary": "A plain Events link in the header, the phone drawer and the footer that opens /events.",
+      "scope": [
+        "Header group \"Events\" as a plain link (not a mega menu group)",
+        "Drawer entry and footer link",
+        "No flash of a wrong header on load"
+      ],
+      "acceptance": [
+        "The header and the footer each have an \"Events\" link that opens /events",
+        "The link is present in the phone drawer",
+        "The Nominate links stay governed by the Nominations switch (unchanged)"
+      ],
+      "tests": [
+        "header-footer-events-link.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/templates.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/header*",
+        "site/wp-content/themes/whoiswho/parts/footer*",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-EVT-08",
+        "M2-EVT-09",
+        "M2-EVT-10",
+        "M2-EVT-04",
+        "M2-HOM-12"
+      ],
+      "notes": "\"An event cannot be selected in the Sponsored stories screen\" is covered here only at the SponsoredSource contract (M2-STO-05); the screen test is M3.",
+      "key": "M2-EVT-11",
+      "title": "End-to-end tests for events",
+      "area": "qa",
+      "feature": "events",
+      "size": "M",
+      "reqs": [
+        "REQ-262",
+        "REQ-264",
+        "REQ-265",
+        "REQ-244"
+      ],
+      "summary": "Cover every acceptance item of the Events feature page.",
+      "scope": [
+        "Create, schedule, publish an event as Editor; 403 as Reviewer without the grant, success after grant",
+        "List order, filters, past rollover, Online events",
+        "Story related event on and off",
+        "Structured data and sitemap checks",
+        "Home block present with events and absent without",
+        "Events not in search; no payment or registration"
+      ],
+      "acceptance": [
+        "Every acceptance item on the Events feature page has at least one named test"
+      ],
+      "tests": [
+        "test_REQ_244_reviewer_with_grant_opens_events_screen",
+        "test_REQ_264_home_events_block_absent_when_no_upcoming",
+        "events-journeys.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/events.md",
+        "docs/plugins/content.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md"
+      ],
+      "files": [
+        "site/tests/e2e/events/**",
+        "site/tests/Visibility/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M0-PLG-11",
+        "M0-PLG-06"
+      ],
+      "notes": "The docs describe \"Featured first then Latest\" for Stories as a rule, not one of the four modes. Modelled as Latest with a featured-first rule.",
+      "key": "M2-HOM-01",
+      "title": "Home curation settings model and validation",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "S",
+      "reqs": [
+        "REQ-257",
+        "REQ-051"
+      ],
+      "summary": "Store one setting per block (mode, item count, pinned ids) in options through the settings service with validation and audit.",
+      "scope": [
+        "Blocks: On the record, Stories (home), Stories page; Nominees has no mode",
+        "Setting schema: mode (latest, random, manual, pinned_then_fill), count, pinned ids, fill mode (latest or random)",
+        "One validator; defaults: On the record = Pinned then fill with Random; Stories = Featured first then Latest",
+        "Every change audited with actor, block, old and new values"
+      ],
+      "acceptance": [
+        "Every settings change writes an audit row with actor, block, old and new values",
+        "Defaults match the recommended starting setup",
+        "Invalid mode or id is rejected"
+      ],
+      "tests": [
+        "test_REQ_257_curation_requires_capability_and_is_audited",
+        "test_REQ_257_defaults_match_recommended_setup",
+        "test_REQ_257_invalid_mode_is_rejected"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-HOM-01",
+        "M1-DIR-02"
+      ],
+      "notes": "Home page itself is must-have (viewable by 20 Nov 2026) but curation modes are should-have; this issue is S so a fixed rule (portrait first, then organisations, as in the prototype) can ship first if time is short. Portrait presence must be a PublicProfile field; if absent, raise a discovered issue on M1.",
+      "key": "M2-HOM-02",
+      "title": "Curation engine for profile blocks (four modes)",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257",
+        "REQ-218",
+        "REQ-183"
+      ],
+      "summary": "Curation::items(On the record) returns Latest, Random, Manual or Pinned then fill through PublicProfile, with the eligibility rules.",
+      "scope": [
+        "Eligible: public, reviewed, not suppressed; pending-review profiles never appear",
+        "Skip profiles without a portrait where the block needs one",
+        "Manual returns exactly the chosen items in order; a pinned item that stops being eligible is skipped",
+        "Pinned then fill puts pins first then fills with Latest or Random without duplicates",
+        "No payment, arrangement or label input"
+      ],
+      "acceptance": [
+        "On the record shows no pending-review profile, whatever the mode",
+        "In Latest mode the block shows the newest eligible items in order",
+        "In Manual mode it shows exactly the chosen items in the chosen order",
+        "In Pinned then fill mode the pinned items come first and the rest are filled from Latest or Random",
+        "Creating or ending a paid arrangement does not change which items any block shows"
+      ],
+      "tests": [
+        "test_REQ_257_latest_mode_returns_newest_eligible",
+        "test_REQ_257_manual_mode_never_returns_a_hidden_profile",
+        "test_REQ_257_pinned_then_fill_keeps_pins_first",
+        "test_REQ_218_pending_profile_never_in_curated_block",
+        "test_REQ_183_arrangement_does_not_change_curated_items"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-HOM-01",
+        "M2-STO-02",
+        "M2-STO-05"
+      ],
+      "notes": "",
+      "key": "M2-HOM-03",
+      "title": "Curation engine for story blocks and the sponsored slot",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257",
+        "REQ-263",
+        "REQ-183"
+      ],
+      "summary": "Stories on Home and on the Stories page use the same modes with Featured first, and an active placement fills a labelled slot without moving other items.",
+      "scope": [
+        "Curation::items(stories) through PublicStory",
+        "Featured stories first then the chosen mode",
+        "Slot story returned separately for the surface and placed at a fixed position by the theme",
+        "Eligibility: published only"
+      ],
+      "acceptance": [
+        "A placement set to Home or Both fills a labelled slot in the stories block and never changes the order of the other items",
+        "The order of unsponsored stories is identical with and without an active placement",
+        "Creating or ending a paid arrangement does not change which items any block shows"
+      ],
+      "tests": [
+        "test_REQ_263_slot_never_reorders_curated_stories",
+        "test_REQ_257_stories_featured_first_then_latest",
+        "test_REQ_257_stories_manual_mode_returns_chosen_order"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/features/stories.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-HOM-02",
+        "M0-PLG-16",
+        "M0-PLG-15"
+      ],
+      "notes": "\"Every eligible item gets a turn\" implies a shuffle with memory; proposal: deterministic shuffle by day seed over the eligible id list.",
+      "key": "M2-HOM-04",
+      "title": "Random seed, caching and purge on save",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257"
+      ],
+      "summary": "Random mode is fixed for a day, served from cache, refreshed by a daily job, and saving the settings shows the change without waiting for expiry.",
+      "scope": [
+        "Seed per block per day stored in a transient or option; every eligible item gets a turn (rotation across days)",
+        "Daily job refreshes the seed for blocks set to Random",
+        "Saving settings purges the block cache and the public Home page"
+      ],
+      "acceptance": [
+        "In Random mode the selection stays the same for a day and changes on the next, and is served from cache",
+        "Saving the settings screen shows the change on the page without waiting for the cache to expire"
+      ],
+      "tests": [
+        "test_REQ_257_random_mode_is_stable_for_the_day",
+        "test_REQ_257_random_mode_changes_next_day",
+        "test_REQ_257_saving_settings_purges_cache"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-HOM-01",
+        "M2-HOM-04",
+        "M0-PLG-04"
+      ],
+      "notes": "Not drawn in the prototype.",
+      "key": "M2-HOM-05",
+      "title": "Home page settings screen: modes, counts and save",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257",
+        "REQ-244",
+        "REQ-051"
+      ],
+      "summary": "The staff screen where an editor sets the mode and count of each block, guarded by wiw_curate_home.",
+      "scope": [
+        "Admin page with one section per block: mode select, count, fill mode, and the Stories page block",
+        "Capability check wiw_curate_home with nonce, deny by default",
+        "Save purges cache and audits each changed block",
+        "Menu follows effective capabilities"
+      ],
+      "acceptance": [
+        "Without wiw_curate_home the settings screen returns 403; granting the capability to a Reviewer opens it",
+        "Every settings change writes an audit row with actor, block, old and new values",
+        "Saving the screen shows the change on the page"
+      ],
+      "tests": [
+        "test_REQ_257_settings_screen_403_without_capability",
+        "test_REQ_244_wiw_curate_home_is_grantable",
+        "test_REQ_257_save_writes_audit_row"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-HOM-05"
+      ],
+      "notes": "Admin JavaScript sits in the plugin area.",
+      "key": "M2-HOM-06",
+      "title": "Pinning and ordering pickers with preview",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257"
+      ],
+      "summary": "Let an editor search and pin eligible profiles or stories, drag them into order and see a preview of the block.",
+      "scope": [
+        "Picker lists eligible items only",
+        "Drag to order; remove a pin",
+        "Preview renders the block through the same engine"
+      ],
+      "acceptance": [
+        "In Manual mode the block shows exactly the chosen items in the chosen order",
+        "A hidden or pending-review profile cannot be picked",
+        "The preview matches the public result"
+      ],
+      "tests": [
+        "test_REQ_257_picker_offers_only_eligible_items",
+        "test_REQ_257_preview_matches_public_block"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Curation/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/assets/admin/curation/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Curation/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-02",
+        "M2-HOM-03",
+        "M2-EVT-02"
+      ],
+      "notes": "GAP: before M4 the marquee has no categories. The docs do not say what shows. Defaulted to the marquee being absent until the categories provider exists; needs a ruling (or a seeded category list). With curation items being should-have, HomeData falls back to the fixed prototype rule when curation settings do not exist.",
+      "key": "M2-HOM-07",
+      "title": "Home view model: events, nominees and marquee providers",
+      "area": "plugin",
+      "feature": "home-and-curation",
+      "size": "S",
+      "reqs": [
+        "REQ-264",
+        "REQ-198",
+        "REQ-001"
+      ],
+      "summary": "One HomeData service returns every block the front page needs, with providers for events, nominees and the award categories so the theme stays free of logic.",
+      "scope": [
+        "Events: next three upcoming through PublicEvent, empty when none",
+        "Nominees: NomineesProvider interface, null until Awards (M4), so the block is absent not empty",
+        "Marquee: CategoriesProvider interface returning award category names, null until Awards (M4)",
+        "No awards band data"
+      ],
+      "acceptance": [
+        "The Events block shows the next three upcoming events and an \"All events\" link, and is absent when none is upcoming",
+        "The nominees block is absent before nominees are published and present after",
+        "The marquee returns category names as text only"
+      ],
+      "tests": [
+        "test_REQ_264_home_events_empty_when_none_upcoming",
+        "test_REQ_198_nominees_block_absent_before_publication",
+        "test_REQ_001_home_view_model_has_no_awards_band_data"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Home/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Unit/Home/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Home/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-07",
+        "M0-THM-02",
+        "M0-THM-01"
+      ],
+      "notes": "Prototype route #/ (V01): prototype/theme/home-view.js, home.css, home.js, motion.js. Awwwards bar applies. Video and Repline font licences are unconfirmed (see M2-HOM-14). Brand values come from the child theme tokens. The cookie notice card (REQ-248) is a shared part assumed from the M0 shell or the privacy work (M3); not built here.",
+      "key": "M2-HOM-08",
+      "title": "Front page: hero, first screen and header without flash",
+      "area": "theme",
+      "feature": "home-and-curation",
+      "size": "L",
+      "reqs": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-052",
+        "REQ-190"
+      ],
+      "summary": "Build the front-page template shell, the first screen that states what the brand is, and the hero of four muted looping videos with hover widen and scroll exit, with a header that does not flash.",
+      "scope": [
+        "Template front-page.php reading HomeData only; brand name, tagline and edition from the tokens and settings, not typed in the template",
+        "First screen on 360 px states what the brand is, who it is for and shows a way to get listed, nominate or browse (Nominate follows the Nominations switch)",
+        "Hero: four muted autoplaying looping videos, hover widens one without scale and raises contrast and saturation, 2 by 2 grid on phones, scroll-exit shrink on desktop",
+        "Header transparent over the hero only, set by an inline script before first paint",
+        "Static poster fallback with scripts off, data saver or reduced motion; videos do not delay the first view"
+      ],
+      "acceptance": [
+        "The first screen on a 360 px phone states what the brand is and shows a way to get listed, nominate or browse",
+        "The hero shows four videos that autoplay muted and loop; hovering one widens it with no scale change; on phones they form a 2 by 2 grid",
+        "With reduced motion requested, hero motion and scroll effects are off and the page still reads in full",
+        "There is no header flash on first load or refresh on the home page",
+        "The header is transparent over the home hero only and solid elsewhere"
+      ],
+      "tests": [
+        "home-hero.spec.ts (Playwright)",
+        "home-no-header-flash.spec.ts (Playwright)",
+        "home-first-screen-360.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/front-page.php",
+        "site/wp-content/themes/whoiswho/parts/home-hero*",
+        "site/wp-content/themes/whoiswho/assets/home/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-08"
+      ],
+      "notes": "Prototype V01. Home text editing is REQ-260 (M4).",
+      "key": "M2-HOM-09",
+      "title": "Front page: three acts, four doors and closing call",
+      "area": "theme",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-001",
+        "REQ-002"
+      ],
+      "summary": "The pinned full-screen scenes Influence, Achievement and Legacy, the four doors to the directory types, and the closing call.",
+      "scope": [
+        "Three pinned scenes with brand marks and links (people, awards, stories)",
+        "Four doors: People, Entrepreneurs, Businesses, Institutions",
+        "Closing call \"Who should the continent know?\" with one button",
+        "Page copy as default theme patterns; made editable in M4"
+      ],
+      "acceptance": [
+        "The page reads in full as static content with scripts off and with reduced motion",
+        "Doors link to the four directory lists",
+        "No horizontal scroll at 360 px"
+      ],
+      "tests": [
+        "home-sections.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/home-*",
+        "site/wp-content/themes/whoiswho/patterns/home-*",
+        "site/wp-content/themes/whoiswho/assets/home/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-08",
+        "M2-HOM-02"
+      ],
+      "notes": "Prototype V01.",
+      "key": "M2-HOM-10",
+      "title": "Front page: On the record block with hover card and rail",
+      "area": "theme",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-257",
+        "REQ-218",
+        "REQ-247"
+      ],
+      "summary": "A list of curated profiles with a floating hover card on desktop and an auto-advancing swipeable rail of posters on phones.",
+      "scope": [
+        "Reads Curation::items only",
+        "Desktop: hover or focus on a name shows the photo or the coloured symbol card; keyboard accessible",
+        "Phones and tablets: poster rail that advances by itself, swipeable, pausable; off under reduced motion",
+        "Link to the directory"
+      ],
+      "acceptance": [
+        "On the record shows no pending-review profile, whatever the mode",
+        "With reduced motion the rail autoscroll is off and the page still reads in full",
+        "A profile without a photo shows the coloured card with the mark"
+      ],
+      "tests": [
+        "home-on-the-record.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/home-record*",
+        "site/wp-content/themes/whoiswho/assets/home/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-08",
+        "M2-HOM-07"
+      ],
+      "notes": "Real data arrives from Awards in M4; build against fixtures. Prototype V01.",
+      "key": "M2-HOM-11",
+      "title": "Front page: awards marquee and nominees grid",
+      "area": "theme",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-198",
+        "REQ-001"
+      ],
+      "summary": "A slow endless text strip of the award category names, and a nominees grid that exists only once nominees are published.",
+      "scope": [
+        "Marquee as text only: no heading, statement, numbered list or button; static under reduced motion",
+        "Nominees grid up to eight posters with group filters hidden on phones; block absent, not empty, before publication",
+        "No awards band on the page"
+      ],
+      "acceptance": [
+        "The home page has no awards band, numbered category list or awards button; the marquee shows the award categories as text",
+        "The nominees block is absent before nominees are published and present after",
+        "With reduced motion the marquee does not move"
+      ],
+      "tests": [
+        "home-marquee.spec.ts (Playwright)",
+        "home-nominees-block.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md",
+        "docs/theme/blocks-and-patterns.md",
+        "docs/theme/motion-and-performance.md",
+        "docs/theme/responsive-and-accessibility.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/home-marquee*",
+        "site/wp-content/themes/whoiswho/parts/home-nominees*",
+        "site/wp-content/themes/whoiswho/assets/home/**",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-08",
+        "M2-HOM-03",
+        "M2-EVT-07",
+        "M2-STO-09"
+      ],
+      "notes": "The docs say \"six latest stories\" for the prototype; the count is the block setting (default six).",
+      "key": "M2-HOM-12",
+      "title": "Front page: stories track and Events block",
+      "area": "theme",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-264",
+        "REQ-263",
+        "REQ-257"
+      ],
+      "summary": "A horizontal track of stories with a labelled sponsored slot and the Events block of three compact agenda rows with an \"All events\" link.",
+      "scope": [
+        "Story track from Curation::items with the slot position fixed",
+        "Sponsored label on the slot card",
+        "Events block of the next three upcoming events; the whole block absent when none",
+        "\"All events\" link to /events"
+      ],
+      "acceptance": [
+        "The Events block shows the next three upcoming events and an \"All events\" link, and is absent when none is upcoming",
+        "A placement set to Home or Both fills a labelled slot without changing the order of the other items",
+        "Sponsored shows only on stories"
+      ],
+      "tests": [
+        "home-stories-and-events.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/features/events.md",
+        "docs/pages/admin/events.md",
+        "docs/pages/public/events.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/home-stories*",
+        "site/wp-content/themes/whoiswho/parts/home-events*",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-HOM-08",
+        "M2-HOM-09",
+        "M2-HOM-10",
+        "M2-HOM-11",
+        "M2-HOM-12"
+      ],
+      "notes": "",
+      "key": "M2-HOM-13",
+      "title": "Home page quality: reduced motion, data saver and no-JS",
+      "area": "qa",
+      "feature": "home-and-curation",
+      "size": "M",
+      "reqs": [
+        "REQ-002",
+        "REQ-043",
+        "REQ-044",
+        "REQ-040"
+      ],
+      "summary": "Prove the home page works as a complete static page and every acceptance item holds across the four widths.",
+      "scope": [
+        "Playwright projects with reduced motion, scripts off and data saver",
+        "axe at 360, 768, 1280, 1600 px",
+        "Header flash check on first load and refresh",
+        "All curation-mode behaviours seen through the page",
+        "Home absent-block cases (no events, no nominees)"
+      ],
+      "acceptance": [
+        "With reduced motion requested, hero motion, the rail autoscroll and scroll effects are off and the page still reads in full",
+        "There is no header flash on first load or refresh",
+        "The page has no awards band or button",
+        "Every Home and curation acceptance item has a named test"
+      ],
+      "tests": [
+        "home-reduced-motion.spec.ts (Playwright)",
+        "home-no-js.spec.ts (Playwright)",
+        "home-axe.spec.ts (Playwright with axe)",
+        "test_REQ_257_curation_modes_visible_on_page"
+      ],
+      "docs": [
+        "docs/features/home-and-curation.md",
+        "docs/plugins/content.md",
+        "docs/pages/public/home.md",
+        "docs/pages/admin/curation-and-content.md",
+        "docs/theme/theme-acceptance.md"
+      ],
+      "files": [
+        "site/tests/e2e/home/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [],
+      "notes": "Probably duplicates an M0 or M5 human task; keep one and link. Raised here because M2 theme work uses the files.",
+      "key": "M2-HOM-14",
+      "title": "Confirm licences for hero videos, fonts and portraits",
+      "area": "human",
+      "feature": "home-and-curation",
+      "size": "S",
+      "reqs": [],
+      "summary": "A person confirms the licences for the four hero videos, the Repline and Montreal fonts and the stock portraits, and supplies final home copy, so the theme does not ship unlicensed files.",
+      "scope": [
+        "Confirm or replace each hero video and each font with a licensed file",
+        "Replace stock placeholder portraits",
+        "Supply final home page wording from Brand"
+      ],
+      "acceptance": [
+        "A written licence note exists for every video, font and portrait used on the home page",
+        "Placeholders are replaced or recorded as blocking launch"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/pages/public/home.md",
+        "docs/theme/brand-and-tokens.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M0-PLG-02",
+        "M0-PLG-01"
+      ],
+      "notes": "GAP: docs/plugins/compliance.md lists wiw_consents columns as subject email, purpose, policy version, granted and revoked times, with no confirmed time; content.md proposes a confirmed date. Which module creates wiw_consents (Compliance in M3, or earlier) is not stated; this plan has the first needing issue extend it. Resolve ownership so two migrations do not clash.",
+      "key": "M2-NWS-01",
+      "title": "Subscriber storage on the consent record",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-061",
+        "REQ-249"
+      ],
+      "summary": "Store each newsletter sign-up as a consent record with purpose, policy version, confirmation and unsubscribe times, apart from enquiries and customers.",
+      "scope": [
+        "Expand migration adding the purpose \"stories newsletter\", a confirmed time and a token hash to wiw_consents (create the table only if no earlier migration has)",
+        "Repository Content\\Newsletter\\SubscriberRepository: add pending, confirm, unsubscribe, list, find by email hash",
+        "Email stored once per address (a repeat sign-up re-sends confirmation, no second row)",
+        "PII catalogue entries in config/pii.php",
+        "Never joined to enquiries, customers or awards"
+      ],
+      "acceptance": [
+        "Submitting a valid email creates a record with a timestamp and the current policy version",
+        "A sign-up never enters Enquiries or the customer records",
+        "Retention, export and erase can find the record by email"
+      ],
+      "tests": [
+        "test_REQ_058_newsletter_consent_stores_policy_version",
+        "test_REQ_061_duplicate_signup_does_not_create_second_row",
+        "test_REQ_058_newsletter_columns_are_in_pii_catalogue"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/**",
+        "site/wp-content/plugins/whoiswho-core/config/pii.php",
+        "site/wp-content/plugins/whoiswho-core/src/Platform/Migrations/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-01",
+        "M0-PLG-18"
+      ],
+      "notes": "DOCS TENSION: the visitor lands on \"You are subscribed\" right after submit, yet double opt-in means the subscription is not active until the email link is used. Proposal: show the page as the docs word it but keep the status pending until confirmed; ask Brand whether the wording should be \"Check your email to confirm\". The feature page says double opt-in is out of scope (\"Out of scope or later\") while content.md, REQ-249 and the task require it.",
+      "key": "M2-NWS-02",
+      "title": "Sign-up handler: validate, rate limit, bot check, record",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-061",
+        "REQ-081",
+        "REQ-122"
+      ],
+      "summary": "POST /newsletter validates the email, refuses over-limit and bot-failed requests, records consent and queues the confirmation.",
+      "scope": [
+        "One validator for the form (email and the consent tick); error messages that do not echo data",
+        "Rate limit per IP and per email; bot challenge; honeypot",
+        "Policy version recorded with the privacy notice the theme shows at the point of collection",
+        "Redirect to /done?kind=newsletter",
+        "No PII in logs or error messages"
+      ],
+      "acceptance": [
+        "Submitting a valid email creates a record with a timestamp and the current policy version",
+        "Submitting an invalid or empty email shows an error and creates no record",
+        "More than the rate limit from one IP is refused",
+        "A bot-challenge failure creates no record",
+        "The visitor lands on the \"You are subscribed\" page after submitting"
+      ],
+      "tests": [
+        "test_REQ_061_invalid_email_creates_no_record",
+        "test_REQ_122_signup_rate_limited_per_ip",
+        "test_REQ_081_bot_failure_creates_no_record",
+        "test_REQ_058_valid_signup_records_timestamp_and_policy_version"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-02",
+        "M0-EML-01"
+      ],
+      "notes": "Token pattern assumed from the M0 signed-links service.",
+      "key": "M2-NWS-03",
+      "title": "Double opt-in confirmation link",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-249",
+        "REQ-061"
+      ],
+      "summary": "Send the confirmation email with a signed single-use link and mark the subscription confirmed when it is used.",
+      "scope": [
+        "Signed token via Platform signed links, single use, with expiry",
+        "Confirmation email through Platform mail (logged)",
+        "GET /confirm/:token marks the confirmed time and shows the subscribed state; expired or used shows the expired page",
+        "Resend on a repeat sign-up of an unconfirmed address"
+      ],
+      "acceptance": [
+        "A confirmation email is sent to that address",
+        "The link confirms the subscription once; a second use shows \"Link expired or already used\"",
+        "An unconfirmed address receives no marketing email",
+        "A sign-up is confirmable and reversible from every email"
+      ],
+      "tests": [
+        "test_REQ_249_confirmation_email_is_sent",
+        "test_REQ_249_confirm_link_is_single_use",
+        "test_REQ_061_unconfirmed_address_gets_no_marketing_email"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-03"
+      ],
+      "notes": "How newsletters are actually sent is a build choice and unspecified; this issue builds the guard and the wrapper only. No sending tool is built (newsletter design, scheduling and sending are out of scope).",
+      "key": "M2-NWS-04",
+      "title": "One-click unsubscribe and send guard",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-061",
+        "REQ-249"
+      ],
+      "summary": "Every marketing message carries a working unsubscribe link and headers; unsubscribing records the time and blocks later marketing mail.",
+      "scope": [
+        "Unsubscribe token link and List-Unsubscribe and List-Unsubscribe-Post headers",
+        "/unsubscribe works without login and without further steps",
+        "Records the unsubscribed time and keeps the record",
+        "SendGuard::canSend(email) used by any marketing send; refuses unsubscribed and unconfirmed addresses",
+        "Marketing mail wrapper template that always includes the link"
+      ],
+      "acceptance": [
+        "Every marketing email contains an unsubscribe link that works without logging in and without further steps",
+        "After unsubscribing the address receives no further marketing email and the record shows the unsubscribe time"
+      ],
+      "tests": [
+        "test_REQ_061_newsletter_message_has_one_click_unsubscribe",
+        "test_REQ_061_unsubscribed_address_receives_no_marketing_email",
+        "test_REQ_249_unsubscribe_records_time"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md",
+        "docs/plugins/platform.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "S",
+      "depends": [
+        "M2-NWS-03",
+        "M0-PLG-06"
+      ],
+      "notes": "UNSPECIFIED IN THE DOCS: the Subscribers screen is \"not yet specified\" and the feature page lists it as out of scope while content.md and the Stories page say it exists. No capability is named. Proposal: a new capability wiw_manage_subscribers for Editor and Administrator, to be added to the matrix in docs/pages/admin/roles-and-capabilities.md by the shared-docs owner before build. Kept small; priority S.",
+      "key": "M2-NWS-05",
+      "title": "Subscribers screen with consent date and export",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-061",
+        "REQ-051"
+      ],
+      "summary": "A small staff screen listing subscribers with count, consent date, confirmed date and unsubscribed list, with a logged export.",
+      "scope": [
+        "Admin list with status filter (pending, confirmed, unsubscribed), count and dates",
+        "CSV export logged through AuditLogger",
+        "Capability check; no editing of addresses",
+        "Menu entry under the editorial group"
+      ],
+      "acceptance": [
+        "An Editor or Administrator can see sign-ups and who has unsubscribed",
+        "The export is logged in the audit log",
+        "A user without the capability gets 403"
+      ],
+      "tests": [
+        "test_REQ_058_subscribers_screen_requires_capability",
+        "test_REQ_051_subscriber_export_is_audited",
+        "test_REQ_061_subscribers_screen_lists_unsubscribed"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md",
+        "docs/pages/admin/roles-and-capabilities.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/Admin/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-01"
+      ],
+      "notes": "The Compliance data-request screen (M3) must call the same exporter. If a mail provider is chosen it must be added to the processor register (see M2-NWS-08).",
+      "key": "M2-NWS-06",
+      "title": "Subscriber data in exports, requests and retention",
+      "area": "plugin",
+      "feature": "newsletter",
+      "size": "S",
+      "reqs": [
+        "REQ-058",
+        "REQ-061"
+      ],
+      "summary": "Register the newsletter data with the WordPress personal data exporter and eraser so a subscriber appears in data-request exports and can be erased.",
+      "scope": [
+        "wp_privacy_personal_data_exporters and erasers for the newsletter consent rows",
+        "Retention hook for unsubscribed addresses (value set by Compliance)",
+        "Entry in the PII catalogue"
+      ],
+      "acceptance": [
+        "A subscriber appears in exports and data-request exports for that email address",
+        "Erasing on a data request removes or anonymises the row"
+      ],
+      "tests": [
+        "test_REQ_058_subscriber_appears_in_personal_data_export",
+        "test_REQ_058_subscriber_is_erased_on_request"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/wp-content/plugins/whoiswho-core/src/Content/Newsletter/Privacy/**",
+        "site/wp-content/plugins/whoiswho-core/tests/Integration/Newsletter/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-02",
+        "M2-NWS-04",
+        "M2-STO-09",
+        "M0-THM-01"
+      ],
+      "notes": "Prototype routes: sign-ups on #/stories and the home page, #/done?kind=digest (the prototype names the kind digest), #/unsubscribe (V45). The prototype stores no consent timestamp; do not copy that.",
+      "key": "M2-NWS-07",
+      "title": "Sign-up forms, done and unsubscribe pages",
+      "area": "theme",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-249",
+        "REQ-061",
+        "REQ-058"
+      ],
+      "summary": "Build the two sign-up form components, the done page for kind newsletter, the confirmed page and the Unsubscribe page.",
+      "scope": [
+        "Masthead form and dark block form, each with one email field, consent text with privacy notice, bot check and submit",
+        "Done page /done?kind=newsletter (\"You are subscribed\"), confirmed page and expired page",
+        "/unsubscribe page template: one click then confirmation",
+        "Uses the shared field and bot check parts; works with scripts off"
+      ],
+      "acceptance": [
+        "Submitting an invalid or empty email shows an error and creates no record",
+        "The visitor lands on the \"You are subscribed\" page after submitting",
+        "The unsubscribe page works without an account and confirms the unsubscribe",
+        "Every field has a label with its hint attached; messages are announced",
+        "Passes axe at the four widths"
+      ],
+      "tests": [
+        "newsletter-signup.spec.ts (Playwright)",
+        "newsletter-unsubscribe.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md",
+        "docs/theme/templates.md",
+        "docs/theme/components.md",
+        "docs/theme/theme-acceptance.md",
+        "docs/theme/prototype-guide.md"
+      ],
+      "files": [
+        "site/wp-content/themes/whoiswho/parts/newsletter-*",
+        "site/wp-content/themes/whoiswho/page-unsubscribe.php",
+        "site/wp-content/themes/whoiswho/tests/**"
+      ]
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [],
+      "notes": "D-056 leaves this open.",
+      "key": "M2-NWS-08",
+      "title": "Decide newsletter sending and register the processor",
+      "area": "human",
+      "feature": "newsletter",
+      "size": "S",
+      "reqs": [],
+      "summary": "A person decides whether a newsletter is wanted at launch, who sends it and with which tool, and records any provider in the processor register.",
+      "scope": [
+        "Decide launch scope (collect sign-ups only, or also send)",
+        "Choose the sender (cPanel mail account or a provider) and record a provider in the processor register",
+        "Confirm the consent wording with Legal"
+      ],
+      "acceptance": [
+        "The decision is recorded in docs/decisions.md by the shared-docs owner",
+        "Any provider is in the processor register",
+        "Consent text is approved"
+      ],
+      "tests": [],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": []
+    },
+    {
+      "milestone": "M2",
+      "priority": "M",
+      "depends": [
+        "M2-NWS-07",
+        "M2-NWS-06",
+        "M2-NWS-05"
+      ],
+      "notes": "REQ-195 (Nominations open soon sign-up) should reuse the NWS-02 handler with a distinct purpose in M4.",
+      "key": "M2-NWS-09",
+      "title": "End-to-end tests for the newsletter",
+      "area": "qa",
+      "feature": "newsletter",
+      "size": "M",
+      "reqs": [
+        "REQ-058",
+        "REQ-061",
+        "REQ-081",
+        "REQ-122",
+        "REQ-249"
+      ],
+      "summary": "Cover every acceptance item of the Newsletter feature page through the browser and mail capture.",
+      "scope": [
+        "Valid, invalid and empty sign-up; confirmation email captured; confirm link; unsubscribe link; rate limit; bot failure",
+        "Exports include the subscriber",
+        "Check the email footer carries the unsubscribe link"
+      ],
+      "acceptance": [
+        "Every acceptance item on the Newsletter feature page has at least one named test",
+        "No PII appears in logs or error messages"
+      ],
+      "tests": [
+        "test_REQ_061_unsubscribe_link_works_without_login",
+        "test_REQ_122_rate_limit_in_browser",
+        "newsletter-journeys.spec.ts (Playwright)"
+      ],
+      "docs": [
+        "docs/features/newsletter.md",
+        "docs/plugins/content.md",
+        "docs/plugins/compliance.md",
+        "docs/pages/public/stories.md"
+      ],
+      "files": [
+        "site/tests/e2e/newsletter/**"
+      ]
+    }
+  ]
+}
