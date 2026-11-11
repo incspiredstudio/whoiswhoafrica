@@ -17,7 +17,7 @@ final class ConfigTemplateTest extends TestCase {
 
 	public function test_REQ_046_env_example_holds_names_only(): void {
 		foreach ( explode( "\n", $this->read( '.env.example' ) ) as $line ) {
-			if ( preg_match( '/^[A-Z_]+=(.+)$/', $line ) ) {
+			if ( preg_match( '/^[A-Z_]+=(.+)$/', trim( $line ) ) ) {
 				$this->fail( 'Value present in .env.example: ' . $line );
 			}
 		}

@@ -47,7 +47,11 @@
     "lint": "phpcs",
     "lint:fix": "phpcbf",
     "analyse": "phpstan analyse --memory-limit=1G --no-progress",
-    "test": "echo no tests yet"
+    "test": "phpunit --do-not-fail-on-empty-test-suite",
+    "test:coverage": [
+      "phpunit --do-not-fail-on-empty-test-suite --coverage-clover build/coverage/clover.xml --coverage-html build/coverage/html",
+      "@php tests/check-coverage.php"
+    ]
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
@@ -58,5 +62,10 @@
     "szepeviktor/phpstan-wordpress": "^2.0",
     "wp-coding-standards/wpcs": "^3.4",
     "yoast/phpunit-polyfills": "^2.0"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "WhoIsWho\\Tests\\": "tests/"
+    }
   }
 }

@@ -32,6 +32,15 @@
 	<rule ref="Generic.Commenting">
 		<exclude-pattern>*/tests/*</exclude-pattern>
 	</rule>
+	<rule ref="WordPress.NamingConventions">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Universal.Operators.DisallowShortTernary">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
 	<rule ref="WordPress.WP.AlternativeFunctions">
 		<exclude-pattern>*/tests/*</exclude-pattern>
 	</rule>
