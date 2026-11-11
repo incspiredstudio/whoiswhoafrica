@@ -41,6 +41,8 @@
 		<exclude-pattern>*/whoiswho-core/migrations/*</exclude-pattern>
 		<exclude-pattern>*/tests/*</exclude-pattern>
 		<exclude-pattern>*/whoiswho/emails/layout.*.php</exclude-pattern>
+		<exclude-pattern>*/whoiswho/archive-wiw_event.php</exclude-pattern>
+		<exclude-pattern>*/whoiswho/single-wiw_event.php</exclude-pattern>
 	</rule>
 	<rule ref="Universal.Operators.DisallowShortTernary">
 		<exclude-pattern>*/tests/*</exclude-pattern>
