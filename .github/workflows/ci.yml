@@ -19,7 +19,7 @@ env:
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
 
   analyse:
     name: analyse
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
 
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     services:
       mariadb:
@@ -82,7 +82,7 @@ jobs:
 
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
   e2e:
     name: e2e
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     services:
       mariadb:
@@ -148,7 +148,7 @@ jobs:
 
   audit:
     name: audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -161,7 +161,7 @@ jobs:
 
   secrets:
     name: secrets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -170,7 +170,7 @@ jobs:
 
   pr-body:
     name: pr-body
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: PR body cites a REQ id and "Closes #N"
         if: github.event_name == 'pull_request'
