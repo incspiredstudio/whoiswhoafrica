@@ -85,6 +85,15 @@ final class LoginProtectionTest extends WpTestCase {
 		$this->assertSame( 3600, Login::IDLE_LIMIT );
 	}
 
+	public function test_REQ_047_a_new_sign_in_resets_a_stale_idle_clock(): void {
+		$id = $this->staff_user( 'staleclock' );
+		update_user_meta( $id, Login::META_ACTIVE, time() - 86400 );
+
+		do_action( 'wp_login', 'staleclock', new \WP_User( $id ) );
+
+		$this->assertFalse( Login::is_idle( (int) get_user_meta( $id, Login::META_ACTIVE, true ), time() ), 'the old session\'s timestamp must not end the new one' );
+	}
+
 	public function test_REQ_235_sessions_are_revoked_when_the_role_changes(): void {
 		$id     = $this->staff_user( 'revoke' );
 		$tokens = \WP_Session_Tokens::get_instance( $id );

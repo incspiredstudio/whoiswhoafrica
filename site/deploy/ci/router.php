@@ -26,9 +26,9 @@ if ( false !== strpos( $wiw_path, '..' ) ) {
 }
 
 $wiw_map = array(
-	'#^/wp-content/#'               => $wiw_site,
+	'#^/(wp-content|wordpress)/#'   => $wiw_site,
 	'#^/(wp-admin|wp-includes)/#'   => $wiw_site . '/wordpress',
-	'#^/(wp-login|wp-cron)\.php$#'  => $wiw_site . '/wordpress',
+	'#^/(wp-login|wp-cron|xmlrpc)\.php$#'  => $wiw_site . '/wordpress',
 );
 foreach ( $wiw_map as $wiw_pattern => $wiw_root ) {
 	if ( preg_match( $wiw_pattern, $wiw_path ) ) {
