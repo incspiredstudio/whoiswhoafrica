@@ -118,4 +118,33 @@ return array(
 		'erase'     => 'keep',
 		'note'      => 'A short staff reason; the form tells staff not to type personal data.',
 	),
+
+	// Import evidence for the reviewer (never public).
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_claims.claim_text',
+		'class'     => 'pii',
+		'retention' => 'import_evidence',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'A claim drafted from public sources, for the reviewer only. Deleted with the profile or on an erase request.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_claims.quote',
+		'class'     => 'pii',
+		'retention' => 'import_evidence',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'The exact quote that backs a claim. As claim_text.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_passages.passage_text',
+		'class'     => 'pii',
+		'retention' => 'import_evidence',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'The passage of a public source behind a claim; only the passage needed, never the whole page.',
+	),
 );
