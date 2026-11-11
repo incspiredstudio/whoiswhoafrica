@@ -1,0 +1,102 @@
+/* WHOISWHO base design tokens (parent theme).
+   Brand values (colours, typefaces, the logo) live ONLY in the child theme's tokens file, which loads after this one and
+   overrides these names. Here the colours are neutral CSS system colours so the parent never carries a brand literal.
+   Structure (type scale, spacing, widths, radii, shadows, motion) is shared. Components read semantic tokens, never raw palette values. */
+:root {
+  /* Semantic colour (placeholders; the child sets the brand values) */
+  --c-bg: Canvas;
+  --c-bg-alt: Canvas;
+  --c-surface: Canvas;
+  --c-text: CanvasText;
+  --c-muted: GrayText;
+  --c-line: GrayText;
+  --c-line-strong: CanvasText;
+  --c-link: LinkText;
+  --c-accent: Highlight;
+  --c-accent-hover: Highlight;
+  --c-cta: ButtonFace;
+  --c-cta-hover: ButtonFace;
+  --c-on-cta: ButtonText;
+  --c-dark: CanvasText;
+  --c-dark-deep: CanvasText;
+  --c-dark-raised: CanvasText;
+  --c-on-dark: Canvas;
+  --c-on-dark-muted: Canvas;
+  --c-line-on-dark: GrayText;
+  --c-highlight: Mark;
+  --c-focus: Highlight;
+  --c-focus-on-dark: Mark;
+  --c-dip: CanvasText;
+
+  /* Label colours: the shape differs too, so colour is never the only signal */
+  --l-verified: CanvasText;
+  --l-verified-bg: Canvas;
+  --l-featured: CanvasText;
+  --l-featured-bg: Canvas;
+  --l-reviewed: CanvasText;
+  --l-reviewed-bg: Canvas;
+  --l-pending: GrayText;
+  --l-pending-bg: Canvas;
+  --l-sponsored: CanvasText;
+  --l-sponsored-bg: Canvas;
+  --c-ok: CanvasText;
+  --c-ok-bg: Canvas;
+  --c-warn: CanvasText;
+  --c-warn-bg: Canvas;
+  --c-bad: CanvasText;
+  --c-bad-bg: Canvas;
+
+  /* Type families (the child names the brand typefaces) */
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-code: ui-monospace, Menlo, Consolas, monospace;
+
+  /* Type scale */
+  --t-xs: .75rem;
+  --t-sm: .875rem;
+  --t-base: 1rem;
+  --t-md: 1.125rem;
+  --t-lg: clamp(1.25rem, 1.15rem + .45vw, 1.5rem);
+  --t-xl: clamp(1.5rem, 1.3rem + .9vw, 2rem);
+  --t-2xl: clamp(1.875rem, 1.5rem + 1.7vw, 2.875rem);
+  --t-3xl: clamp(2.375rem, 1.75rem + 3vw, 4.25rem);
+  --t-4xl: clamp(2.75rem, 1.7rem + 5.2vw, 6.25rem);
+  --lh-tight: 1.06;
+  --lh-snug: 1.25;
+  --lh-body: 1.6;
+  --track-label: .08em;
+
+  /* Spacing (4px base) */
+  --s-1: .25rem;
+  --s-2: .5rem;
+  --s-3: .75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: clamp(3.5rem, 2.5rem + 4vw, 6.5rem);
+  --gutter: clamp(1rem, .6rem + 2vw, 2.5rem);
+  --w-page: 82rem;
+  --w-text: 42rem;
+  --head-h: 4.25rem;
+
+  /* Radius */
+  --r-1: 3px;
+  --r-2: 8px;
+  --r-3: 14px;
+  --r-pill: 999px;
+
+  /* Shadow */
+  --sh-1: 0 1px 2px rgb(0 0 0 / .08);
+  --sh-2: 0 10px 28px -14px rgb(0 0 0 / .32);
+  --sh-3: 0 26px 56px -24px rgb(0 0 0 / .55);
+
+  /* Motion */
+  --m-fast: 140ms;
+  --m-base: 240ms;
+  --m-slow: 620ms;
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --ease-inout: cubic-bezier(.6, 0, .2, 1);
+  --rise: 14px;
+}

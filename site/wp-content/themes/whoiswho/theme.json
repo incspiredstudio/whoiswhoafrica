@@ -3,6 +3,58 @@
   "version": 3,
   "settings": {
     "appearanceTools": false,
-    "layout": { "contentSize": "var(--wiw-content, 42rem)", "wideSize": "var(--wiw-wide, 75rem)" }
+    "layout": { "contentSize": "var(--w-text)", "wideSize": "var(--w-page)" },
+    "color": {
+      "defaultPalette": false,
+      "defaultGradients": false,
+      "palette": [
+        { "slug": "bg", "name": "Background", "color": "var(--c-bg)" },
+        { "slug": "bg-alt", "name": "Background alternate", "color": "var(--c-bg-alt)" },
+        { "slug": "surface", "name": "Surface", "color": "var(--c-surface)" },
+        { "slug": "text", "name": "Text", "color": "var(--c-text)" },
+        { "slug": "muted", "name": "Muted text", "color": "var(--c-muted)" },
+        { "slug": "line", "name": "Line", "color": "var(--c-line)" },
+        { "slug": "link", "name": "Link", "color": "var(--c-link)" },
+        { "slug": "accent", "name": "Accent", "color": "var(--c-accent)" },
+        { "slug": "cta", "name": "Call to action", "color": "var(--c-cta)" },
+        { "slug": "on-cta", "name": "Text on call to action", "color": "var(--c-on-cta)" },
+        { "slug": "dark", "name": "Dark", "color": "var(--c-dark)" },
+        { "slug": "on-dark", "name": "Text on dark", "color": "var(--c-on-dark)" }
+      ]
+    },
+    "typography": {
+      "defaultFontSizes": false,
+      "fluid": false,
+      "fontFamilies": [
+        { "slug": "display", "name": "Display", "fontFamily": "var(--font-display)" },
+        { "slug": "body", "name": "Body", "fontFamily": "var(--font-body)" },
+        { "slug": "code", "name": "Code", "fontFamily": "var(--font-code)" }
+      ],
+      "fontSizes": [
+        { "slug": "xs", "name": "Extra small", "size": "var(--t-xs)" },
+        { "slug": "sm", "name": "Small", "size": "var(--t-sm)" },
+        { "slug": "base", "name": "Base", "size": "var(--t-base)" },
+        { "slug": "md", "name": "Medium", "size": "var(--t-md)" },
+        { "slug": "lg", "name": "Large", "size": "var(--t-lg)" },
+        { "slug": "xl", "name": "Extra large", "size": "var(--t-xl)" },
+        { "slug": "2xl", "name": "2x large", "size": "var(--t-2xl)" },
+        { "slug": "3xl", "name": "3x large", "size": "var(--t-3xl)" },
+        { "slug": "4xl", "name": "4x large", "size": "var(--t-4xl)" }
+      ]
+    },
+    "spacing": {
+      "units": ["rem", "%", "vw"],
+      "spacingSizes": [
+        { "slug": "1", "name": "1", "size": "var(--s-1)" },
+        { "slug": "2", "name": "2", "size": "var(--s-2)" },
+        { "slug": "3", "name": "3", "size": "var(--s-3)" },
+        { "slug": "4", "name": "4", "size": "var(--s-4)" },
+        { "slug": "5", "name": "5", "size": "var(--s-5)" },
+        { "slug": "6", "name": "6", "size": "var(--s-6)" },
+        { "slug": "7", "name": "7", "size": "var(--s-7)" },
+        { "slug": "8", "name": "8", "size": "var(--s-8)" },
+        { "slug": "9", "name": "9", "size": "var(--s-9)" }
+      ]
+    }
   }
 }
