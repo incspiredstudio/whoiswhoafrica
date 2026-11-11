@@ -32,7 +32,7 @@ final class Module implements ModuleInterface {
 		Links\LinkRoute::for_site()->register();
 		Mail\Notifier::for_site();
 		Log\Logger::for_site()->register();
-		Health\HealthEndpoint::for_site()->register();
+		Mail\Admin\EmailLogScreen::hooks();
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',
 			86400,
@@ -53,5 +53,6 @@ final class Module implements ModuleInterface {
 				( new Capabilities\RoleSync( new Capabilities\CapabilityCatalogue() ) )->maybe_sync();
 			}
 		);
+		Mail\Admin\EmailLogScreen::hooks();
 	}
 }
