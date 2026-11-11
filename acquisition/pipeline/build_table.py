@@ -6,12 +6,18 @@ into the page as text, never as markup, because they come from outside sources.
 Run with: python -I acquisition/pipeline/build_table.py
 """
 import json
+import re
 import pathlib
 import sqlite3
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DATA = ROOT / "acquisition" / "data"
 
+# Organisation websites whose domain lapsed now serve gambling, adult or placeholder pages. Never show that text.
+SITE_SPAM = re.compile(r"\b(casino|slots?\d*|gacor|togel|toto|judi|sbobet\w*|betting|betway|betclic|melbet|1xbet|poker|jackpot|"
+                       r"porn\w*|xxx|nudes?|onlyfans|escort|hentai|viagra|domain (?:is |may be |name is )?for sale|buy this domain|"
+                       r"wordpress theme|html5 template|lorem ipsum|default page|your description|page description here|"
+                       r"just another wordpress site)\b|секс|садомазо", re.I)
 FIELDS = ["record_id", "type", "qid", "name", "country", "city", "org_type", "org_category", "segment", "person_field", "lifespan", "born_in", "died_in", "education", "industry", "website", "website_status",
           "founded_year", "exchange", "current_title", "current_org", "roles", "awards", "sitelinks", "description", "bio",
           "site_description", "criterion", "criterion_met", "evidence_url", "wikipedia_lead", "photo_path", "photo_source",
@@ -113,6 +119,12 @@ def main():
     con = sqlite3.connect(DATA / "staging.sqlite")
     con.row_factory = sqlite3.Row
     rows = [{k: r[k] for k in FIELDS} for r in con.execute("SELECT * FROM records ORDER BY sitelinks DESC")]
+    hidden = 0
+    for row in rows:
+        if row["site_description"] and SITE_SPAM.search(row["site_description"]):
+            row["site_description"] = None
+            hidden += 1
+    print("site descriptions hidden as spam or placeholder:", hidden)
     payload = json.dumps(rows, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     import time
     countries = con.execute("SELECT COUNT(DISTINCT country) FROM records").fetchone()[0]

@@ -177,6 +177,13 @@ def db():
 
 
 MANUAL_EXCLUDE = {"Sunday Adelaja", "Uniqueness and reform movement", "Brigade Mixte Mobile", "Central Revolutionary Investigation Department"}
+# Found while writing profile text (2026-11-11): records that break the selection rules. Finalise skips them.
+MANUAL_EXCLUDE_QIDS = {
+    **dict.fromkeys(['Q104626314', 'Q105276927', 'Q109613103', 'Q114787381', 'Q118725695', 'Q121090256', 'Q131632528', 'Q133190283', 'Q141432055', 'Q141450685', 'Q16734072', 'Q17175778', 'Q18204369', 'Q30745641', 'Q3137437', 'Q42765480', 'Q43048236', 'Q4937163', 'Q5348479', 'Q5869804', 'Q6048694', 'Q65089114', 'Q7042628', 'Q7291754', 'Q8035254', 'Q12192627', 'Q124429416', 'Q106517788', 'Q107244716', 'Q126180417', 'Q135237706', 'Q98807643', 'Q80307901', 'Q21619182', 'Q21619219'], 'not_an_organisation'),
+    **dict.fromkeys(['Q107969863', 'Q12206040', 'Q12407842', 'Q14956362', 'Q5348458', 'Q6722884'], 'religious_or_political'),
+    **dict.fromkeys(['Q12191839', 'Q16204010', 'Q17068877', 'Q5162761', 'Q7959261'], 'military_security_or_prison'),
+    **dict.fromkeys(['Q12620566', 'Q15734112', 'Q2823724', 'Q50357831', 'Q746413', 'Q273642', 'Q16647785', 'Q735415', 'Q4672520', 'Q19892740', 'Q55826536', 'Q55627184', 'Q137162596', 'Q12213826', 'Q7370229', 'Q1935533', 'Q1299166', 'Q3370417', 'Q3577771', 'Q11859650', 'Q11996144', 'Q131444879', 'Q6702996', 'Q56395801', 'Q5188535', 'Q421023', 'Q97059619', 'Q6719686', 'Q121133743', 'Q130461747', 'Q12211260'], 'not_african'),
+}
 
 
 def clean_description(desc):
@@ -1395,6 +1402,9 @@ def stage_finalise():
     scan_failed = 0
     for r in rows:
         d, qid, kind = json.loads(r["data"]), r["qid"], r["kind"]
+        if qid in MANUAL_EXCLUDE_QIDS:
+            con.execute("INSERT OR REPLACE INTO exclusions VALUES(?,?,?)", (qid, kind, "manual_" + MANUAL_EXCLUDE_QIDS[qid]))
+            continue
         d["description"] = clean_description(d.get("description"))
         wd_url = f"https://www.wikidata.org/wiki/{qid}"
         at = r["retrieved_at"]
