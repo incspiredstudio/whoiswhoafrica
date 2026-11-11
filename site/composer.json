@@ -3,9 +3,19 @@
   "description": "WHOISWHO WordPress site",
   "type": "project",
   "license": "proprietary",
-  "repositories": [{ "type": "composer", "url": "https://wpackagist.org", "only": ["wpackagist-plugin/*", "wpackagist-theme/*"] }],
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://wpackagist.org",
+      "only": [
+        "wpackagist-plugin/*",
+        "wpackagist-theme/*"
+      ]
+    }
+  ],
   "require": {
     "php": ">=8.3",
+    "composer/installers": "^2.3",
     "johnpbloch/wordpress-core": "^7.1",
     "nikic/php-parser": "^5.9",
     "woocommerce/action-scheduler": "^4.2"
@@ -19,7 +29,20 @@
       "phpstan/extension-installer": true
     }
   },
-  "extra": { "wordpress-install-dir": "wordpress" },
+  "extra": {
+    "wordpress-install-dir": "wordpress",
+    "installer-paths": {
+      "wp-content/plugins/{$name}/": [
+        "type:wordpress-plugin"
+      ],
+      "wp-content/mu-plugins/{$name}/": [
+        "type:wordpress-muplugin"
+      ],
+      "wp-content/themes/{$name}/": [
+        "type:wordpress-theme"
+      ]
+    }
+  },
   "scripts": {
     "lint": "phpcs",
     "lint:fix": "phpcbf",
