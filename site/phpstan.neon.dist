@@ -11,6 +11,7 @@ parameters:
 		- config
 	scanDirectories:
 		- wordpress
+		- wp-content/plugins/action-scheduler
 	stubFiles: []
 	ignoreErrors: []
 	reportUnmatchedIgnoredErrors: true
