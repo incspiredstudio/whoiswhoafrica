@@ -11,9 +11,14 @@ test.describe("header state before first paint (REQ-046)", () => {
     expect(cls).toContain("at-top");
   });
 
-  test("the inline script carries a nonce", async ({ page }) => {
+  test("the inline script runs under the CSP without a violation", async ({ page }) => {
+    const violations: string[] = [];
+    page.on("console", (m) => {
+      if (/content security policy/i.test(m.text())) violations.push(m.text());
+    });
     await page.goto("/");
-    const nonce = await page.locator("script[data-home]").getAttribute("nonce");
-    expect(nonce === null ? "" : nonce).not.toBe("");
+    expect(violations).toEqual([]);
+    // Browsers hide the nonce value from the DOM; the classes above being set proves the script carried the nonce.
+    expect(await page.locator("script[data-home]").count()).toBe(1);
   });
 });
