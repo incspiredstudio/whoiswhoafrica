@@ -1,5 +1,5 @@
-# Merge gates for the WordPress site (site/). Job names are stable: lint, analyse, test, build, e2e, audit, secrets, pr-body.
-# Required checks for branch protection (set by the repo owner): lint, analyse, test, build, e2e, audit, secrets, pr-body.
+# Merge gates for the WordPress site (site/). Job names are stable: lint, analyse, test, build, e2e, audit, plugins, secrets, pr-body.
+# Required checks for branch protection (set by the repo owner): lint, analyse, test, build, e2e, audit, plugins, secrets, pr-body.
 # Deploy is not a CI step: going live is a manual migration (docs/build/deployment.md).
 name: CI
 on:
@@ -159,6 +159,18 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}" }
       - run: composer audit --locked
       - run: npm audit --audit-level=high
+
+  plugins:
+    name: plugins
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - name: Plugin allowlist and forbidden kinds
+        run: |
+          node --test scripts/__tests__
+          node scripts/check-plugins.js
 
   secrets:
     name: secrets
