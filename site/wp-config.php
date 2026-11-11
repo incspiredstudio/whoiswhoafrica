@@ -39,6 +39,12 @@ define( 'DB_PASSWORD', wiw_secret( 'DB_PASSWORD' ) );
 define( 'DB_HOST', wiw_secret( 'DB_HOST', 'localhost' ) );
 define( 'WIW_FORM_TOKEN_KEY', wiw_secret( 'FORM_TOKEN_KEY' ) );
 define( 'WIW_SIGNED_LINK_KEY', wiw_secret( 'SIGNED_LINK_KEY' ) );
+define( 'WIW_SMTP_HOST', wiw_secret( 'SMTP_HOST' ) );
+define( 'WIW_SMTP_PORT', wiw_secret( 'SMTP_PORT', '587' ) );
+define( 'WIW_SMTP_USER', wiw_secret( 'SMTP_USER' ) );
+define( 'WIW_SMTP_PASSWORD', wiw_secret( 'SMTP_PASSWORD' ) );
+define( 'WIW_SMTP_FROM', wiw_secret( 'SMTP_FROM' ) );
+define( 'WIW_MAIL_HOURLY_CAP', wiw_secret( 'MAIL_HOURLY_CAP', '100' ) );
 define( 'DB_CHARSET', 'utf8mb4' );
 define( 'DB_COLLATE', '' );
 

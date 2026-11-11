@@ -43,7 +43,7 @@ This creates a Studio site in `.studio/` (git-ignored), links `whoiswho-core` an
 
 Optional path with Docker: `npx wp-env start` using `.wp-env.json` (core, a separate test environment, `WP_DEBUG` on). Needs Docker Desktop running.
 
-Known gap: there is no mail catcher on the Studio path (#367); use Mailpit or read `wp_mail` output until one is wired. PHPUnit integration tests run against a separate MariaDB (see PHPUnit below).
+Mail: `powershell -File deploy/local/mailpit.ps1` starts the Mailpit catcher (SMTP on 127.0.0.1:1025, web on http://127.0.0.1:8025). Outside production, with no SMTP account in the secrets file, the site sends all mail there. In production the SMTP account in the secrets file is required: without it nothing is sent and staff see an error.
 
 Playwright runs against the local URL: set `BASE_URL` to the address Studio prints (default `http://localhost:8882`).
 

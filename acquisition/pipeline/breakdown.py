@@ -218,9 +218,11 @@ def main():
         w(table(["Type", "AI reworded", "Of which from thin facts", "Template bio only"],
                 [[names.get(t, t), fmt(a), fmt(b), fmt(c)] for t, a, b, c in txt]))
         w("")
-        w("`reword.py` sends each record's stored facts to DeepSeek, which rewords them into a bio and the three sections of the tagline. "
-          "Code checks that every number and proper name it uses appears in the facts, and drops the text otherwise. "
-          "Records without reworded text keep the template bio. All AI text needs human review before use.")
+        meth = q("SELECT text_method, COUNT(*) FROM records GROUP BY 1 ORDER BY 2 DESC")
+        w("`reword.py` turns each record's stored facts into a bio and the three sections of the tagline. "
+          "The facts go to an AI writer as numbered facts, and code checks that every number and proper name it uses appears in them. "
+          "Text that fails is rejected; records without reworded text keep the template bio. All AI text needs human review before use. "
+          "**Writer:** " + ", ".join(f"`{m}` {fmt(n)}" for m, n in meth) + ".")
     else:
         w("No profile text has been reworded yet.")
     w("")
