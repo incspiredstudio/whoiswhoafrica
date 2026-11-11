@@ -242,6 +242,9 @@ final class PublicStoryTest extends TestCase {
 		$b      = $this->story( array( 'post_date' => '2026-02-01 10:00:00' ) );
 		$c      = $this->story( array( 'post_date' => '2026-03-01 10:00:00' ) );
 		$before = wp_list_pluck( PublicStory::list( array() )['items'], 'id' );
+		foreach ( array( 'add_post_metadata', 'update_post_metadata', 'delete_post_metadata' ) as $filter ) {
+			remove_filter( $filter, array( \WhoIsWho\Core\Content\Stories\StoryFlags::class, 'guard_meta' ), 1 ); // This test only needs the fields set; StoryFlagsTest covers the guard.
+		}
 		update_post_meta( $a, 'wiw_sponsor_name', 'Acme' );
 		update_post_meta( $a, 'wiw_sponsor_placement', 'home' );
 		$after = wp_list_pluck( PublicStory::list( array() )['items'], 'id' );
