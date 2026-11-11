@@ -90,6 +90,16 @@ final class Runner {
 	}
 
 	/**
+	 * Migrations not yet applied, in order.
+	 *
+	 * @return MigrationInterface[]
+	 */
+	public function pending(): array {
+		$current = $this->current_version();
+		return array_values( array_filter( $this->discover(), static fn ( MigrationInterface $m ): bool => strcmp( $m->version(), $current ) > 0 ) );
+	}
+
+	/**
 	 * Contract (destructive) migrations, for CI to list.
 	 *
 	 * @return string[] Versions.
