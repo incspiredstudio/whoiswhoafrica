@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Build the release artifact (REQ-273, REQ-056): pinned WordPress core, third-party plugins from the lockfile, the
+# first-party plugin, the guard mu-plugin, BOTH themes (parent whoiswho and child whoiswho-child), the production Composer
+# autoloader, built assets and a version stamp (release.json). No dev dependencies, no tests, no .env files, no secrets.
+#
+# Usage: deploy/build-release [--out DIR] [--version X] [--source DIR] [--skip-assets] [--skip-composer] [--no-archive]
+#   --out DIR          where the artifact goes (default: build/release, git-ignored)
+#   --version X        version label (default: git describe, else a timestamp)
+#   --source DIR       the site/ folder to build from (default: the folder above this script)
+#   --skip-assets      do not run "npm ci && npm run build"; copy dist/ if it exists
+#   --skip-composer    do not run "composer install --no-dev" (the self-test uses this; a real release never does)
+#   --no-archive       leave the folder, skip the .tar.gz
+# Environment: WIW_COMPOSER names the composer command (default "composer", for example "php /path/composer.phar").
+# (Not COMPOSER: Composer itself reads that variable as the name of its json file.)
+# Exit codes: 0 built, 1 a rule failed (missing theme, forbidden file in the artifact), 2 bad usage.
+
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE="$(cd "$HERE/.." && pwd)"
+OUT=""
+VERSION=""
+SKIP_ASSETS=0
+SKIP_COMPOSER=0
+ARCHIVE=1
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--out) OUT="$2"; shift 2 ;;
+		--version) VERSION="$2"; shift 2 ;;
+		--source) SOURCE="$(cd "$2" && pwd)"; shift 2 ;;
+		--skip-assets) SKIP_ASSETS=1; shift ;;
+		--skip-composer) SKIP_COMPOSER=1; shift ;;
+		--no-archive) ARCHIVE=0; shift ;;
+		*) echo "build-release: unknown option $1" >&2; exit 2 ;;
+	esac
+done
+
+fail() { echo "build-release: FAILED: $1" >&2; exit 1; }
+
+[ -n "$OUT" ] || OUT="$SOURCE/build/release"
+
+# 1. The themes. A release needs the parent and a child that declares Template: whoiswho.
+PARENT="$SOURCE/wp-content/themes/whoiswho"
+CHILD="$SOURCE/wp-content/themes/whoiswho-child"
+[ -f "$PARENT/style.css" ] || fail "the parent theme whoiswho is missing (wp-content/themes/whoiswho/style.css)"
+[ -f "$CHILD/style.css" ] || fail "the child theme whoiswho-child is missing (wp-content/themes/whoiswho-child/style.css)"
+grep -Eq '^[[:space:]]*Template:[[:space:]]*whoiswho[[:space:]]*$' "$CHILD/style.css" || fail "the child theme does not declare 'Template: whoiswho'"
+[ -f "$SOURCE/wp-content/plugins/whoiswho-core/whoiswho-core.php" ] || fail "the whoiswho-core plugin is missing"
+[ -f "$SOURCE/wp-content/mu-plugins/whoiswho-guard.php" ] || fail "the whoiswho-guard mu-plugin is missing"
+[ -f "$SOURCE/composer.json" ] || fail "composer.json is missing"
+[ -f "$SOURCE/composer.lock" ] || fail "composer.lock is missing: a release installs from the lockfile"
+
+# 2. Version and stage folder.
+COMMIT="$(git -C "$SOURCE" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+if [ -z "$VERSION" ]; then
+	VERSION="$(git -C "$SOURCE" describe --tags --always 2>/dev/null || date -u +%Y%m%d%H%M%S)"
+fi
+case "$VERSION" in *[!A-Za-z0-9._-]*) fail "the version may contain only letters, digits, dot, dash and underscore" ;; esac
+STAGE="$OUT/whoiswho-$VERSION"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+echo "build-release: building $VERSION into $STAGE"
+
+# 3. Production dependencies from the lockfile: core, third-party plugins, autoloader. No dev packages.
+if [ "$SKIP_COMPOSER" -eq 0 ]; then
+	cp "$SOURCE/composer.json" "$SOURCE/composer.lock" "$STAGE/"
+	# shellcheck disable=SC2086
+	(cd "$STAGE" && env -u COMPOSER ${WIW_COMPOSER:-composer} install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts) || fail "composer install failed"
+	rm -f "$STAGE/composer.lock" "$STAGE/composer.json"
+	# Composer's own cache of the plugin skeletons is not part of a release.
+fi
+
+# 4. Built assets.
+if [ "$SKIP_ASSETS" -eq 0 ]; then
+	(cd "$SOURCE" && npm ci --no-audit --no-fund && npm run build) || fail "the asset build failed"
+fi
+
+# 5. Our code. tar with excludes keeps tests, dev files and secrets out. The first-party plugin and themes are copied whole
+# apart from those excludes.
+copy_tree() {
+	local from="$1" to="$2"
+	[ -e "$from" ] || return 0
+	mkdir -p "$to"
+	(cd "$from" && tar --exclude='./node_modules' --exclude='./tests' --exclude='.env' --exclude='.env.*' --exclude='*.env' --exclude='*.log' --exclude='.git' --exclude='.DS_Store' -cf - .) | (cd "$to" && tar -xf -)
+}
+copy_tree "$SOURCE/wp-content/plugins/whoiswho-core" "$STAGE/wp-content/plugins/whoiswho-core"
+copy_tree "$PARENT" "$STAGE/wp-content/themes/whoiswho"
+copy_tree "$CHILD" "$STAGE/wp-content/themes/whoiswho-child"
+mkdir -p "$STAGE/wp-content/mu-plugins"
+cp "$SOURCE/wp-content/mu-plugins/whoiswho-guard.php" "$STAGE/wp-content/mu-plugins/"
+copy_tree "$SOURCE/wp-content/mu-plugins/whoiswho-guard" "$STAGE/wp-content/mu-plugins/whoiswho-guard"
+copy_tree "$SOURCE/bin" "$STAGE/bin"
+copy_tree "$SOURCE/dist" "$STAGE/dist"
+cp "$SOURCE/index.php" "$SOURCE/wp-config.php" "$STAGE/"
+if [ -f "$SOURCE/config/plugin-allowlist.json" ]; then
+	mkdir -p "$STAGE/config"
+	cp "$SOURCE/config/plugin-allowlist.json" "$STAGE/config/"
+fi
+
+# 6. The version stamp, read by the health check.
+BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+printf '{\n  "version": "%s",\n  "commit": "%s",\n  "built_at": "%s"\n}\n' "$VERSION" "$COMMIT" "$BUILT_AT" > "$STAGE/release.json"
+
+# 7. Checks on what was built.
+for theme in whoiswho whoiswho-child; do
+	[ -f "$STAGE/wp-content/themes/$theme/style.css" ] || fail "the artifact lacks the theme $theme"
+done
+grep -Eq '^[[:space:]]*Template:[[:space:]]*whoiswho[[:space:]]*$' "$STAGE/wp-content/themes/whoiswho-child/style.css" || fail "the artifact's child theme does not declare Template: whoiswho"
+
+SCAN=""
+for d in wp-content/plugins/whoiswho-core wp-content/themes wp-content/mu-plugins bin dist config; do
+	[ -d "$STAGE/$d" ] && SCAN="$SCAN $STAGE/$d"
+done
+# shellcheck disable=SC2086
+LEAKS="$( { find "$STAGE" -maxdepth 1 -type f \( -name '.env' -o -name '.env.*' -o -name '*.env' -o -name '*.sql' -o -name 'phpunit*' -o -name 'phpcs*' -o -name 'phpstan*' -o -name 'playwright*' \); [ -n "$SCAN" ] && find $SCAN \( -name '.env' -o -name '.env.*' -o -name '*.env' -o -name 'phpunit*' -o -name 'phpcs*' -o -name 'phpstan*' -o -name '.phpunit*' -o -name 'playwright*' -o -name 'node_modules' -o -name '.git' -o -name 'tests' -o -name '*.sql' \); } 2>/dev/null | head -20)"
+[ -z "$LEAKS" ] || fail "the artifact holds files that must not ship: $LEAKS"
+if [ -d "$STAGE/vendor" ]; then
+	DEV="$(find "$STAGE/vendor" -maxdepth 2 \( -name phpunit -o -name phpstan -o -name squizlabs -o -name wp-coding-standards -o -name yoast \) 2>/dev/null | head -5)"
+	[ -z "$DEV" ] || fail "the artifact holds development packages: $DEV"
+fi
+
+# 8. Archive.
+if [ "$ARCHIVE" -eq 1 ]; then
+	(cd "$OUT" && tar -czf "whoiswho-$VERSION.tar.gz" "whoiswho-$VERSION")
+	echo "build-release: wrote $OUT/whoiswho-$VERSION.tar.gz"
+fi
+echo "build-release: OK $STAGE"
