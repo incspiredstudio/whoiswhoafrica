@@ -33,6 +33,7 @@ final class Guard {
 	public static function init(): void {
 		add_action( 'init', array( self::class, 'register_status' ), 0 );
 		Hardening\Hardening::init();
+		Exposure\Exposure::init();
 	}
 
 	/**
