@@ -1,0 +1,17 @@
+#!/bin/sh
+# Optional pre-commit hook: scans staged changes for secrets before they are committed.
+# Install:  cp site/deploy/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Uses gitleaks when it is installed; otherwise a small pattern check for the commonest key shapes.
+# It never reads .env files: they are git-ignored and stay out of the index.
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --config .gitleaks.toml --no-banner
+  exit $?
+fi
+
+PATTERN='(ghp_[A-Za-z0-9]{30,}|gho_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----|xox[baprs]-[A-Za-z0-9-]{10,}|sk_live_[A-Za-z0-9]{16,})'
+if git diff --cached -U0 | grep -E '^\+' | grep -Eq "$PATTERN"; then
+  echo "Possible secret in the staged changes. Remove it (and rotate it if it was real), or install gitleaks for a precise scan." >&2
+  exit 1
+fi
+exit 0

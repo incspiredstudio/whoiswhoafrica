@@ -1,0 +1,20 @@
+# Weekly dependency updates. Each update arrives as a pull request and must pass the same CI gates as any other change.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /site
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: [dependencies, "area:infra"]
+    commit-message: { prefix: "deps(php)" }
+  - package-ecosystem: npm
+    directory: /site
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: [dependencies, "area:infra"]
+    commit-message: { prefix: "deps(js)" }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    labels: [dependencies, "area:infra"]
+    commit-message: { prefix: "deps(actions)" }
