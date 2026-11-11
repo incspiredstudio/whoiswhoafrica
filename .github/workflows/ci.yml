@@ -26,7 +26,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
       - uses: actions/cache@v4
-        with: { path: ~/.cache/composer, key: composer-${{ hashFiles('site/composer.lock') }} }
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
       - run: composer install --no-interaction --prefer-dist
@@ -44,7 +44,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
       - uses: actions/cache@v4
-        with: { path: ~/.cache/composer, key: composer-${{ hashFiles('site/composer.lock') }} }
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
       - run: composer analyse
 
@@ -72,7 +72,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, coverage: pcov, extensions: "mbstring, mysqli, zip, intl, gd" }
       - uses: actions/cache@v4
-        with: { path: ~/.cache/composer, key: composer-${{ hashFiles('site/composer.lock') }} }
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
       - name: PHPUnit, all suites, with the coverage threshold
         run: composer test:coverage
@@ -114,7 +114,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, extensions: "mbstring, mysqli, zip, intl, gd" }
       - uses: actions/cache@v4
-        with: { path: ~/.cache/composer, key: composer-${{ hashFiles('site/composer.lock') }} }
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
       - run: composer install --no-interaction --prefer-dist
