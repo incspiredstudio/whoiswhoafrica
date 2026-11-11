@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="tests/bootstrap.php" colors="true" failOnWarning="true" failOnRisky="true" beStrictAboutOutputDuringTests="true" cacheDirectory=".phpunit.cache">
+	<testsuites>
+		<testsuite name="Unit"><directory suffix="Test.php">tests/Unit</directory></testsuite>
+		<testsuite name="Integration"><directory suffix="Test.php">tests/Integration</directory></testsuite>
+		<testsuite name="Arch"><directory suffix="Test.php">tests/Arch</directory></testsuite>
+		<testsuite name="Visibility"><directory suffix="Test.php">tests/Visibility</directory></testsuite>
+		<testsuite name="Security"><directory suffix="Test.php">tests/Security</directory></testsuite>
+	</testsuites>
+	<source>
+		<include><directory suffix=".php">wp-content/plugins/whoiswho-core/src</directory></include>
+	</source>
+</phpunit>
