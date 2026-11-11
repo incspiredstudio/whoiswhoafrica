@@ -14,6 +14,7 @@ define( 'WP_CONTENT_DIR', dirname( __DIR__ ) . '/wp-content' );
 define( 'WP_CONTENT_URL', 'http://example.org/wp-content' );
 define( 'WP_DEFAULT_THEME', 'whoiswho-child' );
 define( 'WP_DEBUG', true );
+define( 'WP_ENVIRONMENT_TYPE', 'local' );
 
 define( 'DB_NAME', (string) getenv( 'WIW_TEST_DB_NAME' ) );
 define( 'DB_USER', (string) getenv( 'WIW_TEST_DB_USER' ) );

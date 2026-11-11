@@ -29,4 +29,6 @@ spl_autoload_register(
 	}
 );
 
+require_once WIW_GUARD_DIR . 'functions.php';
+
 \WhoIsWho\Guard\Guard::init();
