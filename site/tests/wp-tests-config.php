@@ -12,7 +12,7 @@ declare(strict_types=1);
 define( 'ABSPATH', dirname( __DIR__ ) . '/wordpress/' );
 define( 'WP_CONTENT_DIR', dirname( __DIR__ ) . '/wp-content' );
 define( 'WP_CONTENT_URL', 'http://example.org/wp-content' );
-define( 'WP_DEFAULT_THEME', 'whoiswho' );
+define( 'WP_DEFAULT_THEME', 'whoiswho-child' );
 define( 'WP_DEBUG', true );
 
 define( 'DB_NAME', (string) getenv( 'WIW_TEST_DB_NAME' ) );

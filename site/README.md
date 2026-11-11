@@ -43,7 +43,7 @@ This creates a Studio site in `.studio/` (git-ignored), links `whoiswho-core` an
 
 Optional path with Docker: `npx wp-env start` using `.wp-env.json` (core, a separate test environment, `WP_DEBUG` on). Needs Docker Desktop running.
 
-Known gaps, tracked for a later issue: Studio uses SQLite, so PHPUnit integration tests that need MariaDB run in CI or with wp-env; there is no mail catcher on the Studio path (use Mailpit, or read mail from `wp_mail` logs, until one is wired).
+Known gap: there is no mail catcher on the Studio path (#367); use Mailpit or read `wp_mail` output until one is wired. PHPUnit integration tests run against a separate MariaDB (see PHPUnit below).
 
 Playwright runs against the local URL: set `BASE_URL` to the address Studio prints (default `http://localhost:8882`).
 
