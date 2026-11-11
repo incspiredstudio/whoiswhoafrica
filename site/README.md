@@ -46,3 +46,15 @@ Optional path with Docker: `npx wp-env start` using `.wp-env.json` (core, a sepa
 Known gaps, tracked for a later issue: Studio uses SQLite, so PHPUnit integration tests that need MariaDB run in CI or with wp-env; there is no mail catcher on the Studio path (use Mailpit, or read mail from `wp_mail` logs, until one is wired).
 
 Playwright runs against the local URL: set `BASE_URL` to the address Studio prints (default `http://localhost:8882`).
+
+## Adding a third-party plugin
+
+Plugins are installed by Composer from wordpress.org (through wpackagist) and are never committed: `wp-content/plugins/*` is git-ignored except `whoiswho-core`. Core, plugins and themes are pinned to exact versions in `composer.lock`, and file modification is disabled in production, so wp-admin cannot update them.
+
+1. Name the job the plugin does and check `docs/plugins/third-party.md`; prefer a small custom plugin if the job is narrow.
+2. Record what personal data it touches, and its visibility matrix (what it exposes publicly).
+3. Add it pinned: `composer require wpackagist-plugin/<slug>:<exact version>`.
+4. Commit `composer.json` and `composer.lock`; record the plugin in `docs/plugins/third-party.md`.
+5. Update it only locally, test, then commit the new lock.
+
+Plugins that are not on wordpress.org are unsupported; vendor them as a private composer package if one is ever needed.
