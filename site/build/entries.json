@@ -3,6 +3,7 @@
   "entries": {
     "base": "wp-content/themes/whoiswho/assets/css/base.css",
     "components": "wp-content/themes/whoiswho/assets/css/components.css",
+    "forms": "wp-content/themes/whoiswho/assets/css/forms.css",
     "a11y": "wp-content/themes/whoiswho/assets/css/a11y.css",
     "main": "wp-content/themes/whoiswho/assets/js/main.js"
   }

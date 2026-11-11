@@ -1,0 +1,23 @@
+/* Form parts (REQ-081, REQ-043): honeypot kept out of sight and the error state. */
+.bot-check {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: var(--c-bad);
+  box-shadow: 0 0 0 1px var(--c-bad);
+}
+
+.field .err {
+  margin-top: var(--s-1);
+}
+
+.done h1 {
+  margin-bottom: var(--s-3);
+}
