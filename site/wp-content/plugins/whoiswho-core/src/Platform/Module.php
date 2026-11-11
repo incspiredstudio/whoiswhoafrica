@@ -29,6 +29,14 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		( Mail\Transport::for_site() )->register();
 		Jobs\JobRunner::for_site()->register();
+		Links\LinkRoute::for_site()->register();
+		Jobs\JobRunner::for_site()->recurring(
+			'links.purge_spent',
+			86400,
+			static function (): void {
+				Links\SignedLinks::for_site()->purge_spent();
+			}
+		);
 		add_action(
 			'init',
 			static function (): void {
