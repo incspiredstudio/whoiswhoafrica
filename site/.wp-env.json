@@ -1,0 +1,9 @@
+{
+  "core": null,
+  "phpVersion": "8.3",
+  "plugins": ["./wp-content/plugins/whoiswho-core"],
+  "themes": ["./wp-content/themes/whoiswho", "./wp-content/themes/whoiswho-child"],
+  "mappings": { "wp-content/mu-plugins": "./wp-content/mu-plugins" },
+  "config": { "WP_DEBUG": true, "WP_DEBUG_LOG": true },
+  "env": { "tests": { "config": { "WP_DEBUG": true } } }
+}
