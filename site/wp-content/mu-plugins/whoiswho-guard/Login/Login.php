@@ -117,8 +117,12 @@ final class Login {
 	 * @param string   $user_login Login.
 	 * @param \WP_User $user       User.
 	 */
-	public static function clear_failures( $user_login, $user = null ): void {  // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- hook signature.
+	public static function clear_failures( $user_login, $user = null ): void {
 		delete_transient( self::key( (string) $user_login ) );
+		// A new sign-in starts a fresh idle clock, so a stale timestamp from an old session cannot end it at once.
+		if ( $user instanceof \WP_User ) {
+			update_user_meta( $user->ID, self::META_ACTIVE, time() );
+		}
 	}
 
 	/**

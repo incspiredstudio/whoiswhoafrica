@@ -13,6 +13,6 @@ export default defineConfig({
   use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
   projects: [
     ...widths.map((w) => ({ name: `chromium-${w}`, use: { ...devices["Desktop Chrome"], viewport: { width: w, height: 900 } } })),
-    { name: "webkit-mobile", use: { ...devices["iPhone 14"] } },
+    ...(process.env.WIW_NO_WEBKIT ? [] : [{ name: "webkit-mobile", use: { ...devices["iPhone 14"] } }]),
   ],
 });

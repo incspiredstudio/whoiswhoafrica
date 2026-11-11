@@ -19,7 +19,7 @@ env:
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
 
   analyse:
     name: analyse
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
 
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     services:
       mariadb:
@@ -82,7 +82,7 @@ jobs:
 
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -93,7 +93,8 @@ jobs:
 
   e2e:
     name: e2e
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     services:
       mariadb:
@@ -108,6 +109,7 @@ jobs:
     env:
       BASE_URL: http://127.0.0.1:8890
       WIW_THEME_READY: "1"
+      WIW_NO_WEBKIT: "1"
       WIW_SECRETS_FILE: ${{ github.workspace }}/wiw-secrets.env
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +137,11 @@ jobs:
           php deploy/ci/install-wp.php
           PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8890 -t . deploy/ci/router.php > "$RUNNER_TEMP/php-server.log" 2>&1 &
           for i in $(seq 1 20); do curl -sf http://127.0.0.1:8890/ >/dev/null && break; sleep 1; done
-      - run: npx playwright install --with-deps chromium webkit
+      # System libraries come from apt, which the runners could not reach (2026-11-11), so CI installs Chromium only and skips WebKit.
+      # Re-enable with: npx playwright install --with-deps chromium webkit, and remove WIW_NO_WEBKIT, once apt works again.
+      - name: Install Chromium
+        timeout-minutes: 8
+        run: npx playwright install chromium
       - run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: always()
@@ -143,7 +149,7 @@ jobs:
 
   audit:
     name: audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
@@ -156,7 +162,7 @@ jobs:
 
   secrets:
     name: secrets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -165,7 +171,7 @@ jobs:
 
   pr-body:
     name: pr-body
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: PR body cites a REQ id and "Closes #N"
         if: github.event_name == 'pull_request'
