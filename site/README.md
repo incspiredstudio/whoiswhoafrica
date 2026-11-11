@@ -62,3 +62,7 @@ Plugins that are not on wordpress.org are unsupported; vendor them as a private 
 ## Assets
 
 `npm run build` runs `build/build.mjs` (esbuild): entries come from `build/entries.json`, output goes to the git-ignored `dist/` with content-hashed names and `dist/manifest.json` for cache-busting. `npm run build:sample` builds the bundled sample. `npm run lint:js` and `npm run lint:css` use ESLint 9 and Stylelint; jQuery and `eval` are errors.
+
+## End-to-end tests
+
+`npx playwright test` runs `tests/e2e` against `BASE_URL` (default http://localhost:8882) at widths 360, 768, 1280 and 1600 plus a WebKit mobile profile, with axe checks (`expectNoA11yViolations`). Set `WIW_THEME_READY=1` once the child theme is active to include the home page. The staff-login helper needs `WIW_E2E_TEST_MODE=1`, a local URL and `E2E_USER`, `E2E_PASS`, `E2E_2FA_CODE`; it refuses otherwise. Reports and traces are written to `playwright-report/` and `test-results/` (CI artifacts).
