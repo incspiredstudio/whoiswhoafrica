@@ -13,6 +13,6 @@ add_action(
 		if ( get_stylesheet() !== get_template() ) {
 			return;
 		}
-		echo '<div class="notice notice-warning"><p>' . esc_html__( 'The WHOISWHO parent theme is active on its own. Activate the WHOISWHO child theme, which holds the brand values.', 'whoiswho' ) . '</p></div>';
+		echo '<div class="notice notice-warning"><p>' . esc_html__( 'The parent theme is active on its own. Activate the child theme, which holds the brand values.', 'whoiswho' ) . '</p></div>';
 	}
 );
