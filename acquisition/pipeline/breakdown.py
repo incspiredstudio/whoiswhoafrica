@@ -210,6 +210,21 @@ def main():
       "and need permission or removal before any public use.")
     w("")
 
+    w("## 9a. Profile text: bio, Achievement, Influence, Legacy")
+    w("")
+    if "text_method" in {c[1] for c in q("PRAGMA table_info(records)")}:
+        txt = q("""SELECT type, SUM(text_method LIKE 'ai_reworded%'), SUM(text_method LIKE 'ai_reworded%' AND flags LIKE '%ai_text_thin_facts%'),
+                          SUM(text_method IS NULL OR text_method='template') FROM records GROUP BY 1""")
+        w(table(["Type", "AI reworded", "Of which from thin facts", "Template bio only"],
+                [[names.get(t, t), fmt(a), fmt(b), fmt(c)] for t, a, b, c in txt]))
+        w("")
+        w("`reword.py` sends each record's stored facts to DeepSeek, which rewords them into a bio and the three sections of the tagline. "
+          "Code checks that every number and proper name it uses appears in the facts, and drops the text otherwise. "
+          "Records without reworded text keep the template bio. All AI text needs human review before use.")
+    else:
+        w("No profile text has been reworded yet.")
+    w("")
+
     w("## 10. Flags")
     w("")
     flag_counts = {}
