@@ -169,7 +169,7 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}" }
       - name: Plugin allowlist and forbidden kinds
         run: |
-          node --test scripts/__tests__
+          node --test scripts/__tests__/check-plugins.test.js
           node scripts/check-plugins.js
 
   secrets:

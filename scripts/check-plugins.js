@@ -6,7 +6,7 @@
 // to it needs a pull request that cites docs/plugins/third-party.md and reruns the visibility matrix (tests/Visibility).
 //
 //   node scripts/check-plugins.js            check the repo
-//   node --test scripts/__tests__            run the self tests
+//   node --test scripts/__tests__/check-plugins.test.js   run the self tests
 
 const fs = require("fs");
 const path = require("path");
