@@ -1,5 +1,6 @@
 # Merge gates for the WordPress site (site/). Job names are stable: lint, analyse, test, build, e2e, audit, plugins, secrets, pr-body.
 # Required checks for branch protection (set by the repo owner): lint, analyse, test, build, e2e, audit, plugins, secrets, pr-body.
+# The visibility job (visibility matrix) also runs on every PR; a plugin or allowlist change needs it green.
 # Deploy is not a CI step: going live is a manual migration (docs/build/deployment.md).
 name: CI
 on:
@@ -79,6 +80,35 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: coverage, path: site/build/coverage, if-no-files-found: ignore }
+
+  visibility:
+    name: visibility
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: site } }
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wiw_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WIW_TEST_DB_NAME: wiw_test
+      WIW_TEST_DB_USER: root
+      WIW_TEST_DB_PASSWORD: root
+      WIW_TEST_DB_HOST: "127.0.0.1:3306"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, extensions: "mbstring, mysqli, zip, intl, gd" }
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
+      - run: composer install --no-interaction --prefer-dist
+      - name: Visibility matrix (every surface, every publication state); rerun after any plugin, guard or theme change
+        run: composer test -- --testsuite Visibility
 
   build:
     name: build
