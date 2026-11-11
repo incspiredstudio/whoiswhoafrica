@@ -14,6 +14,7 @@ namespace WhoIsWho\Tests\Arch;
 use WhoIsWho\Tests\Arch\Rules\AwardsNeverReferencesCommerce;
 use WhoIsWho\Tests\Arch\Rules\CommerceNeverWritesClaimedOrFeatured;
 use WhoIsWho\Tests\Arch\Rules\OnlyAuditLoggerWritesAuditTable;
+use WhoIsWho\Tests\Arch\Rules\OnlyReviewUsesStateChangeToken;
 use WhoIsWho\Tests\Arch\Rules\OnlyStateMachineWritesPubState;
 use WhoIsWho\Tests\Arch\Support\Rule;
 use WhoIsWho\Tests\Arch\Support\SourceSet;
@@ -111,5 +112,16 @@ final class ModuleBoundariesTest extends TestCase {
 		$this->assertBroken( $rule, array( 'Import/Bad.php' => '<?php namespace WhoIsWho\Core\Import; class Bad { function f( $db ) { $db->insert( $db->prefix . "wiw_audit_log", array() ); } }' ) );
 		$this->assertAccepted( $rule, array( 'Platform/Audit/AuditLogger.php' => '<?php namespace WhoIsWho\Core\Platform\Audit; class AuditLogger { function f( $db ) { $db->query( "INSERT INTO wiw_audit_log" ); } }' ) );
 		$this->assertAccepted( $rule, array( 'Platform/Pii/PiiCatalogue.php' => '<?php namespace WhoIsWho\Core\Platform\Pii; class PiiCatalogue { const X = array( "wiw_audit_log.action" => "no person" ); }' ) );
+	}
+
+	public function test_REQ_210_only_review_uses_the_state_change_token(): void {
+		$this->assertHolds( new OnlyReviewUsesStateChangeToken() );
+	}
+
+	public function test_REQ_210_a_fixture_that_uses_the_token_outside_review_fails_the_rule(): void {
+		$rule = new OnlyReviewUsesStateChangeToken();
+		$this->assertBroken( $rule, array( 'Import/Bad.php' => '<?php namespace WhoIsWho\Core\Import; use WhoIsWho\Guard\Status\StateChangeToken; class Bad { function f() { StateChangeToken::run( fn() => 1 ); } }' ) );
+		$this->assertBroken( $rule, array( 'Import/Bad.php' => '<?php namespace WhoIsWho\Core\Import; class Bad { function f() { \WhoIsWho\Guard\Status\StateChangeToken::run( fn() => 1 ); } }' ) );
+		$this->assertAccepted( $rule, array( 'Review/StateMachine.php' => '<?php namespace WhoIsWho\Core\Review; use WhoIsWho\Guard\Status\StateChangeToken; class StateMachine { function f() { StateChangeToken::run( fn() => 1 ); } }' ) );
 	}
 }
