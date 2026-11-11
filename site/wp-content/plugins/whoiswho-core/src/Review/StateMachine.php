@@ -17,6 +17,7 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\StateWriter;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Db\Transaction;
+use WhoIsWho\Guard\Status\StateChangeToken;
 
 /**
  * State machine.
@@ -176,6 +177,19 @@ final class StateMachine {
 	}
 
 	/**
+	 * Run a change with the guard's permission to write post statuses. Without the guard mu-plugin there is nothing to ask.
+	 *
+	 * @param callable $change The change.
+	 */
+	private static function with_token( callable $change ): void {
+		if ( class_exists( StateChangeToken::class ) ) {
+			StateChangeToken::run( $change );
+			return;
+		}
+		$change();
+	}
+
+	/**
 	 * Write state, post status and audit in one transaction, then announce the change.
 	 *
 	 * @param int         $profile_id Profile.
@@ -189,39 +203,42 @@ final class StateMachine {
 	private function apply( int $profile_id, ?string $from, string $to, string $reason, callable $write_state, ?string $batch = null ): void {
 		++self::$writing;
 		try {
-			Transaction::run(
-				function () use ( $profile_id, $from, $to, $reason, $write_state, $batch ): void {
-					$write_state();
-					$updated = wp_update_post(
-						array(
-							'ID'          => $profile_id,
-							'post_status' => self::post_status_for( $to ),
-						),
-						true
-					);
-					if ( is_wp_error( $updated ) ) {
-						throw StateException::refuse( 'The post status could not be set.' );
+			// The guard lets the status change through only while this token runs (REQ-210).
+			self::with_token(
+				fn () => Transaction::run(
+					function () use ( $profile_id, $from, $to, $reason, $write_state, $batch ): void {
+						$write_state();
+						$updated = wp_update_post(
+							array(
+								'ID'          => $profile_id,
+								'post_status' => self::post_status_for( $to ),
+							),
+							true
+						);
+						if ( is_wp_error( $updated ) ) {
+							throw StateException::refuse( 'The post status could not be set.' );
+						}
+						/**
+						 * Fires inside the transaction after the state and status are written. Hook the search row here; a throw rolls back.
+						 *
+						 * @param int         $profile_id Profile.
+						 * @param string|null $from       Previous state.
+						 * @param string      $to         New state.
+						 */
+						do_action( 'wiw_profile_state_in_transaction', $profile_id, $from, $to );
+						$this->audit->log(
+							'profile.state_change',
+							array(
+								'type' => 'profile',
+								'id'   => $profile_id,
+							),
+							array( 'pub_state' => $from ),
+							array( 'pub_state' => $to ),
+							$reason,
+							$batch
+						);
 					}
-					/**
-					 * Fires inside the transaction after the state and status are written. Hook the search row here; a throw rolls back.
-					 *
-					 * @param int         $profile_id Profile.
-					 * @param string|null $from       Previous state.
-					 * @param string      $to         New state.
-					 */
-					do_action( 'wiw_profile_state_in_transaction', $profile_id, $from, $to );
-					$this->audit->log(
-						'profile.state_change',
-						array(
-							'type' => 'profile',
-							'id'   => $profile_id,
-						),
-						array( 'pub_state' => $from ),
-						array( 'pub_state' => $to ),
-						$reason,
-						$batch
-					);
-				}
+				)
 			);
 		} finally {
 			--self::$writing;

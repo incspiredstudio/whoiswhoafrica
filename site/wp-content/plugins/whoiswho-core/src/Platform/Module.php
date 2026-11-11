@@ -33,6 +33,7 @@ final class Module implements ModuleInterface {
 		Mail\Notifier::for_site();
 		Log\Logger::for_site()->register();
 		Users\Deactivation::for_site()->register();
+		Health\HealthEndpoint::for_site()->register();
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',
 			86400,
