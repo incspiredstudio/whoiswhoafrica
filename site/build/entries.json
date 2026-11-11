@@ -1,7 +1,9 @@
 {
-  "_comment": "Theme issues add entries here: name -> source file. Names become dist/<name>.<hash>.<ext>.",
+  "_comment": "Theme issues add entries here: name -> source file. Names become dist/<name>.<hash>.<ext>; the manifest key is <name><ext> (for example base.css). Keep names unique across CSS and JS.",
   "entries": {
-    "base.css": "wp-content/themes/whoiswho/assets/css/base.css",
-    "components.css": "wp-content/themes/whoiswho/assets/css/components.css"
+    "base": "wp-content/themes/whoiswho/assets/css/base.css",
+    "components": "wp-content/themes/whoiswho/assets/css/components.css",
+    "a11y": "wp-content/themes/whoiswho/assets/css/a11y.css",
+    "main": "wp-content/themes/whoiswho/assets/js/main.js"
   }
 }
