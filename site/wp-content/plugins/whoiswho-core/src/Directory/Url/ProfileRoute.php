@@ -54,6 +54,36 @@ final class ProfileRoute {
 		add_action( 'init', array( $this, 'maybe_flush' ), 99 );
 		add_filter( 'query_vars', array( $this, 'query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle' ), 1 );
+		// Written again at the response layer, after the theme and other plugins, so none of them can drop it (REQ-217, REQ-209).
+		add_action( 'send_headers', array( $this, 'reassert_headers' ), PHP_INT_MAX );
+	}
+
+	/**
+	 * Headers for a decision: the robots rule and a cache rule that never lets a CDN or browser keep a stale state.
+	 *
+	 * @param array{action: string, status: int, id: int|null, location: string|null, policy: StatePolicy|null} $result Decision from resolve().
+	 * @return array<string, string>
+	 */
+	public static function headers_for( array $result ): array {
+		$headers = array( 'Cache-Control' => 'no-cache, must-revalidate, max-age=0, s-maxage=0' );
+		$policy  = $result['policy'] ?? StatePolicy::for_state( null );
+		if ( 'redirect' !== $result['action'] && $policy->noindex ) {
+			$headers['X-Robots-Tag'] = 'noindex';
+		}
+		return $headers;
+	}
+
+	/**
+	 * Send the headers again for a profile request, once everything else has had its say.
+	 */
+	public function reassert_headers(): void {
+		$slug = get_query_var( self::QUERY_VAR );
+		if ( ! is_string( $slug ) || '' === $slug || headers_sent() ) {
+			return;
+		}
+		foreach ( self::headers_for( $this->resolve( $slug ) ) as $name => $value ) {
+			header( $name . ': ' . $value, true );
+		}
 	}
 
 	/**
@@ -159,15 +189,17 @@ final class ProfileRoute {
 				$wp_query->is_404 = false;
 				status_header( 200 );
 				nocache_headers();
-				if ( null !== $result['policy'] && $result['policy']->noindex ) {
-					header( 'X-Robots-Tag: noindex' );
+				foreach ( self::headers_for( $result ) as $name => $value ) {
+					header( $name . ': ' . $value, true );
 				}
 				return;
 			case 'gone':
 				$wp_query->set_404();
 				status_header( 410 );
 				nocache_headers();
-				header( 'X-Robots-Tag: noindex' );
+				foreach ( self::headers_for( $result ) as $name => $value ) {
+					header( $name . ': ' . $value, true );
+				}
 				return;
 			default:
 				$wp_query->set_404();
