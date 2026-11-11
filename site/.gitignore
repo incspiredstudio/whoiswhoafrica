@@ -21,3 +21,4 @@
 /test-results/
 /.phpunit.result.cache
 *.log
+/.studio/
