@@ -186,12 +186,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: PR body cites a REQ id and "Closes #N"
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           BODY: ${{ github.event.pull_request.body }}
         run: |
           echo "$BODY" | grep -Eq 'REQ-[0-9]+' || { echo "::error::The pull request body must cite at least one REQ id (REQ-123)."; exit 1; }
           echo "$BODY" | grep -Eiq '(closes|fixes|resolves) #[0-9]+' || { echo "::error::The pull request body must contain 'Closes #N'."; exit 1; }
-      - name: Not a pull request
-        if: github.event_name != 'pull_request'
+      - name: Not applicable (not a pull request, or a Dependabot version bump, which every other gate still checks)
+        if: github.event_name != 'pull_request' || github.event.pull_request.user.login == 'dependabot[bot]'
         run: echo "pr-body applies to pull requests only"
