@@ -65,7 +65,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "WhoIsWho\\Tests\\": "tests/"
+      "WhoIsWho\\Tests\\": "tests/",
+      "WhoIsWho\\Core\\": "wp-content/plugins/whoiswho-core/src/"
     }
   }
 }

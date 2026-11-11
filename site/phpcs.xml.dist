@@ -21,7 +21,7 @@
 	<rule ref="PHPCompatibilityWP"/>
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
-		<properties><property name="prefixes" type="array"><element value="wiw"/><element value="WIW"/><element value="WhoIsWho"/></property></properties>
+		<properties><property name="prefixes" type="array"><element value="wiw_"/><element value="WIW_"/><element value="WhoIsWho"/></property></properties>
 	</rule>
 	<rule ref="WordPress.WP.I18n">
 		<properties><property name="text_domain" type="array"><element value="whoiswho"/><element value="whoiswho-child"/></property></properties>
@@ -36,6 +36,7 @@
 		<exclude-pattern>*/tests/*</exclude-pattern>
 	</rule>
 	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>*/whoiswho-core/src/*</exclude-pattern>
 		<exclude-pattern>*/tests/*</exclude-pattern>
 	</rule>
 	<rule ref="Universal.Operators.DisallowShortTernary">
