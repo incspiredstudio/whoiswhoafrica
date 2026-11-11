@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, coverage: pcov, extensions: "mbstring, mysqli, zip, intl, gd" }
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, coverage: pcov, extensions: "mbstring, mysqli, zip, intl, gd", ini-values: "pcov.directory=." }
       - uses: actions/cache@v4
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
@@ -151,7 +151,7 @@ jobs:
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}" }
-      - run: composer audit
+      - run: composer audit --locked
       - run: npm audit --audit-level=high
 
   secrets:
