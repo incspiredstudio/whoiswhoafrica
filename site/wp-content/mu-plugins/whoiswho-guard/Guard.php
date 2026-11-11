@@ -36,6 +36,7 @@ final class Guard {
 		Exposure\Exposure::init();
 		Login\Login::init();
 		Headers\Headers::init();
+		Uploads\Uploads::init();
 	}
 
 	/**
