@@ -64,7 +64,13 @@ final class EventPageTest extends TestCase {
 	private function render( int $id ): string {
 		global $wp_query, $post;
 		$post     = get_post( $id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
-		$wp_query = new \WP_Query( array( 'p' => $id, 'post_type' => EventPostType::TYPE, 'post_status' => 'any' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+		$wp_query = new \WP_Query( // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+			array(
+				'p'           => $id,
+				'post_type'   => EventPostType::TYPE,
+				'post_status' => 'any',
+			)
+		); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 		$wp_query->get_posts();
 		ob_start();
 		include get_template_directory() . '/single-wiw_event.php';
