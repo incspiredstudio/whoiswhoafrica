@@ -58,3 +58,7 @@ Plugins are installed by Composer from wordpress.org (through wpackagist) and ar
 5. Update it only locally, test, then commit the new lock.
 
 Plugins that are not on wordpress.org are unsupported; vendor them as a private composer package if one is ever needed.
+
+## Assets
+
+`npm run build` runs `build/build.mjs` (esbuild): entries come from `build/entries.json`, output goes to the git-ignored `dist/` with content-hashed names and `dist/manifest.json` for cache-busting. `npm run build:sample` builds the bundled sample. `npm run lint:js` and `npm run lint:css` use ESLint 9 and Stylelint; jQuery and `eval` are errors.
