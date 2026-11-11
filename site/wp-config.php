@@ -37,6 +37,8 @@ define( 'DB_NAME', wiw_secret( 'DB_NAME' ) );
 define( 'DB_USER', wiw_secret( 'DB_USER' ) );
 define( 'DB_PASSWORD', wiw_secret( 'DB_PASSWORD' ) );
 define( 'DB_HOST', wiw_secret( 'DB_HOST', 'localhost' ) );
+define( 'WIW_FORM_TOKEN_KEY', wiw_secret( 'FORM_TOKEN_KEY' ) );
+define( 'WIW_SIGNED_LINK_KEY', wiw_secret( 'SIGNED_LINK_KEY' ) );
 define( 'DB_CHARSET', 'utf8mb4' );
 define( 'DB_COLLATE', '' );
 
