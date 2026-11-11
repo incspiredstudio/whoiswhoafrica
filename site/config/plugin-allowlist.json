@@ -1,0 +1,11 @@
+{
+  "_comment": "Approved third-party plugins. A change needs a pull request citing docs/plugins/third-party.md and a rerun of the visibility matrix. Versions must equal composer.lock. Forbidden kinds (SEO, public login, payment, AI drafting, page builders) fail even if listed.",
+  "plugins": [
+    {
+      "package": "woocommerce/action-scheduler",
+      "version": "4.2.0",
+      "reason": "Background jobs, used as a library inside whoiswho-core (docs/plugins/third-party.md: Background jobs, Chosen). Touches no personal data of its own.",
+      "docs": "docs/plugins/third-party.md"
+    }
+  ]
+}
