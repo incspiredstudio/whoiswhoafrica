@@ -34,7 +34,7 @@ final class Output {
 	 * @param bool $to_terminal Print each line.
 	 */
 	public function __construct( bool $to_terminal = true ) {
-		$this->print = $to_terminal;
+		$this->to_terminal = $to_terminal;
 	}
 
 	/**
@@ -44,7 +44,7 @@ final class Output {
 	 */
 	public function line( string $line ): void {
 		$this->lines[] = $line;
-		if ( $this->print ) {
+		if ( $this->to_terminal ) {
 			echo $line . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- terminal output, not a web page.
 		}
 	}
