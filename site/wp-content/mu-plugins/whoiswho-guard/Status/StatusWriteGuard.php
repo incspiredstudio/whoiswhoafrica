@@ -83,6 +83,9 @@ final class StatusWriteGuard {
 
 		$logger = '\WhoIsWho\Core\Platform\Audit\AuditLogger';
 		if ( class_exists( $logger ) ) {
+			global $wpdb;
+			// A missing or busy audit table must never print an error into a public response.
+			$previous = $wpdb->suppress_errors( true );
 			try {
 				$audit = call_user_func( array( $logger, 'for_site' ) );
 				$audit->log(
@@ -98,7 +101,9 @@ final class StatusWriteGuard {
 			} catch ( \Throwable $e ) {
 				unset( $e );
 				// The refusal stands even when the log is busy.
+			} finally {
+				$wpdb->suppress_errors( $previous );
 			}
-		}
+		}//end if
 	}
 }
