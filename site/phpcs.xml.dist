@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<ruleset name="WHOISWHO">
+	<description>WordPress coding standards for the WHOISWHO site (REQ-056).</description>
+	<file>wp-content/plugins/whoiswho-core</file>
+	<file>wp-content/mu-plugins</file>
+	<file>wp-content/themes/whoiswho</file>
+	<file>wp-content/themes/whoiswho-child</file>
+	<file>bin</file>
+	<file>tests</file>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/dist/*</exclude-pattern>
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+	<config name="testVersion" value="8.3-"/>
+	<config name="minimum_wp_version" value="6.5"/>
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+	<rule ref="PHPCompatibilityWP"/>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+		<properties><property name="prefixes" type="array"><element value="wiw"/><element value="WIW"/><element value="WhoIsWho"/></property></properties>
+	</rule>
+	<rule ref="WordPress.WP.I18n">
+		<properties><property name="text_domain" type="array"><element value="whoiswho"/><element value="whoiswho-child"/></property></properties>
+	</rule>
+</ruleset>

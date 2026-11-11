@@ -21,12 +21,14 @@
   },
   "extra": { "wordpress-install-dir": "wordpress" },
   "scripts": {
-    "lint": "phpcs --standard=WordPress --extensions=php --ignore=vendor,wordpress,node_modules wp-content bin config tests || exit 0",
+    "lint": "phpcs",
+    "lint:fix": "phpcbf",
     "analyse": "echo no PHP to analyse yet",
     "test": "echo no tests yet"
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.3",
     "phpunit/phpunit": "^10",
