@@ -34,6 +34,7 @@ final class Guard {
 		add_action( 'init', array( self::class, 'register_status' ), 0 );
 		Hardening\Hardening::init();
 		Exposure\Exposure::init();
+		Login\Login::init();
 	}
 
 	/**
