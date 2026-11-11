@@ -20,6 +20,12 @@
   --c-dark: CanvasText;
   --c-dark-deep: CanvasText;
   --c-dark-raised: CanvasText;
+  --c-white: white;
+  --img-pattern-tile: none;
+  --img-mark-star: none;
+  --img-mark-comb: none;
+  --img-mark-link: none;
+  --img-mark-spiral: none;
   --c-on-dark: Canvas;
   --c-on-dark-muted: Canvas;
   --c-line-on-dark: GrayText;

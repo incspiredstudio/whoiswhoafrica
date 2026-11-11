@@ -15,6 +15,14 @@
 @font-face { font-family: "Montreal"; src: url("../fonts/montreal-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
 
 :root {
+  /* Brand images; the url() resolves from this file, so these work wherever the component CSS is served from */
+  --c-white: #fff;
+  --img-pattern-tile: url("../brand/pattern-tile.png");
+  --img-mark-star: url("../brand/mark-star.webp");
+  --img-mark-comb: url("../brand/mark-comb.webp");
+  --img-mark-link: url("../brand/mark-link.webp");
+  --img-mark-spiral: url("../brand/mark-spiral.webp");
+
   /* Raw palette */
   --charcoal-950: #1f1f1f;
   --charcoal-900: #2f2f2f; /* guide */
