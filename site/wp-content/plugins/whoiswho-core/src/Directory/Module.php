@@ -33,6 +33,7 @@ final class Module implements ModuleInterface {
 				( new ProfileType() )->register();
 				( new Taxonomies() )->register();
 				( new PlaceSeeder() )->maybe_seed();
+				( new Fields\ProfileFields() )->register();
 			},
 			5
 		);
