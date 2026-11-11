@@ -19,6 +19,10 @@ foreach ($k in $links.Keys) {
   $target = Join-Path (Join-Path $dir "wp-content") $k
   if (-not (Test-Path $target)) { New-Item -ItemType Junction -Path $target -Target (Join-Path $site $links[$k]) | Out-Null }
 }
+# Must-use plugins are copied (re-run this script after changing them): the guard loader and its folder.
+$muTarget = Join-Path (Join-Path $dir "wp-content") "mu-plugins"
+Copy-Item (Join-Path $site "wp-content\mu-plugins\whoiswho-guard.php") $muTarget -Force
+Copy-Item (Join-Path $site "wp-content\mu-plugins\whoiswho-guard") $muTarget -Recurse -Force
 & $studio start --path $dir --skip-browser
 try { & $studio wp --path $dir theme activate whoiswho-child } catch { Write-Warning "Child theme not installable yet (its files arrive with the theme issues)." }
 & $studio wp --path $dir rewrite structure "/%postname%/"
