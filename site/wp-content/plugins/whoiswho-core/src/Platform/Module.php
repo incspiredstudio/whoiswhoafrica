@@ -27,5 +27,11 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		add_action(
+			'init',
+			static function (): void {
+				( new Capabilities\RoleSync( new Capabilities\CapabilityCatalogue() ) )->maybe_sync();
+			}
+		);
 	}
 }
