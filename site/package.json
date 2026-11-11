@@ -1,0 +1,12 @@
+{
+  "name": "whoiswho-site",
+  "private": true,
+  "description": "Build tooling for the WHOISWHO WordPress site",
+  "scripts": {
+    "build": "node -e \"console.log('no assets to build yet (theme issues replace this)')\"",
+    "lint:js": "node -e \"console.log('no JS to lint yet')\"",
+    "lint:css": "node -e \"console.log('no CSS to lint yet')\"",
+    "test:e2e": "playwright test --pass-with-no-tests"
+  },
+  "devDependencies": {}
+}
