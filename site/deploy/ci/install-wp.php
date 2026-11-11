@@ -22,4 +22,30 @@ if ( ! is_readable( WP_CONTENT_DIR . "/themes/{$wiw_theme}/style.css" ) ) {
 	$wiw_theme = 'whoiswho';
 }
 switch_theme( $wiw_theme );
+
+// Activate the core plugin so pages that need it (profiles, link pages, legal pages) render. The guard is a must-use plugin and loads by itself.
+$wiw_plugin = 'whoiswho-core/whoiswho-core.php';
+if ( is_readable( WP_PLUGIN_DIR . '/' . $wiw_plugin ) ) {
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	if ( ! is_plugin_active( $wiw_plugin ) ) {
+		$wiw_result = activate_plugin( $wiw_plugin );
+		if ( is_wp_error( $wiw_result ) ) {
+			fwrite( STDERR, 'could not activate ' . $wiw_plugin . ': ' . $wiw_result->get_error_message() . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			exit( 1 );
+		}
+	}
+}
+// Pretty permalinks, so the plugin's /profile/{slug} route and the page addresses work in the browser tests.
+update_option( 'permalink_structure', '/%postname%/' );
+delete_option( 'wiw_rewrite_version' );
+
+// Create the plugin's tables (forward-only migrations) through the same command the deploy script uses.
+if ( is_plugin_active( $wiw_plugin ) ) {
+	$wiw_status = 0;
+	passthru( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) . '/bin/wiw.php' ) . ' migrate', $wiw_status ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
+	if ( 0 !== $wiw_status ) {
+		fwrite( STDERR, "migrations failed\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		exit( 1 );
+	}
+}
 echo 'installed, theme ' . $wiw_theme . "\n";
