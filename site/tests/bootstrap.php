@@ -12,6 +12,11 @@ declare(strict_types=1);
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 $wiw_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( ! $wiw_tests_dir && getenv( 'WIW_TEST_DB_NAME' ) && is_dir( dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit' ) ) {
+	// The bundled wp-phpunit package, with the environment-driven config in tests/wp-tests-config.php.
+	$wiw_tests_dir = dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit';
+	define( 'WP_TESTS_CONFIG_FILE_PATH', __DIR__ . '/wp-tests-config.php' );
+}
 
 if ( $wiw_tests_dir && is_readable( $wiw_tests_dir . '/includes/functions.php' ) ) {
 	define( 'WIW_WP_TESTS', true );
