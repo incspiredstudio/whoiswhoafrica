@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( new Url\ProfileRoute() )->register();
+		( new Views\ViewCounter() )->register();
 		add_filter(
 			'wiw_public_profile_choices',
 			static fn ( $choices ): array => ( is_array( $choices ) ? $choices : array() ) + PublicProfile::public_choices()
