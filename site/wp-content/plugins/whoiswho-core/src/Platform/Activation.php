@@ -19,6 +19,7 @@ final class Activation {
 	 */
 	public static function activate(): void {
 		update_option( 'wiw_core_version', WIW_CORE_VERSION, false );
+		( new Capabilities\RoleSync( new Capabilities\CapabilityCatalogue() ) )->activate();
 	}
 
 	/**
