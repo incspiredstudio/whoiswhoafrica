@@ -3,10 +3,18 @@
   "private": true,
   "description": "Build tooling for the WHOISWHO WordPress site",
   "scripts": {
-    "build": "node -e \"console.log('no assets to build yet (theme issues replace this)')\"",
-    "lint:js": "node -e \"console.log('no JS to lint yet')\"",
-    "lint:css": "node -e \"console.log('no CSS to lint yet')\"",
-    "test:e2e": "playwright test --pass-with-no-tests"
+    "build": "node build/build.mjs",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"**/*.css\" --allow-empty-input",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "build:sample": "node build/build.mjs --sample"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "stylelint": "^18.0.0",
+    "stylelint-config-standard": "^41.0.0"
+  }
 }
