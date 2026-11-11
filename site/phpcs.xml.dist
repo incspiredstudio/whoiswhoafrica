@@ -26,4 +26,13 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties><property name="text_domain" type="array"><element value="whoiswho"/><element value="whoiswho-child"/></property></properties>
 	</rule>
+	<rule ref="Squiz.Commenting">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
 </ruleset>
