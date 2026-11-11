@@ -5,6 +5,7 @@
     "components": "wp-content/themes/whoiswho/assets/css/components.css",
     "forms": "wp-content/themes/whoiswho/assets/css/forms.css",
     "a11y": "wp-content/themes/whoiswho/assets/css/a11y.css",
-    "main": "wp-content/themes/whoiswho/assets/js/main.js"
+    "lenis": "wp-content/themes/whoiswho/assets/vendor/lenis.js",
+    "main":"wp-content/themes/whoiswho/assets/js/main.js"
   }
 }
