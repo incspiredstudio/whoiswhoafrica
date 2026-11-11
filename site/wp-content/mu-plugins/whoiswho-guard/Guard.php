@@ -37,6 +37,7 @@ final class Guard {
 		Login\Login::init();
 		Headers\Headers::init();
 		Uploads\Uploads::init();
+		Capabilities\Capabilities::init();
 	}
 
 	/**
