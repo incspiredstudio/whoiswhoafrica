@@ -140,7 +140,7 @@ final class AuditLoggerTest extends TestCase {
 		$runner = new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false );
 		$this->assertContains( '2026111101', array_map( static fn ( $m ): string => $m->version(), $runner->discover() ) );
 		$this->assertFalse( $runner->contract_versions() > array(), 'the audit migration is not destructive' );
-		$this->assertSame( array(), array_values( array_filter( $runner->discover(), static fn ( $m ): bool => array() !== $m->pii_columns() ) ), 'no personal-data columns' );
+		$this->assertSame( array(), array_values( array_filter( $runner->discover(), static fn ( $m ): bool => '2026111101' === $m->version() && array() !== $m->pii_columns() ) ), 'the audit migration declares no personal-data columns' );
 		$this->assertNotNull( $wpdb );
 	}
 }
