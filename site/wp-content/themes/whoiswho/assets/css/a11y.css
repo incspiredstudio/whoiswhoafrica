@@ -1,0 +1,83 @@
+/* Accessibility base (REQ-043, REQ-040): focus, reduced motion, utilities, touch targets. Loads last so it wins. */
+
+/* Focus ring on every control; the dark ring colour on dark surfaces */
+:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.on-dark :focus-visible,
+.site-foot :focus-visible,
+.drawer :focus-visible {
+  outline-color: var(--c-focus-on-dark);
+}
+
+/* Visually hidden, still read by assistive technology */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Live region for confirmations and errors */
+.live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Touch targets: at least 44 by 44 pixels for buttons and icon buttons */
+.btn,
+.icon-btn {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+/* Hover-only effects must not be needed on touch */
+@media (hover: none) {
+  .skip:focus {
+    position: fixed;
+  }
+}
+
+/* Reduced motion: no reveals, smooth scroll, autoscroll or animation; the page stays complete */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Zoom to 200 percent: long words and wide media never force sideways scroll */
+body {
+  overflow-wrap: anywhere;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+}

@@ -18,7 +18,7 @@ if ( ! function_exists( 'wiw_manifest' ) ) {
 		static $cache = null;
 		if ( null === $cache ) {
 			$cache = array();
-			$file  = dirname( WP_CONTENT_DIR ) . '/dist/manifest.json';
+			$file  = WP_CONTENT_DIR . '/../dist/manifest.json';
 			if ( is_readable( $file ) ) {
 				$data = json_decode( (string) file_get_contents( $file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 				if ( is_array( $data ) ) {
@@ -56,7 +56,7 @@ add_action(
 	static function (): void {
 		// Tokens (child) come first through the 'wiw-tokens-base' dependency, then base, then components.
 		$deps = array( 'wiw-tokens-base' );
-		foreach ( array( 'base', 'components' ) as $layer ) {
+		foreach ( array( 'base', 'components', 'a11y' ) as $layer ) {
 			$url = wiw_asset_url( $layer . '.css' );
 			if ( null === $url ) {
 				continue;
