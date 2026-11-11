@@ -1,12 +1,12 @@
 # Corrections, removals and reports
 
-Anyone can ask for a correction, a removal, or report a profile, with no account and no payment. Staff handle each in the Support inbox against published deadlines.
+Anyone can ask for a correction, a removal, or report a profile, with no account and no payment. Corrections have their own screen, and removals and reports go to Requests and reports; staff handle each against published deadlines (REQ-270, REQ-271).
 
 ## What it does
 
 - Provides three public forms on every profile: Suggest a correction, Request removal, Report.
 - Confirms the requester's email by a single-use link before the request counts.
-- Lands each request in the Support inbox as a typed item with status, age and due date.
+- Lands each correction on the Corrections screen, and each removal and report on the Requests and reports screen, as items with a status, an age and a due date.
 - Lets staff fix a profile directly, hide it, or add it to the permanent suppression list.
 - Takes a profile down at once on the origin, with a 410 response, and clears it from search, sitemap and cache.
 
@@ -29,19 +29,19 @@ Anyone can ask for a correction, a removal, or report a profile, with no account
 
 ### Plugin
 
-- Support inbox item types: Enquiry, Correction, Removal, Report, Complaint (REQ-089).
+- Item types: Enquiry (Enquiries), Correction (Corrections), Removal and Report (Requests and reports), alongside data requests (REQ-089, 270, 271).
 - Single-use signed link service for email verification (REQ-233).
 - Deadline tracking and breach flags (REQ-158).
 - Direct profile edit with a required reason, version history and audit (REQ-125, 188).
 - Suppression list and the state machine's Removed and suppressed transition.
 - Unpublish pipeline: 410, noindex header, sitemap and search removal, cache purge job (REQ-209).
 - Bulk unpublish by filter and restore by batch (REQ-193).
-- Capabilities `wiw_support_inbox`, `wiw_handle_disputes`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_view_suppression`, `wiw_edit_suppression`.
+- Capabilities `wiw_support_inbox`, `wiw_handle_requests`, `wiw_handle_disputes`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_view_suppression`, `wiw_edit_suppression`.
 
 ### Pages and screens
 
 - Public: correction, removal, report, done, expired-link pages.
-- Staff: Support inbox, Profile screen, Profiles list with bulk unpublish, Suppression list, Purge log.
+- Staff: Corrections, Requests and reports, Profile screen, Profiles list with bulk unpublish, Suppression list, Purge log.
 
 ### Third-party plugins
 
@@ -67,7 +67,10 @@ A bot challenge on the public forms. No other plugin.
 
 ## Acceptance criteria
 
-- [ ] A correction form submission creates a Support inbox item of type Correction with a due date 7 days out.
+- [ ] A correction form submission creates an item on the Corrections screen with a due date 7 days out.
+- [ ] A removal request or a report creates an item on Requests and reports, not on Corrections, with its due date and a Kind column value of Removal or Report; a data-rights form submission appears in the same list as a Data request.
+- [ ] On the Corrections screen, Apply opens the profile for a direct edit with a required reason; for a claimed profile the edit waits for approval (REQ-253); Decline requires a reason that is never public.
+- [ ] A user without `wiw_handle_requests` gets a 403 on Requests and reports.
 - [ ] A removal submission creates an item of type Removal with a countdown to two business days.
 - [ ] Until the requester opens the verification link, the item shows "email not confirmed"; the link works once and expires.
 - [ ] Opening a used or expired link shows the expired-or-used page and changes nothing.

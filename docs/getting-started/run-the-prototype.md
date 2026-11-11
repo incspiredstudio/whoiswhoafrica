@@ -38,8 +38,8 @@ The top bar has a **Preview as** menu with four choices.
 |---|---|
 | Visitor | The public site only |
 | Reviewer | The public site and staff screens for review, duplicates, profiles, sources and the suppression list |
-| Editor | Everything a Reviewer has, plus support inbox, claims, nominations and the awards screens |
-| Administrator | Everything, including register, customers, import, audit log and Sprint thresholds (roles, grants and exports are WordPress features, not drawn in the prototype) |
+| Editor | Everything a Reviewer has, plus enquiries, corrections, requests and reports, claims, nominations and the awards screens |
+| Administrator | Everything, including Sponsored stories money fields, customers, import, audit log and Sprint thresholds (roles, grants and exports are WordPress features, not drawn in the prototype) |
 
 Switching role changes the left menu, and a screen you may not open shows a 403 page. In the real site, the Administrator grants or revokes single capabilities in a role-editor plugin and the change shows up at once; the prototype does not draw that screen.
 

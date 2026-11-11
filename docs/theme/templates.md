@@ -4,13 +4,15 @@ This page lists every public template the `whoiswho` theme must provide: its add
 
 The template names below are proposals. The requirements fix the behaviour, not the file names. Route ids (V01, V09 and so on) point at the prototype screens that show the intended look. Requirement ids are cited as plain text.
 
+The theme is a parent `whoiswho` and an active child `whoiswho-child` (REQ-273, see [Design overview](/theme/)). The templates on this page are written in the parent. A site-specific change is made by copying a template into the child and editing the copy.
+
 ## Rules every template follows
 
 | Rule | Detail |
 |---|---|
 | Read models only | Templates never call `get_post_meta` or `WP_Query` on the profile type. They read profiles through `PublicProfile` and stories through `PublicStory`. A read model returns data only when the state allows it and only allowlisted fields (REQ-208, REQ-139). |
 | No state logic in the theme | The theme never decides whether a profile is public. It renders what the read model returns, or the 404 or 410 the plugin tells it to render. |
-| No brand values in templates | Colours, fonts, spacing, the brand name, tagline and edition come from the tokens file and theme settings ([Brand and tokens](/theme/brand-and-tokens), [Theme settings](/theme/theme-settings)). |
+| No brand values in templates | Colours, fonts, spacing, the brand name, tagline and edition come from the tokens file (in the child theme) and theme settings ([Brand and tokens](/theme/brand-and-tokens), [Theme settings](/theme/theme-settings)). |
 | No accounts | No template shows sign in, sign up, a profile menu or a saved list. Every action works without an account ([The public site](/pages/public/)). |
 | Server rendered | Every page is readable and indexable without JavaScript. Motion and enhancements are added on top (REQ-044). |
 | One image on a profile | The only image on a profile is the photograph or logo. No cover or banner (REQ-247). |
@@ -93,7 +95,7 @@ The awards read through the plugin's awards view-models. Their names are not yet
 | Claim (V57) | `/claim/:slug` | `claim` | Already claimed shows "Already claimed" and a link to suggest a correction. Unknown slug returns 404. |
 | Correct (V39) | `/correct/:slug` | `correct` | Rate limit; email confirmation link sent for a person or their representative. |
 | Remove (V40) | `/remove/:slug` | `remove` | Same; promise of two business days for a valid request. |
-| Report | dialog on a profile | `report` (part) | Reason and details; lands in the Support inbox. |
+| Report | dialog on a profile | `report` (part) | Reason and details; lands on the Requests and reports screen. |
 | Done (V41) | `/done?kind=` | `done` | Kinds: correction, removal, claim, contact, enquiry and newsletter. The nomination confirmation is its own page (N04). |
 | Confirm, expired | `/confirm/:token`, `/expired` | `confirm`, `expired` | Single use; "Link expired or already used". |
 | Get listed (V24) | `/subscribe` | `get-listed` | Enquiry form, no prices or packages (REQ-177, REQ-120). |

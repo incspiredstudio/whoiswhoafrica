@@ -42,7 +42,7 @@ The edit is stored as a revision with author and time, written to the audit log,
 | Step | Who | What happens |
 |---|---|---|
 | 1 | Visitor | Fills in the claim form on the profile: relationship, name, role, work email, phone (optional), how staff can check it, and a consent tick (REQ-251). No account. |
-| 2 | System | Creates the claim with a received date and a decide-by date 5 days later, emails an acknowledgement, and tells the Support inbox. |
+| 2 | System | Creates the claim with a received date and a decide-by date 5 days later, emails an acknowledgement, and tells the Editors. |
 | 3 | Reviewer of claims | Opens Claims. Each claim shows every field the claimant entered, the received date and the decide-by date. |
 | 4 | Reviewer of claims | Approves or rejects. Rejecting records a reason and emails the claimant. |
 | 5 | System | On approval, sets the profile Claimed and emails the claimant. |

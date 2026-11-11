@@ -49,7 +49,7 @@ There is no staff sign-in screen any more (D-059): WordPress provides the real o
 
 ## Sample data and state
 
-State lives in the browser's `localStorage` under the key `wiw-wireframe-v12`. Nothing leaves the browser. When the data shape changes, the version in `core.js` and `data.js` is bumped so old state is not reused. The seed includes published, pending and unpublished profiles, one pending claim and one claimed profile with an assigned user, stories (one sponsored), nominations and arrangements.
+State lives in the browser's `localStorage` under the key `wiw-wireframe-v20`. Nothing leaves the browser. When the data shape changes, the version in `core.js` and `data.js` is bumped so old state is not reused. The seed includes published, pending and unpublished profiles, one pending claim and one claimed profile with an assigned user, stories (one sponsored), nominations and arrangements.
 
 ## Add or change a page
 

@@ -5,8 +5,8 @@ The Get listed page and the contact form are how people reach the team. Both cre
 ## What it does
 
 - Presents "Get listed" as an enquiry form with explanatory text, not a shop.
-- Creates a Support inbox item of type Enquiry for staff from each Get listed submission and sends an acknowledgement.
-- Provides a contact form that creates a general item in the Support inbox.
+- Creates an Enquiries item of type Enquiry for staff from each Get listed submission and sends an acknowledgement.
+- Provides a contact form that creates a general item in Enquiries.
 - Relays enquiries sent to a profile owner without exposing the owner's email or phone.
 - Lets staff invite a customer to fill in their own profile, or ask a person to consent to a complimentary listing, through single-use links.
 
@@ -15,7 +15,7 @@ The Get listed page and the contact form are how people reach the team. Both cre
 - As an organisation, I can ask to be listed, sponsor a story, ask for media work or sponsor the awards.
 - As a visitor, I can send the team a message.
 - As a visitor, I can send an enquiry to a profile's owner.
-- As an Editor, I can work enquiries in the Support inbox, set an owner and status, and create a customer when a deal is agreed.
+- As an Editor, I can work enquiries on the Enquiries screen, set an owner and status, and create a customer when a deal is agreed.
 - As an Administrator, I can issue an invitation or consent link to a customer.
 
 ## The pieces
@@ -30,7 +30,7 @@ The Get listed page and the contact form are how people reach the team. Both cre
 
 ### Plugin
 
-- `Commerce` module: customers with stable external IDs and change timestamps (REQ-205). Enquiries live in the Support inbox.
+- `Commerce` module: customers with stable external IDs and change timestamps (REQ-205). Enquiries live on the Enquiries screen.
 - Single-use signed link service for invitations and consent.
 - Profile intake form with drafts, validation, image type and size limits, and a free-text scan for contact details and sensitive words (REQ-013, 141).
 - Enquiry relay with rate limits.
@@ -39,7 +39,7 @@ The Get listed page and the contact form are how people reach the team. Both cre
 ### Pages and screens
 
 - Public: `/subscribe`, `/contact`, profile enquiry form, `/invite/:token`, `/consent/:token`.
-- Staff: Support inbox (Enquiry items), Customers (with the Issue invitation or consent link action).
+- Staff: Enquiries (Enquiry items), Customers (with the Issue invitation or consent link action).
 
 ### Third-party plugins
 
@@ -62,10 +62,10 @@ A bot challenge. No other plugin.
 
 ## Acceptance criteria
 
-- [ ] Submitting the Get listed form creates a Support inbox item of type Enquiry with the entered fields and a reference, and sends an acknowledgement.
+- [ ] Submitting the Get listed form creates an Enquiries item of type Enquiry with the entered fields and a reference, and sends an acknowledgement.
 - [ ] The Get listed form refuses a submission without name, contact or consent.
 - [ ] No page on the site shows a price, package or checkout.
-- [ ] Submitting the contact form creates a general Support inbox item and shows "Message sent".
+- [ ] Submitting the contact form creates a general Enquiries item and shows "Message sent".
 - [ ] A profile enquiry reaches staff and never exposes the owner's email or phone in the page or the confirmation.
 - [ ] After the rate limit, further submissions from one IP or email are refused with a try-later message.
 - [ ] An invitation link opens the profile form once; a second use shows "Link expired or already used".
@@ -76,7 +76,7 @@ A bot challenge. No other plugin.
 
 ## Depends on
 
-- Sponsored content and the commercial register (conversion to arrangements).
+- Sponsored stories and deals (an agreed enquiry becomes a customer and a deal).
 - Email and notifications; Roles, audit and admin.
 - Directory and profiles (enquiry form, intake).
 

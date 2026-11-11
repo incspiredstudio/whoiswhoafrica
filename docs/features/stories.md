@@ -37,7 +37,7 @@ Stories are the media side of the platform: interviews, features, spotlights, op
 ### Pages and screens
 
 - Public: `/stories`, `/stories/:slug`.
-- Staff: WordPress Posts (core screens), Story sponsors screen. The wireframe does not draw an Articles screen because WordPress provides it.
+- Staff: WordPress Posts (core screens), Sponsored stories screen. The wireframe does not draw an Articles screen because WordPress provides it.
 
 ### Third-party plugins
 
@@ -78,7 +78,7 @@ None for stories. Comments use wpDiscuz (see Comments). The newsletter sign-up i
 ## Depends on
 
 - Directory and profiles (linked profiles).
-- Sponsored content and the commercial register (arrangements).
+- Sponsored stories and deals (the paid slot).
 - Search; SEO, sharing and sitemaps.
 - Home and curation (Featured-first ordering).
 

@@ -23,7 +23,7 @@ On activation the plugin removes WordPress's built-in subscriber, contributor, a
 |---|---|---|
 | Core, generated for the profile type | `edit_wiw_profiles`, `publish_wiw_profiles`, `read_private_wiw_profiles` | Requires the profile type to declare its own capability type |
 | Core | `edit_posts`, `upload_files`, `manage_terms`, `list_users`, `install_plugins`, `manage_options` | Stories use the core post capabilities; Featured on a story is the sticky flag |
-| Plugin, `wiw_` prefix | `wiw_review_records`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_review_claims`, `wiw_curate_home`, `wiw_manage_events`, `wiw_set_sponsored`, `wiw_manage_awards`, `wiw_support_inbox`, `wiw_run_imports`, `wiw_export_data`, `wiw_view_audit`, `wiw_edit_suppression` | One capability per screen and action |
+| Plugin, `wiw_` prefix | `wiw_review_records`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_review_claims`, `wiw_curate_home`, `wiw_manage_events`, `wiw_set_sponsored`, `wiw_manage_awards`, `wiw_support_inbox`, `wiw_handle_requests`, `wiw_run_imports`, `wiw_export_data`, `wiw_view_audit`, `wiw_edit_suppression` | One capability per screen and action |
 
 `wiw_set_trust_labels` is withdrawn: profiles have no trust labels (D-059).
 
@@ -34,7 +34,7 @@ Some capabilities cannot be granted to a non-Administrator. They are **fixed**:
 - user and role management
 - site settings
 - plugin and theme installation
-- the commercial register (`wiw_manage_register`)
+- sponsored story deal money details (`wiw_manage_register`)
 - the capability screen (`wiw_manage_capabilities`)
 - the Nominations flag (`wiw_toggle_nominations`)
 
@@ -56,7 +56,7 @@ Menus, routes and actions follow the user's **effective** capabilities. Deny by 
 - Each row stores the previous row's hash, so a break is detectable.
 - Where the database account allows it, triggers block UPDATE and DELETE.
 - A periodic export is kept off the server, and a verify command checks the chain.
-- Every staff action on profiles, labels, the register, imports, bulk unpublish, suppression, the Nominations flag and capability grants goes through it, with actor, time, and old and new values.
+- Every staff action on profiles, labels, sponsored story deals, imports, bulk unpublish, suppression, the Nominations flag and capability grants goes through it, with actor, time, and old and new values.
 
 Bulk unpublish writes one row per profile plus one for the batch.
 

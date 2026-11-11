@@ -31,15 +31,15 @@ Staff work in the WordPress admin. There are three default roles, and the Admini
 | Role | Does |
 |---|---|
 | Reviewer | Reviews incoming records, resolves duplicates, assigns existing terms, can bulk unpublish |
-| Editor | Everything a Reviewer does, plus editing profiles, the support inbox, claims, stories, awards and curation |
-| Administrator | Everything, plus the commercial register, import, exports, audit log, users and roles, and the sprint thresholds |
+| Editor | Everything a Reviewer does, plus editing profiles, enquiries, corrections, requests and reports, claims, stories, awards and curation |
+| Administrator | Everything, plus the sponsored story money details, import, exports, audit log, users and roles, and the sprint thresholds |
 
 ## How it is put together
 
 | Part | What it is | Where it is described |
 |---|---|---|
-| Theme `whoiswho` | The public front end: templates, design tokens, components, motion | [Theme](/theme/) |
-| Plugin `whoiswho-core` | The platform logic: directory, review, import, claims, commercial register, content, awards, compliance, audit | [Plugins](/plugins/) |
+| Theme: parent `whoiswho` and child `whoiswho-child` | The public front end. The parent holds templates, components and motion; the active child holds the brand tokens (colours, fonts, logo) and site-specific overrides | [Theme](/theme/) |
+| Plugin `whoiswho-core` | The platform logic: directory, review, import, claims, sponsored story deals, content, awards, compliance, audit | [Plugins](/plugins/) |
 | Must-use plugin `whoiswho-guard` | Rules that must always hold, whatever else is installed | [Guard](/plugins/guard) |
 | Third-party plugins | Two-factor sign-in, comments, spam protection, role editor, SEO, page editor, cache, backups | [Third-party plugins](/plugins/third-party) |
 | WordPress itself | Posts, users, roles, sign-in, taxonomy terms, the media library | [Stack](/build/stack) |

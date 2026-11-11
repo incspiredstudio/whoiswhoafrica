@@ -59,6 +59,10 @@ The logo wordmark is the shortened form of the public name WHOISWHO (D-060). Ora
 
 Four African (Adinkra-style) symbols replaced the earlier brush strokes. They are `webp` files in `theme/assets/`: `mark-star`, `mark-comb`, `mark-link` and `mark-spiral`. They appear on the home colour blocks, the directory doors and the poster component (see [Components](/theme/components)). Each has a CSS variable (`--m`) so a poster can tint and place one.
 
+## Where the tokens file lives (REQ-273)
+
+The parent theme defines the token structure and sensible defaults. The brand values themselves, meaning the colours, fonts and logo listed on this page, live in the tokens file of the child theme `whoiswho-child`, which is the active theme and overrides the parent. Never edit brand values in the parent.
+
 ## How tokens are used
 
 | Do | Do not |
@@ -67,7 +71,7 @@ Four African (Adinkra-style) symbols replaced the earlier brush strokes. They ar
 | Add a new value to `tokens.css` first | Add a one-off colour to `site.css` |
 | Use `--s-*` for gaps and padding | Use arbitrary pixel values |
 
-The brand name and tagline sit in `prototype/tokens.js`, the wireframe's own token file. In the WordPress build the rule in `CLAUDE.md` applies: no brand values outside the theme tokens file.
+The brand name and tagline sit in `prototype/tokens.js`, the wireframe's own token file. In the WordPress build the rule in `CLAUDE.md` applies: no brand values outside the theme tokens file, which lives in the child theme `whoiswho-child`.
 
 ## Related
 

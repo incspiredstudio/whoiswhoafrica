@@ -80,7 +80,7 @@ None. Reminders run on the background job runner already chosen for the plugin.
 - Directory and profiles (the profile and its states).
 - Roles, audit and admin (capabilities, review queue, audit log).
 - Email and notifications.
-- Corrections, removals and reports (shares the Support inbox patterns and signed-link and bot protections).
+- Corrections, removals and reports (shares the typed-item patterns and signed-link and bot protections).
 
 ## Out of scope or later
 

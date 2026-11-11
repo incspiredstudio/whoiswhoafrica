@@ -179,7 +179,7 @@
   W.forms.claim = function (d) {
     var id = "CLM-" + ("0000" + ((W.S.claims || []).length + 1)).slice(-4); W.S.claims = W.S.claims || [];
     W.S.claims.unshift({ id: id, profileId: d.id, name: d.name, relationship: d.relationship, email: d.email, phone: d.phone || "", role: d.role || "", evidence: d.evidence, consent: !!d.consent, status: "new", at: W.TODAY, due: new Date(new Date(W.TODAY).getTime() + 5 * 86400000).toISOString().slice(0, 10), remindAt: new Date(new Date(W.TODAY).getTime() + 3 * 86400000).toISOString().slice(0, 10), by: "", reason: "" });
-    W.mail("Support inbox (Editor)", "New claim " + id, d.name + " asks to claim a profile.", "#/admin/claims"); W.mail(d.email, "We received your claim", "Reference " + id + ". We will reply within 5 days.", "");
+    W.mail("Claims (Editor)", "New claim " + id, d.name + " asks to claim a profile.", "#/admin/claims"); W.mail(d.email, "We received your claim", "Reference " + id + ". We will reply within 5 days.", "");
     W.save(); W.go("#/done?kind=claim&ref=" + id);
   };
   W.route("/correct/:slug", "V39", function (par) {
@@ -341,7 +341,7 @@
   W.forms.bizenquiry = function (d) {
     var id = "ENQ-" + ("000" + (W.S.enquiries.filter(function (x) { return x.business; }).length + 1)).slice(-4);
     W.S.enquiries.unshift({ id: W.uid("e"), ref: id, business: true, kind: d.interest, profileId: "", name: d.name, org: d.org || "", email: d.contact, message: d.msg || "", at: W.TODAY, read: false, general: true });
-    W.mail("Support inbox (Editor)", "New enquiry: " + d.name, d.interest + " from " + (d.org || "an individual") + ".", "#/admin/inbox"); W.mail(d.contact, "We received your enquiry", "Reference " + id + ".", "");
+    W.mail("Enquiries (Editor)", "New enquiry: " + d.name, d.interest + " from " + (d.org || "an individual") + ".", "#/admin/inbox"); W.mail(d.contact, "We received your enquiry", "Reference " + id + ".", "");
     W.save(); W.go("#/done?kind=enquiry&ref=" + id);
   };
   W.route("/contact", "V26", function () {

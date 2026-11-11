@@ -1,4 +1,4 @@
-/* Staff console part 1: shell, sign-in, dashboard, review, profiles, support inbox. Flow preview only; the real admin will be WordPress. */
+/* Staff console part 1: shell, sign-in, dashboard, review, profiles, enquiries, corrections, requests and reports. Flow preview only; the real admin will be WordPress. */
 (function () {
   var W = window.W, e = W.esc;
   var ALL = ["reviewer", "editor", "admin"];
@@ -11,13 +11,13 @@
     ["view_sources", "Sources (read-only)", "Directory", "RE"], ["view_suppression", "Suppression list: view (read-only)", "Directory", "RE"],
     ["bulk_unpublish", "Bulk unpublish by filter, and restore a batch", "Directory", "R"],
     ["edit_profiles", "Edit a profile directly", "Editing", "E"], ["publish_profiles", "Publish a profile", "Editing", "E"], ["unpublish_profile", "Unpublish and restore a single profile", "Editing", "E"],
-    ["review_claims", "Claims: review a request, set Claimed, assign the profile manager", "Editing", "E"], ["stories", "Stories (articles)", "Editing", "E"], ["manage_events", "Events: add, edit, publish and unpublish (wiw_manage_events)", "Editing", "E"], ["sponsored_label", "Story sponsors and the Sponsored label (stories only)", "Editing", "E"], ["edit_terms", "Taxonomy terms: add and edit", "Editing", "E"],
-    ["support_inbox", "Support inbox: enquiries, corrections, removals, reports", "Inbox", "E"], ["handle_disputes", "Handle disputes and removal requests (a valid removal adds to the suppression list)", "Inbox", "E"],
+    ["review_claims", "Claims: review a request, set Claimed, assign the profile manager", "Editing", "E"], ["stories", "Stories (articles)", "Editing", "E"], ["manage_events", "Events: add, edit, publish and unpublish (wiw_manage_events)", "Editing", "E"], ["sponsored_label", "Sponsored stories: choose the story and schedule the labelled slot (stories only)", "Editing", "E"], ["edit_terms", "Taxonomy terms: add and edit", "Editing", "E"],
+    ["support_inbox", "Enquiries and Corrections: Get listed enquiries and suggested corrections", "Inbox", "E"], ["handle_disputes", "Handle disputes and removal requests (a valid removal adds to the suppression list)", "Inbox", "E"],
     ["nominations", "Nominations: open or close the page, add profiles, set Nominated or Winner, make live (judging happens outside the site)", "Awards", "E"],
-    ["suppression_change", "Suppression list: add or remove by hand", "Administration", ""], ["imports", "Import from the acquisition pipeline", "Administration", ""], ["data_requests", "Data requests and compliance", "Administration", ""],
-    ["commercial_register", "Commercial register, customers and payments (confirmed by)", "Administration", "", true], ["revenue_tiles", "Revenue, sprint target and arrangements tiles", "Administration", ""],
-    ["exports", "Export personal data (CSV), logged (REQ-069)", "Administration", ""], ["audit_log", "Audit log, purge log and email log", "Administration", ""],
-    ["users_roles", "Users, roles and capabilities", "Administration", "", true], ["settings", "Settings and plugins", "Administration", "", true]
+    ["suppression_change", "Suppression list: add or remove by hand", "Administration", ""], ["imports", "Import from the acquisition pipeline", "Administration", ""], ["data_requests", "Requests and reports: data requests, removals and profile reports (REQ-270)", "Inbox", "E"],
+    ["commercial_register", "Sponsored story deals, customers and payments (amounts and confirmed by)", "Administration", "", true], ["revenue_tiles", "Revenue, sprint target and sponsored story tiles", "Administration", ""],
+    ["audit_log", "Audit log, purge log and email log", "Administration", ""],
+    ["settings", "Sprint thresholds (a theme setting in WordPress)", "Administration", "", true]
   ];
   var CAPIDX = {}; W.CAPS.forEach(function (c) { CAPIDX[c[0]] = c; }); W.CAPIDX = CAPIDX;
   var LETTER = { reviewer: "R", editor: "E" };
@@ -32,7 +32,7 @@
     return base;
   };
   W.rolesWithCap = function (cap) { return ALL.filter(function (r) { return W.capDefault(cap, r); }); };
-  var ACLCAP = { review: "review_queue", profiles: "view_profiles", sources: "view_sources", inbox: "support_inbox", supprView: "view_suppression", supprEdit: "suppression_change", import: "imports", taxonomy: "edit_terms", dsr: "data_requests", customers: "commercial_register", register: "commercial_register", sponsors: "sponsored_label", articles: "stories", events: "manage_events", awards: "nominations", purges: "audit_log", emails: "audit_log" };
+  var ACLCAP = { review: "review_queue", profiles: "view_profiles", sources: "view_sources", inbox: "support_inbox", corrections: "support_inbox", supprView: "view_suppression", supprEdit: "suppression_change", import: "imports", taxonomy: "edit_terms", dsr: "data_requests", customers: "commercial_register", sponsors: "sponsored_label", articles: "stories", events: "manage_events", awards: "nominations", purges: "audit_log", emails: "audit_log" };
   var ACL = {}; Object.keys(ACLCAP).forEach(function (k) { ACL[k] = W.rolesWithCap(ACLCAP[k]).filter(function (r) { return r !== "admin"; }); });
   /* Capabilities inside a screen (the route capability only opens the screen). */
   var CAPMAP = { edit: "edit_profiles", publish: "publish_profiles", unpublish: "unpublish_profile", bulk: "bulk_unpublish", supprEdit: "suppression_change", terms: "edit_terms", assignTerms: "assign_terms", disputes: "handle_disputes" };
@@ -64,9 +64,9 @@
     ["Overview", [["Dashboard", "/admin", "*"]]],
     ["Review", [["Review queue", "/admin/review", "review_queue"], ["Duplicates", "/admin/duplicates", "duplicates"]]],
     ["Directory", [["Profiles", "/admin/profiles", "view_profiles"], ["Sources", "/admin/sources", "view_sources"], ["Import", "/admin/import", "imports"], ["Suppression list", "/admin/suppression", "view_suppression"], ["Claims", "/admin/claims", "review_claims"]]],
-    ["Inbox", [["Support inbox", "/admin/inbox", "support_inbox"], ["Data requests", "/admin/dsr", "data_requests"]]],
+    ["Inbox", [["Enquiries", "/admin/inbox", "support_inbox"], ["Corrections", "/admin/corrections", "support_inbox"], ["Requests and reports", "/admin/dsr", "data_requests"]]],
     ["Content", [["Stories", "/admin/stories", "stories"], ["Events", "/admin/events", "manage_events"]]],
-    ["Commercial", [["Customers", "/admin/customers", "commercial_register"], ["Register", "/admin/register", "commercial_register"], ["Story sponsors", "/admin/sponsors", "sponsored_label"]]],
+    ["Commercial", [["Customers", "/admin/customers", "commercial_register"], ["Sponsored stories", "/admin/sponsors", "sponsored_label"]]],
     ["Awards", [["Nominations", "/admin/nominations", "nominations"], ["Award categories", "/admin/awards", "nominations"]]],
     ["Platform", [["Audit log", "/admin/audit", "audit_log"], ["Purge log", "/admin/purges", "audit_log"], ["Email log", "/admin/emails", "audit_log"], ["Sprint thresholds", "/admin/thresholds", "settings"]]]
   ];
@@ -102,15 +102,11 @@
     }
     if (showCom) {
       var counted = S.arrangements.filter(W.counts), rev = counted.reduce(function (t, a) { return t + a.amount; }, 0), t = S.thresholds, pct = function (n, d) { return Math.min(100, Math.round(100 * n / d)); };
-      var byType = {}; counted.forEach(function (a) { byType[a.type] = (byType[a.type] || 0) + 1; });
-      var byStream = { subscription: 0, media: 0, sponsorship: 0 }; counted.forEach(function (a) { byStream[a.stream] += a.amount; });
-      var comp = S.arrangements.filter(function (a) { return a.complimentary; }).length;
-      var soon = S.arrangements.filter(function (a) { return !a.cancelled && a.end && a.end >= W.TODAY && (new Date(a.end) - new Date(W.TODAY)) / 86400000 <= 30; });
-      out += '<div class="grid c2"><div class="card stack-s"><h2>Sprint target: either one is enough</h2><p><strong>Paid subscriptions</strong> (Confirmed paid arrangements, REQ-022): <strong>' + counted.length + " of " + t.subs + '</strong></p><div class="bar" role="img" aria-label="' + pct(counted.length, t.subs) + ' percent of the subscription target"><i style="width:' + pct(counted.length, t.subs) + '%"></i></div><p><strong>Confirmed revenue</strong>: <strong>' + W.money(rev) + " of " + W.money(t.revenue) + '</strong></p><div class="bar"><i style="width:' + pct(rev, t.revenue) + '%"></i></div><p>' + ((counted.length >= t.subs || rev >= t.revenue) ? '<span class="pill ok">Target met</span>' : '<span class="pill warn">Target not met yet</span>') + ' <span class="small muted">Thresholds are settings, not hard-coded. This is the commercial sprint target, not a directory size.</span></p><p class="small">By type: ' + (Object.keys(byType).length ? Object.keys(byType).map(function (k) { return e(W.LISTS.arrTypes[k]) + " " + byType[k]; }).join(", ") : "none") + ". Complimentary (excluded): " + comp + ".</p></div>" +
-        '<div class="card stack-s"><h2>Revenue per stream</h2>' + W.table(["Stream", "Confirmed"], Object.keys(byStream).map(function (k) { return [e(W.LISTS.streams[k]), W.money(byStream[k])]; })) + "</div></div>" +
-        '<div class="kpis"><div class="kpi"><b>' + S.enquiries.length + '</b>enquiries and messages</div><div class="kpi"><b>' + S.arrangements.length + '</b>arrangements</div></div>' +
+      var soon = (S.placements || []).filter(function (pl) { return W.placementStatus(pl) === "active" && pl.end && (new Date(pl.end) - new Date(W.TODAY)) / 86400000 <= 30; });
+      out += (W.S.sprintOn === false ? "" : '<div class="card stack-s"><h2>Sprint target: either one is enough</h2><p><strong>Paid sponsored stories</strong> (agreed and paid deals, REQ-022): <strong>' + counted.length + " of " + t.subs + '</strong></p><div class="bar" role="img" aria-label="' + pct(counted.length, t.subs) + ' percent of the paid target"><i style="width:' + pct(counted.length, t.subs) + '%"></i></div><p><strong>Confirmed revenue</strong>: <strong>' + W.money(rev) + " of " + W.money(t.revenue) + '</strong></p><div class="bar"><i style="width:' + pct(rev, t.revenue) + '%"></i></div><p>' + ((counted.length >= t.subs || rev >= t.revenue) ? '<span class="pill ok">Target met</span>' : '<span class="pill warn">Target not met yet</span>') + ' <span class="small muted">Thresholds are settings, not hard-coded. This is the commercial sprint target, not a directory size.</span></p></div>') +
+        '<div class="kpis"><div class="kpi"><b>' + S.enquiries.length + '</b>enquiries and messages</div><div class="kpi"><b>' + S.arrangements.length + '</b><a href="#/admin/sponsors">sponsored story deals</a></div></div>' +
         '<p class="small muted">Visitors, journey completion and conversions come from privacy-friendly analytics (not shown in the wireframe).</p>' +
-        '<div class="card stack-s"><h2>Expiry reminders</h2>' + (soon.length ? "<ul>" + soon.map(function (a) { return "<li>" + e(W.LISTS.arrTypes[a.type]) + " for " + e((W.find("customers", a.customerId) || {}).name) + " ends " + e(a.end) + ' <a href="#/admin/register/' + e(a.id) + '">Open</a></li>'; }).join("") + "</ul>" : "<p class=\"muted\">Nothing ends in the next 30 days.</p>") + '<p class="small muted">Reminders only. The system takes no automatic action against customers (REQ-189).</p></div>';
+        '<div class="card stack-s"><h2>Slots ending soon</h2>' + (soon.length ? "<ul>" + soon.map(function (pl) { return "<li>Sponsored by " + e(pl.sponsor) + " ends " + e(pl.end) + ' <a href="#/admin/sponsors' + (pl.dealId ? "/" + e(pl.dealId) : "") + '">Open</a></li>'; }).join("") + "</ul>" : "<p class=\"muted\">No slot ends in the next 30 days.</p>") + '<p class="small muted">Reminders only. The system takes no automatic action against sponsors (REQ-189).</p></div>';
     }
     if (showAw) out += '<div class="kpis"><div class="kpi"><b>' + S.nominations.length + '</b>nominations</div><div class="kpi"><b>' + S.nominations.filter(function (n) { return n.live; }).length + '</b>live</div><div class="kpi"><b>' + (S.flags.nominations.on ? "Open" : "Closed") + '</b><a href="#/admin/nominations">nominations page</a></div></div>';
     if (W.hasCap("stories") && !showCom) out += '<div class="kpis"><div class="kpi"><b>' + S.articles.length + '</b>articles</div><div class="kpi"><b>' + S.articles.filter(function (a) { return a.status === "scheduled"; }).length + '</b>scheduled</div><div class="kpi"><b>' + W.upcomingEvents().length + '</b>upcoming events</div></div>';
@@ -258,11 +254,10 @@
 
   mini("/admin/profiles/:id", "A06", "profiles", function (par) {
     var p = W.profile(par.id); if (!p) return "<h1>Not found</h1>";
-    var arrs = W.S.arrangements.filter(function (a) { return a.linkedProfile === p.id; }), auditRows = W.S.audit.filter(function (a) { return a.target === p.id; });
+    var auditRows = W.S.audit.filter(function (a) { return a.target === p.id; });
     return '<p><a href="#/admin/profiles">← Profiles</a></p><div class="row between"><h1>' + e(p.name) + (p.claimed ? " " + W.vcheck(p, true) : "") + '</h1><div class="row"><a class="btn alt" href="#/profile/' + e(p.slug) + '">Preview as visitor</a>' + (W.can("publish") ? (p.status === "published" ? W.btn("Unpublish", "unpubDlg", p.id, "bad") : p.status === "unpublished" ? W.btn("Restore", "restore", p.id) : "") : "") + "</div></div>" +
       '<div class="tagrow">' + W.stPill(p.status) + W.trustPill(p) + W.statePill(p) + ' <span class="pill gray">origin: ' + e(W.origin(p)) + '</span> <span class="pill gray">source: ' + e(W.srcOf(p)) + '</span>' + (p.batch ? ' <span class="pill gray">batch: ' + e(p.batch) + "</span>" : "") + "</div>" + (W.can("edit") ? editCard(p) : termsCard(p)) + (W.can("edit") ? (
       '<div class="card stack-s"><h2>Claim and profile manager</h2>' + (p.claimed ? '<p class="small">Claimed on ' + e(p.claimedAt || "") + '. Staff see a checkmark; the Claim button is hidden on the public page.</p>' : '<p class="small muted">Not claimed. A claim arrives from the public form and is reviewed on the <a href="#/admin/claims">Claims</a> screen.</p>') + (p.claimed && W.can("review_claims") ? '<form data-form="assignMgr" class="stack-s"><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Assigned user", "manager", { type: "select", options: (W.S.users || []).map(function (u) { return [u.email, u.name + " (" + W.roleName(u.rk) + ")"]; }), blank: "Nobody", value: p.manager || "", hint: "This user may update this profile only. Every change to a claimed profile must be approved by a Reviewer or Administrator before it is public (REQ-253)." }) + '<button class="btn alt sm">Save</button></form>' : (p.claimed ? '<p class="small">Assigned user: ' + e(p.manager || "nobody") + "</p>" : "")) + '</div>' +
-      '<div class="grid c2">' + '<div class="card stack-s"><h2>Arrangements</h2><p class="small">Linked arrangements: ' + (arrs.length ? arrs.map(function (a) { return '<a href="#/admin/register/' + e(a.id) + '">' + e(a.id) + "</a> (" + e(W.arrStatus(a)) + ", " + e(a.start || "") + " to " + e(a.end || "") + ")"; }).join(", ") : "none") + '</p><p class="small muted">A paid arrangement never changes how a profile looks to the public. Only stories can be Sponsored (D-055).</p></div></div>' +
       '<div class="grid c2"><form class="card stack-s" data-form="slug"><h2>Public URL</h2><input type="hidden" name="id" value="' + e(p.id) + '">' + W.field("Slug", "slug", { value: p.slug, hint: "Changing it creates a redirect from the old URL." }) + '<p class="small muted">Redirects: ' + e((p.redirects || []).join(", ") || "none") + '</p><button class="btn alt">Save slug</button></form><div class="card stack-s"><h2>Source sync</h2><p class="small">' + (p.qid ? "Wikidata ID " + e(p.qid) + "." : "Linked to a source record (sample).") + ' Changes from a source are flagged for review, never overwritten (REQ-135, 161).</p>' + W.btn("Check source for changes (sample)", "srcSync", p.id, "alt sm") + "</div></div>" +
       '<div class="grid c2"><form class="card stack-s" data-form="vis"><h2>Contact and enquiries (set on request)</h2><input type="hidden" name="id" value="' + e(p.id) + '"><p class="small muted">Nobody has a login. A request arrives through the correction form into the Support inbox and staff set this here (REQ-018, 060, D-040). Default: nothing public beyond the enquiry form.</p>' + W.field("Show website", "website", { type: "checkbox", value: (p.public || {}).website }) + W.field("Show email", "email", { type: "checkbox", value: (p.public || {}).email }) + W.field("Show phone", "phone", { type: "checkbox", value: (p.public || {}).phone }) + W.field("Allow enquiries", "enq", { type: "checkbox", value: p.enquiries }) + W.field("Requested by (name or email)", "by", { req: true }) + '<button class="btn alt">Save</button></form><div class="card stack-s"><h2>Send views and sources on request (REQ-236)</h2><p class="small">Send the view count and the sources used, as asked. Views: <strong>' + e(p.views) + "</strong> (view count only). Sources: " + e((p.facts || []).map(function (f) { return f.src || "none"; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join("; ") || "none") + ".</p>" + W.btn("Email this to the requester (sample)", "ownerInfo", p.id, "alt sm") + "</div></div>") : '<p class="small muted">Labels, the Sponsored label, the URL, contact settings and edits are for Editors and Administrators. Reviewers can view the profile and assign existing taxonomy terms.</p>') +
       factsCard(p) +
@@ -324,29 +319,75 @@
     var d = Math.round((new Date(due) - new Date(W.TODAY)) / 86400000);
     return d < 0 ? '<span class="pill bad">overdue by ' + (-d) + " day" + (d === -1 ? "" : "s") + "</span>" : d === 0 ? '<span class="pill warn">due today</span>' : '<span class="pill gray">due in ' + d + " day" + (d === 1 ? "" : "s") + "</span>";
   };
-  mini("/admin/inbox", "A12", "inbox", function (par, q) {
-    var S = W.S, rows = [], pn = function (id) { var p = W.profile(id); return p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "\u2014"; };
-    S.enquiries.forEach(function (x) { rows.push({ t: "Enquiry", sub: x.business ? x.kind + " (" + x.ref + "): " + x.name + (x.org ? ", " + x.org : "") + " (" + x.email + ")" + (x.message ? ". " + x.message : "") : x.general ? "Contact form: " + x.name : "From " + x.name, p: x.general ? "" : x.profileId, st: x.read ? "read" : "new", due: "", at: x.at, owner: "Editor", act: x.read ? "" : W.btn("Mark read", "enqRead", x.id, "sm alt") }); });
-    S.corrections.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Correction", sub: x.detail + (x.contact ? " (" + x.contact + (x.emailVerified ? ", email confirmed" : ", email not confirmed") + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: W.disputeHandlers(), act: open ? '<a class="btn sm" href="#/admin/profiles/' + e(x.profileId) + '">Edit the profile</a> ' + W.btn("Mark resolved", "corrDone", x.id, "sm alt") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
-    S.removals.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Removal", sub: x.detail + (x.contact ? " (" + x.contact + ")" : ""), p: x.profileId, st: x.status, due: x.due, at: x.at, owner: W.disputeHandlers(), act: open ? W.btn("Valid: hide + suppress", "rmOk", x.id, "sm bad") + " " + W.btn("Decline", "corrDecline", x.id, "sm alt") : "" }); });
-    S.reports.forEach(function (x) { var open = x.status === "open"; rows.push({ t: "Report", sub: x.reason + ": " + x.detail, p: x.profileId, st: x.status, due: x.due, at: x.at, owner: x.owner || "unassigned", act: open ? W.btn("Hide profile now", "unpubDlg", x.profileId, "sm bad") + " " + W.btn("Dismiss", "repDone", x.id, "sm alt") + " " + W.btn("Resolve", "repDone", x.id, "sm") : "" }); });
-    rows = rows.filter(function (r) { return !q.t || r.t === q.t; }).sort(function (a, b) { return age(b.at) - age(a.at); });
-    return head("Support inbox", "Enquiries and the public correction, removal and report forms land here as typed items, each with a status and a due-date countdown (REQ-089, 158, D-040). Staff act by editing or unpublishing the profile directly in the admin; every edit and unpublish is written to the audit log automatically, and a valid removal also adds the person or organisation to the suppression list.") +
-      '<form class="filters" data-filter="#/admin/inbox">' + W.field("Type", "t", { type: "select", options: ["Enquiry", "Correction", "Removal", "Report"], blank: "All", value: q.t }) + "</form>" +
-      '<p class="small muted">Disputes, corrections and removal requests are handled by whoever holds the <strong>handle_disputes</strong> capability: ' + e(W.disputeHandlers()) + ' by default (the Administrator can grant it to others, for example a Reviewer). Targets: acknowledge in 1 business day; hide within 2 business days of a valid removal; resolve corrections within 7 days (REQ-158).</p>' +
-      W.table(["Type", "Item", "Profile", "Status", "Due", "Age (days)", "Owner", ""], rows.map(function (r) { return ['<span class="pill ' + (r.t === "Removal" ? "bad" : r.t === "Report" ? "warn" : "gray") + '">' + r.t + "</span>", e(r.sub), r.p ? pn(r.p) : "\u2014", W.stPill(r.st), W.dueText(r.due, r.st), age(r.at), e(r.owner), r.act]; }), "Inbox zero.");
+  /* Enquiries (A12): Get listed, sponsored story, media work and awards sponsorship enquiries, and contact-form messages. */
+  mini("/admin/inbox", "A12", "inbox", function () {
+    var S = W.S, pn = function (id) { var p = W.profile(id); return p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "\u2014"; };
+    var rows = S.enquiries.slice().sort(function (a, b) { return age(b.at) - age(a.at); });
+    return head("Enquiries", "Get listed, sponsored story, media work and awards sponsorship enquiries, and contact-form messages (REQ-089, 177). Corrections have their own screen, and removal requests, profile reports and data requests are under Requests and reports.") +
+      W.table(["Kind", "Item", "Profile", "Status", "Age (days)", "Owner", ""], rows.map(function (x) {
+        var kind = x.business ? x.kind : x.general ? "Contact form" : "Profile enquiry", sub = x.business ? x.ref + ": " + x.name + (x.org ? ", " + x.org : "") + " (" + x.email + ")" + (x.message ? ". " + x.message : "") : x.general ? x.name : "From " + x.name;
+        return ['<span class="pill gray">' + e(kind) + "</span>", e(sub), x.general ? "\u2014" : pn(x.profileId), W.stPill(x.read ? "read" : "new"), age(x.at), "Editor", x.read ? "" : W.btn("Mark read", "enqRead", x.id, "sm alt")];
+      }), "No enquiries.");
   });
   W.act.enqRead = function (id) { W.find("enquiries", id).read = true; W.log("enquiry.read", id, ""); W.save(); W.render(); };
-  W.act.repDone = function (id) { W.find("reports", id).status = "closed"; W.log("report.close", id, ""); W.save(); W.render(); };
+
+  /* Corrections (A64 list, A65 detail): the public "Suggest a correction" submissions (REQ-271). */
+  function pnLink(id) { var p = W.profile(id); return p ? '<a href="#/admin/profiles/' + e(p.id) + '">' + e(p.name) + "</a>" : "\u2014"; }
+  mini("/admin/corrections", "A64", "corrections", function (par, q) {
+    var rows = W.S.corrections.filter(function (x) { return !q.s || (q.s === "open" ? (x.status === "open" || x.status === "awaiting email check") : x.status === q.s); }).sort(function (a, b) { return age(b.at) - age(a.at); });
+    return head("Corrections", "Public suggested corrections (REQ-157, 158, 271). Acknowledge within 1 business day and resolve within 7 days. Apply a correction by editing the profile with a required reason; on a claimed profile the edit goes to a Reviewer or Administrator for approval (REQ-253).") +
+      '<form class="filters" data-filter="#/admin/corrections">' + W.field("Status", "s", { type: "select", options: [["open", "Open"], ["closed", "Resolved"], ["declined", "Declined"]], blank: "All", value: q.s }) + "</form>" +
+      '<p class="small muted">Handled by whoever holds the <strong>handle_disputes</strong> capability: ' + e(W.disputeHandlers()) + " by default.</p>" +
+      W.table(["Ref", "Profile", "Suggestion", "Received", "Due", "Status", ""], rows.map(function (x) { return [e(x.id), pnLink(x.profileId), e(x.detail), e(x.at), W.dueText(x.due, x.status), W.stPill(x.status), '<a class="btn sm alt" href="#/admin/corrections/' + e(x.id) + '">Open</a>']; }), "No corrections waiting.");
+  });
+  mini("/admin/corrections/:id", "A65", "corrections", function (par) {
+    var x = W.find("corrections", par.id); if (!x) return "<h1>Not found</h1>";
+    var p = W.profile(x.profileId), open = x.status === "open", claimed = p && p.claimed;
+    return '<p><a href="#/admin/corrections">\u2190 Corrections</a></p>' + head("Correction " + x.id, p ? e(p.name) : "") +
+      '<div class="card stack-s"><dl class="kv"><dt>Status</dt><dd>' + W.stPill(x.status) + "</dd><dt>Received</dt><dd>" + e(x.at) + "</dd><dt>Due</dt><dd>" + W.dueText(x.due, x.status) + "</dd><dt>Who is asking</dt><dd>" + e(x.requesterRole || "Not stated") + "</dd><dt>Suggestion</dt><dd>" + e(x.detail) + "</dd>" + (x.evidence ? "<dt>Evidence</dt><dd>" + e(x.evidence) + "</dd>" : "") + "<dt>Contact (staff only)</dt><dd>" + e(x.contact || "none") + (x.contact ? (x.emailVerified ? ", email confirmed" : ", email not confirmed") : "") + "</dd>" + (x.reason ? "<dt>Decline reason</dt><dd>" + e(x.reason) + "</dd>" : "") + "</dl></div>" +
+      (claimed ? '<p class="note">This profile is claimed: an edit by its assigned user, or by staff applying this correction, goes to a Reviewer or Administrator for approval before it is public (REQ-253).</p>' : "") +
+      (open ? '<div class="row">' + (p ? '<a class="btn" href="#/admin/profiles/' + e(p.id) + '">Apply: edit the profile</a>' : "") + W.btn("Mark resolved", "corrDone", x.id, "alt") + W.btn("Decline with a reason", "declineDlg", "corrections:" + x.id, "alt") + "</div>" : "");
+  });
   W.act.corrDone = function (id) { if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; } var x = W.find("corrections", id); x.status = "closed"; W.log("request.close", id, x.kind + " resolved"); W.save(); W.render(); };
-  W.act.corrDecline = function (id) { if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; } var x = W.find("corrections", id) || W.find("removals", id); x.status = "declined"; W.log("request.decline", id, x.kind); W.save(); W.render(); };
+  /* Decline with a reason: corrections, removals and reports. */
+  W.act.declineDlg = function (arg) { W.openModal("Decline with a reason", '<form data-form="decline" class="stack-s"><input type="hidden" name="arg" value="' + e(arg) + '">' + W.field("Reason (kept with the request, never public)", "reason", { type: "textarea", req: true }) + '<button class="btn">Decline</button></form>'); };
+  W.forms.decline = function (d) {
+    if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; }
+    var a = String(d.arg).split(":"), x = W.find(a[0], a[1]); if (!x) return;
+    x.status = "declined"; x.reason = d.reason; W.log("request.decline", x.id, x.kind || a[0]); W.ui.modal = null; W.save(); W.render();
+  };
+
+  /* Requests and reports (A35 list, A66 detail): data requests, removal requests and profile reports in one list (REQ-270). */
+  function reqItems() {
+    var S = W.S, out = [];
+    S.dsr.forEach(function (x) { out.push({ coll: "dsr", id: x.id, kind: "Data request", what: x.kind, who: e(x.who), p: "", at: x.at, due: x.due, status: x.status, x: x }); });
+    S.removals.forEach(function (x) { out.push({ coll: "removals", id: x.id, kind: "Removal", what: "Request removal", who: pnLink(x.profileId), p: x.profileId, at: x.at, due: x.due, status: x.status, x: x }); });
+    S.reports.forEach(function (x) { out.push({ coll: "reports", id: x.id, kind: "Report", what: x.reason, who: pnLink(x.profileId), p: x.profileId, at: x.at, due: x.due, status: x.status, x: x }); });
+    return out;
+  }
+  var DONE = ["closed", "done", "declined"];
+  mini("/admin/dsr", "A35", "dsr", function (par, q) {
+    var rows = reqItems().filter(function (r) { return (!q.k || r.kind === q.k) && (!q.s || (q.s === "open" ? DONE.indexOf(r.status) < 0 : DONE.indexOf(r.status) >= 0)); }).sort(function (a, b) { return age(b.at) - age(a.at); });
+    return head("Requests and reports", "Data-rights requests (access, correction of your own data, erasure, objection, portability), removal requests and profile reports, in one list with due dates (REQ-059, 090, 158, 270). A valid removal hides the profile within 2 business days and adds the name to the suppression list.") +
+      '<form class="filters" data-filter="#/admin/dsr">' + W.field("Kind", "k", { type: "select", options: ["Data request", "Removal", "Report"], blank: "All", value: q.k }) + W.field("Status", "s", { type: "select", options: [["open", "Open"], ["closed", "Closed"]], blank: "All", value: q.s }) + "</form>" +
+      W.table(["Ref", "Kind", "Profile or person", "Received", "Due", "Status", ""], rows.map(function (r) { return [e(r.id), '<span class="pill ' + (r.kind === "Removal" ? "bad" : r.kind === "Report" ? "warn" : "gray") + '">' + r.kind + "</span> " + e(r.what), r.who, e(r.at), W.dueText(r.due, r.status), W.stPill(r.status), '<a class="btn sm alt" href="#/admin/dsr/' + e(r.id) + '">Open</a>']; }), "Nothing waiting.");
+  });
+  mini("/admin/dsr/:id", "A66", "dsr", function (par) {
+    var it = reqItems().filter(function (r) { return r.id === par.id; })[0]; if (!it) return "<h1>Not found</h1>";
+    var x = it.x, open = DONE.indexOf(it.status) < 0, acts = "";
+    if (open && it.coll === "removals") acts = W.btn("Valid: hide and suppress", "rmOk", x.id, "bad") + W.btn("Not valid, with a reason", "declineDlg", "removals:" + x.id, "alt");
+    else if (open && it.coll === "reports") acts = (x.profileId ? W.btn("Hide profile now", "unpubDlg", x.profileId, "bad") : "") + W.btn("Resolve", "repDone", x.id) + W.btn("Dismiss", "repDone", x.id, "alt");
+    else if (open) acts = W.btn("Close", "dsrDone", x.id);
+    return '<p><a href="#/admin/dsr">\u2190 Requests and reports</a></p>' + head(it.kind + " " + x.id, e(it.what)) +
+      '<div class="card stack-s"><dl class="kv"><dt>Kind</dt><dd>' + it.kind + "</dd><dt>Status</dt><dd>" + W.stPill(it.status) + "</dd><dt>Received</dt><dd>" + e(it.at) + "</dd><dt>Due</dt><dd>" + W.dueText(it.due, it.status) + "</dd><dt>" + (it.coll === "dsr" ? "Requester" : "Profile") + "</dt><dd>" + it.who + "</dd>" + (x.detail ? "<dt>Details</dt><dd>" + e(x.detail) + "</dd>" : "") + (x.contact ? "<dt>Contact (staff only)</dt><dd>" + e(x.contact) + "</dd>" : "") + (x.reason && it.coll !== "reports" ? "<dt>Decision note</dt><dd>" + e(x.reason) + "</dd>" : "") + "</dl></div>" +
+      (it.coll === "removals" ? '<p class="note">A valid removal hides the profile (410 and noindex) within 2 business days, adds the name to the permanent suppression list and queues a cache purge.</p>' : "") +
+      (acts ? '<div class="row">' + acts + "</div>" : "");
+  });
+  W.act.repDone = function (id) { W.find("reports", id).status = "closed"; W.log("report.close", id, ""); W.save(); W.render(); };
   W.act.rmOk = function (id) {
     if (!W.can("disputes")) { W.toast("You do not have the handle_disputes capability."); return; }
     var x = W.find("removals", id), p = W.profile(x.profileId); x.status = "done"; p.status = "suppressed"; p.removedReason = "Removal request";
     W.S.suppression.unshift({ id: W.uid("sp"), name: p.name, kind: "Removed individual or organisation", at: W.TODAY, reason: "Removal request " + id }); W.purge("/profile/" + p.slug, "removal request"); W.log("removal.approve", p.id, "suppressed"); W.mail(x.contact || "requester", "Your removal request was accepted", "The profile is no longer public.", ""); W.save(); W.render(); W.toast("Hidden (410 + noindex), added to the permanent suppression list, CDN purge queued.");
   };
-  mini("/admin/dsr", "A35", "dsr", function () {
-    return head("Data requests", "Access, correction, erasure, objection, portability, each with a due date (REQ-059).") + W.table(["Type", "Requester", "Received", "Due", "Status", ""], W.S.dsr.map(function (d) { return [e(d.kind), e(d.who), e(d.at), e(d.due), W.stPill(d.status), d.status !== "closed" ? W.btn("Close", "dsrDone", d.id, "sm") : ""]; }), "No requests.");
-  });
   W.act.dsrDone = function (id) { W.find("dsr", id).status = "closed"; W.log("dsr.close", id, ""); W.save(); W.render(); };
 })();

@@ -99,7 +99,7 @@ Stories are native WordPress posts. WordPress already provides scheduling, revis
 ### Newsletter
 
 - Double opt-in. Consent is stored with a timestamp and the policy version.
-- Not an enquiry. A sign-up never enters the Support inbox or the customer records.
+- Not an enquiry. A sign-up never enters Enquiries or the customer records.
 - Unsubscribe in one click, and the unsubscribe page works without an account.
 
 ## Tests that must exist

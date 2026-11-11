@@ -1,7 +1,7 @@
 /* Core: state store, selectors, helpers, router, chrome, events. No framework, no build. */
 (function () {
   var W = (window.W = window.W || {});
-  var KEY = "wiw-wireframe-v19";
+  var KEY = "wiw-wireframe-v21";
   W.act = {}; W.forms = {}; W.live = {};
   W.ui = { flows: false, notes: false, nav: false, modal: null, cookie: false, outbox: false };
 
@@ -51,27 +51,38 @@
   W.isPublic = function (p) { return W.vis(p) === "public"; };
   W.publicProfiles = function () { return W.S.profiles.filter(W.isPublic); };
   W.inWindow = function (a) { return (!a.start || a.start <= W.TODAY) && (!a.end || a.end >= W.TODAY); };
+  /* Sponsored story deal (REQ-263, REQ-269, D-068). One deal = one sponsor, one story, one paid slot. The only arrangement type is "sponsored post".
+     Money is only RECORDED here after it is agreed and paid offline (D-005). Four steps: 1 deal agreed, 2 payment recorded, 3 story ready (published), 4 placement. */
   W.arrMissing = function (a) {
     var m = [];
-    if (a.complimentary) { if (!a.confirmedBy) m.push("confirmed-by"); if (!a.onboarding) m.push("onboarding started"); if (!a.consent && a.linkedProfile) m.push("customer consent (REQ-175)"); return m; }
     if (!(a.amount > 0)) m.push("amount"); if (!a.currency) m.push("currency"); if (!a.method) m.push("payment method");
-    if (!a.ref) m.push("payment reference"); if (!a.received) m.push("date received"); if (!a.confirmedBy) m.push("confirmed-by"); if (!a.onboarding) m.push("onboarding started");
+    if (!a.ref) m.push("payment reference"); if (!a.received) m.push("date received"); if (!a.confirmedBy) m.push("confirmed-by");
     return m;
   };
-  W.arrStatus = function (a) {
-    if (a.cancelled) return "cancelled";
-    var complete = W.arrMissing(a).length === 0;
-    if (complete && a.agreed) { if (a.endedManual || (a.end && a.end < W.TODAY)) return "ended"; return "confirmed"; }
-    if (a.endedManual) return "ended";
-    if (a.agreed && (a.received || a.ref || a.method)) return "awaiting payment (incomplete)";
-    if (a.agreed) return "awaiting payment";
-    return "proposed";
+  W.dealPaid = function (a) { return W.arrMissing(a).length === 0; };
+  /* The deal's current placement: a live one, else a scheduled one, else the latest. */
+  W.dealPlacement = function (a) {
+    var all = (W.S.placements || []).filter(function (pl) { return pl.dealId === a.id; });
+    return all.filter(function (pl) { return W.placementStatus(pl) === "active"; })[0] || all.filter(function (pl) { return W.placementStatus(pl) === "scheduled"; })[0] || all.sort(function (x, y) { return x.start < y.start ? 1 : -1; })[0] || null;
   };
-  W.counts = function (a) { var s = W.arrStatus(a); return !a.complimentary && (s === "confirmed" || s === "ended") && W.arrMissing(a).length === 0; };
+  W.dealStory = function (a) { return a.linkedArticle ? W.find("articles", a.linkedArticle) : null; };
+  /* The four steps, each true or false. */
+  W.dealSteps = function (a) { var s = W.dealStory(a); return [!!(a.agreed && a.customerId && a.amount > 0), W.dealPaid(a), !!(s && s.status === "published"), !!W.dealPlacement(a)]; };
+  /* Status keys: cancelled, live, scheduled, ended, needs payment, needs story, ready to schedule. */
+  W.dealStatus = function (a) {
+    if (a.cancelled) return "cancelled";
+    var pl = W.dealPlacement(a), st = pl ? W.placementStatus(pl) : "";
+    if (st === "active") return "live"; if (st === "scheduled") return "scheduled"; if (st) return "ended";
+    var s = W.dealSteps(a);
+    if (!s[1]) return "needs payment"; if (!s[2]) return "needs story"; return "ready to schedule";
+  };
+  W.arrStatus = W.dealStatus;
+  /* Counts toward the sprint target when the deal is agreed and the payment record is complete and the deal is not cancelled (REQ-022). */
+  W.counts = function (a) { return !a.cancelled && !!a.agreed && W.dealPaid(a); };
   /* Profiles cannot be Sponsored (D-055): that label is for stories only. Kept so older call sites read as "none". */
   W.sponsorOf = function () { return null; };
   /* Paid story placement (REQ-263, D-060): a sponsor pays for a labelled slot for a story, for set dates, on the Home page, the Stories page or both.
-     The slot never changes the order of other stories, search ranking, profiles, Featured, nominations or winners. Payment is agreed offline and recorded in the Register. */
+     The slot never changes the order of other stories, search ranking, profiles, Featured, nominations or winners. Payment is agreed offline and recorded on the deal (Sponsored stories). */
   W.placementStatus = function (pl) { if (pl.ended) return "ended"; if (pl.start && pl.start > W.TODAY) return "scheduled"; if (pl.end && pl.end < W.TODAY) return "expired"; return "active"; };
   W.activePlacements = function (where) {
     return (W.S.placements || []).filter(function (pl) { return W.placementStatus(pl) === "active" && (!where || pl.placement === "Both" || pl.placement === where); }).sort(function (x, y) { return x.start < y.start ? -1 : 1; });
@@ -121,7 +132,7 @@
   W.statePill = function (p) { if (p.status === "published" && p.compiled) return '<span class="pill warn" title="Review state (D-033)">' + e(W.PENDING_LABEL) + "</span>"; return p.status === "published" && p.lastReviewed ? '<span class="pill ok" title="Review state (D-033)">Reviewed on ' + e(p.lastReviewed) + "</span>" : ""; };
   W.spPill = function (name) { return name ? ' <span class="pill sponsored" title="Paid placement disclosure. Not a trust status (REQ-155).">Sponsored by ' + e(name) + "</span>" : ""; };
   W.stPill = function (s) {
-    var m = { published: "ok", confirmed: "ok", approved: "ok", pending: "warn", open: "warn", draft: "gray", proposed: "gray", rejected: "bad", unpublished: "bad", suppressed: "bad", cancelled: "bad", ended: "gray", new: "warn", contacted: "gray", qualified: "ok" };
+    var m = { published: "ok", confirmed: "ok", approved: "ok", pending: "warn", open: "warn", draft: "gray", proposed: "gray", rejected: "bad", unpublished: "bad", suppressed: "bad", cancelled: "bad", ended: "gray", new: "warn", contacted: "gray", qualified: "ok", live: "ok", scheduled: "warn", "needs payment": "warn", "needs story": "warn", "ready to schedule": "gray" };
     return '<span class="pill ' + (m[s] || (/awaiting/.test(s) ? "warn" : "gray")) + '">' + e(s) + "</span>";
   };
   W.ph = function (label, cls) { return '<div class="ph ' + (cls || "") + '" role="img" aria-label="Placeholder: ' + e(label) + '">' + e(label) + "</div>"; };

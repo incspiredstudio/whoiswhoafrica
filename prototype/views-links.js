@@ -27,7 +27,7 @@
     if (W.S.used[par.token]) return expiredPage();
     return page("Single-use link", "Consent to a complimentary listing", '<p style="font-size:var(--t-md)">' + e(W.brand.name) + ' would like to publish a complimentary profile for you. It is not public until you agree and a reviewer approves it.</p><div class="row">' + W.btn("I consent", "giveConsent", par.token) + '<a class="btn alt bad" href="#/remove/ngozi-balogun-mensah">I do not consent</a></div><p class="small muted">Your choice is recorded with a timestamp. No account is needed.</p>');
   });
-  W.act.giveConsent = function (token) { var a = W.find("arrangements", "arr5"); if (a) a.consent = true; W.S.used[token] = true; W.log("consent.complimentary", "arr5", "recorded via signed link"); W.save(); W.toast("Consent recorded with a timestamp."); W.go("#/"); };
+  W.act.giveConsent = function (token) { var c = W.find("customers", "c4"); if (c) c.consent = true; W.S.used[token] = true; W.log("consent.complimentary", "c4", "recorded via signed link"); W.save(); W.toast("Consent recorded with a timestamp."); W.go("#/"); };
 
   /* ---------- the profile form (same checks as before; no account) ---------- */
   var SCAN = [[/(\+?\d[\d\s-]{8,}\d)/, "phone number"], [/[\w.+-]+@[\w-]+\.[\w.]+/, "email address"], [/\b(aged?\s*\d{2}|born\s+(in|on)\s+\d)/i, "age or date of birth"], [/\b(health|cancer|religio|pastor|imam|politic|ethnic|arrest|convict|allegation|divorce)\w*/i, "sensitive topic"]];

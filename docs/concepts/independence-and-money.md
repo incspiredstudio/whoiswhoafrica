@@ -20,7 +20,7 @@ What money can do is one narrow, visible thing: a sponsor can pay for a story to
 
 ## What the platform records about money
 
-The site has no payment processing at all: no gateway, no checkout, no card data (D-005). Payment happens offline. An Administrator records it in the commercial register.
+The site has no payment processing at all: no gateway, no checkout, no card data (D-005). Payment happens offline. An Administrator records it on the sponsored story deal.
 
 | Item | How it is stored |
 |---|---|
@@ -28,21 +28,20 @@ The site has no payment processing at all: no gateway, no checkout, no card data
 | Method and reference | Text only. A digit-pattern guard rejects anything that looks like a card number |
 | Who confirmed it | A named Administrator |
 | Dates | Received, start and end |
-| Refunds and cancellations | Handled offline; the register holds a status and a note |
+| Refunds and cancellations | Handled offline; the deal holds a status and a note |
 
-Only the Administrator can open the register or confirm a payment. The capability is fixed to the Administrator and cannot be granted to others ([build: roles in code](/build/roles-in-code)).
+Only the Administrator can add a deal, see an amount or confirm a payment. The capability is fixed to the Administrator and cannot be granted to others ([build: roles in code](/build/roles-in-code)).
 
 ## The counting rule
 
-The sprint target counts "paid subscriptions". An arrangement counts only when its status is **Confirmed**, and Confirmed is computed, never typed (REQ-022). It needs all of:
+The sprint target counts paid sponsored story deals. A deal counts only when it is agreed, not cancelled, and its payment record is complete, and that is computed, never typed (REQ-022). It needs all of:
 
 1. amount and currency
 2. payment method and reference
 3. date received
 4. a named confirming Administrator
-5. onboarding started
 
-Complimentary arrangements never count and are reported separately (REQ-023). Property tests cover this: removing any required field flips the status, and a complimentary row never counts.
+Property tests cover this: removing any required field makes a deal stop counting.
 
 ## How the separation is enforced
 
@@ -60,7 +59,7 @@ The rule is built into the code structure, not left to good behaviour.
 |---|---|
 | Architecture test: Awards does not reference Commerce | No path from payment to nomination or winner |
 | Architecture test: Commerce and the Sponsored label never write Claimed or Featured | A paid arrangement cannot change a mark |
-| Property tests on the counting rule | Status follows fields, complimentary never counts |
+| Property tests on the counting rule | Status follows the fields and the slot |
 | Screen tests on the Awards screens | No commercial data is displayed or exported |
 | Change test: edit an arrangement, then check profile marks | Commercial changes leave marks unchanged (REQ-184) |
 

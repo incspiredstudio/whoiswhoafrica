@@ -6,7 +6,7 @@ How the platform's code is divided between a custom plugin, a must-use guard plu
 
 | Part | Where it lives | Job |
 |---|---|---|
-| `whoiswho-core` (plugin) | `site/wp-content/plugins/whoiswho-core/` | All product rules: profiles, review and publishing, import, claims, the commercial register, awards, support and privacy, audit, settings |
+| `whoiswho-core` (plugin) | `site/wp-content/plugins/whoiswho-core/` | All product rules: profiles, review and publishing, import, claims, sponsored story deals, awards, support and privacy, audit, settings |
 | `whoiswho-guard` (must-use plugin) | `site/wp-content/mu-plugins/` | Keeps non-public content out of every surface WordPress adds, locks core REST to staff, emits all SEO markup, hardens the install. It cannot be switched off from wp-admin |
 | `whoiswho` (theme) | `site/wp-content/themes/whoiswho/` | Templates, components, tokens, motion. No product logic: it reads data only through the plugin's read models |
 | Third-party plugins | Installed and pinned through the build | Things WordPress or the community already does well: two-factor sign-in, comments, jobs library, spam checks |
@@ -23,10 +23,10 @@ Product code lives in domain modules under `whoiswho-core/src/`. Admin screens a
 | `Review` | The `StateMachine`, review queue, duplicates, bulk unpublish, approval of edits to claimed profiles | [Review](/plugins/review) |
 | `Import` | Bundle validation, dry run, chunked apply, undo, hash check, results, suppression snapshot | [Import](/plugins/import) |
 | `Trust` | Claims, the Claimed mark, the assigned user, claim reminders | [Trust](/plugins/trust) |
-| `Commerce` | Customers, arrangements, the counting rule, story sponsors | [Commerce](/plugins/commerce) |
+| `Commerce` | Customers, sponsored story deals, the counting rule, the paid story slot | [Commerce](/plugins/commerce) |
 | `Content` | Stories support, events, home and stories curation, newsletter, comment settings, pages | [Content](/plugins/content) |
 | `Awards` | Editions, categories, criteria, nominations (stage and status), winners | [Awards](/plugins/awards) |
-| `Compliance` | Support inbox, data requests, suppression list, consents, retention, processors | [Compliance](/plugins/compliance) |
+| `Compliance` | Enquiries, corrections, requests and reports, suppression list, consents, retention, processors | [Compliance](/plugins/compliance) |
 | `Platform` | Capabilities and roles, audit logger, settings, the Nominations switch, signed links, mail, jobs, health, cache purge | [Platform](/plugins/platform) |
 
 The guard and the third-party choices have their own pages: [Guard](/plugins/guard) and [Third-party plugins](/plugins/third-party).

@@ -1,6 +1,6 @@
 # Compliance
 
-The module that deals with people and their rights: the support inbox, corrections, removals, reports, data requests, the suppression list, consents and retention. The processor register, lawful basis and retention schedule are documents, not screens.
+The module that deals with people and their rights: enquiries, corrections, removals, reports, data requests, the suppression list, consents and retention. The processor register, lawful basis and retention schedule are documents, not screens.
 
 ## Responsibility
 
@@ -23,8 +23,9 @@ The module that deals with people and their rights: the support inbox, correctio
 
 | Screen | What it does |
 |---|---|
-| Support inbox | One list for all typed items with a due-date countdown on removals |
-| Data requests | Access, correction, erasure, objection and portability requests, each with a due date |
+| Enquiries | Get listed, sponsored story, media work and awards sponsorship enquiries and contact-form messages (type Enquiry) |
+| Corrections | The public suggested corrections, each with a due date; Apply, resolve or decline with a reason (REQ-271) |
+| Requests and reports | Data requests, removals and profile reports in one list with kind and status filters and due dates (REQ-270) |
 | Suppression list | Read for Reviewers and Editors. Changed manually only by Administrators |
 
 ## Capabilities
@@ -33,11 +34,12 @@ The module that deals with people and their rights: the support inbox, correctio
 |---|---|---|---|
 | `wiw_support_inbox` | no | yes | yes |
 | `wiw_handle_disputes` | no | yes | yes |
+| `wiw_handle_requests` | no | yes | yes |
 | `wiw_view_suppression` | yes | yes | yes |
 | `wiw_edit_suppression` | no | no | yes |
 | `wiw_receive_enquiries` | no | no | yes (grantable) |
 
-The capability list has no separate data-request capability. The data requests screen uses the inbox capability unless a separate one is added.
+`wiw_handle_requests` covers the Requests and reports screen (data requests, removals and reports). `wiw_support_inbox` covers Enquiries and Corrections. Decisions on corrections and removals also need `wiw_handle_disputes`.
 
 ## Public read models and endpoints
 

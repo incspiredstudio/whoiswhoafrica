@@ -10,7 +10,7 @@ One WordPress site with the product rules in three code packages:
 
 | Package | Kind | Job |
 |---|---|---|
-| `whoiswho-core` | Plugin | The product: profiles, review, import, awards, commercial register, support inbox, capabilities, audit log |
+| `whoiswho-core` | Plugin | The product: profiles, review, import, awards, sponsored story deals, enquiries, corrections, requests and reports, capabilities, audit log |
 | `whoiswho-guard` | Must-use plugin | Closes the surfaces where WordPress could leak a non-public profile, locks core REST to staff, sets headers and hardening. An Administrator cannot deactivate it |
 | `whoiswho` | Theme | Server-rendered PHP templates with brand values in one tokens file. No page builder; staff edit page copy in the native block editor (D-060) |
 
@@ -76,7 +76,7 @@ Work moves through stages, with a human gate after the question list, the archit
 8. The import path: contract validator, hash check, dry run, chunked apply, undo, result.
 9. Cache purge and the 410 handler, then bulk unpublish.
 
-After M0, parallel waves cover directory pages, the review queue, the support inbox and forms, signed links, the register, stories, awards, the capability screen, email templates, analytics and the runbook.
+After M0, parallel waves cover directory pages, the review queue, the enquiries, corrections and requests screens and forms, signed links, sponsored story deals, stories, awards, the capability screen, email templates, analytics and the runbook.
 
 ## Pages in this section
 

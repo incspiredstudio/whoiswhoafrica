@@ -35,7 +35,7 @@ How the platform collects, shows, keeps and deletes personal data, and how peopl
 ### Pages and screens
 
 - Public: `/privacy`, `/terms`, `/cookies`, `/data-rights`, `/complaints`, `/unsubscribe`, cookie card.
-- Staff: Data requests. Exports are provided by WordPress and a plugin. The registers are documents, not screens.
+- Staff: Requests and reports (data requests, removals and reports). Exports are provided by WordPress and a plugin. The registers are documents, not screens.
 
 ### Third-party plugins
 

@@ -43,7 +43,7 @@ A sponsor can pay for a story (never an event) to be placed in a labelled slot o
 
 Only stories can be Sponsored (D-055, REQ-155, REQ-182). A sponsored story shows a "Sponsored" badge with the sponsor's name on its card and its page, and a notice in the story: "Sponsored content. Paid for by (sponsor). The sponsor did not write it and has no influence over any label or award."
 
-The label comes from either a sponsor name set on the story, or from a confirmed sponsored-story arrangement in the commercial register that is linked to the story and in its date window. When the dates end the label and slot go with them. It is never styled like a trust status. The staff side is the Story sponsors screen and the commercial register. A payment never changes a profile, a nomination or an award.
+The label comes from a live placement on the Sponsored stories screen: a slot for that story, within its start and end dates. When the dates end the label and slot go with them. It is never styled like a trust status. The staff side is the Sponsored stories screen. A payment never changes a profile, a nomination or an award.
 
 ## Comments
 
@@ -69,7 +69,7 @@ Published stories are searchable ([Search](/pages/public/search)) and appear in 
 |---|---|
 | Stories | WordPress posts (create, schedule, publish, revisions). The Articles screen is not drawn in the wireframe because WordPress provides it (D-059). |
 | Featured stories | The native sticky or featured flag. Featured applies to stories only. |
-| Sponsor and Sponsored label | Story sponsors screen (A18) and the commercial register |
+| Sponsor and Sponsored label | Sponsored stories screen (A18) |
 | Newsletter sign-ups | A Subscribers list (to be specified) |
 | Home and stories-page selection | The Home page settings and capability `wiw_curate_home` (REQ-257); stories use the same modes as the home page |
 

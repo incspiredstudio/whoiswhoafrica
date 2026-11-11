@@ -28,12 +28,13 @@ R is Reviewer, E is Editor, A is Administrator.
 | Curation | Home page and stories curation (`wiw_curate_home`) | no | yes | yes |
 | Events | Create, edit, schedule and unpublish events, link one to a story (`wiw_manage_events`) | no | yes | yes |
 | Stories | Create, schedule, publish, trash (`edit_posts`, `edit_others_posts`, `publish_posts`) | no | yes | yes |
-| Sponsored label | Set it on a story (`wiw_set_sponsored`) | no | yes | yes |
-| Support | Support inbox (`wiw_support_inbox`), disputes and removals (`wiw_handle_disputes`) | no | yes | yes |
+| Sponsored stories | Choose the story and schedule or end the labelled slot (`wiw_set_sponsored`) | no | yes | yes |
+| Enquiries and corrections | Enquiries and Corrections screens (`wiw_support_inbox`); decide corrections and removals (`wiw_handle_disputes`) | no | yes | yes |
+| Requests and reports | Data requests, removals and profile reports (`wiw_handle_requests`) | no | yes | yes |
 | Awards | Nominations: stage, status, add and remove, nomination and winner emails (`wiw_manage_awards`) | no | yes | yes |
 | Imports | Run an import (`wiw_run_imports`) | no | no | yes |
-| Register | Customers, arrangements, confirming payments (`wiw_manage_register`) | no | no | yes |
-| Exports | CSV exports of the register, nominations and personal data (`wiw_export_data`) | no | no | yes |
+| Sponsored deals (money) | Add a deal, record the payment, customers (`wiw_manage_register`) | no | no | yes |
+| Exports | CSV exports of sponsored story deals, nominations and personal data (`wiw_export_data`) | no | no | yes |
 | Audit | Read the audit log (`wiw_view_audit`) | no | no | yes |
 | Suppression | Change the suppression list (`wiw_edit_suppression`) | no | no | yes |
 | Dashboard | Commercial tiles (`wiw_view_dashboard_commercial`) | no | no | yes |
@@ -48,11 +49,11 @@ These are marked fixed. They are enforced by a `user_has_cap` filter, not only b
 
 - User and role management (`create_users`, `edit_users`, `promote_users`, `delete_users`).
 - Settings (`manage_options`) and installing or switching plugins and themes.
-- The commercial register (`wiw_manage_register`).
+- Sponsored story deals and money details (`wiw_manage_register`).
 - The Nominations switch (`wiw_toggle_nominations`).
 - Editing role bundles and per-user grants (`wiw_manage_capabilities`).
 
-In the prototype the locked capabilities are the register, users and roles, and settings. Q72 is still a proposed limit.
+In the prototype the locked capabilities are the money details, users and roles, and settings. Q72 is still a proposed limit.
 
 ## How roles and grants work in WordPress
 
@@ -65,7 +66,7 @@ The Roles and permissions, Users and capabilities and Exports screens are not dr
 | Create a new role | The same plugin: name the role, copy an existing one, then tick capabilities |
 | Add a user and choose their role | Core Users > Add New. One role per user; extra capabilities come from grants |
 | See the menu a role gets | Log in as a test user of that role. WordPress shows only the menu items the capabilities cover (REQ-240) |
-| Export data | CSV actions on the list screens (register, customers, nominations, profiles, support items) and core Tools > Export. Each needs `wiw_export_data` and is logged (REQ-087) |
+| Export data | CSV actions on the list screens (sponsored story deals, customers, nominations, profiles, support items) and core Tools > Export. Each needs `wiw_export_data` and is logged (REQ-087) |
 
 ## Granting a capability, step by step
 

@@ -40,7 +40,7 @@ The architecture proposes `wiw_story` as its own type. D-059 describes stories a
 | `wiw_bulk_actions` | Filter, reason, count and actor for each bulk unpublish |
 | `wiw_support_items` | Enquiry, correction, removal, report, complaint, data request: requester, message, status, owner, due date |
 | `wiw_customers` | Customers |
-| `wiw_arrangements`, `wiw_arrangement_links` | The commercial register. Never joined to awards tables |
+| `wiw_arrangements`, `wiw_arrangement_links` | Sponsored story deals (type is always sponsored post) and their placements. Never joined to awards tables |
 | Awards tables | Editions, categories, nominations with stage and status. Not live nominations are private. The Contact email is personal data in the PII catalogue |
 | `wiw_signed_links` | Hashed token, purpose, subject, expiry, use and revocation |
 | `wiw_notes` | Internal notes, never public |

@@ -21,7 +21,7 @@ The side text lists what the team can do: create or improve a listing, sponsored
 | Anything else | Free text |
 | Consent | A tick that the visitor has read the privacy notice and agrees to be contacted about this enquiry |
 
-The form has a bot challenge and is rate-limited per IP and per email (REQ-081, REQ-122). Submitting it creates an item of type **Enquiry** in the Support inbox and sends the visitor an acknowledgement with a reference such as `ENQ-0004`. The visitor lands on "Enquiry received: Our team will contact you. Terms are agreed offline; nothing is charged on this site."
+The form has a bot challenge and is rate-limited per IP and per email (REQ-081, REQ-122). Submitting it creates an item of type **Enquiry** on the Enquiries screen and sends the visitor an acknowledgement with a reference such as `ENQ-0004`. The visitor lands on "Enquiry received: Our team will contact you. Terms are agreed offline; nothing is charged on this site."
 
 An enquiry is not a profile. Nothing is published because someone sent an enquiry. If a listing is agreed, the team either creates the profile on the customer's behalf or sends the customer a single-use invitation link.
 
@@ -44,7 +44,7 @@ A short form: name, email and message, with a bot challenge. The page says a per
 
 The side panel points to common alternatives: find a profile to correct or remove it, Get listed, complaints and takedown, and your data rights.
 
-Sending a message creates a general item in the Support inbox and shows "Message sent: A member of staff will reply. The message is logged." (V27, REQ-039).
+Sending a message creates a general item on the Enquiries screen and shows "Message sent: A member of staff will reply. The message is logged." (V27, REQ-039).
 
 ## Enquiries about a profile
 
@@ -54,11 +54,11 @@ A different form lives on each profile: "Send an enquiry" relays a message to th
 
 | Public form | Staff screen | Who |
 |---|---|---|
-| Get listed | Support inbox, type Enquiry; customers and the commercial register for agreed deals (A14, A15) | Editor, Administrator |
-| Contact and profile enquiries | Support inbox (A12) | Editor, Administrator |
+| Get listed | Enquiries, type Enquiry; customers and Sponsored stories for agreed deals (A14, A18) | Editor, Administrator |
+| Contact and profile enquiries | Enquiries (A12) | Editor, Administrator |
 | Invitations and consent links | Customers (A14), issued with "Issue invitation or consent link" (A45) | Administrator |
 
-Default roles: the Support inbox is an Editor capability, and the commercial register, customers and exports are Administrator only. The Administrator can regrant capabilities to other users.
+Default roles: Enquiries is an Editor capability, and the money details of sponsored story deals, customers and exports are Administrator only. The Administrator can regrant capabilities to other users.
 
 ## Rules to remember
 

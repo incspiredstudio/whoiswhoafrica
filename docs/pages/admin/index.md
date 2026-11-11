@@ -11,8 +11,8 @@ Staff are the only people with accounts. Visitors, profile owners, nominators, n
 | Role | In one line |
 |---|---|
 | Reviewer | Reviews incoming records, resolves duplicates, assigns existing terms, can bulk unpublish. Read-only on most things. |
-| Editor | Everything a Reviewer does, plus editing and publishing profiles, claims, the support inbox, stories, awards and curation. |
-| Administrator | Everything, including the commercial register, imports, exports, the audit log, users, roles and settings. |
+| Editor | Everything a Reviewer does, plus editing and publishing profiles, claims, enquiries, corrections, requests and reports, stories, awards and curation. |
+| Administrator | Everything, including the sponsored story money details, imports, exports, the audit log, users, roles and settings. |
 
 The anonymous Visitor has no capabilities.
 
@@ -35,11 +35,11 @@ The left menu is built from the user's capabilities. These are the defaults from
 | Directory: Profiles, Sources, Suppression list (read-only) | Yes | Yes | Yes |
 | Directory: Claims | No | Yes | Yes |
 | Directory: Import | No | No | Yes |
-| Inbox: Support inbox | No | Yes | Yes |
-| Inbox: Data requests | No | No | Yes |
+| Inbox: Enquiries, Corrections | No | Yes | Yes |
+| Inbox: Requests and reports | No | Yes | Yes |
 | Content: Events | No | Yes | Yes |
-| Commercial: Story sponsors | No | Yes | Yes |
-| Commercial: Customers, Register | No | No | Yes |
+| Commercial: Sponsored stories (steps 3 and 4; no amounts) | No | Yes | Yes |
+| Commercial: Customers, and the money steps on Sponsored stories | No | No | Yes |
 | Awards: Nominations, Award categories | No | Yes | Yes |
 | Platform: Audit log, Email log, Purge log, Sprint thresholds | No | No | Yes |
 
@@ -66,7 +66,7 @@ These are not designed in the wireframe, because WordPress does them natively (D
 | [Review and publishing](./review-and-publishing) | Review queue, import, duplicates, publish-first labels |
 | [Profiles and claims](./profiles-and-claims) | Profile screen, direct edits, Claimed, claim deadline and reminders |
 | [Support and requests](./support-and-requests) | Inbox, corrections, removals, reports, data requests, suppression, bulk unpublish |
-| [Commercial and sponsors](./commercial-and-sponsors) | Customers, register, counting rule, story sponsors |
+| [Commercial and sponsors](./commercial-and-sponsors) | Customers, sponsored story deals, counting rule |
 | [Awards admin](./awards-admin) | Award categories, and the Nominations screen: the open or closed toggle, add a profile, stages, nominees and winners |
 | [Curation and content](./curation-and-content) | Home and stories curation, stories, comments, page copy |
 | [Events](./events) | Create and publish events, link one to a story |
@@ -76,5 +76,5 @@ These are not designed in the wireframe, because WordPress does them natively (D
 
 - **Public only after review.** An organisation can be live before review but carries a visible label; an individual is public only after a person approves them (REQ-208).
 - **Money never buys recognition.** Payment never affects nominations, judging, winners, profile ranking or any label. It can only buy a labelled story placement (REQ-183, REQ-199, REQ-263).
-- **Everything staff do on profiles, labels, the register, imports, bulk unpublish, suppression and capability grants is audited** (REQ-051, REQ-188).
+- **Everything staff do on profiles, labels, sponsored story deals, imports, bulk unpublish, suppression and capability grants is audited** (REQ-051, REQ-188).
 - **Claimed is a staff mark.** There are no Verified profiles (D-059).

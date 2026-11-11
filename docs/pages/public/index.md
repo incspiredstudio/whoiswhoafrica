@@ -57,8 +57,8 @@ The prototype is a clickable demonstration with sample data. All people and orga
 | Content | Fed by |
 |---|---|
 | Profiles | The acquisition import and the review queue, then the profiles screens (A03 to A06) |
-| Stories | WordPress posts, with sponsors set on the Story sponsors screen |
+| Stories | WordPress posts, with sponsors set on the Sponsored stories screen |
 | Awards | The Award categories and Nominations screens, with the open or closed toggle |
-| Forms | The Support inbox, Claims and Data requests screens |
+| Forms | The Enquiries, Corrections, Requests and reports and Claims screens |
 
 For the staff side see the wireframe inventory.

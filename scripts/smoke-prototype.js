@@ -65,14 +65,17 @@ check("recent bulk actions listed with a restore button", (ctx.location.hash = "
 S().role = "visitor"; ctx.location.hash = "#/people"; W.render(); check("people list drops the bulk-unpublished profiles", !/Tunde Achebe-Wanjala/.test(app.innerHTML));
 S().role = "reviewer"; W.act.bulkRestore(S().bulkLog[0].id); check("restore this batch brings them back", W.isPublic(W.profile("ip2")) && W.isPublic(W.profile("ip4")) && S().bulkLog[0].restored);
 W.forms.bulk({ f: "Annual Report~~B-2026-11-06~~~", reason: "x" }); check("bulk by source and batch", !W.isPublic(W.profile("ip8")) && W.isPublic(W.profile("ip2")) && W.profile("ip8").bulkId);
-// register counting
-reload(); const a = S().arrangements; check("seed counts", a.filter(W.counts).length === 2, a.filter(W.counts).map((x) => x.id).join());
-check("complimentary never counts", !W.counts(a.find((x) => x.id === "arr5")));
-check("a profile is never Sponsored, even with a confirmed arrangement (D-055)", W.sponsorOf(W.profile("b2")) === null);
-W.act.arrEnd("arr1");  check("trust unchanged", W.profile("b2").trust === "verified");
+// sponsored story deals (REQ-263, REQ-269, REQ-022): one arrangement type, four steps, counting rule
+reload(); const a = S().arrangements; S().role = "admin";
+check("seed counts", a.filter(W.counts).length === 3, a.filter(W.counts).map((x) => x.id).join());
+check("the only arrangement type is the sponsored post", Object.keys(W.LISTS.arrTypes).join() === "sponsored_post" && a.every((x) => x.type === "sponsored_post"));
+check("seed deals cover every status", ["needs payment", "needs story", "live", "scheduled", "ended"].every((s) => a.some((x) => W.dealStatus(x) === s)), a.map(W.dealStatus).join());
+check("a live deal without a payment record does not count", W.dealStatus(a.find((x) => x.id === "arr2")) === "live" && !W.counts(a.find((x) => x.id === "arr2")));
+check("a profile is never Sponsored, even with a counted deal (D-055)", W.sponsorOf(W.profile("b2")) === null);
+W.act.dealCancel("arr1");  check("a cancelled deal no longer counts and the profile trust is unchanged", !W.counts(a.find((x) => x.id === "arr1")) && W.dealStatus(a.find((x) => x.id === "arr1")) === "cancelled" && W.profile("b2").trust === "verified");
 // enquiries and customers
 S().role = "editor"; W.forms.bizenquiry({ name: "N", org: "O", interest: "Awards sponsorship", contact: "c@example.org", msg: "m" }); check("enquiry lands in the Support inbox", S().enquiries.length === 5 && S().enquiries[0].business && S().enquiries[0].kind === "Awards sponsorship"); ctx.location.hash = "#/admin/inbox"; W.render(); check("inbox shows the enquiry with its kind", /Awards sponsorship/.test(app.innerHTML));
-S().role = "admin"; W.forms.customer({ name: "New Co", segment: "Business", contact: "x" }); check("customer created directly", S().customers.length === 5 && S().customers[S().customers.length - 1].name === "New Co"); check("no leads or prospects state", S().leads === undefined && S().prospects === undefined);
+S().role = "admin"; W.forms.customer({ name: "New Co", segment: "Business", contact: "x" }); check("customer created directly", S().customers.length === 6 && S().customers[S().customers.length - 1].name === "New Co"); check("no leads or prospects state", S().leads === undefined && S().prospects === undefined);
 // nominations
 reload(); S().role = "editor"; check("no invite UI, no nominee token route and no token on any nomination", !W.act.nomStep && !W.act.nomAccept && !W.act.nomDeclineYes && !W.routes.some((r) => /^\/nominee\//.test(r.pattern)) && S().nominations.every((n) => !("token" in n)));
 ctx.location.hash = "#/admin/nominations/n2"; W.render(); check("nomination detail has no Invite nominee, no Recorded-by line and no Shortlisted hint", !/Invite nominee|Open the nominee link|Recorded by|Shortlisted, Finalist/.test(app.innerHTML));
@@ -115,15 +118,26 @@ check("controlled lists screen gone", W.match("#/admin/lists").r === W.notFound)
 S().tax.industries.push({ name: "Mining", slug: "mining", parent: "" }); W.syncLists(); W.forms.impdry({ csv: W.ui.imp.csv, src: "x.csv" }); check("import dry run accepts a term once an Editor adds it", W.ui.imp.rows.every((r) => !/not a term/.test(r.why)));
 check("country list is Nigeria-first and has other African countries and pan-African bodies", W.LISTS.countries[0] === "Nigeria" && W.LISTS.countries.length > 3 && W.LISTS.countries.some((c) => /Pan-African/.test(c)));
 reload(); S().role = "visitor"; ctx.location.hash = "#/businesses"; W.render(); check("country filter is enabled and offers other countries", /Ghana/.test(app.innerHTML) && !/Nigeria only/i.test(app.innerHTML));
-// D-040: correction, removal and report land in the Support inbox; staff edit directly; no separate screen
-check("corrections and reports screens gone", W.match("#/admin/corrections").r === W.notFound && W.match("#/admin/reports").r === W.notFound);
+// D-069: Enquiries, Corrections and Requests and reports are three screens; staff still edit directly
+check("Corrections and Requests and reports screens exist, no separate Reports screen", W.match("#/admin/corrections").r !== W.notFound && W.match("#/admin/dsr").r !== W.notFound && W.match("#/admin/reports").r === W.notFound);
 reload(); S().role = "visitor";
 W.forms.correct({ id: "b1", who: "The person named on this profile", need: "Correct a fact", part: "title", detail: "New Title", evidence: "", contact: "x@example.org" });
 const cr = S().corrections[0]; check("correction is a typed Correction item awaiting email", cr.kind === "Correction" && cr.status === "awaiting email check");
 ctx.location.hash = "#/confirm/" + cr.token; W.render(); check("email link opens the correction", cr.status === "open" && cr.emailVerified && S().used[cr.token]);
 W.forms.remove({ id: "ip3", who: "I am the person", detail: "d", contact: "r@example.org" }); W.forms.report({ id: "b6", reason: "Other", detail: "d" });
 S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
-check("inbox shows Correction, Removal and Report with a due countdown", /Correction/.test(app.innerHTML) && /Removal/.test(app.innerHTML) && /Report/.test(app.innerHTML) && /due in|overdue|due today/.test(app.innerHTML));
+check("Enquiries holds enquiries only: no Removal, Report or Correction rows", /Enquiries/.test(app.innerHTML) && !/pill bad">Removal/.test(app.innerHTML) && !/pill warn">Report/.test(app.innerHTML) && !/Suggestion/.test(app.innerHTML));
+ctx.location.hash = "#/admin/corrections"; W.render();
+check("Corrections lists the suggestion with a due countdown and no removals or reports", /Corrections/.test(app.innerHTML) && /headquarters is wrong/.test(app.innerHTML) && /due in|overdue|due today/.test(app.innerHTML) && !/Request removal/.test(app.innerHTML));
+W.profile("p-a").claimed = true; ctx.location.hash = "#/admin/corrections/cr2"; W.render();
+check("correction detail shows the claimed-profile review hint, Apply, Resolve and Decline", /goes to a Reviewer or Administrator for approval/.test(app.innerHTML) && /Apply: edit the profile/.test(app.innerHTML) && /Decline with a reason/.test(app.innerHTML));
+ctx.location.hash = "#/admin/dsr"; W.render();
+check("Requests and reports lists data requests, removals and reports together", /Requests and reports/.test(app.innerHTML) && /Data request/.test(app.innerHTML) && /pill bad">Removal/.test(app.innerHTML) && /pill warn">Report/.test(app.innerHTML));
+ctx.location.hash = "#/admin/dsr/" + S().removals[0].id; W.render();
+check("removal detail offers Valid and Not valid, with the 2 business day rule", /Valid: hide and suppress/.test(app.innerHTML) && /Not valid, with a reason/.test(app.innerHTML) && /2 business days/.test(app.innerHTML));
+W.profile("p-a").claimed = false; W.forms.decline({ arg: "corrections:" + S().corrections[0].id, reason: "Not verifiable" }); check("decline records a reason and the status", S().corrections[0].status === "declined" && S().corrections[0].reason === "Not verifiable" && S().audit.some((a) => a.action === "request.decline"));
+S().role = "reviewer"; ctx.location.hash = "#/admin/dsr"; W.render(); check("Reviewer has no Requests and reports by default: 403", /403/.test(app.innerHTML) && W.menuFor("reviewer").indexOf("Requests and reports") < 0);
+S().role = "editor";
 const before = S().audit.length; W.forms.profedit({ id: "b1", name: "Savanna Loop Agritech", title: "New Title", org: undefined, website: "https://example.org/sample-agritech", industry: "Agriculture & Agritech", country: "Nigeria", city: "Lagos", orgType: "Company", bio: "b", achievements: "a", reason: "request", item: cr.id });
 check("staff edit goes live at once and is audited", W.profile("b1").title === "New Title" && S().audit.length > before && S().audit.some((a) => a.action === "profile.edit") && cr.status === "closed");
 W.act.rmOk(S().removals[0].id); check("valid removal hides and suppresses", W.profile("ip3").status === "suppressed" && S().suppression.some((x) => x.name === "Halima Osei-Danjuma"));
@@ -139,19 +153,22 @@ for (const role of Object.keys(W.LISTS.roles)) {
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render();
 check("reviewer dashboard: counts by state present", /imported/.test(app.innerHTML) && /pending human review/.test(app.innerHTML) && />reviewed</.test(app.innerHTML) && />published</.test(app.innerHTML));
 check("reviewer dashboard hides commercial tiles", !/Sprint target/.test(app.innerHTML) && !/Revenue per stream/.test(app.innerHTML) && !/Expiry reminders/.test(app.innerHTML));
-for (const role of ["admin"]) { S().role = role; ctx.location.hash = "#/admin"; W.render(); check(role + " dashboard shows sprint target and revenue per stream", /Sprint target/.test(app.innerHTML) && /Revenue per stream/.test(app.innerHTML)); }
+for (const role of ["admin"]) { S().role = role; ctx.location.hash = "#/admin"; W.render(); check(role + " dashboard shows the sprint target and slots ending soon", /Sprint target/.test(app.innerHTML) && /Slots ending soon/.test(app.innerHTML) && !/Revenue per stream/.test(app.innerHTML)); }
+S().role = "admin"; ctx.location.hash = "#/admin/thresholds"; W.render(); check("Sprint thresholds has the Show sprint tracking switch with the theme-setting note", /Show sprint tracking/.test(app.innerHTML) && /Theme settings/.test(app.innerHTML));
+W.forms.sprintsw({}); ctx.location.hash = "#/admin"; W.render(); check("switching sprint tracking off hides the sprint card and is audited", S().sprintOn === false && !/Sprint target/.test(app.innerHTML) && S().audit.some((a) => a.action === "settings.sprint_tracking"));
+W.forms.sprintsw({ on: "1" }); ctx.location.hash = "#/admin"; W.render(); check("switching it back on shows the sprint card again", S().sprintOn === true && /Sprint target/.test(app.innerHTML));
 for (const role of ["reviewer", "editor"]) { S().role = role; ctx.location.hash = "#/admin"; W.render(); check(role + " dashboard hides the sprint target", !/Sprint target/.test(app.innerHTML)); }
 // D-041: left menu by role
 const REVIEWER_MENU = ["Dashboard", "Review queue", "Duplicates", "Profiles", "Sources", "Suppression list"];
-check("reviewer menu is exactly the six screens (no Support inbox, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
+check("reviewer menu is exactly the six screens (no Enquiries, no leads)", JSON.stringify(W.menuFor("reviewer")) === JSON.stringify(REVIEWER_MENU), W.menuFor("reviewer").join());
 S().role = "reviewer"; ctx.location.hash = "#/admin"; W.render(); { const side = (app.innerHTML.match(/<nav class="app-side"[\s\S]*?<\/nav>/) || [""])[0]; const links = [...side.matchAll(/<a href="#[^"]*"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]); check("reviewer left menu renders exactly those links", JSON.stringify(links) === JSON.stringify(REVIEWER_MENU), links.join()); }
 check("administrator menu includes everything", ["Import", "Sprint thresholds", "Award categories"].every((x) => W.menuFor("admin").concat(Object.values(W.TAXES).map((t) => "Taxonomies")).indexOf(x) >= 0));
-check("no AI drafting, kill switch or corrections screen in any menu; Claims only for those with the capability", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /ai drafting|kill|controlled lists|corrections and removals|reports/i.test(x))) && W.menuFor("editor").includes("Claims") && !W.menuFor("reviewer").includes("Claims"));
+check("no AI drafting, kill switch or corrections screen in any menu; Claims only for those with the capability", ["reviewer", "editor", "admin"].every((r) => !W.menuFor(r).some((x) => /ai drafting|kill|controlled lists/i.test(x))) && W.menuFor("editor").includes("Claims") && !W.menuFor("reviewer").includes("Claims"));
 check("Sources is in the Reviewer, Editor and Administrator menus", ["reviewer", "editor", "admin"].every((r) => W.menuFor(r).indexOf("Sources") >= 0));
-check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Support inbox", "Nominations"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Register", "Customers", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
-check("Administrator menu includes Register, Customers, Import and Sprint thresholds", ["Register", "Customers", "Import", "Sprint thresholds", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
+check("Editor menu has what the Reviewer has plus the Editor screens", REVIEWER_MENU.every((x) => W.menuFor("editor").indexOf(x) >= 0) && ["Enquiries", "Corrections", "Requests and reports", "Nominations"].every((x) => W.menuFor("editor").indexOf(x) >= 0) && !["Import", "Customers", "Exports", "Audit log", "Feature flag"].some((x) => W.menuFor("editor").indexOf(x) >= 0), W.menuFor("editor").join());
+check("Administrator menu includes Sponsored stories, Customers, Import and Sprint thresholds", ["Sponsored stories", "Customers", "Import", "Sprint thresholds", "Audit log"].every((x) => W.menuFor("admin").indexOf(x) >= 0));
 for (const r of ["claim", "ai", "killswitch"]) check("no route /admin/" + r, W.match("#/admin/" + r).r === W.notFound);
-for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/register"], ["editor", "#/admin/import"], ["editor", "#/admin/register"], ["editor", "#/admin/customers"], ["editor", "#/admin/audit"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
+for (const [role, path] of [["reviewer", "#/admin/import"], ["reviewer", "#/admin/inbox"], ["reviewer", "#/admin/sponsors"], ["editor", "#/admin/import"], ["editor", "#/admin/customers"], ["editor", "#/admin/audit"], ["visitor", "#/admin/sources"]]) { S().role = role; ctx.location.hash = path; W.render(); check("403 for " + role + " on " + path, /403/.test(app.innerHTML)); }
 for (const h of ["#/admin/flags", "#/admin/announcements"]) { ctx.location.hash = h; W.render(); check("route gone " + h, W.match(h).r === W.notFound); }
 check("no nominations_flag capability and no Feature flag or Shortlist and winners menu items", !W.CAPS.some((c) => c[0] === "nominations_flag") && ["Feature flag", "Shortlist and winners", "Awards setup"].every((x) => W.menuFor("admin").indexOf(x) < 0));
 
@@ -306,15 +323,15 @@ check("confirmed-by owners are not removed roles", S().arrangements.every((a) =>
 // Capability grants are made in WordPress; the prototype only models their effect on menus and screens (REQ-244).
 const tog = (role, cap) => { const g = S().caps[role], on = W.hasCap(cap, role), def = W.capDefault(cap, role); if (on) { g.grant = g.grant.filter((x) => x !== cap); if (def && g.revoke.indexOf(cap) < 0) g.revoke.push(cap); } else { g.revoke = g.revoke.filter((x) => x !== cap); if (!def && g.grant.indexOf(cap) < 0) g.grant.push(cap); } };
 reload(); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
-check("reviewer has no Support inbox by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML));
+check("reviewer has no Enquiries by default: not in the menu and 403", W.menuFor("reviewer").indexOf("Enquiries") < 0 && /403/.test(app.innerHTML));
 S().role = "admin"; tog("reviewer", "support_inbox");
 check("a granted capability is effective for a Reviewer", W.hasCap("support_inbox", "reviewer"));
-S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Support inbox") >= 0 && !/403/.test(app.innerHTML));
+S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render(); check("granted capability opens the screen and shows in the menu", W.menuFor("reviewer").indexOf("Enquiries") >= 0 && !/403/.test(app.innerHTML));
 S().role = "admin"; tog("reviewer", "support_inbox"); S().role = "reviewer"; ctx.location.hash = "#/admin/inbox"; W.render();
 check("revoking the grant brings the 403 back", !W.hasCap("support_inbox", "reviewer") && /403/.test(app.innerHTML));
 S().role = "admin"; tog("editor", "support_inbox"); S().role = "editor"; ctx.location.hash = "#/admin/inbox"; W.render();
-check("revoking a default takes the screen away from that Editor", W.menuFor("editor").indexOf("Support inbox") < 0 && /403/.test(app.innerHTML) && W.menuFor("editor", true).indexOf("Support inbox") >= 0);
-check("locked capabilities (users_roles, settings, commercial_register) are not grantable to others (Q72)", !W.hasCap("users_roles", "editor") && !W.hasCap("settings", "reviewer") && !W.hasCap("commercial_register", "editor"));
+check("revoking a default takes the screen away from that Editor", W.menuFor("editor").indexOf("Enquiries") < 0 && /403/.test(app.innerHTML) && W.menuFor("editor", true).indexOf("Enquiries") >= 0);
+check("locked capabilities (settings, commercial_register) are not grantable to others (Q72)", !W.hasCap("settings", "reviewer") && !W.hasCap("commercial_register", "editor"));
 tog("editor", "bulk_unpublish"); S().role = "editor";
 ctx.location.hash = "#/admin/profiles?type=individual&origin=import"; W.render(); check("Editor granted bulk_unpublish sees the bulk button", W.can("bulk") && /data-act="bulkDlg"/.test(app.innerHTML));
 check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_disputes", "editor") && !W.hasCap("handle_disputes", "reviewer") && /Editor/.test(W.disputeHandlers()));
@@ -378,7 +395,7 @@ check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_dispu
   // staff: the screens
   S().role = "editor";
   const adm = html("#/admin/sponsors"), stf = html("#/admin/stories");
-  check("Story sponsors screen shows status and no money fields", /active/.test(adm) && /scheduled/.test(adm) && /expired/.test(adm) && !/name="(amount|price|currency|method|ref|payment)"/.test(adm));
+  check("Sponsored stories list shows statuses and, for an Editor, no money fields", />live</.test(adm) && />scheduled</.test(adm) && />ended</.test(adm) && !/name="(amount|price|currency|method|ref|payment)"/.test(adm) && !/₦/.test(adm) && !/>Amount</.test(adm));
   check("Stories screen has no Event type or event fields and has a Related event select", !/<option[^>]*>Event</.test(stf) && !/name="evStart"/.test(stf) && /name="relatedEvent"/.test(stf));
   check("Story sponsors cannot target an event: events are not in the story list and a forced event id is refused", !/Lagos Agri-Finance Forum/.test(adm) && (() => { const n = S().placements.length; W.forms.placement({ sponsor: "Lodestar Building Supplies", storyId: "ev1", placement: "Both", start: "2027-02-01", end: "2027-02-05" }); return S().placements.length === n; })());
   // Events screen
@@ -408,7 +425,35 @@ check("handle_disputes: Editor by default, not Reviewer", W.hasCap("handle_dispu
   W.act.plEnd("pl1");
   check("ending a slot removes the label and the slot", W.sponsorOfArticle(W.find("articles", "a3")) === null && W.slotFor("Stories") === null);
   check("sponsoring a story never changes any profile label or state", profBefore === JSON.stringify(S().profiles.map((p) => [p.id, p.trust, p.sponsored, p.status])));
-  check("Reviewer has neither the Stories nor the Story sponsors screen by default", !W.menuFor("reviewer", true).includes("Stories") && !W.menuFor("reviewer", true).includes("Story sponsors"));
+  check("Reviewer has neither the Stories nor the Sponsored stories screen by default", !W.menuFor("reviewer", true).includes("Stories") && !W.menuFor("reviewer", true).includes("Sponsored stories"));
+  // the sponsored story deal flow: agreed offline, recorded here in four steps (REQ-269)
+  S().role = "admin"; const dn = S().arrangements.length, pc = S().placements.length;
+  W.forms.dealNew({ customerId: "c3", newName: "", newContact: "", amount: "50000", currency: "NGN", notes: "", method: "", ref: "", received: "", confirmedBy: "" });
+  const nd = S().arrangements[S().arrangements.length - 1];
+  check("a new deal starts at Needs payment with step 1 done and is audit-logged", S().arrangements.length === dn + 1 && W.dealStatus(nd) === "needs payment" && W.dealSteps(nd).join() === "true,false,false,false" && S().audit.some((r) => /deal\.create/.test(JSON.stringify(r))));
+  W.forms.dealPay({ id: nd.id, method: "Bank transfer", ref: "R-1", received: "2026-11-07", confirmedBy: "Sample Admin" });
+  check("a complete payment record counts toward the sprint target and moves the deal to Needs story", W.counts(nd) && W.dealStatus(nd) === "needs story" && W.dealSteps(nd)[1]);
+  W.forms.dealStory({ id: nd.id, storyId: "a7" }); W.forms.dealSlot({ id: nd.id, placement: "Home", start: "2027-02-01", end: "2027-02-10" });
+  check("a draft story keeps the deal at Needs story and no slot is added", W.dealStatus(nd) === "needs story" && S().placements.length === pc);
+  W.forms.dealStory({ id: nd.id, storyId: "a1" });
+  check("a published story moves the deal to Ready to schedule", W.dealStatus(nd) === "ready to schedule");
+  W.forms.dealSlot({ id: nd.id, placement: "Home", start: "2027-02-01", end: "2027-02-10" });
+  const ndp = W.dealPlacement(nd);
+  check("scheduling the slot moves the deal to Scheduled, with the sponsor's name and the deal id on the slot", W.dealStatus(nd) === "scheduled" && ndp && ndp.dealId === nd.id && ndp.sponsor === "Amber Coast Insurance" && S().audit.some((r) => /placement\.add/.test(JSON.stringify(r))));
+  check("the deal page shows the four steps, and warns when payment is missing on a live deal", /Deal agreed/.test(html("#/admin/sponsors/" + nd.id)) && /Placement/.test(html("#/admin/sponsors/" + nd.id)) && /Payment not recorded/.test(html("#/admin/sponsors/arr2")));
+  check("the list filters by status", /Amber Coast/.test(html("#/admin/sponsors?s=live")) && !/Lodestar Building Supplies<\/td>/.test(html("#/admin/sponsors?s=live").split("Supported by")[0]));
+  S().role = "editor";
+  const ed = html("#/admin/sponsors/arr1"), edn = html("#/admin/sponsors/new");
+  check("an Editor sees the deal steps but no money fields, and cannot open New sponsored story", /Story ready/.test(ed) && !/name="(amount|method|ref|received|confirmedBy)"/.test(ed) && /name="storyId"/.test(ed) && /Only an Administrator/.test(edn) && !/data-form="dealNew"/.test(edn));
+  const before = JSON.stringify(S().arrangements.find((x) => x.id === "arr5"));
+  W.forms.dealPay({ id: "arr5", method: "Cash", ref: "X", received: "2026-11-07", confirmedBy: "Editor" });
+  check("an Editor cannot record a payment", JSON.stringify(S().arrangements.find((x) => x.id === "arr5")) === before);
+  S().role = "admin";
+  check("an Administrator sees the money fields and New sponsored story", /name="amount"/.test(html("#/admin/sponsors/arr5")) && /data-form="dealNew"/.test(html("#/admin/sponsors/new")) && /New sponsored story/.test(html("#/admin/sponsors")));
+  W.act.dealCancel(nd.id);
+  check("cancelling a deal ends its slot and removes its label", W.dealStatus(nd) === "cancelled" && W.dealPlacement(nd).ended === true && !W.counts(nd));
+  check("a new story made from a deal is linked to it", (() => { const k = S().arrangements.length; W.forms.dealNew({ customerId: "__new", newName: "Test Sponsor Ltd", newContact: "Sample Contact 9", amount: "100", currency: "NGN" }); const d2 = S().arrangements[S().arrangements.length - 1]; W.forms.story({ title: "Made for a sponsor", type: "Feature", lede: "x", status: "draft", dealId: d2.id }); return S().arrangements.length === k + 1 && W.dealStory(d2) && W.dealStory(d2).title === "Made for a sponsor" && S().customers.some((c) => c.name === "Test Sponsor Ltd"); })());
+  S().role = "editor";
   S().role = "visitor";
 }
 S().role = "visitor"; S().user = null;

@@ -1,6 +1,6 @@
 # Theme settings
 
-This page lists what the `whoiswho` theme is configured with, and what lives in settings, in the tokens file, in code or in plugin options. The rule behind all of it: brand values live in one place, and a build check fails if they appear anywhere else (REQ-052, REQ-190).
+This page lists what the theme (parent `whoiswho`, active child `whoiswho-child`, REQ-273) is configured with, and what lives in settings, in the tokens file, in code or in plugin options. The rule behind all of it: brand values live in one place, and a build check fails if they appear anywhere else (REQ-052, REQ-190).
 
 ## Four places a value can live
 
@@ -63,6 +63,14 @@ Proposal: menus are WordPress menus for ordering and wording, and the conditiona
 | Before Accept | Only essential cookies run (REQ-062) |
 | After the choice | The Cookie preferences button in the footer reopens it |
 | Analytics | Privacy-friendly analytics measure visits and journeys (REQ-078); non-essential scripts load only after Accept |
+
+## Sprint tracking (REQ-272)
+
+| Setting | Name | Default | Who changes it | What it does |
+|---|---|---|---|---|
+| Sprint tracking | `sprint_tracking` | On | Administrator, audited | Shows or hides the sprint card on the Administrator dashboard and the Sprint thresholds screen |
+
+Turning it off hides the sprint tiles and the Sprint thresholds screen from the Administrator menu. Nothing is deleted: the two thresholds are kept and the setting can be turned back on. It does not affect sponsored story deals, the Sponsored stories screen or revenue records. The prototype shows the switch at the top of the Sprint thresholds screen, with a note that in WordPress it is a theme setting (Theme settings > Sprint tracking).
 
 ## Settings the theme reads but does not own
 

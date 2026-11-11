@@ -9,7 +9,7 @@ Requirements: REQ-057 to 072, 139, 140, 147, 158, 233. Decisions: D-013, D-016, 
 | Data | Where it sits | Public? |
 |---|---|---|
 | Profile facts, each with source and retrieval date | Profile records and provenance | Yes, once the profile is public |
-| Requester name and email, message | Support inbox | No |
+| Requester name and email, message | Enquiries, Corrections, Requests and reports | No |
 | Claim details (name, role, work email, phone, evidence, consent) | Claims screen | No |
 | Nominator details | Nominations | **Never** (REQ-064) |
 | Nominee data, including the staff-only Contact email | Nominations | Private while the nomination is Not live; the Contact email is never public |
@@ -52,7 +52,7 @@ This table is the register. It is a document in these docs, not an admin screen 
 | Right | How a person uses it |
 |---|---|
 | Access, correct, erase, object, port | The data-rights page, which opens a request with a due date (REQ-059) |
-| Correct a profile | The correction form, handled in the support inbox |
+| Correct a profile | The correction form, handled on the Corrections screen |
 | Remove a profile | The removal form |
 | Stop marketing email | One-click unsubscribe on every message (REQ-061) |
 
@@ -66,7 +66,7 @@ No account is needed for any of these. Email ownership is checked with a single-
 | Hide the profile after a valid removal request from the subject | Within 2 business days |
 | Resolve a correction | Within 7 days |
 
-These come from REQ-158. The support inbox shows a countdown for removals, and breaches are flagged. A valid removal adds the person to the permanent suppression list so imports never bring them back (REQ-147, 207). See [Publication states](/concepts/publication-states).
+These come from REQ-158. The Requests and reports screen shows a countdown for removals, and breaches are flagged. A valid removal adds the person to the permanent suppression list so imports never bring them back (REQ-147, 207). See [Publication states](/concepts/publication-states).
 
 ## Retention
 

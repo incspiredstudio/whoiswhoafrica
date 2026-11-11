@@ -64,9 +64,9 @@ These apply once `site/` exists:
 
 - Public templates read profiles and stories only through the `PublicProfile` and `PublicStory` read models.
 - Only `Review\StateMachine` writes a profile's publication state.
-- Every staff action on profiles, claims, labels, the register, imports and bulk unpublish goes through `AuditLogger`.
+- Every staff action on profiles, claims, labels, sponsored story deals, imports and bulk unpublish goes through `AuditLogger`.
 - Escape all output, verify nonces, check a named `wiw_*` capability on every admin action, and use `$wpdb->prepare`.
-- No brand values outside the theme tokens file. No payment code (D-005).
+- No brand values outside the theme tokens file, which lives in the child theme `whoiswho-child` (the parent `whoiswho` is never edited for brand values, REQ-273). No payment code (D-005).
 - Only the Administrator changes roles or capabilities.
 
 The technical design is in Architecture.

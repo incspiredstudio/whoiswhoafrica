@@ -68,7 +68,7 @@ All four work without an account or payment.
 
 **Request removal** (`/remove/:slug`). Asks who you are, why, and your email. The promise is acknowledgement in one business day and, for a valid request from the person or their representative, the profile hidden within two business days. A removed profile returns 410 and its name goes on a permanent suppression list so imports cannot bring it back (REQ-147, REQ-207, REQ-209).
 
-**Report this profile.** A short form in a dialog: reason (inaccurate, defamatory or harmful, privacy, copyright, other) and details. It lands in the Support inbox (V44, REQ-090).
+**Report this profile.** A short form in a dialog: reason (inaccurate, defamatory or harmful, privacy, copyright, other) and details. It lands on the Requests and reports screen (V44, REQ-090, REQ-270).
 
 After any of these the visitor sees a "received" page with a reference and, in the prototype, a button that shows the email that would be sent. Opening an expired or already used confirmation link shows "Link expired or already used".
 
@@ -78,7 +78,9 @@ After any of these the visitor sees a "received" page with a reference and, in t
 |---|---|
 | Profiles, status, claimed mark, assigned user | Profiles list (A05) and Profile admin (A06) |
 | New and edited records | Review queue (A03) |
-| Corrections, removals, reports, enquiries | Support inbox (A12) |
+| Enquiries | Enquiries (A12) |
+| Corrections | Corrections (A64) |
+| Removals and reports | Requests and reports (A35) |
 | Claims | Claims (A61) |
 | Removed names | Suppression list (A22) |
 | Facts' sources | Sources (A59) and the field source panel on A06 |

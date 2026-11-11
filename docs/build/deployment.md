@@ -22,6 +22,8 @@ Object storage is not planned. There is no AI provider account on the site side.
 
 ## Building a release
 
+A release contains both themes: the parent `whoiswho` and the child `whoiswho-child`. The child is the active theme on the live site, and the deploy script checks that the child is active and that the parent is present (REQ-273).
+
 For go-live, build an artifact containing:
 
 - WordPress core, pinned

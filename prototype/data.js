@@ -10,9 +10,7 @@
     orgTypes: ["Company", "University / school", "Professional association", "Public body", "NGO / social enterprise"],
     professions: ["Executive", "Founder", "Academic", "Legal", "Medical", "Creative", "Public servant"],
     roles: { visitor: "Visitor (anonymous, no account)", reviewer: "Reviewer", editor: "Editor", admin: "Administrator" },
-    streams: { subscription: "Subscription", media: "Media / editorial", sponsorship: "Sponsorship" },
-    arrTypes: { sponsored_post: "Sponsored post", media_package: "Media / editorial package", awards_sponsorship: "Awards sponsorship", other: "Other" },
-    defaultStream: { sponsored_post: "media", media_package: "media", awards_sponsorship: "sponsorship", other: "subscription" },
+    arrTypes: { sponsored_post: "Sponsored post" },
   };
 
   /* Controlled lists are WordPress custom taxonomies (D-039): terms with name, slug, optional parent. Countries are Nigeria-first and include other African countries and pan-African bodies (amended D-010). */
@@ -39,7 +37,7 @@
       v: 12, role: "visitor", user: null, consent: null, rate: { enquiry: 0, nominate: 0 }, used: {}, intake: {},
       flags: { nominations: { on: false, ref: "" } },
       bulkLog: [],
-      thresholds: { subs: 10, revenue: 500000000 },
+      thresholds: { subs: 10, revenue: 500000000 }, sprintOn: true,
       profiles: [], articles: [], events: [], sponsors: [], placements: [], customers: [], arrangements: [], subscribers: [],
       reports: [], corrections: [], removals: [], enquiries: [], nominations: [], signups: [],
       dsr: [], suppression: [], imports: [], emails: [], audit: [], purges: [], notes: {}, coi: {}, escalations: [],
@@ -91,7 +89,7 @@
       facts: [f("Type", "Research institute", "Accreditation List", "high", "import", "2026-11-05"), f("Founded", "1998", "Accreditation List", "high", "import", "2026-11-05")], scan: [], leadership: [], products: "", history: [] });
     /* Reviewed with a Sponsored disclosure and no trust label. */
     P.push({ id: "b8", slug: "osu-harbour-foods", type: "business", name: "Osu Harbour Foods", title: "Food processing and export", industry: "Manufacturing", city: "Accra", country: "Ghana", orgType: "Company", status: "published", trust: "", sponsored: "Osu Harbour Foods", source: "acquired", aiDrafted: false, views: 14, enquiries: true, lastReviewed: "2026-11-02", founded: "2007",
-      bio: "Osu Harbour Foods processes and exports shelf-stable foods from Accra to markets in West Africa. This profile is a paid placement: the company pays for its prominence, not for its facts or its labels.", achievements: "Export licence renewed (2025).", website: "https://example.org/osu-harbour",
+      bio: "Osu Harbour Foods processes and exports shelf-stable foods from Accra to markets in West Africa.", achievements: "Export licence renewed (2025).", website: "https://example.org/osu-harbour",
       milestones: [{ when: "2007", what: "Founded in Accra" }, { when: "2018", what: "First export contracts in the sub-region" }, { when: "2025", what: "Export licence renewed" }],
       facts: [f("Founded", "2007", "National Company Registry", "high", "import", "2026-10-29"), f("Headquarters", "Accra", "Official website", "high", "manual", "2026-10-29")], leadership: [], products: "Shelf-stable foods, sauces and grain products.", history: [] });
     P.push({ id: "b9", slug: "kigali-data-foundry", type: "business", name: "Kigali Data Foundry", title: "Data infrastructure company", industry: "Technology", city: "Kigali", country: "Rwanda", orgType: "Company", status: "published", trust: "verified", sponsored: null, source: "acquired", aiDrafted: false, views: 21, enquiries: true, lastReviewed: "2026-11-03", founded: "2019",
@@ -190,22 +188,24 @@
     ];
     S.sponsors = [{ id: "s1", name: "Amber Coast Insurance", link: "https://example.org/amber-coast", logo: "Logo placeholder", attached: ["Awards: Maiden Edition", "Article: Same-day settlement"] }, { id: "s2", name: "Lodestar Building Supplies", link: "https://example.org/lodestar", logo: "Logo placeholder", attached: [] }];
     S.placements = [
-      { id: "pl1", sponsor: "Amber Coast Insurance", storyId: "a3", placement: "Both", start: "2026-11-04", end: "2026-12-04", ended: false },
-      { id: "pl2", sponsor: "Lodestar Building Supplies", storyId: "a4", placement: "Home", start: "2026-12-05", end: "2026-12-19", ended: false },
-      { id: "pl3", sponsor: "Lodestar Building Supplies", storyId: "a6", placement: "Stories", start: "2026-10-01", end: "2026-10-31", ended: false }
+      { id: "pl1", sponsor: "Amber Coast Insurance", storyId: "a3", placement: "Both", start: "2026-11-04", end: "2026-12-04", ended: false, dealId: "arr2" },
+      { id: "pl2", sponsor: "Lodestar Building Supplies", storyId: "a4", placement: "Home", start: "2026-12-05", end: "2026-12-19", ended: false, dealId: "arr3" },
+      { id: "pl3", sponsor: "Lodestar Building Supplies", storyId: "a6", placement: "Stories", start: "2026-10-01", end: "2026-10-31", ended: false, dealId: "arr4" }
     ];
     S.customers = [
       { id: "c1", name: "Tiderail Payments", segment: "Business", contact: "Sample Contact 1", ext: "CUS-0001", profileId: "b2" },
       { id: "c2", name: "Bonny Reach Logistics", segment: "Business", contact: "Sample Contact 2", ext: "CUS-0002", profileId: "b3" },
       { id: "c3", name: "Amber Coast Insurance", segment: "Sponsor", contact: "Sample Contact 3", ext: "CUS-0003", profileId: "" },
-      { id: "c4", name: "Ngozi Balogun-Mensah", segment: "Individual", contact: "Ngozi Balogun-Mensah", ext: "CUS-0004", profileId: "p-a" }
+      { id: "c4", name: "Ngozi Balogun-Mensah", segment: "Individual", contact: "Ngozi Balogun-Mensah", ext: "CUS-0004", profileId: "p-a" },
+      { id: "c5", name: "Lodestar Building Supplies", segment: "Sponsor", contact: "Sample Contact 5", ext: "CUS-0005", profileId: "" }
     ];
+    /* Sponsored story deals (REQ-269): the only arrangement type is the sponsored post. A deal is agreed and paid offline; the site only records it. */
     S.arrangements = [
-      { id: "arr1", type: "media_package", customerId: "c1", linkedProfile: "b2", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Sample arrangement. Sponsored label applies between start and end dates.", consent: false },
-      { id: "arr2", type: "sponsored_post", customerId: "c3", linkedProfile: "", linkedArticle: "a3", amount: 5000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "2026-11-04", end: "2026-12-04", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "media", notes: "Awaiting payment.", consent: false },
-      { id: "arr3", type: "awards_sponsorship", customerId: "c3", linkedProfile: "", amount: 100000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-05", end: "2027-03-31", complimentary: false, agreed: true, cancelled: false, endedManual: false, stream: "sponsorship", notes: "Sample awards sponsorship. Has no effect on nominations or judging.", consent: false },
-      { id: "arr4", type: "media_package", customerId: "c2", linkedProfile: "", amount: 8000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, cancelled: false, endedManual: false, stream: "media", notes: "Proposed.", consent: false },
-      { id: "arr5", type: "other", customerId: "c4", linkedProfile: "p-a", amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "Sample Admin", onboarding: true, start: "2026-11-01", end: "2027-01-31", complimentary: true, agreed: true, cancelled: false, endedManual: false, stream: "subscription", notes: "Complimentary listing; customer consent recorded.", consent: true }
+      { id: "arr1", type: "sponsored_post", customerId: "c1", linkedArticle: "", amount: 20000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-001", received: "2026-11-03", confirmedBy: "Sample Admin", agreed: true, cancelled: false, notes: "Sample deal. Paid; the story is not chosen yet." },
+      { id: "arr2", type: "sponsored_post", customerId: "c3", linkedArticle: "a3", amount: 5000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", agreed: true, cancelled: false, notes: "Live, but payment is not recorded yet." },
+      { id: "arr3", type: "sponsored_post", customerId: "c5", linkedArticle: "a4", amount: 4000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-002", received: "2026-11-05", confirmedBy: "Sample Admin", agreed: true, cancelled: false, notes: "Paid and scheduled." },
+      { id: "arr4", type: "sponsored_post", customerId: "c5", linkedArticle: "a6", amount: 3000000, currency: "NGN", method: "Bank transfer", ref: "SAMPLE-REF-003", received: "2026-09-28", confirmedBy: "Sample Admin", agreed: true, cancelled: false, notes: "Sample deal whose slot has ended." },
+      { id: "arr5", type: "sponsored_post", customerId: "c2", linkedArticle: "", amount: 8000000, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", agreed: true, cancelled: false, notes: "Agreed offline. Waiting for payment." }
     ];
     S.reports = [{ id: "r1", profileId: "b6", reason: "Inaccurate information", detail: "Sample report text.", at: "2026-11-05", due: "2026-11-12", status: "open", owner: "" }];
     S.corrections = [{ id: "cr1", profileId: "b1", kind: "Correction", detail: "Sample: headquarters is wrong.", contact: "sample@example.org", emailVerified: true, at: "2026-11-05", due: "2026-11-12", status: "open" },

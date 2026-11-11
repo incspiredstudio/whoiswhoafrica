@@ -73,58 +73,20 @@
   W.act.newCustomer = function () { W.openModal("New customer", '<form data-form="customer" class="stack-s">' + W.field("Name", "name", { req: true }) + W.field("Segment", "segment", { type: "select", options: ["Individual", "Business", "Institution"] }) + W.field("Contact", "contact", { req: true }) + '<button class="btn">Add</button></form>'); };
   W.forms.customer = function (d) { var id = W.uid("c"); W.S.customers.push({ id: id, name: d.name, segment: d.segment || "Business", contact: d.contact, ext: "CUS-" + ("000" + (W.S.customers.length + 1)).slice(-4), profileId: "" }); W.log("customer.create", id, d.name); W.ui.modal = null; W.save(); W.render(); W.toast("Customer added."); };
   mini("/admin/customers", "A14", "customers", function () {
-    return '<div class="row between"><h1>Customers</h1>' + W.btn("New customer", "newCustomer", "", "alt") + "</div>" + W.table(["External ID", "Name", "Segment", "Contact", "Arrangements", ""], W.S.customers.map(function (c) { var n = W.S.arrangements.filter(function (a) { return a.customerId === c.id; }).length; return [e(c.ext), e(c.name), e(c.segment), e(c.contact), n, W.btn("Send profile invitation", "invite", c.id, "sm alt")]; })) + '<p class="small muted">Customers and enquiries have stable external IDs and change timestamps for a later CaromHQ link (REQ-205).</p>';
+    return '<div class="row between"><h1>Customers</h1>' + W.btn("New customer", "newCustomer", "", "alt") + "</div>" + W.table(["External ID", "Name", "Segment", "Contact", "Sponsored stories", ""], W.S.customers.map(function (c) { var n = W.S.arrangements.filter(function (a) { return a.customerId === c.id; }).length; return [e(c.ext), e(c.name), e(c.segment), e(c.contact), n, W.btn("Send profile invitation", "invite", c.id, "sm alt")]; })) + '<p class="small muted">Customers and enquiries have stable external IDs and change timestamps for a later CaromHQ link (REQ-205).</p>';
   });
 
-  /* ---------- register ---------- */
-  mini("/admin/register", "A15", "register", function (par, q) {
-    var rows = W.S.arrangements.filter(function (a) { return !q.s || W.arrStatus(a).indexOf(q.s) === 0; });
-    return '<div class="row between"><h1>Commercial register</h1><div class="row"><a class="btn" href="#/admin/register/new">New arrangement</a>' + '</div></div><div class="infobox"><strong>Counting rule (REQ-022).</strong> A paid subscription = a non-complimentary arrangement with status Confirmed. Confirmed needs amount, currency, payment method and reference, date received, a named confirmed-by admin, and onboarding started. Status is computed from the fields; it is not typed in. Complimentary never counts. <em>Ended arrangements that were confirmed still count in this wireframe: see report notes.</em></div>' +
-      '<form class="filters" data-filter="#/admin/register">' + W.field("Status", "s", { type: "select", options: ["proposed", "awaiting payment", "confirmed", "ended", "cancelled"], blank: "Any", value: q.s }) + "</form>" +
-      W.table(["ID", "Type", "Customer", "Amount", "Stream", "Status (computed)", "Counts?", "Dates", ""], rows.map(function (a) { var c = W.find("customers", a.customerId); return [e(a.id), e(W.LISTS.arrTypes[a.type]), e(c ? c.name : "?"), a.complimentary ? '<span class="pill gray">complimentary</span>' : W.money(a.amount, a.currency), e(W.LISTS.streams[a.stream]), W.stPill(W.arrStatus(a)), W.counts(a) ? '<span class="pill ok">Yes</span>' : '<span class="pill gray">No</span>', e((a.start || "?") + " to " + (a.end || "?")), '<a class="btn sm alt" href="#/admin/register/' + e(a.id) + '">Open</a>']; }));
-  });
-  function arrForm(a, isNew) {
-    var miss = W.arrMissing(a);
-    return '<form class="card stack-s" data-form="arr" data-live="arr"><input type="hidden" name="id" value="' + e(a.id) + '">' + W.field("Type", "type", { type: "select", options: Object.keys(W.LISTS.arrTypes).map(function (k) { return [k, W.LISTS.arrTypes[k]]; }), value: a.type }) + W.field("Customer", "customerId", { type: "select", options: W.S.customers.map(function (c) { return [c.id, c.name + " (" + c.segment + ")"]; }), value: a.customerId }) +
-      W.field("Agreed with customer", "agreed", { type: "checkbox", value: a.agreed }) + W.field("Complimentary (excluded from paid counts and revenue)", "complimentary", { type: "checkbox", value: a.complimentary }) + W.field("Amount (NGN, whole naira)", "amount", { type: "number", value: a.amount / 100 }) + W.field("Currency", "currency", { value: a.currency }) + W.field("Payment method", "method", { type: "select", options: ["Bank transfer", "Cash", "Cheque", "Other"], blank: "—", value: a.method }) + W.field("Payment reference", "ref", { value: a.ref }) + W.field("Date received", "received", { type: "date", value: a.received }) + W.field("Confirmed by (named admin)", "confirmedBy", { value: a.confirmedBy }) + W.field("Onboarding started", "onboarding", { type: "checkbox", value: a.onboarding }) +
-      W.field("Start date", "start", { type: "date", value: a.start }) + W.field("End date", "end", { type: "date", value: a.end }) + W.field("Revenue stream", "stream", { type: "select", options: Object.keys(W.LISTS.streams).map(function (k) { return [k, W.LISTS.streams[k]]; }), value: a.stream, hint: "Default from the type; editable." }) + W.field("Linked profile (for Sponsored label)", "linkedProfile", { type: "select", options: W.S.profiles.map(function (p) { return [p.id, p.name || p.id]; }), blank: "None", value: a.linkedProfile }) + W.field("Customer consent recorded (complimentary profiles)", "consent", { type: "checkbox", value: a.consent }) + W.field("Notes", "notes", { type: "textarea", value: a.notes }) + (isNew ? "" : W.field("Reason for this change (audited)", "reason", { req: true })) +
-      '<div id="arrcheck" class="infobox" role="status" aria-live="polite">' + arrCheck(a, miss) + '</div><div class="row"><button class="btn">Save</button>' + (isNew ? "" : W.btn("End now", "arrEnd", a.id, "alt") + W.btn("Cancel arrangement", "arrCancel", a.id, "alt bad")) + "</div></form>";
-  }
-  function arrCheck(a, miss) {
-    miss = miss || W.arrMissing(a); var st = W.arrStatus(a);
-    return "<strong>Status: " + e(st) + ".</strong> Counts toward the 10 paid subscriptions: <strong>" + (W.counts(a) ? "Yes" : "No") + "</strong>" + (a.complimentary ? " (complimentary never counts)" : miss.length ? "; missing: " + e(miss.join(", ")) : "") + "." + (a.type === "sponsored_profile" && a.linkedProfile ? " The Sponsored label shows on the linked profile from " + e(a.start || "?") + " to " + e(a.end || "?") + " while Confirmed." : "") + " This never changes Verified or Featured.";
-  }
-  W.live.arr = function (f) {
-    var d = W.formData(f), a = readArr(d, {}); var box = document.getElementById("arrcheck"); if (box) box.innerHTML = arrCheck(a);
-  };
-  function readArr(d, old) {
-    var a = Object.assign({}, old, { type: d.type, customerId: d.customerId, agreed: !!d.agreed, complimentary: !!d.complimentary, amount: Math.round((Number(d.amount) || 0) * 100), currency: d.currency || "", method: d.method || "", ref: d.ref || "", received: d.received || "", confirmedBy: d.confirmedBy || "", onboarding: !!d.onboarding, start: d.start || "", end: d.end || "", stream: d.stream, linkedProfile: d.linkedProfile || "", consent: !!d.consent, notes: d.notes || "" });
-    return a;
-  }
-  mini("/admin/register/new", "A16", "register", function () {
-    var a = { id: "new", type: "media_package", customerId: W.S.customers[0].id, amount: 0, currency: "NGN", method: "", ref: "", received: "", confirmedBy: "", onboarding: false, start: "", end: "", complimentary: false, agreed: false, stream: "subscription", linkedProfile: "", notes: "", consent: false };
-    return '<p><a href="#/admin/register">← Register</a></p>' + head("New arrangement") + arrForm(a, true);
-  });
-  mini("/admin/register/:id", "A16", "register", function (par) {
-    var a = W.find("arrangements", par.id); if (!a) return "<h1>Not found</h1>";
-    return '<p><a href="#/admin/register">← Register</a></p>' + head("Arrangement " + a.id) + arrForm(a, false) + W.notesBox(a.id);
-  });
-  W.forms.arr = function (d) {
-    if (d.id === "new") { var n = readArr(d, { id: W.uid("arr"), cancelled: false, endedManual: false }); W.S.arrangements.push(n); W.log("arrangement.create", n.id, n.type); W.save(); W.go("#/admin/register/" + n.id); return; }
-    var a = W.find("arrangements", d.id), before = W.arrStatus(a); var n2 = readArr(d, a); Object.assign(a, n2);
-    W.log("arrangement.edit", a.id, "reason: " + d.reason + "; " + before + " to " + W.arrStatus(a)); W.save(); W.render(); W.toast("Saved. Status is now " + W.arrStatus(a) + "; Claimed and Featured unchanged.");
-  };
-  W.act.arrEnd = function (id) { var a = W.find("arrangements", id); a.endedManual = true; W.log("arrangement.end", id, "ended by admin"); W.save(); W.render(); W.toast("Ended. Nothing is deleted."); };
-  W.act.arrCancel = function (id) { var a = W.find("arrangements", id); a.cancelled = true; W.log("arrangement.cancel", id, "recorded; refund handled offline and recorded by an Administrator"); W.save(); W.render(); };
   /* ---------- Stories (blog articles) ---------- */
-  mini("/admin/stories", "A62", "articles", function () {
+  mini("/admin/stories", "A62", "articles", function (par, q) {
+    var forDeal = q && q.for ? W.find("arrangements", q.for) : null;
     var rows = W.S.articles.slice().sort(function (x, y) { return x.date < y.date ? 1 : -1; }).map(function (a) {
       var sp = W.sponsorOfArticle(a), ev = a.relatedEvent ? W.find("events", a.relatedEvent) : null;
       return ['<a href="#/stories/' + e(a.slug) + '">' + e(a.title) + "</a>", e(a.type), e(a.status), e(a.date), ev ? e(ev.title) : '<span class="muted">-</span>', sp ? "Sponsored by " + e(sp) : '<span class="muted">-</span>'];
     });
-    return head("Stories", "Blog articles: interviews, features, news and more. In WordPress these are ordinary posts. Events are a separate post type on the Events screen (REQ-262); a story can link one event, which shows at the end of the story (REQ-265). Comments on a story are moderated with the WordPress defaults (REQ-258). A story is made Sponsored on the Story sponsors screen, never here.") +
+    return head("Stories", "Blog articles: interviews, features, news and more. In WordPress these are ordinary posts. Events are a separate post type on the Events screen (REQ-262); a story can link one event, which shows at the end of the story (REQ-265). Comments on a story are moderated with the WordPress defaults (REQ-258). A story is made Sponsored on the Sponsored stories screen, never here.") +
+      (forDeal ? '<div class="infobox" role="status">Creating the story for the sponsored story deal <strong>' + e(forDeal.id) + "</strong> (sponsor: " + e((W.find("customers", forDeal.customerId) || {}).name) + "). When you save it, it is linked to that deal. Publish it, then schedule the slot on the deal.</div>" : "") +
       W.table(["Title", "Type", "Status", "Published", "Related event", "Paid slot"], rows) +
-      '<form class="card stack-s" data-form="story"><h2>New story</h2>' +
+      '<form class="card stack-s" data-form="story"><h2>New story</h2>' + (forDeal ? '<input type="hidden" name="dealId" value="' + e(forDeal.id) + '">' : "") +
       W.field("Title", "title", { req: true }) + W.field("Type", "type", { type: "select", options: ["Interview", "Feature", "Spotlight", "Opinion", "Announcement", "News"], req: true }) +
       W.field("Industry", "industry", { type: "select", options: W.LISTS.industries, blank: "Choose" }) + W.field("Author", "author", { value: "WHOISWHO Stories" }) +
       W.field("Summary", "lede", { type: "textarea", req: true }) + W.field("Body", "body", { type: "textarea" }) +
@@ -136,7 +98,8 @@
     var slug = d.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     var a = { id: W.uid("a"), slug: slug, seed: slug, type: d.type, title: d.title, industry: d.industry || "", author: d.author || "WHOISWHO Stories", date: d.date || W.TODAY, status: d.status || "draft", sponsor: null, profiles: [], lede: d.lede, body: d.body || d.lede, paras: [], quote: "" };
     if (d.relatedEvent && W.find("events", d.relatedEvent)) a.relatedEvent = d.relatedEvent;
-    W.S.articles.push(a); W.log("story.add", a.id, a.type + ": " + a.title + " (" + a.status + ")" + (a.relatedEvent ? ", links event " + a.relatedEvent : "")); W.save(); W.render(); W.toast("Saved. " + (a.status === "published" ? "It is public." : "It is not public until published."));
+    W.S.articles.push(a); var dl = d.dealId ? W.find("arrangements", d.dealId) : null; if (dl) { dl.linkedArticle = a.id; W.log("deal.story", dl.id, "story " + a.id + " created for the deal"); }
+    W.log("story.add", a.id, a.type + ": " + a.title + " (" + a.status + ")" + (a.relatedEvent ? ", links event " + a.relatedEvent : "")); W.save(); W.render(); W.toast("Saved. " + (a.status === "published" ? "It is public." : "It is not public until published.")); if (dl) W.go("#/admin/sponsors/" + dl.id);
   };
   W.act.storyEvent = function (id, ev) { var a = W.find("articles", id); if (!a) return; if (ev) a.relatedEvent = ev; else delete a.relatedEvent; W.log("story.event", id, ev ? "links event " + ev : "event link removed"); W.save(); W.render(); };
 
@@ -171,38 +134,123 @@
     W.log(v.status === "published" ? "event.publish" : "event.unpublish", id, v.title); W.save(); W.render(); W.toast(v.status === "published" ? "Published." : "Unpublished. It is no longer public; stories that link it no longer show it.");
   };
 
-  /* ---------- Story sponsors: dated paid slots (REQ-263) ---------- */
-  mini("/admin/sponsors", "A18", "sponsors", function () {
-    var pls = (W.S.placements || []).slice().sort(function (x, y) { return x.start < y.start ? 1 : -1; });
-    var rows = pls.map(function (pl) {
-      var a = W.find("articles", pl.storyId), st = W.placementStatus(pl);
-      return [e(pl.sponsor), a ? '<a href="#/stories/' + e(a.slug) + '">' + e(a.title) + "</a>" : "(story removed)", e(pl.placement), e(pl.start), e(pl.end), '<span class="pill ' + (st === "active" ? "ok" : st === "scheduled" ? "warn" : "") + '">' + e(st) + "</span>", st === "active" || st === "scheduled" ? W.btn("End now", "plEnd", pl.id, "alt sm") : ""];
+  /* ---------- Sponsored stories: one deal, four steps (REQ-263, REQ-269, D-068) ---------- */
+  var DEALSTAT = [["needs payment", "Needs payment"], ["needs story", "Needs story"], ["ready to schedule", "Ready to schedule"], ["scheduled", "Scheduled"], ["live", "Live"], ["ended", "Ended"], ["cancelled", "Cancelled"]];
+  var STEPNAMES = ["Deal agreed", "Payment received", "Story ready", "Placement"];
+  function money() { return W.hasCap("commercial_register"); }
+  function sponsorName(a) { var c = W.find("customers", a.customerId); return c ? c.name : "?"; }
+  function dots(a) { var s = W.dealSteps(a), n = s.filter(Boolean).length; return '<span class="mono" role="img" aria-label="' + n + ' of 4 steps done">' + s.map(function (x) { return x ? "●" : "○"; }).join("") + "</span>"; }
+  /* The first step that is not done, as one short instruction. */
+  function nextAction(a) {
+    if (a.cancelled) return "-";
+    var s = W.dealSteps(a), pl = W.dealPlacement(a);
+    if (!s[1]) return money() ? "Record the payment" : "Waiting for the payment record (Administrator)";
+    if (!s[2]) return W.dealStory(a) ? "Publish the story" : "Choose or create the story";
+    if (!s[3]) return "Schedule the slot";
+    return pl && W.placementStatus(pl) === "active" ? "Running. End now if needed" : "-";
+  }
+  function dealRows(q) {
+    var rows = W.S.arrangements.filter(function (a) { return !q.s || W.dealStatus(a) === q.s; });
+    return rows.map(function (a) {
+      var st = W.dealStory(a), cells = [e(sponsorName(a)), st ? '<a href="#/stories/' + e(st.slug) + '">' + e(st.title) + "</a>" + (st.status !== "published" ? ' <span class="pill gray">' + e(st.status) + "</span>" : "") : '<span class="muted">not chosen</span>'];
+      if (money()) cells.push(W.money(a.amount, a.currency));
+      cells.push(dots(a), W.stPill(W.dealStatus(a)), e(nextAction(a)), '<a class="btn sm alt" href="#/admin/sponsors/' + e(a.id) + '">Open</a>');
+      return cells;
     });
-    var stories = W.S.articles.map(function (a) { return [a.id, a.title + " (" + a.type + ", " + a.status + ")"]; });
-    return head("Story sponsors", "A story is Sponsored when a sponsor pays for a slot for it. The slot is one labelled card on the Home page, the Stories page or both, between two dates. It is always labelled \"Sponsored by\" with the sponsor's name. It never changes the order of other stories, search results, profiles, Featured, nominations or winners (REQ-263). Payment is agreed offline and recorded in the Register; no amount or payment detail is entered here.") +
-      W.table(["Sponsor", "Story", "Slot", "Start", "End", "Status", ""], rows, "No paid slots yet.") +
-      '<form class="card stack-s" data-form="placement"><h2>Add a paid slot</h2>' +
-      W.field("Sponsor", "sponsor", { type: "select", options: W.S.sponsors.map(function (s) { return s.name; }), req: true, hint: "Add the sponsor record below if it is not listed." }) +
-      W.field("Story", "storyId", { type: "select", options: stories, req: true }) +
-      W.field("Slot on", "placement", { type: "select", options: ["Home", "Stories", "Both"], req: true }) +
-      W.field("Start date", "start", { type: "date", req: true }) + W.field("End date", "end", { type: "date", req: true }) +
-      '<p class="small muted">One paid slot per page at a time. Only a published story can fill a slot. Slots are audit-logged (capability: story sponsors).</p><button class="btn">Add slot</button></form>' +
-      '<h2 style="margin-top:2rem">Sponsor records</h2><p class="small muted">The sponsor name, link and logo, also shown as "Supported by" on the Awards page. A sponsor record has no effect on nominations or winners (REQ-186, REQ-199).</p>' +
+  }
+  mini("/admin/sponsors", "A18", "sponsors", function (par, q) {
+    var heads = ["Sponsor", "Story"].concat(money() ? ["Amount"] : []).concat(["Progress", "Status", "Next step", ""]);
+    var counted = W.S.arrangements.filter(W.counts).length;
+    return '<div class="row between"><h1>Sponsored stories</h1>' + (money() ? '<a class="btn" href="#/admin/sponsors/new">New sponsored story</a>' : "") + "</div>" +
+      '<div class="infobox"><strong>How a sponsored story works (REQ-263, REQ-269).</strong> The deal is agreed and paid offline; this site only records it. Four steps: 1 deal agreed, 2 payment recorded, 3 story ready (published), 4 placement on Home, Stories or both between two dates. A live placement is labelled &quot;Sponsored by&quot; with the sponsor&#39;s name. It never changes the order of other stories, search results, profiles, Featured, nominations or winners. <strong>Counting rule (REQ-022):</strong> a deal counts toward the sprint target when it is agreed and its payment record is complete (amount, currency, method, reference, date received, confirmed by). ' + (money() ? "Counted now: " + counted + "." : "The money details are Administrator-only.") + '</div>' +
+      '<form class="filters" data-filter="#/admin/sponsors">' + W.field("Status", "s", { type: "select", options: DEALSTAT, blank: "Any", value: q.s }) + "</form>" +
+      W.table(heads, dealRows(q), "No sponsored stories match.") +
+      '<h2 style="margin-top:2rem">Supported by (Awards page)</h2><p class="small muted">The sponsor name, link and logo shown as &quot;Supported by&quot; on the Awards page. A sponsor record has no effect on nominations or winners (REQ-186, REQ-199).</p>' +
       W.table(["Sponsor", "Link", "Logo", "Attached to"], W.S.sponsors.map(function (s) { return [e(s.name), e(s.link), e(s.logo), e(s.attached.join("; ") || "nothing")]; })) + '<form class="card stack-s" data-form="sponsor2"><h2>Add sponsor record</h2>' + W.field("Name", "name", { req: true }) + W.field("Link", "link") + W.field("Attach to", "to", { type: "select", options: ["Awards: Maiden Edition", "Category page", "Stories page", "Not yet"] }) + '<button class="btn">Add</button></form>';
   });
-  W.forms.placement = function (d) {
-    var a = W.find("articles", d.storyId);
-    if (!a) { W.toast("Choose a story."); return; }
-    if (a.status !== "published") { W.toast("Only a published story can fill a paid slot."); return; }
-    if (!d.start || !d.end || d.end < d.start) { W.toast("Check the dates: the end must be on or after the start."); return; }
-    var clash = (W.S.placements || []).filter(function (o) { var st = W.placementStatus(o); return (st === "active" || st === "scheduled") && o.start <= d.end && d.start <= o.end && (o.placement === "Both" || d.placement === "Both" || o.placement === d.placement); })[0];
-    if (clash) { W.toast("That slot is taken by " + clash.sponsor + " from " + clash.start + " to " + clash.end + "."); return; }
-    var pl = { id: W.uid("pl"), sponsor: d.sponsor, storyId: d.storyId, placement: d.placement, start: d.start, end: d.end, ended: false };
+  W.forms.sponsor2 = function (d) { W.S.sponsors.push({ id: W.uid("s"), name: d.name, link: d.link, logo: "Logo placeholder", attached: d.to === "Not yet" ? [] : [d.to] }); W.log("sponsor.add", d.name, d.to); W.save(); W.render(); };
+
+  function payFields(a) {
+    return W.field("Payment method", "method", { type: "select", options: ["Bank transfer", "Cash", "Cheque", "Other"], blank: "Not yet received", value: a.method }) + W.field("Payment reference", "ref", { value: a.ref }) + W.field("Date received", "received", { type: "date", value: a.received }) + W.field("Confirmed by (named admin)", "confirmedBy", { value: a.confirmedBy });
+  }
+  function readPay(d) { return { method: d.method || "", ref: d.ref || "", received: d.received || "", confirmedBy: d.confirmedBy || "" }; }
+  mini("/admin/sponsors/new", "A18", "sponsors", function () {
+    if (!money()) return '<p><a href="#/admin/sponsors">← Sponsored stories</a></p><h1>New sponsored story</h1><p>Only an Administrator records a new deal and its money details.</p>';
+    return '<p><a href="#/admin/sponsors">← Sponsored stories</a></p>' + head("New sponsored story", "Steps 1 and 2 in one go. Step 2 can wait until the money arrives. The deal was agreed and paid offline; nothing is charged here (D-005).") +
+      '<form class="card stack-s" data-form="dealNew"><h2>1. Deal agreed</h2>' +
+      W.field("Sponsor", "customerId", { type: "select", options: W.S.customers.map(function (c) { return [c.id, c.name + " (" + c.segment + ")"]; }).concat([["__new", "New customer…"]]), req: true }) +
+      W.field("New customer name (only if you chose New customer)", "newName") + W.field("New customer contact", "newContact") +
+      W.field("Agreed amount (NGN, whole naira)", "amount", { type: "number", req: true }) + W.field("Currency", "currency", { value: "NGN" }) + W.field("Notes", "notes", { type: "textarea" }) +
+      "<h2>2. Payment received (optional now)</h2>" + payFields({}) + '<button class="btn">Create the deal</button></form>';
+  });
+  W.forms.dealNew = function (d) {
+    if (!money()) { W.toast("Only an Administrator can record a deal."); return; }
+    var cid = d.customerId;
+    if (cid === "__new") {
+      if (!d.newName || !d.newContact) { W.toast("Enter the new customer's name and contact, or choose an existing sponsor."); return; }
+      cid = W.uid("c"); W.S.customers.push({ id: cid, name: d.newName, segment: "Sponsor", contact: d.newContact, ext: "CUS-" + ("000" + (W.S.customers.length + 1)).slice(-4), profileId: "" }); W.log("customer.create", cid, "from a new sponsored story");
+    }
+    var amt = Math.round((Number(d.amount) || 0) * 100);
+    if (!(amt > 0)) { W.toast("Enter the agreed amount."); return; }
+    var a = Object.assign({ id: W.uid("arr"), type: "sponsored_post", customerId: cid, linkedArticle: "", amount: amt, currency: d.currency || "NGN", agreed: true, cancelled: false, notes: d.notes || "" }, readPay(d));
+    W.S.arrangements.push(a); W.log("deal.create", a.id, "customer " + cid + (W.dealPaid(a) ? ", payment recorded" : ", payment not yet recorded")); W.save(); W.go("#/admin/sponsors/" + a.id);
+  };
+  mini("/admin/sponsors/:id", "A18", "sponsors", function (par) {
+    var a = W.find("arrangements", par.id); if (!a) return "<h1>Not found</h1>";
+    var s = W.dealSteps(a), cur = s.indexOf(false), st = W.dealStory(a), pl = W.dealPlacement(a), plSt = pl ? W.placementStatus(pl) : "", adm = money();
+    var stories = W.S.articles.map(function (x) { return [x.id, x.title + " (" + x.type + ", " + x.status + ")"]; });
+    var s1 = '<div class="card stack-s"><h2>1. Deal agreed ' + (s[0] ? '<span class="pill ok">done</span>' : '<span class="pill warn">open</span>') + "</h2>" +
+      (adm ? '<form data-form="dealEdit" class="stack-s"><input type="hidden" name="id" value="' + e(a.id) + '">' + W.field("Sponsor", "customerId", { type: "select", options: W.S.customers.map(function (c) { return [c.id, c.name + " (" + c.segment + ")"]; }), value: a.customerId }) + W.field("Agreed amount (NGN, whole naira)", "amount", { type: "number", value: a.amount / 100 }) + W.field("Currency", "currency", { value: a.currency }) + W.field("Notes", "notes", { type: "textarea", value: a.notes }) + '<button class="btn alt">Save the deal</button></form>' : "<p>Sponsor: <strong>" + e(sponsorName(a)) + "</strong>. The amount is Administrator-only.</p>") + "</div>";
+    var s2 = '<div class="card stack-s"><h2>2. Payment received ' + (s[1] ? '<span class="pill ok">recorded</span>' : '<span class="pill warn">not recorded</span>') + "</h2>" +
+      (adm ? '<p class="small muted">Recorded here after the money arrives offline. Nothing is charged or processed here (D-005). Counts toward the sprint target when complete: <strong>' + (W.counts(a) ? "Yes" : "No") + "</strong>" + (s[1] ? "" : "; missing: " + e(W.arrMissing(a).join(", "))) + '.</p><form data-form="dealPay" class="stack-s"><input type="hidden" name="id" value="' + e(a.id) + '">' + payFields(a) + '<button class="btn alt">Save the payment record</button></form>' : "<p>" + (s[1] ? "Payment is recorded." : "Payment is not recorded yet. An Administrator records it.") + "</p>") + "</div>";
+    var s3 = '<div class="card stack-s"><h2>3. Story ready ' + (s[2] ? '<span class="pill ok">published</span>' : st ? '<span class="pill warn">' + e(st.status) + "</span>" : '<span class="pill warn">not chosen</span>') + "</h2>" +
+      (st ? '<p>Story: <a href="#/stories/' + e(st.slug) + '">' + e(st.title) + "</a> (" + e(st.status) + ")." + (st.status !== "published" ? " It must be published before the slot can be scheduled." : "") + "</p>" : "<p>No story chosen yet.</p>") +
+      '<form data-form="dealStory" class="stack-s"><input type="hidden" name="id" value="' + e(a.id) + '">' + W.field("Story", "storyId", { type: "select", options: stories, blank: "Choose a story", value: a.linkedArticle }) + '<div class="row"><button class="btn alt">Use this story</button><a class="btn alt" href="#/admin/stories?for=' + e(a.id) + '">Create the story</a></div></form></div>';
+    var plBlock = pl ? "<p>Slot on <strong>" + e(pl.placement) + "</strong> from " + e(pl.start) + " to " + e(pl.end) + ": " + W.stPill(plSt === "expired" ? "ended" : plSt) + ". Labelled &quot;Sponsored by " + e(pl.sponsor) + "&quot; while live.</p>" + (plSt === "active" || plSt === "scheduled" ? W.btn("End now", "plEnd", pl.id, "alt sm") : "") : "";
+    var canSlot = s[2] && !(pl && (plSt === "active" || plSt === "scheduled"));
+    var s4 = '<div class="card stack-s"><h2>4. Placement ' + (pl ? W.stPill(plSt === "expired" ? "ended" : plSt) : '<span class="pill warn">not scheduled</span>') + "</h2>" + plBlock +
+      (!s[1] ? '<p class="infobox" role="status">Payment not recorded. You can still schedule the slot; the deal counts toward the sprint target only when the payment is recorded.</p>' : "") +
+      (canSlot ? '<form data-form="dealSlot" class="stack-s"><input type="hidden" name="id" value="' + e(a.id) + '">' + W.field("Slot on", "placement", { type: "select", options: ["Home", "Stories", "Both"], req: true }) + W.field("Start date", "start", { type: "date", req: true }) + W.field("End date", "end", { type: "date", req: true }) + '<p class="small muted">One paid slot per page at a time. Only a published story can fill a slot.</p><button class="btn">' + (pl ? "Schedule again" : "Schedule the slot") + "</button></form>" : (s[2] ? "" : '<p class="small muted">Choose and publish the story first (step 3).</p>')) + "</div>";
+    return '<p><a href="#/admin/sponsors">← Sponsored stories</a></p>' + head("Sponsored story: " + sponsorName(a), a.id + ". Status: " + (DEALSTAT.filter(function (x) { return x[0] === W.dealStatus(a); })[0] || ["", ""])[1] + ". Next: " + nextAction(a) + ".") + W.steps(STEPNAMES, cur < 0 ? 4 : cur) + '<div class="stack">' + s1 + s2 + s3 + s4 + "</div>" +
+      (adm && !a.cancelled ? '<div class="row">' + W.btn("Cancel this deal", "dealCancel", a.id, "alt bad") + "</div>" : "") + W.notesBox(a.id);
+  });
+  W.forms.dealEdit = function (d) {
+    if (!money()) { W.toast("Only an Administrator can change the money details."); return; }
+    var a = W.find("arrangements", d.id); if (!a) return; var amt = Math.round((Number(d.amount) || 0) * 100); if (!(amt > 0)) { W.toast("Enter the agreed amount."); return; }
+    a.customerId = d.customerId; a.amount = amt; a.currency = d.currency || "NGN"; a.notes = d.notes || "";
+    W.log("deal.edit", a.id, "customer " + a.customerId); W.save(); W.render(); W.toast("Saved.");
+  };
+  W.forms.dealPay = function (d) {
+    if (!money()) { W.toast("Only an Administrator can record a payment."); return; }
+    var a = W.find("arrangements", d.id); if (!a) return; Object.assign(a, readPay(d));
+    W.log("deal.payment", a.id, W.dealPaid(a) ? "payment record complete" : "payment record incomplete: " + W.arrMissing(a).join(", ")); W.save(); W.render(); W.toast(W.dealPaid(a) ? "Saved. It now counts toward the sprint target." : "Saved. Still missing: " + W.arrMissing(a).join(", ") + ".");
+  };
+  W.forms.dealStory = function (d) {
+    var a = W.find("arrangements", d.id), s = W.find("articles", d.storyId); if (!a) return; if (!s) { W.toast("Choose a story."); return; }
+    a.linkedArticle = s.id; W.log("deal.story", a.id, "story " + s.id + " (" + s.status + ")"); W.save(); W.render(); W.toast(s.status === "published" ? "Story chosen." : "Story chosen. It must be published before the slot can be scheduled.");
+  };
+  /* Adds a dated paid slot after the checks every slot needs. Returns the slot, or null after a message. */
+  function addPlacement(sponsor, storyId, where, start, end, dealId) {
+    var a = W.find("articles", storyId);
+    if (!a) { W.toast("Choose a story."); return null; }
+    if (a.status !== "published") { W.toast("Only a published story can fill a paid slot."); return null; }
+    if (!start || !end || end < start) { W.toast("Check the dates: the end must be on or after the start."); return null; }
+    var clash = (W.S.placements || []).filter(function (o) { var st = W.placementStatus(o); return (st === "active" || st === "scheduled") && o.start <= end && start <= o.end && (o.placement === "Both" || where === "Both" || o.placement === where); })[0];
+    if (clash) { W.toast("That slot is taken by " + clash.sponsor + " from " + clash.start + " to " + clash.end + "."); return null; }
+    var pl = { id: W.uid("pl"), sponsor: sponsor, storyId: storyId, placement: where, start: start, end: end, ended: false };
+    if (dealId) pl.dealId = dealId;
     W.S.placements.push(pl);
-    var sr = W.S.sponsors.filter(function (s) { return s.name === d.sponsor; })[0]; if (sr) sr.attached.push("Story: " + a.title);
-    W.log("placement.add", pl.id, d.sponsor + " on " + d.placement + " for " + a.title + ", " + d.start + " to " + d.end); W.save(); W.render(); W.toast("Slot added. It shows from " + d.start + " and is labelled Sponsored by " + d.sponsor + ".");
+    var sr = W.S.sponsors.filter(function (s) { return s.name === sponsor; })[0]; if (sr) sr.attached.push("Story: " + a.title);
+    W.log("placement.add", pl.id, sponsor + " on " + where + " for " + a.title + ", " + start + " to " + end); W.save(); W.render(); W.toast("Slot added. It shows from " + start + " and is labelled Sponsored by " + sponsor + ".");
+    return pl;
+  }
+  W.forms.placement = function (d) { addPlacement(d.sponsor, d.storyId, d.placement, d.start, d.end, d.dealId); };
+  W.forms.dealSlot = function (d) {
+    var a = W.find("arrangements", d.id); if (!a) return; if (!W.dealStory(a)) { W.toast("Choose the story first (step 3)."); return; }
+    addPlacement(sponsorName(a), a.linkedArticle, d.placement, d.start, d.end, a.id);
   };
   W.act.plEnd = function (id) { var pl = W.find("placements", id); pl.ended = true; W.log("placement.end", id, "ended by staff"); W.save(); W.render(); W.toast("Ended. The label and the slot are gone; the story stays."); };
+  W.act.dealCancel = function (id) { var a = W.find("arrangements", id); if (!money()) return; a.cancelled = true; (W.S.placements || []).forEach(function (pl) { if (pl.dealId === id) pl.ended = true; }); W.log("deal.cancel", id, "recorded; any refund is handled offline and recorded by an Administrator"); W.save(); W.render(); W.toast("Cancelled. The slot is ended; nothing is deleted."); };
   W.forms.sponsor2 = function (d) { W.S.sponsors.push({ id: W.uid("s"), name: d.name, link: d.link, logo: "Logo placeholder", attached: d.to === "Not yet" ? [] : [d.to] }); W.log("sponsor.add", d.name, d.to); W.save(); W.render(); };
 
   /* ---------- awards ---------- */
@@ -314,8 +362,6 @@
     return head("Audit log", "Append-only. Each row stores the hash of the one before, so tampering is detectable (REQ-051, 188). Exported nightly off-host.") + W.table(["#", "When", "Actor", "Action", "Target", "Detail", "Hash"], A.slice().reverse().slice(0, 60).map(function (a) { return [a.n, e(a.at), e(a.actor), e(a.action), e(a.target), e(a.detail), '<span class="mono">' + e(a.hash) + "</span>"]; }), "No actions yet. Do something as staff.") + "<p>" + W.btn("Verify chain", "verifyChain", "", "alt") + "</p>";
   });
   W.act.verifyChain = function () { var prev = "00000000", ok = true; W.S.audit.forEach(function (a) { if (a.prev !== prev) ok = false; prev = a.hash; }); W.toast(ok ? "Chain intact: " + W.S.audit.length + " rows verified." : "CHAIN BROKEN: alert raised."); };
-  W.act.leaver = function () { W.log("user.deactivate", "Sample Leaver", "same-day deactivation"); W.save(); W.toast("Account deactivated and logged (sample)."); };
-  W.act.mfa = function (n) { W.S.users.filter(function (u) { return u.name === n; })[0].mfa = true; W.log("user.mfa", n, "required"); W.save(); W.render(); };
   mini("/admin/purges", "A48", "purges", function () {
     return head("Purge and unpublish log", "Each unpublish (single or bulk), removal and decline queues a CDN purge (REQ-209). The origin already answers 410 + noindex.") + W.table(["URL", "Why", "Date", "Status"], W.S.purges.map(function (p) { return ['<span class="mono">' + e(p.url) + "</span>", e(p.why), e(p.at), e(p.status)]; }), "Nothing purged yet. Unpublish a profile to see an entry.");
   });
@@ -324,8 +370,9 @@
   });
   capRoute("settings", "/admin/thresholds", "A47", function () {
     var t = W.S.thresholds;
-    return head("Sprint thresholds", "The targets the dashboard measures progress against. Either one is enough.") + '<form class="card stack-s" data-form="thresholds">' + W.field("Paid subscriptions needed", "subs", { type: "number", value: t.subs }) + W.field("Confirmed revenue needed (NGN)", "rev", { type: "number", value: t.revenue / 100 }) + '<button class="btn">Save</button></form>';
+    return head("Sprint thresholds", "The targets the dashboard measures progress against. Either one is enough.") + '<form class="card stack-s" data-form="sprintsw"><h2>Show sprint tracking (REQ-272)</h2><p class="small muted">In WordPress this is a theme setting (Theme settings > Sprint tracking). Off hides the sprint target card on the Administrator dashboard; nothing is deleted and the thresholds below are kept.</p>' + W.field("Show sprint tracking", "on", { type: "checkbox", value: W.S.sprintOn !== false }) + '<button class="btn alt">Save switch</button></form><form class="card stack-s" data-form="thresholds">' + W.field("Paid subscriptions needed", "subs", { type: "number", value: t.subs }) + W.field("Confirmed revenue needed (NGN)", "rev", { type: "number", value: t.revenue / 100 }) + '<button class="btn">Save</button></form>';
   });
+  W.forms.sprintsw = function (d) { W.S.sprintOn = !!d.on; W.log("settings.sprint_tracking", "theme setting", W.S.sprintOn ? "on" : "off"); W.save(); W.toast(W.S.sprintOn ? "Sprint tracking is on." : "Sprint tracking is off."); W.render(); };
   W.forms.thresholds = function (d) { W.S.thresholds = { subs: Number(d.subs), revenue: Math.round(Number(d.rev) * 100) }; W.log("settings.save", "thresholds", ""); W.save(); W.toast("Saved."); W.render(); };
 
 })();

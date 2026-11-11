@@ -75,7 +75,7 @@ Fields on an event: start date and time, optional end, venue or Online, city, co
 - [ ] The Event page lists the published stories that link to it, and omits drafts.
 - [ ] A published event has Event structured data that matches the visible details; a draft or scheduled event has none.
 - [ ] Events do not appear in site search results.
-- [ ] An event cannot be selected in the Story sponsors screen.
+- [ ] An event cannot be selected in the Sponsored stories screen.
 - [ ] Without `wiw_manage_events`, the Events screen returns 403; granting it to a Reviewer opens it.
 - [ ] The registration link opens the external address in a new tab, and the site collects no payment or registration.
 

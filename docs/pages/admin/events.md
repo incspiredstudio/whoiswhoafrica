@@ -39,7 +39,7 @@ The story editor has an optional Related event field that picks one published ev
 
 ## What is not here
 
-- Events cannot be Sponsored. The Story sponsors screen lists stories only (REQ-263).
+- Events cannot be Sponsored. The Sponsored stories screen lists stories only (REQ-263).
 - No registration or payment is taken (D-005).
 - Events are not in site search at launch.
 

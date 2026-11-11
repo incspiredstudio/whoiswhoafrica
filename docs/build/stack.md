@@ -13,7 +13,7 @@ WordPress, built and tested locally, then migrated to the existing cPanel accoun
 | Layer | Choice | Why | Rejected |
 |---|---|---|---|
 | CMS | WordPress, current stable, PHP 8.3 recommended (verify at build) | Your decision (D-031); native to cPanel; editors know it | Laravel and Filament (the earlier draft); headless CMS options |
-| Public front end | Server-rendered PHP templates, CSS variables from one tokens file, small JavaScript only where needed | Indexable, fast on 4G, works at 360 px | Page builders for output; a single-page app |
+| Public front end | A parent theme `whoiswho` and an active child theme `whoiswho-child`: server-rendered PHP templates, CSS variables from one tokens file (brand values in the child), small JavaScript only where needed | Indexable, fast on 4G, works at 360 px | Page builders for output; a single-page app |
 | Admin | wp-admin with custom roles, capabilities and list tables | No admin framework to buy or learn | A separate admin app |
 | Database | MariaDB 10.11+ or MySQL 8.0+ through `$wpdb`, InnoDB, utf8mb4 | Native to cPanel; enough for 10k to 100k profiles with FULLTEXT | PostgreSQL (not on cPanel); SQLite |
 | Auth | Staff only, enforced two-factor plugin, closed registration | There is no visitor login to attack | Third-party identity; front-end login |
@@ -27,6 +27,10 @@ WordPress, built and tested locally, then migrated to the existing cPanel accoun
 | Observability | Logs with IDs only; first-party counters; uptime monitor and Sentry later | Cookieless, so no consent banner | GA4 |
 | CI/CD | GitHub Actions | Matches the repo and PR workflow | Manual FTP |
 | Bots | Per-IP and per-email throttles; Cloudflare Turnstile and WAF when Cloudflare is added | Rate limits and bot challenge | reCAPTCHA |
+
+## Theme structure
+
+Parent theme `whoiswho` (`site/wp-content/themes/whoiswho`) holds templates, patterns, components, motion and the token structure. Child theme `whoiswho-child` (`site/wp-content/themes/whoiswho-child`) is the active theme and holds the brand token values, the logo, site-specific template overrides and anything that must survive a parent update (REQ-273). Brand values are never edited in the parent.
 
 ## Cloudflare is optional
 

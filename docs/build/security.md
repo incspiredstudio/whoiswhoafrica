@@ -58,7 +58,7 @@ Done in the guard plugin and the server configuration:
 
 ## Personal data and payments
 
-- No card or bank data is handled. The register stores method and reference text, with a digit-pattern guard.
+- No card or bank data is handled. A deal stores method and reference text, with a digit-pattern guard.
 - Personal-data columns are catalogued and kept out of logs and error reports. Sensitive evidence is encrypted at rest where possible. See [Privacy](/concepts/privacy-and-data-rights).
 - No PII in logs or error messages. Add any new personal-data column to the catalogue.
 

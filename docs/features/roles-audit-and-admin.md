@@ -53,7 +53,7 @@ None for the public side. WordPress admin screens are used.
 - There is no registration, login or account area for visitors, owners, nominators, nominees or judges. Front-end registration is closed (REQ-229).
 - One unique email and one role per user; sign-in has no role selector (REQ-245).
 - The Administrator can grant or revoke a capability for a user, across roles, and edit what a role contains, without code. Every grant, revocation and use of a sensitive capability is audited (REQ-244).
-- Fixed to the Administrator and enforced by filter: user and role management, settings, plugin and theme installation, the commercial register, the capability screen, the Nominations flag.
+- Fixed to the Administrator and enforced by filter: user and role management, settings, plugin and theme installation, the sponsored story money details, the capability screen, the Nominations flag.
 - Menus and routes follow effective capabilities: hidden menu, 403 on the screen. The default Reviewer menu is Dashboard (review tiles), Review queue, Duplicates, Profiles, Sources (read-only), Suppression list (read-only) (REQ-240).
 - Leavers are deactivated the same day and the change is audited (REQ-235).
 - All staff actions on profiles, customer records and reviews, imports, labels, arrangements, sponsors, notes, capability grants, flag changes, nomination stage and status changes and nomination emails, and exports are written to the audit log (REQ-051, 188, 228).
@@ -73,7 +73,7 @@ None for the public side. WordPress admin screens are used.
 - [ ] Every audited action writes one row with actor, time, action, target and old and new values or reason.
 - [ ] The "verify chain" action reports intact on an untouched log and fails when a row is altered in a test.
 - [ ] Only the audit service writes to the log table; an architecture test fails if other code does.
-- [ ] The Reviewer dashboard shows no commercial tiles; the Administrator's shows sprint count and revenue per stream.
+- [ ] The Reviewer dashboard shows no commercial tiles; the Administrator's shows sprint count and confirmed revenue.
 - [ ] The dashboard shows counts by state and no directory-size target or progress bar.
 - [ ] Deactivating a user ends their sessions and writes an audit row.
 

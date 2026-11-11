@@ -24,7 +24,7 @@ Architecture: section 7. Record: ADR-012. Rules: `CLAUDE.md`.
 | Privacy (REQ-057 to 072) | The data-request workflow, the retention job, completeness of the personal-data catalogue |
 | UI, accessibility, performance (REQ-040 to 043, 055) | Playwright end-to-end on Chromium and a WebKit mobile profile; axe on key pages; a Lighthouse budget for LCP and CLS on the local build |
 | Security (REQ-046) | Static analysis, dependency audits, secret scan, a header test, and a test that no registration or login route is exposed to visitors |
-| Theme (REQ-052, 190) | A check that fails if brand colours or fonts appear outside the tokens file |
+| Theme (REQ-052, 190, 273) | A check that fails if brand colours or fonts appear outside the tokens file, which lives in the child theme; a check that the child is the active theme and extends the parent |
 
 ## Architecture tests
 

@@ -28,12 +28,12 @@ The module everything else stands on: capabilities and roles, the audit log, set
 |---|---|
 | Dashboard | Differs by role. Reviewers see review and directory tiles. Editors add support and nominations counts. Administrators add sprint, revenue and arrangement tiles |
 | Audit log | Read and verify the chain |
-| Sprint thresholds | The two sprint targets. Administrator only, audited |
+| Sprint thresholds | The two sprint targets. Administrator only, audited. Shown only while the `sprint_tracking` theme setting is on (REQ-272) |
 | Roles, per-user grants and exports | Provided by WordPress and a role-editor plugin, not drawn in the prototype; the module registers the capabilities, audits grants and checks `wiw_export_data` |
 | Nominations switch | On or off, with an optional reason; changed from the Nominations screen |
 | Email log | Every message sent, with status |
 | Purge log | Cache purges and unpublish events |
-| Exports | CSV exports of the register, nominations and personal data. Each is logged |
+| Exports | CSV exports of sponsored story deals, nominations and personal data. Each is logged |
 | Users, plugins, themes | Native WordPress. Not custom |
 
 ## Capabilities
@@ -76,7 +76,7 @@ Jobs run on Action Scheduler through WP-Cron, with a time budget. A real cron on
 ## Business rules
 
 - **Deny by default.** Every admin screen and action checks a named capability. A screen hidden from a menu is also blocked by direct URL.
-- **Audit everything sensitive.** Staff actions on profiles, labels, the register, imports, bulk unpublish, suppression, the Nominations flag and capability grants go through `AuditLogger`.
+- **Audit everything sensitive.** Staff actions on profiles, labels, sponsored story deals, imports, bulk unpublish, suppression, the Nominations flag and capability grants go through `AuditLogger`.
 - **Signed links.** 32 random bytes, stored only as a hash, bound to one purpose and record, expiring (14 days by default, shorter for verification), single use, no personal data in the URL. Staff can revoke or reissue.
 - **Mail.** `wp_mail` through the host's SMTP, with SPF, DKIM and DMARC. Every message is logged. Marketing messages carry a one-click unsubscribe.
 - **No PII in logs or errors.** Logs carry identifiers only.

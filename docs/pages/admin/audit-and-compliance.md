@@ -10,9 +10,9 @@ The logs and screens that show what staff did, what the system sent and which da
 | Purge log | Each unpublish, removal and decline and its cache purge | `wiw_view_audit` | Administrator |
 | Email log | Every notification the system sends | `wiw_view_audit` | Administrator |
 | Exports | CSV downloads, provided by WordPress and a plugin (not drawn in the prototype) | `wiw_export_data` | Administrator |
-| Data requests | Access, correction, erasure, objection, portability | data-request screens | Administrator |
+| Requests and reports | Data requests, removals and profile reports in one list (see [Enquiries, corrections and requests](./support-and-requests)) | `wiw_handle_requests` | Editor, Administrator |
 
-In the prototype the audit, purge and email logs share one capability (`audit_log`), and Data requests use `data_requests`.
+In the prototype the audit, purge and email logs share one capability (`audit_log`), and Requests and reports uses `data_requests`.
 
 ## Audit log
 
@@ -36,7 +36,7 @@ Every notification the system sends is listed here (REQ-094). That includes ackn
 
 ## Exports
 
-Exports are provided by WordPress and are not drawn in the prototype. The build gives the Administrator CSV downloads of the register with its counting-rule status, customers, nominations (never including the Contact email) and all profiles in an open format, and of support items (REQ-077, REQ-087, REQ-131).
+Exports are provided by WordPress and are not drawn in the prototype. The build gives the Administrator CSV downloads of sponsored story deals with their counting status, customers, nominations (never including the Contact email) and all profiles in an open format, and of support items (REQ-077, REQ-087, REQ-131).
 
 - **How:** a small export action on each list screen, built on the WordPress list tables, plus core Tools > Export for posts and pages. No separate Exports screen is drawn.
 - **Administrator only.** The `wiw_export_data` capability is held by the Administrator, and Reviewers cannot export (REQ-069).
@@ -45,7 +45,7 @@ Exports are provided by WordPress and are not drawn in the prototype. The build 
 
 ## Data requests
 
-The screen tracks access, correction, erasure, objection and portability requests with a due date (REQ-059). Public data-rights requests come in through the data-rights form. Core WordPress Privacy tools take, confirm and fulfil access and erasure requests; the other right types and the due dates are custom. New personal-data columns and meta keys must be added to the PII catalogue (a repository rule in `CLAUDE.md`). Comments and newsletter sign-ups are personal data too, and need to be covered (REQ-258).
+The Requests and reports screen lists access, correction, erasure, objection and portability requests with a due date (REQ-059). Public data-rights requests come in through the data-rights form. Core WordPress Privacy tools take, confirm and fulfil access and erasure requests; the other right types and the due dates are custom. New personal-data columns and meta keys must be added to the PII catalogue (a repository rule in `CLAUDE.md`). Comments and newsletter sign-ups are personal data too, and need to be covered (REQ-258).
 
 ## Privacy rules staff must follow
 

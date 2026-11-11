@@ -21,8 +21,8 @@ The only WordPress users are staff.
 | Role | Default scope |
 |---|---|
 | Reviewer | Review queue, duplicates, profile list (view, assign existing terms), read-only sources and suppression list |
-| Editor | Everything a Reviewer does, plus editing, publishing, stories, awards, the support inbox, claims and curation |
-| Administrator | Everything, including imports, exports, the commercial register, the audit log, users and capabilities (managed in WordPress) |
+| Editor | Everything a Reviewer does, plus editing, publishing, stories, awards, enquiries, corrections, requests and reports, claims and curation |
+| Administrator | Everything, including imports, exports, the sponsored story money details, the audit log, users and capabilities (managed in WordPress) |
 
 These are default bundles of named capabilities. The Administrator can grant or revoke single capabilities per user, and can create more roles (REQ-244). Staff sign in through the normal WordPress login, with a maintained two-factor plugin enforced for every staff account before first use (REQ-047). There is no role selector on sign-in (D-048).
 
@@ -37,12 +37,13 @@ Anyone can do these with no account:
 | Form | Lands in |
 |---|---|
 | Enquiry to a profile | Relayed by email; the owner's address is never shown |
-| Correction, removal, report | The support inbox as a typed item with a status |
+| Correction | The Corrections screen, with a status and a due date |
+| Removal, report | The Requests and reports screen, with a status and a due date |
 | Claim this profile | The Claims screen |
-| Contact | The support inbox |
-| Get listed (enquiry) | Support inbox, type Enquiry |
+| Contact | Enquiries |
+| Get listed (enquiry) | Enquiries, type Enquiry |
 | Nominate | Nominations (private) |
-| Data request | Data requests, with a due date |
+| Data request | Requests and reports, with a due date |
 | Stories newsletter | A consented opt-in with one-click unsubscribe (REQ-061) |
 
 ### Single-use signed links

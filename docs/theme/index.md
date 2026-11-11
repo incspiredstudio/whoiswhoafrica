@@ -13,10 +13,25 @@ The staff screens do not share that bar. They keep the plain wireframe look, bec
 | Area | Look | Source files |
 |---|---|---|
 | Public pages (home, directory, profiles, stories, awards, forms, legal) | High fidelity, brand theme | `prototype/theme/` |
-| Staff screens (review, profiles, claims, register, awards, audit) | Wireframe | `prototype/styles.css`, `prototype/tools.css` |
+| Staff screens (review, profiles, claims, sponsored stories, awards, audit) | Wireframe | `prototype/styles.css`, `prototype/tools.css` |
 | Prototype tools (role switcher, Flows menu, Design notes, Design review) | Wireframe | `prototype/core.js`, `prototype/flows.js` |
 
 The two looks share one page. Both stylesheet sets stay loaded and switch through the `media` attribute, so nothing flashes when you move between a public and a staff page. See [the prototype guide](/theme/prototype-guide).
+
+## Parent and child theme (REQ-273)
+
+The theme ships as two themes, in the same repository.
+
+| Theme | Path | Holds | Active? |
+|---|---|---|---|
+| Parent `whoiswho` | `site/wp-content/themes/whoiswho` | Templates, block patterns, components, motion, accessibility, and the structure of the design tokens | No (a parent is never activated on its own) |
+| Child `whoiswho-child` | `site/wp-content/themes/whoiswho-child` | The brand token values (colours, fonts, logo), site-specific template overrides, and anything that must survive a parent update | **Yes** |
+
+Rules:
+
+- The child is the active theme. Brand values are never edited in the parent: they live in the child's tokens file, which overrides the parent's defaults.
+- A site-specific change to a template is made by copying the template into the child and editing the copy. The parent stays reusable and can be updated without losing it.
+- Both themes follow the rules in [Templates](/theme/templates). Tests run against the child as the active theme, so what the visitor sees is what is tested.
 
 ## The principles
 
