@@ -31,6 +31,14 @@ final class Module implements ModuleInterface {
 		Jobs\JobRunner::for_site()->register();
 		Links\LinkRoute::for_site()->register();
 		Mail\Notifier::for_site();
+		Log\Logger::for_site()->register();
+		Jobs\JobRunner::for_site()->recurring(
+			'log.purge',
+			86400,
+			static function (): void {
+				Log\FileSink::for_site()->purge();
+			}
+		);
 		Jobs\JobRunner::for_site()->recurring(
 			'links.purge_spent',
 			86400,
