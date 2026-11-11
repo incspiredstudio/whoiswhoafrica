@@ -1,0 +1,20 @@
+# Secret scanner configuration (gitleaks). The default rules stay on. The allowlist below is for false positives only and is
+# reviewed in pull requests: every entry needs a comment saying what it is and why it is not a secret.
+title = "WHOISWHO secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed false positives"
+paths = [
+  # Generated lockfiles contain package hashes, not secrets.
+  '''site/composer\.lock''',
+  '''site/package-lock\.json''',
+  '''handbook/package-lock\.json''',
+  '''docs/package-lock\.json''',
+]
+regexes = [
+  # The documented placeholder in .env.example and the docs: names only, never values.
+  '''(?i)changeme|example-only|not-a-real''',
+]
