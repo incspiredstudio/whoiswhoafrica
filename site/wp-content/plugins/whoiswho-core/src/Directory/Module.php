@@ -27,6 +27,7 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		( new Url\ProfileRoute() )->register();
 		add_action(
 			'init',
 			static function (): void {
