@@ -8,7 +8,7 @@ parameters:
 		- bin
 		- config
 	scanDirectories:
-		- vendor/johnpbloch/wordpress-core
+		- wordpress
 	stubFiles: []
 	ignoreErrors: []
 	reportUnmatchedIgnoredErrors: true

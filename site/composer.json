@@ -17,6 +17,7 @@
     "php": ">=8.3",
     "composer/installers": "^2.3",
     "johnpbloch/wordpress-core": "^7.1",
+    "johnpbloch/wordpress-core-installer": "^2.0",
     "nikic/php-parser": "^5.9",
     "woocommerce/action-scheduler": "^4.2"
   },
@@ -26,11 +27,11 @@
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true,
       "composer/installers": true,
-      "phpstan/extension-installer": true
+      "phpstan/extension-installer": true,
+      "johnpbloch/wordpress-core-installer": true
     }
   },
   "extra": {
-    "wordpress-install-dir": "wordpress",
     "installer-paths": {
       "wp-content/plugins/{$name}/": [
         "type:wordpress-plugin"
@@ -41,7 +42,8 @@
       "wp-content/themes/{$name}/": [
         "type:wordpress-theme"
       ]
-    }
+    },
+    "wordpress-install-dir": "wordpress"
   },
   "scripts": {
     "lint": "phpcs",
@@ -61,6 +63,7 @@
     "phpunit/phpunit": "^10",
     "szepeviktor/phpstan-wordpress": "^2.0",
     "wp-coding-standards/wpcs": "^3.4",
+    "wp-phpunit/wp-phpunit": "^7.1",
     "yoast/phpunit-polyfills": "^2.0"
   },
   "autoload-dev": {

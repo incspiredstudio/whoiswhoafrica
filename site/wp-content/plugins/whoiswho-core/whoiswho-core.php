@@ -20,7 +20,9 @@ define( 'WIW_CORE_VERSION', '0.1.0' );
 define( 'WIW_CORE_FILE', __FILE__ );
 define( 'WIW_CORE_DIR', plugin_dir_path( __FILE__ ) );
 
-if ( version_compare( PHP_VERSION, '8.3', '<' ) || version_compare( get_bloginfo( 'version' ), '6.5', '<' ) ) {
+require_once WIW_CORE_DIR . 'src/Platform/Requirements.php';
+
+if ( ! \WhoIsWho\Core\Platform\Requirements::met( PHP_VERSION, get_bloginfo( 'version' ) ) ) {
 	add_action(
 		'admin_notices',
 		static function (): void {

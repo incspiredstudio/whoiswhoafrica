@@ -69,4 +69,9 @@ Plugins that are not on wordpress.org are unsupported; vendor them as a private 
 
 ## PHPUnit
 
-`composer test` runs all five suites (Unit, Integration, Arch, Visibility, Security). Unit, Arch and Security need no WordPress. Integration and Visibility load the WordPress test suite when `WP_TESTS_DIR` points at a wordpress-develop `tests/phpunit` checkout with a MariaDB test database, and are skipped otherwise (see #366). `composer test:coverage` writes `build/coverage/` and fails below `WIW_COVERAGE_MIN` (default 0, raised per milestone); it needs pcov or Xdebug.
+`composer test` runs all five suites (Unit, Integration, Arch, Visibility, Security). With no database configured, the tests that need WordPress are skipped. To run them all:
+
+1. `powershell -File deploy/local/test-db.ps1` starts a throwaway MariaDB on port 3307 (no Docker) and prints four `WIW_TEST_DB_*` variables to set. The suite empties that database, so never point it at a real site.
+2. Set the variables, then `composer test`. Core is installed in `wordpress/` by Composer, and `tests/wp-tests-config.php` reads the database from the environment, so no password is stored.
+
+`composer test:coverage` needs pcov or Xdebug, writes `build/coverage/` and fails below `WIW_COVERAGE_MIN` (default 60, raised per milestone).

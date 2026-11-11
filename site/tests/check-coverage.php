@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-$wiw_threshold = (float) ( getenv( 'WIW_COVERAGE_MIN' ) ? getenv( 'WIW_COVERAGE_MIN' ) : 0 );
+$wiw_threshold = (float) ( getenv( 'WIW_COVERAGE_MIN' ) ? getenv( 'WIW_COVERAGE_MIN' ) : 60 );
 $wiw_file      = dirname( __DIR__ ) . '/build/coverage/clover.xml';
 
 if ( ! is_readable( $wiw_file ) ) {
