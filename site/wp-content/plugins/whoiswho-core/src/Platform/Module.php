@@ -54,5 +54,6 @@ final class Module implements ModuleInterface {
 			}
 		);
 		Mail\Admin\EmailLogScreen::hooks();
+		Capabilities\CapabilityAudit::for_site()->register();
 	}
 }
