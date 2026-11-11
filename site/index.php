@@ -1,0 +1,10 @@
+<?php
+/**
+ * Front controller: WordPress core is installed in wordpress/ by Composer.
+ *
+ * @package WhoIsWho
+ */
+
+define( 'WP_USE_THEMES', true );
+
+require __DIR__ . '/wordpress/wp-blog-header.php';

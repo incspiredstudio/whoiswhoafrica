@@ -1,6 +1,6 @@
 # Data breakdown: how the staging records are grouped
 
-Generated 2026-11-11 00:52 from `acquisition/data/staging.sqlite` by `acquisition/pipeline/breakdown.py`. Run it again after each run to refresh this file: `python -I acquisition/pipeline/breakdown.py`.
+Generated 2026-11-11 11:05 from `acquisition/data/staging.sqlite` by `acquisition/pipeline/breakdown.py`. Run it again after each run to refresh this file: `python -I acquisition/pipeline/breakdown.py`.
 
 **Unreviewed staging data.** Every grouping below is assigned by script from Wikidata. No person has checked it. This file holds counts only, with no names.
 
@@ -248,11 +248,24 @@ The field is the one that matches most of the person's Wikidata occupations and 
 
 Photos and logos from Wikimedia Commons carry their licence and credit. Logos from organisations' own sites have no licence and need permission or removal before any public use.
 
+## 9a. Profile text: bio, Achievement, Influence, Legacy
+
+| Type | AI reworded | Of which from thin facts | Template bio only |
+|---|---:|---:|---:|
+| Notable people (deceased) | 893 | 145 | 106 |
+| Entrepreneurs | 1 | 0 | 1,550 |
+| Organisations | 0 | 0 | 9,257 |
+| Notable people (living) | 1,631 | 469 | 51 |
+
+`reword.py` sends each record's stored facts to DeepSeek, which rewords them into a bio and the three sections of the tagline. Code checks that every number and proper name it uses appears in the facts, and drops the text otherwise. Records without reworded text keep the template bio. All AI text needs human review before use.
+
 ## 10. Flags
 
 | Flag | Records |
 |---|---:|
+| `ai_text_missing` | 10,964 |
 | `website_no_website` | 3,290 |
+| `ai_text_needs_review` | 2,525 |
 | `living_person_review_required` | 1,682 |
 | `criterion_not_confirmed_from_primary_source` | 1,682 |
 | `does_not_yet_meet_E1_E2` | 1,550 |
@@ -260,6 +273,7 @@ Photos and logos from Wikimedia Commons carry their licence and credit. Logos fr
 | `outside_mvp_scope_deceased` | 999 |
 | `website_http_error` | 719 |
 | `website_bad_url` | 652 |
+| `ai_text_thin_facts` | 614 |
 | `current_role_not_confirmed` | 412 |
 | `possible_duplicate` | 311 |
 | `website_robots_blocked` | 237 |

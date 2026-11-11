@@ -1,0 +1,179 @@
+# Merge gates for the WordPress site (site/). Job names are stable: lint, analyse, test, build, e2e, audit, secrets, pr-body.
+# Required checks for branch protection (set by the repo owner): lint, analyse, test, build, e2e, audit, secrets, pr-body.
+# Deploy is not a CI step: going live is a manual migration (docs/build/deployment.md).
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main, chore/structured-build-setup]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: "8.3"
+  NODE_VERSION: "22"
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - run: composer lint
+      - run: npm run lint:js
+      - run: npm run lint:css
+
+  analyse:
+    name: analyse
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer analyse
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wiw_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WIW_TEST_DB_NAME: wiw_test
+      WIW_TEST_DB_USER: root
+      WIW_TEST_DB_PASSWORD: root
+      WIW_TEST_DB_HOST: "127.0.0.1:3306"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, coverage: pcov, extensions: "mbstring, mysqli, zip, intl, gd", ini-values: "pcov.directory=." }
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
+      - run: composer install --no-interaction --prefer-dist
+      - name: PHPUnit, all suites, with the coverage threshold
+        run: composer test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: coverage, path: site/build/coverage, if-no-files-found: ignore }
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
+      - run: npm ci
+      - run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wiw_e2e
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      BASE_URL: http://127.0.0.1:8890
+      WIW_THEME_READY: "1"
+      WIW_SECRETS_FILE: ${{ github.workspace }}/wiw-secrets.env
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, extensions: "mbstring, mysqli, zip, intl, gd" }
+      - uses: actions/cache@v4
+        with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - name: Write a throwaway secrets file outside the web root
+        run: |
+          {
+            echo "WIW_ENV=local"
+            echo "WIW_SITE_URL=http://127.0.0.1:8890"
+            echo "DB_NAME=wiw_e2e"
+            echo "DB_USER=root"
+            echo "DB_PASSWORD=root"
+            echo "DB_HOST=127.0.0.1:3306"
+            for k in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT; do echo "$k=$(openssl rand -hex 16)"; done
+          } > "$WIW_SECRETS_FILE"
+      - name: Install WordPress and start the server
+        run: |
+          php deploy/ci/install-wp.php
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8890 -t . deploy/ci/router.php > "$RUNNER_TEMP/php-server.log" 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:8890/ >/dev/null && break; sleep 1; done
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-report, path: "site/playwright-report\nsite/test-results", if-no-files-found: ignore }
+
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: site } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - run: composer audit --locked
+      - run: npm audit --audit-level=high
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+
+  pr-body:
+    name: pr-body
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR body cites a REQ id and "Closes #N"
+        if: github.event_name == 'pull_request'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo "$BODY" | grep -Eq 'REQ-[0-9]+' || { echo "::error::The pull request body must cite at least one REQ id (REQ-123)."; exit 1; }
+          echo "$BODY" | grep -Eiq '(closes|fixes|resolves) #[0-9]+' || { echo "::error::The pull request body must contain 'Closes #N'."; exit 1; }
+      - name: Not a pull request
+        if: github.event_name != 'pull_request'
+        run: echo "pr-body applies to pull requests only"

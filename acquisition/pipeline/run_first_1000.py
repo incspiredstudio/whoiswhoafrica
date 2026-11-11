@@ -14,6 +14,7 @@ Stdlib only. Run with: python -I acquisition/pipeline/run_first_1000.py <stage>
 """
 import concurrent.futures as cf
 import hashlib
+import importlib.util
 import html
 import html.parser
 import ipaddress
@@ -159,7 +160,8 @@ def db():
       criterion TEXT, criterion_met INT, evidence_url TEXT, wikipedia_lead TEXT,
       photo_path TEXT, photo_source TEXT, photo_licence TEXT, photo_credit TEXT,
       logo_path TEXT, logo_source TEXT, logo_licence TEXT, logo_credit TEXT,
-      flags TEXT, checks TEXT, content_hash TEXT, run_id TEXT, retrieved_at TEXT);
+      flags TEXT, checks TEXT, content_hash TEXT, run_id TEXT, retrieved_at TEXT,
+      bio_template TEXT, achievement TEXT, influence TEXT, legacy TEXT, text_method TEXT);
     CREATE TABLE IF NOT EXISTS provenance(record_id TEXT, field TEXT, source_id TEXT, source_url TEXT, retrieved_at TEXT,
       confidence TEXT, method TEXT, PRIMARY KEY(record_id, field));
     CREATE TABLE IF NOT EXISTS exclusions(qid TEXT PRIMARY KEY, kind TEXT, reason TEXT);
@@ -1696,6 +1698,11 @@ def stage_finalise():
                         [(rec["record_id"], f, *p[:2], at, *p[2:]) for f, p in prov.items()])
     con.commit()
     print("records", con.execute("SELECT COUNT(*) FROM records").fetchone()[0], "site descriptions dropped", site_clean, "records failed scan", scan_failed)
+    # Re-apply any AI-reworded text whose facts have not changed since it was drafted (reword.py).
+    spec = importlib.util.spec_from_file_location("wiw_reword", pathlib.Path(__file__).resolve().parent / "reword.py")
+    reword = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reword)
+    reword.apply(con)
 
 
 STAGES = dict(seed_leaders=stage_seed_leaders, enrich_leaders=stage_enrich_leaders, select_leaders=stage_select_leaders,

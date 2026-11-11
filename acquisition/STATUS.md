@@ -60,12 +60,36 @@ On your instruction of 2026-11-10: add the brief's groups 1 to 5 (section 4), at
   - Birth years written as "1992 -" are now stripped.
 - **Known side effect:** for 865 candidates that earlier runs had also considered, this run's exclusion reason replaced the earlier one in the `exclusions` table.
 
+## In progress: Achievement, Influence and Legacy text (`reword.py`)
+On your instruction of 2026-11-11: every profile needs Achievement, Influence and Legacy, reworded rather than copied from the source, using DeepSeek.
+
+- **Method:** each record's stored facts go to DeepSeek V4.1-Flash (`deepseek-flash`, thinking off) as numbered facts. It returns a bio plus the three sections and lists the facts each one uses. The brief's definitions (section 3) are in the prompt.
+- **Checks in code; a failing draft gets up to 2 retries:**
+  - every number and proper name appears in the facts
+  - no he or she
+  - no hype words
+  - no talk of "the directory" or "records"
+  - for living people, nothing on birth, family, religion, party or education
+  - no 10-word span copied from source prose
+  - the existing sensitive-term scan
+- **Done so far:** 2,525 records: 1,631 living people, 893 deceased and 1 entrepreneur. The DeepSeek balance ran out (¥9.78, about ¥0.0036 a record).
+- **Not done:**
+  - 10,833 records were not reached: organisations, entrepreneurs, and 51 living and 106 deceased people.
+  - 131 drafts were rejected. 96 of those were caused by a checker bug that read "2017–2024" as one number, now fixed. They redraft on the next run.
+- **Not yet reached:** these records keep the template bio and the flag `ai_text_missing`.
+- **Next:** top up DeepSeek by about ¥40–50. Then run `DEEPSEEK_API_KEY=… python -I acquisition/pipeline/reword.py draft`; it resumes.
+- **Flags on AI text:**
+  - All of it is `ai_text_needs_review`.
+  - 614 drafts came from thin facts and are flagged `ai_text_thin_facts`. Those sections are short and general.
+- **The key:** it is passed in the environment only and is in no file. **Rotate it after use, because it was pasted into a chat.**
+
 ## Differences from the plan
 | Plan | This run | Why |
 |---|---|---|
 | 500 organisations, 200 entrepreneurs, 300 individuals; 850 Nigeria | 8,950 and 1,557, no notable individuals; all African countries | Your instructions; the mix is what the filters allow |
 | MVP excludes deceased persons (plan 1.4; REQ-139 has only a current title) | 999 deceased people collected, with birth and death years | Your instruction; REQ-140 (no date of birth) was written for living people, so Legal should confirm it does not apply |
-| Legal basis before any individual's data is processed, including AI (REQ-169, Q35, Q63) | Skipped for local collection, on your instruction | No AI API was used, and nothing was published |
+| Legal basis before any individual's data is processed, including AI (REQ-169, Q35, Q63) | Skipped, on your instruction. Since 2026-11-11, records including living people's stored facts are sent to DeepSeek (China) for rewording | Nothing was published. No transfer basis (NDPA s.41–43) is recorded for DeepSeek, and its data-use terms were not reviewed |
+| Claude Opus 5.5 drafts from numbered source passages, and each claim quotes its passage exactly (Q39, REQ-165–167) | DeepSeek V4.1-Flash rewords the stored facts. Names and numbers are traced to the facts, but there are no exact quotes | Your choice of model. Rewording cannot quote exactly |
 | No photos or logos until Legal advises (Q34) | Collected, on your instruction | Each stores licence or credit, and source |
 | Entrepreneurs meet E1 or E2 from a primary source | 1 meets E1; 1,556 marked `LEAD` | Wikidata alone cannot prove E1 or E2 |
 | AI-drafted bios with quote checks | Template bios from Wikidata descriptions and fields | Your choice; no prose copied from Wikipedia |
@@ -82,7 +106,7 @@ On your instruction of 2026-11-10: add the brief's groups 1 to 5 (section 4), at
 - 310 records are flagged as possible duplicates. They are not merged (REQ-146).
 
 ## Decisions needed
-- Bios are short (median 115 characters for organisations, 66 for people). Longer ones need Wikipedia summaries, which amends the plan's "never copy prose" rule, or the AI step.
+- Bios are short where the source facts are thin. AI rewording reads better but cannot add facts. Thin profiles need more sources, such as organisation sites or Wikipedia summaries; using Wikipedia summaries amends the plan's "never copy prose" rule.
 - Should this run be kept, re-run under the plan, or used only as a seed list for it?
 
 ## For shared docs
@@ -94,3 +118,5 @@ The shared-docs owner should apply these:
 - `docs/contracts/import-format.md`: this run's records are not yet in contract format. An export step is still to be written.
 - Living notable people beyond entrepreneurs (run `leaders-2026-11-10`) are collected under plan criteria I1, I2, I3 and I6, using Wikidata as a lead source only. The plan's 300 "individuals" need a REQ that says which groups count, and how creative and sports figures qualify; I6 needs the named-award list.
 - Record the new organisation category Healthcare (brief 4.2) alongside the existing categories.
+- Q39 and REQ-169: you chose DeepSeek (`deepseek-flash`) instead of Claude Opus 5.5 for rewording. Record it as a decision. Legal needs the transfer basis and a review of DeepSeek's data-use terms before any of this text is published.
+- Profile fields: every profile now carries Achievement, Influence and Legacy (brief 3.1–3.3). `docs/contracts/import-format.md` and the profile REQs need these three fields.

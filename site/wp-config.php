@@ -59,6 +59,15 @@ define( 'WP_AUTO_UPDATE_CORE', false );
 define( 'FORCE_SSL_ADMIN', $wiw_production );
 define( 'DISABLE_WP_CRON', 'true' === wiw_secret( 'WIW_DISABLE_WP_CRON', 'false' ) );
 
+// Core lives in wordpress/ (installed by Composer); our code lives in wp-content/ next to it.
+$wiw_site_url = rtrim( wiw_secret( 'WIW_SITE_URL' ), '/' );
+if ( '' !== $wiw_site_url ) {
+	define( 'WP_HOME', $wiw_site_url );
+	define( 'WP_SITEURL', $wiw_site_url . '/wordpress' );
+	define( 'WP_CONTENT_URL', $wiw_site_url . '/wp-content' );
+}
+define( 'WP_CONTENT_DIR', __DIR__ . '/wp-content' );
+
 if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/wordpress/' );
 }
