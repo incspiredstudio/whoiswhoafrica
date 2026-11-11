@@ -128,7 +128,7 @@ final class StatusWriteGuardTest extends WpTestCase {
 		$this->assertSame( 'wiw_hidden', get_post_status( $bulk ), 'bulk edit' );
 
 		// REST.
-		$rest   = $this->probe();
+		$rest                      = $this->probe();
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride -- rebuild the routes so the probe type has one.
 		rest_get_server();
 		$request = new \WP_REST_Request( 'POST', '/wp/v2/wiw_probe/' . $rest );
