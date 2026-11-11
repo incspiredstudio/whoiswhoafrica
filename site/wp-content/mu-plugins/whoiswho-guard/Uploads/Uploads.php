@@ -154,6 +154,83 @@ final class Uploads {
 		}
 		$editor->maybe_exif_rotate();
 		$saved = $editor->save( $path, $mime );
-		return ! is_wp_error( $saved );
+		if ( is_wp_error( $saved ) ) {
+			return false;
+		}
+		// Do not rely on the encoder to drop metadata: remove it from the bytes as well.
+		$bytes = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$clean = 'image/jpeg' === $mime ? self::strip_jpeg_metadata( $bytes ) : ( 'image/png' === $mime ? self::strip_png_metadata( $bytes ) : $bytes );
+		if ( $clean !== $bytes && '' !== $clean ) {
+			file_put_contents( $path, $clean ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+		return true;
+	}
+
+	/**
+	 * Remove comment and application segments (EXIF, XMP, ICC extras, thumbnails) from JPEG bytes. APP0 (JFIF) and APP14 (Adobe
+	 * colour transform) stay because they affect how the image displays.
+	 *
+	 * @param string $bytes JPEG bytes.
+	 */
+	public static function strip_jpeg_metadata( string $bytes ): string {
+		$length = strlen( $bytes );
+		if ( $length < 4 || "\xFF\xD8" !== substr( $bytes, 0, 2 ) ) {
+			return $bytes;
+		}
+		$out = "\xFF\xD8";
+		$pos = 2;
+		while ( $pos + 4 <= $length ) {
+			if ( "\xFF" !== $bytes[ $pos ] ) {
+				return $bytes;
+				// Not a well-formed segment stream: leave the file as it is.
+			}
+			$marker = ord( $bytes[ $pos + 1 ] );
+			if ( 0xDA === $marker || 0xD9 === $marker ) {
+				// Start of scan or end of image: the rest is image data.
+				return $out . substr( $bytes, $pos );
+			}
+			$size = ( ord( $bytes[ $pos + 2 ] ) << 8 ) + ord( $bytes[ $pos + 3 ] );
+			if ( $size < 2 || $pos + 2 + $size > $length ) {
+				return $bytes;
+			}
+			$drop = ( $marker >= 0xE1 && $marker <= 0xED ) || 0xEF === $marker || 0xFE === $marker;
+			if ( ! $drop ) {
+				$out .= substr( $bytes, $pos, 2 + $size );
+			}
+			$pos += 2 + $size;
+		}
+		return $bytes;
+	}
+
+	/**
+	 * Remove text and EXIF chunks from PNG bytes. Chunks that affect display (palette, transparency, gamma, ICC) stay.
+	 *
+	 * @param string $bytes PNG bytes.
+	 */
+	public static function strip_png_metadata( string $bytes ): string {
+		$signature = "\x89PNG\r\n\x1a\n";
+		if ( strlen( $bytes ) < 12 || substr( $bytes, 0, 8 ) !== $signature ) {
+			return $bytes;
+		}
+		$out    = $signature;
+		$pos    = 8;
+		$length = strlen( $bytes );
+		while ( $pos + 12 <= $length ) {
+			$unpacked = unpack( 'N', substr( $bytes, $pos, 4 ) );
+			$chunk    = is_array( $unpacked ) ? (int) $unpacked[1] : 0;
+			$type     = substr( $bytes, $pos + 4, 4 );
+			$total    = 12 + $chunk;
+			if ( $pos + $total > $length ) {
+				return $bytes;
+			}
+			if ( ! in_array( $type, array( 'tEXt', 'zTXt', 'iTXt', 'eXIf', 'tIME' ), true ) ) {
+				$out .= substr( $bytes, $pos, $total );
+			}
+			$pos += $total;
+			if ( 'IEND' === $type ) {
+				break;
+			}
+		}
+		return $out;
 	}
 }

@@ -161,6 +161,37 @@ final class UploadRulesTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'SECRET-GPS-AND-CAMERA-DATA', (string) file_get_contents( $stored['file'] ), 'the stored file is re-encoded' );
 	}
 
+	public function test_REQ_127_metadata_is_stripped_from_jpeg_bytes_whatever_the_encoder_does(): void {
+		$bytes   = $this->jpeg( true );
+		$comment = "\xFF\xFE" . pack( 'n', 14 ) . 'SECRET-NOTE!';
+		$bytes   = substr( $bytes, 0, 2 ) . $comment . substr( $bytes, 2 );
+		$this->assertStringContainsString( 'SECRET-NOTE!', $bytes );
+
+		$clean = Uploads::strip_jpeg_metadata( $bytes );
+		$this->assertStringNotContainsString( 'SECRET-NOTE!', $clean );
+		$this->assertStringNotContainsString( 'SECRET-GPS-AND-CAMERA-DATA', $clean );
+		$image = imagecreatefromstring( $clean );
+		$this->assertNotFalse( $image, 'the stripped JPEG still decodes' );
+		$this->assertSame( 40, imagesx( $image ) );
+		$this->assertSame( 'not a jpeg', Uploads::strip_jpeg_metadata( 'not a jpeg' ), 'other bytes are left alone' );
+	}
+
+	public function test_REQ_127_metadata_is_stripped_from_png_bytes(): void {
+		$img = imagecreatetruecolor( 8, 8 );
+		ob_start();
+		imagepng( $img );
+		$png  = (string) ob_get_clean();
+		$data = "Comment\0SECRET-PNG-TEXT";
+		$text = pack( 'N', strlen( $data ) ) . 'tEXt' . $data . pack( 'N', crc32( 'tEXt' . $data ) );
+		// Insert after the 8-byte signature and the 25-byte IHDR chunk.
+		$with = substr( $png, 0, 33 ) . $text . substr( $png, 33 );
+		$this->assertStringContainsString( 'SECRET-PNG-TEXT', $with );
+
+		$clean = Uploads::strip_png_metadata( $with );
+		$this->assertStringNotContainsString( 'SECRET-PNG-TEXT', $clean );
+		$this->assertNotFalse( imagecreatefromstring( $clean ), 'the stripped PNG still decodes' );
+	}
+
 	public function test_REQ_127_a_scanner_can_refuse_a_file(): void {
 		$jpeg = $this->temp( $this->jpeg( false ), 'jpg' );
 		add_filter(
