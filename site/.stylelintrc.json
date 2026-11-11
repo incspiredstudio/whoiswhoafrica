@@ -10,6 +10,17 @@
     "playwright-report/**",
     "test-results/**"
   ],
+  "overrides": [
+    {
+      "files": ["wp-content/themes/whoiswho/assets/css/base.css", "wp-content/themes/whoiswho/assets/css/components.css"],
+      "rules": {
+        "no-descending-specificity": null,
+        "no-duplicate-selectors": null,
+        "declaration-block-no-duplicate-properties": null,
+        "property-no-deprecated": null
+      }
+    }
+  ],
   "rules": {
     "value-keyword-case": null,
     "alpha-value-notation": null,

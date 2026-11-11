@@ -121,6 +121,7 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci
+      - run: npm run build
       - name: Write a throwaway secrets file outside the web root
         run: |
           {

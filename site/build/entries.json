@@ -1,4 +1,7 @@
 {
   "_comment": "Theme issues add entries here: name -> source file. Names become dist/<name>.<hash>.<ext>.",
-  "entries": {}
+  "entries": {
+    "base.css": "wp-content/themes/whoiswho/assets/css/base.css",
+    "components.css": "wp-content/themes/whoiswho/assets/css/components.css"
+  }
 }
