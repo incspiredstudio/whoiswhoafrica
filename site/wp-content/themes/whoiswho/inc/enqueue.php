@@ -56,7 +56,7 @@ add_action(
 	static function (): void {
 		// Tokens (child) come first through the 'wiw-tokens-base' dependency, then base, then components.
 		$deps = array( 'wiw-tokens-base' );
-		foreach ( array( 'base', 'components', 'a11y' ) as $layer ) {
+		foreach ( array( 'base', 'components', 'forms', 'a11y' ) as $layer ) {
 			$url = wiw_asset_url( $layer . '.css' );
 			if ( null === $url ) {
 				continue;
