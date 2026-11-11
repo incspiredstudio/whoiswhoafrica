@@ -1,4 +1,6 @@
 parameters:
+	bootstrapFiles:
+		- config/phpstan-bootstrap.php
 	level: 6
 	paths:
 		- wp-content/plugins/whoiswho-core
