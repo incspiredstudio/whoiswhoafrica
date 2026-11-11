@@ -1,0 +1,140 @@
+/* WHOISWHO brand tokens (child theme). The one place brand values live: colours, typefaces, and the values the pages use.
+   It loads after the parent's tokens.base.css and overrides the same names. Replace a value here, never in a template.
+   Source: prototype/theme/tokens.css; colours come from the brand guide. The theme.json in this theme is generated from this file
+   (npm run theme-json in site/), so edit this file, then run the generator. */
+
+/* The guide's two typefaces, self-hosted. No italics are loaded: the design does not use them. */
+@font-face { font-family: "Repline"; src: url("../fonts/repline.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Montreal"; src: url("../fonts/montreal-300.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Montreal"; src: url("../fonts/montreal-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Montreal"; src: url("../fonts/montreal-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Montreal"; src: url("../fonts/montreal-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+
+:root {
+  /* Raw palette */
+  --charcoal-950: #1f1f1f;
+  --charcoal-900: #2f2f2f; /* guide */
+  --charcoal-800: #3d3d3d;
+  --charcoal-700: #454545;
+  --charcoal-600: #5a5a5a;
+  --stone-500: #aea796;
+  --stone-400: #d8d1c1;
+  --stone-300: #e9e3d6;
+  --offwhite: #f3efe6; /* guide */
+  --surface: #fbf8f1;
+  --orange: #ffa600; /* guide */
+  --orange-600: #e89700;
+  --orange-200: #ffd27a;
+  --orange-100: #ffefcc;
+  --orange-800: #6b4600;
+  --blue: #0e71fe; /* guide */
+  --blue-700: #0b57c9;
+  --blue-100: #deeafe;
+  --red: #af0102; /* guide */
+  --red-800: #860101;
+  --red-100: #fbe3e3;
+  --green: #276538; /* guide */
+  --green-100: #dcefe1;
+  --purple: #8036e2; /* guide */
+  --purple-800: #6426b8;
+  --purple-100: #f1e6fc;
+
+  /* Semantic colour */
+  --c-bg: var(--offwhite);
+  --c-bg-alt: var(--stone-300);
+  --c-surface: var(--surface);
+  --c-text: var(--charcoal-900);
+  --c-muted: var(--charcoal-600);
+  --c-line: var(--stone-400);
+  --c-line-strong: var(--charcoal-900);
+  --c-link: var(--blue-700);
+  --c-accent: var(--red);
+  --c-accent-hover: var(--red-800);
+  --c-cta: var(--orange);
+  --c-cta-hover: var(--orange-600);
+  --c-on-cta: var(--charcoal-900);
+  --c-dark: var(--charcoal-900);
+  --c-dark-deep: var(--charcoal-950);
+  --c-dark-raised: var(--charcoal-800);
+  --c-on-dark: var(--offwhite);
+  --c-on-dark-muted: var(--stone-400);
+  --c-line-on-dark: rgb(243, 239, 230, .24);
+  --c-highlight: var(--orange);
+  --c-focus: var(--blue-700);
+  --c-focus-on-dark: var(--orange);
+  --c-dip: var(--charcoal-900);
+
+  /* Label colours: the shape differs too, so colour is never the only signal */
+  --l-verified: var(--green);
+  --l-verified-bg: var(--green-100);
+  --l-featured: var(--orange-800);
+  --l-featured-bg: var(--orange-100);
+  --l-reviewed: var(--blue-700);
+  --l-reviewed-bg: var(--blue-100);
+  --l-pending: var(--charcoal-700);
+  --l-pending-bg: var(--stone-300);
+  --l-sponsored: var(--purple-800);
+  --l-sponsored-bg: var(--purple-100);
+  --c-ok: var(--green);
+  --c-ok-bg: var(--green-100);
+  --c-warn: var(--orange-800);
+  --c-warn-bg: var(--orange-100);
+  --c-bad: var(--red);
+  --c-bad-bg: var(--red-100);
+
+  /* Type. The guide names Repline (headlines) and Montreal (everything else). */
+  --font-display: "Repline", Georgia, "Times New Roman", serif;
+  --font-body: "Montreal", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-code: ui-monospace, Menlo, Consolas, monospace;
+  --t-xs: .75rem;
+  --t-sm: .875rem;
+  --t-base: 1rem;
+  --t-md: 1.125rem;
+  --t-lg: clamp(1.25rem, 1.15rem + .45vw, 1.5rem);
+  --t-xl: clamp(1.5rem, 1.3rem + .9vw, 2rem);
+  --t-2xl: clamp(1.875rem, 1.5rem + 1.7vw, 2.875rem);
+  --t-3xl: clamp(2.375rem, 1.75rem + 3vw, 4.25rem);
+  --t-4xl: clamp(2.75rem, 1.7rem + 5.2vw, 6.25rem);
+  --lh-tight: 1.06;
+  --lh-snug: 1.25;
+  --lh-body: 1.6;
+  --track-label: .08em;
+
+  /* Spacing (4px base) */
+  --s-1: .25rem;
+  --s-2: .5rem;
+  --s-3: .75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: clamp(3.5rem, 2.5rem + 4vw, 6.5rem);
+  --gutter: clamp(1rem, .6rem + 2vw, 2.5rem);
+  --w-page: 82rem;
+  --w-text: 42rem;
+  --head-h: 4.25rem;
+
+  /* Radius */
+  --r-1: 3px;
+  --r-2: 8px;
+  --r-3: 14px;
+  --r-pill: 999px;
+
+  /* Shadow */
+  --sh-1: 0 1px 2px rgb(31, 31, 31, .08);
+  --sh-2: 0 10px 28px -14px rgb(31, 31, 31, .32);
+  --sh-3: 0 26px 56px -24px rgb(31, 31, 31, .55);
+
+  /* Motion */
+  --m-fast: 140ms;
+  --m-base: 240ms;
+  --m-slow: 620ms;
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --ease-inout: cubic-bezier(.6, 0, .2, 1);
+  --rise: 14px;
+}

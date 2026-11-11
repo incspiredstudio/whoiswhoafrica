@@ -15,3 +15,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'WIW_CHILD_VERSION', '0.1.0' );
 
 require_once get_stylesheet_directory() . '/inc/status.php';
+require_once get_stylesheet_directory() . '/inc/assets.php';

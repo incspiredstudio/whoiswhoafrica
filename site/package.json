@@ -3,11 +3,13 @@
   "private": true,
   "description": "Build tooling for the WHOISWHO WordPress site",
   "scripts": {
-    "build": "node build/build.mjs",
+    "build": "node build/build.mjs && node build/theme-json.mjs --check",
     "lint:js": "eslint .",
     "lint:css": "stylelint \"**/*.css\" --allow-empty-input",
     "test:e2e": "playwright test",
-    "build:sample": "node build/build.mjs --sample"
+    "build:sample": "node build/build.mjs --sample",
+    "theme-json": "node build/theme-json.mjs",
+    "theme-json:check": "node build/theme-json.mjs --check"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

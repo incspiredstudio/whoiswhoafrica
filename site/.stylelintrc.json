@@ -1,11 +1,21 @@
 {
   "extends": "stylelint-config-standard",
-  "ignoreFiles": ["dist/**", "build/coverage/**", "vendor/**", "node_modules/**", "wordpress/**", ".studio/**", "playwright-report/**", "test-results/**"],
+  "ignoreFiles": [
+    "dist/**",
+    "build/coverage/**",
+    "vendor/**",
+    "node_modules/**",
+    "wordpress/**",
+    ".studio/**",
+    "playwright-report/**",
+    "test-results/**"
+  ],
   "rules": {
     "value-keyword-case": null,
     "alpha-value-notation": null,
     "color-function-notation": null,
     "selector-class-pattern": null,
-    "custom-property-pattern": null
+    "custom-property-pattern": null,
+    "font-family-name-quotes": null
   }
 }

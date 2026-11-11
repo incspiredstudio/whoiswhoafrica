@@ -1,0 +1,134 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "_generated": "Generated from assets/css/tokens.css by `npm run theme-json` in site/. Do not edit by hand.",
+  "settings": {
+    "color": {
+      "palette": [
+        {
+          "slug": "bg",
+          "name": "Background",
+          "color": "#f3efe6"
+        },
+        {
+          "slug": "bg-alt",
+          "name": "Background alternate",
+          "color": "#e9e3d6"
+        },
+        {
+          "slug": "surface",
+          "name": "Surface",
+          "color": "#fbf8f1"
+        },
+        {
+          "slug": "text",
+          "name": "Text",
+          "color": "#2f2f2f"
+        },
+        {
+          "slug": "muted",
+          "name": "Muted text",
+          "color": "#5a5a5a"
+        },
+        {
+          "slug": "line",
+          "name": "Line",
+          "color": "#d8d1c1"
+        },
+        {
+          "slug": "link",
+          "name": "Link",
+          "color": "#0b57c9"
+        },
+        {
+          "slug": "accent",
+          "name": "Accent",
+          "color": "#af0102"
+        },
+        {
+          "slug": "cta",
+          "name": "Call to action",
+          "color": "#ffa600"
+        },
+        {
+          "slug": "on-cta",
+          "name": "Text on call to action",
+          "color": "#2f2f2f"
+        },
+        {
+          "slug": "dark",
+          "name": "Dark",
+          "color": "#2f2f2f"
+        },
+        {
+          "slug": "on-dark",
+          "name": "Text on dark",
+          "color": "#f3efe6"
+        }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "slug": "display",
+          "name": "Display",
+          "fontFamily": "\"Repline\", Georgia, \"Times New Roman\", serif",
+          "fontFace": [
+            {
+              "fontFamily": "Repline",
+              "fontWeight": "400",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "file:./assets/fonts/repline.woff2"
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "body",
+          "name": "Body",
+          "fontFamily": "\"Montreal\", system-ui, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif",
+          "fontFace": [
+            {
+              "fontFamily": "Montreal",
+              "fontWeight": "300",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "file:./assets/fonts/montreal-300.woff2"
+              ]
+            },
+            {
+              "fontFamily": "Montreal",
+              "fontWeight": "400",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "file:./assets/fonts/montreal-400.woff2"
+              ]
+            },
+            {
+              "fontFamily": "Montreal",
+              "fontWeight": "500",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "file:./assets/fonts/montreal-500.woff2"
+              ]
+            },
+            {
+              "fontFamily": "Montreal",
+              "fontWeight": "700",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "file:./assets/fonts/montreal-700.woff2"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
