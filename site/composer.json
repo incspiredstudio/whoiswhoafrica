@@ -23,7 +23,7 @@
   "scripts": {
     "lint": "phpcs",
     "lint:fix": "phpcbf",
-    "analyse": "echo no PHP to analyse yet",
+    "analyse": "phpstan analyse --memory-limit=1G --no-progress",
     "test": "echo no tests yet"
   },
   "require-dev": {

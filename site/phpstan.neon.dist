@@ -1,0 +1,15 @@
+parameters:
+	level: 6
+	paths:
+		- wp-content/plugins/whoiswho-core
+		- wp-content/mu-plugins
+		- wp-content/themes/whoiswho
+		- wp-content/themes/whoiswho-child
+		- bin
+		- config
+	scanDirectories:
+		- vendor/johnpbloch/wordpress-core
+	stubFiles: []
+	ignoreErrors: []
+	reportUnmatchedIgnoredErrors: true
+	phpVersion: 80300
