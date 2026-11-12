@@ -29,5 +29,6 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		( new StatusGuard() )->register();
 		Bulk\BulkUnpublish::for_site()->register();
+		Admin\BulkUnpublishPanel::hooks();
 	}
 }
