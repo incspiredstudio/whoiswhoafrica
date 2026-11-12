@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Compliance\Forms;
 
+use WhoIsWho\Core\Awards\CategoryService;
+use WhoIsWho\Core\Awards\NominationIntake;
 use WhoIsWho\Core\Compliance\Consent\ConsentRecorder;
 use WhoIsWho\Core\Compliance\Support\EnquiryIntake;
 use WhoIsWho\Core\Compliance\Support\EnquirySubmission;
@@ -50,6 +52,8 @@ final class FormRoutes {
 		'#^newsletter/?$#'               => 'newsletter',
 		'#^correct/([A-Za-z0-9_-]+)/?$#' => 'correction',
 		'#^remove/([A-Za-z0-9_-]+)/?$#'  => 'removal',
+		'#^nominate/start/?$#'           => 'nomination_start',
+		'#^nominate/?$#'                 => 'nomination',
 	);
 
 	/**
@@ -81,13 +85,15 @@ final class FormRoutes {
 		$notifier  = Notifier::for_site();
 		return new self(
 			array(
-				'claim'           => static fn ( FormInput $input, string $ip, string $slug ): array => ( new ClaimIntake( new ClaimRepository(), $notifier, $protect, $consent ) )->submit( $slug, $input, $ip ),
-				'get_listed'      => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->get_listed( $input, $ip ),
-				'contact'         => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->contact( $input, $ip ),
-				'profile_enquiry' => static fn ( FormInput $input, string $ip, string $slug ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->profile( $slug, $input, $ip ),
-				'correction'      => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->correction( $slug, $input, $ip ),
-				'removal'         => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->removal( $slug, $input, $ip ),
-				'newsletter'      => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
+				'claim'            => static fn ( FormInput $input, string $ip, string $slug ): array => ( new ClaimIntake( new ClaimRepository(), $notifier, $protect, $consent ) )->submit( $slug, $input, $ip ),
+				'get_listed'       => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->get_listed( $input, $ip ),
+				'contact'          => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->contact( $input, $ip ),
+				'profile_enquiry'  => static fn ( FormInput $input, string $ip, string $slug ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->profile( $slug, $input, $ip ),
+				'correction'       => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->correction( $slug, $input, $ip ),
+				'removal'          => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->removal( $slug, $input, $ip ),
+				'newsletter'       => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
+				'nomination_start' => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->begin( $input, $ip ),
+				'nomination'       => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->submit( $input, $ip ),
 			)
 		);
 	}
@@ -149,7 +155,7 @@ final class FormRoutes {
 	 * @param string    $path   Path relative to the site root.
 	 * @param FormInput $input  Submitted fields.
 	 * @param string    $ip     Visitor IP.
-	 * @return array{form: string, status: string, message: string, errors: array<string, string>, reference: string, http: int}|null
+	 * @return array{form: string, status: string, message: string, errors: array<string, string>, reference: string, http: int, draft?: string}|null
 	 */
 	public function dispatch( string $method, string $path, FormInput $input, string $ip ): ?array {
 		if ( 'POST' !== strtoupper( $method ) ) {
@@ -180,6 +186,9 @@ final class FormRoutes {
 			ClaimIntake::REVIEW_FIRST        => 409,
 			ClaimIntake::ALREADY_CLAIMED     => 409,
 			EnquirySubmission::ENQUIRIES_OFF => 409,
+			NominationIntake::CLOSED         => 409,
+			NominationIntake::UNVERIFIED     => 409,
+			NominationIntake::DUPLICATE      => 409,
 		);
 		return $map[ $status ] ?? 400;
 	}
@@ -190,7 +199,7 @@ final class FormRoutes {
 	 * @param array{form: string, reference: string} $result Dispatch result.
 	 */
 	public static function done_url( array $result ): string {
-		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal' ), true ) ? $result['form'] : 'enquiry';
+		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal', 'nomination', 'nomination_start' ), true ) ? $result['form'] : 'enquiry';
 		$url  = add_query_arg(
 			array(
 				'kind' => $kind,
@@ -225,6 +234,7 @@ final class FormRoutes {
 					'message'   => $result['message'],
 					'errors'    => $result['errors'],
 					'reference' => $result['reference'],
+					'draft'     => $result['draft'] ?? '',
 				),
 				303 === $result['http'] ? 200 : $result['http']
 			);

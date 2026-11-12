@@ -14,6 +14,9 @@ use WhoIsWho\Core\Awards\AwardsTables;
 use WhoIsWho\Core\Awards\CategoryService;
 use WhoIsWho\Core\Awards\NominationIntake;
 use WhoIsWho\Core\Awards\NominationDrafts;
+use WhoIsWho\Core\Awards\NominationDuplicates;
+use WhoIsWho\Core\Compliance\Suppression\Suppression;
+use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Compliance\Forms\PublicSubmission;
 use WhoIsWho\Core\Compliance\Forms\TurnstileChallenge;
 use WhoIsWho\Core\Platform\Forms\FormGate;
@@ -82,7 +85,7 @@ final class NominationIntakeTest extends TestCase {
 		return (int) $wpdb->insert_id;
 	}
 
-	private function intake(): NominationIntake {
+	private function intake( ?array $limits = null ): NominationIntake {
 		$queue         = new MemoryQueue();
 		$options       = new \ArrayObject();
 		$runner        = new JobRunner(
@@ -128,7 +131,7 @@ final class NominationIntakeTest extends TestCase {
 		$limiter       = new RateLimiter(
 			new MemoryStore(),
 			'secret',
-			array(
+			$limits ?? array(
 				'default' => array(
 					'ip'      => array( 5, 600 ),
 					'subject' => array( 5, 600 ),
@@ -327,5 +330,141 @@ final class NominationIntakeTest extends TestCase {
 		$bot = $intake->begin( new FormInput( $this->start_fields( array( TurnstileChallenge::RESPONSE_FIELD => 'bad' ) ) ), '203.0.113.10' );
 		$this->assertSame( PublicSubmission::EXPIRED, $bot['status'] );
 		$this->assertSame( array(), $this->sent );
+	}
+
+	/**
+	 * A verified draft.
+	 */
+	private function verified_draft(): string {
+		$drafts = new NominationDrafts();
+		$draft  = $drafts->create( 'Nora Nominator', 'nora.nominator@example.test' );
+		$drafts->verify( $draft );
+		return $draft;
+	}
+
+	public function test_REQ_196_duplicate_nomination_is_detected(): void {
+		$cat    = $this->category();
+		$intake = $this->intake();
+		$first  = $intake->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat ) ), '203.0.113.20' );
+		$this->assertSame( PublicSubmission::RECEIVED, $first['status'] );
+
+		// Same person and category, with different spacing, case and punctuation: a warning, nothing stored.
+		$draft = $this->verified_draft();
+		$dup   = $intake->submit( new FormInput( $this->nomination_fields( $draft, $cat, array( 'nominee_name' => '  ADA  obi. ' ) ) ), '203.0.113.21' );
+		$this->assertSame( NominationIntake::DUPLICATE, $dup['status'] );
+		$this->assertSame( NominationIntake::DUPLICATE_MESSAGE, $dup['message'] );
+		$this->assertSame( $draft, $dup['draft'], 'the draft survives so the nominator can continue' );
+		$this->assertStringNotContainsString( 'Nora', $dup['message'], 'the warning never says who nominated' );
+		$this->assertCount( 1, $this->nominations() );
+		$this->assertSame( 409, \WhoIsWho\Core\Compliance\Forms\FormRoutes::http_status( $dup['status'] ) );
+
+		$check = new NominationDuplicates();
+		$this->assertSame( NominationDuplicates::NOMINATED, $check->check( 'Ada Obi', 'Obi Labs', $cat ) );
+		$this->assertNull( $check->check( 'Ada Obi', 'Another Company', $cat ), 'a different organisation is another nominee' );
+		$this->assertNull( $check->check( 'Ada Obi', '', $cat + 1 ), 'another category is not a duplicate' );
+		$this->assertNull( $check->check( 'Somebody Else', '', $cat ) );
+	}
+
+	public function test_REQ_196_suppressed_name_shows_warning_but_can_continue(): void {
+		$cat = $this->category();
+		( new Suppression( AuditLogger::for_site() ) )->add_declined_nominee( 'Tunde Bello', 'individual' );
+		$intake = $this->intake();
+		$draft  = $this->verified_draft();
+		$warn   = $intake->submit( new FormInput( $this->nomination_fields( $draft, $cat, array( 'nominee_name' => 'Tunde Bello' ) ) ), '203.0.113.22' );
+		$this->assertSame( NominationIntake::DUPLICATE, $warn['status'] );
+		$this->assertSame( NominationIntake::DUPLICATE_MESSAGE, $warn['message'], 'the same neutral message as any duplicate; no hint of a removal' );
+		$this->assertSame( array(), $this->nominations() );
+			$this->assertSame( NominationDuplicates::SUPPRESSED, ( new NominationDuplicates() )->check( 'Tunde Bello', '', $cat ) );
+
+		$go = $intake->submit(
+			new FormInput(
+				$this->nomination_fields(
+					$draft,
+					$cat,
+					array(
+						'nominee_name'    => 'Tunde Bello',
+						'continue_anyway' => '1',
+					)
+				)
+			),
+			'203.0.113.23'
+		);
+		$this->assertSame( PublicSubmission::RECEIVED, $go['status'], 'the nominator can continue past the warning' );
+		$this->assertCount( 1, $this->nominations() );
+		$this->assertSame( 'not_live', $this->nominations()[0]['status'] );
+	}
+
+	public function test_REQ_122_nomination_rate_limit_per_ip_and_email(): void {
+		$cat    = $this->category();
+		$intake = $this->intake(
+			array(
+				'default'    => array(
+					'ip'      => array( 50, 600 ),
+					'subject' => array( 50, 600 ),
+				),
+				'nomination' => array(
+					'ip'      => array( 2, 600 ),
+					'subject' => array( 50, 600 ),
+				),
+			)
+		);
+		foreach ( array( 'One Person', 'Two Person' ) as $name ) {
+			$ok = $intake->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( 'nominee_name' => $name ) ) ), '203.0.113.30' );
+			$this->assertSame( PublicSubmission::RECEIVED, $ok['status'] );
+		}
+		$limited = $intake->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( 'nominee_name' => 'Three Person' ) ) ), '203.0.113.30' );
+		$this->assertSame( PublicSubmission::TRY_LATER, $limited['status'] );
+		$this->assertStringContainsString( 'Too many nominations from this device', $limited['message'] );
+		$this->assertSame( 429, \WhoIsWho\Core\Compliance\Forms\FormRoutes::http_status( $limited['status'] ) );
+		$this->assertCount( 2, $this->nominations() );
+		$other = $intake->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( 'nominee_name' => 'Four Person' ) ) ), '203.0.113.31' );
+		$this->assertSame( PublicSubmission::RECEIVED, $other['status'], 'another device is not limited' );
+
+		$by_email = $this->intake(
+			array(
+				'default'    => array(
+					'ip'      => array( 50, 600 ),
+					'subject' => array( 50, 600 ),
+				),
+				'nomination' => array(
+					'ip'      => array( 50, 600 ),
+					'subject' => array( 1, 600 ),
+				),
+			)
+		);
+		$first    = $by_email->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( 'nominee_name' => 'Five Person' ) ) ), '203.0.113.32' );
+		$this->assertSame( PublicSubmission::RECEIVED, $first['status'] );
+		$second = $by_email->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( 'nominee_name' => 'Six Person' ) ) ), '203.0.113.33' );
+		$this->assertSame( PublicSubmission::TRY_LATER, $second['status'], 'the same email from another device is limited too' );
+	}
+
+	public function test_REQ_196_evidence_with_contact_data_or_sensitive_words_is_blocked(): void {
+		$cat    = $this->category();
+		$intake = $this->intake();
+		$draft  = $this->verified_draft();
+		$cases  = array(
+			'phone'     => 'Call her on +234 803 123 4567 to confirm that she built the payments switch.',
+			'email'     => 'Reach him at someone@example.test, he built the national payments switch.',
+			'sensitive' => 'He is a leader whose HIV status is public and who built the payments switch.',
+		);
+		foreach ( $cases as $label => $evidence ) {
+			$out = $intake->submit( new FormInput( $this->nomination_fields( $draft, $cat, array( 'evidence' => $evidence ) ) ), '203.0.113.4' . strlen( $label ) );
+			$this->assertSame( NominationIntake::INVALID, $out['status'], $label );
+			$this->assertSame( 'remove_personal_text', $out['errors']['evidence'], $label );
+			$this->assertStringContainsString( 'remove personal details', $out['message'] );
+			$this->assertStringNotContainsString( 'example.test', $out['message'], 'the text is never echoed' );
+			$this->assertSame( $draft, $out['draft'] );
+		}
+		$this->assertSame( array(), $this->nominations() );
+		$ok = $intake->submit( new FormInput( $this->nomination_fields( $draft, $cat ) ), '203.0.113.49' );
+		$this->assertSame( PublicSubmission::RECEIVED, $ok['status'], 'clean evidence passes' );
+	}
+
+	public function test_REQ_196_bot_challenge_is_required_on_the_final_step(): void {
+		$cat    = $this->category();
+		$intake = $this->intake();
+		$out    = $intake->submit( new FormInput( $this->nomination_fields( $this->verified_draft(), $cat, array( TurnstileChallenge::RESPONSE_FIELD => 'bad' ) ) ), '203.0.113.50' );
+		$this->assertSame( PublicSubmission::EXPIRED, $out['status'] );
+		$this->assertSame( array(), $this->nominations() );
 	}
 }
