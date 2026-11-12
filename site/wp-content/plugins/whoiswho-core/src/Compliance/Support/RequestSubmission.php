@@ -62,6 +62,18 @@ final class RequestSubmission {
 	}
 
 	/**
+	 * POST /remove/{slug}: ask for a profile to be removed. This creates a Removal item only, never a data request.
+	 *
+	 * @param string    $slug  Profile slug.
+	 * @param FormInput $input Submitted fields.
+	 * @param string    $ip    Visitor IP.
+	 * @return array{status: string, message: string, errors: array<string, string>, reference: string}
+	 */
+	public function removal( string $slug, FormInput $input, string $ip ): array {
+		return $this->handle( ItemType::REMOVAL, 'removal', new RemovalValidator(), $slug, $input, $ip );
+	}
+
+	/**
 	 * Validate, find the profile, protect, create.
 	 *
 	 * @param string    $type      Item type.
