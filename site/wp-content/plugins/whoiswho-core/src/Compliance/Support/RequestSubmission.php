@@ -74,6 +74,19 @@ final class RequestSubmission {
 	}
 
 	/**
+	 * POST /report/{slug}: any visitor reports a profile. No account is needed; an address is optional, and when given it is
+	 * confirmed by link.
+	 *
+	 * @param string    $slug  Profile slug.
+	 * @param FormInput $input Submitted fields.
+	 * @param string    $ip    Visitor IP.
+	 * @return array{status: string, message: string, errors: array<string, string>, reference: string}
+	 */
+	public function report( string $slug, FormInput $input, string $ip ): array {
+		return $this->handle( ItemType::REPORT, 'report', new ReportValidator(), $slug, $input, $ip );
+	}
+
+	/**
 	 * Validate, find the profile, protect, create.
 	 *
 	 * @param string    $type      Item type.
@@ -93,16 +106,17 @@ final class RequestSubmission {
 		if ( null === $profile ) {
 			return $this->reply( self::NOT_FOUND, 'We could not find that profile.', array(), '' );
 		}
-		$values = $result->values();
-		$verify = in_array( $values['relationship'] ?? '', RequestIntake::VERIFIED_RELATIONSHIPS, true );
-		$answer = $this->submission->handle(
+		$values  = $result->values();
+		$verify  = ItemType::REPORT === $type || in_array( $values['relationship'] ?? '', RequestIntake::VERIFIED_RELATIONSHIPS, true );
+		$subject = ! empty( $values['email'] ) ? $values['email'] : $ip;
+		$answer  = $this->submission->handle(
 			$form,
 			$input,
 			$ip,
-			$values['email'] ?? '',
+			$subject,
 			fn (): array => $this->intake->submit( $type, $values, $profile->id, $ip, $verify )
 		);
-		$ref    = PublicSubmission::RECEIVED === $answer['status'] && is_array( $answer['item'] ) ? (string) ( $answer['item']['reference'] ?? '' ) : '';
+		$ref     = PublicSubmission::RECEIVED === $answer['status'] && is_array( $answer['item'] ) ? (string) ( $answer['item']['reference'] ?? '' ) : '';
 		return $this->reply( $answer['status'], PublicSubmission::RECEIVED === $answer['status'] ? 'Request received. Thank you.' : $answer['message'], array(), $ref );
 	}
 
