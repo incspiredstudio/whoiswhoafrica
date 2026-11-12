@@ -35,6 +35,7 @@ final class Events {
 	public const NOMINATION_WINNER       = 'nomination_winner';
 	public const DATA_REQUEST_ACK        = 'data_request_ack';
 	public const COMMENT_ACKNOWLEDGED    = 'comment_acknowledged';
+	public const COMMENT_HELD            = 'comment_held';
 	public const CUSTOMER_INVITATION     = 'customer_invitation';
 	public const NEWSLETTER_CONFIRMATION = 'newsletter_confirmation';
 	public const RENEWAL_REMINDER        = 'renewal_reminder';
@@ -124,6 +125,10 @@ final class Events {
 			self::COMMENT_ACKNOWLEDGED    => array(
 				'audience' => 'public',
 				'subject'  => 'We received your comment',
+			),
+			self::COMMENT_HELD            => array(
+				'audience' => 'capability:moderate_comments',
+				'subject'  => 'A comment is waiting for moderation',
 			),
 			self::CUSTOMER_INVITATION     => array(
 				'audience' => 'public',
