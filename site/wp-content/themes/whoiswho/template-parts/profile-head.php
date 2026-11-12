@@ -67,6 +67,15 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 				<?php if ( null !== $wiw_profile->label ) : ?>
 					<div class="badges"><?php get_template_part( 'template-parts/pending-label', null, array( 'label' => $wiw_profile->label ) ); ?></div>
 				<?php endif; ?>
+				<?php if ( null !== $wiw_profile->reviewed_at ) : ?>
+					<?php $wiw_reviewed = strtotime( $wiw_profile->reviewed_at . ' UTC' ); ?>
+					<?php if ( false !== $wiw_reviewed ) : ?>
+						<p class="profile-reviewed meta">
+							<?php esc_html_e( 'Reviewed on', 'whoiswho' ); ?>
+							<time datetime="<?php echo esc_attr( gmdate( 'Y-m-d', $wiw_reviewed ) ); ?>"><?php echo esc_html( wp_date( (string) get_option( 'date_format' ), $wiw_reviewed ) ); ?></time>
+						</p>
+					<?php endif; ?>
+				<?php endif; ?>
 				<p class="profile-loc meta"><?php echo wiw_icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?> <?php echo esc_html( implode( ' · ', $wiw_where ) ); ?></p>
 			</div>
 		</div>
