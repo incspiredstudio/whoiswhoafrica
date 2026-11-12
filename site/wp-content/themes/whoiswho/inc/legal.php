@@ -1,6 +1,6 @@
 <?php
 /**
- * Legal pages (Privacy, Terms, Cookie policy): one template, a draft note until Legal supplies wording, and the Cookie preferences control on the cookie page (REQ-100, REQ-120, REQ-248).
+ * Legal pages (Privacy, Terms, Cookie policy, Complaints and takedown, Your data rights): one template, a draft note until Legal supplies wording, and the Cookie preferences control on the cookie page (REQ-100, REQ-120, REQ-248).
  *
  * @package WhoIsWho
  */
@@ -13,7 +13,7 @@ declare(strict_types=1);
  * @return array<int, string>
  */
 function wiw_legal_slugs(): array {
-	return (array) apply_filters( 'wiw_legal_slugs', array( 'privacy', 'terms', 'cookies' ) );
+	return (array) apply_filters( 'wiw_legal_slugs', array( 'privacy', 'terms', 'cookies', 'complaints', 'data-rights' ) );
 }
 
 /**
