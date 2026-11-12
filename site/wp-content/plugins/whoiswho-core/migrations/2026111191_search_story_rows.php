@@ -18,7 +18,7 @@ return new class() implements MigrationInterface {
 	 * Version.
 	 */
 	public function version(): string {
-		return '2026111180';
+		return '2026111191';
 	}
 
 	/**
