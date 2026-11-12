@@ -11,7 +11,8 @@ test("REQ-046 a private key in history is found", () => {
 });
 
 test("REQ-046 a real salt value is found, the placeholder is not", () => {
-  const real = "+define( 'AUTH_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6' );";
+  const value = "a1b2c3d4e5f6".repeat(3); // built at run time so the scanner never sees a literal secret
+  const real = "+define( 'AUTH_KEY', '" + value + "' );";
   assert.strictEqual(scanText(real).length, 1);
   assert.deepStrictEqual(scanText("+define( 'AUTH_KEY', 'put your unique phrase here' );"), []);
 });
