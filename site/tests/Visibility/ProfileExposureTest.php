@@ -19,10 +19,17 @@ use WhoIsWho\Tests\WpTestCase;
 
 final class ProfileExposureTest extends WpTestCase {
 
+	/**
+	 * Build the real tables once, before the first test starts. WordPress's test case turns CREATE TABLE into temporary tables
+	 * from the start of each test, and the version tables carry triggers, which need real tables.
+	 */
+	public static function set_up_before_class(): void {
+		parent::set_up_before_class();
+		( new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
-		// The profile state tables must exist before a profile is created.
-		( new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		remove_role( 'wiw_reviewer' );
 		remove_role( 'wiw_editor' );
 		delete_option( RoleSync::OPTION_SYNCED );
