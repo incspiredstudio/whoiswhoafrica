@@ -80,7 +80,7 @@ final class ReviewQueue {
 				'kind'       => (string) $row['kind'],
 				'name'       => (string) $row['post_title'],
 				'type'       => (string) $row['entity_type'],
-				'state'      => (string) $row['pub_state'],
+				'state'      => (string) $row[ StateRepository::STATE_COLUMN ],
 				'pilot'      => 0 === (int) $row['pilot'],
 				'since'      => (string) $row['ts'],
 				'ai_drafted' => (bool) (int) $row['ai'],
@@ -103,7 +103,7 @@ final class ReviewQueue {
 	 */
 	public function tiles(): array {
 		$states = new StateRepository();
-		$count  = static fn ( string $state ): int => $states->count( array( 'pub_state' => $state ) );
+		$count  = static fn ( string $state ): int => $states->count( array( StateRepository::STATE_COLUMN => $state ) );
 		$pend   = $count( PubState::PUBLISHED_PENDING );
 		$rev    = $count( PubState::PUBLISHED_REVIEWED );
 		return array(
