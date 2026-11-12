@@ -59,6 +59,15 @@ return array(
 		'children',
 		'son of',
 		'daughter of',
+		// Biometrics, sexual life, trade-union membership and criminal records.
+		'biometric',
+		'fingerprint',
+		'sexual orientation',
+		'sexuality',
+		'trade union',
+		'union member',
+		'criminal record',
+		'prison',
 		// Under 18.
 		'minor',
 		'underage',
