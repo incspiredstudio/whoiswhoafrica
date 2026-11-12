@@ -19,7 +19,7 @@ use WhoIsWho\Core\Platform\Jobs\JobRunner;
 final class PurgeService {
 
 	public const HOOK = 'wiw_content_unpublished';
-	public const JOB  = 'cache.purge';
+	public const JOB  = 'cache.edge_purge';
 
 	/**
 	 * Runner.
