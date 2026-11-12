@@ -187,6 +187,6 @@ final class StoryVisibilityTest extends WpTestCase {
 			)
 		);
 		$this->assertSame( home_url( '/stories/new-story-slug/' ), get_permalink( $id ) );
-		$this->assertSame( array( 'old-story-slug' ), get_post_meta( $id, '_wp_old_slug' ) );
+		$this->assertSame( array( 'old-story-slug' ), get_post_meta( $id, '_wp_old_slug', false ) );
 	}
 }
