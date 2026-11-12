@@ -137,8 +137,9 @@ final class Sitemap {
 	 * Home page and published pages.
 	 */
 	private function pages(): string {
-		$xml   = '<url><loc>' . esc_url( home_url( '/' ) ) . '</loc></url>';
-		$pages = get_pages( array( 'sort_column' => 'ID' ) ); // Published pages only, by default.
+		$xml = '<url><loc>' . esc_url( home_url( '/' ) ) . '</loc></url>';
+		// Published pages only, by default.
+		$pages = get_pages( array( 'sort_column' => 'ID' ) );
 		foreach ( $pages as $page ) {
 			$xml .= $this->url( (string) get_permalink( $page ), $page->post_modified_gmt );
 		}
