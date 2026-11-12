@@ -23,15 +23,19 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 	 */
 	function wiw_form_pages(): array {
 		return array(
-			'contact'   => array(
+			'contact'    => array(
 				'template' => 'templates/contact.php',
 				'title'    => __( 'Contact', 'whoiswho' ),
 			),
-			'subscribe' => array(
+			'subscribe'  => array(
 				'template' => 'templates/get-listed.php',
 				'title'    => __( 'Get listed', 'whoiswho' ),
 			),
-			'done'      => array(
+			'newsletter' => array(
+				'template' => 'templates/newsletter.php',
+				'title'    => __( 'Newsletter', 'whoiswho' ),
+			),
+			'done'       => array(
 				'template' => 'templates/done.php',
 				'title'    => __( 'Received', 'whoiswho' ),
 			),
