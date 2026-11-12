@@ -23,4 +23,5 @@
 *.env
 /build/coverage/
 /.phpunit.cache/
+/build/release/
 /wp-content/wiw-logs/
