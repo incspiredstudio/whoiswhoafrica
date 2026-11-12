@@ -146,6 +146,7 @@ return array(
 		'export'    => 'exclude',
 		'erase'     => 'delete',
 		'note'      => 'The passage of a public source behind a claim; only the passage needed, never the whole page.',
+	),
 	array(
 		'kind'      => 'column',
 		'name'      => 'wiw_support_items.requester_name',
