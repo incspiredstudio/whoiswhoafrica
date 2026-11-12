@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		Support\EnquiryIntake::register();
+		Support\DataRightsIntake::register();
 		( new Legal\LegalPages() )->register();
 	}
 }
