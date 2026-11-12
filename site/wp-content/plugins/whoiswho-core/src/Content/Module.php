@@ -31,5 +31,6 @@ final class Module implements ModuleInterface {
 		Stories\StoryFlags::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		( new Comments\CommentPolicy() )->register();
 	}
 }

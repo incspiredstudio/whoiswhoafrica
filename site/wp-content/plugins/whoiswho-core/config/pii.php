@@ -45,6 +45,35 @@ return array(
 		'note'      => '',
 	),
 
+	// Guest comments on stories (REQ-258). The email is for the moderator only and is never in public HTML.
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Name a guest typed on a story comment; shown with an approved comment.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Guest email; moderator only, never public.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author_IP',
+		'class'     => 'pii',
+		'retention' => 'log_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Address WordPress stores for spam checks.',
+	),
+
 	// Tables added in the foundation milestone and the ones planned next.
 	array(
 		'kind'      => 'column',
