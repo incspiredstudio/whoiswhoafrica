@@ -122,6 +122,34 @@ final class AuditLogger {
 	}
 
 	/**
+	 * Capabilities whose use is always logged. Modules call log_use() when they act under one of them.
+	 */
+	public const SENSITIVE_CAPABILITIES = array(
+		'wiw_export_data',
+		'wiw_manage_capabilities',
+		'wiw_toggle_nominations',
+		'wiw_manage_register',
+		'wiw_edit_suppression',
+		'wiw_bulk_unpublish',
+		'wiw_run_imports',
+	);
+
+	/**
+	 * Record the use of a sensitive capability (an export, a toggle, a register change, a bulk action). Other capabilities are not logged.
+	 *
+	 * @param string                              $capability The capability the action ran under.
+	 * @param array{type: string, id: string|int} $subject    What it was done to.
+	 * @param string                              $reason     Why, when the action needs one.
+	 * @return int|null Row id, or null when the capability is not on the sensitive list.
+	 */
+	public function log_use( string $capability, array $subject, string $reason = '' ): ?int {
+		if ( ! in_array( $capability, self::SENSITIVE_CAPABILITIES, true ) ) {
+			return null;
+		}
+		return $this->log( 'capability.use', $subject, null, array( 'capability' => $capability ), $reason );
+	}
+
+	/**
 	 * Record one action done to many subjects: a batch row, then one row per subject, all sharing the batch reference.
 	 *
 	 * @param string                                          $action   Action name.
