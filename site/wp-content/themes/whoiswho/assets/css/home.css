@@ -206,3 +206,25 @@ html.home-live .h-act.in .h-act-foot, html.home-live .h-act.in .h-act-n { opacit
 html.home-live [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity 800ms ease, transform 1000ms var(--ease-out); transition-delay: calc(var(--d, 0) * 70ms); }
 html.home-live [data-reveal].in { opacity: 1; transform: none; }
 html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }
+
+/* Stories from the record: a swipeable track. */
+.h-stories { padding-block: var(--s-8); overflow: hidden; }
+.h-track-wrap { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding-inline: var(--gutter); }
+.h-track { display: flex; gap: var(--s-4); width: max-content; margin: 0; padding: 0; list-style: none; }
+.h-story { position: relative; flex: none; width: min(82vw, 26rem); scroll-snap-align: center; display: grid; align-content: start; gap: var(--s-3); }
+.h-story-media { aspect-ratio: 16 / 9; overflow: hidden; background: var(--c-bg-alt); }
+.h-story-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 900ms var(--ease-out); }
+.h-story:hover .h-story-media img { transform: scale(1.05); }
+.h-story-text { display: grid; gap: var(--s-2); }
+.h-story-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); margin: 0; font-size: var(--t-sm); color: var(--c-muted); }
+.h-story-meta b { color: var(--c-text); }
+.h-story h3 { margin: 0; font: 400 var(--t-xl)/1.08 var(--font-display); transition: color var(--m-fast); }
+.h-story h3 a { color: inherit; text-decoration: none; }
+.h-story:hover h3 { color: var(--c-accent); }
+
+@media (width >= 64rem) { .h-story { width: clamp(24rem, 28vw, 30rem); } .h-track { gap: var(--s-6); } }
+
+/* Events: the next three as a ruled agenda. */
+.h-events { position: relative; padding-block: var(--s-8); background: var(--c-bg); color: var(--c-text); }
+.h-events .h-link:focus-visible { outline-color: var(--c-focus); }
+.h-story h3 a::after { content: ""; position: absolute; inset: 0; }
