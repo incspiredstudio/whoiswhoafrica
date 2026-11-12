@@ -159,6 +159,33 @@ final class ProfileListTest extends TestCase {
 		$this->assertCount( 0, $list->query( 'all', array( 'industry' => 'no-such-term-qwv' ) )['profiles'], 'An unknown term matches nothing.' );
 	}
 
+	public function test_REQ_008_q_narrows_by_name_together_with_other_filters(): void {
+		$ind = $this->term( 'Narrow Ind Qwv', Taxonomies::INDUSTRY );
+		$this->profile( 'Zanzibar Foods Qwv', 'organisation', 'reviewed', array( Taxonomies::INDUSTRY => array( $ind ) ) );
+		$this->profile( 'Zanzibar Bank Qwv', 'organisation', 'reviewed' );
+		$this->profile( 'Other Foods Qwv', 'organisation', 'reviewed', array( Taxonomies::INDUSTRY => array( $ind ) ) );
+		$this->profile( 'Zanzibar Pending Qwv', 'organisation', 'pending' );
+		$list = new ProfileList();
+
+		$q = $list->query( 'all', array( 'q' => '  zanzibar  ' ) );
+		$this->assertEqualsCanonicalizing( array( 'Zanzibar Foods Qwv', 'Zanzibar Bank Qwv' ), array_map( static fn ( $p ) => $p->name, $q['profiles'] ), 'q matches the name, ignoring case and spaces around it.' );
+		$this->assertSame( 2, $q['total'] );
+		$this->assertSame( 'zanzibar', $q['applied']['q'] );
+
+		$both = $list->query(
+			'all',
+			array(
+				'q'        => 'Zanzibar',
+				'industry' => 'narrow-ind-qwv',
+			)
+		);
+		$this->assertSame( array( 'Zanzibar Foods Qwv' ), array_map( static fn ( $p ) => $p->name, $both['profiles'] ) );
+		$this->assertSame( 1, $both['total'] );
+		$this->assertSame( 0, $list->query( 'all', array( 'q' => '100%_Qwv' ) )['total'], 'LIKE wildcards in q are literal.' );
+		$this->assertSame( 0, $list->query( 'all', array( 'q' => str_repeat( 'x', 200 ) . 'Zanzibar' ) )['total'], 'A long q is cut to 80 characters and cannot break the query.' );
+		$this->assertArrayNotHasKey( 'q', $list->query( 'all', array( 'q' => '   ' ) )['applied'] );
+	}
+
 	public function test_REQ_007_profession_filter_only_on_people_lists(): void {
 		$prof     = $this->term( 'Surgeon Qwv', Taxonomies::PROFESSION );
 		$org_type = $this->term( 'Bank Qwv', Taxonomies::ORG_TYPE );

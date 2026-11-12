@@ -13,6 +13,7 @@ namespace WhoIsWho\Core\Content;
 
 use WhoIsWho\Core\Content\Events\EventPostType;
 use WhoIsWho\Core\Content\Stories\LinkedProfiles;
+use WhoIsWho\Core\Content\Stories\MetaSponsoredSource;
 use WhoIsWho\Core\Content\Stories\ReadingTime;
 use WhoIsWho\Core\Content\Stories\StoryTypes;
 
@@ -49,6 +50,12 @@ final class PublicStory {
 		$story['profiles'] = self::linked_profiles( $post->ID );
 		$story['event']    = self::related_event( $post->ID );
 		$story['sponsor']  = self::sponsor( $post->ID );
+		$story['share']    = array(
+			'title'       => $story['title'],
+			'description' => $story['lede'],
+			'image'       => $story['cover'],
+			'label'       => null !== $story['sponsor'] ? $story['sponsor']['label'] : null,
+		);
 		$story['seo']      = array(
 			'title'       => (string) get_post_meta( $post->ID, 'wiw_seo_title', true ),
 			'description' => (string) get_post_meta( $post->ID, 'wiw_seo_description', true ),
@@ -66,8 +73,10 @@ final class PublicStory {
 	/**
 	 * A list of stories: newest first, Featured (sticky) first. Placements never change the order.
 	 *
-	 * @param array{type?: string, industry?: string, page?: int, per_page?: int, exclude?: int} $args Filters.
-	 * @return array{items: array<int, array<string, mixed>>, total: int, pages: int, page: int, error: bool}
+	 * The slot story for the surface (home or stories) comes back separately in `slot`; it never moves other items.
+	 *
+	 * @param array{type?: string, industry?: string, page?: int, per_page?: int, exclude?: int, surface?: string} $args Filters.
+	 * @return array{items: array<int, array<string, mixed>>, total: int, pages: int, page: int, error: bool, slot: array<string, mixed>|null}
 	 */
 	public static function list( array $args ): array {
 		$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
@@ -80,6 +89,7 @@ final class PublicStory {
 				'pages' => 0,
 				'page'  => $page,
 				'error' => true,
+				'slot'  => null,
 			);
 		}
 		$ids    = self::ids( $type, (string) ( $args['industry'] ?? '' ), (int) ( $args['exclude'] ?? 0 ) );
@@ -101,16 +111,56 @@ final class PublicStory {
 			'pages' => (int) ceil( $total / $per_page ),
 			'page'  => $page,
 			'error' => false,
+			'slot'  => self::slot( (string) ( $args['surface'] ?? '' ) ),
 		);
+	}
+
+	/**
+	 * The sponsored source: Commerce supplies one through the filter; the default reads the story's sponsor fields.
+	 */
+	public static function source(): SponsoredSource {
+		$source = apply_filters( 'wiw_sponsored_source', new MetaSponsoredSource() );
+		return $source instanceof SponsoredSource ? $source : new MetaSponsoredSource();
+	}
+
+	/**
+	 * Today's date (Y-m-d, site time) for placement windows.
+	 */
+	private static function today(): string {
+		$today = apply_filters( 'wiw_story_today', wp_date( 'Y-m-d' ) );
+		return is_string( $today ) ? $today : wp_date( 'Y-m-d' );
+	}
+
+	/**
+	 * The one sponsored story filling the slot on a surface today: a public story (never an event) whose placement covers the
+	 * surface and whose dates include today. Newest story wins a tie. Null when none.
+	 *
+	 * @param string $surface home or stories.
+	 * @return array<string, mixed>|null
+	 */
+	private static function slot( string $surface ): ?array {
+		if ( ! in_array( $surface, array( 'home', 'stories' ), true ) ) {
+			return null;
+		}
+		$ids = self::source()->story_ids( $surface );
+		rsort( $ids );
+		foreach ( $ids as $id ) {
+			$post = get_post( $id );
+			if ( $post instanceof \WP_Post && 'post' === $post->post_type && self::is_public( $post ) && null !== self::sponsor( $id, $surface ) ) {
+				return self::card( $post );
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * Published stories that link a public profile.
 	 *
 	 * @param int $profile_id Profile ID.
+	 * @param int $limit      Maximum stories, newest first; 0 for all.
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function for_profile( int $profile_id ): array {
+	public static function for_profile( int $profile_id, int $limit = 0 ): array {
 		if ( ! isset( LinkedProfiles::choices()[ $profile_id ] ) ) {
 			return array();
 		}
@@ -121,6 +171,9 @@ final class PublicStory {
 				$post = get_post( $id );
 				if ( $post instanceof \WP_Post ) {
 					$out[] = self::card( $post );
+					if ( $limit > 0 && count( $out ) >= $limit ) {
+						break;
+					}
 				}
 			}
 		}
@@ -290,15 +343,29 @@ final class PublicStory {
 	}
 
 	/**
-	 * The sponsor label, when the story has one. Placement rules (dates, slots) are applied by the Commerce module through
-	 * the filter; this read model only exposes the label and never uses it to order anything.
+	 * The sponsor label and an active flag, only between the placement's start and end dates (inclusive). After the end date
+	 * the label and slot are gone and the story stays. This read model never uses the label to order anything.
 	 *
-	 * @param int $post_id Post ID.
-	 * @return array{name: string}|null
+	 * @param int         $post_id Post ID.
+	 * @param string|null $surface When given, the placement must also cover this surface.
+	 * @return array{name: string, label: string, active: bool}|null
 	 */
-	private static function sponsor( int $post_id ): ?array {
-		$name = (string) get_post_meta( $post_id, 'wiw_sponsor_name', true );
-		$name = apply_filters( 'wiw_story_sponsor_name', $name, $post_id );
-		return is_string( $name ) && '' !== $name ? array( 'name' => $name ) : null;
+	private static function sponsor( int $post_id, ?string $surface = null ): ?array {
+		$placement = self::source()->placement( $post_id );
+		if ( null === $placement || '' === $placement['sponsor'] ) {
+			return null;
+		}
+		if ( null !== $surface && ! in_array( $placement['placement'], array( $surface, 'both' ), true ) ) {
+			return null;
+		}
+		$today = self::today();
+		if ( ( '' !== $placement['start'] && $today < $placement['start'] ) || ( '' !== $placement['end'] && $today > $placement['end'] ) ) {
+			return null;
+		}
+		return array(
+			'name'   => $placement['sponsor'],
+			'label'  => 'Sponsored by ' . $placement['sponsor'],
+			'active' => true,
+		);
 	}
 }

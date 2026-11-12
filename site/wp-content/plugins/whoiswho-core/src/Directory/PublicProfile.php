@@ -17,6 +17,7 @@ use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\Url\ProfileSlugs;
+use WhoIsWho\Core\Platform\Settings\SettingsService;
 use WhoIsWho\Core\Review\StatePolicy;
 
 /**
@@ -28,6 +29,11 @@ final class PublicProfile {
 	 * Post meta holding the record id the importer assigned (links a person to an organisation).
 	 */
 	public const RECORD_ID_META = '_wiw_record_id';
+
+	/**
+	 * Post meta set to 1 when enquiries are switched off for the profile.
+	 */
+	public const ENQUIRIES_OFF_META = '_wiw_enquiries_off';
 
 	/**
 	 * Post meta holding the attachment id of the portrait or logo.
@@ -112,6 +118,20 @@ final class PublicProfile {
 	public bool $claimed = false;
 
 	/**
+	 * Whether the Claim this profile button may show: the profile is reviewed and not yet claimed. A pending-review profile cannot be claimed.
+	 *
+	 * @var bool
+	 */
+	public bool $claimable = false;
+
+	/**
+	 * Whether visitors may send an enquiry about this profile. Staff switch it off on the owner's request (REQ-018); the switch is audited.
+	 *
+	 * @var bool
+	 */
+	public bool $enquiries_open = true;
+
+	/**
 	 * Related organisation, only when that organisation is itself public: array{name: string, url: string}.
 	 *
 	 * @var array<string, string>|null
@@ -172,7 +192,8 @@ final class PublicProfile {
 	 * The pending-review label text: one configuration value (REQ-216).
 	 */
 	public static function pending_label(): string {
-		$label = apply_filters( 'wiw_pending_label', StatePolicy::PENDING_LABEL );
+		$label = ( new SettingsService( SettingsService::default_registry() ) )->get( SettingsService::PENDING_REVIEW_LABEL );
+		$label = apply_filters( 'wiw_pending_label', is_string( $label ) && '' !== $label ? $label : StatePolicy::PENDING_LABEL );
 		return is_string( $label ) && '' !== $label ? $label : StatePolicy::PENDING_LABEL;
 	}
 
@@ -211,6 +232,8 @@ final class PublicProfile {
 		}
 		$profile                  = new self( $id, $post->post_name, $post->post_title, (string) $row['entity_type'], $state, $policy );
 		$profile->claimed         = (bool) (int) $row['claimed'];
+		$profile->enquiries_open  = '1' !== (string) get_post_meta( $id, self::ENQUIRIES_OFF_META, true );
+		$profile->claimable       = $public && PubState::PUBLISHED_REVIEWED === $state && ! $profile->claimed;
 		$profile->reviewed_at     = PubState::PUBLISHED_REVIEWED === $state && ! empty( $row['reviewed_at'] ) ? (string) $row['reviewed_at'] : null;
 		$profile->visibility_note = $public ? null : 'Not public: ' . $state . '. Visitors see HTTP ' . $policy->status . '.';
 		$profile->facts           = self::facts( $id, (string) $row['entity_type'], $state );
@@ -219,6 +242,17 @@ final class PublicProfile {
 		$profile->image_id        = $image > 0 ? $image : null;
 		$profile->share           = self::share( $profile );
 		return $profile;
+	}
+
+	/**
+	 * Published stories that link to this profile, newest first (REQ-028). Read live on every call, so a story that links, unlinks
+	 * or leaves the published state shows or disappears at once; nothing is cached.
+	 *
+	 * @param int $limit Maximum stories.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function related_stories( int $limit = 6 ): array {
+		return \WhoIsWho\Core\Content\PublicStory::for_profile( $this->id, max( 1, $limit ) );
 	}
 
 	/**
