@@ -33,5 +33,6 @@ final class Module implements ModuleInterface {
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		( new Newsletter\Privacy\SubscriberPrivacy() )->register();
 	}
 }
