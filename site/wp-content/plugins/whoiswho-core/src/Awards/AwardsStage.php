@@ -135,8 +135,8 @@ final class AwardsStage {
 	/**
 	 * Drop the Nominate entry from menus while Nominations is off.
 	 *
-	 * @param array<int, object> $items Menu items.
-	 * @return array<int, object>
+	 * @param mixed $items Menu items (a filter value, so not trusted to be an array).
+	 * @return mixed
 	 */
 	public static function filter_menu_items( $items ) {
 		if ( ! is_array( $items ) || self::for_site()->nominations_open() ) {

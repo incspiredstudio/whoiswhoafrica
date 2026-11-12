@@ -43,6 +43,7 @@ final class AwardsStageTest extends WpTestCase {
 			(object) array( 'url' => home_url( '/nominate/' ) ),
 			(object) array( 'url' => home_url( '/awards/winners/' ) ),
 		);
+
 		$closed = $this->stage( false, false, false );
 		$this->assertSame( 'Nominations closed', $closed->nav_label() );
 		$this->assertNull( $closed->nominate_url() );
