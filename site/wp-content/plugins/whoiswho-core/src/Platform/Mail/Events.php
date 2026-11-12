@@ -40,6 +40,7 @@ final class Events {
 	public const RENEWAL_REMINDER        = 'renewal_reminder';
 	public const EXPIRY_REMINDER         = 'expiry_reminder';
 	public const STAFF_ITEM_NEEDS_ATTEND = 'staff_item_needs_attention';
+	public const NEWSLETTER_ISSUE        = 'newsletter_issue';
 
 	/**
 	 * Audience and placeholder subject by event.
@@ -144,6 +145,24 @@ final class Events {
 				'audience' => 'capability:wiw_review_records',
 				'subject'  => 'An item needs attention',
 			),
+			self::NEWSLETTER_ISSUE        => array(
+				'audience' => 'public',
+				'subject'  => 'Our latest news',
+			),
 		);
+	}
+
+	/**
+	 * Marketing events: they pass the consent and unsubscribe gate (REQ-061). Modules add their own through the
+	 * wiw_mail_marketing_events filter.
+	 *
+	 * @return string[]
+	 */
+	public static function marketing(): array {
+		$events = array( self::NEWSLETTER_ISSUE );
+		if ( function_exists( 'apply_filters' ) ) {
+			$events = array_map( 'strval', (array) apply_filters( 'wiw_mail_marketing_events', $events ) );
+		}
+		return $events;
 	}
 }

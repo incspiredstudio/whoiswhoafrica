@@ -31,6 +31,7 @@ final class Module implements ModuleInterface {
 		Jobs\JobRunner::for_site()->register();
 		Links\LinkRoute::for_site()->register();
 		Mail\Notifier::for_site();
+		Mail\Marketing\Marketing::for_site()->register();
 		Log\Logger::for_site()->register();
 		Users\Deactivation::for_site()->register();
 		Health\HealthEndpoint::for_site()->register();
