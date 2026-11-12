@@ -113,6 +113,13 @@ final class PublicProfile {
 	public bool $claimed = false;
 
 	/**
+	 * Whether the Claim this profile button may show: the profile is reviewed and not yet claimed. A pending-review profile cannot be claimed.
+	 *
+	 * @var bool
+	 */
+	public bool $claimable = false;
+
+	/**
 	 * Related organisation, only when that organisation is itself public: array{name: string, url: string}.
 	 *
 	 * @var array<string, string>|null
@@ -213,6 +220,7 @@ final class PublicProfile {
 		}
 		$profile                  = new self( $id, $post->post_name, $post->post_title, (string) $row['entity_type'], $state, $policy );
 		$profile->claimed         = (bool) (int) $row['claimed'];
+		$profile->claimable       = $public && PubState::PUBLISHED_REVIEWED === $state && ! $profile->claimed;
 		$profile->reviewed_at     = PubState::PUBLISHED_REVIEWED === $state && ! empty( $row['reviewed_at'] ) ? (string) $row['reviewed_at'] : null;
 		$profile->visibility_note = $public ? null : 'Not public: ' . $state . '. Visitors see HTTP ' . $policy->status . '.';
 		$profile->facts           = self::facts( $id, (string) $row['entity_type'], $state );
