@@ -36,5 +36,6 @@ final class Module implements ModuleInterface {
 		Events\EventFields::hooks();
 		( new Comments\CommentPolicy() )->register();
 		Newsletter\NewsletterSignup::register();
+		( new Newsletter\ConfirmRoute() )->register();
 	}
 }
