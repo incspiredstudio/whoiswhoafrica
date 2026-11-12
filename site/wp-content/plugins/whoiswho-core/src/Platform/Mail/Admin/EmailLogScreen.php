@@ -201,7 +201,7 @@ final class EmailLogScreen {
 		}
 		foreach ( $rows as $row ) {
 			$failed = 'failed' === $row['result'];
-			$out   .= '<tr' . ( $failed ? ' class="wiw-failed" style="background:#fbe3e3"' : '' ) . '>';
+			$out   .= '<tr' . ( $failed ? ' class="wiw-failed" style="background:#fcf0f1"' : '' ) . '>';
 			$out   .= '<td>' . esc_html( (string) $row['created_at'] ) . '</td>';
 			$out   .= '<td>' . esc_html( (string) $row['event'] ) . '</td>';
 			$out   .= '<td><code>' . esc_html( substr( (string) $row['recipient_ref'], 0, 10 ) ) . '</code></td>';
