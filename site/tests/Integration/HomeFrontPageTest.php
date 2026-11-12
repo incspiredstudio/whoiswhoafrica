@@ -78,4 +78,38 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertStringContainsString( 'data-home="1"', $html );
 		$this->assertStringContainsString( 'is-home', $html );
 	}
+
+	public function test_REQ_001_the_three_acts_use_the_tagline_words_with_a_mark_and_a_link_each(): void {
+		$out = $this->render();
+		$this->assertSame( 3, substr_count( $out, 'class="h-act h-act--' ) );
+		foreach ( array( 'Influence.', 'Achievement.', 'Legacy.' ) as $word ) {
+			$this->assertStringContainsString( $word, $out );
+		}
+		$this->assertStringContainsString( '/people/', $out );
+		$this->assertStringContainsString( '/awards/', $out );
+		$this->assertStringContainsString( '/stories/', $out );
+		$this->assertSame( 3, substr_count( $out, 'h-act-mark' ) );
+	}
+
+	public function test_REQ_001_the_four_doors_link_to_the_four_directory_lists(): void {
+		$out = $this->render();
+		$this->assertSame( 4, substr_count( $out, 'class="h-door h-door--' ) );
+		foreach ( array( '/people/', '/entrepreneurs/', '/businesses/', '/institutions/' ) as $path ) {
+			$this->assertStringContainsString( 'href="' . home_url( $path ) . '"', $out );
+		}
+	}
+
+	public function test_REQ_002_the_closing_call_has_one_button_that_follows_the_nominations_switch(): void {
+		add_filter( 'wiw_nominations_are_open', '__return_false' );
+		$out = $this->render();
+		$this->assertStringContainsString( 'Who should the continent know?', $out );
+		$this->assertSame( 1, substr_count( $out, 'class="h-final-cta"' ) );
+		$part = substr( $out, (int) strpos( $out, 'h-final-cta' ) );
+		$this->assertStringContainsString( 'Get listed', $part );
+		$this->assertStringNotContainsString( 'Nominate someone', $part );
+		remove_all_filters( 'wiw_nominations_are_open' );
+		add_filter( 'wiw_nominations_are_open', '__return_true' );
+		$open = $this->render();
+		$this->assertStringContainsString( 'Nominate someone', substr( $open, (int) strpos( $open, 'h-final-cta' ) ) );
+	}
 }
