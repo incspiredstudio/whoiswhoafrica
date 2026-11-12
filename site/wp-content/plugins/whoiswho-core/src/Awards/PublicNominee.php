@@ -79,6 +79,13 @@ final class PublicNominee {
 	public int $year;
 
 	/**
+	 * The public citation staff wrote for a winner (never the nominator evidence).
+	 *
+	 * @var string
+	 */
+	public string $citation = '';
+
+	/**
 	 * Whether this nominee is a winner (stage Winner; the nomination is Live).
 	 *
 	 * @var bool
@@ -117,6 +124,7 @@ final class PublicNominee {
 		$this->group       = AwardsTables::GROUPS[ $this->group_key ] ?? $this->group_key;
 		$this->year        = (int) ( $row['edition_year'] ?? 0 ) > 0 ? (int) $row['edition_year'] : (int) substr( (string) $row['created_at'], 0, 4 );
 		$this->is_winner   = 'winner' === $row['stage'];
+		$this->citation    = isset( $row['citation'] ) ? (string) $row['citation'] : '';
 	}
 
 	/**
@@ -243,7 +251,7 @@ final class PublicNominee {
 		$n   = AwardsTables::table( AwardsTables::NOMINATIONS );
 		$c   = AwardsTables::table( AwardsTables::CATEGORIES );
 		$e   = AwardsTables::table( AwardsTables::EDITIONS );
-		$sql = 'SELECT n.id, n.category_id, n.profile_id, n.stage, n.status, n.created_at, c.title AS category_title, c.group_key, c.sort_order, e.year AS edition_year'
+		$sql = 'SELECT n.id, n.category_id, n.profile_id, n.stage, n.status, n.created_at, n.citation, c.title AS category_title, c.group_key, c.sort_order, e.year AS edition_year'
 			. " FROM {$n} n INNER JOIN {$c} c ON c.id = n.category_id LEFT JOIN {$e} e ON e.id = n.edition_id WHERE {$where}"
 			. ' ORDER BY COALESCE(e.year, YEAR(n.created_at)) DESC, c.group_key ASC, c.sort_order ASC, n.id ASC';
 		$sql = array() === $args ? $sql : $wpdb->prepare( $sql, $args ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- fixed names; values prepared.
