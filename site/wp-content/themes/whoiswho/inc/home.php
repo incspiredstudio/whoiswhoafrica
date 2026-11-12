@@ -11,6 +11,21 @@
 
 declare(strict_types=1);
 
+if ( ! function_exists( 'wiw_is_home_request' ) ) {
+	/**
+	 * Whether this request is the home page itself. Routes without a post of their own (the form pages, the single-use link page,
+	 * lists) also look like the front page to is_front_page(), so the request must carry no query variable of its own except paging.
+	 */
+	function wiw_is_home_request(): bool {
+		if ( ! is_front_page() ) {
+			return false;
+		}
+		global $wp;
+		$vars = isset( $wp->query_vars ) && is_array( $wp->query_vars ) ? array_filter( array_diff_key( $wp->query_vars, array( 'paged' => 1 ) ), static fn ( $v ): bool => '' !== $v ) : array();
+		return array() === $vars;
+	}
+}
+
 if ( ! function_exists( 'wiw_home_title_lines' ) ) {
 	/**
 	 * The hero title as two lines: the brand's long name in sentence case, split after the third word ("Who is who" / "in Africa.").
