@@ -88,6 +88,11 @@ final class ChunkApplier {
 		if ( in_array( $batch['status'], array( 'applied', 'undone', 'refused' ), true ) ) {
 			return $this->summary( $batch_id, true, 0 );
 		}
+		$previewed = json_decode( (string) $batch['settings_snapshot'], true );
+		$previewed = is_array( $previewed ) && isset( $previewed['dry_run']['file_hash'] ) ? (string) $previewed['dry_run']['file_hash'] : (string) $batch['file_hash'];
+		if ( $bundle->file_hash() !== (string) $batch['file_hash'] || $bundle->file_hash() !== $previewed ) {
+			throw new \RuntimeException( 'The file changed since the dry run.' );
+		}
 		$size       = max( 1, min( self::MAX_CHUNK, $size ) );
 		$cursor     = (int) $batch['progress_cursor'];
 		$importer   = (int) $batch['created_by'];
