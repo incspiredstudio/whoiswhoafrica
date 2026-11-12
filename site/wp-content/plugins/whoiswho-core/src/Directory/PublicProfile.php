@@ -17,6 +17,7 @@ use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\Url\ProfileSlugs;
+use WhoIsWho\Core\Platform\Settings\SettingsService;
 use WhoIsWho\Core\Review\StatePolicy;
 
 /**
@@ -172,7 +173,8 @@ final class PublicProfile {
 	 * The pending-review label text: one configuration value (REQ-216).
 	 */
 	public static function pending_label(): string {
-		$label = apply_filters( 'wiw_pending_label', StatePolicy::PENDING_LABEL );
+		$label = ( new SettingsService( SettingsService::default_registry() ) )->get( SettingsService::PENDING_REVIEW_LABEL );
+		$label = apply_filters( 'wiw_pending_label', is_string( $label ) && '' !== $label ? $label : StatePolicy::PENDING_LABEL );
 		return is_string( $label ) && '' !== $label ? $label : StatePolicy::PENDING_LABEL;
 	}
 
