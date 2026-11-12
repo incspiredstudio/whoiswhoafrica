@@ -79,6 +79,25 @@ final class Request {
 	}
 
 	/**
+	 * Whether a value was sent for a name (an empty value counts as sent).
+	 *
+	 * @param string $key Name.
+	 */
+	public function has( string $key ): bool {
+		return array_key_exists( $key, $this->values );
+	}
+
+	/**
+	 * A multi-line text value (a textarea), line breaks kept, or an empty string.
+	 *
+	 * @param string $key Name.
+	 */
+	public function text( string $key ): string {
+		$value = $this->values[ $key ] ?? '';
+		return is_scalar( $value ) ? sanitize_textarea_field( (string) $value ) : '';
+	}
+
+	/**
 	 * A whole number, or zero.
 	 *
 	 * @param string $key Name.

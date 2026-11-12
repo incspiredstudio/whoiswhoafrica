@@ -179,8 +179,11 @@ final class ProfilesScreen {
 				);
 				echo '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Unpublish', 'whoiswho' ) . '</a>';
 			}
+			if ( current_user_can( ProfileEditScreen::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- generated for the profile type, listed in config/capabilities.php.
+				echo ' <a href="' . esc_url( ProfileEditScreen::url( (int) $row['id'] ) ) . '">' . esc_html__( 'Edit fields', 'whoiswho' ) . '</a>';
+			}
 			echo '</td></tr>';
-		}
+		}//end foreach
 		echo '</tbody></table>';
 	}
 
