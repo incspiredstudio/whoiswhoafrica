@@ -34,5 +34,6 @@ final class Module implements ModuleInterface {
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
 		( new Newsletter\Privacy\SubscriberPrivacy() )->register();
+		Newsletter\NewsletterSignup::register();
 	}
 }

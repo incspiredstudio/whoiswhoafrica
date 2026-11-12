@@ -14,6 +14,7 @@ namespace WhoIsWho\Core\Compliance\Support;
 
 use WhoIsWho\Core\Compliance\Consent\ConsentRecorder;
 use WhoIsWho\Core\Compliance\Forms\PublicSubmission;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Forms\ValidationResult;
 
@@ -22,7 +23,9 @@ use WhoIsWho\Core\Platform\Forms\ValidationResult;
  */
 final class EnquirySubmission {
 
-	public const INVALID = 'invalid';
+	public const INVALID       = 'invalid';
+	public const NOT_FOUND     = 'not_found';
+	public const ENQUIRIES_OFF = 'enquiries_off';
 
 	/**
 	 * Intake.
@@ -95,6 +98,47 @@ final class EnquirySubmission {
 	}
 
 	/**
+	 * POST /enquire/{slug}: an enquiry about a public profile. It becomes an Enquiry item for staff; the profile owner's email and
+	 * phone are never read, returned or put in any message (REQ-018). A profile whose enquiries are switched off refuses.
+	 *
+	 * @param string    $slug  Profile slug from the URL.
+	 * @param FormInput $input Submitted fields (with the form token and challenge response).
+	 * @param string    $ip    Visitor IP.
+	 * @return array{status: string, message: string, errors: array<string, string>, reference: string}
+	 */
+	public function profile( string $slug, FormInput $input, string $ip ): array {
+		$fields = array( 'source' => 'profile' );
+		foreach ( array( 'name', 'organisation', 'email', 'phone', 'message' ) as $name ) {
+			$fields[ $name ] = $input->raw( $name );
+		}
+		$result = ( new EnquiryValidator() )->validate( new FormInput( $fields ) );
+		if ( ! $result->is_valid() ) {
+			return $this->invalid( $result );
+		}
+		$profile = PublicProfile::find( $slug );
+		if ( null === $profile ) {
+			return $this->refusal( self::NOT_FOUND, 'We could not find that profile.' );
+		}
+		return $this->run( 'enquiry', $input, $ip, $result->values(), false, $profile );
+	}
+
+	/**
+	 * A refusal reply.
+	 *
+	 * @param string $status  Status.
+	 * @param string $message Message for the visitor.
+	 * @return array{status: string, message: string, errors: array<string, string>, reference: string}
+	 */
+	private function refusal( string $status, string $message ): array {
+		return array(
+			'status'    => $status,
+			'message'   => $message,
+			'errors'    => array(),
+			'reference' => '',
+		);
+	}
+
+	/**
 	 * Run the protection, then create the enquiry.
 	 *
 	 * @param string                $form    Form type for the throttle.
@@ -102,27 +146,34 @@ final class EnquirySubmission {
 	 * @param string                $ip      Visitor IP.
 	 * @param array<string, string> $values  Validated values.
 	 * @param bool                  $consent Whether consent was part of the form.
+	 * @param PublicProfile|null    $profile The profile, for a profile enquiry.
 	 * @return array{status: string, message: string, errors: array<string, string>, reference: string}
 	 */
-	private function run( string $form, FormInput $input, string $ip, array $values, bool $consent ): array {
+	private function run( string $form, FormInput $input, string $ip, array $values, bool $consent, ?PublicProfile $profile = null ): array {
 		$email   = $values['email'] ?? '';
 		$subject = $email;
 		if ( '' === $email ) {
 			$subject = $values['phone'] ?? '';
 		}
-		$answer    = $this->submission->handle(
+		$answer = $this->submission->handle(
 			$form,
 			$input,
 			$ip,
 			$subject,
-			function () use ( $values, $ip, $consent ): array {
-				$row = $this->intake->submit( $values, null, $ip );
+			function () use ( $values, $ip, $consent, $profile ): array {
+				if ( null !== $profile && ! $profile->enquiries_open ) {
+					return array( 'refused' => self::ENQUIRIES_OFF );
+				}
+				$row = $this->intake->submit( $values, null !== $profile ? $profile->id : null, $ip );
 				if ( $consent && '' !== ( $values['email'] ?? '' ) ) {
 					$this->consent->grant( $values['email'], ConsentRecorder::ENQUIRY, 'get listed form' );
 				}
 				return $row;
 			}
 		);
+		if ( PublicSubmission::RECEIVED === $answer['status'] && is_array( $answer['item'] ) && isset( $answer['item']['refused'] ) ) {
+			return $this->refusal( self::ENQUIRIES_OFF, 'Enquiries are switched off for this profile. Please use the contact page instead.' );
+		}
 		$reference = '';
 		if ( PublicSubmission::RECEIVED === $answer['status'] && is_array( $answer['item'] ) ) {
 			$reference = (string) ( $answer['item']['reference'] ?? '' );
