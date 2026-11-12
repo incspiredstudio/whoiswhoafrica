@@ -24,6 +24,7 @@ final class SettingsService {
 	public const NOMINATIONS_ENABLED = 'nominations_enabled';
 	public const NOMINATIONS_REASON  = 'nominations_reason';
 	public const POLICY_VERSION      = 'policy_version';
+	public const SPRINT_TRACKING     = 'sprint_tracking';
 
 	/**
 	 * Key names that look like brand values are never accepted as settings.
@@ -100,6 +101,12 @@ final class SettingsService {
 				'audited'    => true,
 				'max'        => 40,
 			),
+			self::SPRINT_TRACKING     => array(
+				'type'       => 'bool',
+				'default'    => true,
+				'capability' => 'manage_options',
+				'audited'    => true,
+			),
 			'sprint_target_profiles'  => array(
 				'type'       => 'int',
 				'default'    => 0,
@@ -136,6 +143,13 @@ final class SettingsService {
 	}
 
 	/**
+	 * Whether sprint tracking is on (REQ-272): the dashboard sprint card and the Sprint thresholds screen show only while it is.
+	 */
+	public function sprint_tracking_enabled(): bool {
+		return (bool) $this->get( self::SPRINT_TRACKING );
+	}
+
+	/**
 	 * Read a setting, falling back to its default.
 	 *
 	 * @param string $key Registered key.
@@ -169,7 +183,8 @@ final class SettingsService {
 		if ( $old === $new ) {
 			return;
 		}
-		update_option( self::OPTION_PREFIX . $key, $new, false );
+		// A bool is stored as "1" or "0": WordPress skips a write of false when the option does not exist yet, which would leave a default-on setting on.
+		update_option( self::OPTION_PREFIX . $key, is_bool( $new ) ? ( $new ? '1' : '0' ) : $new, false );
 		if ( $definition['audited'] && null !== $this->audit ) {
 			$this->audit->log(
 				'settings.change',

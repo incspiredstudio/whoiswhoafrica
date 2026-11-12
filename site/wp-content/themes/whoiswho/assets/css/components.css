@@ -1299,3 +1299,6 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar .fbar-sel select { field-sizing: content; }
 .fbar-l { flex: 1 1 auto; }
 .fbar-q { min-width: min(100%, 12rem); }
+
+.notice--preview { margin-bottom: 0; padding-inline: var(--s-5); background: var(--c-highlight); color: var(--charcoal-900); border-bottom: 3px solid var(--charcoal-900); }
+.profile-reviewed { margin-top: var(--s-2); }
