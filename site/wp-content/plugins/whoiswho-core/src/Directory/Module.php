@@ -29,7 +29,11 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		( new Url\ProfileRoute() )->register();
 		( new Seo\Output() )->register();
+		Admin\ProfilesScreen::hooks();
 		( new Views\ViewCounter() )->register();
+		Purge\PurgeQueue::for_site()->register();
+		( new Search\SearchIndexer() )->register();
+		add_filter( 'wiw_cli_commands', static fn ( $commands ): array => array_merge( is_array( $commands ) ? $commands : array(), array( new Search\SearchRebuildCommand() ) ) );
 		add_filter(
 			'wiw_public_profile_choices',
 			static fn ( $choices ): array => ( is_array( $choices ) ? $choices : array() ) + PublicProfile::public_choices()

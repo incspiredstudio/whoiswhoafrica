@@ -136,4 +136,48 @@ if ( ! function_exists( 'wiw_event_months' ) ) {
 		}
 		return $groups;
 	}
-}
+}//end if
+
+add_filter(
+	'query_vars',
+	static function ( array $vars ): array {
+		// Filters of the Events list live in the address (REQ-264): ?city=Abuja&industry=energy.
+		return array_merge( $vars, array( 'city', 'industry' ) );
+	}
+);
+
+if ( ! function_exists( 'wiw_events_filters' ) ) {
+	/**
+	 * The city and industry filters of the Events list, from the address.
+	 *
+	 * @return array{city: string, industry: string}
+	 */
+	function wiw_events_filters(): array {
+		return array(
+			'city'     => sanitize_text_field( (string) get_query_var( 'city', '' ) ),
+			'industry' => sanitize_title( (string) get_query_var( 'industry', '' ) ),
+		);
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_events_industry_options' ) ) {
+	/**
+	 * Industries used by published events, as slug => name, for the filter.
+	 *
+	 * @param array<int, array<string, mixed>> $events All published events (unfiltered).
+	 * @return array<string, string>
+	 */
+	function wiw_events_industry_options( array $events ): array {
+		$out = array();
+		foreach ( $events as $event ) {
+			foreach ( (array) ( $event['industries'] ?? array() ) as $name ) {
+				$term = taxonomy_exists( 'wiw_industry' ) ? get_term_by( 'name', (string) $name, 'wiw_industry' ) : false;
+				if ( $term instanceof WP_Term ) {
+					$out[ $term->slug ] = $term->name;
+				}
+			}
+		}
+		asort( $out );
+		return $out;
+	}
+}//end if

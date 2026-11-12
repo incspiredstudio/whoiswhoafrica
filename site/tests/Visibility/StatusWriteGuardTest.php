@@ -27,6 +27,13 @@ final class StatusWriteGuardTest extends WpTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		Guard::guard_post_type( 'wiw_probe' );
+		// The exposure guard turns REST off for guarded types (REQ-217). This probe turns it back on so the REST refusal can still be tested.
+		add_filter(
+			'register_post_type_args',
+			static fn ( $args, $type ) => 'wiw_probe' === $type ? array_merge( $args, array( 'show_in_rest' => true ) ) : $args,
+			100,
+			2
+		);
 		register_post_type(
 			'wiw_probe',
 			array(

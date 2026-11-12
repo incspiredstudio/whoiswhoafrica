@@ -23,6 +23,7 @@ final class SettingsService {
 
 	public const NOMINATIONS_ENABLED = 'nominations_enabled';
 	public const NOMINATIONS_REASON  = 'nominations_reason';
+	public const POLICY_VERSION      = 'policy_version';
 
 	/**
 	 * Key names that look like brand values are never accepted as settings.
@@ -91,6 +92,13 @@ final class SettingsService {
 				'capability' => 'wiw_toggle_nominations',
 				'audited'    => true,
 				'max'        => 300,
+			),
+			self::POLICY_VERSION      => array(
+				'type'       => 'string',
+				'default'    => '1',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'max'        => 40,
 			),
 			'sprint_target_profiles'  => array(
 				'type'       => 'int',
