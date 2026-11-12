@@ -191,6 +191,12 @@ add_action(
 			$wp_query->is_404 = false;
 			// The plugin sets 4xx for a refused submission later, on template_redirect.
 			status_header( 200 );
+		} elseif ( 'claim' === wiw_form_current() ) {
+			// A slug that is not a public profile is a 404 (WordPress does not flag it: the request looks like the home query).
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
 		}
 	}
 );
