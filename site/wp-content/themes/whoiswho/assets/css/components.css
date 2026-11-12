@@ -1311,3 +1311,5 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .faq-q summary:focus-visible { outline: 3px solid var(--c-focus, var(--blue)); outline-offset: 2px; }
 .faq-a { padding-bottom: var(--s-4); max-width: 46rem; line-height: 1.6; }
 .faq-a > * + * { margin-top: var(--s-3); }
+.notice--preview { margin-bottom: 0; padding-inline: var(--s-5); background: var(--c-highlight); color: var(--charcoal-900); border-bottom: 3px solid var(--charcoal-900); }
+.profile-reviewed { margin-top: var(--s-2); }

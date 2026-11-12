@@ -27,7 +27,7 @@ function wiw_link_page( string $html, array $state = array() ): string {
 		<?php if ( 'confirm' === $kind ) : ?>
 			<h1><?php esc_html_e( 'Please confirm', 'whoiswho' ); ?></h1>
 			<p><?php esc_html_e( 'Press the button to continue. Opening this page does nothing until you do.', 'whoiswho' ); ?></p>
-			<form method="post" action="<?php echo esc_url( home_url( '/link/' . rawurlencode( $token ) ) ); ?>">
+			<form method="post" data-personal-data="none" action="<?php echo esc_url( home_url( '/link/' . rawurlencode( $token ) ) ); ?>">
 				<button type="submit" class="btn"><?php esc_html_e( 'Confirm', 'whoiswho' ); ?></button>
 			</form>
 		<?php elseif ( 'done' === $kind ) : ?>

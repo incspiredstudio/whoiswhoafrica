@@ -97,16 +97,16 @@ final class DueDates {
 	/**
 	 * Whether an item is in breach: still open past its resolve date, or not yet acknowledged past its acknowledge date.
 	 *
-	 * @param string             $status          Item status.
-	 * @param \DateTimeImmutable $now             Now.
-	 * @param \DateTimeImmutable $due             Resolve date.
-	 * @param \DateTimeImmutable $acknowledge_due Acknowledge date.
+	 * @param string                  $status          Item status.
+	 * @param \DateTimeImmutable      $now             Now.
+	 * @param \DateTimeImmutable|null $due        Resolve date; null when the item has none (enquiries).
+	 * @param \DateTimeImmutable      $acknowledge_due Acknowledge date.
 	 */
-	public static function is_breach( string $status, \DateTimeImmutable $now, \DateTimeImmutable $due, \DateTimeImmutable $acknowledge_due ): bool {
+	public static function is_breach( string $status, \DateTimeImmutable $now, ?\DateTimeImmutable $due, \DateTimeImmutable $acknowledge_due ): bool {
 		if ( ItemStatus::is_closed( $status ) ) {
 			return false;
 		}
-		if ( $now > $due ) {
+		if ( null !== $due && $now > $due ) {
 			return true;
 		}
 		return ItemStatus::NEW === $status && $now > $acknowledge_due;
