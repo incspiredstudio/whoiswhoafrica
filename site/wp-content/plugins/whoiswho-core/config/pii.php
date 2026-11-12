@@ -66,6 +66,15 @@ return array(
 	),
 	array(
 		'kind'      => 'column',
+		'name'      => 'wiw_consents.token_hash',
+		'class'     => 'pii',
+		'retention' => 'consent_life',
+		'export'    => 'hash_only',
+		'erase'     => 'delete',
+		'note'      => 'Hash of the single-use newsletter confirmation token; cleared once confirmed or unsubscribed.',
+	),
+	array(
+		'kind'      => 'column',
 		'name'      => 'wiw_consents.email_hash',
 		'class'     => 'pii',
 		'retention' => 'consent_life',
