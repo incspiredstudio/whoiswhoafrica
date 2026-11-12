@@ -155,3 +155,47 @@ if ( ! function_exists( 'wiw_profile_sections' ) ) {
 		return apply_filters( 'wiw_profile_sections', $sections, $profile );
 	}
 }//end if
+
+if ( ! function_exists( 'wiw_profile_key_facts' ) ) {
+	/**
+	 * The key facts of a profile, each with its source and retrieval date (REQ-144, REQ-133). A fact without a source address is
+	 * not returned, even though the read model already drops it: the page must never show a fact it cannot cite.
+	 * Each row: label, value, source_url, source_host, retrieved (Y-m-d, or empty).
+	 *
+	 * @param PublicProfile $profile Profile.
+	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, retrieved: string}>
+	 */
+	function wiw_profile_key_facts( PublicProfile $profile ): array {
+		$labels = array(
+			'current_title'        => __( 'Current title', 'whoiswho' ),
+			'current_organisation' => __( 'Organisation', 'whoiswho' ),
+			'org_type'             => __( 'Organisation type', 'whoiswho' ),
+			'industry'             => __( 'Industry', 'whoiswho' ),
+			'sector'               => __( 'Sector', 'whoiswho' ),
+			'regulator'            => __( 'Regulator', 'whoiswho' ),
+			'licence_category'     => __( 'Licence category', 'whoiswho' ),
+			'hq_city'              => __( 'Headquarters', 'whoiswho' ),
+			'year_founded'         => __( 'Founded', 'whoiswho' ),
+		);
+		$rows   = array();
+		foreach ( $labels as $key => $label ) {
+			$fact   = $profile->facts[ $key ] ?? null;
+			$value  = is_array( $fact ) ? ( $fact['value'] ?? '' ) : '';
+			$value  = is_scalar( $value ) ? trim( (string) $value ) : '';
+			$source = is_array( $fact ) && is_string( $fact['source_url'] ?? null ) ? esc_url_raw( $fact['source_url'], array( 'http', 'https' ) ) : '';
+			if ( '' === $value || '' === $source ) {
+				continue;
+			}
+			$time   = is_string( $fact['retrieved_at'] ?? null ) ? strtotime( $fact['retrieved_at'] ) : false;
+			$host   = wp_parse_url( $source, PHP_URL_HOST );
+			$rows[] = array(
+				'label'       => $label,
+				'value'       => $value,
+				'source_url'  => $source,
+				'source_host' => is_string( $host ) ? (string) preg_replace( '/^www\./', '', $host ) : $source,
+				'retrieved'   => false === $time ? '' : gmdate( 'Y-m-d', $time ),
+			);
+		}
+		return $rows;
+	}
+}//end if

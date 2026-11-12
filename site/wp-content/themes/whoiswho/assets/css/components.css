@@ -382,6 +382,9 @@
 .share figure { margin: 0; height: 6.5rem; }
 .share div { padding: var(--s-3); font-size: var(--t-sm); }
 .share strong { display: block; line-height: 1.3; }
+.rail-block { display: grid; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--c-line); background: var(--c-surface); }
+.rail-h { font: 600 var(--t-xs)/1.4 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--c-muted); }
+.rail-note { font-size: var(--t-sm); line-height: 1.5; color: var(--c-muted); }
 .rail-actions { display: grid; gap: var(--s-2); }
 
 /* ---------- article ---------- */

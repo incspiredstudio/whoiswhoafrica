@@ -65,6 +65,8 @@ $wiw_site     = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, '
 					<?php endif; ?>
 				</section>
 			<?php endforeach; ?>
+			<?php get_template_part( 'template-parts/profile-key-facts', null, array( 'profile' => $wiw_profile ) ); ?>
+			<?php get_template_part( 'template-parts/profile-related-stories', null, array( 'profile' => $wiw_profile ) ); ?>
 			<?php if ( '' !== $wiw_site ) : ?>
 				<p style="margin-top:1rem">
 					<?php esc_html_e( 'Website:', 'whoiswho' ); ?>
@@ -74,8 +76,9 @@ $wiw_site     = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, '
 		</div>
 		<aside class="profile-rail" aria-label="<?php esc_attr_e( 'Actions', 'whoiswho' ); ?>">
 			<?php
+			get_template_part( 'template-parts/profile-rail', null, array( 'profile' => $wiw_profile ) );
 			/**
-			 * The right rail of a profile: enquiry, claim, correction, removal and report actions are added by their own issues.
+			 * Extra blocks in the right rail, for example the award panel once a nomination is published.
 			 *
 			 * @param \WhoIsWho\Core\Directory\PublicProfile $profile Profile.
 			 */
