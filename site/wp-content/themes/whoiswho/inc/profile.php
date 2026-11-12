@@ -13,14 +13,15 @@ use WhoIsWho\Core\Directory\PublicProfile;
 
 if ( ! function_exists( 'wiw_current_profile' ) ) {
 	/**
-	 * The public profile of the current request, or null.
+	 * The public profile of the current request, or null. A member of staff also gets a profile that is not public, with the note
+	 * that explains it (the read model checks the capability; the theme decides nothing).
 	 */
 	function wiw_current_profile(): ?PublicProfile {
 		if ( ! class_exists( PublicProfile::class ) ) {
 			return null;
 		}
 		$id = (int) get_query_var( 'wiw_profile_id', 0 );
-		return $id > 0 ? PublicProfile::find_by_id( $id ) : null;
+		return $id > 0 ? PublicProfile::find_by_id( $id, true ) : null;
 	}
 }
 
