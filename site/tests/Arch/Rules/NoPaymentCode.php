@@ -21,7 +21,7 @@ final class NoPaymentCode implements Rule {
 	/**
 	 * Gateway and processor names, matched in code strings and names.
 	 */
-	public const GATEWAYS = '/(stripe|paystack|flutterwave|paypal|braintree|razorpay|adyen|checkout\.com|\bsquareup\b|mollie|interswitch|cardinal ?commerce)/i';
+	public const GATEWAYS = '/(\bstripe\b|paystack|flutterwave|paypal|braintree|razorpay|adyen|checkout\.com|\bsquareup\b|mollie|interswitch|cardinal ?commerce)/i';
 
 	/**
 	 * Package names that must not appear in composer.lock.
