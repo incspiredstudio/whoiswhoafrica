@@ -55,6 +55,8 @@ final class Module implements ModuleInterface {
 			}
 		);
 		Mail\Admin\EmailLogScreen::hooks();
+		Cache\PurgeService::for_site()->register();
+		Cache\Admin\PurgeLogScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
 	}
 }

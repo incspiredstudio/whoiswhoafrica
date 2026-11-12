@@ -105,12 +105,15 @@ if ( ! function_exists( 'wiw_directory_params' ) ) {
 		foreach ( ProfileList::filters_for( $list_name ) as $name ) {
 			$params[ $name ] = sanitize_title( (string) get_query_var( $name, '' ) );
 		}
+		// The per-list narrowing text (REQ-008, REQ-254): it narrows only this list, never the site search. Handed to ProfileList as q.
+		$params['q']    = mb_substr( trim( sanitize_text_field( (string) get_query_var( 'q', '' ) ) ), 0, 80 );
 		$sort           = sanitize_key( (string) get_query_var( 'sort', '' ) );
 		$params['sort'] = ProfileList::SORT_UPDATED === $sort ? $sort : '';
+		$params['view'] = 'list' === sanitize_key( (string) get_query_var( 'view', '' ) ) ? 'list' : '';
 		$params['page'] = max( 1, (int) get_query_var( 'paged', 1 ) );
 		return $params;
 	}
-}
+}//end if
 
 if ( ! function_exists( 'wiw_directory_filter_options' ) ) {
 	/**
@@ -173,7 +176,7 @@ if ( ! function_exists( 'wiw_directory_filter_labels' ) ) {
 add_filter(
 	'query_vars',
 	static function ( array $vars ): array {
-		return array_merge( $vars, array( WIW_LIST_VAR, 'country', 'profession', 'org_type', 'sort' ) );
+		return array_merge( $vars, array( WIW_LIST_VAR, 'country', 'profession', 'org_type', 'sort', 'q', 'view' ) );
 	}
 );
 
