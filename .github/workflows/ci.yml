@@ -203,6 +203,18 @@ jobs:
           node --test scripts/__tests__/check-plugins.test.js
           node scripts/check-plugins.js
 
+  brand:
+    name: brand
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}" }
+      - name: Brand values only in the child tokens file and the brand configuration
+        run: |
+          node --test scripts/__tests__/check-brand-values.test.js
+          node scripts/check-brand-values.js
+
   secrets:
     name: secrets
     runs-on: ubuntu-24.04
