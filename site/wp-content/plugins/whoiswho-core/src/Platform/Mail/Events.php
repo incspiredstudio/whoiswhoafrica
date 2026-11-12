@@ -27,6 +27,7 @@ final class Events {
 	public const REMOVAL_RECEIVED        = 'removal_received';
 	public const REPORT_RECEIVED         = 'report_received';
 	public const REQUEST_RESOLVED        = 'request_resolved';
+	public const REQUEST_ACKNOWLEDGED    = 'request_acknowledged';
 	public const CLAIM_ACKNOWLEDGED      = 'claim_acknowledged';
 	public const CLAIM_DECISION          = 'claim_decision';
 	public const CLAIM_REMINDER          = 'claim_reminder';
@@ -92,6 +93,10 @@ final class Events {
 			self::REQUEST_RESOLVED        => array(
 				'audience' => 'public',
 				'subject'  => 'Your request has been resolved',
+			),
+			self::REQUEST_ACKNOWLEDGED    => array(
+				'audience' => 'public',
+				'subject'  => 'We received your request',
 			),
 			self::CLAIM_ACKNOWLEDGED      => array(
 				'audience' => 'public',
