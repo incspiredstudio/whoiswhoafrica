@@ -1299,3 +1299,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar .fbar-sel select { field-sizing: content; }
 .fbar-l { flex: 1 1 auto; }
 .fbar-q { min-width: min(100%, 12rem); }
+
+/* ---------- FAQ (REQ-260) ---------- */
+.faq-group { margin-block: var(--s-7); }
+.faq-group-h { margin-bottom: var(--s-3); padding-top: var(--s-3); border-top: 3px solid var(--c-text); font-size: var(--t-xl); }
+.faq-q { border-bottom: 1px solid var(--c-line); }
+.faq-q summary { position: relative; padding: var(--s-4) var(--s-6) var(--s-4) 0; font: 500 var(--t-md)/1.35 var(--font-body); cursor: pointer; list-style: none; }
+.faq-q summary::-webkit-details-marker { display: none; }
+.faq-q summary::after { content: "+"; position: absolute; right: var(--s-2); top: 50%; translate: 0 -50%; font-size: var(--t-xl); line-height: 1; transition: rotate var(--m-fast); }
+.faq-q[open] summary::after { rotate: 45deg; }
+.faq-q summary:focus-visible { outline: 3px solid var(--c-focus, var(--blue)); outline-offset: 2px; }
+.faq-a { padding-bottom: var(--s-4); max-width: 46rem; line-height: 1.6; }
+.faq-a > * + * { margin-top: var(--s-3); }

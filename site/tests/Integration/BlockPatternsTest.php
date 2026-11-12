@@ -23,6 +23,7 @@ final class BlockPatternsTest extends TestCase {
 		'whoiswho/closing-call',
 		'whoiswho/legal-section',
 		'whoiswho/guidance-section',
+		'whoiswho/faq-groups',
 	);
 
 	protected function setUp(): void {
