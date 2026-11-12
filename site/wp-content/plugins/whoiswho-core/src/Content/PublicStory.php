@@ -108,9 +108,10 @@ final class PublicStory {
 	 * Published stories that link a public profile.
 	 *
 	 * @param int $profile_id Profile ID.
+	 * @param int $limit      Maximum stories, newest first; 0 for all.
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function for_profile( int $profile_id ): array {
+	public static function for_profile( int $profile_id, int $limit = 0 ): array {
 		if ( ! isset( LinkedProfiles::choices()[ $profile_id ] ) ) {
 			return array();
 		}
@@ -121,6 +122,9 @@ final class PublicStory {
 				$post = get_post( $id );
 				if ( $post instanceof \WP_Post ) {
 					$out[] = self::card( $post );
+					if ( $limit > 0 && count( $out ) >= $limit ) {
+						break;
+					}
 				}
 			}
 		}
