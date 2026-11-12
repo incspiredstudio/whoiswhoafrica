@@ -53,6 +53,9 @@ final class MarketingMailTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
+		if ( function_exists( 'remove_all_actions' ) ) {
+			remove_all_actions( 'wiw_marketing_unsubscribed' ); // The newsletter listener needs its table; this test is about the gate.
+		}
 		$this->rows    = array();
 		$this->sent    = array();
 		$options       = new \ArrayObject();
