@@ -114,7 +114,8 @@ final class FormPartsTest extends TestCase {
 		switch_theme( 'whoiswho-child' );
 		$out = $this->render( 'template-parts/forms/privacy-notice', array( 'text' => 'We use <this>' ) );
 		$this->assertStringContainsString( 'We use &lt;this&gt;', $out );
-		$this->assertSame( '', trim( $this->render( 'template-parts/forms/privacy-notice', array() ) ) );
+		$default = $this->render( 'template-parts/forms/privacy-notice', array() );
+		$this->assertStringContainsString( '/privacy/', $default, 'The link is never missing, even without wording.' );
 		$notice = $this->render(
 			'template-parts/notice',
 			array(

@@ -1311,3 +1311,5 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ind-name { font: 400 var(--t-lg)/1.2 var(--font-display); overflow-wrap: anywhere; }
 .ind-count { font-size: var(--t-sm); color: var(--c-muted); white-space: nowrap; }
 .ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
+.notice--preview { margin-bottom: 0; padding-inline: var(--s-5); background: var(--c-highlight); color: var(--charcoal-900); border-bottom: 3px solid var(--charcoal-900); }
+.profile-reviewed { margin-top: var(--s-2); }

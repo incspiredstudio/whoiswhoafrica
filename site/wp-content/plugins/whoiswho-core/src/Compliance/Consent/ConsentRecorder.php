@@ -43,6 +43,8 @@ final class ConsentRecorder {
 		policy_version varchar(40) NOT NULL,
 		granted_at datetime NOT NULL,
 		revoked_at datetime NULL,
+		confirmed_at datetime NULL,
+		token_hash char(64) NULL,
 		source varchar(60) NOT NULL DEFAULT \'\',
 		PRIMARY KEY  (id),
 		UNIQUE KEY person_purpose (email_hash, purpose),
