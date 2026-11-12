@@ -97,6 +97,22 @@ final class PurgeServiceTest extends TestCase {
 		$this->assertCount( 1, $this->queue->jobs, 'a retry waits in the queue' );
 	}
 
+	public function test_REQ_209_urls_announced_by_the_directory_purge_queue_reach_the_client_and_the_log(): void {
+		$client  = new FakeClient();
+		$service = new PurgeService( $this->runner, $client, $this->log );
+		$service->on_purge_urls( array( 'https://example.test/p/a/', 'https://example.test/p/a/' ), false );
+		$service->on_purge_urls( array(), true );
+
+		$this->assertSame( array( array( 'https://example.test/p/a/' ), array() ), $client->calls );
+		$rows = $this->log->rows();
+		$this->assertSame( 'broad', $rows[0]['reason'] );
+		$this->assertSame( 'urls', $rows[1]['reason'] );
+
+		$client->failing = true;
+		$service->on_purge_urls( array( 'https://example.test/x/' ) );
+		$this->assertSame( 'failed', $this->log->rows()[0]['result'], 'a failure is logged and does not throw' );
+	}
+
 	public function test_REQ_121_staff_responses_are_not_publicly_cacheable(): void {
 		$public = CacheHeaders::for_response( array( 'method' => 'GET' ) );
 		$this->assertSame( 'public, max-age=120, s-maxage=120', $public['Cache-Control'] );

@@ -69,6 +69,7 @@ final class PurgeService {
 	public function register(): void {
 		$this->register_handler();
 		add_action( self::HOOK, array( $this, 'on_unpublished' ), 10, 4 );
+		add_action( 'wiw_purge_urls', array( $this, 'on_purge_urls' ), 10, 2 );
 	}
 
 	/**
@@ -97,6 +98,26 @@ final class PurgeService {
 			),
 			true
 		);
+	}
+
+	/**
+	 * The directory purge queue announces the URLs of a changed profile (or a broad purge) on wiw_purge_urls: hand them to the
+	 * client and log the attempt. It runs inside that queue's own job, so it never throws.
+	 *
+	 * @param string[] $urls  URLs; empty for a broad purge.
+	 * @param bool     $broad Whether everything is cleared.
+	 */
+	public function on_purge_urls( array $urls, bool $broad = false ): void {
+		$urls   = self::clean( $urls );
+		$reason = $broad ? 'broad' : 'urls';
+		try {
+			$result = $this->client->purge( $urls );
+		} catch ( \Throwable $failure ) {
+			unset( $failure );
+			$this->log->add( 'cache', 0, count( $urls ), 'failed', $reason );
+			return;
+		}
+		$this->log->add( 'cache', 0, count( $urls ), 'ok' === $result ? 'ok' : 'skipped', $reason );
 	}
 
 	/**
