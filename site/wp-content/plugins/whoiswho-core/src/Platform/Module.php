@@ -54,5 +54,6 @@ final class Module implements ModuleInterface {
 				( new Capabilities\RoleSync( new Capabilities\CapabilityCatalogue() ) )->maybe_sync();
 			}
 		);
+		Mail\Admin\EmailLogScreen::hooks();
 	}
 }

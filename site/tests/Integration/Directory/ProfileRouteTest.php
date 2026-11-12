@@ -135,4 +135,39 @@ final class ProfileRouteTest extends TestCase {
 		( new StateMachine() )->enter( (int) $id, PubState::IMPORTED_NOT_PUBLIC, array( 'entity_type' => 'individual' ) );
 		$this->assertSame( 404, ( new ProfileRoute() )->resolve( 'hidden-route-qwv' )['status'] );
 	}
+
+	public function test_REQ_217_pending_returns_200_with_noindex_header(): void {
+		$this->profile( 'Pending Hdr Qwv', PubState::PUBLISHED_PENDING );
+		$result = ( new ProfileRoute() )->resolve( 'pending-hdr-qwv' );
+		$this->assertSame( 200, $result['status'] );
+		$this->assertSame( 'noindex', ProfileRoute::headers_for( $result )['X-Robots-Tag'] );
+	}
+
+	public function test_REQ_209_removed_returns_410_with_noindex_header(): void {
+		$id = $this->profile( 'Removed Hdr Qwv' );
+		( new StateMachine() )->transition( $id, PubState::REMOVED_SUPPRESSED, 'Removal request' );
+		$result = ( new ProfileRoute() )->resolve( 'removed-hdr-qwv' );
+		$this->assertSame( 410, $result['status'] );
+		$this->assertSame( 'noindex', ProfileRoute::headers_for( $result )['X-Robots-Tag'] );
+	}
+
+	public function test_REQ_209_restore_returns_200_again(): void {
+		$id = $this->profile( 'Restore Hdr Qwv' );
+		( new StateMachine() )->transition( $id, PubState::UNPUBLISHED, 'Takedown' );
+		$this->assertSame( 410, ( new ProfileRoute() )->resolve( 'restore-hdr-qwv' )['status'] );
+		( new StateMachine() )->transition( $id, PubState::PUBLISHED_PENDING );
+		$this->assertSame( 200, ( new ProfileRoute() )->resolve( 'restore-hdr-qwv' )['status'] );
+	}
+
+	public function test_REQ_208_status_read_from_database_not_cache(): void {
+		$id    = $this->profile( 'Fresh Hdr Qwv' );
+		$route = new ProfileRoute();
+		$this->assertSame( 200, $route->resolve( 'fresh-hdr-qwv' )['status'] );
+		global $wpdb;
+		$wpdb->update( StateRepository::table(), array( 'pub_state' => PubState::UNPUBLISHED ), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$result = $route->resolve( 'fresh-hdr-qwv' );
+		$this->assertSame( 410, $result['status'], 'A direct database change shows at once.' );
+		$this->assertStringContainsString( 'no-cache', ProfileRoute::headers_for( $result )['Cache-Control'] );
+		$this->assertStringContainsString( 's-maxage=0', ProfileRoute::headers_for( $result )['Cache-Control'] );
+	}
 }
