@@ -28,5 +28,6 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( new Apply\ApplyJob() )->register();
+		Result\ImportResult::hooks();
 	}
 }

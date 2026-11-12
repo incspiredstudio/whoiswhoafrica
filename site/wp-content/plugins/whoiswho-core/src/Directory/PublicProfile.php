@@ -31,6 +31,11 @@ final class PublicProfile {
 	public const RECORD_ID_META = '_wiw_record_id';
 
 	/**
+	 * Post meta set to 1 when enquiries are switched off for the profile.
+	 */
+	public const ENQUIRIES_OFF_META = '_wiw_enquiries_off';
+
+	/**
 	 * Post meta holding the attachment id of the portrait or logo.
 	 */
 	public const IMAGE_META = '_wiw_image_id';
@@ -118,6 +123,13 @@ final class PublicProfile {
 	 * @var bool
 	 */
 	public bool $claimable = false;
+
+	/**
+	 * Whether visitors may send an enquiry about this profile. Staff switch it off on the owner's request (REQ-018); the switch is audited.
+	 *
+	 * @var bool
+	 */
+	public bool $enquiries_open = true;
 
 	/**
 	 * Related organisation, only when that organisation is itself public: array{name: string, url: string}.
@@ -220,6 +232,7 @@ final class PublicProfile {
 		}
 		$profile                  = new self( $id, $post->post_name, $post->post_title, (string) $row['entity_type'], $state, $policy );
 		$profile->claimed         = (bool) (int) $row['claimed'];
+		$profile->enquiries_open  = '1' !== (string) get_post_meta( $id, self::ENQUIRIES_OFF_META, true );
 		$profile->claimable       = $public && PubState::PUBLISHED_REVIEWED === $state && ! $profile->claimed;
 		$profile->reviewed_at     = PubState::PUBLISHED_REVIEWED === $state && ! empty( $row['reviewed_at'] ) ? (string) $row['reviewed_at'] : null;
 		$profile->visibility_note = $public ? null : 'Not public: ' . $state . '. Visitors see HTTP ' . $policy->status . '.';
