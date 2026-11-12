@@ -148,6 +148,27 @@ class ClaimRepository {
 	}
 
 	/**
+	 * Claims, newest first.
+	 *
+	 * @param string $status new, approved or rejected; empty for all.
+	 * @param int    $limit  Maximum rows.
+	 * @return Claim[]
+	 */
+	public function list_by_status( string $status = '', int $limit = 200 ): array {
+		global $wpdb;
+		$sql  = 'SELECT * FROM ' . self::table();
+		$args = array();
+		if ( '' !== $status ) {
+			$sql   .= ' WHERE status = %s';
+			$args[] = $status;
+		}
+		$sql   .= ' ORDER BY received_at DESC, id DESC LIMIT %d';
+		$args[] = max( 1, $limit );
+		$rows   = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name and fixed clauses.
+		return array_map( array( Claim::class, 'from_row' ), is_array( $rows ) ? $rows : array() );
+	}
+
+	/**
 	 * Record that a reminder went out.
 	 *
 	 * @param int                     $id Claim id.
