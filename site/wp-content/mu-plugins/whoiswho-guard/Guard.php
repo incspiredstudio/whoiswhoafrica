@@ -38,6 +38,7 @@ final class Guard {
 		Headers\Headers::init();
 		Uploads\Uploads::init();
 		Capabilities\Capabilities::init();
+		Status\StatusWriteGuard::init();
 	}
 
 	/**
