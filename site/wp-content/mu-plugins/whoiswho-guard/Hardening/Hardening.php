@@ -46,12 +46,6 @@ final class Hardening {
 		add_filter( 'loginout', '__return_empty_string' );
 		add_filter( 'register', '__return_empty_string' );
 
-		// Do not advertise the PHP version (X-Powered-By).
-		self::strip_powered_by();
-		add_action( 'send_headers', array( self::class, 'strip_powered_by' ), 99 );
-		add_action( 'admin_init', array( self::class, 'strip_powered_by' ), 99 );
-		add_action( 'login_init', array( self::class, 'strip_powered_by' ), 99 );
-
 		add_action( 'admin_notices', array( self::class, 'config_notice' ) );
 	}
 
@@ -75,15 +69,6 @@ final class Hardening {
 	public static function remove_pingback_header( array $headers ): array {
 		unset( $headers['X-Pingback'] );
 		return $headers;
-	}
-
-	/**
-	 * Remove the X-Powered-By header PHP adds, unless output has already started.
-	 */
-	public static function strip_powered_by(): void {
-		if ( ! headers_sent() ) {
-			header_remove( 'X-Powered-By' );
-		}
 	}
 
 	/**
