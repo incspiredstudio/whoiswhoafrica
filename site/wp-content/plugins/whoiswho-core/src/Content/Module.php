@@ -35,6 +35,7 @@ final class Module implements ModuleInterface {
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
 		( new Comments\CommentPolicy() )->register();
+		( new Comments\CommentSpamGuard() )->register();
 		Newsletter\NewsletterSignup::register();
 		Curation\CurationCache::register();
 		( new Newsletter\ConfirmRoute() )->register();
