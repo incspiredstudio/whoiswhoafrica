@@ -14,6 +14,7 @@ namespace WhoIsWho\Core\Import\Apply;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleReader;
+use WhoIsWho\Core\Import\Result\ImportAudit;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Jobs\JobRunner;
 
@@ -84,19 +85,6 @@ final class ApplyJob {
 			$this->jobs->enqueue( self::JOB, array( 'batch_id' => $batch_id ), true );
 			return;
 		}
-		AuditLogger::for_site()->log(
-			'import.apply',
-			array(
-				'type' => 'import_batch',
-				'id'   => $batch_id,
-			),
-			null,
-			array(
-				'counts'       => $out['counts'],
-				'confirmed_by' => (int) $batch['created_by'],
-			),
-			'',
-			$batch_id
-		);
+		( new ImportAudit() )->record( $batch );
 	}
 }
