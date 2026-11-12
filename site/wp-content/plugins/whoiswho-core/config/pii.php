@@ -420,4 +420,13 @@ return array(
 		'erase'     => 'keep',
 		'note'      => 'Why the entry was made. Stays on the site: never in a snapshot or export. Kept because the list is permanent.',
 	),
+	array(
+		'kind'      => 'meta',
+		'name'      => '_wiw_contact_details',
+		'class'     => 'pii',
+		'retention' => 'permanent',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Contact details staff hold for a profile; private unless a detail is switched on (REQ-060).',
+	),
 );
