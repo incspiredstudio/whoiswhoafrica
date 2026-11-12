@@ -48,11 +48,12 @@ html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:foc
 .h-vids:hover .h-vid { flex-grow: .7; }
 .h-vids .h-vid:hover { flex-grow: 2.4; }
 .h-vid:hover video { filter: saturate(1.3) contrast(1.18) brightness(1); }
-.h-hero-in { position: relative; display: flex; flex-direction: column; min-height: 100svh; padding-block: calc(var(--head-h) + var(--s-6)) var(--s-5); }
+.h-hero-in { position: relative; display: flex; pointer-events: none; flex-direction: column; min-height: 100svh; padding-block: calc(var(--head-h) + var(--s-6)) var(--s-5); }
 .h-title { margin-block: auto; padding-block: var(--s-6); font: 400 clamp(3.25rem, 1.2rem + 7.6vw, 8.5rem)/.98 var(--font-display); letter-spacing: -.012em; text-shadow: 0 2px 30px color-mix(in srgb, var(--c-dark-deep) 45%, transparent); }
 .h-line--r { text-align: right; }
 .h-hero-foot { display: grid; gap: var(--s-4); align-items: end; }
 .h-lede { max-width: 26rem; margin: 0; font-size: var(--t-md); font-weight: 300; line-height: 1.4; color: var(--c-on-dark); }
+.h-hero-in :is(a, button) { pointer-events: auto; }
 .h-hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); }
 .h-btn { min-height: 3.25rem; padding-inline: 1.75rem; border-radius: var(--r-pill); }
 
