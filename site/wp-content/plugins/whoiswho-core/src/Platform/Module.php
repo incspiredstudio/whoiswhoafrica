@@ -35,6 +35,7 @@ final class Module implements ModuleInterface {
 		Log\Logger::for_site()->register();
 		Users\Deactivation::for_site()->register();
 		Health\HealthEndpoint::for_site()->register();
+		Dashboard\DashboardScreen::hooks();
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',
 			86400,
