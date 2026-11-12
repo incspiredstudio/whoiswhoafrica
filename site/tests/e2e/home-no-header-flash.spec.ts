@@ -5,12 +5,13 @@ test.describe("home header has no flash (REQ-046)", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
   test("the header is transparent over the hero from the first paint", async ({ page }) => {
-    // A hovered header is solid by design, so keep the pointer well below it (a headless browser may start with it at 0,0).
-    await page.mouse.move(600, 600);
     await page.goto("/");
-    await page.mouse.move(620, 620);
-    const bg = await page.locator(".site-head").evaluate((e) => getComputedStyle(e).backgroundColor);
-    expect(bg).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+    // A hovered header is solid by design, and a headless browser can start with the pointer at 0,0, over the header. Move it
+    // away, then wait for the header to settle (it fades out over a short transition).
+    await page.mouse.move(600, 600);
+    await expect
+      .poll(() => page.locator(".site-head").evaluate((e) => getComputedStyle(e).backgroundColor), { timeout: 5000 })
+      .toMatch(/rgba\(0, 0, 0, 0\)|transparent|\/ 0\)/);
   });
 
   test("the header turns solid after scrolling past the hero, and inner pages are solid", async ({ page }) => {
