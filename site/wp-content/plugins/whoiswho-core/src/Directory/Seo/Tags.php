@@ -36,8 +36,9 @@ final class Tags {
 	 * The brand name, from theme configuration.
 	 */
 	public static function brand(): string {
-		$name = apply_filters( 'wiw_brand_name', 'WHOISWHO' );
-		return is_string( $name ) && '' !== $name ? $name : 'WHOISWHO';
+		$site = get_bloginfo( 'name' );
+		$name = apply_filters( 'wiw_brand_name', $site );
+		return is_string( $name ) && '' !== $name ? $name : $site;
 	}
 
 	/**
