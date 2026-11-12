@@ -222,6 +222,17 @@ final class PublicProfile {
 	}
 
 	/**
+	 * Published stories that link to this profile, newest first (REQ-028). Read live on every call, so a story that links, unlinks
+	 * or leaves the published state shows or disappears at once; nothing is cached.
+	 *
+	 * @param int $limit Maximum stories.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function related_stories( int $limit = 6 ): array {
+		return \WhoIsWho\Core\Content\PublicStory::for_profile( $this->id, max( 1, $limit ) );
+	}
+
+	/**
 	 * Reviewed public profiles as id => name, for pickers (stories link only to reviewed profiles).
 	 *
 	 * @param int $limit Maximum entries.

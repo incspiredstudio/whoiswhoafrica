@@ -17,6 +17,8 @@ namespace WhoIsWho\Core\Platform\Mail;
 final class Events {
 
 	public const ENQUIRY_RECEIVED        = 'enquiry_received';
+	public const ENQUIRY_ACKNOWLEDGED    = 'enquiry_acknowledged';
+	public const ENQUIRY_STAFF_NOTICE    = 'enquiry_staff_notice';
 	public const PROFILE_RECEIVED        = 'profile_received';
 	public const PROFILE_APPROVED        = 'profile_approved';
 	public const PROFILE_REJECTED        = 'profile_rejected';
@@ -49,6 +51,14 @@ final class Events {
 			self::ENQUIRY_RECEIVED        => array(
 				'audience' => 'capability:wiw_receive_enquiries',
 				'subject'  => 'New enquiry received',
+			),
+			self::ENQUIRY_ACKNOWLEDGED    => array(
+				'audience' => 'public',
+				'subject'  => 'We received your enquiry',
+			),
+			self::ENQUIRY_STAFF_NOTICE    => array(
+				'audience' => 'capability:wiw_support_inbox',
+				'subject'  => 'New enquiry in the inbox',
 			),
 			self::PROFILE_RECEIVED        => array(
 				'audience' => 'public',

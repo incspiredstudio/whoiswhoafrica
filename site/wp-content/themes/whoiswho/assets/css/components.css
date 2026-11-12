@@ -1304,3 +1304,5 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .rail-card { padding: var(--s-4); border: 1px solid var(--c-line); background: var(--c-surface); }
 .rail-card h2 { margin-bottom: var(--s-3); font: 500 var(--t-md)/1.2 var(--font-body); }
 .rail-actions .btn { justify-content: center; text-align: center; }
+.notice--preview { margin-bottom: 0; padding-inline: var(--s-5); background: var(--c-highlight); color: var(--charcoal-900); border-bottom: 3px solid var(--charcoal-900); }
+.profile-reviewed { margin-top: var(--s-2); }

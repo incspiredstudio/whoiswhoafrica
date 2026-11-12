@@ -34,6 +34,7 @@ $wiw_site     = wiw_profile_fact( $wiw_profile, 'official_website' );
 $wiw_site     = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, 'website' );
 ?>
 <article class="profile">
+	<?php get_template_part( 'template-parts/profile-preview-banner', null, array( 'profile' => $wiw_profile ) ); ?>
 	<?php get_template_part( 'template-parts/profile-head', null, array( 'profile' => $wiw_profile ) ); ?>
 	<div class="wrap split split--rail profile-body">
 		<div class="profile-main">
