@@ -29,8 +29,9 @@ final class WpdbPurgeLog implements PurgeLog {
 	 * @param int    $subject_id   Id.
 	 * @param int    $url_count    Count.
 	 * @param string $result       Result.
+	 * @param string $reason       Reason.
 	 */
-	public function add( string $subject_type, int $subject_id, int $url_count, string $result ): void {
+	public function add( string $subject_type, int $subject_id, int $url_count, string $result, string $reason = '' ): void {
 		global $wpdb;
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			self::table(),
@@ -39,6 +40,7 @@ final class WpdbPurgeLog implements PurgeLog {
 				'subject_id'   => $subject_id,
 				'url_count'    => $url_count,
 				'result'       => $result,
+				'reason'       => substr( $reason, 0, 120 ),
 				'created_at'   => gmdate( 'Y-m-d H:i:s' ),
 			)
 		);
@@ -47,23 +49,39 @@ final class WpdbPurgeLog implements PurgeLog {
 	/**
 	 * Newest first.
 	 *
-	 * @param int $limit  Limit.
-	 * @param int $offset Offset.
-	 * @return array<int, array{subject_type: string, subject_id: int, url_count: int, result: string, created_at: string}>
+	 * @param int                                                $limit   Limit.
+	 * @param int                                                $offset  Offset.
+	 * @param array{status?: string, from?: string, to?: string} $filters Filters.
+	 * @return array<int, array{subject_type: string, subject_id: int, url_count: int, result: string, reason: string, created_at: string}>
 	 */
-	public function rows( int $limit = 50, int $offset = 0 ): array {
+	public function rows( int $limit = 50, int $offset = 0, array $filters = array() ): array {
 		global $wpdb;
-		$found = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; values prepared.
-			$wpdb->prepare( 'SELECT subject_type, subject_id, url_count, result, created_at FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d OFFSET %d', $limit, $offset ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; values prepared.
-			ARRAY_A
-		);
-		$out   = array();
+		$sql  = 'SELECT subject_type, subject_id, url_count, result, reason, created_at FROM ' . self::table() . ' WHERE 1 = 1';
+		$args = array();
+		if ( ! empty( $filters['status'] ) ) {
+			$sql   .= ' AND result = %s';
+			$args[] = $filters['status'];
+		}
+		if ( ! empty( $filters['from'] ) ) {
+			$sql   .= ' AND created_at >= %s';
+			$args[] = $filters['from'] . ' 00:00:00';
+		}
+		if ( ! empty( $filters['to'] ) ) {
+			$sql   .= ' AND created_at <= %s';
+			$args[] = $filters['to'] . ' 23:59:59';
+		}
+		$sql   .= ' ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[] = $limit;
+		$args[] = $offset;
+		$found  = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+		$out    = array();
 		foreach ( $found as $row ) {
 			$out[] = array(
 				'subject_type' => (string) $row['subject_type'],
 				'subject_id'   => (int) $row['subject_id'],
 				'url_count'    => (int) $row['url_count'],
 				'result'       => (string) $row['result'],
+				'reason'       => (string) $row['reason'],
 				'created_at'   => (string) $row['created_at'],
 			);
 		}

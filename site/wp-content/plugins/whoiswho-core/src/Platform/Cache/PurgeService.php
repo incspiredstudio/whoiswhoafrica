@@ -68,7 +68,8 @@ final class PurgeService {
 	 */
 	public function register(): void {
 		$this->register_handler();
-		add_action( self::HOOK, array( $this, 'on_unpublished' ), 10, 3 );
+		add_action( self::HOOK, array( $this, 'on_unpublished' ), 10, 4 );
+		add_action( 'wiw_purge_urls', array( $this, 'on_purge_urls' ), 10, 2 );
 	}
 
 	/**
@@ -84,17 +85,39 @@ final class PurgeService {
 	 * @param string   $subject_type Subject type.
 	 * @param int      $subject_id   Subject id.
 	 * @param string[] $urls         URLs to purge, supplied by the caller.
+	 * @param string   $reason       Short reason (unpublished, removed, declined), never personal data.
 	 */
-	public function on_unpublished( string $subject_type, int $subject_id, array $urls ): void {
+	public function on_unpublished( string $subject_type, int $subject_id, array $urls, string $reason = '' ): void {
 		$this->runner->enqueue(
 			self::JOB,
 			array(
 				'subject_type' => $subject_type,
 				'subject_id'   => $subject_id,
 				'urls'         => self::clean( $urls ),
+				'reason'       => substr( $reason, 0, 120 ),
 			),
 			true
 		);
+	}
+
+	/**
+	 * The directory purge queue announces the URLs of a changed profile (or a broad purge) on wiw_purge_urls: hand them to the
+	 * client and log the attempt. It runs inside that queue's own job, so it never throws.
+	 *
+	 * @param string[] $urls  URLs; empty for a broad purge.
+	 * @param bool     $broad Whether everything is cleared.
+	 */
+	public function on_purge_urls( array $urls, bool $broad = false ): void {
+		$urls   = self::clean( $urls );
+		$reason = $broad ? 'broad' : 'urls';
+		try {
+			$result = $this->client->purge( $urls );
+		} catch ( \Throwable $failure ) {
+			unset( $failure );
+			$this->log->add( 'cache', 0, count( $urls ), 'failed', $reason );
+			return;
+		}
+		$this->log->add( 'cache', 0, count( $urls ), 'ok' === $result ? 'ok' : 'skipped', $reason );
 	}
 
 	/**
@@ -107,14 +130,15 @@ final class PurgeService {
 		$type = (string) ( $args['subject_type'] ?? '' );
 		$id   = (int) ( $args['subject_id'] ?? 0 );
 		$urls = self::clean( (array) ( $args['urls'] ?? array() ) );
+		$why  = (string) ( $args['reason'] ?? '' );
 		try {
 			$result = $this->client->purge( $urls );
 		} catch ( \Throwable $failure ) {
 			unset( $failure );
-			$this->log->add( $type, $id, count( $urls ), 'failed' );
+			$this->log->add( $type, $id, count( $urls ), 'failed', $why );
 			throw new \RuntimeException( 'Cache purge failed.' );
 		}
-		$this->log->add( $type, $id, count( $urls ), 'ok' === $result ? 'ok' : 'skipped' );
+		$this->log->add( $type, $id, count( $urls ), 'ok' === $result ? 'ok' : 'skipped', $why );
 	}
 
 	/**

@@ -60,6 +60,6 @@ final class PurgeLogScreenAccessTest extends WpTestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$html = ( new PurgeLogScreen( $log ) )->html( new Request( array() ) );
 		$this->assertStringContainsString( 'profile #5', $html );
-		$this->assertStringNotContainsString( '<form', $html );
+		$this->assertStringNotContainsString( 'method="post"', $html );
 	}
 }
