@@ -62,6 +62,25 @@ final class EnqueueTest extends TestCase {
 		$this->assertStringContainsString( 'is-home', $out );
 	}
 
+	public function test_REQ_043_motion_base_gets_the_smooth_scroll_url_and_page_scripts_use_the_js_suffix(): void {
+		$this->requireWordPress();
+		add_filter(
+			'wiw_manifest',
+			static fn () => array(
+				'main.js'    => 'main.1.js',
+				'lenis.js'   => 'lenis.1.js',
+				'home-js.js' => 'home-js.1.js',
+			)
+		);
+		wp_dequeue_script( 'wiw-main' );
+		wp_deregister_script( 'wiw-main' );
+		do_action( 'wp_enqueue_scripts' );
+		$before = implode( '', (array) wp_scripts()->get_data( 'wiw-main', 'before' ) );
+		$this->assertStringContainsString( 'window.wiwMotion=', $before );
+		$this->assertStringContainsString( 'lenis.1.js', $before );
+		remove_all_filters( 'wiw_manifest' );
+	}
+
 	public function test_REQ_042_card_and_poster_image_sizes_are_registered(): void {
 		$this->requireWordPress();
 		wiw_register_image_sizes();

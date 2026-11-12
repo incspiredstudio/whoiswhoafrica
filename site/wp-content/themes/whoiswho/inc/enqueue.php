@@ -74,7 +74,8 @@ add_action(
 			if ( null !== $css ) {
 				wp_enqueue_style( 'wiw-' . $key, $css, $deps, WIW_THEME_VERSION );
 			}
-			$js = wiw_asset_url( $key . '.js' );
+			// Entry names are unique across CSS and JS, so a page script is named "<key>-js" (home.css and home-js.js).
+			$js = wiw_asset_url( $key . '-js.js' ) ?? wiw_asset_url( $key . '.js' );
 			if ( null !== $js ) {
 				wp_enqueue_script( 'wiw-' . $key, $js, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
 			}
@@ -82,6 +83,11 @@ add_action(
 		$main = wiw_asset_url( 'main.js' );
 		if ( null !== $main ) {
 			wp_enqueue_script( 'wiw-main', $main, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
+			// The smooth-scroll library is fetched by the motion base only when motion is allowed (REQ-043, REQ-041).
+			$lenis = wiw_asset_url( 'lenis.js' );
+			if ( null !== $lenis ) {
+				wp_add_inline_script( 'wiw-main', 'window.wiwMotion=' . wp_json_encode( array( 'lenis' => $lenis ) ) . ';', 'before' );
+			}
 		}
 	},
 	30
