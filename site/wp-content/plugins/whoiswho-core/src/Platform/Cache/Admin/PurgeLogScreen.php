@@ -22,6 +22,7 @@ final class PurgeLogScreen {
 	public const SCREEN   = 'wiw-purge-log';
 	public const CAP      = 'wiw_view_audit';
 	public const PER_PAGE = 50;
+	public const STATUSES = array( 'ok', 'skipped', 'failed' );
 
 	/**
 	 * Log.
@@ -75,17 +76,45 @@ final class PurgeLogScreen {
 		if ( ! current_user_can( self::CAP ) ) {
 			throw new \DomainException( 'Not allowed to use the purge log.' );
 		}
-		$page = max( 1, $request->int( 'paged' ) );
-		$rows = $this->log->rows( self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE );
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Purge log', 'whoiswho' ) . '</h1>';
-		$out .= '<p>' . esc_html__( 'Every request to clear cached pages after content was unpublished. Without an edge cache the result is skipped.', 'whoiswho' ) . '</p>';
-		$out .= '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time (UTC)', 'whoiswho' ) . '</th><th>' . esc_html__( 'Subject', 'whoiswho' ) . '</th><th>' . esc_html__( 'URLs', 'whoiswho' ) . '</th><th>' . esc_html__( 'Result', 'whoiswho' ) . '</th></tr></thead><tbody>';
+		$page   = max( 1, $request->int( 'paged' ) );
+		$status = $request->string( 'status' );
+		$from   = $this->day( $request->string( 'from' ) );
+		$to     = $this->day( $request->string( 'to' ) );
+		$status = in_array( $status, self::STATUSES, true ) ? $status : '';
+		$rows   = $this->log->rows(
+			self::PER_PAGE,
+			( $page - 1 ) * self::PER_PAGE,
+			array(
+				'status' => $status,
+				'from'   => $from,
+				'to'     => $to,
+			)
+		);
+		$out    = '<div class="wrap"><h1>' . esc_html__( 'Purge log', 'whoiswho' ) . '</h1>';
+		$out   .= '<p>' . esc_html__( 'Every request to clear cached pages after content was unpublished, removed or declined. Without an edge cache the result is skipped.', 'whoiswho' ) . '</p>';
+		$out   .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		$out   .= '<label>' . esc_html__( 'Status', 'whoiswho' ) . ' <select name="status"><option value="">' . esc_html__( 'Any', 'whoiswho' ) . '</option>';
+		foreach ( self::STATUSES as $option ) {
+			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $status, $option, false ) . '>' . esc_html( $option ) . '</option>';
+		}
+		$out .= '</select></label> <label>' . esc_html__( 'From', 'whoiswho' ) . ' <input type="date" name="from" value="' . esc_attr( $from ) . '" /></label> ';
+		$out .= '<label>' . esc_html__( 'To', 'whoiswho' ) . ' <input type="date" name="to" value="' . esc_attr( $to ) . '" /></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$out .= '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time (UTC)', 'whoiswho' ) . '</th><th>' . esc_html__( 'Subject', 'whoiswho' ) . '</th><th>' . esc_html__( 'Reason', 'whoiswho' ) . '</th><th>' . esc_html__( 'URLs', 'whoiswho' ) . '</th><th>' . esc_html__( 'Status', 'whoiswho' ) . '</th></tr></thead><tbody>';
 		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="4">' . esc_html__( 'Nothing purged yet.', 'whoiswho' ) . '</td></tr>';
+			$out .= '<tr><td colspan="5">' . esc_html__( 'Nothing purged yet.', 'whoiswho' ) . '</td></tr>';
 		}
 		foreach ( $rows as $row ) {
-			$out .= '<tr><td>' . esc_html( $row['created_at'] ) . '</td><td>' . esc_html( $row['subject_type'] . ' #' . $row['subject_id'] ) . '</td><td>' . esc_html( (string) $row['url_count'] ) . '</td><td>' . esc_html( $row['result'] ) . '</td></tr>';
+			$out .= '<tr><td>' . esc_html( $row['created_at'] ) . '</td><td>' . esc_html( $row['subject_type'] . ' #' . $row['subject_id'] ) . '</td><td>' . esc_html( $row['reason'] ) . '</td><td>' . esc_html( (string) $row['url_count'] ) . '</td><td>' . esc_html( $row['result'] ) . '</td></tr>';
 		}
 		return $out . '</tbody></table></div>';
+	}
+
+	/**
+	 * A date as Y-m-d, or an empty string.
+	 *
+	 * @param string $value Raw value.
+	 */
+	private function day( string $value ): string {
+		return 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ? $value : '';
 	}
 }
