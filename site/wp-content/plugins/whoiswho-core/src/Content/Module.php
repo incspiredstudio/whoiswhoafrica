@@ -29,6 +29,7 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		Stories\StoryFields::hooks();
 		Stories\StoryFlags::hooks();
+		Stories\StoryRoute::hooks();
 		( new Pages\PageRoutes() )->register();
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
