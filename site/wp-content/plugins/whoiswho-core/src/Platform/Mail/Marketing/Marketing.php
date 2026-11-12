@@ -90,6 +90,9 @@ final class Marketing {
 			self::PURPOSE,
 			function ( array $link ): string {
 				$this->unsubscribe_ref( (string) $link['subject_id'] );
+				if ( function_exists( 'do_action' ) ) {
+					do_action( 'wiw_marketing_unsubscribed', $link );
+				}
 				return 'You have been unsubscribed.';
 			}
 		);
@@ -142,7 +145,7 @@ final class Marketing {
 	 * @return string The public URL.
 	 */
 	public function unsubscribe_url( string $address ): string {
-		$token = $this->links->issue( self::PURPOSE, 'marketing', ( $this->ref )( $address ), null );
+		$token = $this->links->issue( self::PURPOSE, 'marketing', ( $this->ref )( $address ), strtolower( trim( $address ) ) );
 		return $this->links->url( $token );
 	}
 
