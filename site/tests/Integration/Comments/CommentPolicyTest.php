@@ -11,6 +11,7 @@ namespace WhoIsWho\Tests\Integration\Comments;
 
 use WhoIsWho\Core\Content\Comments\CommentPolicy;
 use WhoIsWho\Core\Directory\ProfileType;
+use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Tests\TestCase;
 
 final class CommentPolicyTest extends TestCase {
@@ -32,6 +33,7 @@ final class CommentPolicyTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->requireWordPress();
+		( new Runner( dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		wp_set_current_user( 0 );
 		add_filter( 'wp_is_comment_flood', '__return_false', 99 );
 		( new CommentPolicy() )->register();
