@@ -34,3 +34,12 @@ if ( ! function_exists( 'wiw_brand' ) ) {
 		return $config[ $key ] ?? '';
 	}
 }
+
+// The plugin asks for the brand name through this filter; the answer lives in config/brand.php only.
+add_filter(
+	'wiw_brand_name',
+	static function ( $fallback ) {
+		$name = wiw_brand( 'name' );
+		return '' !== $name ? $name : $fallback;
+	}
+);

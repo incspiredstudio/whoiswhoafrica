@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( new Url\ProfileRoute() )->register();
+		( new Seo\Output() )->register();
 		Admin\ProfilesScreen::hooks();
 		( new Views\ViewCounter() )->register();
 		( new Sitemap\Sitemap() )->register();
