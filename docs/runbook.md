@@ -20,6 +20,10 @@ Skeleton created at M0. Each section names the issue that completes it; "TODO" m
 
 TODO. Owner: M0-INF-12 (release artifact script), M0-INF-13 (go-live migration) and M5.
 
+### Smoke check after every deploy (M5-LCH-03)
+
+From the site folder on the host: `php deploy/smoke-check.php --url=https://<site> --gone-path=/profile/<an-unpublished-slug> [--healthz-token=<token>]`. It prints one PASS, FAIL or SKIP line per check and exits non-zero if any check fails (a run with no passes also fails). Staging and live use the same command. Paste the output into the release notes. Add `--no-wp` to run only the HTTP checks from another machine.
+
 ## Rollback
 
 TODO. Owner: M0-INF-12. Rule: migrations are forward-only; roll back code, not the database (see Deployment).
