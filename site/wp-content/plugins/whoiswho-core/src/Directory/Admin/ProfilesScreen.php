@@ -82,7 +82,7 @@ final class ProfilesScreen {
 		if ( array() !== $result['groups'] ) {
 			$this->groups( $result['groups'], $filters );
 		}
-		if ( current_user_can( 'wiw_unpublish_profiles' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+		if ( current_user_can( 'wiw_unpublish_profiles' ) || current_user_can( 'wiw_bulk_unpublish' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			do_action( 'wiw_profiles_bulk_host', $filters );
 		}
 		$this->table( $result['rows'] );

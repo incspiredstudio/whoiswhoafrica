@@ -93,6 +93,24 @@ return array(
 	),
 	array(
 		'kind'      => 'column',
+		'name'      => 'wiw_profile_search.name',
+		'class'     => 'public_after_approval',
+		'retention' => 'profile_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Copy of a public profile name. The row is deleted with the profile or when it leaves the public states.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_profile_search.name_sort',
+		'class'     => 'public_after_approval',
+		'retention' => 'profile_life',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'Lower-case sort key of the name. As name.',
+	),
+	array(
+		'kind'      => 'column',
 		'name'      => 'wiw_profile_versions.old_value',
 		'class'     => 'public_after_approval',
 		'retention' => 'profile_life',
@@ -135,6 +153,25 @@ return array(
 		'export'    => 'exclude',
 		'erase'     => 'keep',
 		'note'      => 'A short staff reason; the form tells staff not to type personal data.',
+	),
+
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_bulk_actions.reason',
+		'class'     => 'caller_supplied',
+		'retention' => 'permanent',
+		'export'    => 'exclude',
+		'erase'     => 'keep',
+		'note'      => 'A short staff reason for a bulk unpublish; the form tells staff not to type personal data. Mirrors the audit row.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_bulk_actions.filter_json',
+		'class'     => 'caller_supplied',
+		'retention' => 'permanent',
+		'export'    => 'exclude',
+		'erase'     => 'keep',
+		'note'      => 'The filter a bulk unpublish used (source, batch, type, state, origin, name search). The name search is staff-typed.',
 	),
 
 	// Import evidence for the reviewer (never public).
