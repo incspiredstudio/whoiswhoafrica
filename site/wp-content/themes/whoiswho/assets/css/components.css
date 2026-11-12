@@ -1384,6 +1384,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ab-how-item { padding-top: var(--s-4); border-top: 2px solid var(--charcoal-900); display: grid; gap: var(--s-2); align-content: start; }
 .ab-how-item h3 { font: 400 var(--t-xl)/1.1 var(--font-display); }
 .ab-how-item p { font-weight: 300; line-height: 1.5; color: var(--c-muted); max-width: 26em; }
+
 /* Comments on a story (REQ-258): initials, never a picture; the form uses the shared fields. */
 .comments h2 { font-size: var(--t-2xl); margin-top: var(--s-2); }
 .cm-list { list-style: none; margin: var(--s-6) 0 var(--s-7); display: grid; gap: 0; border-top: 1px solid var(--c-text); }
