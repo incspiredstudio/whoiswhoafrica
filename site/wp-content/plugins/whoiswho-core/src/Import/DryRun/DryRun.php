@@ -128,6 +128,7 @@ final class DryRun {
 				'field'     => (string) $valid['field'],
 				'diff'      => array(),
 				'flags'     => array(),
+				'unmapped'  => array(),
 			);
 		}
 		$record = (array) $valid['record'];
@@ -150,6 +151,7 @@ final class DryRun {
 			'field'     => '',
 			'diff'      => array(),
 			'flags'     => $flags,
+			'unmapped'  => $unmapped,
 		);
 		if ( null !== $this->suppression->refusal_for_import(
 			array(
@@ -200,25 +202,25 @@ final class DryRun {
 	/**
 	 * Field-level diff of two value maps. Pure.
 	 *
-	 * @param array<string, mixed> $old Current values.
-	 * @param array<string, mixed> $new Incoming values.
+	 * @param array<string, mixed> $current  Current values.
+	 * @param array<string, mixed> $incoming Incoming values.
 	 * @return array<int, array{field: string, change: string, old: mixed, new: mixed}> Fields that are added, changed or removed.
 	 */
-	public static function diff( array $old, array $new ): array {
+	public static function diff( array $current, array $incoming ): array {
 		$out  = array();
-		$keys = array_unique( array_merge( array_keys( $old ), array_keys( $new ) ) );
+		$keys = array_unique( array_merge( array_keys( $current ), array_keys( $incoming ) ) );
 		sort( $keys );
 		foreach ( $keys as $key ) {
-			$in_old = array_key_exists( $key, $old );
-			$in_new = array_key_exists( $key, $new );
-			if ( $in_old && $in_new && wp_json_encode( $old[ $key ] ) === wp_json_encode( $new[ $key ] ) ) {
+			$in_old = array_key_exists( $key, $current );
+			$in_new = array_key_exists( $key, $incoming );
+			if ( $in_old && $in_new && wp_json_encode( $current[ $key ] ) === wp_json_encode( $incoming[ $key ] ) ) {
 				continue;
 			}
 			$out[] = array(
 				'field'  => (string) $key,
 				'change' => ! $in_old ? 'added' : ( ! $in_new ? 'removed' : 'changed' ),
-				'old'    => $old[ $key ] ?? null,
-				'new'    => $new[ $key ] ?? null,
+				'old'    => $current[ $key ] ?? null,
+				'new'    => $incoming[ $key ] ?? null,
 			);
 		}
 		return $out;
