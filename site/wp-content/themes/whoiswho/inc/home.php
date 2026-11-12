@@ -184,7 +184,7 @@ if ( ! function_exists( 'wiw_home_stories' ) ) {
 		}
 		return array_slice( $items, 0, 6 );
 	}
-}
+}//end if
 
 if ( ! function_exists( 'wiw_home_events' ) ) {
 	/**

@@ -26,7 +26,16 @@ if ( array() === $wiw_events ) {
 		</div>
 		<ul class="ag-list ag-list--home">
 			<?php foreach ( $wiw_events as $wiw_event ) : ?>
-				<?php get_template_part( 'template-parts/event-row', null, array( 'event' => $wiw_event, 'compact' => true ) ); ?>
+				<?php
+				get_template_part(
+					'template-parts/event-row',
+					null,
+					array(
+						'event'   => $wiw_event,
+						'compact' => true,
+					)
+				);
+				?>
 			<?php endforeach; ?>
 		</ul>
 	</div>
