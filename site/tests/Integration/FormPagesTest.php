@@ -165,7 +165,7 @@ final class FormPagesTest extends WpTestCase {
 	}
 
 	public function test_REQ_081_the_routes_and_the_template_choice(): void {
-		$this->assertSame( array( 'contact', 'subscribe', 'done' ), array_keys( wiw_form_pages() ) );
+		$this->assertSame( array( 'contact', 'subscribe', 'claim', 'done' ), array_keys( wiw_form_pages() ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'contact' );
 		$this->assertStringEndsWith( 'templates/contact.php', wiw_form_template( 'x.php' ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'subscribe' );

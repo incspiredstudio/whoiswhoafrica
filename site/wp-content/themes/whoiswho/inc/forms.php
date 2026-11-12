@@ -12,8 +12,9 @@ declare(strict_types=1);
 
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
-const WIW_FORM_PAGE_VAR = 'wiw_form_page';
-const WIW_FORM_RULES_OP = 'wiw_theme_form_rules';
+const WIW_FORM_PAGE_VAR  = 'wiw_form_page';
+const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_2';
+const WIW_CLAIM_SLUG_VAR = 'wiw_claim_slug';
 
 if ( ! function_exists( 'wiw_form_pages' ) ) {
 	/**
@@ -30,6 +31,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 			'subscribe' => array(
 				'template' => 'templates/get-listed.php',
 				'title'    => __( 'Get listed', 'whoiswho' ),
+			),
+			'claim'     => array(
+				'template' => 'templates/claim.php',
+				'title'    => __( 'Claim this profile', 'whoiswho' ),
 			),
 			'done'      => array(
 				'template' => 'templates/done.php',
@@ -57,7 +62,7 @@ if ( ! function_exists( 'wiw_form_template' ) ) {
 	 */
 	function wiw_form_template( string $template ): string {
 		$page = wiw_form_current();
-		if ( '' === $page ) {
+		if ( '' === $page || ( 'claim' === $page && ! wiw_claim_is_servable() ) ) {
 			return $template;
 		}
 		$found = locate_template( wiw_form_pages()[ $page ]['template'] );
@@ -151,14 +156,16 @@ add_filter(
 add_filter(
 	'query_vars',
 	static function ( array $vars ): array {
-		return array_merge( $vars, array( WIW_FORM_PAGE_VAR, 'kind', 'from', 'ref' ) );
+		return array_merge( $vars, array( WIW_FORM_PAGE_VAR, WIW_CLAIM_SLUG_VAR, 'kind', 'from', 'ref' ) );
 	}
 );
 
 add_action(
 	'init',
 	static function (): void {
-		add_rewrite_rule( '^(' . implode( '|', array_keys( wiw_form_pages() ) ) . ')/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=$matches[1]', 'top' );
+		// The claim page carries a profile slug, so it has its own rule.
+		add_rewrite_rule( '^(' . implode( '|', array_keys( array_diff_key( wiw_form_pages(), array( 'claim' => 1 ) ) ) ) . ')/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=$matches[1]', 'top' );
+		add_rewrite_rule( '^claim/([A-Za-z0-9_-]+)/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=claim&' . WIW_CLAIM_SLUG_VAR . '=$matches[1]', 'top' );
 		if ( '1' !== get_option( WIW_FORM_RULES_OP ) ) {
 			flush_rewrite_rules( false );
 			update_option( WIW_FORM_RULES_OP, '1', false );
@@ -179,11 +186,17 @@ add_action(
 	'wp',
 	static function (): void {
 		// A form page has no post of its own, so WordPress marked the request 404 just before this hook: undo that.
-		if ( '' !== wiw_form_current() ) {
+		if ( '' !== wiw_form_current() && ( 'claim' !== wiw_form_current() || wiw_claim_is_servable() ) ) {
 			global $wp_query;
 			$wp_query->is_404 = false;
 			// The plugin sets 4xx for a refused submission later, on template_redirect.
 			status_header( 200 );
+		} elseif ( 'claim' === wiw_form_current() ) {
+			// A slug that is not a public profile is a 404 (WordPress does not flag it: the request looks like the home query).
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
 		}
 	}
 );
@@ -191,7 +204,7 @@ add_action(
 add_action(
 	'wp_head',
 	static function (): void {
-		if ( 'done' === wiw_form_current() ) {
+		if ( in_array( wiw_form_current(), array( 'done', 'claim' ), true ) ) {
 			echo '<meta name="robots" content="noindex, nofollow">' . "\n";
 		}
 	},
