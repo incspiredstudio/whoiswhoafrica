@@ -27,5 +27,7 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		Consent\ListingConsent::register_gate();
+		( new Consent\ListingConsent() )->register_links( \WhoIsWho\Core\Platform\Links\SignedLinks::for_site() );
 	}
 }
