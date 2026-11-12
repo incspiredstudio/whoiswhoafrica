@@ -54,7 +54,8 @@ add_filter(
 			return $title;
 		}
 		$profile = wiw_claim_profile();
-		return null === $profile ? $title : sprintf( /* translators: %s: profile name */ __( 'Claim %s', 'whoiswho' ), $profile->name ) . ' | ' . wiw_site_name();
+		// A slug that is not a public profile is a 404, so the title says so rather than offering a claim.
+		return null === $profile ? __( 'Page not found', 'whoiswho' ) . " \u{2013} " . wiw_site_name() : sprintf( /* translators: %s: profile name */ __( 'Claim %s', 'whoiswho' ), $profile->name ) . ' | ' . wiw_site_name();
 	},
 	11
 );
