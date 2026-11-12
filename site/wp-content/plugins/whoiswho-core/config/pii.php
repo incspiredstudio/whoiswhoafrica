@@ -137,6 +137,25 @@ return array(
 		'note'      => 'A short staff reason; the form tells staff not to type personal data.',
 	),
 
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_bulk_actions.reason',
+		'class'     => 'caller_supplied',
+		'retention' => 'permanent',
+		'export'    => 'exclude',
+		'erase'     => 'keep',
+		'note'      => 'A short staff reason for a bulk unpublish; the form tells staff not to type personal data. Mirrors the audit row.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_bulk_actions.filter_json',
+		'class'     => 'caller_supplied',
+		'retention' => 'permanent',
+		'export'    => 'exclude',
+		'erase'     => 'keep',
+		'note'      => 'The filter a bulk unpublish used (source, batch, type, state, origin, name search). The name search is staff-typed.',
+	),
+
 	// Import evidence for the reviewer (never public).
 	array(
 		'kind'      => 'column',

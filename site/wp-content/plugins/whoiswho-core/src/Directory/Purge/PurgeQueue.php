@@ -68,6 +68,18 @@ final class PurgeQueue {
 	}
 
 	/**
+	 * Number of profiles above which one broad purge replaces per-profile purges.
+	 */
+	public static function threshold(): int {
+		/**
+		 * Number of profiles above which one broad purge replaces per-profile purges.
+		 *
+		 * @param int $threshold Threshold.
+		 */
+		return max( 1, (int) apply_filters( 'wiw_purge_threshold', self::THRESHOLD ) );
+	}
+
+	/**
 	 * Attach hooks and the job handler.
 	 */
 	public function register(): void {
@@ -117,12 +129,46 @@ final class PurgeQueue {
 	 * @return int Number of jobs queued.
 	 */
 	public function end_batch(): int {
-		$ids         = array_values( array_unique( $this->batch ?? array() ) );
-		$this->batch = null;
+		$ids = $this->collect_batch();
 		if ( array() === $ids ) {
 			return 0;
 		}
 		return $this->queue( $ids, 'batch' );
+	}
+
+	/**
+	 * Stop collecting and hand back the collected ids without queueing anything (a chunked job decides on the whole batch).
+	 *
+	 * @return int[]
+	 */
+	public function collect_batch(): array {
+		$ids         = array_values( array_unique( $this->batch ?? array() ) );
+		$this->batch = null;
+		return $ids;
+	}
+
+	/**
+	 * Queue one broad purge.
+	 *
+	 * @param int $count How many profiles the change touched, for the log.
+	 */
+	public function queue_broad( int $count ): void {
+		$this->jobs->enqueue(
+			self::JOB,
+			array(
+				'broad' => true,
+				'count' => $count,
+			),
+			true
+		);
+		$this->log->log(
+			'info',
+			'purge_queued',
+			array(
+				'event' => 'broad',
+				'count' => $count,
+			)
+		);
 	}
 
 	/**
@@ -133,29 +179,8 @@ final class PurgeQueue {
 	 * @return int Jobs queued.
 	 */
 	public function queue( array $ids, string $reason ): int {
-		/**
-		 * Number of profiles above which one broad purge replaces per-profile purges.
-		 *
-		 * @param int $threshold Threshold.
-		 */
-		$threshold = max( 1, (int) apply_filters( 'wiw_purge_threshold', self::THRESHOLD ) );
-		if ( count( $ids ) > $threshold ) {
-			$this->jobs->enqueue(
-				self::JOB,
-				array(
-					'broad' => true,
-					'count' => count( $ids ),
-				),
-				true
-			);
-			$this->log->log(
-				'info',
-				'purge_queued',
-				array(
-					'event' => 'broad',
-					'count' => count( $ids ),
-				)
-			);
+		if ( count( $ids ) > self::threshold() ) {
+			$this->queue_broad( count( $ids ) );
 			return 1;
 		}
 		foreach ( $ids as $id ) {
