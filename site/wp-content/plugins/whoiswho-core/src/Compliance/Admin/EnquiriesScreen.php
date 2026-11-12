@@ -165,8 +165,7 @@ final class EnquiriesScreen {
 	 * @param int    $id     Item id.
 	 * @param string $status New status.
 	 * @param int    $owner  Owner user id, or 0 for none.
-	 * @throws \DomainException Without the capability.
-	 * @throws \InvalidArgumentException For an unknown enquiry, status or owner.
+	 * @throws \InvalidArgumentException For an unknown enquiry, status or owner, or without the capability.
 	 */
 	public function update( int $id, string $status, int $owner ): void {
 		$item = $this->item( $id );
@@ -212,8 +211,7 @@ final class EnquiriesScreen {
 	 *
 	 * @param int    $id   Item id.
 	 * @param string $body Note text.
-	 * @throws \DomainException Without the capability.
-	 * @throws \InvalidArgumentException For an unknown enquiry or an invalid note.
+	 * @throws \InvalidArgumentException For an unknown enquiry or an invalid note, or without the capability.
 	 */
 	public function add_note( int $id, string $body ): void {
 		if ( null === $this->item( $id ) ) {
