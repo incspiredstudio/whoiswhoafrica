@@ -27,6 +27,8 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\VersionRepository;
 use WhoIsWho\Core\Import\EvidenceRepository;
 use WhoIsWho\Core\Import\Mapping\TermMapper;
+use WhoIsWho\Core\Import\Scan\FreeTextScanner;
+use WhoIsWho\Core\Import\Scan\ScanBlock;
 use WhoIsWho\Core\Import\StateAssigner;
 use WhoIsWho\Core\Platform\Db\Transaction;
 use WhoIsWho\Core\Review\StateMachine;
@@ -70,6 +72,20 @@ final class ProfileApplier {
 	private StateAssigner $assigner;
 
 	/**
+	 * Free-text scanner.
+	 *
+	 * @var FreeTextScanner
+	 */
+	private FreeTextScanner $scanner;
+
+	/**
+	 * Scan block.
+	 *
+	 * @var ScanBlock
+	 */
+	private ScanBlock $block;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Suppression        $suppression The live suppression list.
@@ -82,6 +98,8 @@ final class ProfileApplier {
 		$this->map         = $map ?? new RecordMap();
 		$this->terms       = $terms ?? new TermMapper();
 		$this->assigner    = $assigner ?? new StateAssigner();
+		$this->scanner     = new FreeTextScanner();
+		$this->block       = new ScanBlock();
 	}
 
 	/**
@@ -184,8 +202,11 @@ final class ProfileApplier {
 		}
 		$profile_id = (int) $post;
 		$this->map->link( $record_id, $profile_id );
-		$this->assigner->assign( $profile_id, $record, $import_all, $importer_id, $batch_id, $this->source_of( $record ) );
+		$flags = $this->scanner->scan( (array) $record['fields'] );
+		// A record that failed the free-text scan lands as Imported not public, with a block a reviewer must clear (REQ-141).
+		$this->assigner->assign( $profile_id, $record, $import_all || array() !== $flags, $importer_id, $batch_id, $this->source_of( $record ) );
 		$this->write_fields( $profile_id, $record );
+		$this->block->set( $profile_id, $flags );
 		return $this->result( self::CREATED, $profile_id );
 	}
 
@@ -210,6 +231,7 @@ final class ProfileApplier {
 			self::new_values( $record )
 		);
 		$this->write_fields( $profile_id, $record );
+		$this->block->set( $profile_id, $this->scanner->scan( (array) $record['fields'] ) );
 		$hash = (string) preg_replace( '/^sha256:/', '', (string) $record['content_hash'] );
 		( new StateRepository() )->update(
 			$profile_id,
