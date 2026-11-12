@@ -1358,3 +1358,17 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
   .stories-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .stories-signup-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
+
+/* Form pages: side panel rows and tick list (Contact, Get listed). */
+.link-rows { list-style: none; margin: 0; padding: 0; }
+.link-rows li { border-top: 1px solid var(--c-line); }
+.link-rows li:last-child { border-bottom: 1px solid var(--c-line); }
+.link-rows a { display: grid; gap: var(--s-1); padding-block: var(--s-4); padding-right: var(--s-5); position: relative; color: inherit; text-decoration: none; }
+.link-rows a::after { content: "\2192"; position: absolute; right: 0; top: 50%; translate: 0 -50%; color: var(--c-accent); transition: translate var(--m-fast); }
+.link-rows a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.link-rows a:hover::after { translate: 4px -50%; }
+.link-rows .meta { color: var(--c-muted); font-size: var(--t-sm); }
+.ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.ticks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+.ticks .ico { margin-top: .2rem; color: var(--c-accent); }
+.form-aside > h2 { font: 600 var(--t-xs)/1.4 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--c-muted); }
