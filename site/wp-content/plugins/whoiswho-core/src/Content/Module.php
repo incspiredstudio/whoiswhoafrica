@@ -33,6 +33,7 @@ final class Module implements ModuleInterface {
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		( new Comments\CommentPolicy() )->register();
 		Newsletter\NewsletterSignup::register();
 	}
 }
