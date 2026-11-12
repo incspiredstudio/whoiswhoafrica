@@ -17,6 +17,8 @@ use WhoIsWho\Core\Compliance\Consent\ConsentRecorder;
 use WhoIsWho\Core\Compliance\Support\EnquiryIntake;
 use WhoIsWho\Core\Compliance\Support\EnquirySubmission;
 use WhoIsWho\Core\Compliance\Support\SupportItems;
+use WhoIsWho\Core\Content\Newsletter\NewsletterSignup;
+use WhoIsWho\Core\Content\Newsletter\SubscriberRepository;
 use WhoIsWho\Core\Platform\Forms\FormGate;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Forms\FormToken;
@@ -37,9 +39,11 @@ final class FormRoutes {
 	 * Path patterns (relative to the site root) mapped to form names. The first capture, if any, is the slug.
 	 */
 	private const ROUTES = array(
-		'#^claim/([A-Za-z0-9_-]+)/?$#' => 'claim',
-		'#^subscribe/?$#'              => 'get_listed',
-		'#^contact/?$#'                => 'contact',
+		'#^claim/([A-Za-z0-9_-]+)/?$#'   => 'claim',
+		'#^subscribe/?$#'                => 'get_listed',
+		'#^contact/?$#'                  => 'contact',
+		'#^enquire/([A-Za-z0-9_-]+)/?$#' => 'profile_enquiry',
+		'#^newsletter/?$#'               => 'newsletter',
 	);
 
 	/**
@@ -71,9 +75,11 @@ final class FormRoutes {
 		$notifier  = Notifier::for_site();
 		return new self(
 			array(
-				'claim'      => static fn ( FormInput $input, string $ip, string $slug ): array => ( new ClaimIntake( new ClaimRepository(), $notifier, $protect, $consent ) )->submit( $slug, $input, $ip ),
-				'get_listed' => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->get_listed( $input, $ip ),
-				'contact'    => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->contact( $input, $ip ),
+				'claim'           => static fn ( FormInput $input, string $ip, string $slug ): array => ( new ClaimIntake( new ClaimRepository(), $notifier, $protect, $consent ) )->submit( $slug, $input, $ip ),
+				'get_listed'      => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->get_listed( $input, $ip ),
+				'contact'         => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->contact( $input, $ip ),
+				'profile_enquiry' => static fn ( FormInput $input, string $ip, string $slug ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->profile( $slug, $input, $ip ),
+				'newsletter'      => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
 			)
 		);
 	}
@@ -158,13 +164,14 @@ final class FormRoutes {
 	 */
 	public static function http_status( string $status ): int {
 		$map = array(
-			PublicSubmission::RECEIVED   => 303,
-			'invalid'                    => 422,
-			PublicSubmission::TRY_LATER  => 429,
-			PublicSubmission::EXPIRED    => 400,
-			ClaimIntake::NOT_FOUND       => 404,
-			ClaimIntake::REVIEW_FIRST    => 409,
-			ClaimIntake::ALREADY_CLAIMED => 409,
+			PublicSubmission::RECEIVED       => 303,
+			'invalid'                        => 422,
+			PublicSubmission::TRY_LATER      => 429,
+			PublicSubmission::EXPIRED        => 400,
+			ClaimIntake::NOT_FOUND           => 404,
+			ClaimIntake::REVIEW_FIRST        => 409,
+			ClaimIntake::ALREADY_CLAIMED     => 409,
+			EnquirySubmission::ENQUIRIES_OFF => 409,
 		);
 		return $map[ $status ] ?? 400;
 	}
@@ -175,7 +182,7 @@ final class FormRoutes {
 	 * @param array{form: string, reference: string} $result Dispatch result.
 	 */
 	public static function done_url( array $result ): string {
-		$kind = 'claim' === $result['form'] ? 'claim' : 'enquiry';
+		$kind = in_array( $result['form'], array( 'claim', 'newsletter' ), true ) ? $result['form'] : 'enquiry';
 		$url  = add_query_arg(
 			array(
 				'kind' => $kind,

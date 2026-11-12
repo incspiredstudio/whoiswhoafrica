@@ -42,9 +42,11 @@ final class FormRoutesTest extends TestCase {
 		};
 		return new FormRoutes(
 			array(
-				'claim'      => $make( 'claim' ),
-				'get_listed' => $make( 'get_listed' ),
-				'contact'    => $make( 'contact' ),
+				'claim'           => $make( 'claim' ),
+				'get_listed'      => $make( 'get_listed' ),
+				'contact'         => $make( 'contact' ),
+				'profile_enquiry' => $make( 'profile_enquiry' ),
+				'newsletter'      => $make( 'newsletter' ),
 			)
 		);
 	}
@@ -66,6 +68,23 @@ final class FormRoutesTest extends TestCase {
 	public function test_REQ_039_post_contact_is_the_contact_form(): void {
 		$this->routes()->dispatch( 'POST', 'contact', new FormInput( array() ), '' );
 		$this->assertSame( 'contact', $this->calls[0]['form'] );
+	}
+
+	public function test_REQ_018_post_enquire_slug_calls_profile_enquiry_with_the_slug(): void {
+		$result = $this->routes()->dispatch( 'POST', 'enquire/acme-ltd', new FormInput( array( 'name' => 'Bola' ) ), '203.0.113.4' );
+		$this->assertSame( 'profile_enquiry', $this->calls[0]['form'] );
+		$this->assertSame( 'acme-ltd', $this->calls[0]['slug'] );
+		$this->assertSame( 303, $result['http'] );
+		$this->assertNull( $this->routes()->dispatch( 'POST', 'enquire/', new FormInput( array() ), '' ) );
+	}
+
+	public function test_REQ_061_post_newsletter_is_the_newsletter_form(): void {
+		$this->routes()->dispatch( 'POST', '/newsletter/', new FormInput( array() ), '' );
+		$this->assertSame( 'newsletter', $this->calls[0]['form'] );
+	}
+
+	public function test_REQ_060_enquiries_switched_off_is_refused_with_409(): void {
+		$this->assertSame( 409, FormRoutes::http_status( 'enquiries_off' ) );
 	}
 
 	public function test_REQ_058_get_requests_and_other_paths_are_left_alone(): void {
