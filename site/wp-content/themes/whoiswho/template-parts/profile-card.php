@@ -37,12 +37,7 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
 	'wiw-poster',
 	false,
-	array(
-		'class'    => 'poster-photo',
-		'alt'      => '',
-		'loading'  => 'lazy',
-		'decoding' => 'async',
-	)
+	array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) )
 ) : '';
 ?>
 <article class="pcard<?php echo $wiw_pend ? ' pcard--pending' : ''; ?>" data-profile="<?php echo esc_attr( $wiw_profile->slug ); ?>">
