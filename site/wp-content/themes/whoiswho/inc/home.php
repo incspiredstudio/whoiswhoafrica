@@ -20,7 +20,7 @@ if ( ! function_exists( 'wiw_home_title_lines' ) ) {
 	 */
 	function wiw_home_title_lines( string $long_name ): array {
 		$words = preg_split( '/\s+/', trim( $long_name ) );
-		$words = is_array( $words ) ? array_values( array_filter( $words, 'strlen' ) ) : array();
+		$words = is_array( $words ) ? array_values( array_filter( $words, static fn ( string $w ): bool => '' !== $w ) ) : array();
 		if ( count( $words ) < 2 ) {
 			return array( implode( ' ', $words ), '' );
 		}
@@ -101,7 +101,6 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 		 *
 		 * @param array<string, mixed> $model Model.
 		 */
-		$filtered = apply_filters( 'wiw_home_model', $model );
-		return is_array( $filtered ) ? $filtered : $model;
+		return apply_filters( 'wiw_home_model', $model );
 	}
 }//end if
