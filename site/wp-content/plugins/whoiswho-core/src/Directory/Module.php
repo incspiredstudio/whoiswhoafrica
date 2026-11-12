@@ -30,6 +30,7 @@ final class Module implements ModuleInterface {
 		( new Url\ProfileRoute() )->register();
 		Admin\ProfilesScreen::hooks();
 		( new Views\ViewCounter() )->register();
+		( new Sitemap\Sitemap() )->register();
 		Purge\PurgeQueue::for_site()->register();
 		( new Search\SearchIndexer() )->register();
 		add_filter( 'wiw_cli_commands', static fn ( $commands ): array => array_merge( is_array( $commands ) ? $commands : array(), array( new Search\SearchRebuildCommand() ) ) );
