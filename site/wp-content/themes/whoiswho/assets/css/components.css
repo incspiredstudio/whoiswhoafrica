@@ -1372,3 +1372,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ticks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
 .ticks .ico { margin-top: .2rem; color: var(--c-accent); }
 .form-aside > h2 { font: 600 var(--t-xs)/1.4 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--c-muted); }
+
+/* Editor-built lists (REQ-260): the pattern's list and group blocks carry no inner spans, so number, title, text and arrow come from the item itself. */
+.ab-do-list { counter-reset: abdo; }
+.ab-do-list li { counter-increment: abdo; position: relative; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) 2.75rem; gap: var(--s-2) var(--s-4); align-items: center; padding-block: var(--s-5); border-bottom: 1px solid var(--c-line); color: var(--c-muted); font-weight: 300; }
+.ab-do-list li::before { content: "0" counter(abdo); grid-row: 1 / span 2; font: 500 var(--t-xs)/1 var(--font-body); letter-spacing: .14em; color: var(--c-text); }
+.ab-do-list li::after { content: "\2197"; grid-column: 3; grid-row: 1 / span 2; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--c-text); border-radius: 50%; color: var(--c-text); transition: background var(--m-fast), color var(--m-fast); }
+.ab-do-list li > a { grid-column: 2; font: 400 clamp(1.75rem, 1.2rem + 2.4vw, 3.5rem)/1 var(--font-display); color: var(--c-text); text-decoration: none; display: block; padding: 0; border: 0; }
+.ab-do-list li > a::after { content: ""; position: absolute; inset: 0; }
+.ab-do-list li:hover::after { background: var(--c-text); color: var(--c-surface); }
+.ab-how-item { padding-top: var(--s-4); border-top: 2px solid var(--charcoal-900); display: grid; gap: var(--s-2); align-content: start; }
+.ab-how-item h3 { font: 400 var(--t-xl)/1.1 var(--font-display); }
+.ab-how-item p { font-weight: 300; line-height: 1.5; color: var(--c-muted); max-width: 26em; }

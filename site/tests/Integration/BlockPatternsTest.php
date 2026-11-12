@@ -23,6 +23,8 @@ final class BlockPatternsTest extends TestCase {
 		'whoiswho/closing-call',
 		'whoiswho/legal-section',
 		'whoiswho/guidance-section',
+		'whoiswho/draft-note',
+		'whoiswho/about-page',
 	);
 
 	protected function setUp(): void {
@@ -78,6 +80,19 @@ final class BlockPatternsTest extends TestCase {
 			$this->assertStringContainsString( $class, $content );
 		}
 		$this->assertSame( 3, substr_count( $content, '"lock":{"move":true,"remove":true}' ) );
+	}
+
+	public function test_REQ_260_about_page_pattern_has_one_h1_and_a_deletable_draft_note(): void {
+		$content = (string) \WP_Block_Patterns_Registry::get_instance()->get_registered( 'whoiswho/about-page' )['content'];
+		$this->assertSame( 1, substr_count( $content, '<h1 ' ) );
+		$this->assertSame( 1, substr_count( $content, 'notice--draft' ) );
+		$this->assertSame( 3, substr_count( $content, '"lock":{"move":true,"remove":true}' ), 'only the three pillars are locked' );
+	}
+
+	public function test_REQ_260_about_uses_the_editorial_template_and_an_empty_page_falls_back_to_the_pattern(): void {
+		$this->assertArrayHasKey( 'about', wiw_editorial_pages() );
+		$this->assertStringContainsString( 'ab-hero', wiw_default_page_pattern( 'about' ) );
+		$this->assertSame( '', wiw_default_page_pattern( 'no-such-page' ) );
 	}
 
 	public function test_REQ_260_legal_section_has_a_removable_draft_note_and_forms_have_no_pattern(): void {
