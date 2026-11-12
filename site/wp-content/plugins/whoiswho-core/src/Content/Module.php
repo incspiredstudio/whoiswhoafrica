@@ -37,5 +37,6 @@ final class Module implements ModuleInterface {
 		( new Comments\CommentPolicy() )->register();
 		Newsletter\NewsletterSignup::register();
 		( new Newsletter\ConfirmRoute() )->register();
+		( new Newsletter\SendGuard() )->register();
 	}
 }
