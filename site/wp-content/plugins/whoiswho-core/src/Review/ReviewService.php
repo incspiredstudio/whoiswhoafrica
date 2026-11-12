@@ -13,6 +13,7 @@ namespace WhoIsWho\Core\Review;
 
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
+use WhoIsWho\Core\Import\Scan\ScanBlock;
 
 /**
  * Review service.
@@ -57,6 +58,9 @@ final class ReviewService {
 		$row = $this->row( $profile_id );
 		if ( (int) ( $row['importer_id'] ?? 0 ) > 0 && (int) $row['importer_id'] === $actor_id ) {
 			throw StateException::refuse( 'The person who imported a record cannot approve it.' );
+		}
+		if ( ScanBlock::is_blocked( $profile_id ) ) {
+			throw StateException::refuse( 'The free-text scan flagged this record. Clear the block before approving.' );
 		}
 		$this->machine->transition( $profile_id, PubState::PUBLISHED_REVIEWED, '', $actor_id );
 	}

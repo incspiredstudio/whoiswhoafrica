@@ -24,9 +24,12 @@ use WhoIsWho\Core\Import\Apply\ResultRepository;
 use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleReader;
 use WhoIsWho\Core\Import\ContentHasher;
+use WhoIsWho\Core\Import\Scan\ScanBlock;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
+use WhoIsWho\Core\Review\ReviewService;
+use WhoIsWho\Core\Review\StateException;
 use WhoIsWho\Core\Review\StateMachine;
 use WhoIsWho\Tests\TestCase;
 
@@ -38,6 +41,13 @@ final class ApplyTest extends TestCase {
 	 * @var string[]
 	 */
 	private array $dirs = array();
+
+	/**
+	 * Users to remove.
+	 *
+	 * @var int[]
+	 */
+	private array $users = array();
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -65,6 +75,10 @@ final class ApplyTest extends TestCase {
 			rmdir( $dir );
 		}
 		$this->dirs = array();
+		foreach ( $this->users as $user_id ) {
+			wp_delete_user( $user_id );
+		}
+		$this->users = array();
 		wp_set_current_user( 0 );
 		parent::tearDown();
 	}
@@ -91,9 +105,10 @@ final class ApplyTest extends TestCase {
 	 *
 	 * @param string $id   Record id.
 	 * @param string $name Organisation name.
-	 * @param string $city Optional summary text, to change the hash.
+	 * @param string $city Optional regulator text, to change the hash.
+	 * @param string $summary Optional free-text summary.
 	 */
-	private function line( string $id, string $name, string $city = '' ): string {
+	private function line( string $id, string $name, string $city = '', string $summary = '' ): string {
 		$record                      = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/import/worked-example.json' ), false );
 		$record->record_id           = $id;
 		$record->batch_id            = 'B-apply';
@@ -101,6 +116,12 @@ final class ApplyTest extends TestCase {
 		$record->fields->name->value = $name;
 		if ( '' !== $city ) {
 			$record->fields->regulator->value = $city;
+		}
+		if ( '' !== $summary ) {
+			$record->fields->summary = (object) array(
+				'value'      => $summary,
+				'provenance' => $record->fields->name->provenance,
+			);
 		}
 		$record->content_hash = ContentHasher::hash_record( $record );
 		return (string) json_encode( $record ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- test.
@@ -149,6 +170,21 @@ final class ApplyTest extends TestCase {
 	 */
 	private function applier( ?Suppression $suppression = null ): ChunkApplier {
 		return new ChunkApplier( new ProfileApplier( $suppression ?? new Suppression( AuditLogger::for_site() ) ) );
+	}
+
+	/**
+	 * A new user.
+	 */
+	private function user(): int {
+		$id = wp_insert_user(
+			array(
+				'user_login' => 'apply_' . bin2hex( random_bytes( 4 ) ),
+				'user_pass'  => wp_generate_password(),
+			)
+		);
+		$this->assertIsInt( $id );
+		$this->users[] = $id;
+		return $id;
 	}
 
 	/**
@@ -333,5 +369,55 @@ final class ApplyTest extends TestCase {
 		$this->assertSame( $bundle->file_hash(), $batches->get( 'B-job' )['file_hash'] );
 		$audit = $wpdb->get_var( $wpdb->prepare( 'SELECT new_value FROM ' . $wpdb->prefix . "wiw_audit_log WHERE action = 'import.apply' AND subject_id = %s ORDER BY id DESC LIMIT 1", 'B-job' ) ); // phpcs:ignore WordPress.DB
 		$this->assertStringContainsString( '"CREATED":2', (string) $audit );
+	}
+
+	public function test_REQ_141_flagged_record_blocked_until_cleared(): void {
+		global $wpdb;
+		$line = $this->line( 'rec_flag', 'Apply Flag Qwv', '', 'Contact the founder on +234 803 555 0142 about listing.' );
+		$out  = $this->applier()->run( $this->bundle( array( $line ), 'B-flag' ), 'B-flag' );
+		$this->assertSame( array( 'CREATED' => 1 ), $out['counts'] );
+		$id = (int) ( new RecordMap() )->profile_for( 'rec_flag' );
+		$this->assertSame( PubState::IMPORTED_NOT_PUBLIC, ( new StateRepository() )->pub_state( $id ), 'A flagged organisation does not go live.' );
+		$this->assertSame(
+			array(
+				array(
+					'field'    => 'summary',
+					'category' => 'phone',
+				),
+			),
+			ScanBlock::flags( $id )
+		);
+		$this->assertStringNotContainsString( '803', (string) get_post_meta( $id, ScanBlock::META_KEY, true ), 'The matched text is never stored in the flags.' );
+
+		$reviewer = $this->user();
+		get_user_by( 'id', $reviewer )->add_cap( 'wiw_review_records' );
+		$service = new ReviewService();
+		try {
+			$service->approve( $id, $reviewer );
+			$this->fail( 'A blocked record must not be approved.' );
+		} catch ( StateException $e ) {
+			$this->assertStringContainsString( 'Clear the block', $e->getMessage() );
+		}
+		$this->assertSame( PubState::IMPORTED_NOT_PUBLIC, ( new StateRepository() )->pub_state( $id ) );
+
+		( new ScanBlock() )->clear( $id, $reviewer, 'Number is the registry office line.' );
+		$this->assertFalse( ScanBlock::is_blocked( $id ) );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT actor_id, old_value, reason FROM ' . $wpdb->prefix . "wiw_audit_log WHERE action = 'import.scan_cleared' AND subject_id = %s ORDER BY id DESC LIMIT 1", (string) $id ), ARRAY_A ); // phpcs:ignore WordPress.DB
+		$this->assertSame( (string) $reviewer, $row['actor_id'] );
+		$this->assertStringNotContainsString( '803', (string) $row['old_value'], 'The audit row names the field and category, not the text.' );
+		$service->approve( $id, $reviewer );
+		$this->assertSame( PubState::PUBLISHED_REVIEWED, ( new StateRepository() )->pub_state( $id ) );
+	}
+
+	public function test_REQ_141_clean_record_is_not_blocked_and_clearing_needs_the_capability(): void {
+		$this->applier()->run( $this->bundle( array( $this->line( 'rec_clean', 'Apply Clean Qwv', '', 'A licensed commercial bank.' ) ), 'B-clean' ), 'B-clean' );
+		$id = (int) ( new RecordMap() )->profile_for( 'rec_clean' );
+		$this->assertFalse( ScanBlock::is_blocked( $id ) );
+		$this->assertSame( PubState::PUBLISHED_PENDING, ( new StateRepository() )->pub_state( $id ) );
+
+		update_post_meta( $id, ScanBlock::META_KEY, wp_slash( '[{"field":"summary","category":"email"}]' ) );
+		$nobody = $this->user();
+		$this->expectException( StateException::class );
+		( new ScanBlock() )->clear( $id, $nobody, 'Because.' );
 	}
 }
