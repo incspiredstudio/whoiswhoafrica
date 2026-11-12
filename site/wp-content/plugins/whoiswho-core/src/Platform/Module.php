@@ -56,6 +56,7 @@ final class Module implements ModuleInterface {
 		);
 		Mail\Admin\EmailLogScreen::hooks();
 		Audit\Admin\AuditScreen::hooks();
+		Audit\AuditExport::for_site()->register( Jobs\JobRunner::for_site() );
 		Capabilities\CapabilityAudit::for_site()->register();
 	}
 }

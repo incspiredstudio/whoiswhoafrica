@@ -14,6 +14,8 @@ namespace WhoIsWho\Core\Platform\Audit\Admin;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Audit\AuditExport;
+use WhoIsWho\Core\Platform\Audit\AuditGuard;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -173,6 +175,9 @@ final class AuditScreen {
 		$out  = '<div class="wrap"><h1>' . esc_html__( 'Audit log', 'whoiswho' ) . '</h1>';
 		$out .= '<p>' . esc_html__( 'Every staff action that matters, newest first. Rows cannot be changed here.', 'whoiswho' ) . '</p>';
 		$out .= $this->notice( $request );
+		$last = AuditExport::last_run();
+		/* translators: 1: on or off, 2: time of the last export, or never. */
+		$out .= '<p>' . esc_html( sprintf( __( 'Database triggers: %1$s. Last export: %2$s.', 'whoiswho' ), AuditGuard::status(), $last > 0 ? gmdate( 'Y-m-d H:i', $last ) . ' UTC' : __( 'never', 'whoiswho' ) ) ) . '</p>';
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" /><button class="button">' . esc_html__( 'Verify chain', 'whoiswho' ) . '</button></form>';
 		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Actor (user id)', 'whoiswho' ) . ' <input type="number" name="actor" value="' . esc_attr( $filters['actor'] > 0 ? (string) $filters['actor'] : '' ) . '" /></label> ';
