@@ -1,0 +1,23 @@
+/* Single story (REQ-027, REQ-182): header, wide 16:9 cover, readable body, pull quote and the closing blocks. Tokens only. */
+.story-page .article-head { padding-block: var(--s-6) var(--s-5); }
+.story-page .article-head h1 { text-wrap: balance; overflow-wrap: break-word; }
+.story-page .article-meta { margin-top: var(--s-5); }
+.story-page .article-lede { max-width: 40rem; font-weight: 300; text-wrap: pretty; }
+.story-page .article-by { margin-top: var(--s-4); }
+.story-page .article-cover { max-width: 72rem; margin: 0 auto; }
+.story-page .article-cover .scard-media { border-radius: var(--r-2, var(--r-1)); }
+.story-page .article-body { padding-block: var(--s-7) var(--s-9); }
+.story-page .article-body h2, .story-page .article-body h3 { margin-top: var(--s-7); text-wrap: balance; }
+.story-page .article-body a { text-underline-offset: .2em; }
+.story-page .article-body img, .story-page .article-body figure { max-width: 100%; height: auto; }
+.story-page .article-body blockquote { margin-block: var(--s-7); padding-block: var(--s-2); text-wrap: balance; }
+.story-page .article-body blockquote p + p { margin-top: var(--s-3); }
+.story-page .notice--sponsored { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); align-items: start; padding: var(--s-4) var(--s-5); font-size: var(--t-sm); line-height: 1.5; }
+.story-page .notice--sponsored .ico { margin-top: .15em; }
+.story-people .grid { margin-top: 0; }
+.story-more .stories-grid { margin-top: 0; }
+
+@media (width >= 64rem) { .story-more .stories-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+@media (prefers-reduced-motion: reduce) { .story-page .scard-img { transition: none; } }
+.ev-related .np-kicker { margin-top: 0; color: var(--c-muted); }

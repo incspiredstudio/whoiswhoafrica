@@ -75,7 +75,7 @@ final class DeadlineTrackerTest extends TestCase {
 	}
 
 	public function test_REQ_158_overdue_item_shows_breach_flag(): void {
-		$row  = $this->items()->create( array( 'type' => ItemType::CORRECTION ), $this->utc( '2026-11-01 09:00:00' ) );
+		$row = $this->items()->create( array( 'type' => ItemType::CORRECTION ), $this->utc( '2026-11-01 09:00:00' ) );
 		$this->items()->set_status( $row['id'], ItemStatus::ACKNOWLEDGED, $this->utc( '2026-11-01 10:00:00' ) );
 		$item = (array) $this->items()->get( $row['id'] );
 		$this->assertSame( DeadlineTracker::NONE, $this->tracker()->flag( $item, $this->utc( '2026-11-03 09:00:00' ) ) );
