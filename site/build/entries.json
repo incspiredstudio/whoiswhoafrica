@@ -8,6 +8,7 @@
     "lenis": "wp-content/themes/whoiswho/assets/vendor/lenis.js",
     "main": "wp-content/themes/whoiswho/assets/js/main.js",
     "home": "wp-content/themes/whoiswho/assets/css/home.css",
-    "home-js": "wp-content/themes/whoiswho/assets/js/home.js"
+    "home-js": "wp-content/themes/whoiswho/assets/js/home.js",
+    "story": "wp-content/themes/whoiswho/assets/css/story.css"
   }
 }
