@@ -1299,3 +1299,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar .fbar-sel select { field-sizing: content; }
 .fbar-l { flex: 1 1 auto; }
 .fbar-q { min-width: min(100%, 12rem); }
+
+/* ---------- industries (REQ-007) ---------- */
+.ind-grid { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: 0; margin: 0; }
+
+@media (width >= 40rem) { .ind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+@media (width >= 64rem) { .ind-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ind-tile { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-4); border-bottom: 1px solid var(--c-line); color: var(--c-text); text-decoration: none; transition: background var(--m-fast); }
+.ind-tile:hover { background: var(--c-surface); }
+.ind-name { font: 400 var(--t-lg)/1.2 var(--font-display); overflow-wrap: anywhere; }
+.ind-count { font-size: var(--t-sm); color: var(--c-muted); white-space: nowrap; }
+.ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
