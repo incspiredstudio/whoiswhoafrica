@@ -1256,7 +1256,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 /* Event page: a poster, then the details beside the text. */
 .ev-poster { position: relative; overflow: hidden; background: var(--orange); color: var(--charcoal-900); padding-block: var(--s-5) var(--s-7); }
 .ev-poster.is-past { background: var(--charcoal-900); color: var(--c-white); }
-.ev-poster .crumbs, .ev-poster .crumbs a { color: inherit; opacity: .8; }
+.ev-poster .crumbs, .ev-poster .crumbs a { color: inherit; }
 .ev-poster-img { display: none; }
 
 @media (width >= 62rem) {
