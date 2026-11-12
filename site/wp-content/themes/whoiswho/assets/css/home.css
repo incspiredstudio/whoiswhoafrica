@@ -146,7 +146,7 @@ html.home-live .h-act.in .h-act-foot, html.home-live .h-act.in .h-act-n { opacit
   .h-door { flex: 1 1 0; min-height: 0; padding: var(--s-5); transition: flex-grow 800ms var(--ease-out); }
   .h-door:hover, .h-door:focus-visible { flex-grow: 1.7; }
   .h-door-mark { width: min(70%, 20rem); top: 42%; }
-  .h-door strong { font-size: var(--t-2xl); }
+  .h-door strong { font-size: clamp(1.5rem, 1rem + 1.5vw, 2.25rem); }
   .h-door-text > span { display: block; max-width: 18rem; }
 }
 
