@@ -29,5 +29,6 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		ClaimIntake::register();
 		ClaimCard::hooks();
+		Admin\ClaimsScreen::hooks();
 	}
 }
