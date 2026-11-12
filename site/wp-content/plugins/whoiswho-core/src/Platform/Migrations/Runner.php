@@ -181,7 +181,7 @@ final class Runner {
 			}
 		} finally {
 			delete_option( self::OPTION_LOCK );
-		}
+		}//end try
 
 		return array(
 			'applied' => $applied,
