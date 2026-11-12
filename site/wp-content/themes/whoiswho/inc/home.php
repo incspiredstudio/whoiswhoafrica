@@ -141,6 +141,24 @@ if ( ! function_exists( 'wiw_home_doors' ) ) {
 	}
 }//end if
 
+if ( ! function_exists( 'wiw_home_record' ) ) {
+	/**
+	 * The profiles of the On the record block, picked by the curation engine (REQ-257) and re-read through PublicProfile, so only
+	 * public, reviewed profiles come back. Empty when the plugin is not active.
+	 *
+	 * @return array<int, \WhoIsWho\Core\Directory\PublicProfile>
+	 */
+	function wiw_home_record(): array {
+		if ( ! class_exists( '\WhoIsWho\Core\Content\Curation\ProfileCuration' ) ) {
+			return array();
+		}
+		$curation = new \WhoIsWho\Core\Content\Curation\ProfileCuration(
+			new \WhoIsWho\Core\Content\Curation\CurationSettings( \WhoIsWho\Core\Platform\Audit\AuditLogger::for_site() )
+		);
+		return $curation->items( \WhoIsWho\Core\Content\Curation\CurationSettings::ON_THE_RECORD );
+	}
+}
+
 if ( ! function_exists( 'wiw_home_model' ) ) {
 	/**
 	 * Everything the front page needs that is not a profile, story or event.
@@ -176,6 +194,7 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 			'videos'     => wiw_home_hero_videos(),
 			'acts'       => wiw_home_acts( $tagline ),
 			'doors'      => wiw_home_doors(),
+			'record'     => wiw_home_record(),
 		);
 		/**
 		 * Filters the home model (the plugin's HomeData view model plugs in here).

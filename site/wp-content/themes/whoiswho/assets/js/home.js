@@ -53,3 +53,29 @@ function init() {
 }
 
 init();
+
+/* On the record: a preview card follows the pointer over the name index (desktop with a mouse only). */
+function initPeek() {
+  const peek = document.getElementById("home-peek");
+  const list = document.getElementById("home-index");
+  if (!peek || !list || !window.matchMedia("(width >= 64rem) and (pointer: fine)").matches) return;
+  let on = null;
+  const place = (e) => { peek.style.transform = `translate3d(${e.clientX + 56}px, ${e.clientY - 170}px, 0)`; };
+  const show = (a) => {
+    on = a;
+    const photo = a.getAttribute("data-peek-photo");
+    peek.className = "h-peek is-on h-peek--" + (a.getAttribute("data-peek-tone") || "orange") + (photo ? " h-peek--photo" : "");
+    peek.textContent = "";
+    if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; peek.appendChild(img); }
+    const name = document.createElement("span");
+    name.textContent = a.getAttribute("data-peek-name") || "";
+    peek.appendChild(name);
+  };
+  list.addEventListener("pointermove", (e) => {
+    const a = e.target instanceof Element ? e.target.closest("[data-peek-name]") : null;
+    if (a) { if (a !== on) show(a); place(e); }
+  });
+  list.addEventListener("pointerleave", () => { on = null; peek.classList.remove("is-on"); });
+}
+
+initPeek();
