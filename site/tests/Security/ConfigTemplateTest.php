@@ -24,6 +24,11 @@ final class ConfigTemplateTest extends TestCase {
 		$this->assertStringContainsString( 'SIGNED_LINK_KEY=', $this->read( '.env.example' ) );
 	}
 
+	public function test_REQ_046_turnstile_secret_is_read_from_the_secrets_file(): void {
+		$this->assertStringContainsString( "define( 'WIW_TURNSTILE_SECRET', wiw_secret( 'TURNSTILE_SECRET_KEY' ) );", $this->read( 'wp-config.php' ) );
+		$this->assertStringContainsString( 'TURNSTILE_SECRET_KEY=', $this->read( '.env.example' ) );
+	}
+
 	public function test_REQ_046_template_has_no_literal_secret(): void {
 		$this->assertDoesNotMatchRegularExpression( '/define\(\s*\'(DB_PASSWORD|AUTH_KEY|NONCE_SALT)\'\s*,\s*\'[^\']+\'/', $this->read( 'wp-config.php' ) );
 	}
