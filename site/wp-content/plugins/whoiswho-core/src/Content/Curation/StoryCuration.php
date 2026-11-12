@@ -65,21 +65,21 @@ final class StoryCuration {
 				'slot'  => null,
 			);
 		}
-		$setting = $this->settings->get( $block );
-		$count   = max( 1, $setting['count'] );
-		$public  = PublicStory::public_ids();
-		$sticky  = $setting['featured_first'] ? array_map( 'intval', (array) get_option( 'sticky_posts', array() ) ) : array();
+		$setting  = $this->settings->get( $block );
+		$count    = max( 1, $setting['count'] );
+		$live_ids = PublicStory::public_ids();
+		$sticky   = $setting['featured_first'] ? array_map( 'intval', (array) get_option( 'sticky_posts', array() ) ) : array();
 		switch ( $setting['mode'] ) {
 			case 'manual':
 				$ids = $this->pinned( $setting['pinned'], PHP_INT_MAX );
 				break;
 			case 'pinned_then_fill':
 				$pins = $this->pinned( $setting['pinned'], $count );
-				$fill = array_values( array_diff( $this->ordered( $public, $setting['fill'], $block, $sticky ), $pins ) );
+				$fill = array_values( array_diff( $this->ordered( $live_ids, $setting['fill'], $block, $sticky ), $pins ) );
 				$ids  = array_merge( $pins, array_slice( $fill, 0, $count - count( $pins ) ) );
 				break;
 			default:
-				$ids = array_slice( $this->ordered( $public, $setting['mode'], $block, $sticky ), 0, $count );
+				$ids = array_slice( $this->ordered( $live_ids, $setting['mode'], $block, $sticky ), 0, $count );
 		}
 		$items = array();
 		foreach ( $ids as $id ) {
@@ -119,14 +119,14 @@ final class StoryCuration {
 	 * Order the public ids: latest (as given) or a daily shuffle, with Featured stories first when asked. Nothing here reads a
 	 * placement or a payment.
 	 *
-	 * @param array<int, int> $public Public ids, newest first.
+	 * @param array<int, int> $live_ids Public ids, newest first.
 	 * @param string          $order  latest or random.
 	 * @param string          $block  Block, part of the shuffle seed.
 	 * @param array<int, int> $sticky Featured ids to put first (empty when the block does not ask for it).
 	 * @return array<int, int>
 	 */
-	private function ordered( array $public, string $order, string $block, array $sticky ): array {
-		$ids = $public;
+	private function ordered( array $live_ids, string $order, string $block, array $sticky ): array {
+		$ids = $live_ids;
 		if ( 'random' === $order ) {
 			$seed = $block . '|' . (string) ( $this->today )();
 			usort(
