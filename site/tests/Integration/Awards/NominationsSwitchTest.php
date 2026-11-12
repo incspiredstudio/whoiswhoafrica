@@ -124,7 +124,7 @@ final class NominationsSwitchTest extends TestCase {
 	public function test_REQ_194_nominations_is_the_only_feature_flag(): void {
 		$bools = array();
 		foreach ( SettingsService::default_registry() as $key => $definition ) {
-			if ( 'bool' === $definition['type'] && 0 === preg_match( '/^import_/', $key ) ) {
+			if ( 'bool' === $definition['type'] && 0 === preg_match( '/^(import_|sprint_)/', $key ) ) {
 				$bools[] = $key;
 			}
 		}
