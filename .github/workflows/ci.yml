@@ -214,6 +214,14 @@ jobs:
         run: |
           node --test scripts/__tests__/check-brand-values.test.js
           node scripts/check-brand-values.js
+      - name: Traceability report (non-blocking until M5; docs/traceability.md is not rewritten here)
+        continue-on-error: true
+        run: |
+          node --test scripts/__tests__/traceability.test.js
+          node scripts/traceability.js --out "$RUNNER_TEMP/traceability.md" --strict
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: traceability, path: "${{ runner.temp }}/traceability.md", if-no-files-found: ignore }
 
   secrets:
     name: secrets
