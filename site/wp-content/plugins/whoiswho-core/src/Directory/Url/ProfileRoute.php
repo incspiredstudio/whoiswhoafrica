@@ -151,6 +151,27 @@ final class ProfileRoute {
 	}
 
 	/**
+	 * The profile a staff member may preview at this address, or null. Only a user who can read profiles that are not public
+	 * (a Reviewer, an Editor, an Administrator) gets one; a visitor never does, so the public answer is unchanged.
+	 *
+	 * @param string $slug Slug from the address.
+	 */
+	public function staff_preview_id( string $slug ): ?int {
+		if ( ! current_user_can( 'read_private_wiw_profiles' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return null;
+		}
+		$slug = sanitize_title( $slug );
+		$id   = $this->slugs->find_current( $slug );
+		if ( null === $id ) {
+			$id = $this->slugs->find_by_old_slug( $slug );
+		}
+		if ( null === $id || null === ( new StateRepository() )->pub_state( $id ) ) {
+			return null;
+		}
+		return $id;
+	}
+
+	/**
 	 * Build a result.
 	 *
 	 * @param string           $action   Action.
@@ -180,6 +201,20 @@ final class ProfileRoute {
 			return;
 		}
 		$result = $this->resolve( $slug );
+		if ( in_array( $result['action'], array( 'gone', 'notfound' ), true ) ) {
+			$preview = $this->staff_preview_id( $slug );
+			if ( null !== $preview ) {
+				// A staff member can open a profile that is not public: served as a preview, never indexed or cached.
+				$wp_query->set( self::ID_VAR, $preview );
+				$wp_query->is_404 = false;
+				status_header( 200 );
+				nocache_headers();
+				if ( ! headers_sent() ) {
+					header( 'X-Robots-Tag: noindex', true );
+				}
+				return;
+			}
+		}
 		switch ( $result['action'] ) {
 			case 'redirect':
 				wp_safe_redirect( (string) $result['location'], 301 );
@@ -189,7 +224,7 @@ final class ProfileRoute {
 				$wp_query->is_404 = false;
 				status_header( 200 );
 				nocache_headers();
-				foreach ( self::headers_for( $result ) as $name => $value ) {
+				foreach ( headers_sent() ? array() : self::headers_for( $result ) as $name => $value ) {
 					header( $name . ': ' . $value, true );
 				}
 				return;
@@ -197,7 +232,7 @@ final class ProfileRoute {
 				$wp_query->set_404();
 				status_header( 410 );
 				nocache_headers();
-				foreach ( self::headers_for( $result ) as $name => $value ) {
+				foreach ( headers_sent() ? array() : self::headers_for( $result ) as $name => $value ) {
 					header( $name . ': ' . $value, true );
 				}
 				return;
