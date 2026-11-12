@@ -28,7 +28,7 @@ final class SubscriberPrivacy {
 	public function register(): void {
 		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'add_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'add_eraser' ) );
-		add_action( 'wiw_retention_run', array( $this, 'purge_unsubscribed' ) );
+		add_action( 'wiw_retention_run', array( $this, 'run_retention' ) );
 	}
 
 	/**
@@ -149,6 +149,13 @@ final class SubscriberPrivacy {
 			'messages'       => array(),
 			'done'           => true,
 		);
+	}
+
+	/**
+	 * Retention hook: purge, discarding the count (action callbacks return nothing).
+	 */
+	public function run_retention(): void {
+		$this->purge_unsubscribed();
 	}
 
 	/**
