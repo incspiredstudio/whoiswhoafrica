@@ -55,6 +55,8 @@ final class Module implements ModuleInterface {
 			}
 		);
 		Mail\Admin\EmailLogScreen::hooks();
+		require_once __DIR__ . '/Settings/functions.php';
+		Settings\SprintScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
 	}
 }
