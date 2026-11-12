@@ -5,7 +5,10 @@ test.describe("home header has no flash (REQ-046)", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
   test("the header is transparent over the hero from the first paint", async ({ page }) => {
+    // A hovered header is solid by design, so keep the pointer well below it (a headless browser may start with it at 0,0).
+    await page.mouse.move(600, 600);
     await page.goto("/");
+    await page.mouse.move(620, 620);
     const bg = await page.locator(".site-head").evaluate((e) => getComputedStyle(e).backgroundColor);
     expect(bg).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
   });
