@@ -14,6 +14,10 @@ export function initFilterBars() {
     form.addEventListener("change", (event) => {
       if (event.target instanceof HTMLSelectElement) go(form);
     });
+    /* The clear cross of a search field fires "search" with an empty value: apply that too. */
+    form.addEventListener("search", (event) => {
+      if (event.target instanceof HTMLInputElement && event.target.value === "") go(form);
+    });
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       go(form);
