@@ -28,7 +28,9 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		Support\EnquiryIntake::register();
+		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
+		Admin\Suppression\SuppressionScreen::hooks();
 		Forms\FormRoutes::register_for_site();
 		( new Legal\LegalPages() )->register();
 	}
