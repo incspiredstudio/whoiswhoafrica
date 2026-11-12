@@ -36,6 +36,7 @@ final class SearchIndexer {
 		url varchar(2083) NOT NULL DEFAULT \'\',
 		pending tinyint(1) unsigned NOT NULL DEFAULT 0,
 		name_sort varchar(255) NOT NULL DEFAULT \'\',
+		sponsored tinyint(1) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (item_type,item_id),
 		KEY name_sort (name_sort(100)),
 		KEY pending (pending),
