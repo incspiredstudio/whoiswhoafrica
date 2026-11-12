@@ -13,6 +13,7 @@ namespace WhoIsWho\Tests\Visibility;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Platform\Capabilities\CapabilityCatalogue;
 use WhoIsWho\Core\Platform\Capabilities\RoleSync;
+use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Guard\Exposure\Exposure;
 use WhoIsWho\Tests\WpTestCase;
 
@@ -20,6 +21,8 @@ final class ProfileExposureTest extends WpTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
+		// The profile state tables must exist before a profile is created.
+		( new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		remove_role( 'wiw_reviewer' );
 		remove_role( 'wiw_editor' );
 		delete_option( RoleSync::OPTION_SYNCED );
