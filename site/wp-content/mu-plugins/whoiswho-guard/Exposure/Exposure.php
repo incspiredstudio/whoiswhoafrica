@@ -33,6 +33,93 @@ final class Exposure {
 
 		add_filter( 'login_errors', array( self::class, 'generic_login_error' ) );
 		add_action( 'pre_get_posts', array( self::class, 'exclude_guarded_from_search' ) );
+
+		// Guarded types (the profile type) have no door of their own: no REST, archive, feed, shortlink, embed or sitemap entry.
+		add_filter( 'register_post_type_args', array( self::class, 'lock_guarded_type' ), 99, 2 );
+		add_filter( 'pre_get_shortlink', array( self::class, 'no_shortlink_for_guarded' ), 10, 2 );
+		add_filter( 'oembed_request_post_id', array( self::class, 'no_oembed_for_guarded' ), 99 );
+		add_filter( 'wp_sitemaps_post_types', array( self::class, 'drop_guarded_from_sitemaps' ) );
+		add_filter( 'the_posts', array( self::class, 'strip_guarded_from_public_queries' ), 99, 2 );
+	}
+
+	/**
+	 * Force the closed settings on a guarded post type, whatever registered it.
+	 *
+	 * @param array<string, mixed> $args      Arguments.
+	 * @param string               $post_type Post type.
+	 * @return array<string, mixed>
+	 */
+	public static function lock_guarded_type( array $args, string $post_type ): array {
+		if ( ! in_array( $post_type, \WhoIsWho\Guard\Guard::guarded_post_types(), true ) ) {
+			return $args;
+		}
+		$args['show_in_rest']        = false;
+		$args['has_archive']         = false;
+		$args['publicly_queryable']  = false;
+		$args['exclude_from_search'] = true;
+		return $args;
+	}
+
+	/**
+	 * No shortlink for a guarded post.
+	 *
+	 * @param mixed $shortlink Current value (false to use the default).
+	 * @param int   $post_id   Post id.
+	 * @return mixed
+	 */
+	public static function no_shortlink_for_guarded( $shortlink, $post_id ) {
+		return self::is_guarded( (int) $post_id ) ? '' : $shortlink;
+	}
+
+	/**
+	 * No oEmbed answer for a guarded post.
+	 *
+	 * @param int $post_id Post id found for the URL.
+	 */
+	public static function no_oembed_for_guarded( $post_id ): int {
+		return self::is_guarded( (int) $post_id ) ? 0 : (int) $post_id;
+	}
+
+	/**
+	 * Guarded types never enter core sitemaps (they are also off).
+	 *
+	 * @param array<string, mixed> $types Post types.
+	 * @return array<string, mixed>
+	 */
+	public static function drop_guarded_from_sitemaps( array $types ): array {
+		foreach ( \WhoIsWho\Guard\Guard::guarded_post_types() as $type ) {
+			unset( $types[ $type ] );
+		}
+		return $types;
+	}
+
+	/**
+	 * Last line of defence: a public (front-end) query never hands a guarded post to a template, a feed or a third-party plugin.
+	 * Profiles reach pages only through the plugin's read model.
+	 *
+	 * @param array<int, \WP_Post> $posts Posts.
+	 * @param \WP_Query            $query Query.
+	 * @return array<int, \WP_Post>
+	 */
+	public static function strip_guarded_from_public_queries( array $posts, \WP_Query $query ): array {
+		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) || $query->get( 'wiw_allow_guarded' ) ) {
+			return $posts;
+		}
+		$guarded = \WhoIsWho\Guard\Guard::guarded_post_types();
+		if ( array() === $guarded ) {
+			return $posts;
+		}
+		return array_values( array_filter( $posts, static fn ( \WP_Post $post ): bool => ! in_array( $post->post_type, $guarded, true ) ) );
+	}
+
+	/**
+	 * Whether a post id belongs to a guarded type.
+	 *
+	 * @param int $post_id Post id.
+	 */
+	private static function is_guarded( int $post_id ): bool {
+		$type = $post_id > 0 ? get_post_type( $post_id ) : false;
+		return false !== $type && in_array( $type, \WhoIsWho\Guard\Guard::guarded_post_types(), true );
 	}
 
 	/**
