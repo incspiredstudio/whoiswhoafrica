@@ -183,6 +183,18 @@ final class SubscriberRepository {
 	}
 
 	/**
+	 * The address of one sign-up row, for the job that emails it (the address is never kept in the job).
+	 *
+	 * @param int $id Row id.
+	 * @return string Address, or an empty string when the row is gone.
+	 */
+	public function email_for_id( int $id ): string {
+		global $wpdb;
+		$email = $wpdb->get_var( $wpdb->prepare( 'SELECT email FROM ' . self::table() . ' WHERE id = %d AND purpose = %s', $id, self::PURPOSE ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return is_string( $email ) ? $email : '';
+	}
+
+	/**
 	 * Subscribers, newest first.
 	 *
 	 * @param string $state confirmed (active), pending or unsubscribed.
