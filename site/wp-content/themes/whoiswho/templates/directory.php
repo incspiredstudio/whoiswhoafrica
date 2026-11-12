@@ -29,7 +29,7 @@ $wiw_result = class_exists( ProfileList::class ) ? ( new ProfileList() )->query(
 	'per_page' => 16,
 	'applied'  => array(),
 );
-$wiw_on     = array() !== $wiw_result['applied'];
+$wiw_on     = array() !== $wiw_result['applied'] || '' !== $wiw_params['q'];
 $wiw_base   = wiw_directory_url( $wiw_key );
 $wiw_total  = (int) $wiw_result['total'];
 $wiw_labels = wiw_directory_filter_labels();
@@ -81,6 +81,12 @@ wiw_page_band(
 			array(
 				'action'   => $wiw_base,
 				'label'    => __( 'Filter profiles', 'whoiswho' ),
+				'search'   => array(
+					'name'        => 'q',
+					'value'       => (string) $wiw_params['q'],
+					'label'       => __( 'Narrow this list', 'whoiswho' ),
+					'placeholder' => __( 'Narrow this list by name', 'whoiswho' ),
+				),
 				'controls' => $wiw_controls,
 				'sort'     => array(
 					'name'    => 'sort',
