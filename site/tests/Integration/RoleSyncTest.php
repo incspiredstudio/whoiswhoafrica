@@ -88,8 +88,8 @@ final class RoleSyncTest extends TestCase {
 		$editor->remove_cap( 'wiw_curate_home' );
 
 		// A new capability reaches the roles on the next sync (simulated with a catalogue that has one more).
-		$config            = require dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/config/capabilities.php';
-		$config['version'] = 2;
+		$config             = require dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/config/capabilities.php';
+		$config['version'] += 1;
 		$config['capabilities']['wiw_future_capability'] = array(
 			'source' => 'plugin',
 			'roles'  => array( 'editor', 'administrator' ),

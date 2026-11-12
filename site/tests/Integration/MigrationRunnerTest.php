@@ -28,6 +28,7 @@ final class MigrationRunnerTest extends TestCase {
 		$this->dir = sys_get_temp_dir() . '/wiw-migrations-' . uniqid();
 		mkdir( $this->dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		delete_option( Runner::OPTION_VERSION );
+		delete_option( Runner::OPTION_APPLIED );
 		delete_option( Runner::OPTION_LOCK );
 		delete_option( 'wiw_test_trace' );
 	}
@@ -134,6 +135,35 @@ PHP;
 		} finally {
 			$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB
 		}
+	}
+
+	public function test_REQ_056_a_migration_added_later_with_a_lower_number_still_runs(): void {
+		$this->write_migration( '2026111142' );
+		$runner = new Runner( $this->dir, false, false );
+		$this->assertSame( array( '2026111142' ), $runner->run()['applied'] );
+
+		// Another lane adds a migration numbered below the one already applied.
+		$this->write_migration( '2026111117' );
+		$this->assertCount( 1, $runner->pending(), 'the lower-numbered migration is pending' );
+		$result = $runner->run();
+		$this->assertSame( array( '2026111117' ), $result['applied'] );
+		$this->assertNull( $result['error'] );
+		$this->assertSame( '2026111142', $runner->current_version(), 'the recorded version stays the highest applied' );
+		$this->assertSame( array(), $runner->run()['applied'], 'and nothing runs twice' );
+	}
+
+	public function test_REQ_056_an_install_from_before_the_applied_list_is_not_run_again(): void {
+		$this->write_migration( '2026111101' );
+		$this->write_migration( '2026111102' );
+		$this->write_migration( '2026111103' );
+		// The old runner recorded only a version, no list.
+		update_option( Runner::OPTION_VERSION, '2026111102', false );
+		delete_option( Runner::OPTION_APPLIED );
+
+		$runner = new Runner( $this->dir, false, false );
+		$this->assertSame( array( '2026111103' ), array_map( static fn ( $m ): string => $m->version(), $runner->pending() ) );
+		$this->assertSame( array( '2026111103' ), $runner->run()['applied'] );
+		$this->assertSame( array( '2026111101', '2026111102', '2026111103' ), $runner->applied() );
 	}
 
 	public function test_REQ_056_contract_migrations_are_listed_and_there_is_no_down(): void {

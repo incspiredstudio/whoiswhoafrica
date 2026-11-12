@@ -145,21 +145,72 @@ final class Notifier {
 	}
 
 	/**
+	 * Queue a public event email without keeping the address in the job: only the record's source and id are stored, and the
+	 * address is looked up when the job runs (issue 429). A resolver for the source is registered through the
+	 * wiw_mail_recipient_resolvers filter as source => callable( int $id ): string.
+	 *
+	 * @param string               $event   Event id from Events (public audience only).
+	 * @param string               $source  Record source, for example support_item.
+	 * @param int                  $id      Record id.
+	 * @param array<string, mixed> $context Ids, reference, reason, link_token.
+	 * @return int Number of messages queued.
+	 * @throws \InvalidArgumentException For an unknown or non-public event.
+	 */
+	public function send_to_record( string $event, string $source, int $id, array $context = array() ): int {
+		$events = Events::all();
+		if ( ! isset( $events[ $event ] ) || 'public' !== $events[ $event ]['audience'] ) {
+			throw new \InvalidArgumentException( 'Not a public email event.' );
+		}
+		$this->jobs->enqueue(
+			self::JOB,
+			array(
+				'event'   => $event,
+				'record'  => array(
+					'source' => $source,
+					'id'     => $id,
+				),
+				'context' => $context,
+			),
+			true
+		);
+		return 1;
+	}
+
+	/**
 	 * Deliver one queued message. Logs the attempt; throws on failure so the runner retries.
 	 *
 	 * @param array<string, mixed> $args Job arguments.
 	 * @throws \RuntimeException When the mailer reports failure.
 	 */
 	public function deliver( array $args ): void {
-		$event   = (string) ( $args['event'] ?? '' );
-		$to      = (string) ( $args['to'] ?? '' );
-		$ref     = (string) ( $args['_ref'] ?? '' );
+		$event = (string) ( $args['event'] ?? '' );
+		$to    = isset( $args['record'] ) && is_array( $args['record'] ) ? $this->resolve_record( $args['record'] ) : (string) ( $args['to'] ?? '' );
+		$ref   = (string) ( $args['_ref'] ?? '' );
+		if ( ! self::valid_address( $to ) ) {
+			// The record is gone, erased or has no usable address: nothing to send, and nothing to retry.
+			$this->log->add( $ref, $event, '', 'sent', 'skipped' );
+			return;
+		}
 		$message = $this->render( $event, (array) ( $args['context'] ?? array() ) );
 		$ok      = (bool) ( $this->mailer )( $to, $message['subject'], $message['text'], $message['html'] );
 		$this->log->add( $ref, $event, $this->recipient_ref( $to ), 'sent', $ok ? 'sent' : 'failed' );
 		if ( ! $ok ) {
 			throw new \RuntimeException( 'Send failed.' );
 		}
+	}
+
+	/**
+	 * Look up a record's address when the job runs.
+	 *
+	 * @param array<string, mixed> $record Source and id.
+	 */
+	private function resolve_record( array $record ): string {
+		$resolvers = function_exists( 'apply_filters' ) ? apply_filters( 'wiw_mail_recipient_resolvers', array() ) : array();
+		$source    = (string) ( $record['source'] ?? '' );
+		if ( ! is_array( $resolvers ) || ! isset( $resolvers[ $source ] ) || ! is_callable( $resolvers[ $source ] ) ) {
+			return '';
+		}
+		return (string) call_user_func( $resolvers[ $source ], (int) ( $record['id'] ?? 0 ) );
 	}
 
 	/**
