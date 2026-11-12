@@ -44,7 +44,7 @@ if ( ! function_exists( 'wiw_theme_settings_html' ) ) {
 		if ( ! $can_edit ) {
 			return $out . '<p>' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p></div>';
 		}
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out .= '<form method="post" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( WIW_THEME_SETTINGS_ACTION ) . '" />';
 		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
 		$out .= '<input type="hidden" name="sprint_tracking" value="' . ( $on ? '0' : '1' ) . '" />';
