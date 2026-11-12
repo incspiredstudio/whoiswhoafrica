@@ -42,6 +42,10 @@ final class Events {
 	public const EXPIRY_REMINDER         = 'expiry_reminder';
 	public const STAFF_ITEM_NEEDS_ATTEND = 'staff_item_needs_attention';
 	public const NEWSLETTER_ISSUE        = 'newsletter_issue';
+	public const DEADLINE_DISPUTES       = 'deadline_disputes';
+	public const DEADLINE_REQUESTS       = 'deadline_requests';
+	public const DEADLINE_ENQUIRIES      = 'deadline_enquiries';
+	public const DISPUTE_ESCALATED       = 'dispute_escalated';
 
 	/**
 	 * Audience and placeholder subject by event.
@@ -153,6 +157,22 @@ final class Events {
 			self::NEWSLETTER_ISSUE        => array(
 				'audience' => 'public',
 				'subject'  => 'Our latest news',
+			),
+			self::DEADLINE_DISPUTES       => array(
+				'audience' => 'capability:wiw_handle_disputes',
+				'subject'  => 'A correction is nearly or past due',
+			),
+			self::DEADLINE_REQUESTS       => array(
+				'audience' => 'capability:wiw_handle_requests',
+				'subject'  => 'A removal or report is nearly or past due',
+			),
+			self::DEADLINE_ENQUIRIES      => array(
+				'audience' => 'capability:wiw_support_inbox',
+				'subject'  => 'An enquiry is waiting for a reply',
+			),
+			self::DISPUTE_ESCALATED       => array(
+				'audience' => 'administrators',
+				'subject'  => 'An unresolved dispute needs the Administrator',
 			),
 		);
 	}

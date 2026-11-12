@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		Support\EnquiryIntake::register();
+		Deadlines\DeadlineTracker::register();
 		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
 		Admin\Suppression\SuppressionScreen::hooks();
