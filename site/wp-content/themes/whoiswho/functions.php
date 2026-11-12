@@ -13,6 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'WIW_THEME_VERSION', '0.1.0' );
 
-foreach ( array( 'setup', 'cleanup', 'parent-notice', 'assets', 'enqueue', 'images', 'layout', 'system-pages', 'legal', 'components', 'navigation', 'email', 'events', 'patterns', 'consent', 'link-page', 'profile', 'directory', 'settings' ) as $wiw_inc ) {
+foreach ( array( 'setup', 'cleanup', 'parent-notice', 'assets', 'enqueue', 'images', 'layout', 'system-pages', 'legal', 'components', 'navigation', 'email', 'events', 'patterns', 'consent', 'link-page', 'profile', 'industries', 'directory', 'settings' ) as $wiw_inc ) {
 	require_once get_template_directory() . '/inc/' . $wiw_inc . '.php';
 }
