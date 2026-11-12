@@ -21,10 +21,11 @@ final class SettingsService {
 
 	public const OPTION_PREFIX = 'wiw_setting_';
 
-	public const NOMINATIONS_ENABLED = 'nominations_enabled';
-	public const NOMINATIONS_REASON  = 'nominations_reason';
-	public const POLICY_VERSION      = 'policy_version';
-	public const SPRINT_TRACKING     = 'sprint_tracking';
+	public const NOMINATIONS_ENABLED  = 'nominations_enabled';
+	public const NOMINATIONS_REASON   = 'nominations_reason';
+	public const POLICY_VERSION       = 'policy_version';
+	public const SPRINT_TRACKING      = 'sprint_tracking';
+	public const PENDING_REVIEW_LABEL = 'pending_review_label';
 
 	/**
 	 * Key names that look like brand values are never accepted as settings.
@@ -81,45 +82,52 @@ final class SettingsService {
 	 */
 	public static function default_registry(): array {
 		return array(
-			self::NOMINATIONS_ENABLED => array(
+			self::NOMINATIONS_ENABLED  => array(
 				'type'       => 'bool',
 				'default'    => false,
 				'capability' => 'wiw_toggle_nominations',
 				'audited'    => true,
 			),
-			self::NOMINATIONS_REASON  => array(
+			self::NOMINATIONS_REASON   => array(
 				'type'       => 'string',
 				'default'    => '',
 				'capability' => 'wiw_toggle_nominations',
 				'audited'    => true,
 				'max'        => 300,
 			),
-			self::POLICY_VERSION      => array(
+			self::POLICY_VERSION       => array(
 				'type'       => 'string',
 				'default'    => '1',
 				'capability' => 'manage_options',
 				'audited'    => true,
 				'max'        => 40,
 			),
-			self::SPRINT_TRACKING     => array(
+			self::PENDING_REVIEW_LABEL => array(
+				'type'       => 'string',
+				'default'    => 'Compiled automatically from public sources. Human review pending.',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'max'        => 300,
+			),
+			self::SPRINT_TRACKING      => array(
 				'type'       => 'bool',
 				'default'    => true,
 				'capability' => 'manage_options',
 				'audited'    => true,
 			),
-			'sprint_target_profiles'  => array(
+			'sprint_target_profiles'   => array(
 				'type'       => 'int',
 				'default'    => 0,
 				'capability' => 'manage_options',
 				'audited'    => true,
 			),
-			'sprint_target_verified'  => array(
+			'sprint_target_verified'   => array(
 				'type'       => 'int',
 				'default'    => 0,
 				'capability' => 'manage_options',
 				'audited'    => true,
 			),
-			'import_all_not_public'   => array(
+			'import_all_not_public'    => array(
 				'type'       => 'bool',
 				'default'    => true,
 				'capability' => 'wiw_run_imports',

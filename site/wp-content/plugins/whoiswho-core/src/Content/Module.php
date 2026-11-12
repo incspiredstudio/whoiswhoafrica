@@ -30,8 +30,10 @@ final class Module implements ModuleInterface {
 		Stories\StoryFields::hooks();
 		Stories\StoryFlags::hooks();
 		Stories\StoryRoute::hooks();
+		( new Pages\PageRoutes() )->register();
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		Newsletter\NewsletterSignup::register();
 	}
 }

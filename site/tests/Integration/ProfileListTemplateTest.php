@@ -33,7 +33,7 @@ final class ProfileListTemplateTest extends TestCase {
 		( new Runner( dirname( __DIR__ ) . '/../wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		wp_set_current_user( 0 );
 		switch_theme( 'whoiswho-child' );
-		foreach ( array( 'wiw_list', 'paged', 'industry', 'sort' ) as $var ) {
+		foreach ( array( 'wiw_list', 'paged', 'industry', 'sort', 'q' ) as $var ) {
 			set_query_var( $var, '' );
 		}
 	}
@@ -46,7 +46,7 @@ final class ProfileListTemplateTest extends TestCase {
 			$wpdb->delete( ProvenanceRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 		$this->posts = array();
-		foreach ( array( 'wiw_list', 'paged', 'industry', 'sort' ) as $var ) {
+		foreach ( array( 'wiw_list', 'paged', 'industry', 'sort', 'q' ) as $var ) {
 			set_query_var( $var, '' );
 		}
 		global $wp_rewrite;
@@ -163,5 +163,30 @@ final class ProfileListTemplateTest extends TestCase {
 		$orgs = $this->render( 'businesses' );
 		$this->assertStringContainsString( 'name="org_type"', $orgs );
 		$this->assertStringNotContainsString( 'name="profession"', $orgs );
+	}
+
+	public function test_REQ_254_every_list_has_its_own_narrowing_box_first_in_the_filter_bar(): void {
+		foreach ( array( 'all', 'people', 'entrepreneurs', 'businesses', 'institutions' ) as $list ) {
+			$out = $this->render( $list );
+			$bar = substr( $out, (int) strpos( $out, '<form class="fbar"' ) );
+			$this->assertStringContainsString( 'name="q"', $bar, $list );
+			$this->assertLessThan( (int) strpos( $bar, '<select' ), (int) strpos( $bar, 'name="q"' ), $list . ': search field comes first' );
+			$this->assertStringContainsString( 'Narrow this list', $bar, $list );
+			$this->assertStringContainsString( 'Apply filters', $bar, $list );
+		}
+	}
+
+	public function test_REQ_008_the_narrowing_text_is_kept_in_the_field_and_the_address_and_is_not_the_site_search(): void {
+		set_query_var( 'q', '  Alpha <b>Beta</b> ' );
+		$out = $this->render( 'all' );
+		$this->assertStringContainsString( 'value="Alpha Beta"', $out );
+		$this->assertStringNotContainsString( '<b>Beta', $out );
+		$this->assertStringContainsString( 'fbar-clear', $out, 'Clear shows while a narrowing text is on' );
+		$this->assertStringNotContainsString( 'name="s"', $out, 'the box does not submit to the site search' );
+		$params = array(
+			'q'        => 'alpha',
+			'industry' => 'energy',
+		);
+		$this->assertStringEndsWith( '/directory/?q=alpha&industry=energy', wiw_directory_url( 'all', $params ) );
 	}
 }

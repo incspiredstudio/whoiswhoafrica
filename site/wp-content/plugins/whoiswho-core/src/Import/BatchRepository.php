@@ -84,6 +84,29 @@ final class BatchRepository {
 	}
 
 	/**
+	 * Save progress: the number of record lines handled so far and, optionally, the status.
+	 *
+	 * @param string      $batch_id Batch id.
+	 * @param int         $cursor   Lines handled.
+	 * @param string|null $status   New status, or null to keep it.
+	 * @throws \InvalidArgumentException For an unknown status.
+	 */
+	public function advance( string $batch_id, int $cursor, ?string $status = null ): void {
+		global $wpdb;
+		if ( null !== $status && ! in_array( $status, self::STATUSES, true ) ) {
+			throw new \InvalidArgumentException( 'Unknown batch status.' );
+		}
+		$values = array(
+			'progress_cursor' => max( 0, $cursor ),
+			'updated_at'      => gmdate( 'Y-m-d H:i:s' ),
+		);
+		if ( null !== $status ) {
+			$values['status'] = $status;
+		}
+		$wpdb->update( self::table(), $values, array( 'batch_id' => $batch_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
 	 * Whether a batch id is registered.
 	 *
 	 * @param string $batch_id Batch id.
