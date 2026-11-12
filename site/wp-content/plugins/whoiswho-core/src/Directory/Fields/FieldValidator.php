@@ -80,6 +80,18 @@ final class FieldValidator {
 	}
 
 	/**
+	 * Whether one value fits the rule of a field for an entity type (no provenance check), for a direct staff edit.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $key         Field key.
+	 * @param mixed  $value       Value.
+	 */
+	public function value_acceptable( string $entity_type, string $key, $value ): bool {
+		$rule = $this->allowlist->for_type( $entity_type )[ $key ] ?? null;
+		return null !== $rule && ! $this->allowlist->is_forbidden( $key ) && $this->value_ok( $rule, $value );
+	}
+
+	/**
 	 * The refusal for the provenance of one field, or null when it is fine.
 	 *
 	 * @param string $key        Field key.
