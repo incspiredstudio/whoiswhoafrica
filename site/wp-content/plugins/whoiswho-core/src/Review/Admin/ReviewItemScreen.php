@@ -26,6 +26,7 @@ use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Review\FactGate;
 use WhoIsWho\Core\Review\Metrics\DecisionLog;
 use WhoIsWho\Core\Review\ReviewService;
+use WhoIsWho\Core\Review\Revisions\RevisionService;
 use WhoIsWho\Core\Review\StateException;
 
 /**
@@ -38,6 +39,8 @@ final class ReviewItemScreen {
 	public const APPROVE    = 'wiw_review_item_approve';
 	public const REJECT     = 'wiw_review_item_reject';
 	public const CLEAR      = 'wiw_review_item_clear';
+	public const REV_OK     = 'wiw_review_revision_approve';
+	public const REV_NO     = 'wiw_review_revision_reject';
 
 	/**
 	 * The five-point neutral checklist, all of which must be ticked to approve.
@@ -77,6 +80,8 @@ final class ReviewItemScreen {
 				ActionGuard::register( self::APPROVE, self::CAPABILITY, array( self::class, 'handle_approve' ) );
 				ActionGuard::register( self::REJECT, self::CAPABILITY, array( self::class, 'handle_reject' ) );
 				ActionGuard::register( self::CLEAR, self::CAPABILITY, array( self::class, 'handle_clear' ) );
+				ActionGuard::register( self::REV_OK, self::CAPABILITY, array( self::class, 'handle_revision_approve' ) );
+				ActionGuard::register( self::REV_NO, self::CAPABILITY, array( self::class, 'handle_revision_reject' ) );
 			},
 			1
 		);
@@ -170,6 +175,57 @@ final class ReviewItemScreen {
 	}
 
 	/**
+	 * Approve a pending revision of a claimed profile (the author cannot; the service refuses).
+	 *
+	 * @param Request $request Request.
+	 */
+	public static function handle_revision_approve( Request $request ): void {
+		$id = $request->int( 'profile_id' );
+		try {
+			( new RevisionService() )->approve( $request->int( 'version_id' ), get_current_user_id() );
+			self::back( $id, 'approved' );
+		} catch ( StateException $e ) {
+			self::back( $id, 'refused', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Reject a pending revision with a reason.
+	 *
+	 * @param Request $request Request.
+	 */
+	public static function handle_revision_reject( Request $request ): void {
+		$id = $request->int( 'profile_id' );
+		try {
+			( new RevisionService() )->reject( $request->int( 'version_id' ), $request->string( 'reason' ), get_current_user_id() );
+			self::back( $id, 'rejected' );
+		} catch ( StateException $e ) {
+			self::back( $id, 'refused', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * The pending revisions of a claimed profile, each with approve and reject.
+	 *
+	 * @param int $id Profile.
+	 */
+	private function revisions_html( int $id ): string {
+		$out = '';
+		foreach ( ( new RevisionService() )->pending( $id ) as $row ) {
+			$mine = get_current_user_id() === (int) $row['author_id'];
+			$out .= '<h3>' . esc_html__( 'Pending change from the profile manager', 'whoiswho' ) . '</h3><p>' . esc_html( (string) $row['reason'] ) . '</p>';
+			if ( $mine ) {
+				$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'You made this change, so another reviewer must decide it.', 'whoiswho' ) . '</p></div>';
+				continue;
+			}
+			$vid  = (string) $row['id'];
+			$out .= $this->form( self::REV_OK, $id ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" /><p><button class="button button-primary">' . esc_html__( 'Approve this change', 'whoiswho' ) . '</button></p></form>';
+			$out .= $this->form( self::REV_NO, $id ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" /><p><label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button">' . esc_html__( 'Reject this change', 'whoiswho' ) . '</button></p></form>';
+		}
+		return $out;
+	}
+
+	/**
 	 * Redirect back to the item.
 	 *
 	 * @param int    $profile_id Profile.
@@ -204,6 +260,7 @@ final class ReviewItemScreen {
 		$out .= $this->diff_html( $id );
 		$out .= $this->claims_html( $id );
 		$out .= $this->flags_html( $id );
+		$out .= $this->revisions_html( $id );
 		return $out . $this->decision_html( $id ) . '</div>';
 	}
 

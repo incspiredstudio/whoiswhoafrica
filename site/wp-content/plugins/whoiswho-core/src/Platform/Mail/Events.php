@@ -30,6 +30,7 @@ final class Events {
 	public const CLAIM_ACKNOWLEDGED      = 'claim_acknowledged';
 	public const CLAIM_DECISION          = 'claim_decision';
 	public const CLAIM_REMINDER          = 'claim_reminder';
+	public const REVISION_DECISION       = 'revision_decision';
 	public const NOMINATION_RECEIVED     = 'nomination_received';
 	public const NOMINATION_EMAIL        = 'nomination_email';
 	public const NOMINATION_WINNER       = 'nomination_winner';
@@ -104,6 +105,10 @@ final class Events {
 			self::CLAIM_REMINDER          => array(
 				'audience' => 'capability:wiw_review_claims',
 				'subject'  => 'A claim is waiting for review',
+			),
+			self::REVISION_DECISION       => array(
+				'audience' => 'public',
+				'subject'  => 'Your profile change was reviewed',
 			),
 			self::NOMINATION_RECEIVED     => array(
 				'audience' => 'public',
