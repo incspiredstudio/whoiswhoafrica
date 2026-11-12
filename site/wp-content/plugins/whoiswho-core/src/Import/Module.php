@@ -29,5 +29,14 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		( new Apply\ApplyJob() )->register();
 		Result\ImportResult::hooks();
+		Sources\SourcesScreen::hooks();
+		add_action(
+			'wiw_import_batch_registered',
+			static function ( $batch_id, $sources ): void {
+				( new Sources\SourceRepository() )->record_manifest( (array) $sources, (string) $batch_id );
+			},
+			10,
+			2
+		);
 	}
 }

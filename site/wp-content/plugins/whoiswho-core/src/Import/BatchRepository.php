@@ -80,7 +80,10 @@ final class BatchRepository {
 		if ( false === $ok ) {
 			throw new \RuntimeException( 'That batch id is already registered.' );
 		}
-		return (int) $wpdb->insert_id;
+		$row_id = (int) $wpdb->insert_id;
+		do_action( 'wiw_import_batch_registered', (string) $m['batch_id'], (array) ( $m['sources'] ?? array() ) );
+		// The sources snapshot listens (REQ-136).
+		return $row_id;
 	}
 
 	/**
