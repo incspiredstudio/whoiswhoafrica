@@ -15,6 +15,7 @@ namespace WhoIsWho\Core\Platform\Migrations;
 final class Runner {
 
 	public const OPTION_VERSION = 'wiw_schema_version';
+	public const OPTION_APPLIED = 'wiw_schema_applied';
 	public const OPTION_LOCK    = 'wiw_migration_lock';
 	private const LOCK_TTL      = 600;
 
@@ -95,8 +96,33 @@ final class Runner {
 	 * @return MigrationInterface[]
 	 */
 	public function pending(): array {
-		$current = $this->current_version();
-		return array_values( array_filter( $this->discover(), static fn ( MigrationInterface $m ): bool => strcmp( $m->version(), $current ) > 0 ) );
+		$applied = $this->applied();
+		return array_values( array_filter( $this->discover(), static fn ( MigrationInterface $m ): bool => ! in_array( $m->version(), $applied, true ) ) );
+	}
+
+	/**
+	 * Versions already applied. A migration is run when its version is not in this list, whatever its number: lanes number
+	 * migrations independently, so one may be added with a lower number than ones already applied and must still run.
+	 * An install from before this list existed counts every version up to its recorded one as applied.
+	 *
+	 * @return string[]
+	 */
+	public function applied(): array {
+		$applied = get_option( self::OPTION_APPLIED );
+		if ( is_array( $applied ) ) {
+			return array_map( 'strval', $applied );
+		}
+		$current = (string) get_option( self::OPTION_VERSION, '0' );
+		if ( '0' === $current ) {
+			return array();
+		}
+		$seed = array();
+		foreach ( $this->discover() as $migration ) {
+			if ( strcmp( $migration->version(), $current ) <= 0 ) {
+				$seed[] = $migration->version();
+			}
+		}
+		return $seed;
 	}
 
 	/**
@@ -136,9 +162,9 @@ final class Runner {
 		$applied = array();
 		$error   = null;
 		try {
-			$current = $this->current_version();
+			$done = $this->applied();
 			foreach ( $this->discover() as $migration ) {
-				if ( strcmp( $migration->version(), $current ) <= 0 ) {
+				if ( in_array( $migration->version(), $done, true ) ) {
 					continue;
 				}
 				try {
@@ -148,9 +174,10 @@ final class Runner {
 					$error = sprintf( 'Migration %s failed (%s).', $migration->version(), get_class( $e ) );
 					break;
 				}
-				update_option( self::OPTION_VERSION, $migration->version(), false );
+				$done[] = $migration->version();
+				update_option( self::OPTION_APPLIED, $done, false );
+				update_option( self::OPTION_VERSION, max( $done ), false );
 				$applied[] = $migration->version();
-				$current   = $migration->version();
 			}
 		} finally {
 			delete_option( self::OPTION_LOCK );
