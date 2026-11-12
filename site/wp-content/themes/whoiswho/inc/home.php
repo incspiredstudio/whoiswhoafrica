@@ -62,6 +62,85 @@ if ( ! function_exists( 'wiw_home_hero_videos' ) ) {
 	}
 }//end if
 
+if ( ! function_exists( 'wiw_home_acts' ) ) {
+	/**
+	 * The three acts: the words of the brand tagline, each with a mark, a line and a link (people, awards, stories).
+	 *
+	 * @param string $tagline Brand tagline, for example "Influence. Achievement. Legacy.".
+	 * @return array<int, array{tone: string, mark: string, word: string, text: string, link: string, url: string}>
+	 */
+	function wiw_home_acts( string $tagline ): array {
+		$words = array_values( array_filter( array_map( 'trim', explode( '.', $tagline ) ), static fn ( string $w ): bool => '' !== $w ) );
+		$words = 3 === count( $words ) ? $words : array( 'Influence', 'Achievement', 'Legacy' );
+		return array(
+			array(
+				'tone' => 'blue',
+				'mark' => 'star',
+				'word' => $words[0] . '.',
+				'text' => __( 'The people and organisations making a difference and shaping the world around them.', 'whoiswho' ),
+				'link' => __( 'Discover the people', 'whoiswho' ),
+				'url'  => home_url( '/people/' ),
+			),
+			array(
+				'tone' => 'orange',
+				'mark' => 'comb',
+				'word' => $words[1] . '.',
+				'text' => __( 'The milestones, contributions and innovations that deserve to be on the record.', 'whoiswho' ),
+				'link' => __( 'See how recognition works', 'whoiswho' ),
+				'url'  => home_url( '/awards/' ),
+			),
+			array(
+				'tone' => 'purple',
+				'mark' => 'spiral',
+				'word' => $words[2] . '.',
+				'text' => __( 'The lasting impact people and institutions leave behind, kept accurate over time.', 'whoiswho' ),
+				'link' => __( 'Read the stories', 'whoiswho' ),
+				'url'  => home_url( '/stories/' ),
+			),
+		);
+	}
+}
+
+if ( ! function_exists( 'wiw_home_doors' ) ) {
+	/**
+	 * The four doors to the directory lists.
+	 *
+	 * @return array<int, array{tone: string, mark: string, title: string, text: string, url: string}>
+	 */
+	function wiw_home_doors(): array {
+		return array(
+			array(
+				'tone'  => 'blue',
+				'mark'  => 'star',
+				'title' => __( 'People', 'whoiswho' ),
+				'text'  => __( 'Leaders and professionals on the public record', 'whoiswho' ),
+				'url'   => home_url( '/people/' ),
+			),
+			array(
+				'tone'  => 'orange',
+				'mark'  => 'comb',
+				'title' => __( 'Entrepreneurs', 'whoiswho' ),
+				'text'  => __( 'Founders and the ventures they built', 'whoiswho' ),
+				'url'   => home_url( '/entrepreneurs/' ),
+			),
+			array(
+				'tone'  => 'green',
+				'mark'  => 'link',
+				'title' => __( 'Businesses', 'whoiswho' ),
+				'text'  => __( 'Companies, from startups to listed groups', 'whoiswho' ),
+				'url'   => home_url( '/businesses/' ),
+			),
+			array(
+				'tone'  => 'purple',
+				'mark'  => 'spiral',
+				'title' => __( 'Institutions', 'whoiswho' ),
+				'text'  => __( 'Universities, associations and public bodies', 'whoiswho' ),
+				'url'   => home_url( '/institutions/' ),
+			),
+		);
+	}
+}
+
 if ( ! function_exists( 'wiw_home_model' ) ) {
 	/**
 	 * Everything the front page needs that is not a profile, story or event.
@@ -95,6 +174,8 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 				),
 			),
 			'videos'     => wiw_home_hero_videos(),
+			'acts'       => wiw_home_acts( $tagline ),
+			'doors'      => wiw_home_doors(),
 		);
 		/**
 		 * Filters the home model (the plugin's HomeData view model plugs in here).

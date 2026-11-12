@@ -1,3 +1,5 @@
+/* stylelint-disable no-descending-specificity -- the live-motion rules are written next to their section and read the same elements as the static rules above them */
+
 /* Front page (M2-HOM-08..12). The default rules are the complete static page: scripts off, reduced motion, data saver.
    html.home-live (set by home.js only when motion is allowed) adds the scroll effects. Colours, type and spacing come from the
    child theme's tokens; nothing here names a brand value. Ported from prototype/theme/home.css. */
@@ -96,4 +98,68 @@ html.home-live.home-in .h-hero-foot { opacity: 1; transition: opacity 900ms ease
 @media (prefers-reduced-motion: reduce) {
   .h-vid, .h-vid video { transition: none; }
   .h-cue-line::after { animation: none; inset: 0; height: 100%; }
+}
+
+/* Brand marks: images from the child theme's tokens (--img-mark-*). */
+.h-mark { display: block; background: center / contain no-repeat; }
+.h-mark--star { background-image: var(--img-mark-star); }
+.h-mark--comb { background-image: var(--img-mark-comb); }
+.h-mark--link { background-image: var(--img-mark-link); }
+.h-mark--spiral { background-image: var(--img-mark-spiral); }
+
+/* Three acts: stacked full-height colour scenes (pinned and animated only when motion is allowed). */
+.h-act { position: relative; display: flex; min-height: 90svh; overflow: hidden; }
+.h-act--blue { background: var(--blue); color: var(--c-white); }
+.h-act--orange { background: var(--orange); color: var(--charcoal-900); }
+.h-act--purple { background: var(--purple); color: var(--c-white); }
+.h-act-mark { position: absolute; right: 5vw; top: 8%; width: min(46vw, 62svh); aspect-ratio: 1; }
+.h-act--orange .h-act-mark { filter: brightness(.19); }
+.h-act-in { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s-4); padding-block: calc(var(--head-h) + var(--s-3)) var(--s-7); }
+.h-act-n { position: absolute; top: calc(var(--head-h) + var(--s-3)); margin: 0; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.h-act-word { margin: 0; font: 400 min(calc((100vw - 2 * var(--gutter)) / 6.02), 38svh)/.96 var(--font-display); }
+.h-act-foot { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s-4) var(--s-7); }
+.h-act-foot p { max-width: 25em; margin: 0; font-size: clamp(1.5rem, 1.25rem + .6vw, 1.875rem); line-height: 1.22; }
+.h-act .h-link { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.h-act .h-link:focus-visible { outline-color: currentcolor; }
+html.home-live .h-act { min-height: 100svh; }
+html.home-live .h-act .h-line > span { transform: translateY(105%); }
+html.home-live .h-act.in .h-line > span { transform: none; transition: transform 1100ms var(--ease-out) 60ms; }
+html.home-live .h-act-foot, html.home-live .h-act-n { opacity: 0; transform: translateY(24px); }
+html.home-live .h-act.in .h-act-foot, html.home-live .h-act.in .h-act-n { opacity: 1; transform: none; transition: opacity 700ms 260ms, transform 1000ms var(--ease-out) 260ms; }
+
+/* Four doors: the brand's colour blocks, a 2 by 2 grid on phones and one row that widens under the pointer on desktop. */
+.h-doors { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--c-bg); }
+.h-door { position: relative; display: flex; align-items: flex-end; min-height: 60vw; padding: var(--s-4); overflow: hidden; color: var(--c-white); text-decoration: none; }
+.h-door--blue { background: var(--blue-700); }
+.h-door--orange { background: var(--orange); color: var(--charcoal-900); }
+.h-door--green { background: var(--green); }
+.h-door--purple { background: var(--purple); }
+.h-door-mark { position: absolute; left: 50%; top: 40%; width: 62%; aspect-ratio: 1; transform: translate(-50%, -50%); filter: brightness(0); transition: transform 900ms var(--ease-out); }
+.h-door:hover .h-door-mark { transform: translate(-50%, -50%) rotate(14deg) scale(1.12); }
+.h-door-text { position: relative; display: grid; gap: var(--s-1); }
+.h-door strong { font: 400 var(--t-xl)/1 var(--font-display); }
+.h-door-text > span { display: none; font-size: var(--t-sm); line-height: 1.3; }
+.h-door:focus-visible { outline-offset: -6px; outline-color: currentcolor; }
+
+@media (width >= 64rem) {
+  .h-doors { display: flex; height: 84svh; }
+  .h-door { flex: 1 1 0; min-height: 0; padding: var(--s-5); transition: flex-grow 800ms var(--ease-out); }
+  .h-door:hover, .h-door:focus-visible { flex-grow: 1.7; }
+  .h-door-mark { width: min(70%, 20rem); top: 42%; }
+  .h-door strong { font-size: var(--t-2xl); }
+  .h-door-text > span { display: block; max-width: 18rem; }
+}
+
+/* Closing call. */
+.h-final { position: relative; padding-block: var(--s-8); background: var(--orange); color: var(--charcoal-900); }
+.h-final-title { margin: var(--s-3) 0 0; max-width: 11em; font: 400 clamp(2.5rem, 1.4rem + 4.4vw, 5.5rem)/.96 var(--font-display); text-wrap: balance; }
+.h-final-cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4) var(--s-6); margin-top: var(--s-6); }
+.h-final .btn { border-color: var(--charcoal-900); background: var(--charcoal-900); color: var(--c-on-dark); }
+.h-final .btn:hover { border-color: var(--charcoal-800); background: var(--charcoal-800); }
+.h-final a:focus-visible { outline-color: var(--charcoal-900); }
+
+@media (width >= 56.25rem) {
+  .h-final .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-7); align-items: end; }
+  .h-final .h-kicker { grid-column: 1 / -1; }
+  .h-final .h-final-cta { margin-top: 0; padding-bottom: var(--s-3); }
 }
