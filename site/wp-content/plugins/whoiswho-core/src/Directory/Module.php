@@ -30,6 +30,7 @@ final class Module implements ModuleInterface {
 		( new Url\ProfileRoute() )->register();
 		Admin\ProfilesScreen::hooks();
 		( new Views\ViewCounter() )->register();
+		( new Sitemap\Sitemap() )->register();
 		Purge\PurgeQueue::for_site()->register();
 		add_filter(
 			'wiw_public_profile_choices',
