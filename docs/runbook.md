@@ -57,6 +57,22 @@ Keys to rotate (values live only in the secrets file, mode 600, outside the web 
 
 TODO. Owner: M5. Fallback hosting is described in Deployment.
 
+## Performance budget (REQ-041, REQ-042)
+
+Run on a served site: `BASE_URL=http://127.0.0.1:<port> WIW_THEME_READY=1 WIW_PERF=1 npx playwright test` (in `site/`). It loads each page three times cold-cache in Chromium at 412x823 with 4x CPU slowdown, 1.6 Mbps down, 750 kbps up and 150 ms round trip, and takes the median LCP, CLS, script KB and total KB. The numbers it enforces live in `site/tests/e2e/perf/budgets.json`. CI runs it as a non-blocking step of the e2e job.
+
+Baseline on the local PHP built-in server (Windows, no page cache; time to first byte is about 1.1 s there, so LCP here is a worst case, to be re-measured on the staging host):
+
+| Page | LCP ms | CLS | Script KB | Total KB |
+|---|---|---|---|---|
+| / | 4532 | 0 | 11.3 | 721 |
+| /directory/ | 3332 | 0 | 9.9 | 375 |
+| /stories/ | 3320 | 0 | 9.9 | 371 |
+| /events/ | 3316 | 0 | 9.9 | 371 |
+| /contact/ | 2808 | 0 | 9.9 | 372 |
+
+Proposed ceilings (for the owner to agree; docs/theme/theme-acceptance.md still lists the numeric budget as an open point): LCP 6000 ms enforced now with 2500 ms the REQ-041 target reported as a warning, CLS 0.1, scripts 20 KB, page weight 900 KB. Tighten LCP to 2500 ms once measured on the staging host.
+
 ## Live-host check results
 
 Filled in at M5 from the checks listed in Deployment (Q87 still open).
