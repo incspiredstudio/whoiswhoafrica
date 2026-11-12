@@ -496,6 +496,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 #toast:empty { display: none; }
 .cookie { position: fixed; left: var(--s-3); right: var(--s-3); bottom: var(--s-3); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: .625rem .75rem .625rem var(--s-4); background: var(--charcoal-900); color: var(--c-white); font-size: var(--t-xs); line-height: 1.35; box-shadow: var(--sh-3); opacity: 0; visibility: hidden; transform: translateY(1rem); transition: opacity 400ms ease, transform 500ms var(--ease-out), visibility 0s linear 400ms; }
 .cookie.is-in { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.cookie[hidden] { display: none; }
 .cookie p { margin: 0; }
 .cookie a { color: inherit; text-underline-offset: 2px; }
 .cookie-act { display: flex; flex: none; gap: var(--s-1); }
