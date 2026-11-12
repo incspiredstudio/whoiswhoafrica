@@ -57,6 +57,9 @@ final class ProfileFieldsTest extends TestCase {
 	}
 
 	public function test_REQ_140_forbidden_attributes_have_no_storage(): void {
+		if ( ! array_key_exists( 'wiw_org_type', get_registered_meta_keys( 'post', ProfileType::POST_TYPE ) ) ) {
+			( new ProfileFields() )->register(); // WordPress tests unregister meta keys at the end of a test that extends WpTestCase.
+		}
 		$registered = array_keys( get_registered_meta_keys( 'post', ProfileType::POST_TYPE ) );
 		$allow      = new FieldAllowlist();
 		foreach ( $allow->forbidden() as $key ) {
