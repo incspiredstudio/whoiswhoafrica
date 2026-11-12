@@ -50,6 +50,7 @@ final class FormRoutes {
 		'#^newsletter/?$#'               => 'newsletter',
 		'#^correct/([A-Za-z0-9_-]+)/?$#' => 'correction',
 		'#^remove/([A-Za-z0-9_-]+)/?$#'  => 'removal',
+		'#^report/([A-Za-z0-9_-]+)/?$#'  => 'report',
 	);
 
 	/**
@@ -86,6 +87,7 @@ final class FormRoutes {
 				'contact'         => static fn ( FormInput $input, string $ip ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->contact( $input, $ip ),
 				'profile_enquiry' => static fn ( FormInput $input, string $ip, string $slug ): array => ( new EnquirySubmission( new EnquiryIntake( new SupportItems(), $notifier ), $protect, $consent ) )->profile( $slug, $input, $ip ),
 				'correction'      => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->correction( $slug, $input, $ip ),
+				'report'          => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->report( $slug, $input, $ip ),
 				'removal'         => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->removal( $slug, $input, $ip ),
 				'newsletter'      => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
 			)
@@ -190,7 +192,7 @@ final class FormRoutes {
 	 * @param array{form: string, reference: string} $result Dispatch result.
 	 */
 	public static function done_url( array $result ): string {
-		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal' ), true ) ? $result['form'] : 'enquiry';
+		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal', 'report' ), true ) ? $result['form'] : 'enquiry';
 		$url  = add_query_arg(
 			array(
 				'kind' => $kind,
