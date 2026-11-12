@@ -99,7 +99,7 @@ if ( ! function_exists( 'wiw_home_acts' ) ) {
 			),
 		);
 	}
-}
+}//end if
 
 if ( ! function_exists( 'wiw_home_doors' ) ) {
 	/**
@@ -139,7 +139,7 @@ if ( ! function_exists( 'wiw_home_doors' ) ) {
 			),
 		);
 	}
-}
+}//end if
 
 if ( ! function_exists( 'wiw_home_model' ) ) {
 	/**
