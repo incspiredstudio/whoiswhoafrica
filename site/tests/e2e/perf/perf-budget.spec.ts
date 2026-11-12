@@ -1,15 +1,28 @@
 import { test, expect } from "@playwright/test";
 import { budgets, measureOnce, median, type Sample } from "./measure";
+import { discover, profilePattern, storyPattern } from "./discover";
 
 // REQ-041, REQ-042. Throttled mid-range Android profile on the base templates; numbers come from budgets.json.
 // One command: BASE_URL=http://127.0.0.1:<port> WIW_PERF=1 npx playwright test
-// Pages with real profile, story or directory content are added by M5-PRF-01 (#43) once those templates exist.
-const pages = ["/", "/directory/", "/stories/", "/events/", "/contact/"];
+// Real content pages (a profile, a story) are found on the list pages, or set WIW_PERF_PROFILE_PATH / WIW_PERF_STORY_PATH; WIW_PERF_REQUIRE_CONTENT=1 fails when none exists.
+const pages = ["/", "/directory/", "/stories/", "/events/", "/contact/", "profile", "story"];
 
-for (const path of pages) {
-  test(`REQ-041 REQ-042 ${path} stays within the performance budget`, async ({ browser, browserName }, testInfo) => {
+for (const entry of pages) {
+  test(`REQ-041 REQ-042 ${entry} stays within the performance budget`, async ({ browser, browserName, request }, testInfo) => {
     test.skip(browserName !== "chromium", "needs the DevTools protocol");
-    test.skip(path === "/" && !process.env.WIW_THEME_READY, "theme not active yet");
+    test.skip(entry === "/" && !process.env.WIW_THEME_READY, "theme not active yet");
+    let path = entry;
+    if (entry === "profile" || entry === "story") {
+      const found =
+        entry === "profile"
+          ? await discover(request, process.env.WIW_PERF_PROFILE_PATH, "/directory/", profilePattern)
+          : await discover(request, process.env.WIW_PERF_STORY_PATH, "/stories/", storyPattern);
+      if (!found && process.env.WIW_PERF_REQUIRE_CONTENT) {
+        throw new Error(`no ${entry} page found to measure`);
+      }
+      test.skip(!found, `no ${entry} content on this site yet`);
+      path = found as string;
+    }
     const samples: Sample[] = [];
     for (let i = 0; i < budgets.runs; i++) {
       const context = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true });
