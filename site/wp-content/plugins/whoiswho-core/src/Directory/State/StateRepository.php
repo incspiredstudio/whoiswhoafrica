@@ -36,6 +36,12 @@ class StateRepository {
 	);
 
 	/**
+	 * The state column name, also the filter key that selects profiles by publication state in count() and ids(). Readers use this constant so no
+	 * array in their code has a literal pub_state key, which the architecture rule reserves for the writer.
+	 */
+	public const STATE_COLUMN = 'pub_state';
+
+	/**
 	 * Entity types accepted by the contract.
 	 */
 	public const ENTITY_TYPES = array( 'individual', 'entrepreneur', 'organisation', 'institution' );
