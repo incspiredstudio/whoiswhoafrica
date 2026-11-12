@@ -1,0 +1,20 @@
+{
+    "contract_version": "1.0",
+    "run_id": "run_20261110_a",
+    "batch_id": "B1",
+    "generated_at": "2026-11-10T09:00:00Z",
+    "pipeline_version": "fixture-1",
+    "source_list_version": "fixture-1",
+    "sources": [
+        {
+            "source_id": "src_sample_regulator",
+            "name": "Sample Regulator"
+        }
+    ],
+    "suppression_snapshot_id": "snap_fixture_1",
+    "record_count": 1,
+    "counts": {
+        "organisation": 1
+    },
+    "records_sha256": "sha256:f1dae75e82c5477bc32f4762211822017c8cc834667e08eb53e0b415810dc455"
+}
