@@ -144,7 +144,7 @@ final class ReviewQueueScreen {
 			echo '<tr><td colspan="8">' . esc_html__( 'Nothing to review.', 'whoiswho' ) . '</td></tr>';
 		}
 		foreach ( $result['items'] as $item ) {
-			$edit  = get_edit_post_link( $item['profile_id'] );
+			$edit  = ReviewItemScreen::url( (int) $item['profile_id'] );
 			$marks = array_filter(
 				array(
 					$item['pilot'] ? __( 'Pilot', 'whoiswho' ) : '',
