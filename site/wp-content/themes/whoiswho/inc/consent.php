@@ -10,6 +10,8 @@
 
 declare(strict_types=1);
 
+use WhoIsWho\Core\Platform\Settings\SettingsService;
+
 const WIW_CONSENT_COOKIE = 'wiw_consent';
 
 if ( ! function_exists( 'wiw_consent_choice' ) ) {
@@ -33,6 +35,19 @@ if ( ! function_exists( 'wiw_consent_accepted' ) ) {
 			return true;
 		}
 		return 'all' === wiw_consent_choice();
+	}
+}
+
+if ( ! function_exists( 'wiw_policy_version' ) ) {
+	/**
+	 * The current policy version, from the settings service (REQ-058). Printed in consent forms so the plugin records which wording the
+	 * visitor agreed to.
+	 */
+	function wiw_policy_version(): string {
+		if ( ! class_exists( SettingsService::class ) ) {
+			return '';
+		}
+		return (string) SettingsService::for_site()->get( SettingsService::POLICY_VERSION );
 	}
 }
 
