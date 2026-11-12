@@ -27,5 +27,6 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		( new Apply\ApplyJob() )->register();
 	}
 }
