@@ -6,6 +6,12 @@
       "version": "4.2.0",
       "reason": "Background jobs, used as a library inside whoiswho-core (docs/plugins/third-party.md: Background jobs, Chosen). Touches no personal data of its own.",
       "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/user-role-editor",
+      "version": "4.67",
+      "reason": "Per-user capability and role screen (docs/plugins/third-party.md: Per-user capability screen, Decided Q86; owner approved on issue #2). Limited to wiw_manage_capabilities (Administrator only), loaded by whoiswho-core; the guard still refuses fixed capabilities. Touches no visitor data.",
+      "docs": "docs/plugins/third-party.md"
     }
   ]
 }
