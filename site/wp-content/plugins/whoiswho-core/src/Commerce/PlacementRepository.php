@@ -92,7 +92,7 @@ class PlacementRepository {
 	 */
 	public function mark_ended( int $id, \DateTimeImmutable $at ): void {
 		global $wpdb;
-		$wpdb->update(
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
 			array(
 				'ended'      => 1,
