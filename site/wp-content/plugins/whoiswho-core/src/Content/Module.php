@@ -39,6 +39,7 @@ final class Module implements ModuleInterface {
 		Curation\Admin\CurationScreen::hooks();
 		Curation\CurationCache::register();
 		( new Newsletter\ConfirmRoute() )->register();
+		Newsletter\Admin\SubscribersScreen::hooks();
 		( new Newsletter\SendGuard() )->register();
 	}
 }
