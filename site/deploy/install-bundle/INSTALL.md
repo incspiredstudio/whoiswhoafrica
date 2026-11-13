@@ -17,6 +17,8 @@ You need WordPress 6.5 or newer, PHP 8.3 or newer, and a MySQL or MariaDB databa
 
 ## Steps, in this order
 
+**Upload size limit.** The child theme zip is about 4 MB, and PHP's default `upload_max_filesize` is 2 MB (some shared hosts set the same limit), so Appearance > Themes > Upload can fail. Raise `upload_max_filesize` and `post_max_size` to at least 16M (in `php.ini` or on the host's PHP settings page), or unzip the folders and upload them with the host's File Manager or FTP into `wp-content/themes` and `wp-content/plugins`.
+
 1. **Upload the themes.** Appearance > Themes > Add New > Upload Theme: upload `whoiswho.zip`, then `whoiswho-child.zip`. You can leave them inactive for now.
 2. **Upload the plugin.** Plugins > Add New > Upload Plugin: upload `whoiswho-core.zip` and click **Activate**.
 3. **Follow the Setup screen.** Right after activation WordPress opens **Setup** (it is also in the admin menu, and a box on the Dashboard reminds you). It creates the database tables by itself and switches on readable web addresses (permalinks), then shows a checklist with a ready, recommended or needs-attention label for each step, what to do when it is not ready, and a button where one click can fix it:
