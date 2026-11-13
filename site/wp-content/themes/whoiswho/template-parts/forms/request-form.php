@@ -21,12 +21,12 @@ $wiw_prefix  = isset( $args['prefix'] ) ? sanitize_html_class( (string) $args['p
 if ( null === $wiw_profile || ! in_array( $wiw_kind, wiw_request_kinds(), true ) ) {
 	return;
 }
-$wiw_forms = array(
+$wiw_forms  = array(
 	'correct' => 'correction',
 	'remove'  => 'removal',
 	'report'  => 'report',
 );
-$wiw_field = static function ( string $name, array $more ) use ( $wiw_prefix ): void {
+$wiw_field  = static function ( string $name, array $more ) use ( $wiw_prefix ): void {
 	get_template_part(
 		'template-parts/forms/field',
 		null,
