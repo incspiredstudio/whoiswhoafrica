@@ -32,5 +32,6 @@ final class Module implements ModuleInterface {
 		DashboardTiles::hooks();
 		SponsoredStoriesScreen::hooks();
 		Admin\CustomersScreen::hooks();
+		CustomerExport::hooks();
 	}
 }

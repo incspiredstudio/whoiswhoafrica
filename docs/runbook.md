@@ -209,3 +209,7 @@ The page cache is WP Super Cache (pinned through composer, on the plugin allowli
 - **Unpublish:** the unpublish hook queues a purge job (`PurgeService`) that clears the page from the cache through `wpsc_delete_url_cache`; the origin then answers 404 or 410 and is never cached (non-200).
 - **After any plugin, guard or theme change:** rerun the visibility suite (`composer test -- --testsuite Visibility`) and, on a served site with the cache on, request a pending-review profile twice and confirm the `X-Robots-Tag: noindex` header both times.
 - **Known limits:** WP Super Cache expires files by garbage collection (every shutdown here), not at serve time, so staleness after an edit is bounded by the unpublish purge and the 60-second GC, not strictly by the lifetime. The guard's per-request Content-Security-Policy nonce is in the page body, so a cached page would carry an old nonce: see the follow-up issue before turning the cache on in production.
+
+## Customer and enquiry CSV export (REQ-077, #324)
+
+The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.

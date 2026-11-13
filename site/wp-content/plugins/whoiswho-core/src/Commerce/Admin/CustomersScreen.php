@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Commerce\Admin;
 
+use WhoIsWho\Core\Commerce\CustomerExport;
 use WhoIsWho\Core\Commerce\CustomerRepository;
 use WhoIsWho\Core\Commerce\CustomerService;
 use WhoIsWho\Core\Compliance\Support\ItemType;
@@ -229,6 +230,7 @@ final class CustomersScreen {
 		$rows = $this->rows( $search );
 		$out  = '<div class="wrap"><h1>' . esc_html__( 'Customers', 'whoiswho' ) . '</h1>';
 		$out .= '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&customer=new' ) ) . '">' . esc_html__( 'Add customer', 'whoiswho' ) . '</a></p>';
+		$out .= self::export_html();
 		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Search', 'whoiswho' ) . ' <input type="search" name="s" value="' . esc_attr( $search ) . '" /></label> <button class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
 		$out .= '<table class="widefat striped"><thead><tr>';
@@ -259,6 +261,23 @@ final class CustomersScreen {
 			$out  .= '<option value="' . esc_attr( (string) $item['id'] ) . '">' . esc_html( $label ) . '</option>';
 		}
 		return $out . '</select></label> <button class="button">' . esc_html__( 'Create customer', 'whoiswho' ) . '</button></form></div>';
+	}
+
+	/**
+	 * The two CSV export buttons, shown only to someone who holds wiw_export_data (REQ-077).
+	 */
+	private static function export_html(): string {
+		if ( ! current_user_can( CustomerExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return '';
+		}
+		$out = '<p>';
+		foreach ( array(
+			CustomerExport::CUSTOMERS_ACTION => __( 'Export customers as CSV', 'whoiswho' ),
+			CustomerExport::ENQUIRIES_ACTION => __( 'Export enquiries as CSV', 'whoiswho' ),
+		) as $action => $label ) {
+			$out .= '<form method="post" style="display:inline" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><button class="button">' . esc_html( $label ) . '</button></form> ';
+		}
+		return $out . '</p>';
 	}
 
 	/**
