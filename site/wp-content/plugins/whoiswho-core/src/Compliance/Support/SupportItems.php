@@ -182,6 +182,20 @@ class SupportItems {
 	}
 
 	/**
+	 * Every item still open (not resolved or declined), oldest first. Used by the deadline job.
+	 *
+	 * @param int $limit Maximum rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function list_open( int $limit = 1000 ): array {
+		global $wpdb;
+		$closed = ItemStatus::closed();
+		$marks  = implode( ', ', array_fill( 0, count( $closed ), '%s' ) );
+		$sql    = 'SELECT * FROM ' . self::table() . " WHERE status NOT IN ({$marks}) ORDER BY id ASC LIMIT %d";
+		return (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $closed, array( max( 1, $limit ) ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table; placeholders built from a count.
+	}
+
+	/**
 	 * Change an item's status. Closing stamps resolved_at; acknowledging stamps acknowledged_at.
 	 *
 	 * @param int                     $id     Item id.

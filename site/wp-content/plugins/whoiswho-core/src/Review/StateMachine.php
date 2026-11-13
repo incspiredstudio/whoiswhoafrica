@@ -123,6 +123,7 @@ final class StateMachine {
 		if ( null !== $this->writer->get( $profile_id ) ) {
 			throw StateException::refuse( 'The profile already has a state.' );
 		}
+		self::gate( $profile_id, null, $state, (string) ( $values['origin'] ?? '' ) );
 		$this->apply(
 			$profile_id,
 			null,
@@ -155,6 +156,8 @@ final class StateMachine {
 		if ( ( in_array( $to, self::REASON_REQUIRED, true ) || null !== $batch ) && '' === trim( $reason ) ) {
 			throw StateException::refuse( 'A reason is required.' );
 		}
+		$row = $this->writer->get( $profile_id );
+		self::gate( $profile_id, $from, $to, (string) ( $row['origin'] ?? '' ) );
 		$this->apply(
 			$profile_id,
 			$from,
@@ -174,6 +177,23 @@ final class StateMachine {
 			},
 			$batch
 		);
+	}
+
+	/**
+	 * Let other modules refuse a change (for example a complimentary listing without consent). A filter callback returns a
+	 * refusal message; an empty string means no objection. The machine still does the writing.
+	 *
+	 * @param int         $profile_id Profile.
+	 * @param string|null $from       Previous state.
+	 * @param string      $to         New state.
+	 * @param string      $origin     The profile's origin.
+	 * @throws StateException When a module refuses.
+	 */
+	private static function gate( int $profile_id, ?string $from, string $to, string $origin ): void {
+		$refusal = apply_filters( 'wiw_profile_transition_refusal', '', $profile_id, $from, $to, $origin );
+		if ( is_string( $refusal ) && '' !== $refusal ) {
+			throw StateException::refuse( esc_html( $refusal ) );
+		}
 	}
 
 	/**

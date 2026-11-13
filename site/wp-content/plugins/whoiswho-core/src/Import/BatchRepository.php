@@ -137,6 +137,18 @@ final class BatchRepository {
 	}
 
 	/**
+	 * The newest batches, for the history list.
+	 *
+	 * @param int $limit How many.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function recent( int $limit = 20 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d', max( 1, $limit ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Whether a batch id is registered.
 	 *
 	 * @param string $batch_id Batch id.

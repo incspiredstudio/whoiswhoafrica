@@ -66,7 +66,13 @@ final class AwardsTables {
 		nominator_email varchar(190) NULL,
 		nominator_verified_at datetime NULL,
 		contact_email varchar(190) NULL,
+		reference varchar(24) NULL,
+		nominee_name varchar(190) NULL,
+		nominee_org varchar(190) NULL,
+		relationship_declared tinyint(1) unsigned NOT NULL DEFAULT 0,
+		relationship_note text NULL,
 		evidence text NULL,
+		citation text NULL,
 		stage enum(\'nominated\',\'winner\') NOT NULL DEFAULT \'nominated\',
 		status enum(\'not_live\',\'live\') NOT NULL DEFAULT \'not_live\',
 		source enum(\'public_form\',\'staff\') NOT NULL DEFAULT \'public_form\',
@@ -80,7 +86,8 @@ final class AwardsTables {
 		KEY category (category_id),
 		KEY profile (profile_id),
 		KEY edition (edition_id),
-		KEY stage_status (stage, status)';
+		KEY stage_status (stage, status),
+		UNIQUE KEY reference (reference)';
 
 	public const CHANGES_DEFINITION = 'id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		nomination_id bigint(20) unsigned NOT NULL,
