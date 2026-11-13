@@ -74,6 +74,44 @@ return array(
 		'note'      => 'Address WordPress stores for spam checks.',
 	),
 
+	// wpDiscuz tables (REQ-258): present only while that plugin is active; the catalogue lists them so export and erase cover them.
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_comments_subscription.email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Email a reader gave to follow a story thread (wpDiscuz); moderator only. Removed on request.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_follow_users.follower_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Email of a reader following a commenter (wpDiscuz).',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_follow_users.user_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Email of the commenter being followed (wpDiscuz).',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_users_voted.user_id',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Holds a guest IP address for a comment vote (wpDiscuz).',
+	),
+
 	// Tables added in the foundation milestone and the ones planned next.
 	array(
 		'kind'      => 'column',
