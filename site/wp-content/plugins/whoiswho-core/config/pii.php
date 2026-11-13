@@ -380,6 +380,15 @@ return array(
 	),
 	array(
 		'kind'      => 'column',
+		'name'      => 'wiw_nominations.notes',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'exclude',
+		'erase'     => 'anonymise',
+		'note'      => 'Internal staff notes on a nomination (REQ-031); never public, never in an export; may name people.',
+	),
+	array(
+		'kind'      => 'column',
 		'name'      => 'wiw_support_items.requester_name',
 		'class'     => 'pii',
 		'retention' => 'support_request',

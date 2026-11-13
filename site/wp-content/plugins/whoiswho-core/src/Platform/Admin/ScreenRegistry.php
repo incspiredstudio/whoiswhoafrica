@@ -28,7 +28,7 @@ final class ScreenRegistry {
 	/**
 	 * Registered screens by slug.
 	 *
-	 * @var array<string, array{title: string, capability: string, callback: callable}>
+	 * @var array<string, array{title: string, capability: string, callback: callable, hidden: bool}>
 	 */
 	private array $screens = array();
 
@@ -57,9 +57,10 @@ final class ScreenRegistry {
 	 * @param string   $title      Menu and page title.
 	 * @param string   $capability A named capability, for example wiw_review_records. Required.
 	 * @param callable $callback   Renders the screen.
+	 * @param bool     $hidden     True for a page reached by a link (a detail screen): it has no menu item but is guarded the same way.
 	 * @throws \InvalidArgumentException When the slug is invalid or taken, or the capability is empty.
 	 */
-	public function register( string $slug, string $title, string $capability, callable $callback ): void {
+	public function register( string $slug, string $title, string $capability, callable $callback, bool $hidden = false ): void {
 		if ( ! preg_match( '/^[a-z0-9-]+$/', $slug ) ) {
 			throw new \InvalidArgumentException( 'A screen slug is lowercase letters, digits and dashes.' );
 		}
@@ -73,13 +74,14 @@ final class ScreenRegistry {
 			'title'      => $title,
 			'capability' => $capability,
 			'callback'   => $callback,
+			'hidden'     => $hidden,
 		);
 	}
 
 	/**
 	 * Registered screens.
 	 *
-	 * @return array<string, array{title: string, capability: string, callback: callable}>
+	 * @return array<string, array{title: string, capability: string, callback: callable, hidden: bool}>
 	 */
 	public function screens(): array {
 		return $this->screens;
@@ -111,7 +113,7 @@ final class ScreenRegistry {
 		}
 		add_menu_page( 'WHOISWHO', 'WHOISWHO', 'read', self::MENU_SLUG, '__return_null', 'dashicons-groups', 3 );
 		foreach ( $this->screens as $slug => $screen ) {
-			add_submenu_page( self::MENU_SLUG, $screen['title'], $screen['title'], $screen['capability'], $slug, $screen['callback'] );
+			add_submenu_page( $screen['hidden'] ? null : self::MENU_SLUG, $screen['title'], $screen['title'], $screen['capability'], $slug, $screen['callback'] );
 		}
 		remove_submenu_page( self::MENU_SLUG, self::MENU_SLUG );
 	}

@@ -265,7 +265,7 @@ final class NominationsScreen {
 			} else {
 				$out .= $this->form( 'remove_ask', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Remove', 'whoiswho' ) . '</button>' );
 			}
-			$out .= '</td></tr>';
+			$out .= ' <a href="' . esc_url( NominationDetailScreen::url( $id ) ) . '">' . esc_html__( 'Details', 'whoiswho' ) . '</a></td></tr>';
 		}
 		$out .= '</tbody></table>';
 		for ( $i = 1; $result['pages'] > 1 && $i <= $result['pages']; $i++ ) {
