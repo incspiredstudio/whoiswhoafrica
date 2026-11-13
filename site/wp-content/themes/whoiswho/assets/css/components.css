@@ -32,7 +32,7 @@
 .btn[disabled], .btn.disabled { opacity: .5; cursor: not-allowed; }
 
 /* ---------- header and mega nav ---------- */
-.site-head { position: sticky; top: 0; z-index: 30; background: var(--c-surface); border-bottom: 1px solid var(--c-line); transition: box-shadow var(--m-base); }
+.site-head { position: sticky; top: var(--wiw-bar); z-index: 30; background: var(--c-surface); border-bottom: 1px solid var(--c-line); transition: box-shadow var(--m-base); }
 .is-scrolled .site-head { box-shadow: var(--sh-2); }
 .head-bar { display: flex; align-items: center; gap: var(--s-4); min-height: var(--head-h); }
 .logo { display: inline-flex; align-items: center; gap: var(--s-2); font: 400 1.25rem/1 var(--font-display); letter-spacing: .012em; color: var(--c-text); text-decoration: none; white-space: nowrap; }
@@ -69,7 +69,7 @@
 .mega-note { padding: var(--s-5); border-radius: var(--r-2); background: var(--c-dark); color: var(--c-on-dark); }
 .mega-note p { font-size: var(--t-sm); color: var(--c-on-dark-muted); margin-block: var(--s-2) var(--s-4); }
 .mega-note strong { font: 400 var(--t-lg)/1.2 var(--font-display); display: block; }
-.drawer { position: fixed; inset: 0; z-index: 70; background: var(--c-surface); overflow-y: auto; padding: var(--s-4) var(--gutter) var(--s-8); transform: translateX(100%); visibility: hidden; transition: transform var(--m-base) var(--ease-out), visibility var(--m-base); }
+.drawer { position: fixed; inset: var(--wiw-bar) 0 0; z-index: 70; background: var(--c-surface); overflow-y: auto; padding: var(--s-4) var(--gutter) var(--s-8); transform: translateX(100%); visibility: hidden; transition: transform var(--m-base) var(--ease-out), visibility var(--m-base); }
 .drawer.open { transform: none; visibility: visible; }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--s-4); }
 .drawer details { border-top: 1px solid var(--c-line); }
@@ -370,7 +370,7 @@ ul.sponsors { list-style: none; }
 .profile-stories-list { display: grid; gap: var(--s-4); }
 .profile-rail { display: grid; gap: var(--s-4); }
 
-@media (width >= 64rem) { .profile-rail { position: sticky; top: calc(var(--head-h) + var(--s-4)); } }
+@media (width >= 64rem) { .profile-rail { position: sticky; top: calc(var(--wiw-bar) + var(--head-h) + var(--s-4)); } }
 .notice { display: flex; gap: var(--s-3); padding: var(--s-3) var(--s-4); font-size: var(--t-sm); line-height: 1.5; margin-bottom: var(--s-5); }
 .notice .ico { font-size: 1.125rem; margin-top: .125rem; }
 .notice--pending { background: repeating-linear-gradient(135deg, var(--stone-300), var(--stone-300) 8px, var(--offwhite) 8px, var(--offwhite) 16px); border-left: 4px solid var(--charcoal-700); }
@@ -555,7 +555,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 }
 
 /* search panel: full screen, opens from the header icon */
-.sov { position: fixed; inset: 0; z-index: 80; overflow-y: auto; background: var(--charcoal-950); color: var(--c-on-dark); opacity: 0; transition: opacity var(--m-base) ease; }
+.sov { position: fixed; inset: var(--wiw-bar) 0 0; z-index: 80; overflow-y: auto; background: var(--charcoal-950); color: var(--c-on-dark); opacity: 0; transition: opacity var(--m-base) ease; }
 .sov.open { opacity: 1; }
 .sov[hidden] { display: none; }
 .sov-in { display: flex; flex-direction: column; gap: var(--s-6); min-height: 100%; padding-block: var(--s-4) var(--s-8); }
@@ -1294,7 +1294,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ev-side { grid-area: side; }
 .ev-text { grid-area: text; max-width: 40rem; }
 
-@media (width >= 62rem) { .ev-side { position: sticky; top: calc(var(--head-h, 4.25rem) + var(--s-4)); align-self: start; } }
+@media (width >= 62rem) { .ev-side { position: sticky; top: calc(var(--wiw-bar) + var(--head-h, 4.25rem) + var(--s-4)); align-self: start; } }
 .ev-sum { font-size: var(--t-xl); line-height: 1.35; font-weight: 500; }
 .ev-card { display: grid; gap: var(--s-3); padding: var(--s-5); background: var(--c-white); border: 2px solid var(--charcoal-900); border-top: .5rem solid var(--orange); }
 .ev-card h2 { font: 400 var(--t-lg)/1.1 var(--font-display); }

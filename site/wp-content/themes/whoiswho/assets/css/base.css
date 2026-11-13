@@ -2,7 +2,12 @@
 
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { text-size-adjust: 100%; scroll-padding-top: calc(var(--head-h) + var(--s-4)); }
+
+/* The WordPress admin bar (signed-in staff only) is fixed over the top of the page: 32px, 46px below 783px, and on phones it scrolls
+   away with the page. --wp-admin--admin-bar--height exists only while the bar does; header.js refines it to the visible part of the
+   bar (--wiw-bar-live). Everything pinned to the top starts below --wiw-bar, so staff never lose the logo or the menu behind it. */
+:root { --wiw-bar: var(--wiw-bar-live, var(--wp-admin--admin-bar--height, 0px)); }
+html { text-size-adjust: 100%; scroll-padding-top: calc(var(--wiw-bar) + var(--head-h) + var(--s-4)); }
 body { margin: 0; background: var(--c-bg); color: var(--c-text); font: 400 var(--t-base)/var(--lh-body) var(--font-body); -webkit-font-smoothing: antialiased; }
 img, svg { display: block; max-width: 100%; }
 a { color: var(--c-link); text-underline-offset: .16em; text-decoration-thickness: 1px; }
@@ -21,7 +26,7 @@ table { border-collapse: collapse; width: 100%; }
 legend { padding: 0; }
 pre { overflow: auto; }
 .sr, .skip { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip:focus { position: fixed; left: var(--s-3); top: var(--s-3); width: auto; height: auto; clip: auto; padding: var(--s-3) var(--s-4); background: var(--c-surface); color: var(--c-text); border: 2px solid var(--c-focus); z-index: 100; }
+.skip:focus { position: fixed; left: var(--s-3); top: calc(var(--wiw-bar) + var(--s-3)); width: auto; height: auto; clip: auto; padding: var(--s-3) var(--s-4); background: var(--c-surface); color: var(--c-text); border: 2px solid var(--c-focus); z-index: 100; }
 .muted { color: var(--c-muted); }
 .small { font-size: var(--t-sm); }
 .mono, .meta { font-family: var(--font-body); font-size: var(--t-xs); font-variant-numeric: tabular-nums; letter-spacing: .02em; }

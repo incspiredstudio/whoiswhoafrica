@@ -1,7 +1,7 @@
 <?php
 /**
  * Home hero (REQ-001, REQ-002, REQ-052): four muted, looping videos side by side behind the brand title, a one-line statement of
- * what the brand is and for whom, a way to get listed, nominate or browse, and a scroll cue. The videos are decoration: they carry
+ * what the brand is and for whom, and a scroll cue (no buttons: the ways in are further down the page, issue 798). The videos are decoration: they carry
  * no information, are hidden from assistive technology, never delay the first view (preload="none" and no autoplay until home.js
  * confirms motion is allowed) and fall back to their still poster with scripts off, data saver or reduced motion.
  * Args: home (the home model).
@@ -17,7 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $wiw_home   = isset( $args['home'] ) && is_array( $args['home'] ) ? $args['home'] : array();
 $wiw_title  = isset( $wiw_home['title'] ) && is_array( $wiw_home['title'] ) ? $wiw_home['title'] : array( wiw_site_name(), '' );
-$wiw_ctas   = isset( $wiw_home['ctas'] ) && is_array( $wiw_home['ctas'] ) ? $wiw_home['ctas'] : array();
 $wiw_videos = isset( $wiw_home['videos'] ) && is_array( $wiw_home['videos'] ) ? $wiw_home['videos'] : array();
 ?>
 <section class="h-hero" aria-labelledby="home-title">
@@ -65,14 +64,6 @@ $wiw_videos = isset( $wiw_home['videos'] ) && is_array( $wiw_home['videos'] ) ? 
 		</h1>
 		<div class="h-hero-foot">
 			<p class="h-lede"><?php echo esc_html( (string) ( $wiw_home['lede'] ?? '' ) ); ?></p>
-			<div class="h-hero-ctas">
-				<?php if ( ! empty( $wiw_ctas['primary']['url'] ) ) : ?>
-					<a class="btn h-btn" href="<?php echo esc_url( (string) $wiw_ctas['primary']['url'] ); ?>"><?php echo esc_html( (string) $wiw_ctas['primary']['label'] ); ?></a>
-				<?php endif; ?>
-				<?php if ( ! empty( $wiw_ctas['secondary']['url'] ) ) : ?>
-					<a class="h-link" href="<?php echo esc_url( (string) $wiw_ctas['secondary']['url'] ); ?>"><?php echo esc_html( (string) $wiw_ctas['secondary']['label'] ); ?><?php echo wiw_icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?></a>
-				<?php endif; ?>
-			</div>
 			<a class="h-cue" href="#home-after-hero"><span class="h-cue-label"><?php esc_html_e( 'Scroll', 'whoiswho' ); ?><span class="sr"> <?php esc_html_e( 'to explore', 'whoiswho' ); ?></span></span><span class="h-cue-line" aria-hidden="true"></span></a>
 		</div>
 	</div>

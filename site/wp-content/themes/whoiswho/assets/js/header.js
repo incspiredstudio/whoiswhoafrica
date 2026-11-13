@@ -218,7 +218,20 @@ function initScrolled() {
   }
 }
 
+/* ---------- admin bar ---------- */
+/* Signed-in staff see the WordPress admin bar over the top of the page. It is fixed from 601px and scrolls away on phones, so the
+   offset the pinned header needs is the part of the bar still on screen; base.css falls back to the bar's height without this. */
+function initAdminBar() {
+  const bar = document.getElementById("wpadminbar");
+  if (!bar) return;
+  const update = () => root.style.setProperty("--wiw-bar-live", Math.max(0, Math.round(bar.getBoundingClientRect().bottom)) + "px");
+  update();
+  window.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
+}
+
 export function initHeader() {
+  initAdminBar();
   initMega();
   initDrawer();
   initSearch();
