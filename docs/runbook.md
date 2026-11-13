@@ -191,6 +191,19 @@ Baseline on the local PHP built-in server (Windows, no page cache; time to first
 
 Proposed ceilings (for the owner to agree; docs/theme/theme-acceptance.md still lists the numeric budget as an open point): LCP 6000 ms enforced now with 2500 ms the REQ-041 target reported as a warning, CLS 0.1, scripts 20 KB, page weight 900 KB. Tighten LCP to 2500 ms once measured on the staging host.
 
+## Concurrency baseline (M5-PRF-04; REQ-054)
+
+`site/tests/Performance/concurrency.mjs` sends 50 concurrent anonymous visitors, each walking the home page, the directory, one profile and one story four times (the cache is warmed first), and records response times and the error rate. Command: `BASE_URL=http://127.0.0.1:<port> CONCURRENCY=50 ROUNDS=4 node tests/Performance/concurrency.mjs`. It writes one JSON line and exits 1 over the budget (`MAX_ERROR_RATE`, default 0; `P95_MS`, default 3000).
+
+Baseline on the local build (2026-11-13; Windows dev machine shared with three other builds and test runs; PHP built-in server with 4 workers, WP Super Cache on via `WIW_PAGE_CACHE=true`; 30 sample profiles and stories). This is a worst case: the built-in server serves one request per worker and the machine was busy, so it says little about the live host.
+
+| Walk | Requests | Errors | p50 | p95 | Notes |
+|---|---|---|---|---|---|
+| Home, directory, profile, story, 50 users x 4 rounds | 800 | 0 | 13.9 s | 39.6 s | Home and the story page were cache hits (p50 about 1.3 s, p95 1.5 s and 16.6 s). The directory and the profile page were not cached (the profile page sends no-cache headers; the reason was not investigated) and took p50 22.7 s and 32.5 s. |
+| Same plus search, 50 users x 2 rounds, cold | 500 | 40 (8%) | 58.5 s | 92.7 s | Search carries a query string and is never cached. The 40 errors were not classified (the script counts a status of 400 or more, or a network failure, on the saturated built-in server). |
+
+Findings: (1) no error on the cached walk; (2) the page-cache policy lists `/profiles` but the directory lists live at `/directory/`, `/people/` and the other list paths, so the main lists are never cached (follow-up issue); (3) the response-time pass criterion is not in the docs: the proposal is no errors and p95 under 3 s at 50 concurrent users on the staging host, which the owner has to confirm. Re-run on staging in the launch rehearsal (M5-LCH-04) and record the figures here.
+
 ## Live-host check results
 
 Filled in at M5 from the checks listed in Deployment (Q87 still open).
