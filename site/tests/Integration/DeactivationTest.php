@@ -16,6 +16,7 @@ final class DeactivationTest extends TestCase {
 
 	public function test_REQ_056_deactivation_keeps_data(): void {
 		$this->requireWordPress();
+		add_filter( 'wiw_migrate_on_activation', '__return_false' );
 		Activation::activate();
 		Activation::deactivate();
 		$this->assertSame( WIW_CORE_VERSION, get_option( 'wiw_core_version' ) );
