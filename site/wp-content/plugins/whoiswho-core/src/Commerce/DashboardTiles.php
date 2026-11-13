@@ -47,6 +47,9 @@ final class DashboardTiles {
 	 * @param callable              $today      fn(): string, the date as YYYY-MM-DD.
 	 */
 	public static function register_into( TileRegistry $tiles, SettingsService $settings, ArrangementRepository $deals, PlacementRepository $placements, callable $today ): void {
+		if ( isset( $tiles->all()['slots_ending'] ) ) {
+			return;
+		}
 		if ( $settings->sprint_tracking_enabled() ) {
 			$tiles->register(
 				'deals_counted',
