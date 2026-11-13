@@ -53,6 +53,8 @@ Defaults: **R** = Reviewer, **E** = Editor, **A** = Administrator. The Visitor h
 |---|---|---|---|---|---|
 | `read` | Core | Open wp-admin and the dashboard | yes | yes | yes |
 | `edit_posts`, `edit_others_posts`, `publish_posts`, `edit_published_posts`, `delete_posts` | Core | Create, edit others', schedule, publish, unpublish and trash stories (posts) | no | yes | yes |
+| `moderate_comments` | Core | Approve, hold or delete story comments (REQ-258) | no | yes | yes |
+| `edit_pages`, `edit_others_pages`, `publish_pages`, `edit_published_pages` | Core | Edit About, FAQ, rules and legal pages (REQ-260) | no | yes | yes |
 | `upload_files` | Core | Use the media library | no | yes | yes |
 | `read_private_wiw_profiles` | Core (generated for the profile post type) | See profiles that are not public, read-only | yes | yes | yes |
 | `edit_wiw_profiles`, `edit_others_wiw_profiles`, `publish_wiw_profiles`, `edit_published_wiw_profiles`, `delete_wiw_profiles` | Core (generated for the profile post type) | Create, edit others', publish and trash profiles; direct edit with automatic audit and revisions (REQ-232) | no | yes | yes |
@@ -69,6 +71,8 @@ Defaults: **R** = Reviewer, **E** = Editor, **A** = Administrator. The Visitor h
 | `wiw_bulk_unpublish` | Plugin | Bulk unpublish by filter and restore a batch (REQ-193) | yes | no | yes |
 | `wiw_unpublish_profiles` | Plugin | Unpublish or hide a single profile (REQ-091) | no | yes | yes |
 | `wiw_set_trust_labels` | Plugin | **Withdrawn (D-059).** Profiles have no trust labels; Featured on stories uses the core flag | - | - | - |
+| `wiw_manage_subscribers` | Plugin | Subscribers screen: newsletter list, confirm status, unsubscribe (REQ-255) | no | yes | yes |
+| `wiw_edit_assigned_profiles` | Plugin | My profiles screen: edit only the profiles assigned to the user; added in the build, Administrator by default and grantable (REQ-253) | no | no | yes |
 | `wiw_review_claims` | Plugin | Review claims, set Claimed, assign the profile's user (REQ-251 to 253, 256) | no | yes | yes |
 | `wiw_curate_home` | Plugin | Choose how the home page and the stories page pick what they show, and pin items (REQ-257). Editor and Administrator by default; the Administrator can grant it to any role, including Reviewer | no | yes | yes |
 | `wiw_manage_events` | Plugin | Create, edit, schedule and unpublish events (REQ-262, 264). Editor and Administrator by default; the Administrator can grant it to any role, including Reviewer | no | yes | yes |

@@ -1,6 +1,6 @@
 # Roles and capabilities
 
-How access works in the admin: three default roles, the capabilities behind them, which ones cannot be moved, and how the Administrator changes things without code. The single source for the list is the "Capabilities and default role mapping" section of Requirements.
+How access works in the admin: three default roles, the capabilities behind them, which ones cannot be moved, and how the Administrator changes things without code. The single source for the list is the "Capabilities and default role mapping" section of Requirements; the code's copy is `config/capabilities.php`. The screen-by-screen menu is on the [staff guide index](./).
 
 ## Principles
 
@@ -37,9 +37,27 @@ R is Reviewer, E is Editor, A is Administrator.
 | Exports | CSV exports of sponsored story deals, nominations and personal data (`wiw_export_data`) | no | no | yes |
 | Audit | Read the audit log (`wiw_view_audit`) | no | no | yes |
 | Suppression | Change the suppression list (`wiw_edit_suppression`) | no | no | yes |
-| Dashboard | Commercial tiles (`wiw_view_dashboard_commercial`) | no | no | yes |
+| Dashboard | Commercial widgets on the WordPress Dashboard (`wiw_view_dashboard_commercial`); review widgets need `wiw_view_dashboard_review` | no | no | yes |
 | Nominations switch | Turn the Nominations flag on or off from the Nominations screen (`wiw_toggle_nominations`); Editors see it read-only | no | no | yes |
 | Users and settings | Users, roles, capabilities, settings (including Sprint thresholds), plugins | no | no | yes |
+
+Capabilities in the code that the table above does not name (all from `config/capabilities.php`, catalogue version 4):
+
+| Capability | Allows | R | E | A |
+|---|---|---|---|---|
+| `moderate_comments` (core) | Approve, hold or delete story comments | no | yes | yes |
+| `edit_pages`, `edit_others_pages`, `publish_pages`, `edit_published_pages` (core) | Edit About, FAQ, rules and legal pages | no | yes | yes |
+| `upload_files`, `delete_posts`, `edit_published_posts` (core) | Media library; delete and edit published stories | no | yes | yes |
+| `wiw_view_dashboard_review` | Review and directory dashboard widgets | yes | yes | yes |
+| `wiw_view_sources`, `wiw_view_suppression` | Read-only Sources and Suppression list | yes | yes | yes |
+| `wiw_manage_subscribers` | Subscribers screen (newsletter list) | no | yes | yes |
+| `wiw_edit_assigned_profiles` | My profiles: edit only profiles assigned to the user | no | no | yes |
+| `wiw_handle_disputes` | Decide corrections and removal requests | no | yes | yes |
+| `wiw_receive_enquiries` | Receive enquiries sent to profiles | no | no | yes |
+| `wiw_manage_capabilities` | Edit role bundles and per-user grants (fixed) | no | no | yes |
+| `export` (core) | Core Tools > Export | no | no | yes |
+
+The Administrator holds every capability in the catalogue. The catalogue has a version number; when it is raised, the next sync adds new capabilities to the roles and never removes a grant the Administrator added later. The fixed capabilities (core user, option, plugin and theme capabilities, `wiw_manage_register`, `wiw_toggle_nominations`, `wiw_manage_capabilities`) are marked `fixed` in the catalogue.
 
 `wiw_set_trust_labels` is withdrawn: profiles have no trust labels (D-059). Featured on a story uses the core sticky flag.
 

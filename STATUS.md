@@ -1,70 +1,66 @@
 # STATUS
 
-**Shared-docs owner: restructure session, until `chore/repo-restructure` is merged; then the wireframe session.** Stages are in `CLAUDE.md`. To hand over, commit and change this line.
+**Shared-docs owner: the website session** (Gate 2 and Gate 3 are done; stages are in `CLAUDE.md`). To hand over, commit and change this line.
 
-**Repo layout (2026-11-08):** `docs/` shared; `prototype/` wireframe; `acquisition/` data acquisition. Interface: `docs/contracts/import-format.md`. Other sessions keep their status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
+**Updated 2026-11-13** after integration rounds 1 to 4 were merged into `chore/structured-build-setup`. Counts come from `gh issue list`; statements about what is built come from reading the code in `site/`, not from a fresh end-to-end run, so they are not claims of verification. The verification step (M5 issues #107, #85, #87) is still open.
 
-## Stage
-**Website build under way (2026-11-11):** 360 GitHub issues (milestones M0 to M5, project board https://github.com/users/chinnaji/projects/2) from `docs/plan/`; `node scripts/plan-issues.js status` shows progress. M0 is 18 of 79 done: scaffold in `site/`, PHPCS, PHPStan, PHPUnit with the WordPress test suite, Playwright with axe, asset build, wp-config template, runbook skeleton, CI (eight gates on every pull request), core plugin skeleton, guard (hardening, `wiw_hidden`), parent and child themes, migration framework, capability catalogue and roles. Local environment without Docker: WordPress Studio (`site/deploy/local/setup.ps1`) and a portable MariaDB for tests (`site/deploy/local/test-db.ps1`). One pull request per issue, merged only after CI passes. A second docs site, `handbook/`, holds the production-ready features and flows guide.
+**Repo layout:** `docs/` shared (a VitePress site); `site/` the WordPress code; `prototype/` the wireframe; `acquisition/` data acquisition. Interface between acquisition and the website: `docs/contracts/import-format.md`. Other sessions keep their own status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
-**Brief v2 and brand (D-052, 2026-11-09):** brand stays WHOISWHO; legal name whoiswhoafrica; `docs/spec.md` is now the WIWI brief (most current; old copy in docs/archive/spec-versions/); Q40–Q45 logged and answered; no crawler name.
+## Where the project is
 
-**Unanswered questions sorted (D-049 to D-051, 2026-11-09):** 54 answered, 25 default accepted, 8 deferred, none open. No reviewer pay, hours or names needed (D-049). Build locally on WordPress and import to the live host; no object storage, spikes or new accounts; email by cPanel SMTP (D-050). Legal questions, judging and CaromHQ sync are deferred on purpose and have their own sections or are built last (D-051). Architecture, ADRs, .env.example and CLAUDE.md are being updated to match.
+**355 issues closed, 43 open** (398 in total) across milestones M0 to M5.
 
-**Defaults accepted (D-047, 2026-11-08):** every open question now carries its default (34 questions: Q26–Q29, Q31, Q33–Q39, Q46, Q54–Q56, Q58, Q60–Q67, Q72–Q80); only Q16 is still pending (team lead). D-048: staff sign-in has no role selector (REQ-245). The WIWI rename questions (Q40–Q45, docs/archive/change-review-2026-11-07.md) are not logged and not applied: the brand stays WHOISWHO until you rule.
+| Milestone | Closed | Open |
+|---|---|---|
+| M0 Foundations | 76 | 3 (all human: #1, #2, #3) |
+| M1 The record | 78 | 3 (all human: #5, #6, #7) |
+| M2 Reading and finding | 51 | 2 (human: #8, #9) |
+| M3 Trust and revenue | 56 | 9 |
+| M4 Recognition | 41 | 3 (human: #18, #20, #26) |
+| M5 Launch | 20 | 18 |
+| No milestone (discovered during the build) | 33 | 5 |
 
-Wireframe review fixes applied 2026-11-08 in two rounds (merged by fast-forward into `chore/structured-build-setup`, together with `chore/repo-restructure`, 2026-11-08; not pushed, not merged to main). Round 1: D-035 to D-041. Round 2: D-042 read-only Sources screen, D-043 kill switch replaced by bulk unpublish by filter, D-044 only four roles (Visitor, Reviewer, Editor, Administrator). REQ-239 to 243 added; REQ-124, 151, 152, 173, 227, 230, 231 withdrawn. Round 3: your rulings D-045 (bulk unpublish: Administrator and Reviewer; Administrator alone confirms payments; one-person sign-off accepted; D-010 confirmed) and D-046 (capabilities per user, REQ-244); architecture.md, ADR-001 to 013, CLAUDE.md and .env.example rewritten for WordPress (proposed v2, awaiting your Gate 2 approval); Q73 to Q80 added. See docs/archive/consistency-report.md: open rulings (section 3.1) and the list for the acquisition session (section 4). The wireframe still lacks the D-033 publish-first states.
+## What is built (in `site/`)
 
-D-034 (2026-11-08): no login or signup on the public site; only staff use wp-admin. Requirements (REQ-229–236, six withdrawn, eighteen amended), questions Q56–Q62, acquisition plan, GUIDE and the wireframe are updated; architecture.md and ADR-004 are not (rewritten at Gate 2). See docs/archive/change-review-2026-11-08-no-accounts.md. docs/design-inspiration.md added (all points unverified; no browser available).
+- **M0 Foundations:** scaffold, PHPCS, PHPStan, PHPUnit on the WordPress test suite, Playwright with axe, asset build, wp-config template, runbook, CI, plugin `whoiswho-core`, must-use plugin `whoiswho-guard`, parent theme `whoiswho` and active child theme `whoiswho-child`, migration framework, capability catalogue (`config/capabilities.php`, version 4) and roles.
+- **M1 The record:** profile post type and the `wiw_profile_state` table, the review state machine and queue, duplicates, import path and Sources, suppression, corrections and removals, public profile read model, sitemap and SEO output.
+- **M2 Reading and finding:** home and curation, stories, search, newsletter and Subscribers screen.
+- **M3 Trust and revenue:** claims and My profiles, enquiries and requests with `WIW-` references, customers and single-use invitations, sponsored stories (`wiw_arrangements`, `wiw_placements`), data-rights intake.
+- **M4 Recognition:** award categories, nominations and the Nominations switch, events, comments policy, pages and templates, home animation stage.
+- **Staff admin:** the dashboard tiles are widgets on the WordPress Dashboard (the old WHOISWHO Dashboard screen is gone; its URL redirects). The menu is split into top-level groups by job. See `docs/pages/admin/index.md`.
+- **Plugins approved by the owner:** Two Factor 0.17.0, User Role Editor 4.67 (Administrator only), WP Super Cache 3.1.5 (off by default until #719 is settled). No Akismet. See `docs/plugins/third-party.md`.
+- **Sample content:** seeded and removed with `php bin/wiw.php sample:seed` and `sample:remove`; `content:find-sample` reports what is left; `pages:seed` creates the starter pages. See `docs/build/launch-checklist.md`.
 
-Gate 1 answered. D-031: the CMS is WordPress on cPanel (supersedes the Laravel proposal; architecture.md and ADRs not yet revised). D-033 as amended (2026-11-08): the acquisition pipeline never publishes; records are imported into WordPress and reviewed there; organisations live on import, labelled and noindex; individuals and entrepreneurs not public until approved. **Now: your rulings (plan section 12, Q46, Q55, Q63–Q67 first), then wireframe review** (prototype/, not yet updated for D-033). After review: revise architecture.md for WordPress and D-033, with the import path (REQ-237) as priority input (Gate 2), then /plan (Gate 3).
+## What remains (43 open issues)
 
-## Done
-- Spec copied to docs/spec.md; process files and templates created
-- docs/requirements.md: REQ-001–209 (18 withdrawn: payment, tier and package REQs)
-- docs/questions.md: 13 contradictions, 25 questions with Status column
-- docs/decisions.md: D-001–D-030
-- docs/GUIDE.md added
-- docs/architecture.md + docs/adr/ADR-001–013 (proposed), CLAUDE.md Commands and Conventions, .env.example
-- CLAUDE.md speed rule added
-- Architecture alternatives comparison (architecture.md section 13)
-- D-031 WordPress decision; docs/wireframe-inventory.md (145 entries); clickable wireframe in prototype/ (19 flows); docs/wireframe-findings.md (25 unclear points); scripts/smoke-prototype.js and scripts/build-inventory.js
-- acquisition/docs/acquisition-plan.md (proposed): first 1,000 profiles, inclusion criteria, source map with terms checked 2026-11-07, pipeline, capacity, 50-profile pilot, controls, WordPress tooling T-1–T-17, costs; decisions logged as Q29–Q39. Nothing fetched.
-- D-033 recorded, then amended 2026-11-08 (original text kept). REQ-148, 208 and section 12 amended; REQ-213, 215, 219, 220, 223–225 withdrawn; REQ-237 (import path, first task) and REQ-238 (future AI monitoring and takedown) added. Acquisition plan v3: acquisition about 6.5 hours (estimate), review a separate track. Q63–Q67 added; Q32, Q47, Q48, Q50–Q53 closed. Impact list: acquisition/docs/change-review-2026-11-08-publish-first.md (other documents and wireframe listed, not changed).
-- 2026-11-10 (D-061): Stale records, Prospects and Leads removed from the docs (REQ-093, 160, 176, 178 withdrawn); enquiries go to the Support inbox as type Enquiry. The prototype pass is done too (state key v13).
-- 2026-11-11 (D-067): Roles, Users and capabilities and Exports reframed as WordPress-provided; Compliance and breach-log screens removed (registers are documents); Settings renamed Sprint thresholds. The prototype pass is done (state key v19).
-- 2026-11-11 (D-069): Support inbox split into Enquiries, Corrections and Requests and reports (REQ-270, 271); Sprint tracking theme setting (REQ-272); parent theme `whoiswho` plus active child `whoiswho-child` (REQ-273). Prototype and docs updated.
-- 2026-11-11 (D-068, REQ-269): one arrangement type (sponsored post); the Register and Story sponsors screens are merged into one Sponsored stories screen with a four-step deal tracker; REQ-023 withdrawn; counting rule drops onboarding. Prototype and docs both done (state key v20).
-- 2026-11-10 (D-062): Events added as a story type (REQ-262) and paid story placement (REQ-263). Payment never affects nominations, judging, winners, profile ranking or labels; it can only buy a labelled story slot. Docs updated; the prototype pass is separate.
-- 2026-11-10 (D-063): Events are their own post type `wiw_event`, not a story type (REQ-262 amended; REQ-264 events pages, header and footer links and a Home block; REQ-265 a story links one event; REQ-263 placements are stories only). Capability `wiw_manage_events`. The Home page loses the red awards band; the marquee stays. The prototype still shows events inside Stories until its own pass lands.
-- 2026-11-10 (D-064): Judging panel and conflicts and Scores and results removed from the docs (REQ-036, 037, 234 withdrawn; REQ-034, 200, 202 amended). Judging and scoring are offline; staff only mark shortlisted, finalist and winner. The prototype still shows them until its own pass lands.
-- 2026-11-11 (D-065): Awards admin simplified in the docs: Award categories (categories only), the Nominations open/closed toggle and stage control on the Nominations screen, Shortlist and winners and the Feature flag screen removed (REQ-266, 267 added; REQ-038, 194, 200, 202, 259 amended). The prototype is updated separately.
-- 2026-11-11 (D-066): nomination stage is Nominated or Winner and status is Live or Not live; nominee invitation and response link removed (REQ-197 withdrawn); optional staff-only Contact email with staff-sent nomination and winner emails (REQ-268). Docs updated; the prototype pass is separate.
-- Repo split into website and acquisition on `chore/repo-restructure`: acquisition plan and its change review moved to `acquisition/docs/`; `.gitignore` added; Scope tags on every REQ, D, C and Q; `docs/contracts/import-format.md` drafted; ownership rules in CLAUDE.md and GUIDE. No content amendments applied.
+**Human-only (need the owner or an outside party):**
+#1 sending mailbox and SPF, DKIM, DMARC; #2 approve plugin choices and the vetting rule (answered by the owner, see `docs/questions.md`; the issue still needs closing); #3, #8, #26, #31 font, video and photograph licences and final copy; #5, #6, #7 response promises, label wording, import contract unknowns; #9 newsletter sending; #10 claim evidence standard; #12 processor register; #13 DPIA and data-protection contact; #14 retention schedule with Legal; #18 awards programme details; #20 comment questions; #37 live host limits; #38 deliverability; #68 enrol two-factor; #69 weekly plugin review; #70 remove sample content from the live site; #85 screen reader and real device pass; #128 the live migration with the owner's approval; #299 acquisition dry run; #544 response period for data requests (a 30-day period is recommended, not yet confirmed).
 
-## In flight
-- (none)
+**Deferred by owner decision:** legal pages (#11, #32), backups and restores (#36, #72). Evidence file uploads are out of launch scope (#638).
 
-## Blocked
-- GitHub labels and project board: `gh` not installed or authenticated (not a build blocker)
+**Blocked or waiting:** #719 the page cache stores a stale CSP nonce (the cache stays off until it is settled); #128 waits on the owner's approval and on #71, the staging rehearsal.
 
-## Decisions
-See docs/decisions.md. Key: no payments on the site (D-005); admin commercial register (D-006); individual stubs published without consent with kill switch (D-013); AI drafting allowed with strict rules (D-017); full awards workflow behind OFF flags (D-019); domain wiwi.africa (D-001); no tiers or packages, commercial arrangements only (D-028); public indexed site (D-029); pipeline never publishes; organisations live on import, labelled and noindex; individuals not public until approved (D-033 as amended).
+**Built, waiting to merge:** the sponsored-deals CSV export (#260, PR #769), the Your data rights page (#266, PR #767) and the Profile manager role recipe (#341, PR #768) are open pull requests that go into the next integration round. Merged work lands through integration rounds into `chore/structured-build-setup`, and `Closes #N` closes the issue when the round is merged.
+
+**Buildable (no human needed):** #343 invitation and consent pages (the invitation route exists in code; confirm the pages); #67 and #73 accessibility and image fixes; #71 staging rehearsal; #40 analytics cookie check; #87 concurrency check; #107 verify each launch checklist item; #690 importable demo content with page templates; #733 My profiles contact and photograph edits.
+
+## How to run it locally
+
+- From `site/`: `composer install` and `npm ci`; copy `.env.example` to the secrets file yourself.
+- Main path without Docker: `powershell -File deploy/local/setup.ps1` (WordPress Studio). Optional: `npx wp-env start` with Docker. Mail goes to Mailpit with `deploy/local/mailpit.ps1`. Details in `site/README.md` and `docs/runbook.md`.
+- Seed demonstration content: `php bin/wiw.php sample:seed`; remove it with `sample:remove`. Run jobs with `php bin/wiw.php jobs:run`.
+- A bare `php -S` router has been used for quick checks in the integration rounds; it is not documented or kept in the repository.
+
+## CI gates (every pull request)
+
+Eleven checks in `.github/workflows/ci.yml`: lint, analyse, test, visibility, build, e2e, audit, plugins, brand, secrets, pr-body. A weekly scan runs audit and secrets (`security-weekly.yml`). One pull request per issue, with `Closes #N` and the REQ list in the body.
+
+## Decisions and questions
+
+See `docs/decisions.md` and `docs/questions.md` (it has a section with the owner answers recorded on 2026-11-13). Earlier history of the planning stage (gates, rulings, wireframe review rounds) is in `docs/decisions.md` and `docs/archive/`.
 
 ## Next up
-- You: rule on docs/archive/consistency-report.md section 3.1; merge the two branches in order (`chore/repo-restructure`, then `chore/wireframe-review-fixes`)
-- Acquisition session: apply docs/archive/consistency-report.md section 4 in `acquisition/`
-- You: rule on Q56–Q62 (defaults in docs/archive/change-review-2026-11-08-no-accounts.md section 5); open both reference sites in a browser to confirm docs/design-inspiration.md
-- You: approve all run sources (acquisition plan section 12) when ready. Legal and reviewer hours/names are not needed now (D-049, D-051). Check the Anthropic account tier.
-- Agents: read unread source terms and prepare registry entries (9 Nov); run A organisations (10 Nov); run B individuals once Legal confirms the transfer basis (by 13 Nov).
-- **First build task: basic WordPress import path (REQ-237, plan T-0), then the review queue. File as a GitHub issue when gh is available.**
-- Legal: AI transfer basis by 13 Nov (blocks run B); Terms, Privacy, label wording before organisations go live; LIA, DPIA, NDPC registration tier before the first individual goes public
-- After your rulings: apply the listed edits to GUIDE (line 84 is now false for organisations), CLAUDE.md, architecture, ADRs, questions risk register, prototype and inventory (acquisition/docs/change-review-2026-11-08-publish-first.md sections 3–4)
-- You: review the wireframe (prototype/index.html); answer docs/wireframe-findings.md; enable GitHub Pages (Settings > Pages > Source = GitHub Actions) if you want the link
-- Then: Gate 2 approval of architecture.md (WordPress, built locally, D-050)
-- Then: /plan
-- You: nothing blocking. Reviewer names (Q4) and accounts (Q14) are not needed now; Legal (Q5) is skipped for now (D-051)
-- Deferred: Q16 CaromHQ sync (one of the last things built), the Legal section, the judging section (D-051)
 
-## Docs site (2026-11-10)
-`docs/` is now a VitePress site (`cd docs && npm install && npm run dev`). New written guides (44 pages): `docs/getting-started/`, `docs/guide/public-site/`, `docs/guide/staff/`, `docs/concepts/`, `docs/build/`, `docs/design/`, plus `docs/index.md` and `docs/overview.md`. The requirements, decisions, questions, inventory, architecture and ADR files stay as the reference records the guides cite. Moved to `docs/archive/`: the two change reviews, the consistency report and `spec-versions/`. The two venture briefs moved from the repo root to `docs/brief/` (renamed `whoiswho-venture-brief.md`, `wiwi-venture-brief.md`). References in STATUS.md, decisions, questions and GUIDE were updated; `acquisition/` was not touched, so its link to `docs/change-review-2026-11-08-no-accounts.md` now needs `archive/` added.
+- Owner: close or answer the human issues above, starting with the licences (#8, #31), the host check (#37), the mailbox (#1) and the data-rights period (#544).
+- Website session: the buildable issues listed above, then the verification pass (#107).
+- Acquisition session: see `acquisition/STATUS.md`; the first real import batch is #299.

@@ -6,24 +6,24 @@ Every outside plugin the platform plans to use, what each replaces, and where th
 
 - **Few and pinned.** Every plugin is locked to a version. Updates ship through the build pipeline, and file modification is disabled in production, so nothing updates from wp-admin.
 - **Use WordPress first.** A plugin is added only where WordPress does not already do the job.
-- **Vetting rule.** The rule for allowing a plugin (maintenance, size, licence, data handling) is still an open question; see [open questions](/open-questions). Until it is answered, every plugin below needs the visibility matrix re-run and a privacy check before it is approved.
+- **Vetting rule (owner answer, Q81).** A plugin is allowed only if it is actively maintained, small, under an open licence, and handles no personal data without an entry in the processor register. The visibility matrix is re-run for each one.
 - **Plugins that touch personal data** go on the processor register.
 
 ## The list
 
 | Purpose | Plugin | Status | Replaces | Risks |
 |---|---|---|---|---|
-| Staff two-factor sign-in | A maintained two-factor plugin, enforced for every staff role, with recovery codes | Chosen kind; product not yet named | Custom code | WordPress has none built in. Test enforcement and lockout locally |
+| Staff two-factor sign-in | Two Factor 0.17.0, enforced for every staff role | Approved (owner) | Custom code | WordPress has none built in. Test enforcement and lockout locally |
 | Background jobs | Action Scheduler, used as a library inside `whoiswho-core` | Chosen | A custom job table | Shared hosts cannot run daemons, so it runs on WP-Cron with a time budget |
 | Story comments | wpDiscuz | Chosen | Core comments | Personal data and defamation risk. Needs the settings in [Content](/plugins/content). Add to the PII catalogue and processor register |
-| Spam checking | Akismet or an equivalent, with a honeypot and rate limits in the plugin | Proposed | Custom spam filters | Akismet sends data to a third party. Confirm before use |
-| Per-user capability screen | A maintained role-editor plugin | Decided (Q86) | Custom screen | A plugin with a wide surface; the guard plugin still enforces the non-grantable list |
+| Spam checking | A honeypot and rate limits in the plugin. **No Akismet** | Decided (owner) | Custom spam filters | Akismet would send commenter data to a third party, so it is not used |
+| Per-user capability screen | User Role Editor 4.67, usable only by the Administrator | Approved (owner, Q86) | Custom screen | A plugin with a wide surface; the guard plugin still enforces the non-grantable list |
 | Page editor | The native block editor with theme patterns | Decided (Q98) | Editing copy in code | None; built into WordPress |
-| Backups | The host's nightly backups, plus a backup plugin or export if needed | Proposed | Manual backups | Test a restore into a local copy before launch and monthly |
-| Mail delivery | The host's SMTP through `wp_mail`, with SPF, DKIM and DMARC. A small SMTP plugin only if configuration cannot be done without one | Proposed | A mail provider | Hosts cap messages per hour; check before bulk nominee mail |
+| Backups | Deferred by owner decision (see the launch checklist) | Deferred | Manual backups | Not done until they run and a restore is tested |
+| Mail delivery | A free SMTP service the owner sets up, through `wp_mail`; credentials only in the secrets file | Owner to set up | A paid mail provider | Free tiers cap messages; check before bulk nominee mail. SPF, DKIM and DMARC still apply |
 | Bot challenge | Cloudflare Turnstile, if Cloudflare is added | Optional | reCAPTCHA | Only exists if Cloudflare is in front |
-| Edge cache and firewall | Cloudflare, at go-live if wanted | Optional | A page-cache plugin | Not a dependency. Without it there is no edge cache and the origin's 410 is the answer |
-| Page-cache plugin | None planned | Not planned | | A cache plugin is a leak risk for hidden content |
+| Edge cache and firewall | Cloudflare, at go-live if wanted | Optional | The page-cache plugin | Not a dependency. Without it there is no edge cache and the origin's 410 is the answer |
+| Page-cache plugin | WP Super Cache 3.1.5, kept swappable | Approved (owner, Q82) but **off by default** until the CSP-nonce question (issue #719) is settled | Nothing | A cache plugin is a leak risk for hidden content and can serve a stale Content-Security-Policy nonce. The origin's 410 and the visibility matrix must pass with it on before it is switched on. Q82: keep the `wiw_profile_state` table rather than relying on post meta |
 | SEO plugin | None. The guard emits all markup | Excluded | | A plugin could publish a sitemap or schema entry for a hidden record |
 
 ## Not allowed
