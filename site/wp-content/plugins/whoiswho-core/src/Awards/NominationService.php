@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Awards;
 
+use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -38,14 +39,31 @@ final class NominationService {
 	private $profile_state;
 
 	/**
+	 * Returns whether a profile's name is on the suppression list.
+	 *
+	 * @var callable
+	 */
+	private $is_suppressed;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AuditLogger   $audit         Audit logger.
 	 * @param callable|null $profile_state Profile id to publication state (the Directory read API by default).
+	 * @param callable|null $is_suppressed Profile id to whether its name is suppressed (the Compliance list by default).
 	 */
-	public function __construct( AuditLogger $audit, ?callable $profile_state = null ) {
+	public function __construct( AuditLogger $audit, ?callable $profile_state = null, ?callable $is_suppressed = null ) {
 		$this->audit         = $audit;
 		$this->profile_state = $profile_state ?? static fn ( int $id ): ?string => ( new StateRepository() )->pub_state( $id );
+		$this->is_suppressed = $is_suppressed ?? static function ( int $id ) use ( $audit ): bool {
+			$name = get_the_title( $id );
+			foreach ( StateRepository::ENTITY_TYPES as $type ) {
+				if ( null !== ( new Suppression( $audit ) )->match( $name, $type ) ) {
+					return true;
+				}
+			}
+			return false;
+		};
 	}
 
 	/**
@@ -198,6 +216,46 @@ final class NominationService {
 	}
 
 	/**
+	 * Hide a nomination because a removal request was upheld (REQ-198, REQ-147, REQ-207). This is not a staff action on the
+	 * Nominations screen: the Compliance removal decision has already been made and checked, so no awards capability is needed.
+	 * The nomination goes Not live, the change log and the audit log record it with the support item, and the public pages are
+	 * purged. It never reads or stores anything about the requester.
+	 *
+	 * @param int $id              Nomination.
+	 * @param int $support_item_id The upheld removal item.
+	 * @return bool Whether it was Live and is now hidden.
+	 * @throws \DomainException When the nomination does not exist.
+	 */
+	public function hide_for_removal( int $id, int $support_item_id ): bool {
+		$row = $this->require_row( $id );
+		if ( 'not_live' === $row['status'] ) {
+			return false;
+		}
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			AwardsTables::table( AwardsTables::NOMINATIONS ),
+			array(
+				'status'     => 'not_live',
+				'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $id )
+		);
+		$this->record( $id, 'status', (string) $row['status'], 'not_live' );
+		$this->audit->log(
+			'nomination.removal_hide',
+			$this->subject( $id ),
+			array( 'status' => $row['status'] ),
+			array(
+				'status'       => 'not_live',
+				'support_item' => $support_item_id,
+			)
+		);
+		do_action( 'wiw_nomination_changed', $id, 'status', 'not_live' );
+		$this->purge();
+		return true;
+	}
+
+	/**
 	 * Apply a stage or status change.
 	 *
 	 * @param int      $id      Nomination.
@@ -214,6 +272,9 @@ final class NominationService {
 		}
 		if ( 'status' === $column && 'live' === $value && PubState::PUBLISHED_REVIEWED !== ( $row['profile_id'] ? ( $this->profile_state )( (int) $row['profile_id'] ) : null ) ) {
 			throw new \DomainException( 'A nomination cannot go live until its profile has been reviewed.' );
+		}
+		if ( 'status' === $column && 'live' === $value && $row['profile_id'] && ( $this->is_suppressed )( (int) $row['profile_id'] ) ) {
+			throw new \DomainException( 'This name is on the suppression list, so the nomination cannot go live.' );
 		}
 		$old = (string) $row[ $column ];
 		if ( $old === $value ) {

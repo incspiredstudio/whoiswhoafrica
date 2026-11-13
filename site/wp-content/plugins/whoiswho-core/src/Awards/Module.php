@@ -32,5 +32,6 @@ final class Module implements ModuleInterface {
 		( new AwardsRoutes() )->register();
 		CategoriesScreen::hooks();
 		NominationIntake::register();
+		NomineeRemoval::hooks();
 	}
 }
