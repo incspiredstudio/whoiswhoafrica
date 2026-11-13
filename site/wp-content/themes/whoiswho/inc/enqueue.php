@@ -68,7 +68,7 @@ add_action(
 		/**
 		 * Per-template assets: map of template key => logical names. Only the current template's files load.
 		 */
-		$key = wiw_is_home_request() ? 'home' : ( is_singular( 'post' ) ? 'story' : '' );
+		$key = wiw_is_home_request() ? 'home' : ( is_singular( 'post' ) ? 'story' : ( function_exists( 'wiw_awards_view' ) && 'winners' === wiw_awards_view() ? 'winners' : '' ) );
 		if ( '' !== $key ) {
 			$css = wiw_asset_url( $key . '.css' );
 			if ( null !== $css ) {

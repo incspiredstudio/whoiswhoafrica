@@ -126,6 +126,24 @@ if ( ! function_exists( 'wiw_render_edition_block' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wiw_render_supported_by_block' ) ) {
+	/**
+	 * Supported by block markup: the sponsors attached to the current page, or nothing.
+	 */
+	function wiw_render_supported_by_block(): string {
+		ob_start();
+		get_template_part(
+			'template-parts/supported-by',
+			null,
+			array(
+				'kind' => 'page',
+				'id'   => (int) get_the_ID(),
+			)
+		);
+		return (string) ob_get_clean();
+	}
+}
+
 add_action(
 	'init',
 	static function (): void {
@@ -134,6 +152,7 @@ add_action(
 			'wiw/awards-stage-button' => array( 'Awards stage button', 'wiw_render_stage_button_block' ),
 			'wiw/awards-categories'   => array( 'Awards categories', 'wiw_render_award_categories_block' ),
 			'wiw/edition'             => array( 'Edition label', 'wiw_render_edition_block' ),
+			'wiw/supported-by'        => array( 'Supported by', 'wiw_render_supported_by_block' ),
 		);
 		foreach ( $blocks as $name => list( $title, $callback ) ) {
 			if ( WP_Block_Type_Registry::get_instance()->is_registered( $name ) ) {

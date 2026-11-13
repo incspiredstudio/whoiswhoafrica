@@ -61,6 +61,9 @@ final class Module implements ModuleInterface {
 		Audit\AuditExport::for_site()->register( Jobs\JobRunner::for_site() );
 		require_once __DIR__ . '/Settings/functions.php';
 		Settings\SprintScreen::hooks();
+		TwoFactor\TwoFactor::register();
+		RoleEditor\RoleEditor::register();
+		Cache\PageCache\PageCache::register();
 		Cache\PurgeService::for_site()->register();
 		Cache\Admin\PurgeLogScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
