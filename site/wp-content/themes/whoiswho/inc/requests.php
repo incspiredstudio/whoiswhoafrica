@@ -172,7 +172,6 @@ add_action(
 		if ( $profile instanceof PublicProfile ) {
 			get_template_part( 'template-parts/report-panel', null, array( 'profile' => $profile ) );
 		}
-  },
+	},
 	30
-
 );
