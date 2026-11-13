@@ -6,7 +6,9 @@
  * evidence and the nominator's relationship declaration are validated by one validator and stored as a nomination that is
  * Nominated and Not live, with a reference, source public form, and the nominator's data kept privately. No account or login is
  * created. Both steps run only while the Nominations flag is on, and both pass the bot challenge, form token and throttles
- * (PublicSubmission). Duplicate warnings and the free-text scan arrive in M4-AWD-11.
+ * (PublicSubmission). The evidence and relationship note pass the free-text scan (no contact details or sensitive personal
+ * text), a nominee already nominated in the category or on the suppression list gets one neutral warning the nominator may
+ * continue past, and the nomination throttle answers "Too many nominations from this device" (REQ-196, REQ-122).
  *
  * @package WhoIsWho
  */
@@ -16,6 +18,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Awards;
 
 use WhoIsWho\Core\Compliance\Forms\PublicSubmission;
+use WhoIsWho\Core\Compliance\FreeTextScanner;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Links\SignedLinks;
 use WhoIsWho\Core\Platform\Mail\Events;
@@ -34,6 +37,10 @@ final class NominationIntake {
 	public const CLOSED     = 'closed';
 	public const UNVERIFIED = 'unverified';
 	public const BAD_DRAFT  = 'draft_expired';
+	public const DUPLICATE  = 'duplicate';
+
+	public const DUPLICATE_MESSAGE = 'Someone may already have put this person or organisation forward in this category. You can still send your nomination.';
+	public const THROTTLE_MESSAGE  = 'Too many nominations from this device. Please try again later.';
 
 	/**
 	 * Notifier.
@@ -78,22 +85,40 @@ final class NominationIntake {
 	private $is_open;
 
 	/**
+	 * Free-text scanner.
+	 *
+	 * @var FreeTextScanner
+	 */
+	private FreeTextScanner $scanner;
+
+	/**
+	 * Duplicate check.
+	 *
+	 * @var NominationDuplicates
+	 */
+	private NominationDuplicates $duplicates;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Notifier         $notifier   Notifier.
-	 * @param PublicSubmission $submission Bot challenge, token and throttles.
-	 * @param SignedLinks      $links      Signed links.
-	 * @param CategoryService  $categories Categories.
-	 * @param NominationDrafts $drafts     Drafts.
-	 * @param callable|null    $is_open    Returns whether nominations are open; the Nominations flag by default.
+	 * @param Notifier                  $notifier   Notifier.
+	 * @param PublicSubmission          $submission Bot challenge, token and throttles.
+	 * @param SignedLinks               $links      Signed links.
+	 * @param CategoryService           $categories Categories.
+	 * @param NominationDrafts          $drafts     Drafts.
+	 * @param callable|null             $is_open    Returns whether nominations are open; the Nominations flag by default.
+	 * @param FreeTextScanner|null      $scanner    Free-text scanner.
+	 * @param NominationDuplicates|null $duplicates Duplicate check.
 	 */
-	public function __construct( Notifier $notifier, PublicSubmission $submission, SignedLinks $links, CategoryService $categories, ?NominationDrafts $drafts = null, ?callable $is_open = null ) {
+	public function __construct( Notifier $notifier, PublicSubmission $submission, SignedLinks $links, CategoryService $categories, ?NominationDrafts $drafts = null, ?callable $is_open = null, ?FreeTextScanner $scanner = null, ?NominationDuplicates $duplicates = null ) {
 		$this->notifier   = $notifier;
 		$this->submission = $submission;
 		$this->links      = $links;
 		$this->categories = $categories;
 		$this->drafts     = $drafts ?? new NominationDrafts();
 		$this->is_open    = $is_open ?? static fn (): bool => function_exists( 'wiw_nominations_open' ) && wiw_nominations_open();
+		$this->scanner    = $scanner ?? new FreeTextScanner();
+		$this->duplicates = $duplicates ?? new NominationDuplicates();
 	}
 
 	/**
@@ -184,24 +209,33 @@ final class NominationIntake {
 		if ( null === $draft['verified_at'] ) {
 			return $this->reply( self::UNVERIFIED, 'Please open the link we emailed you before submitting.', array(), $token );
 		}
-		$result = ( new NominationValidator() )->validate( $input );
+		$result = $this->scanner->apply( 'nomination', ( new NominationValidator() )->validate( $input ), array( 'evidence', 'relationship_note' ) );
 		$errors = $result->errors();
 		if ( ! isset( $errors['category_id'] ) && $this->current_category( (int) $result->value( 'category_id' ) ) === null ) {
 			$errors['category_id'] = 'invalid';
 		}
 		if ( array() !== $errors ) {
-			return $this->reply( self::INVALID, 'Please check the highlighted fields.', $errors, $token );
+			$scanned = in_array( FreeTextScanner::ERROR_CODE, $errors, true );
+			return $this->reply( self::INVALID, $scanned ? FreeTextScanner::message() : 'Please check the highlighted fields.', $errors, $token );
 		}
-		$values = $result->values();
+		$values   = $result->values();
+		$continue = '1' === $input->raw( 'continue_anyway' );
+		// The duplicate check runs after the bot challenge and throttle, so the form cannot be used to probe names.
 		$answer = $this->submission->handle(
 			'nomination',
 			$input,
 			$ip,
 			$draft['email'],
-			fn (): string => $this->create( $draft, $values )
+			fn (): string => ! $continue && null !== $this->duplicates->check( $values['nominee_name'], $values['nominee_org'], (int) $values['category_id'] ) ? self::DUPLICATE : $this->create( $draft, $values )
 		);
+		if ( PublicSubmission::TRY_LATER === $answer['status'] ) {
+			return $this->reply( $answer['status'], self::THROTTLE_MESSAGE, array(), $token );
+		}
 		if ( PublicSubmission::RECEIVED !== $answer['status'] ) {
 			return $this->reply( $answer['status'], $answer['message'], array(), $token );
+		}
+		if ( self::DUPLICATE === $answer['item'] ) {
+			return $this->reply( self::DUPLICATE, self::DUPLICATE_MESSAGE, array(), $token );
 		}
 		$this->drafts->delete( $token );
 		return $this->reply( PublicSubmission::RECEIVED, 'Thank you. Your nomination has been received.', array(), '', (string) $answer['item'] );
