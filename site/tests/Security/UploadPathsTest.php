@@ -45,10 +45,17 @@ final class UploadPathsTest extends TestCase {
 		$this->assertSame( 10 * 1024 * 1024, Uploads::MAX_BYTES );
 	}
 
+	/**
+	 * Files outside the guard that may touch the upload superglobal, with the reason. Request.php is the one place the
+	 * superglobals are read (architecture rule); its file() accessor feeds only the staff-only Import screen (a signed-off bundle
+	 * staged by BundleStore), never a public form or the media library. A new consumer of file() fails the second test below.
+	 */
+	private const ALLOWED_READERS = array( 'Request.php' );
+
 	public function test_REQ_127_no_code_outside_the_guard_reads_uploaded_files(): void {
 		$offenders = array();
 		foreach ( $this->source_files() as $path ) {
-			if ( str_contains( $path, '/mu-plugins/whoiswho-guard/' ) ) {
+			if ( str_contains( $path, '/mu-plugins/whoiswho-guard/' ) || in_array( basename( $path ), self::ALLOWED_READERS, true ) ) {
 				continue;
 			}
 			$code = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
@@ -57,6 +64,17 @@ final class UploadPathsTest extends TestCase {
 			}
 		}
 		$this->assertSame( array(), $offenders, 'a new upload path must go through the guard and be added to this matrix: ' . implode( ', ', $offenders ) );
+	}
+
+	public function test_REQ_127_only_the_staff_import_screen_takes_a_file_from_the_request(): void {
+		$callers = array();
+		foreach ( $this->source_files() as $path ) {
+			$code = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			if ( 1 === preg_match( '/->file\(\s*[\'"]/', $code ) ) {
+				$callers[] = basename( $path );
+			}
+		}
+		$this->assertSame( array( 'ImportScreen.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
 	}
 
 	public function test_REQ_127_evidence_not_served_inline(): void {
