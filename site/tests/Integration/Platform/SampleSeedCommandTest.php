@@ -334,6 +334,22 @@ final class SampleSeedCommandTest extends WpTestCase {
 		$this->assertNull( get_post( $image ), 'the image is deleted with the sample content' );
 	}
 
+	public function test_REQ_208_the_faq_and_awards_rules_pages_carry_the_prototype_copy_not_placeholder_text(): void {
+		$this->seed();
+		$faq = get_page_by_path( 'faq' );
+		$this->assertInstanceOf( \WP_Post::class, $faq );
+		$this->assertSame( 'Frequently asked questions', $faq->post_title );
+		$this->assertGreaterThanOrEqual( 5, substr_count( $faq->post_content, '<!-- wp:whoiswho/faq-group' ), 'five groups' );
+		$this->assertGreaterThanOrEqual( 14, substr_count( $faq->post_content, '<!-- wp:whoiswho/faq-question' ), 'every question' );
+		$this->assertStringContainsString( 'How do I get listed?', $faq->post_content );
+		$this->assertStringNotContainsString( 'A question people ask', $faq->post_content );
+		$rules = get_page_by_path( 'awards/rules' );
+		$this->assertInstanceOf( \WP_Post::class, $rules );
+		foreach ( array( 'Eligibility', 'Nominations', 'Judging', 'No public voting', 'Criteria' ) as $heading ) {
+			$this->assertStringContainsString( '>' . $heading . '</h2>', $rules->post_content, $heading );
+		}
+	}
+
 	public function test_REQ_208_the_shipped_dataset_builds_about_forty_profiles_twelve_stories_and_six_events(): void {
 		$data = SampleSeeder::load_data();
 		$this->assertGreaterThanOrEqual( 40, count( $data['profiles'] ) );
