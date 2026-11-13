@@ -61,3 +61,8 @@ export async function loginAs(page: Page, baseURL: string, role: StaffRole): Pro
 export function resetRateLimits(): void {
   runHelper("reset-limits.php");
 }
+
+/** Remove the support items and suppression entries that a browser run created (their addresses end in @example.invalid). */
+export function cleanupSupport(): void {
+  runHelper("cleanup-support.php");
+}
