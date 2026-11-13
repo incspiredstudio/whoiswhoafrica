@@ -66,6 +66,7 @@ final class Transport {
 		add_action( 'phpmailer_init', array( $this, 'configure' ) );
 		add_filter( 'pre_wp_mail', array( $this, 'pre_send' ), 10, 2 );
 		add_filter( 'wp_mail_from', array( $this, 'from_address' ) );
+		add_filter( 'wp_mail_from_name', array( $this, 'from_name' ) );
 		add_action( 'wp_mail_failed', array( $this, 'log_failure' ) );
 		add_action( 'admin_notices', array( $this, 'notice' ) );
 	}
@@ -90,6 +91,14 @@ final class Transport {
 	 * @param \PHPMailer\PHPMailer\PHPMailer $mailer Mailer.
 	 */
 	public function configure( $mailer ): void { // phpcs:disable WordPress.NamingConventions.ValidVariableName -- PHPMailer property names.
+		// Name ourselves with the sending domain (EHLO and Message-ID), also when a job runs from the command line with no host.
+		$at     = strrchr( $this->from_address( '' ), '@' );
+		$domain = false === $at ? '' : substr( $at, 1 );
+		if ( '' !== $domain ) {
+			$mailer->Hostname = $domain;
+		}
+		// A mail server can be slow to answer after the message (spam scanning); give it time, but not forever.
+		$mailer->Timeout = 45;
 		if ( $this->has_credentials() ) {
 			$mailer->isSMTP();
 			$mailer->Host       = $this->config['host'];
@@ -139,6 +148,16 @@ final class Transport {
 		}
 		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		return '' !== $host ? 'no-reply@' . preg_replace( '/^www\./', '', $host ) : (string) $from;
+	}
+
+	/**
+	 * The From name: the brand, not WordPress.
+	 *
+	 * @param string $name Name WordPress would use.
+	 */
+	public function from_name( $name ): string {
+		$brand = trim( (string) apply_filters( 'wiw_brand_name', (string) get_bloginfo( 'name' ) ) );
+		return '' !== $brand ? $brand : (string) $name;
 	}
 
 	/**
