@@ -33,5 +33,6 @@ final class Module implements ModuleInterface {
 		SponsoredStoriesScreen::hooks();
 		Admin\CustomersScreen::hooks();
 		CustomerExport::hooks();
+		Invitations\InvitationRoute::hooks();
 	}
 }
