@@ -13,13 +13,13 @@
 /**
  * Build the zip.
  *
- * @param string   $parent  Folder that holds the entries.
+ * @param string   $folder  Folder that holds the entries.
  * @param string   $target  Zip file to write.
- * @param string[] $entries Entry names (files or folders) inside $parent.
+ * @param string[] $entries Entry names (files or folders) inside $folder.
  * @return int Exit code.
  */
-function wiw_zip_dir( string $parent, string $target, array $entries ): int {
-	$parent = rtrim( str_replace( '\\', '/', $parent ), '/' );
+function wiw_zip_dir( string $folder, string $target, array $entries ): int {
+	$folder = rtrim( str_replace( '\\', '/', $folder ), '/' );
 	if ( file_exists( $target ) ) {
 		unlink( $target );
 	}
@@ -30,7 +30,7 @@ function wiw_zip_dir( string $parent, string $target, array $entries ): int {
 	}
 	$count = 0;
 	foreach ( $entries as $name ) {
-		$full = $parent . '/' . $name;
+		$full = $folder . '/' . $name;
 		if ( is_file( $full ) ) {
 			$zip->addFile( $full, $name );
 			++$count;
