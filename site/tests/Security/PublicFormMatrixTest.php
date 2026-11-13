@@ -19,10 +19,10 @@ use WhoIsWho\Tests\Support\MemoryStore;
 final class PublicFormMatrixTest extends TestCase {
 
 	/**
-	 * Forms in the brief that have no POST handler or template yet (nominate and data request are M3/M4 features; comments use
+	 * Forms in the brief that have no POST handler or template yet (data request is an M4 feature; comments use
 	 * WordPress's own handler).
 	 */
-	private const KNOWN_MISSING = array( 'nominate', 'data_request' );
+	private const KNOWN_MISSING = array( 'data_request' );
 
 	/**
 	 * The form keys of the real route table.
@@ -42,17 +42,24 @@ final class PublicFormMatrixTest extends TestCase {
 		$forms = $this->forms();
 		$this->assertGreaterThanOrEqual( 8, count( $forms ), 'enquiry, contact, get listed, claim, correct, remove, report, newsletter' );
 		foreach ( $forms as $form ) {
-			$limiter = new RateLimiter( new MemoryStore(), 'k', null, static fn (): int => 1000 );
-			for ( $i = 1; $i <= 10; $i++ ) {
-				$this->assertTrue( $limiter->allow( $form, '203.0.113.9' ), "$form attempt $i from one IP is allowed" );
-			}
-			$this->assertFalse( $limiter->allow( $form, '203.0.113.9' ), "$form: the 11th attempt from one IP is throttled" );
+			// Each form is held to its own configured limit (nomination has a wider per-email allowance than the default).
+			$limits              = RateLimiter::LIMITS[ $form ] ?? RateLimiter::LIMITS['default'];
+			list( $ip_max )      = $limits['ip'];
+			list( $subject_max ) = $limits['subject'];
+			$this->assertLessThanOrEqual( 10, $ip_max, "$form: no more than 10 attempts per IP" );
+			$this->assertLessThanOrEqual( 8, $subject_max, "$form: no more than 8 attempts per address" );
 
 			$limiter = new RateLimiter( new MemoryStore(), 'k', null, static fn (): int => 1000 );
-			for ( $i = 1; $i <= 3; $i++ ) {
+			for ( $i = 1; $i <= $ip_max; $i++ ) {
+				$this->assertTrue( $limiter->allow( $form, '203.0.113.9' ), "$form attempt $i from one IP is allowed" );
+			}
+			$this->assertFalse( $limiter->allow( $form, '203.0.113.9' ), "$form: attempt " . ( $ip_max + 1 ) . ' from one IP is throttled' );
+
+			$limiter = new RateLimiter( new MemoryStore(), 'k', null, static fn (): int => 1000 );
+			for ( $i = 1; $i <= $subject_max; $i++ ) {
 				$this->assertTrue( $limiter->allow( $form, '198.51.100.' . $i, 'Same@Example.test' ), "$form attempt $i for one address is allowed" );
 			}
-			$this->assertFalse( $limiter->allow( $form, '198.51.100.99', 'same@example.test' ), "$form: the 4th attempt for one address is throttled across IPs and letter case" );
+			$this->assertFalse( $limiter->allow( $form, '198.51.100.99', 'same@example.test' ), "$form: attempt " . ( $subject_max + 1 ) . ' for one address is throttled across IPs and letter case' );
 		}
 	}
 
