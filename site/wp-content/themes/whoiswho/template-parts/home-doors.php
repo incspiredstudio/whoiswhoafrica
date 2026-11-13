@@ -19,8 +19,8 @@ if ( array() === $wiw_doors ) {
 }
 ?>
 <section class="h-doors" aria-label="<?php esc_attr_e( 'The directory', 'whoiswho' ); ?>">
-	<?php foreach ( $wiw_doors as $wiw_door ) : ?>
-		<a class="h-door h-door--<?php echo esc_attr( (string) $wiw_door['tone'] ); ?>" href="<?php echo esc_url( (string) $wiw_door['url'] ); ?>">
+	<?php foreach ( $wiw_doors as $wiw_i => $wiw_door ) : ?>
+		<a class="h-door h-rv-clip h-door--<?php echo esc_attr( (string) $wiw_door['tone'] ); ?>" style="--d:<?php echo (int) $wiw_i; ?>" data-cursor="<?php esc_attr_e( 'Browse', 'whoiswho' ); ?>" href="<?php echo esc_url( (string) $wiw_door['url'] ); ?>">
 			<span class="h-mark h-door-mark h-mark--<?php echo esc_attr( (string) $wiw_door['mark'] ); ?>" aria-hidden="true"></span>
 			<span class="h-door-text"><strong><?php echo esc_html( (string) $wiw_door['title'] ); ?></strong><span><?php echo esc_html( (string) $wiw_door['text'] ); ?></span></span>
 		</a>
