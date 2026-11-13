@@ -44,7 +44,6 @@ return array(
 		'erase'     => 'anonymise',
 		'note'      => '',
 	),
-
 	// Guest comments on stories (REQ-258). The email is for the moderator only and is never in public HTML.
 	array(
 		'kind'      => 'column',
@@ -73,7 +72,6 @@ return array(
 		'erase'     => 'anonymise',
 		'note'      => 'Address WordPress stores for spam checks.',
 	),
-
 	// wpDiscuz's own tables (REQ-258). They exist only while that plugin is active; listed here so the data-request flow and the
 	// retention schedule know them. Column names follow wpDiscuz 7; check them again when the plugin version changes.
 	array(
@@ -103,7 +101,6 @@ return array(
 		'erase'     => 'delete',
 		'note'      => 'Address of a commenter who follows another (wpDiscuz); deleted on request.',
 	),
-
 	// Tables added in the foundation milestone and the ones planned next.
 	array(
 		'kind'      => 'column',
@@ -222,7 +219,6 @@ return array(
 		'erase'     => 'keep',
 		'note'      => 'A short staff reason; the form tells staff not to type personal data.',
 	),
-
 	array(
 		'kind'      => 'column',
 		'name'      => 'wiw_bulk_actions.reason',
@@ -241,7 +237,6 @@ return array(
 		'erase'     => 'keep',
 		'note'      => 'The filter a bulk unpublish used (source, batch, type, state, origin, name search). The name search is staff-typed.',
 	),
-
 	// Import evidence for the reviewer (never public).
 	array(
 		'kind'      => 'column',
@@ -380,84 +375,6 @@ return array(
 	),
 	array(
 		'kind'      => 'column',
-		'name'      => 'wiw_nominations.notes',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'exclude',
-		'erase'     => 'anonymise',
-		'note'      => 'Internal staff notes on a nomination (REQ-031); never public, never in an export; may name people.',
-		'name'      => 'wiw_customers.name',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Customer or organisation name as staff recorded it.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_customers.contact_email',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Contact address; staff only.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_customers.contact_phone',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Contact phone; staff only.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_customers.notes',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Internal notes; never public; may name people.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_arrangements.notes',
-		'class'     => 'pii',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Internal deal notes; never public; may name people.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_arrangements.reference',
-		'class'     => 'financial',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'keep',
-		'note'      => 'Offline payment reference text; kept as a financial record. Never card data; never joined to Awards.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_arrangements.amount_minor',
-		'class'     => 'financial',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'keep',
-		'note'      => 'Deal amount in minor units (kobo); Administrator only; kept as a financial record.',
-	),
-	array(
-		'kind'      => 'column',
-		'name'      => 'wiw_placements.sponsor_name',
-		'class'     => 'public_after_approval',
-		'retention' => 'case_life',
-		'export'    => 'include',
-		'erase'     => 'anonymise',
-		'note'      => 'Sponsor name shown as Sponsored by while a placement is active.',
-	),
-	array(
-		'kind'      => 'column',
 		'name'      => 'wiw_support_items.requester_name',
 		'class'     => 'pii',
 		'retention' => 'support_request',
@@ -590,6 +507,8 @@ return array(
 		'export'    => 'include',
 		'erase'     => 'anonymise',
 		'note'      => 'Internal notes; never public; may name people.',
+	),
+	array(
 		'kind'      => 'meta',
 		'name'      => '_wiw_contact_details',
 		'class'     => 'pii',
@@ -597,5 +516,50 @@ return array(
 		'export'    => 'include',
 		'erase'     => 'delete',
 		'note'      => 'Contact details staff hold for a profile; private unless a detail is switched on (REQ-060).',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.notes',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'exclude',
+		'erase'     => 'anonymise',
+		'note'      => 'Internal staff notes on a nomination (REQ-031); never public, never in an export; may name people.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_arrangements.notes',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Internal deal notes; never public; may name people.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_arrangements.reference',
+		'class'     => 'financial',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'keep',
+		'note'      => 'Offline payment reference text; kept as a financial record. Never card data; never joined to Awards.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_arrangements.amount_minor',
+		'class'     => 'financial',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'keep',
+		'note'      => 'Deal amount in minor units (kobo); Administrator only; kept as a financial record.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_placements.sponsor_name',
+		'class'     => 'public_after_approval',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Sponsor name shown as Sponsored by while a placement is active.',
 	),
 );
