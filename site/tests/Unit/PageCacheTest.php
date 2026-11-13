@@ -145,7 +145,7 @@ final class PageCacheTest extends TestCase {
 	}
 
 	public function test_REQ_209_a_failed_clear_is_reported_so_the_job_retries(): void {
-		$client = new SuperCachePurgeClient( static fn ( string $url ): bool => false );
+		$client = new SuperCachePurgeClient( static fn ( string $url ): bool => false ); // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- callback signature.
 		$this->expectException( \RuntimeException::class );
 		$client->purge( array( 'https://example.test/profile/a/' ) );
 	}

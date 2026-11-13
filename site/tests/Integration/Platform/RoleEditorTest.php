@@ -92,9 +92,9 @@ final class RoleEditorTest extends TestCase {
 		get_role( 'wiw_editor' )->add_cap( 'ure_edit_roles' );
 		( new \WP_User( $staff ) )->add_cap( 'ure_manage_options' );
 		try {
-			$this->assertFalse( user_can( $staff, 'ure_edit_roles' ) );
-			$this->assertFalse( user_can( $staff, 'ure_manage_options' ) );
-			$this->assertFalse( user_can( $staff, 'ure_create_roles' ), 'a plugin capability that was never stored is also refused' );
+			$this->assertFalse( user_can( $staff, 'ure_edit_roles' ) ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
+			$this->assertFalse( user_can( $staff, 'ure_manage_options' ) ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
+			$this->assertFalse( user_can( $staff, 'ure_create_roles' ), 'a plugin capability that was never stored is also refused' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
 		} finally {
 			get_role( 'wiw_editor' )->remove_cap( 'ure_edit_roles' );
 		}
@@ -104,7 +104,7 @@ final class RoleEditorTest extends TestCase {
 		$admin = $this->user( 'administrator' );
 		$user  = new \WP_User( $admin );
 		$user->add_cap( RoleEditor::GATE, false );
-		$this->assertFalse( user_can( $admin, 'ure_edit_roles' ) );
+		$this->assertFalse( user_can( $admin, 'ure_edit_roles' ) ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
 	}
 
 	public function test_REQ_235_fixed_capability_cannot_be_granted_to_non_administrator(): void {
@@ -117,7 +117,7 @@ final class RoleEditorTest extends TestCase {
 			foreach ( ( new CapabilityCatalogue() )->fixed() as $cap ) {
 				$this->assertFalse( user_can( $staff, $cap ), "$cap has no effect for a non-Administrator" );
 			}
-			$this->assertFalse( user_can( $staff, 'ure_edit_roles' ), 'granting the gate does not open the role editor either' );
+			$this->assertFalse( user_can( $staff, 'ure_edit_roles' ), 'granting the gate does not open the role editor either' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
 		} finally {
 			get_role( 'wiw_editor' )->remove_cap( 'install_plugins' );
 		}
@@ -139,7 +139,7 @@ final class RoleEditorTest extends TestCase {
 		$admin = $this->user( 'administrator' );
 		wp_set_current_user( $admin );
 		( new \WP_User( $admin ) )->add_cap( 'wiw_view_audit_extra' );
-		$this->assertFalse( user_can( $admin, 'wiw_view_audit_extra' ), 'a user cannot grant themselves a capability' );
+		$this->assertFalse( user_can( $admin, 'wiw_view_audit_extra' ), 'a user cannot grant themselves a capability' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- capability checked on purpose, it is not registered by this site.
 		( new \WP_User( $admin ) )->set_role( 'wiw_editor' );
 		$this->assertContains( 'administrator', ( new \WP_User( $admin ) )->roles, 'a user cannot change their own role' );
 	}

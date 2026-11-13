@@ -86,14 +86,14 @@ final class PageCacheConfigTest extends TestCase {
 		file_put_contents( $this->tmp . '/wp-content/plugins/wp-super-cache/advanced-cache.php', "<?php // drop-in\n" );
 		$script = dirname( __DIR__, 2 ) . '/deploy/cache/install.php';
 
-		$first = shell_exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1' );
+		$first = shell_exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec -- runs the install script in a temp site.
 		$this->assertStringContainsString( 'wrote advanced-cache.php', (string) $first );
 		$this->assertStringContainsString( 'wrote wp-cache-config.php', (string) $first );
 		$this->assertFileExists( $this->tmp . '/wp-content/advanced-cache.php' );
 		$this->assertFileExists( $this->tmp . '/wp-content/wp-cache-config.php' );
 		$this->assertDirectoryExists( $this->tmp . '/wp-content/cache' );
 
-		$second = shell_exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1' );
+		$second = shell_exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec -- runs the install script in a temp site.
 		$this->assertStringContainsString( 'unchanged advanced-cache.php', (string) $second );
 		$this->assertStringContainsString( 'unchanged wp-cache-config.php', (string) $second );
 	}
@@ -102,7 +102,7 @@ final class PageCacheConfigTest extends TestCase {
 		$this->tmp = sys_get_temp_dir() . '/wiw-cache-' . bin2hex( random_bytes( 4 ) );
 		mkdir( $this->tmp . '/wp-content', 0777, true );
 		$script = dirname( __DIR__, 2 ) . '/deploy/cache/install.php';
-		exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1', $output, $code );
+		exec( escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( $script ) . ' --site ' . escapeshellarg( $this->tmp ) . ' 2>&1', $output, $code ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- runs the install script in a temp site.
 		$this->assertSame( 1, $code );
 		$this->assertStringContainsString( 'Missing:', implode( "\n", $output ) );
 	}
