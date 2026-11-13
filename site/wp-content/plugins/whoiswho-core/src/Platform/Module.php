@@ -57,6 +57,7 @@ final class Module implements ModuleInterface {
 			}
 		);
 		Mail\Admin\EmailLogScreen::hooks();
+		Audit\Admin\AuditScreen::hooks();
 		require_once __DIR__ . '/Settings/functions.php';
 		Settings\SprintScreen::hooks();
 		Cache\PurgeService::for_site()->register();
