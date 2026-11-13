@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "whoiswho/faq-group",
+  "title": "FAQ group",
+  "category": "text",
+  "icon": "editor-help",
+  "description": "A heading and the questions under it. Drag groups and questions to reorder them.",
+  "keywords": ["faq", "questions"],
+  "textdomain": "whoiswho",
+  "attributes": {
+    "heading": { "type": "string", "default": "" }
+  },
+  "supports": { "html": false, "anchor": true },
+  "editorScript": "wiw-faq-editor"
+}
