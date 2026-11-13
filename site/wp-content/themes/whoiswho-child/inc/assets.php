@@ -11,6 +11,9 @@ declare(strict_types=1);
 add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
+		if ( function_exists( 'wiw_core_ready' ) && ! wiw_core_ready() ) {
+			return; // The holding page loads none of the theme's styles.
+		}
 		wp_enqueue_style( 'wiw-tokens-brand', get_stylesheet_directory_uri() . '/assets/css/tokens.css', array( 'wiw-tokens-base' ), WIW_CHILD_VERSION );
 		// A url() inside a custom property resolves against the stylesheet that uses it, which is the built bundle, not tokens.css. Absolute addresses keep the brand images working everywhere.
 		$brand = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/brand/';
@@ -34,6 +37,9 @@ add_action(
 add_action(
 	'wp_head',
 	static function (): void {
+		if ( function_exists( 'wiw_core_ready' ) && ! wiw_core_ready() ) {
+			return;
+		}
 		foreach ( array( 'repline.woff2', 'montreal-400.woff2' ) as $file ) {
 			printf(
 				'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",

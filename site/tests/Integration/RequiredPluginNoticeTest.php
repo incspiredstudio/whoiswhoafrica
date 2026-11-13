@@ -114,4 +114,9 @@ final class RequiredPluginNoticeTest extends WpTestCase {
 		$this->assertLessThan( $loop, $guard, 'the guard runs before any theme file that calls the plugin' );
 		$this->assertStringContainsString( 'safe-mode.php', $source );
 	}
+
+	public function test_REQ_056_child_theme_loads_no_styles_on_the_holding_page(): void {
+		$source = (string) file_get_contents( dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho-child/inc/assets.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertSame( 2, substr_count( $source, 'wiw_core_ready()' ), 'both the enqueue and the font preload stand down' );
+	}
 }
