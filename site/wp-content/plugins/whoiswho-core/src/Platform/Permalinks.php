@@ -28,7 +28,7 @@ final class Permalinks {
 			return false;
 		}
 		$wp_rewrite->set_permalink_structure( self::STRUCTURE );
-t	// The rules are rebuilt, with every plugin's rules, on the next request.
+		// The rules are rebuilt, with every plugin's rules, on the next request.
 		delete_option( 'rewrite_rules' );
 		return true;
 	}
