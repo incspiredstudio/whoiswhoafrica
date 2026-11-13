@@ -152,13 +152,13 @@ final class SearchVisibilityTest extends TestCase {
 		$found    = $this->found();
 		$failures = array();
 		foreach ( $expected_public as $state => $public ) {
-			if ( $public !== in_array( $profiles[ $state ], $found, true ) ) {
+			if ( in_array( $profiles[ $state ], $found, true ) !== $public ) {
 				$failures[] = "profile in {$state}: expected " . ( $public ? 'found' : 'absent' );
 			}
 		}
 		foreach ( $stories as $status => $id ) {
 			$should = 'publish' === $status;
-			if ( $should !== in_array( $id, $found, true ) ) {
+			if ( in_array( $id, $found, true ) !== $should ) {
 				$failures[] = "story {$status}: expected " . ( $should ? 'found' : 'absent' );
 			}
 		}
