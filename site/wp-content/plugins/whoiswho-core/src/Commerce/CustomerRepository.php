@@ -125,6 +125,26 @@ class CustomerRepository {
 	}
 
 	/**
+	 * Customers, newest first, optionally narrowed by a search over name, segment and external id.
+	 *
+	 * @param string $search Search text, or empty.
+	 * @param int    $limit  Most rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function search( string $search = '', int $limit = 200 ): array {
+		global $wpdb;
+		$limit = max( 1, $limit );
+		if ( '' === $search ) {
+			$sql = $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d', $limit ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		} else {
+			$like = '%' . $wpdb->esc_like( $search ) . '%';
+			$sql  = $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE name LIKE %s OR segment LIKE %s OR external_id LIKE %s ORDER BY id DESC LIMIT %d', $like, $like, $like, $limit ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		}
+		$rows = $wpdb->get_results( (string) $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * The customer created from an enquiry, if there is one.
 	 *
 	 * @param int $enquiry_id Support item id.
