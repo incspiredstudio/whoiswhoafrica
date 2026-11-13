@@ -88,7 +88,7 @@ final class CommentPrivacy {
 		return array_values(
 			array_filter(
 				$found,
-				static fn ( $comment ): bool => $comment instanceof \WP_Comment && strtolower( (string) $comment->comment_author_email ) === $email
+				static fn ( $comment ): bool => strtolower( (string) $comment->comment_author_email ) === $email
 			)
 		);
 	}
