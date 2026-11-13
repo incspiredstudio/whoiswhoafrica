@@ -53,9 +53,9 @@ final class PendingNotice {
 			return '';
 		}
 		if ( 'production' === $environment ) {
-			$text = __( 'The core plugin has database changes waiting. In production they are applied only by the deploy script. Run the deploy, or follow the install steps for a first install.', 'whoiswho' );
+			$text = __( 'The core plugin has database changes waiting. In production they are applied only by the deploy script. Run the deploy, or, on a brand-new install, open Setup in the admin menu and press Run database setup.', 'whoiswho' );
 		} else {
-			$text = __( 'The core plugin has database changes waiting. Deactivate and activate the plugin again, or run wp wiw migrate (or php bin/wiw.php migrate).', 'whoiswho' );
+			$text = __( 'The core plugin has database changes waiting. Open Setup in the admin menu and press Run database setup (or deactivate and activate the plugin again, or run wp wiw migrate).', 'whoiswho' );
 		}
 		return '<div class="notice notice-warning wiw-schema-notice"><p>' . esc_html( $text ) . '</p></div>';
 	}
