@@ -31,6 +31,7 @@ final class Module implements ModuleInterface {
 		NominationsSwitch::hooks();
 		( new AwardsRoutes() )->register();
 		CategoriesScreen::hooks();
+		AwardsStage::hooks();
 		NominationIntake::register();
 	}
 }
