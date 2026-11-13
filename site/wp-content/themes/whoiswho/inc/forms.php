@@ -40,6 +40,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 				'template' => 'templates/unsubscribe.php',
 				'title'    => __( 'Unsubscribe', 'whoiswho' ),
 			),
+			'search'      => array(
+				'template' => 'templates/search.php',
+				'title'    => __( 'Search', 'whoiswho' ),
+			),
 			'done'        => array(
 				'template' => 'templates/done.php',
 				'title'    => __( 'Received', 'whoiswho' ),
@@ -208,7 +212,7 @@ add_action(
 add_action(
 	'wp_head',
 	static function (): void {
-		if ( in_array( wiw_form_current(), array( 'done', 'claim', 'unsubscribe' ), true ) ) {
+		if ( in_array( wiw_form_current(), array( 'done', 'claim', 'unsubscribe', 'search' ), true ) ) {
 			echo '<meta name="robots" content="noindex, nofollow">' . "\n";
 		}
 	},
