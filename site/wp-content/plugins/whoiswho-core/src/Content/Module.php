@@ -34,6 +34,8 @@ final class Module implements ModuleInterface {
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		Events\EventCache::hooks();
+		Events\EventCache::register_job();
 		( new Comments\CommentPolicy() )->register();
 		Newsletter\NewsletterSignup::register();
 		Curation\Admin\CurationScreen::hooks();
