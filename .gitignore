@@ -27,3 +27,11 @@ acquisition/exports/*
 docs/node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+# Local build output and editor/agent folders
+/dist/
+/.claude/
+/.vscode/
+
+# Real sample bundle shipped in the install zip only (personal data; never commit)
+site/wp-content/plugins/whoiswho-core/sample/
