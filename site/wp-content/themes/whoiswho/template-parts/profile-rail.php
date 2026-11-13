@@ -28,7 +28,7 @@ $wiw_slug = rawurlencode( $wiw_profile->slug );
 ob_start();
 do_action( 'wiw_profile_contact', $wiw_profile );
 $wiw_contact   = trim( (string) ob_get_clean() );
-$wiw_can_claim = ! $wiw_profile->claimed && null === $wiw_profile->label;
+$wiw_can_claim = $wiw_profile->claimable; // One rule for the Claim button: reviewed and not yet claimed (REQ-156, REQ-226).
 ?>
 <?php if ( '' !== $wiw_contact ) : ?>
 	<section class="rail-card rail-contact" aria-labelledby="rail-contact-h">
