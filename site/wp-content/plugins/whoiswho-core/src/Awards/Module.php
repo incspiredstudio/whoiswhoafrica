@@ -33,6 +33,8 @@ final class Module implements ModuleInterface {
 		CategoriesScreen::hooks();
 		AwardsStage::hooks();
 		NominationIntake::register();
+		NominationsScreen::hooks();
+		Admin\AddProfileForm::hooks();
 		NominationPrivacy::hooks();
 	}
 }
