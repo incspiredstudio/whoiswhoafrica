@@ -15,6 +15,7 @@ namespace WhoIsWho\Core\Commerce\Admin;
 use WhoIsWho\Core\Commerce\CustomerExport;
 use WhoIsWho\Core\Commerce\CustomerRepository;
 use WhoIsWho\Core\Commerce\CustomerService;
+use WhoIsWho\Core\Commerce\Invitations\Invitations;
 use WhoIsWho\Core\Compliance\Support\ItemType;
 use WhoIsWho\Core\Compliance\Support\SupportItems;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
@@ -31,6 +32,7 @@ final class CustomersScreen {
 	public const CAP           = CustomerService::CAP;
 	public const SAVE_ACTION   = 'wiw_customer_save';
 	public const FROM_ENQUIRY  = 'wiw_customer_from_enquiry';
+	public const INVITE        = 'wiw_customer_invite';
 	public const LIMIT         = 200;
 	public const ENQUIRY_LIMIT = 100;
 
@@ -115,6 +117,13 @@ final class CustomersScreen {
 				self::for_site()->handle_from_enquiry( $request );
 			}
 		);
+		ActionGuard::register(
+			self::INVITE,
+			Invitations::CAP,
+			static function ( Request $request ): void {
+				self::for_site()->handle_invite( $request );
+			}
+		);
 	}
 
 	/**
@@ -182,6 +191,23 @@ final class CustomersScreen {
 			unset( $e );
 		}
 		wp_safe_redirect( admin_url( 'admin.php?page=' . self::SCREEN . ( $id > 0 ? '&customer=' . $id : '' ) ) );
+		exit;
+	}
+
+	/**
+	 * Admin-post handler for issuing an invitation link (an Administrator action; the capability and nonce are already checked).
+	 *
+	 * @param Request $request Request.
+	 */
+	public function handle_invite( Request $request ): void {
+		$id     = $request->int( 'customer' );
+		$result = 'invited';
+		try {
+			Invitations::for_site()->issue( $id, sanitize_email( $request->string( 'invite_email' ) ) );
+		} catch ( \DomainException $e ) {
+			$result = 'invite_refused';
+		}
+		wp_safe_redirect( add_query_arg( 'result', $result, admin_url( 'admin.php?page=' . self::SCREEN . '&customer=' . $id ) ) );
 		exit;
 	}
 
@@ -264,6 +290,20 @@ final class CustomersScreen {
 	}
 
 	/**
+	 * The invitation form: an Administrator sends a single-use link so the customer can fill in their own profile (REQ-013).
+	 *
+	 * @param int $id Customer.
+	 */
+	private static function invite_html( int $id ): string {
+		if ( ! current_user_can( Invitations::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return '';
+		}
+		$out  = '<h2>' . esc_html__( 'Invite the customer to complete their profile', 'whoiswho' ) . '</h2>';
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::INVITE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::INVITE ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />';
+		return $out . '<label>' . esc_html__( 'Send the link to', 'whoiswho' ) . ' <input type="email" name="invite_email" required="required" /></label> <button class="button">' . esc_html__( 'Send invitation', 'whoiswho' ) . '</button></form>';
+	}
+
+	/**
 	 * The two CSV export buttons, shown only to someone who holds wiw_export_data (REQ-077).
 	 */
 	private static function export_html(): string {
@@ -292,6 +332,7 @@ final class CustomersScreen {
 		if ( null !== $row ) {
 			$out .= '<p>' . esc_html__( 'External ID', 'whoiswho' ) . ': <code>' . esc_html( (string) $row['external_id'] ) . '</code></p>';
 			$out .= $this->enquiry_html( $row );
+			$out .= self::invite_html( $id );
 		}
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::SAVE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE_ACTION ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />';

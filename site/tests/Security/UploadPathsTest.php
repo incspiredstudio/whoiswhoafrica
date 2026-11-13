@@ -66,7 +66,7 @@ final class UploadPathsTest extends TestCase {
 		$this->assertSame( array(), $offenders, 'a new upload path must go through the guard and be added to this matrix: ' . implode( ', ', $offenders ) );
 	}
 
-	public function test_REQ_127_only_the_staff_import_screen_takes_a_file_from_the_request(): void {
+	public function test_REQ_127_only_the_staff_import_screen_and_the_invitation_form_take_a_file_from_the_request(): void {
 		$callers = array();
 		foreach ( $this->source_files() as $path ) {
 			$code = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
@@ -74,7 +74,11 @@ final class UploadPathsTest extends TestCase {
 				$callers[] = basename( $path );
 			}
 		}
-		$this->assertSame( array( 'ImportScreen.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
+		// InvitationRoute.php: the public customer invitation form takes one picture. It is checked by Commerce\Invitations\ImageCheck
+		// (real JPEG, PNG or WebP by content, 2 MB, extension must match) before it is stored through the media library, whose upload
+		// filters are the guard's (REQ-013).
+		sort( $callers );
+		$this->assertSame( array( 'ImportScreen.php', 'InvitationRoute.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
 	}
 
 	public function test_REQ_127_evidence_not_served_inline(): void {
