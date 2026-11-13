@@ -34,13 +34,13 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
 	'wiw-poster',
 	false,
-	array(
-		'alt'      => sprintf(
+	wiw_poster_image_attrs(
+		sprintf(
 			/* translators: %s: name. */
 			'individual' === $wiw_profile->entity_type || 'entrepreneur' === $wiw_profile->entity_type ? __( 'Portrait of %s', 'whoiswho' ) : __( 'Logo of %s', 'whoiswho' ),
 			$wiw_profile->name
 		),
-		'decoding' => 'async',
+		'head'
 	)
 ) : '';
 ?>

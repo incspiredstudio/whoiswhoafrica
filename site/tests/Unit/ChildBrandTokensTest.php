@@ -111,11 +111,23 @@ final class ChildBrandTokensTest extends TestCase {
 		$this->assertSame( 'swap', $json['settings']['typography']['fontFamilies'][0]['fontFace'][0]['fontDisplay'] );
 	}
 
+	public function test_REQ_042_the_brand_pattern_tile_is_webp_and_small_and_the_tokens_point_at_it(): void {
+		$tile = $this->child() . '/assets/brand/pattern-tile.webp';
+		$this->assertFileExists( $tile );
+		$this->assertFileDoesNotExist( $this->child() . '/assets/brand/pattern-tile.png', 'the PNG original of the tile is replaced by the WebP' );
+		$head = (string) file_get_contents( $tile, false, null, 0, 12 ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertSame( 'RIFF', substr( $head, 0, 4 ), 'a real RIFF/WebP file' );
+		$this->assertSame( 'WEBP', substr( $head, 8, 4 ), 'a real RIFF/WebP file' );
+		$this->assertLessThan( 30 * 1024, (int) filesize( $tile ), 'the tile is repeated on many pages, so it stays under 30 KB' );
+		$this->assertStringContainsString( 'pattern-tile.webp', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'pattern-tile.webp', (string) file_get_contents( $this->child() . '/inc/assets.php' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
+
 	public function test_REQ_190_logos_are_assets_not_template_markup(): void {
 		foreach ( array( 'wiw-logo.png', 'wiw-icon.png', 'wiw-icon-black.png', 'logo-mark-dark.png', 'logo-mark-light.png' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/logo/' . $file );
 		}
-		foreach ( array( 'mark-star.webp', 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'pattern-tile.png' ) as $file ) {
+		foreach ( array( 'mark-star.webp', 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'pattern-tile.webp' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/brand/' . $file );
 		}
 	}
