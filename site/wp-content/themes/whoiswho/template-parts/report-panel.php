@@ -25,6 +25,7 @@ $wiw_report = home_url( '/report/' . $wiw_profile->slug . '/' );
 	<h2><?php esc_html_e( 'Something wrong?', 'whoiswho' ); ?></h2>
 	<p class="small muted"><?php esc_html_e( 'No account is needed. A person reads every message.', 'whoiswho' ); ?></p>
 	<div class="rail-actions">
+		<?php get_template_part( 'template-parts/claim-button', null, array( 'profile' => $wiw_profile ) ); ?>
 		<a class="btn alt sm" href="<?php echo esc_url( home_url( '/correct/' . $wiw_profile->slug . '/' ) ); ?>"><?php esc_html_e( 'Suggest a correction', 'whoiswho' ); ?></a>
 		<a class="btn alt sm" href="<?php echo esc_url( $wiw_report ); ?>" data-report-open="report-dialog" aria-haspopup="dialog"><?php esc_html_e( 'Report this profile', 'whoiswho' ); ?></a>
 		<a class="btn alt sm bad" href="<?php echo esc_url( home_url( '/remove/' . $wiw_profile->slug . '/' ) ); ?>"><?php esc_html_e( 'Request removal', 'whoiswho' ); ?></a>
