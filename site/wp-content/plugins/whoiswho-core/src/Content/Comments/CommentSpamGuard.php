@@ -82,7 +82,10 @@ final class CommentSpamGuard {
 			wp_die(
 				new \WP_Error( 'wiw_comment_rate', esc_html__( 'Too many comments from this device. Please try again later.', 'whoiswho' ), array( 'response' => 429 ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the message inside the error is escaped.
 				'',
-				array( 'back_link' => true )
+				array(
+					'response'  => 429,
+					'back_link' => true,
+				)
 			);
 		}
 		if ( '' !== FormInput::from_globals()->raw( self::HONEYPOT ) ) {

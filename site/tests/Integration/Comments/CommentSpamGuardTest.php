@@ -147,11 +147,16 @@ final class CommentSpamGuardTest extends TestCase {
 
 	public function test_REQ_258_comment_rate_limit_per_ip_is_enforced(): void {
 		$this->guard( 2 );
+		$status = array();
 		add_filter(
 			'wp_die_handler',
-			static fn () => static function ( $message ): void {
-				$code = $message instanceof \WP_Error ? $message->get_error_code() : 'died';
-				throw new \RuntimeException( esc_html( (string) $code ) );
+			static function () use ( &$status ) {
+				return static function ( $message, $title = '', $args = array() ) use ( &$status ): void {
+					unset( $title );
+					$status = (array) $args;
+					$code   = $message instanceof \WP_Error ? $message->get_error_code() : 'died';
+					throw new \RuntimeException( esc_html( (string) $code ) );
+				};
 			}
 		);
 		$post = $this->story();
@@ -163,6 +168,7 @@ final class CommentSpamGuardTest extends TestCase {
 			$this->fail( 'The third comment from one IP in the window must be refused.' );
 		} catch ( \RuntimeException $refusal ) {
 			$this->assertSame( 'wiw_comment_rate', $refusal->getMessage() );
+			$this->assertSame( 429, $status['response'] ?? null, 'the refusal answers 429, not 500' );
 		}
 		$this->assertCount(
 			2,

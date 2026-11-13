@@ -85,7 +85,10 @@ final class CommentPolicy {
 			wp_die(
 				new \WP_Error( 'wiw_comment_consent', esc_html__( 'Please tick the box to agree before you comment.', 'whoiswho' ), array( 'response' => 409 ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the message inside the error is escaped.
 				'',
-				array( 'back_link' => true )
+				array(
+					'response'  => 409,
+					'back_link' => true,
+				)
 			);
 		}
 		return $commentdata;
