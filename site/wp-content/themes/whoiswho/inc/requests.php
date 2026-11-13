@@ -54,10 +54,10 @@ if ( ! function_exists( 'wiw_request_choices' ) ) {
 	/**
 	 * The fixed lists the forms offer, keyed by the values the plugin validators accept.
 	 *
-	 * @param string $list relationship, need, field or reason.
+	 * @param string $set relationship, need, field or reason.
 	 * @return array<string, string>
 	 */
-	function wiw_request_choices( string $list ): array {
+	function wiw_request_choices( string $set ): array {
 		$lists = array(
 			'relationship' => array(
 				'person'         => __( 'The person named on this profile', 'whoiswho' ),
@@ -79,9 +79,9 @@ if ( ! function_exists( 'wiw_request_choices' ) ) {
 				'other'                 => __( 'Other', 'whoiswho' ),
 			),
 		);
-		return $lists[ $list ] ?? array();
+		return $lists[ $set ] ?? array();
 	}
-}
+}//end if
 
 add_filter(
 	'query_vars',
