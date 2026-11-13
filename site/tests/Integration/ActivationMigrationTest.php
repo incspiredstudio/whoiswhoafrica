@@ -14,6 +14,7 @@ use WhoIsWho\Core\Platform\Cli\WpCliBridge;
 use WhoIsWho\Core\Platform\Migrations\ActivationMigrator;
 use WhoIsWho\Core\Platform\Migrations\PendingNotice;
 use WhoIsWho\Core\Platform\Migrations\Runner;
+use WhoIsWho\Core\Platform\Permalinks;
 use WhoIsWho\Tests\TestCase;
 
 final class ActivationMigrationTest extends TestCase {
@@ -102,5 +103,20 @@ PHP;
 		$this->assertSame( array( 'wiw', 'sample:seed' ), WpCliBridge::argv( array( 'sample:seed' ), array() ) );
 		$this->assertSame( array( 'wiw', 'migrate', '--dry-run' ), WpCliBridge::argv( array( 'migrate' ), array( 'dry-run' => true ) ) );
 		$this->assertSame( array( 'wiw', 'import', '--file=a.csv' ), WpCliBridge::argv( array( 'import' ), array( 'file' => 'a.csv' ) ) );
+	}
+
+	public function test_REQ_056_activation_sets_pretty_permalinks_only_on_a_plain_site(): void {
+		global $wp_rewrite;
+		$before = get_option( 'permalink_structure' );
+		try {
+			$wp_rewrite->set_permalink_structure( '' );
+			$this->assertTrue( Permalinks::ensure_pretty() );
+			$this->assertSame( '/%postname%/', get_option( 'permalink_structure' ) );
+			$wp_rewrite->set_permalink_structure( '/%year%/%postname%/' );
+			$this->assertFalse( Permalinks::ensure_pretty() );
+			$this->assertSame( '/%year%/%postname%/', get_option( 'permalink_structure' ) );
+		} finally {
+			$wp_rewrite->set_permalink_structure( (string) $before );
+		}
 	}
 }

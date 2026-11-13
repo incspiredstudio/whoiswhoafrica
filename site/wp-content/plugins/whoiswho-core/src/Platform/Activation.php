@@ -23,6 +23,7 @@ final class Activation {
 		// A plain WordPress has no deploy script: create the tables now. Refused in production; the filter lets tests switch it off.
 		if ( apply_filters( 'wiw_migrate_on_activation', true ) ) {
 			Migrations\ActivationMigrator::run( Migrations\Runner::for_site() );
+			Permalinks::ensure_pretty();
 		}
 	}
 
