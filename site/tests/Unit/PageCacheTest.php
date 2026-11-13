@@ -24,13 +24,32 @@ final class PageCacheTest extends TestCase {
 		return ( new PageCachePolicy() )->decide( $request );
 	}
 
+	public function test_REQ_209_every_real_directory_list_route_is_cached_for_60_seconds(): void {
+		$theme = (string) file_get_contents( dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho/inc/directory.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertGreaterThanOrEqual( 5, preg_match_all( "/'path'\s*=>\s*'([a-z-]+)'/", $theme, $found ), 'the theme names its list paths' );
+		foreach ( $found[1] as $path ) {
+			foreach ( array( '/' . $path, '/' . $path . '/', '/' . $path . '/page/2/' ) as $url ) {
+				$decision = $this->decide( array( 'path' => $url ) );
+				$this->assertTrue( $decision['cache'], "$url is a public list" );
+				$this->assertSame( 60, $decision['ttl'], "$url is a list: 60 seconds" );
+			}
+			$filtered = $this->decide(
+				array(
+					'path'  => '/' . $path . '/',
+					'query' => 'q=a',
+				)
+			);
+			$this->assertFalse( $filtered['cache'], "$path with a query string is never stored" );
+		}
+	}
+
 	public function test_REQ_209_anonymous_get_of_a_public_path_is_cached_within_the_lifetimes(): void {
 		$profile = $this->decide( array( 'path' => '/profile/ada-obi/' ) );
 		$this->assertTrue( $profile['cache'] );
 		$this->assertSame( 120, $profile['ttl'] );
 		$this->assertTrue( $this->decide( array( 'path' => '/' ) )['cache'], 'the home page is public' );
 
-		foreach ( array( '/search', '/stories', '/events', '/profiles', '/awards', '/industries' ) as $list ) {
+		foreach ( array( '/search', '/stories', '/events', '/directory', '/people', '/awards', '/industries' ) as $list ) {
 			$this->assertSame( 60, $this->decide( array( 'path' => $list ) )['ttl'], "$list is a list or search: 60 seconds" );
 		}
 		foreach ( array( '/', '/profile/a/', '/search', '/stories', '/about' ) as $path ) {
