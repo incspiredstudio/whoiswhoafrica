@@ -50,6 +50,13 @@ final class Module implements ModuleInterface {
 				Links\SignedLinks::for_site()->purge_spent();
 			}
 		);
+		Jobs\JobRunner::for_site()->recurring(
+			Retention\RetentionJob::JOB_NAME,
+			86400,
+			static function (): void {
+				( new Retention\RetentionJob() )->run();
+			}
+		);
 		add_action(
 			'init',
 			static function (): void {
