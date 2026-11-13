@@ -40,6 +40,10 @@ return array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
 		),
+		'moderate_comments'             => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
 		'edit_others_posts'             => array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
