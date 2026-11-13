@@ -559,7 +559,7 @@ final class SampleSeeder {
 			update_option( 'show_on_front', 'page' );
 			update_option( 'page_on_front', $home );
 		}
-		$this->page( 'about', 'About', '', 0 );
+		$this->page( 'about', 'About', self::pattern( 'whoiswho/about-page', 'Fictional About page for the sample directory.' ), 0 );
 		$this->page( 'faq', 'FAQ', self::pattern( 'whoiswho/faq-groups', 'Fictional answers about listings, corrections and removal.' ), 0 );
 		$awards = $this->page( 'awards', 'Awards', self::blocks( array( 'Fictional awards programme for the sample directory. Categories, nominees and winners here are invented.' ), '' ), 0 );
 		$this->page( 'rules', 'Awards rules', self::blocks( array( 'Fictional rules: who can be nominated, how nominations are judged and when results are announced.' ), '' ), $awards );
