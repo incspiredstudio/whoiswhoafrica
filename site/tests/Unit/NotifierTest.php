@@ -199,7 +199,7 @@ final class NotifierTest extends TestCase {
 		$this->runner->run_due( 60 );
 
 		$this->assertStringContainsString( '/link/' . $token, $this->sent[0]['text'] );
-		preg_match( '#Link: (\S+)#', $this->sent[0]['text'], $m );
+		preg_match( '#(https?://\S+/link/\S+)#', $this->sent[0]['text'], $m );
 		$this->assertStringNotContainsString( '@', $m[1] );
 		$this->assertStringNotContainsString( 'jane', $m[1] );
 	}
@@ -209,5 +209,75 @@ final class NotifierTest extends TestCase {
 		$this->assertSame( 0, $notifier->send( Events::PROFILE_RECEIVED, 'not-an-address' ) );
 		$this->expectException( \InvalidArgumentException::class );
 		$notifier->send( 'made_up_event', 'jane@example.org' );
+	}
+
+	public function test_REQ_075_every_event_renders_a_full_layout_with_a_plain_text_twin(): void {
+		$notifier = $this->notifier();
+		foreach ( array_keys( Events::all() ) as $event ) {
+			$mail = $notifier->render( $event, array( 'reference' => 'REF-0001' ) );
+			$this->assertStringContainsString( '<!DOCTYPE html>', $mail['html'], $event );
+			$this->assertStringContainsString( 'max-width:600px', $mail['html'], $event );
+			$this->assertStringContainsString( '<h1', $mail['html'], $event );
+			$this->assertSame( trim( $mail['text'] ), trim( strip_tags( $mail['text'] ) ), "{$event}: the text twin has no markup" );
+			$this->assertStringContainsString( 'REF-0001', $mail['text'], $event );
+			$this->assertStringContainsString( 'REF-0001', $mail['html'], $event );
+			$this->assertStringNotContainsString( 'REF-0001', $mail['subject'], "{$event}: no data in a subject" );
+		}
+	}
+
+	public function test_REQ_075_public_mail_greets_by_first_name_and_a_subject_never_holds_it(): void {
+		$notifier = $this->notifier();
+		$named    = $notifier->render( Events::ENQUIRY_ACKNOWLEDGED, array( 'name' => 'Amara Okafor' ) );
+		$this->assertStringContainsString( 'Hello Amara,', $named['text'] );
+		$this->assertStringContainsString( 'Hello Amara,', $named['html'] );
+		$this->assertStringNotContainsString( 'Amara', $named['subject'] );
+		$this->assertStringNotContainsString( 'Okafor', $named['text'], 'Only the first name is used.' );
+		$anonymous = $notifier->render( Events::ENQUIRY_ACKNOWLEDGED, array() );
+		$this->assertStringContainsString( 'Hello,', $anonymous['text'] );
+		$staff = $notifier->render( Events::ENQUIRY_STAFF_NOTICE, array( 'name' => 'Amara Okafor' ) );
+		$this->assertStringNotContainsString( 'Amara', $staff['text'], 'A staff notice carries no requester name.' );
+	}
+
+	public function test_REQ_075_enquiry_acknowledgement_says_what_happens_next(): void {
+		$mail = $this->notifier()->render( Events::ENQUIRY_ACKNOWLEDGED, array( 'reference' => 'ENQ-0001' ) );
+		$this->assertStringContainsString( 'Your reference: ENQ-0001', $mail['text'] );
+		$this->assertStringContainsString( 'We will reply as soon as we can.', $mail['text'], 'No window set: the plain promise.' );
+		$this->assertStringContainsString( 'You can reply to this email', $mail['text'] );
+	}
+
+	public function test_REQ_075_staff_notice_names_what_to_act_on_with_no_personal_data(): void {
+		$mail = $this->notifier()->render(
+			Events::ENQUIRY_STAFF_NOTICE,
+			array(
+				'reference' => 'ENQ-0001',
+				'details'   => array(
+					'Type'          => 'Enquiry about a profile',
+					'Interested in' => 'Advertising',
+				),
+			)
+		);
+		$this->assertStringContainsString( 'What to do:', $mail['text'] );
+		$this->assertStringContainsString( 'Type: Enquiry about a profile', $mail['text'] );
+		$this->assertStringContainsString( 'Interested in: Advertising', $mail['text'] );
+		$this->assertStringContainsString( 'Reference: ENQ-0001', $mail['text'] );
+		$this->assertStringNotContainsString( 'Hello', $mail['text'], 'Staff notices are not greeted.' );
+	}
+
+	public function test_REQ_061_marketing_mail_shows_the_unsubscribe_link_and_transactional_does_not(): void {
+		$notifier = $this->notifier();
+		$news     = $notifier->render( Events::NEWSLETTER_ISSUE, array( 'unsubscribe_url' => 'https://example.test/unsubscribe/x/' ) );
+		$this->assertStringContainsString( 'Unsubscribe', $news['html'] );
+		$this->assertStringContainsString( 'https://example.test/unsubscribe/x/', $news['text'] );
+		$tx = $notifier->render( Events::ENQUIRY_ACKNOWLEDGED, array( 'unsubscribe_url' => 'https://example.test/unsubscribe/x/' ) );
+		$this->assertStringNotContainsString( 'Unsubscribe', $tx['html'] );
+	}
+
+	public function test_REQ_075_link_emails_have_a_button_and_the_address_in_text(): void {
+		$mail = $this->notifier()->render( Events::VERIFY_EMAIL, array( 'cta_url' => 'https://example.test/link/abc/' ) );
+		$this->assertStringContainsString( 'Confirm my email', $mail['html'] );
+		$this->assertStringContainsString( 'href="https://example.test/link/abc/"', $mail['html'] );
+		$this->assertStringContainsString( 'Confirm my email: https://example.test/link/abc/', $mail['text'] );
+		$bad = $this->notifier()->render( Events::VERIFY_EMAIL, array( 'cta_url' => 'javascript:alert(1)' ) );
+		$this->assertStringNotContainsString( 'javascript:', $bad['html'] );
 	}
 }

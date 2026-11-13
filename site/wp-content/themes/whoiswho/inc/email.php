@@ -79,6 +79,9 @@ if ( ! function_exists( 'wiw_email_args' ) ) {
 				'cta'             => null,
 				'class'           => 'transactional',
 				'unsubscribe_url' => '',
+				'contact_email'   => '',
+				'privacy_url'     => '',
+				'bare'            => false,
 			)
 		);
 	}
@@ -109,7 +112,7 @@ if ( ! function_exists( 'wiw_render_email' ) ) {
 	 * Render a message in both formats.
 	 *
 	 * Arguments: subject, preheader, heading, body_html (limited markup), body_text (plain), cta (array label, url),
-	 * class (transactional or marketing), unsubscribe_url (shown only for marketing).
+	 * class (transactional or marketing), unsubscribe_url (shown only for marketing), contact_email and privacy_url (footer), bare (no logo link, no links at all).
 	 *
 	 * @param array<string, mixed> $args Arguments.
 	 * @return array{subject: string, html: string, text: string}

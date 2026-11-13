@@ -126,8 +126,8 @@ final class Invitations {
 			Events::CUSTOMER_INVITATION,
 			$email,
 			array(
-				'id'   => $customer_id,
-				'lead' => 'You are invited to complete your profile. The link can be used once: ' . $url,
+				'id'      => $customer_id,
+				'cta_url' => $url,
 			)
 		);
 		$this->audit->log(

@@ -192,7 +192,7 @@ final class MarketingMailTest extends TestCase {
 		$this->notifier( new DenyAllConsent() )->send( Events::ENQUIRY_ACKNOWLEDGED, 'reader@example.org' );
 		$this->runner->run_due( 60 );
 		$this->assertCount( 1, $this->sent );
-		$this->assertSame( array(), $this->sent[0]['headers'] );
+		$this->assertSame( array(), array_values( array_filter( $this->sent[0]['headers'], static fn ( string $h ): bool => ! str_starts_with( $h, 'Reply-To: ' ) ) ), 'Only the Reply-To header; no unsubscribe headers.' );
 	}
 
 	public function test_REQ_061_unsubscribing_is_honoured_on_the_next_send(): void {

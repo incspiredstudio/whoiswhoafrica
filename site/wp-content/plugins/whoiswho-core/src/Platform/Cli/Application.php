@@ -40,6 +40,7 @@ final class Application {
 		$app->add( new MigrateCommand( Runner::for_site() ) );
 		$app->add( new JobsRun( \WhoIsWho\Core\Platform\Jobs\JobRunner::for_site() ) );
 		$app->add( new FindSampleCommand() );
+		$app->add( new MailPreview( \WhoIsWho\Core\Platform\Mail\Notifier::for_site(), 'production' === wp_get_environment_type() ) );
 		$app->add( new BackupRecord() );
 		$app->add( new SampleSeedCommand() );
 		$app->add( new SampleRemoveCommand() );
