@@ -132,6 +132,13 @@ final class PublicProfile {
 	public bool $enquiries_open = true;
 
 	/**
+	 * Contact details staff switched on at the owner's request (REQ-060): kind => value. Empty by default.
+	 *
+	 * @var array<string, string>
+	 */
+	public array $switched_on_details = array();
+
+	/**
 	 * Related organisation, only when that organisation is itself public: array{name: string, url: string}.
 	 *
 	 * @var array<string, string>|null
@@ -230,17 +237,18 @@ final class PublicProfile {
 		if ( ! $public && ! $staff ) {
 			return null;
 		}
-		$profile                  = new self( $id, $post->post_name, $post->post_title, (string) $row['entity_type'], $state, $policy );
-		$profile->claimed         = (bool) (int) $row['claimed'];
-		$profile->enquiries_open  = '1' !== (string) get_post_meta( $id, self::ENQUIRIES_OFF_META, true );
-		$profile->claimable       = $public && PubState::PUBLISHED_REVIEWED === $state && ! $profile->claimed;
-		$profile->reviewed_at     = PubState::PUBLISHED_REVIEWED === $state && ! empty( $row['reviewed_at'] ) ? (string) $row['reviewed_at'] : null;
-		$profile->visibility_note = $public ? null : 'Not public: ' . $state . '. Visitors see HTTP ' . $policy->status . '.';
-		$profile->facts           = self::facts( $id, (string) $row['entity_type'], $state );
-		$profile->organisation    = self::organisation( $profile );
-		$image                    = (int) get_post_meta( $id, self::IMAGE_META, true );
-		$profile->image_id        = $image > 0 ? $image : null;
-		$profile->share           = self::share( $profile );
+		$profile                      = new self( $id, $post->post_name, $post->post_title, (string) $row['entity_type'], $state, $policy );
+		$profile->claimed             = (bool) (int) $row['claimed'];
+		$profile->enquiries_open      = '1' !== (string) get_post_meta( $id, self::ENQUIRIES_OFF_META, true );
+		$profile->switched_on_details = $public ? ( new \WhoIsWho\Core\Directory\Contact\ContactSwitches() )->public_details( $id ) : array();
+		$profile->claimable           = $public && PubState::PUBLISHED_REVIEWED === $state && ! $profile->claimed;
+		$profile->reviewed_at         = PubState::PUBLISHED_REVIEWED === $state && ! empty( $row['reviewed_at'] ) ? (string) $row['reviewed_at'] : null;
+		$profile->visibility_note     = $public ? null : 'Not public: ' . $state . '. Visitors see HTTP ' . $policy->status . '.';
+		$profile->facts               = self::facts( $id, (string) $row['entity_type'], $state );
+		$profile->organisation        = self::organisation( $profile );
+		$image                        = (int) get_post_meta( $id, self::IMAGE_META, true );
+		$profile->image_id            = $image > 0 ? $image : null;
+		$profile->share               = self::share( $profile );
 		return $profile;
 	}
 

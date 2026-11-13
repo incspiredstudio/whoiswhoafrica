@@ -512,5 +512,12 @@ return array(
 		'export'    => 'include',
 		'erase'     => 'anonymise',
 		'note'      => 'Internal notes; never public; may name people.',
+		'kind'      => 'meta',
+		'name'      => '_wiw_contact_details',
+		'class'     => 'pii',
+		'retention' => 'permanent',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Contact details staff hold for a profile; private unless a detail is switched on (REQ-060).',
 	),
 );
