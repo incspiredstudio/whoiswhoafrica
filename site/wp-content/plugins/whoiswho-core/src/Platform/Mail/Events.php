@@ -28,6 +28,7 @@ final class Events {
 	public const REPORT_RECEIVED         = 'report_received';
 	public const REQUEST_RESOLVED        = 'request_resolved';
 	public const REQUEST_ACKNOWLEDGED    = 'request_acknowledged';
+	public const INFORMATION_SENT        = 'information_sent';
 	public const CLAIM_ACKNOWLEDGED      = 'claim_acknowledged';
 	public const CLAIM_DECISION          = 'claim_decision';
 	public const CLAIM_REMINDER          = 'claim_reminder';
@@ -36,6 +37,7 @@ final class Events {
 	public const NOMINATION_WINNER       = 'nomination_winner';
 	public const DATA_REQUEST_ACK        = 'data_request_ack';
 	public const COMMENT_ACKNOWLEDGED    = 'comment_acknowledged';
+	public const COMMENT_HELD            = 'comment_held';
 	public const CUSTOMER_INVITATION     = 'customer_invitation';
 	public const NEWSLETTER_CONFIRMATION = 'newsletter_confirmation';
 	public const RENEWAL_REMINDER        = 'renewal_reminder';
@@ -98,6 +100,10 @@ final class Events {
 				'audience' => 'public',
 				'subject'  => 'Your request has been resolved',
 			),
+			self::INFORMATION_SENT        => array(
+				'audience' => 'public',
+				'subject'  => 'Information about your request',
+			),
 			self::REQUEST_ACKNOWLEDGED    => array(
 				'audience' => 'public',
 				'subject'  => 'We received your request',
@@ -133,6 +139,10 @@ final class Events {
 			self::COMMENT_ACKNOWLEDGED    => array(
 				'audience' => 'public',
 				'subject'  => 'We received your comment',
+			),
+			self::COMMENT_HELD            => array(
+				'audience' => 'capability:moderate_comments',
+				'subject'  => 'A comment is waiting for moderation',
 			),
 			self::CUSTOMER_INVITATION     => array(
 				'audience' => 'public',

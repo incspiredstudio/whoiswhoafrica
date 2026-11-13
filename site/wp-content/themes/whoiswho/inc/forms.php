@@ -13,7 +13,7 @@ declare(strict_types=1);
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
 const WIW_FORM_PAGE_VAR  = 'wiw_form_page';
-const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_2';
+const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_3';
 const WIW_CLAIM_SLUG_VAR = 'wiw_claim_slug';
 
 if ( ! function_exists( 'wiw_form_pages' ) ) {
@@ -24,19 +24,23 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 	 */
 	function wiw_form_pages(): array {
 		return array(
-			'contact'   => array(
+			'contact'     => array(
 				'template' => 'templates/contact.php',
 				'title'    => __( 'Contact', 'whoiswho' ),
 			),
-			'subscribe' => array(
+			'subscribe'   => array(
 				'template' => 'templates/get-listed.php',
 				'title'    => __( 'Get listed', 'whoiswho' ),
 			),
-			'claim'     => array(
+			'claim'       => array(
 				'template' => 'templates/claim.php',
 				'title'    => __( 'Claim this profile', 'whoiswho' ),
 			),
-			'done'      => array(
+			'unsubscribe' => array(
+				'template' => 'templates/unsubscribe.php',
+				'title'    => __( 'Unsubscribe', 'whoiswho' ),
+			),
+			'done'        => array(
 				'template' => 'templates/done.php',
 				'title'    => __( 'Received', 'whoiswho' ),
 			),
@@ -204,7 +208,7 @@ add_action(
 add_action(
 	'wp_head',
 	static function (): void {
-		if ( in_array( wiw_form_current(), array( 'done', 'claim' ), true ) ) {
+		if ( in_array( wiw_form_current(), array( 'done', 'claim', 'unsubscribe' ), true ) ) {
 			echo '<meta name="robots" content="noindex, nofollow">' . "\n";
 		}
 	},
