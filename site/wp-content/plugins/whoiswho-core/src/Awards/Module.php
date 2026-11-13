@@ -37,5 +37,6 @@ final class Module implements ModuleInterface {
 		Admin\AddProfileForm::hooks();
 		NominationExport::hooks();
 		NominationPrivacy::hooks();
+		NominationEmails::register();
 	}
 }
