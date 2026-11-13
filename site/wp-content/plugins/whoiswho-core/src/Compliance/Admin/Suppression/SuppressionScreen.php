@@ -48,7 +48,9 @@ final class SuppressionScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'compliance'
 				);
 				$registry->hook();
 				ActionGuard::register( self::ADD, self::EDIT_CAP, array( self::class, 'handle_add' ) );

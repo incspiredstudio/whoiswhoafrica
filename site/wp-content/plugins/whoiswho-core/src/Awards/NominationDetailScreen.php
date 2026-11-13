@@ -61,7 +61,8 @@ final class NominationDetailScreen {
 					static function (): void {
 						( new self( NominationService::for_site() ) )->render();
 					},
-					true
+					true,
+					'awards'
 				);
 				$registry->hook();
 				ActionGuard::register(

@@ -62,7 +62,9 @@ final class NominationsSwitch {
 			self::SCREEN_CAP,
 			static function (): void {
 				( new NominationsScreen( new self( SettingsService::for_site() ), NominationService::for_site() ) )->render();
-			}
+			},
+			false,
+			'awards'
 		);
 		$registry->hook();
 		ActionGuard::register(

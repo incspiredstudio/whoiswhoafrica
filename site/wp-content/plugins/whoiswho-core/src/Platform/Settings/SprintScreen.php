@@ -81,7 +81,9 @@ final class SprintScreen {
 			self::CAP,
 			static function () use ( $settings ): void {
 				echo ( new self( $settings ) )->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-			}
+			},
+			false,
+			'settings'
 		);
 	}
 

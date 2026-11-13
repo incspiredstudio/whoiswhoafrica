@@ -42,7 +42,9 @@ final class ProfilesScreen {
 			self::CAPABILITY,
 			static function (): void {
 				( new self() )->render();
-			}
+			},
+			false,
+			'directory'
 		);
 	}
 
