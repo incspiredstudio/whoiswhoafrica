@@ -526,6 +526,13 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .page-enter main { animation: page-in var(--m-base) var(--ease-out); }
 
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Page to page, the browser cross-fades the two pages and the header stays put (cross-document view transitions, issue 745). Browsers without
+   support, and visitors who prefer reduced motion, simply load the next page. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+.site-head { view-transition-name: site-head; }
 ::view-transition-old(root) { animation: vt-out 120ms ease both; }
 ::view-transition-new(root) { animation: vt-in 220ms var(--ease-out) both; }
 
