@@ -228,6 +228,9 @@ final class NominationsScreen {
 		$filters = NominationList::clean( $filters );
 		$out     = '<div class="wrap"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>';
 		$out    .= $this->toggle->body_html( $on );
+		if ( current_user_can( NominationExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			$out .= '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=' . NominationExport::ACTION ), 'wiw_action_' . NominationExport::ACTION ) ) . '">' . esc_html__( 'Export nominations (CSV)', 'whoiswho' ) . '</a></p>';
+		}
 		if ( '' !== $notice ) {
 			$out .= '<div class="notice notice-info"><p>' . esc_html( $notice ) . '</p></div>';
 		}
@@ -308,7 +311,10 @@ final class NominationsScreen {
 				'p'        => array(),
 				'br'       => array(),
 				'strong'   => array(),
-				'a'        => array( 'href' => true ),
+				'a'        => array(
+					'href'  => true,
+					'class' => true,
+				),
 				'label'    => array(),
 				'table'    => array( 'class' => true ),
 				'thead'    => array(),
