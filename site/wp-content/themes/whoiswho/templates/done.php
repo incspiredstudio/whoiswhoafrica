@@ -30,10 +30,20 @@ if ( 'claim' === $wiw_kind ) {
 } elseif ( 'report' === $wiw_kind ) {
 	$wiw_title = __( 'Report received', 'whoiswho' );
 	$wiw_text  = __( 'A member of staff will look at it. If you gave an email address, we sent a link to confirm it.', 'whoiswho' );
+} elseif ( 'nomination' === $wiw_kind ) {
+	$wiw_title = __( 'Nomination submitted', 'whoiswho' );
+	$wiw_text  = __( 'It is private until our team checks it and makes it live. Nothing is published without staff approval. Keep your reference.', 'whoiswho' );
+} elseif ( 'nomination_start' === $wiw_kind ) {
+	$wiw_title = __( 'Check your email to continue', 'whoiswho' );
+	$wiw_text  = __( 'We sent you a link to confirm your email. Open it, then go back to the nomination form.', 'whoiswho' );
+	$wiw_ref   = '';
 } elseif ( 'newsletter' === $wiw_kind ) {
 	$wiw_title = __( 'Check your email to finish signing up', 'whoiswho' );
 	$wiw_text  = __( 'We sent you a link to confirm. You are subscribed only after you use it. Every email has an unsubscribe link.', 'whoiswho' );
 	$wiw_ref   = '';
+} elseif ( 'profile_enquiry' === $wiw_from ) {
+	$wiw_title = __( 'Enquiry sent', 'whoiswho' );
+	$wiw_text  = __( 'Our team reads each enquiry and passes it on or replies by email. The email address and phone number of the person or organisation stay private.', 'whoiswho' );
 } elseif ( 'contact' === $wiw_from ) {
 	$wiw_title = __( 'Message sent', 'whoiswho' );
 	$wiw_text  = __( 'A member of staff will reply. The message is logged.', 'whoiswho' );
