@@ -27,9 +27,17 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		Consent\ListingConsent::register_gate();
+		( new Consent\ListingConsent() )->register_links( \WhoIsWho\Core\Platform\Links\SignedLinks::for_site() );
 		Support\EnquiryIntake::register();
+		Suppression\SnapshotExport::hooks();
+		Support\DataRightsIntake::register();
+		Deadlines\DeadlineTracker::register();
+		Retention\RetentionJob::register();
+		Privacy\PersonalData::hooks();
 		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
+		Admin\Requests\RequestsScreen::hooks();
 		Admin\Suppression\SuppressionScreen::hooks();
 		Forms\FormRoutes::register_for_site();
 		( new Legal\LegalPages() )->register();

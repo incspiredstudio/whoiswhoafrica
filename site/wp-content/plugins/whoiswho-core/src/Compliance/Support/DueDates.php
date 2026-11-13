@@ -77,6 +77,15 @@ final class DueDates {
 	}
 
 	/**
+	 * Days allowed to answer a data-rights request. Thirty is the working default until Legal confirms the period (open question
+	 * on the issue tracker); Compliance can set it with the wiw_data_request_due_days filter.
+	 */
+	public static function data_request_days(): int {
+		$days = function_exists( 'apply_filters' ) ? apply_filters( 'wiw_data_request_due_days', 30 ) : 30;
+		return is_int( $days ) && $days >= 1 && $days <= 90 ? $days : 30;
+	}
+
+	/**
 	 * When the item must be resolved by: corrections seven days, a removal's hide two business days, everything else
 	 * the one-business-day acknowledgement.
 	 *
@@ -89,6 +98,8 @@ final class DueDates {
 				return $received->modify( '+7 days' );
 			case ItemType::REMOVAL:
 				return $this->add_business_days( $received, 2 );
+			case ItemType::DATA_REQUEST:
+				return $received->modify( '+' . self::data_request_days() . ' days' );
 			default:
 				return $this->acknowledge_due( $received );
 		}
