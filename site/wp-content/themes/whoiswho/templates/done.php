@@ -40,7 +40,7 @@ if ( 'claim' === $wiw_kind ) {
 } else {
 	$wiw_title = __( 'Enquiry received', 'whoiswho' );
 	$wiw_text  = __( 'Our team will contact you. Terms are agreed offline; nothing is charged on this site.', 'whoiswho' );
-}
+}//end if
 
 get_header();
 get_template_part(
