@@ -39,5 +39,6 @@ final class Module implements ModuleInterface {
 		NominationExport::hooks();
 		NominationPrivacy::hooks();
 		NomineeRemoval::hooks();
+		NominationEmails::register();
 	}
 }
