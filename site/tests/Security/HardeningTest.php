@@ -27,6 +27,17 @@ final class HardeningTest extends TestCase {
 		$this->assertSame( '', get_option( 'default_role' ) );
 	}
 
+	public function test_REQ_046_php_version_header_is_stripped_on_every_response_path(): void {
+		$this->requireWordPress();
+		foreach ( array( 'send_headers', 'admin_init', 'login_init' ) as $hook ) {
+			$this->assertNotFalse( has_action( $hook, array( Hardening::class, 'strip_powered_by' ) ), $hook );
+		}
+		Hardening::strip_powered_by();
+		foreach ( headers_list() as $line ) {
+			$this->assertStringNotContainsStringIgnoringCase( 'x-powered-by', $line );
+		}
+	}
+
 	public function test_REQ_046_xmlrpc_is_off(): void {
 		$this->requireWordPress();
 		$this->assertFalse( apply_filters( 'xmlrpc_enabled', true ) );

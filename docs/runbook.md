@@ -185,6 +185,10 @@ Filled in at M5 from the checks listed in Deployment (Q87 still open).
 | Inodes and disk | TODO | |
 | Outgoing mail limits | TODO | |
 
+## PHP version header (REQ-046, #594)
+
+The guard calls `header_remove('X-Powered-By')` on every response. As a second layer, set `expose_php = Off` in the live host's php.ini (cPanel: MultiPHP INI Editor) and check with `curl -sI https://<site> | grep -i x-powered-by`, which must print nothing. Record the result in the check table above.
+
 ## Who receives alerts
 
 TODO. Owner: M5 (monitoring and launch).
