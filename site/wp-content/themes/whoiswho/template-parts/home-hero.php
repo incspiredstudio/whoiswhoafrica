@@ -23,9 +23,35 @@ $wiw_videos = isset( $wiw_home['videos'] ) && is_array( $wiw_home['videos'] ) ? 
 <section class="h-hero" aria-labelledby="home-title">
 	<div class="h-vids" aria-hidden="true">
 		<?php foreach ( $wiw_videos as $wiw_i => $wiw_v ) : ?>
-			<div class="h-vid"<?php echo ! empty( $wiw_v['poster'] ) ? ' style="--poster:url(' . esc_url( (string) $wiw_v['poster'] ) . ')"' : ''; ?>>
+			<?php
+			$wiw_w    = (int) ( $wiw_v['width'] ?? 540 );
+			$wiw_h    = (int) ( $wiw_v['height'] ?? 960 );
+			$wiw_sets = isset( $wiw_v['sets'] ) && is_array( $wiw_v['sets'] ) ? $wiw_v['sets'] : array();
+			// The first still is the largest contentful paint: eager and high priority; the others are small and low priority.
+			// Every clip is preload="none" with no autoplay: nothing is fetched until home.js starts it (first at load, each next on its turn).
+			$wiw_mime = array(
+				'avif' => 'image/avif',
+				'webp' => 'image/webp',
+			);
+			?>
+			<div class="h-vid">
+				<?php if ( ! empty( $wiw_v['poster'] ) ) : ?>
+					<picture>
+						<?php foreach ( $wiw_mime as $wiw_ext => $wiw_type ) : ?>
+							<?php if ( ! empty( $wiw_sets[ $wiw_ext ] ) ) : ?>
+								<source type="<?php echo esc_attr( $wiw_type ); ?>" srcset="<?php echo esc_attr( (string) $wiw_sets[ $wiw_ext ] ); ?>" sizes="(min-width: 64rem) 54vw, 50vw">
+							<?php endif; ?>
+						<?php endforeach; ?>
+						<img class="h-vid-poster" src="<?php echo esc_url( (string) $wiw_v['poster'] ); ?>"<?php echo ! empty( $wiw_sets['jpg'] ) ? ' srcset="' . esc_attr( (string) $wiw_sets['jpg'] ) . '" sizes="(min-width: 64rem) 54vw, 50vw"' : ''; ?> width="<?php echo esc_attr( (string) $wiw_w ); ?>" height="<?php echo esc_attr( (string) $wiw_h ); ?>" alt="" decoding="async" loading="eager"<?php echo 0 === $wiw_i ? ' fetchpriority="high"' : ' fetchpriority="low"'; ?>>
+					</picture>
+				<?php endif; ?>
 				<?php if ( ! empty( $wiw_v['video'] ) ) : ?>
-					<video muted loop playsinline preload="none" tabindex="-1" data-src="<?php echo esc_url( (string) $wiw_v['video'] ); ?>"<?php echo ! empty( $wiw_v['poster'] ) ? ' poster="' . esc_url( (string) $wiw_v['poster'] ) . '"' : ''; ?>></video>
+					<video muted loop playsinline preload="none" tabindex="-1" width="<?php echo esc_attr( (string) $wiw_w ); ?>" height="<?php echo esc_attr( (string) $wiw_h ); ?>" data-turn="<?php echo esc_attr( (string) $wiw_i ); ?>">
+						<?php if ( ! empty( $wiw_v['webm'] ) ) : ?>
+							<source src="<?php echo esc_url( (string) $wiw_v['webm'] ); ?>" type="video/webm">
+						<?php endif; ?>
+						<source src="<?php echo esc_url( (string) $wiw_v['video'] ); ?>" type="video/mp4">
+					</video>
 				<?php endif; ?>
 			</div>
 		<?php endforeach; ?>
