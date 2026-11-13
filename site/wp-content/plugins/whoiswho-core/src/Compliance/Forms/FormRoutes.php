@@ -16,6 +16,7 @@ namespace WhoIsWho\Core\Compliance\Forms;
 use WhoIsWho\Core\Awards\CategoryService;
 use WhoIsWho\Core\Awards\NominationIntake;
 use WhoIsWho\Core\Compliance\Consent\ConsentRecorder;
+use WhoIsWho\Core\Compliance\Support\DataRightsIntake;
 use WhoIsWho\Core\Compliance\Support\EnquiryIntake;
 use WhoIsWho\Core\Compliance\Support\EnquirySubmission;
 use WhoIsWho\Core\Compliance\Support\RequestIntake;
@@ -55,6 +56,7 @@ final class FormRoutes {
 		'#^nominate/start/?$#'           => 'nomination_start',
 		'#^nominate/?$#'                 => 'nomination',
 		'#^report/([A-Za-z0-9_-]+)/?$#'  => 'report',
+		'#^data-rights/?$#'              => 'data_rights',
 	);
 
 	/**
@@ -93,6 +95,7 @@ final class FormRoutes {
 				'correction'       => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->correction( $slug, $input, $ip ),
 				'report'           => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->report( $slug, $input, $ip ),
 				'removal'          => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->removal( $slug, $input, $ip ),
+				'data_rights'      => static fn ( FormInput $input, string $ip ): array => ( new DataRightsIntake( new SupportItems(), $notifier, $protect, SignedLinks::for_site() ) )->submit( $input, $ip ),
 				'newsletter'       => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
 				'nomination_start' => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->begin( $input, $ip ),
 				'nomination'       => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->submit( $input, $ip ),
@@ -201,7 +204,7 @@ final class FormRoutes {
 	 * @param array{form: string, reference: string} $result Dispatch result.
 	 */
 	public static function done_url( array $result ): string {
-		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal', 'report', 'nomination', 'nomination_start' ), true ) ? $result['form'] : 'enquiry';
+		$kind = in_array( $result['form'], array( 'claim', 'newsletter', 'correction', 'removal', 'report', 'nomination', 'nomination_start', 'data_rights' ), true ) ? $result['form'] : 'enquiry';
 		$url  = add_query_arg(
 			array(
 				'kind' => $kind,
