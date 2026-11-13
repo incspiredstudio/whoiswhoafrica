@@ -93,8 +93,9 @@ final class SampleMarker {
 			'intval',
 			get_posts(
 				array(
-					'post_type'      => 'any',
-					'post_status'    => get_post_stati(),
+					'post_type'      => array_values( get_post_types() ),
+					// 'any' would skip types hidden from search, such as profiles and events.
+																			'post_status' => get_post_stati(),
 					'posts_per_page' => -1,
 					'fields'         => 'ids',
 					'no_found_rows'  => true,

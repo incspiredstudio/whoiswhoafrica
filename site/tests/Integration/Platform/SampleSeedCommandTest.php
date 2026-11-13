@@ -248,6 +248,10 @@ final class SampleSeedCommandTest extends WpTestCase {
 			$this->assertSame( '1', get_post_meta( $id, SampleMarker::META, true ) );
 		}
 		$this->assertGreaterThan( 5, count( SampleMarker::all_post_ids() ) );
+		$types = array_unique( array_map( 'get_post_type', SampleMarker::all_post_ids() ) );
+		foreach ( array( ProfileType::POST_TYPE, EventPostType::TYPE, 'post', 'page' ) as $type ) {
+			$this->assertContains( $type, $types, 'the marker lookup sees ' . $type );
+		}
 	}
 
 	public function test_REQ_208_stories_events_awards_pages_and_the_front_page_exist(): void {
