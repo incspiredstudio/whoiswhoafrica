@@ -40,7 +40,9 @@
 
 **Blocked or waiting:** #719 the page cache stores a stale CSP nonce (the cache stays off until it is settled); #128 waits on the owner's approval and on #71, the staging rehearsal.
 
-**Buildable (no human needed):** #260 export sponsored story deals to CSV; #266 Your data rights page; #343 invitation and consent pages; #341 Profile manager role recipe in the runbook; #67 and #73 accessibility and image fixes; #71 staging rehearsal; #40 analytics cookie check; #87 concurrency check; #107 verify each launch checklist item; #690 importable demo content with page templates; #733 My profiles contact and photograph edits.
+**Open but built, to be confirmed:** the integration rounds merge into `chore/structured-build-setup`, which is not the default branch, so `Closes #N` does not close issues. Branches for #260 (export sponsored story deals to CSV), #266 (Your data rights page) and #341 (Profile manager role recipe) have CI runs and were merged through integration rounds, so those issues are probably done and need only a reviewer to close them (the reviewer step marks work done). The open count above may therefore overstate the remaining work.
+
+**Buildable (no human needed):** #343 invitation and consent pages (the invitation route exists in code; confirm the pages); #67 and #73 accessibility and image fixes; #71 staging rehearsal; #40 analytics cookie check; #87 concurrency check; #107 verify each launch checklist item; #690 importable demo content with page templates; #733 My profiles contact and photograph edits.
 
 ## How to run it locally
 
