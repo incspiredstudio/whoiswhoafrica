@@ -65,6 +65,7 @@ $wiw_site     = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, '
 					<?php endif; ?>
 				</section>
 			<?php endforeach; ?>
+			<?php get_template_part( 'template-parts/profile-related-stories', null, array( 'profile' => $wiw_profile ) ); ?>
 			<?php if ( '' !== $wiw_site ) : ?>
 				<p style="margin-top:1rem">
 					<?php esc_html_e( 'Website:', 'whoiswho' ); ?>

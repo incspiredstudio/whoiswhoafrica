@@ -364,6 +364,7 @@
 .profile-body { padding-block: var(--s-6) var(--s-9); }
 .profile-main > * + section { margin-top: var(--s-7); }
 .profile-main h2 { font-size: var(--t-xl); margin-bottom: var(--s-3); padding-top: var(--s-3); border-top: 3px solid var(--c-text); }
+.profile-stories-list { display: grid; gap: var(--s-4); }
 .profile-rail { display: grid; gap: var(--s-4); }
 
 @media (width >= 64rem) { .profile-rail { position: sticky; top: calc(var(--head-h) + var(--s-4)); } }
