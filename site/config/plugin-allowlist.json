@@ -18,6 +18,12 @@
       "version": "4.67",
       "reason": "Per-user capability and role screen (docs/plugins/third-party.md: Per-user capability screen, Decided Q86; owner approved on issue #2). Limited to wiw_manage_capabilities (Administrator only), loaded by whoiswho-core; the guard still refuses fixed capabilities. Touches no visitor data.",
       "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/wp-super-cache",
+      "version": "3.1.5",
+      "reason": "Page cache for anonymous public pages only (docs/plugins/third-party.md; D-060, Q82; owner approved on issue #2; WP Super Cache chosen by default, swappable through the PurgeClient interface). Loaded by whoiswho-core only when WP_CACHE is on, its settings screen is hidden, and PageCachePolicy marks every non-public request DONOTCACHEPAGE. Stores rendered public HTML only.",
+      "docs": "docs/plugins/third-party.md"
     }
   ]
 }

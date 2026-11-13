@@ -63,6 +63,7 @@ final class Module implements ModuleInterface {
 		Settings\SprintScreen::hooks();
 		TwoFactor\TwoFactor::register();
 		RoleEditor\RoleEditor::register();
+		Cache\PageCache\PageCache::register();
 		Cache\PurgeService::for_site()->register();
 		Cache\Admin\PurgeLogScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
