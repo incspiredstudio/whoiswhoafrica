@@ -40,6 +40,7 @@ final class Module implements ModuleInterface {
 		Events\Admin\EventListScreen::hooks();
 		Events\EventCache::hooks();
 		Events\EventCache::register_job();
+		Events\EventSeo::hooks();
 		( new Comments\CommentPolicy() )->register();
 		Comments\CommentPrivacy::hooks();
 		( new Comments\CommentModeratorNotice() )->register();
