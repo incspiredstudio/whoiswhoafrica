@@ -275,6 +275,51 @@ function cue() {
   });
 }
 
+/* ---------- particle stage: Three.js and the stage script are fetched once the visitor starts scrolling, and only on capable devices ---------- */
+function stage() {
+  const urls = window.wiwHome;
+  const hero = document.querySelector(".h-hero");
+  const acts = document.querySelector(".h-acts");
+  const home = document.querySelector(".home");
+  if (!urls || !urls.three || !urls.stage || !hero || !acts || !home) return;
+  if ((navigator.deviceMemory && navigator.deviceMemory < 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4)) return;
+  try {
+    if (!document.createElement("canvas").getContext("webgl")) return;
+  } catch {
+    return;
+  }
+  const load = (src) =>
+    new Promise((resolve, reject) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.async = true;
+      el.onload = resolve;
+      el.onerror = reject;
+      document.head.appendChild(el);
+    });
+  let asked = false;
+  const onScroll = () => {
+    if (asked || window.scrollY < hero.offsetHeight * 0.2) return;
+    asked = true;
+    window.removeEventListener("scroll", onScroll);
+    const go = () =>
+      load(urls.three)
+        .then(() => load(urls.stage))
+        .then(() => {
+          const host = document.createElement("div");
+          host.className = "h-stage";
+          host.setAttribute("aria-hidden", "true");
+          home.insertBefore(host, home.firstChild);
+          if (!window.wiwStage || !window.wiwStage.start(host, acts)) host.remove();
+        })
+        .catch(() => {});
+    if (window.requestIdleCallback) window.requestIdleCallback(go, { timeout: 900 });
+    else window.setTimeout(go, 300);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+}
+
 export function initHomeFx() {
   headerHide();
   pinStories();
@@ -282,4 +327,5 @@ export function initHomeFx() {
   reveals();
   rail();
   cue();
+  stage();
 }
