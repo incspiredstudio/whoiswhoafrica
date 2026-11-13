@@ -124,7 +124,14 @@ function follow() {
   if (mq.addEventListener) mq.addEventListener("change", change);
 }
 
+/** Browsers that cannot animate between pages themselves get a short fade-and-rise of the main content when a page opens. */
+function pageEnter() {
+  if ("onpageswap" in window || !motionAllowed() || root.classList.contains("is-home")) return;
+  root.classList.add("page-enter");
+}
+
 export function initMotion() {
+  pageEnter();
   initReveals();
   initSmoothScroll();
   follow();
