@@ -93,10 +93,10 @@ final class PublicFormMatrixTest extends TestCase {
 	}
 
 	public function test_REQ_081_forms_without_a_template_are_listed_and_still_missing(): void {
-		// Correct, remove, report and newsletter have handlers but no page template in the theme yet: this fails when one is
+		// Correct, remove and report have handlers but no page template in the theme yet: this fails when one is
 		// added, as a reminder to add it to the bot-check test above.
 		$base = dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho/templates';
-		foreach ( array( 'correct', 'correction', 'remove', 'removal', 'report', 'newsletter' ) as $name ) {
+		foreach ( array( 'correct', 'correction', 'remove', 'removal', 'report' ) as $name ) {
 			$this->assertFileDoesNotExist( $base . '/' . $name . '.php', "templates/$name.php now exists: it is covered by the bot-check scan, update this list" );
 		}
 		foreach ( self::KNOWN_MISSING as $form ) {

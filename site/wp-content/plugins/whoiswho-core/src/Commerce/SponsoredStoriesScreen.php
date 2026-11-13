@@ -61,7 +61,9 @@ final class SponsoredStoriesScreen {
 					self::CAP,
 					static function (): void {
 						( new self() )->render();
-					}
+					},
+					false,
+					'commercial'
 				);
 				$registry->hook();
 				ActionGuard::register(

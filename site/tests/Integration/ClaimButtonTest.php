@@ -117,7 +117,7 @@ final class ClaimButtonTest extends TestCase {
 			foreach ( glob( $root . '/' . $dir . '/*.php' ) ?: array() as $file ) {
 				$text = (string) file_get_contents( $file );
 				// Visible wording only: a "Claimed" badge or label, not the helper names that decide whether to hide the button.
-				if ( preg_match( '/>\s*(?:<[^>]+>\s*)*Claimed\b|esc_html_e\(\s*\'Claimed\'|class="[^"]*\bclaimed\b/i', $text ) && 'claim.php' !== basename( $file ) ) {
+				if ( preg_match( '/(?<!-)>\s*(?:<[^>]+>\s*)*Claimed\b|esc_html_e\(\s*\'Claimed\'|class="[^"]*\bclaimed\b/i', $text ) && 'claim.php' !== basename( $file ) ) {
 					$hits[] = basename( $file );
 				}
 			}

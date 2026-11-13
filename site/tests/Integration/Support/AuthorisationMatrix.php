@@ -66,12 +66,23 @@ final class AuthorisationMatrix {
 	}
 
 	/**
-	 * Slugs shown in the WHOISWHO menu for a user.
+	 * Slugs shown in the WHOISWHO menus (every group together) for a user.
 	 *
 	 * @param int $user_id User.
 	 * @return string[]
 	 */
 	public static function menu( int $user_id ): array {
+		return array_merge( array(), ...array_values( self::menu_groups( $user_id ) ) );
+	}
+
+	/**
+	 * The WHOISWHO top-level menus a user sees, as group id => the screen slugs in it. A group with no item for the user, or whose
+	 * top-level entry WordPress removed, is not in the result.
+	 *
+	 * @param int $user_id User.
+	 * @return array<string, string[]>
+	 */
+	public static function menu_groups( int $user_id ): array {
 		global $menu, $submenu, $_wp_menu_nopriv, $_wp_submenu_nopriv, $_registered_pages, $admin_page_hooks;
 		wp_set_current_user( 0 ); // WordPress caches the current user: reset it so granted or revoked capabilities are seen.
 		wp_set_current_user( $user_id );
@@ -83,19 +94,27 @@ final class AuthorisationMatrix {
 		$admin_page_hooks   = array();
 		do_action( 'admin_menu' );
 
-		$slugs = array();
-		foreach ( $submenu[ ScreenRegistry::MENU_SLUG ] ?? array() as $item ) {
-			if ( current_user_can( $item[1] ) ) {
-				$slugs[] = $item[2];
-			}
-		}
-		$top_level_shown = false;
+		$shown = array();
 		foreach ( $menu as $entry ) {
-			if ( ScreenRegistry::MENU_SLUG === $entry[2] ) {
-				$top_level_shown = true;
+			$shown[ (string) $entry[2] ] = true;
+		}
+		$out = array();
+		foreach ( array_keys( ScreenRegistry::groups() ) as $group ) {
+			$parent = ScreenRegistry::menu_slug( $group );
+			if ( ! isset( $shown[ $parent ] ) ) {
+				continue;
+			}
+			$slugs = array();
+			foreach ( $submenu[ $parent ] ?? array() as $item ) {
+				if ( current_user_can( $item[1] ) ) {
+					$slugs[] = $item[2];
+				}
+			}
+			if ( array() !== $slugs ) {
+				$out[ $group ] = $slugs;
 			}
 		}
-		return $top_level_shown ? $slugs : array();
+		return $out;
 	}
 
 	/**

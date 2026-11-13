@@ -116,7 +116,9 @@ final class RequestsScreen {
 			self::CAP,
 			static function (): void {
 				echo self::for_site()->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-			}
+			},
+			false,
+			'review'
 		);
 		$registry->hook();
 		$handler = static function ( Request $request ): void {

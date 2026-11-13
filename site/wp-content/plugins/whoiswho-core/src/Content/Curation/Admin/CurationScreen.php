@@ -78,7 +78,9 @@ final class CurationScreen {
 					self::CAP,
 					static function (): void {
 						( new self( new CurationSettings( AuditLogger::for_site() ) ) )->render( Request::from_globals() );
-					}
+					},
+					false,
+					'directory'
 				);
 				$registry->hook();
 				add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );

@@ -46,7 +46,9 @@ final class SourcesScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'imports'
 				);
 				$registry->hook();
 			},
