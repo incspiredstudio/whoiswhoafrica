@@ -13,7 +13,12 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Commerce\Invitations;
 
+use WhoIsWho\Core\Compliance\Forms\TurnstileChallenge;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Forms\BotChallenge;
+use WhoIsWho\Core\Platform\Forms\FormInput;
+use WhoIsWho\Core\Platform\Forms\FormToken;
+use WhoIsWho\Core\Platform\Forms\NullChallenge;
 use WhoIsWho\Core\Platform\Forms\RateLimiter;
 use WhoIsWho\Core\Platform\Forms\TransientStore;
 use WhoIsWho\Core\Platform\Links\SignedLinks;
@@ -50,14 +55,31 @@ final class InvitationRoute {
 	private RateLimiter $limiter;
 
 	/**
+	 * Bot challenge (Turnstile, or the honeypot and form token fallback), the same one the other public forms use.
+	 *
+	 * @var BotChallenge
+	 */
+	private BotChallenge $challenge;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Invitations $invitations Invitations.
-	 * @param RateLimiter $limiter     Rate limiter.
+	 * @param Invitations  $invitations Invitations.
+	 * @param RateLimiter  $limiter     Rate limiter.
+	 * @param BotChallenge $challenge   Bot challenge.
 	 */
-	public function __construct( Invitations $invitations, RateLimiter $limiter ) {
+	public function __construct( Invitations $invitations, RateLimiter $limiter, BotChallenge $challenge ) {
 		$this->invitations = $invitations;
 		$this->limiter     = $limiter;
+		$this->challenge   = $challenge;
+	}
+
+	/**
+	 * The challenge the other public forms use: Turnstile when its secret is set, otherwise the honeypot and signed token.
+	 */
+	private static function site_challenge(): BotChallenge {
+		$secret = defined( 'WIW_TURNSTILE_SECRET' ) ? (string) constant( 'WIW_TURNSTILE_SECRET' ) : '';
+		return '' !== $secret ? new TurnstileChallenge( TurnstileChallenge::remote_verifier( $secret ) ) : new NullChallenge( FormToken::for_site() );
 	}
 
 	/**
@@ -93,10 +115,10 @@ final class InvitationRoute {
 		nocache_headers();
 		header( 'X-Robots-Tag: noindex, nofollow' );
 		header( 'Referrer-Policy: no-referrer' );
-		$route  = new self( Invitations::for_site(), new RateLimiter( new TransientStore(), wp_salt( 'auth' ), self::LIMITS + RateLimiter::LIMITS ) );
+		$route  = new self( Invitations::for_site(), new RateLimiter( new TransientStore(), wp_salt( 'auth' ), self::LIMITS + RateLimiter::LIMITS ), self::site_challenge() );
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
 		$ip     = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$state  = $route->respond( $method, $token, Request::from_globals(), $ip );
+		$state  = $route->respond( $method, $token, Request::from_globals(), $ip, FormInput::from_globals() );
 		status_header( 'limited' === $state['state'] ? 429 : 200 );
 		echo (string) apply_filters( 'wiw_invitation_page', self::default_page( $state, $token ), $state ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- default markup is escaped below; the theme escapes its own.
 		exit;
@@ -105,18 +127,27 @@ final class InvitationRoute {
 	/**
 	 * Decide the outcome (no output, so it can be tested).
 	 *
-	 * @param string  $method  GET or POST.
-	 * @param string  $token   Token.
-	 * @param Request $request Request, for the values and the picture.
-	 * @param string  $ip      Visitor address.
-	 * @return array{state: string, errors: array<string, string>, values: array<string, string>} state is form, saved, invalid, done, expired or limited.
+	 * @param string    $method  GET or POST.
+	 * @param string    $token   Token.
+	 * @param Request   $request Request, for the values and the picture.
+	 * @param string    $ip      Visitor address.
+	 * @param FormInput $input The same body, for the bot challenge.
+	 * @return array{state: string, errors: array<string, string>, values: array<string, string>} state is form, saved, invalid, done, expired or limited. A post that fails the bot challenge comes back as "form" with the error "form" => "challenge".
 	 */
-	public function respond( string $method, string $token, Request $request, string $ip ): array {
+	public function respond( string $method, string $token, Request $request, string $ip, FormInput $input ): array {
 		$none = array();
 		if ( ! $this->limiter->allow( 'invite', $ip, SignedLinks::hash( $token ) ) ) {
 			return array(
 				'state'  => 'limited',
 				'errors' => $none,
+				'values' => $none,
+			);
+		}
+		// The challenge runs before the link is looked at, so a refusal looks the same for a valid and an invalid link.
+		if ( 'POST' === $method && BotChallenge::OK !== $this->challenge->verify( $input, 'invitation' ) ) {
+			return array(
+				'state'  => 'form',
+				'errors' => array( 'form' => 'challenge' ),
 				'values' => $none,
 			);
 		}
