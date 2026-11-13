@@ -166,3 +166,12 @@ add_action(
 	},
 	3
 );
+add_action(
+	'wiw_profile_rail',
+	static function ( $profile ): void {
+		if ( $profile instanceof PublicProfile ) {
+			get_template_part( 'template-parts/report-panel', null, array( 'profile' => $profile ) );
+		}
+	},
+	30
+);
