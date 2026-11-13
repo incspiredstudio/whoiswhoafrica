@@ -212,4 +212,21 @@ final class PendingRevisionQueueTest extends TestCase {
 		$this->assertStringContainsString( 'Approve this change', $other );
 		$this->assertStringContainsString( 'Reject this change', $other );
 	}
+
+	public function test_REQ_188_pending_revision_decisions_audited(): void {
+		global $wpdb;
+		list( $id, $manager, $version ) = $this->profile_with_pending_edit();
+		$reviewer                       = $this->user( 'wiw_reviewer' );
+		wp_set_current_user( $reviewer );
+		$floor   = (int) $wpdb->get_var( 'SELECT COALESCE(MAX(id),0) FROM ' . $wpdb->prefix . 'wiw_audit_log' ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name.
+		$service = $this->service();
+		$service->reject( $version, 'Please cite a source.', $reviewer );
+		$second = ( new ProfileEditor() )->edit( $id, array( 'hq_city' => 'Kano' ), 'Another move', $manager )['version_id'];
+		$service->approve( $second, $reviewer );
+
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT action, actor_id, reason FROM ' . $wpdb->prefix . 'wiw_audit_log WHERE id > %d AND action IN (%s, %s) ORDER BY id', $floor, 'profile.revision_rejected', 'profile.revision_approved' ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name.
+		$this->assertSame( array( 'profile.revision_rejected', 'profile.revision_approved' ), array_column( $rows, 'action' ) );
+		$this->assertSame( array( (string) $reviewer, (string) $reviewer ), array_column( $rows, 'actor_id' ), 'Each decision records who decided.' );
+		$this->assertSame( 'Please cite a source.', $rows[0]['reason'], 'A return records its reason.' );
+	}
 }
