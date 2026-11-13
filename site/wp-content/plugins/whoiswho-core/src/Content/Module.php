@@ -33,6 +33,7 @@ final class Module implements ModuleInterface {
 		Stories\StoryRoute::hooks();
 		( new Pages\PageRoutes() )->register();
 		Stories\RelatedEvent::hooks();
+		Stories\StorySeo::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
 		( new Newsletter\Privacy\SubscriberPrivacy() )->register();
