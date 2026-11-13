@@ -56,6 +56,22 @@ From the site folder on the host: `php deploy/smoke-check.php --url=https://<sit
 - [ ] Look at the failed-job alerts, the audit log verify result and the backup check.
 - [ ] Record the date, reviewer and findings (issues opened for anything found) in the release notes.
 
+## Pre-launch audit (M5-SEC-05; REQ-046, REQ-065)
+
+Run once before go-live and paste the output into the release notes: `node scripts/prelaunch-audit.js` (from the repository root; add `--skip-network` offline). It prints PASS, FAIL or SKIP per check and exits non-zero on any FAIL.
+
+| Check | What it does | Also enforced in CI |
+|---|---|---|
+| composer audit and npm audit | `composer audit --locked`, `npm audit --audit-level=high` | `audit` job on every pull request and weekly (`security-weekly.yml`); a finding fails the run and the test `test_REQ_046_ci_fails_on_high_severity_finding` guards that wiring |
+| Secrets in history | Runs `gitleaks` when installed; otherwise scans every added line of every branch for private keys, tokens, real salts and pasted DB passwords | `secrets` job, full history (`fetch-depth: 0`) |
+| Plugin allowlist | `scripts/check-plugins.js`: pinned, allowlisted, no forbidden kind | `plugins` job |
+| Plugin register | Every allowlisted plugin is named in `docs/plugins/third-party.md` | not in CI (the register is a docs page) |
+
+Two steps are by hand, because no vulnerability database is wired in and the Administrator's approval is a person's act:
+
+1. **Plugin vulnerabilities.** For each plugin on the allowlist, look up its exact version in a WordPress vulnerability database (Patchstack or WPScan, both need an account; the choice is open) and in the plugin's own changelog. `composer audit` already covers any package that has a Packagist advisory, so a clean result is necessary but not enough for WordPress.org plugins. Record the database, date and result per plugin.
+2. **Approval.** The Administrator confirms each installed plugin was approved and is in the register with its reason. The script's last line stays SKIP until then.
+
 ## Rollback
 
 TODO. Owner: M0-INF-12. Rule: migrations are forward-only; roll back code, not the database (see Deployment).
