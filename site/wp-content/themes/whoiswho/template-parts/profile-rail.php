@@ -45,6 +45,7 @@ $wiw_can_claim = $wiw_profile->claimable;
 		<?php endif; ?>
 		<a class="btn alt" data-action="correct" href="<?php echo esc_url( home_url( '/correct/' . $wiw_slug . '/' ) ); ?>"><?php esc_html_e( 'Suggest a correction', 'whoiswho' ); ?></a>
 		<a class="btn alt" data-action="remove" href="<?php echo esc_url( home_url( '/remove/' . $wiw_slug . '/' ) ); ?>"><?php esc_html_e( 'Request removal', 'whoiswho' ); ?></a>
-		<a class="btn alt" data-action="report" href="<?php echo esc_url( home_url( '/report/' . $wiw_slug . '/' ) ); ?>"><?php esc_html_e( 'Report this profile', 'whoiswho' ); ?></a>
+		<a class="btn alt" data-action="report" data-report-open="report-dialog" aria-haspopup="dialog" href="<?php echo esc_url( home_url( '/report/' . $wiw_slug . '/' ) ); ?>"><?php esc_html_e( 'Report this profile', 'whoiswho' ); ?></a>
 	</div>
+	<p class="small muted"><a href="<?php echo esc_url( home_url( '/complaints/' ) ); ?>"><?php esc_html_e( 'Complaints and takedown', 'whoiswho' ); ?></a></p>
 </section>

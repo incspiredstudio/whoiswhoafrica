@@ -51,6 +51,13 @@ if ( is_readable( $wiw_action_scheduler ) ) {
 	require_once $wiw_action_scheduler;
 }
 
+// The Two Factor plugin (pinned by composer) is loaded here too, so staff cannot deactivate it from wp-admin; its settings are applied by code.
+\WhoIsWho\Core\Platform\TwoFactor\TwoFactor::load( dirname( WIW_CORE_DIR ) );
+// The User Role Editor plugin (pinned by composer) is loaded here, so it cannot be deactivated from wp-admin; its access is decided in Platform\RoleEditor.
+\WhoIsWho\Core\Platform\RoleEditor\RoleEditor::load( dirname( WIW_CORE_DIR ) );
+// The page-cache plugin (pinned by composer) is loaded here only when the secrets file switches the cache on (WP_CACHE).
+\WhoIsWho\Core\Platform\Cache\PageCache\PageCache::load( dirname( WIW_CORE_DIR ) );
+
 register_activation_hook( __FILE__, array( \WhoIsWho\Core\Platform\Activation::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \WhoIsWho\Core\Platform\Activation::class, 'deactivate' ) );
 

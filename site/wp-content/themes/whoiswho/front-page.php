@@ -19,7 +19,7 @@ $wiw_home = wiw_home_model();
 ?>
 <div class="home">
 	<?php
-	foreach ( array( 'home-hero', 'home-acts', 'home-record', 'home-doors', 'home-awards', 'home-stories', 'home-events', 'home-final' ) as $wiw_part ) {
+	foreach ( array( 'home-hero', 'home-acts', 'home-record', 'home-doors', 'home-awards', 'home-nominees', 'home-stories', 'home-events', 'home-final' ) as $wiw_part ) {
 		if ( locate_template( 'template-parts/' . $wiw_part . '.php' ) ) {
 			get_template_part( 'template-parts/' . $wiw_part, null, array( 'home' => $wiw_home ) );
 		}

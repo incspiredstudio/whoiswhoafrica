@@ -227,42 +227,10 @@ if ( 'category' === $wiw_view ) {
 }//end if
 
 if ( 'winners' === $wiw_view ) {
-	$wiw_by_year = PublicWinner::by_year();
-	wiw_page_band(
-		array(
-			'title' => __( 'Winners', 'whoiswho' ),
-			'lede'  => __( 'Every winner was chosen by independent judges against the published criteria.', 'whoiswho' ),
-		)
-	);
-	?>
-	<section class="section">
-		<div class="wrap">
-			<?php if ( array() === $wiw_by_year ) : ?>
-				<?php $wiw_empty( __( 'Winners are not published yet', 'whoiswho' ), __( 'They appear here once the team makes them live.', 'whoiswho' ) ); ?>
-			<?php endif; ?>
-			<?php foreach ( $wiw_by_year as $wiw_year => $wiw_winners ) : ?>
-				<h2><?php echo esc_html( (string) $wiw_year ); ?></h2>
-				<div class="nom-grid">
-					<?php foreach ( $wiw_winners as $wiw_one ) : ?>
-						<?php
-						get_template_part(
-							'template-parts/nominee-card',
-							null,
-							array(
-								'nominee' => $wiw_one,
-								'won'     => true,
-							)
-						);
-						?>
-					<?php endforeach; ?>
-				</div>
-			<?php endforeach; ?>
-		</div>
-	</section>
-	<?php
+	get_template_part( 'template-parts/awards-winners' );
 	get_footer();
 	return;
-}//end if
+}
 
 // The nominees list: public nominees grouped by award group, with group tabs and counts.
 $wiw_live   = PublicNominee::live();

@@ -25,3 +25,6 @@
 /.phpunit.cache/
 /build/release/
 /wp-content/wiw-logs/
+/wp-content/advanced-cache.php
+/wp-content/wp-cache-config.php
+/wp-content/cache/
