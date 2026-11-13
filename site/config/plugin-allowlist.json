@@ -6,6 +6,12 @@
       "version": "4.2.0",
       "reason": "Background jobs, used as a library inside whoiswho-core (docs/plugins/third-party.md: Background jobs, Chosen). Touches no personal data of its own.",
       "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/wp-super-cache",
+      "version": "3.1.5",
+      "reason": "Page cache for anonymous public pages only (docs/plugins/third-party.md; D-060, Q82; owner approved on issue #2; WP Super Cache chosen by default, swappable through the PurgeClient interface). Loaded by whoiswho-core only when WP_CACHE is on, its settings screen is hidden, and PageCachePolicy marks every non-public request DONOTCACHEPAGE. Stores rendered public HTML only.",
+      "docs": "docs/plugins/third-party.md"
     }
   ]
 }

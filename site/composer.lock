@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4af6a69baf97b5054491b106939a69d",
+    "content-hash": "d652d3e4b965d219e4c1ada63e4c2c07",
     "packages": [
         {
             "name": "composer/installers",
@@ -362,6 +362,24 @@
             },
             "time": "2026-09-16T21:40:40+00:00",
             "published-time": "2026-09-16T21:53:56+00:00"
+        },
+        {
+            "name": "wpackagist-plugin/wp-super-cache",
+            "version": "3.1.5",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/wp-super-cache/",
+                "reference": "tags/3.1.5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/wp-super-cache.3.1.5.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/wp-super-cache/"
         }
     ],
     "packages-dev": [

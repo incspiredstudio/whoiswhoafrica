@@ -51,6 +51,9 @@ if ( is_readable( $wiw_action_scheduler ) ) {
 	require_once $wiw_action_scheduler;
 }
 
+// The page-cache plugin (pinned by composer) is loaded here only when the secrets file switches the cache on (WP_CACHE).
+\WhoIsWho\Core\Platform\Cache\PageCache\PageCache::load( dirname( WIW_CORE_DIR ) );
+
 register_activation_hook( __FILE__, array( \WhoIsWho\Core\Platform\Activation::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( \WhoIsWho\Core\Platform\Activation::class, 'deactivate' ) );
 
