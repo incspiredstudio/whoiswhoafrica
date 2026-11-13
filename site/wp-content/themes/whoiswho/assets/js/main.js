@@ -5,9 +5,11 @@ import { initFilterBars } from "./filter-bar.js";
 import { initHeader } from "./header.js";
 import { initMotion, motionAllowed } from "./motion.js";
 import { initCookieNotice } from "./cookie.js";
+import { initReportDialog } from "./report-dialog.js";
 
 window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed });
 initFilterBars();
 initHeader();
 initMotion();
 initCookieNotice();
+initReportDialog();

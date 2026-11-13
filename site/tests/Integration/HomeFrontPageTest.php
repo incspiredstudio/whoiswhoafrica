@@ -112,4 +112,19 @@ final class HomeFrontPageTest extends WpTestCase {
 		$open = $this->render();
 		$this->assertStringContainsString( 'Nominate someone', substr( $open, (int) strpos( $open, 'h-final-cta' ) ) );
 	}
+
+	public function test_REQ_218_the_on_the_record_block_is_absent_when_no_public_profile_qualifies(): void {
+		$this->assertSame( array(), wiw_home_record() );
+		$out = $this->render();
+		$this->assertStringNotContainsString( 'home-record-title', $out );
+		$this->assertStringNotContainsString( 'h-peek', $out );
+	}
+
+	public function test_REQ_218_the_block_reads_profiles_only_from_the_curation_engine_and_shows_no_trust_mark(): void {
+		$part = (string) file_get_contents( get_template_directory() . '/template-parts/home-record.php' );
+		$this->assertStringNotContainsString( 'get_post_meta', $part );
+		$this->assertStringNotContainsString( 'WP_Query', $part );
+		$this->assertStringNotContainsString( 'verified', strtolower( $part ) );
+		$this->assertStringNotContainsString( 'sponsored', strtolower( $part ) );
+	}
 }
