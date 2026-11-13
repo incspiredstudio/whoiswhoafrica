@@ -20,7 +20,8 @@ while ( have_posts() ) {
 	?>
 	<article <?php post_class( 'wrap wrap--text section prose' ); ?>>
 		<?php
-		if ( ! wiw_legal_is_final( get_the_ID() ) ) {
+		// The drafts carry their own visible note as the first block; show the template's note only when the body has none.
+		if ( ! wiw_legal_is_final( get_the_ID() ) && ! str_contains( (string) get_the_content(), 'notice--draft' ) ) {
 			get_template_part(
 				'template-parts/notice',
 				null,

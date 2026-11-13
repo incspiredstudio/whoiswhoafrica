@@ -4,6 +4,9 @@
  * query string, answered 200, and not marked as not public. Anything else is never stored and never served from the cache: staff
  * and any signed-in or commenter cookie, previews, form and link pages (they carry time-based tokens), the admin, REST, feeds,
  * and pages that are noindex because their profile is pending review. Lifetimes are at most 120 seconds, 60 for lists and search.
+ * The list paths are the theme's directory lists (wiw_directory_lists()); a unit test reads them from the theme so the two cannot drift.
+ * A reviewed profile stays cacheable here even though ProfileRoute sends no-cache headers: those headers are for browsers and a CDN
+ * (never keep a stale state), the page-cache plugin does not read them, and an unpublish purges the stored copy (REQ-208, REQ-217).
  *
  * @package WhoIsWho
  */
@@ -22,12 +25,12 @@ final class PageCachePolicy {
 	/**
 	 * Path prefixes that may be cached (exact "/" is the home page). Filter: wiw_page_cache_public_paths.
 	 */
-	public const PUBLIC_PATHS = array( '/profile/', '/profiles', '/stories', '/events', '/awards', '/industries', '/search', '/about', '/faq', '/methodology', '/privacy', '/terms', '/cookies' );
+	public const PUBLIC_PATHS = array( '/profile/', '/directory', '/people', '/entrepreneurs', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search', '/about', '/faq', '/methodology', '/privacy', '/terms', '/cookies' );
 
 	/**
 	 * Prefixes whose responses are lists or search results: 60 seconds.
 	 */
-	public const LIST_PATHS = array( '/profiles', '/stories', '/events', '/awards', '/industries', '/search' );
+	public const LIST_PATHS = array( '/directory', '/people', '/entrepreneurs', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search' );
 
 	/**
 	 * Paths never cached even if a public prefix matched: form pages (time-based tokens), signed links, previews and the like.

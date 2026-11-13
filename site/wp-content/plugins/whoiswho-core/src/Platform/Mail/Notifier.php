@@ -263,7 +263,7 @@ final class Notifier {
 			$lines[] = 'Reason: ' . $context['reason'];
 		}
 		if ( isset( $context['reference'] ) && is_string( $context['reference'] ) && '' !== $context['reference'] ) {
-			$lines[] = 'Your reference: ' . $context['reference'];
+			$lines[] = ( 'public' === ( $definition['audience'] ?? 'public' ) ? 'Your reference: ' : 'Reference: ' ) . $context['reference'];
 		}
 		if ( isset( $context['link_token'] ) && is_string( $context['link_token'] ) && null !== $this->links ) {
 			$lines[] = 'Link: ' . $this->links->url( $context['link_token'] );
@@ -282,7 +282,7 @@ final class Notifier {
 		$text = implode( "\n\n", $lines );
 		$html = '';
 		foreach ( $lines as $line ) {
-			$html .= '<p>' . htmlspecialchars( $line, ENT_QUOTES, 'UTF-8' ) . '</p>';
+			$html .= '<p>' . self::link_urls( htmlspecialchars( $line, ENT_QUOTES, 'UTF-8' ) ) . '</p>';
 		}
 		return array(
 			'subject' => $subject,
@@ -301,6 +301,14 @@ final class Notifier {
 	 * @param string[] $headers Extra headers, for example the one-click unsubscribe pair.
 	 */
 	public static function wp_mail_send( string $to, string $subject, string $text, string $html, array $headers = array() ): bool {
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 120 );
+			// A slow mail server must not end the job after it accepted the message.
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 120 );
+			// A slow mail server must not end the job after it accepted the message.
+		}
 		$alt = static function ( $mailer ) use ( $text ): void {
 			$mailer->AltBody = $text; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 		};
@@ -308,6 +316,15 @@ final class Notifier {
 		$sent = wp_mail( $to, $subject, $html, array_merge( array( 'Content-Type: text/html; charset=UTF-8' ), $headers ) );
 		remove_action( 'phpmailer_init', $alt );
 		return $sent;
+	}
+
+	/**
+	 * Turn the web addresses in escaped text into links. A full stop or bracket at the end is not part of the address.
+	 *
+	 * @param string $escaped HTML-escaped text.
+	 */
+	private static function link_urls( string $escaped ): string {
+		return (string) preg_replace( '~(https?://[^\s<]*[^\s<.,;:!?)])~', '<a href="$1">$1</a>', $escaped );
 	}
 
 	/**

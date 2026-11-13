@@ -32,12 +32,23 @@ final class LegalPagesSeedTest extends TestCase {
 	 * Remove the legal pages and the version setting, so each test starts from nothing.
 	 */
 	private function clean(): void {
+		// The fixed page routes can be deleted only by an Administrator (REQ-260), so clean up as one, then act as nobody again.
+		wp_set_current_user(
+			(int) wp_insert_user(
+				array(
+					'user_login' => 'legal_seed_cleaner_' . wp_generate_password( 6, false ),
+					'user_pass'  => wp_generate_password( 20 ),
+					'role'       => 'administrator',
+				)
+			)
+		);
 		foreach ( array_merge( LegalPages::SLUGS, array( 'about-us' ) ) as $slug ) {
 			$page = get_page_by_path( $slug );
 			if ( $page instanceof \WP_Post ) {
 				wp_delete_post( $page->ID, true );
 			}
 		}
+		wp_set_current_user( 0 );
 		delete_option( SettingsService::OPTION_PREFIX . SettingsService::POLICY_VERSION );
 	}
 

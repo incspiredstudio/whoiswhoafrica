@@ -114,6 +114,36 @@ final class MailTransportTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'jane@example.org', $written );
 	}
 
+	public function test_REQ_075_mailer_names_itself_with_the_sending_domain_and_has_a_bounded_timeout(): void {
+		$mailer = new PHPMailer( true );
+		$this->transport()->configure( $mailer );
+		$this->assertSame( 'example.org', $mailer->Hostname, 'EHLO and Message-ID use the sending domain, not localhost' );
+		$this->assertGreaterThan( 0, $mailer->Timeout );
+		$this->assertLessThanOrEqual( 60, $mailer->Timeout );
+	}
+
+	public function test_REQ_075_from_name_is_the_brand_not_wordpress(): void {
+		add_filter( 'wiw_brand_name', static fn (): string => 'Brand Name' );
+		$this->assertSame( 'Brand Name', $this->transport()->from_name( 'WordPress' ) );
+		remove_all_filters( 'wiw_brand_name' );
+	}
+
+	public function test_REQ_075_html_part_links_urls_and_staff_notices_do_not_say_your_reference(): void {
+		$notifier = \WhoIsWho\Core\Platform\Mail\Notifier::for_site();
+		$public   = $notifier->render(
+			'request_acknowledged',
+			array(
+				'lead'      => 'Confirm here: https://example.org/link/abc?x=1&y=2.',
+				'reference' => 'WIW-1',
+			)
+		);
+		$this->assertStringContainsString( '<a href="https://example.org/link/abc?x=1&amp;y=2">https://example.org/link/abc?x=1&amp;y=2</a>.', $public['html'] );
+		$this->assertStringContainsString( 'Your reference: WIW-1', $public['text'] );
+		$staff = $notifier->render( 'correction_received', array( 'reference' => 'WIW-1' ) );
+		$this->assertStringNotContainsString( 'Your reference', $staff['text'] );
+		$this->assertStringContainsString( 'Reference: WIW-1', $staff['text'] );
+	}
+
 	public function test_REQ_075_from_address_is_on_the_sending_domain_and_the_hourly_cap_is_recorded(): void {
 		$this->assertSame( 'hello@example.org', $this->transport()->from_address( 'wordpress@localhost' ) );
 		$this->assertStringStartsWith( 'no-reply@', $this->transport( array( 'from' => '' ) )->from_address( 'wordpress@localhost' ) );

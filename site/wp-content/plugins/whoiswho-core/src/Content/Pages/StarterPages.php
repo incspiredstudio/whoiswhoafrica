@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Content\Pages;
 
+use WhoIsWho\Core\Compliance\Legal\LegalDrafts;
+use WhoIsWho\Core\Compliance\Legal\LegalPages;
+
 /**
  * Starter pages.
  */
@@ -64,6 +67,9 @@ final class StarterPages {
 				$result['skipped'][] = $path;
 				continue;
 			}
+			if ( in_array( $path, LegalPages::SLUGS, true ) ) {
+				update_post_meta( (int) $id, LegalDrafts::DRAFT_META, '1' );
+			}
 			$result['created'][] = $path;
 		}//end foreach
 		return $result;
@@ -81,45 +87,23 @@ final class StarterPages {
 			'awards'       => $this->def( 'Awards', 'publish', $this->awards_overview() ),
 			'awards/rules' => $this->def( 'Awards rules', 'publish', $this->awards_rules() ),
 			'nominate'     => $this->def( 'Nominate', 'draft', $this->nominate() ),
-			'complaints'   => $this->def( 'Complaints and takedown policy', 'publish', $this->complaints() ),
-			'privacy'      => $this->def(
-				'Privacy policy',
-				'publish',
-				$this->legal(
-					'What we hold, why we hold it, and what you can ask us to do. Version 0.1.',
-					array(
-						'Whose data we hold'  => 'People and organisations named in the directory, whether compiled from public sources or supplied by them; people who nominate, enquire or contact us; and staff.',
-						'Why we hold it'      => 'To publish an accurate professional record, on the basis of legitimate interests with a right to object. Legal will confirm the basis for each group.',
-						'Your rights'         => 'You can ask for access, correction, erasure, objection and portability on the data rights page.',
-						'How long we keep it' => 'We keep each kind of data for a set period, published here once the retention schedule is agreed.',
-						'Who processes it'    => 'Our web host, email provider and analytics provider. A full list is held internally and shared on request.',
-					)
-				)
-			),
-			'terms'        => $this->def(
-				'Terms and conditions',
-				'publish',
-				$this->legal(
-					'The rules for using this site and submitting content to it.',
-					array(
-						'Using the site'    => 'You may read, search and link to the directory. Bulk copying and automated collection are not allowed.',
-						'Submitted content' => 'If you send us content, you confirm you have the right to do so and that it is accurate, and you grant us a licence to publish it.',
-						'Liability'         => 'We take care to check the record, and we correct it when it is wrong. We cannot promise it is free of error.',
-					)
-				)
-			),
-			'cookies'      => $this->def(
-				'Cookie policy',
-				'publish',
-				$this->legal(
-					'Essential cookies always. Analytics only after you agree.',
-					array(
-						'Essential' => 'These keep the site working and secure, and they remember your cookie choice.',
-						'Analytics' => 'Privacy-friendly visit counts. They load only after you accept, and you can change your mind using Cookie preferences in the footer.',
-					)
-				)
-			),
+			'complaints'   => $this->legal_def( 'complaints' ),
+			'privacy'      => $this->legal_def( 'privacy' ),
+			'terms'        => $this->legal_def( 'terms' ),
+			'cookies'      => $this->legal_def( 'cookies' ),
+			'data-rights'  => $this->legal_def( 'data-rights' ),
 		);
+	}
+
+	/**
+	 * A legal page definition from the shared drafts, the same text the legal-pages migration seeds.
+	 *
+	 * @param string $slug Legal page slug.
+	 * @return array{title: string, status: string, content: string}
+	 */
+	private function legal_def( string $slug ): array {
+		$draft = LegalDrafts::for_slug( $slug );
+		return $this->def( $draft['title'], 'publish', $draft['body'] );
 	}
 
 	/**
@@ -217,16 +201,6 @@ final class StarterPages {
 	}
 
 	/**
-	 * A legal page body.
-	 *
-	 * @param string                $intro    Opening paragraph.
-	 * @param array<string, string> $sections Headed sections.
-	 */
-	private function legal( string $intro, array $sections ): string {
-		return $this->note( 'Draft sample text. Legal supplies the final wording.' ) . $this->para( $intro ) . $this->sections( $sections );
-	}
-
-	/**
 	 * About: the theme pattern when it is registered, otherwise a short body.
 	 */
 	private function about(): string {
@@ -317,21 +291,6 @@ final class StarterPages {
 					'Eligibility'        => 'Open to individuals and organisations in Nigeria first, then other African countries, with a professional record in the last five years.',
 					'What to have ready' => 'The nominee’s name, the category, a short statement of why, and one or two public sources. Please leave out phone numbers, home addresses and sensitive personal details.',
 					'Short answers'      => 'Nominating is free and needs no account. Your name and email are never shown to the nominee or the public.',
-				)
-			);
-	}
-
-	/**
-	 * Complaints and takedown.
-	 */
-	private function complaints(): string {
-		return $this->note( 'Draft sample text. Legal supplies the final wording.' )
-			. $this->para( 'Defamation, privacy, copyright or accuracy concerns can be raised without an account and without paying.' )
-			. $this->sections(
-				array(
-					'Our commitments'        => 'We acknowledge every complaint within one business day. We hide a profile within two business days of a valid removal request from the subject. We resolve corrections within seven days.',
-					'How to raise a concern' => 'Open the profile and use Suggest a correction, Request removal or Report this profile. Disputes go to an Editor.',
-					'What a removal means'   => 'A valid removal returns 410 Gone, removes the page from search and the sitemap, and keeps the name on a list so it is not added again.',
 				)
 			);
 	}

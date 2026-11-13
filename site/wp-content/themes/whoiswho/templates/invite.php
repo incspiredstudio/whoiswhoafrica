@@ -83,7 +83,7 @@ $wiw_file_error = wiw_invitation_error_text( $wiw_errors, 'image' );
 				<p class="notice notice--info" role="status"><?php esc_html_e( 'Your draft is saved. You can come back to this link until it expires.', 'whoiswho' ); ?></p>
 			<?php endif; ?>
 			<?php if ( array() !== $wiw_errors ) : ?>
-				<div class="errbox" role="alert"><p><?php esc_html_e( 'Please check the highlighted fields.', 'whoiswho' ); ?></p></div>
+				<div class="errbox" role="alert"><p><?php echo isset( $wiw_errors['form'] ) ? esc_html__( 'This form has expired. Please reload the page and try again.', 'whoiswho' ) : esc_html__( 'Please check the highlighted fields.', 'whoiswho' ); ?></p></div>
 			<?php endif; ?>
 			<?php
 			get_template_part(
