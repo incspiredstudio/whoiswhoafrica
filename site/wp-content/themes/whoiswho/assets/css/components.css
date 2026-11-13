@@ -921,6 +921,7 @@ a:hover .poster-pat, a:focus-visible .poster-pat { mask-position: 14px -10px; ma
 /* ---------- winners ---------- */
 .win-hero .np-title span + span { color: var(--orange); }
 .win-hero .np-intro { padding-bottom: var(--s-7); }
+.win-confetti { position: fixed; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; z-index: 50; }
 .win-year + .win-year { margin-top: var(--s-8); }
 .win-year-h { display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-5); font: 400 clamp(2.5rem, 2rem + 3vw, 5rem)/1 var(--font-display); }
 .win-year-h::after { content: ""; flex: 1; height: 1px; background: var(--c-line); }
