@@ -101,12 +101,11 @@ final class DealService {
 	}
 
 	/**
-	 * Change a deal. Money fields need the register capability, the others the sponsored capability.
+	 * Change a deal. Money fields need the register capability, the others the sponsored capability. A DomainException is thrown when the user lacks the capability for a field or a rule is broken.
 	 *
 	 * @param int                  $id     Deal id.
 	 * @param array<string, mixed> $fields Values to change.
 	 * @return array<int, string> Names of the fields that changed.
-	 * @throws \DomainException When the user lacks the capability for a field or a rule is broken.
 	 * @throws \InvalidArgumentException When the deal is unknown.
 	 */
 	public function update( int $id, array $fields ): array {
