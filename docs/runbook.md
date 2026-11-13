@@ -56,6 +56,22 @@ From the site folder on the host: `php deploy/smoke-check.php --url=https://<sit
 - [ ] Look at the failed-job alerts, the audit log verify result and the backup check.
 - [ ] Record the date, reviewer and findings (issues opened for anything found) in the release notes.
 
+## Pre-launch audit (M5-SEC-05; REQ-046, REQ-065)
+
+Run once before go-live and paste the output into the release notes: `node scripts/prelaunch-audit.js` (from the repository root; add `--skip-network` offline). It prints PASS, FAIL or SKIP per check and exits non-zero on any FAIL.
+
+| Check | What it does | Also enforced in CI |
+|---|---|---|
+| composer audit and npm audit | `composer audit --locked`, `npm audit --audit-level=high` | `audit` job on every pull request and weekly (`security-weekly.yml`); a finding fails the run and the test `test_REQ_046_ci_fails_on_high_severity_finding` guards that wiring |
+| Secrets in history | Runs `gitleaks` when installed; otherwise scans every added line of every branch for private keys, tokens, real salts and pasted DB passwords | `secrets` job, full history (`fetch-depth: 0`) |
+| Plugin allowlist | `scripts/check-plugins.js`: pinned, allowlisted, no forbidden kind | `plugins` job |
+| Plugin register | Every allowlisted plugin is named in `docs/plugins/third-party.md` | not in CI (the register is a docs page) |
+
+Two steps are by hand, because no vulnerability database is wired in and the Administrator's approval is a person's act:
+
+1. **Plugin vulnerabilities.** For each plugin on the allowlist, look up its exact version in a WordPress vulnerability database (Patchstack or WPScan, both need an account; the choice is open) and in the plugin's own changelog. `composer audit` already covers any package that has a Packagist advisory, so a clean result is necessary but not enough for WordPress.org plugins. Record the database, date and result per plugin.
+2. **Approval.** The Administrator confirms each installed plugin was approved and is in the register with its reason. The script's last line stays SKIP until then.
+
 ## Rollback
 
 TODO. Owner: M0-INF-12. Rule: migrations are forward-only; roll back code, not the database (see Deployment).
@@ -141,6 +157,22 @@ Keys to rotate (values live only in the secrets file, mode 600, outside the web 
 
 TODO. Owner: M5. Fallback hosting is described in Deployment.
 
+## Performance budget (REQ-041, REQ-042)
+
+Run on a served site: `BASE_URL=http://127.0.0.1:<port> WIW_THEME_READY=1 WIW_PERF=1 npx playwright test` (in `site/`). It loads each page three times cold-cache in Chromium at 412x823 with 4x CPU slowdown, 1.6 Mbps down, 750 kbps up and 150 ms round trip, and takes the median LCP, CLS, script KB and total KB. The numbers it enforces live in `site/tests/e2e/perf/budgets.json`. CI runs it as a non-blocking step of the e2e job.
+
+Baseline on the local PHP built-in server (Windows, no page cache; time to first byte is about 1.1 s there, so LCP here is a worst case, to be re-measured on the staging host):
+
+| Page | LCP ms | CLS | Script KB | Total KB |
+|---|---|---|---|---|
+| / | 4532 | 0 | 11.3 | 721 |
+| /directory/ | 3332 | 0 | 9.9 | 375 |
+| /stories/ | 3320 | 0 | 9.9 | 371 |
+| /events/ | 3316 | 0 | 9.9 | 371 |
+| /contact/ | 2808 | 0 | 9.9 | 372 |
+
+Proposed ceilings (for the owner to agree; docs/theme/theme-acceptance.md still lists the numeric budget as an open point): LCP 6000 ms enforced now with 2500 ms the REQ-041 target reported as a warning, CLS 0.1, scripts 20 KB, page weight 900 KB. Tighten LCP to 2500 ms once measured on the staging host.
+
 ## Live-host check results
 
 Filled in at M5 from the checks listed in Deployment (Q87 still open).
@@ -156,3 +188,9 @@ Filled in at M5 from the checks listed in Deployment (Q87 still open).
 ## Who receives alerts
 
 TODO. Owner: M5 (monitoring and launch).
+
+## Audit log protection and export
+
+The audit table has database triggers that refuse UPDATE and DELETE where the database account may create triggers (the Audit log screen shows "Database triggers: on" or "off"). Without them the hash chain still detects tampering: run `php bin/wiw.php audit:verify` (exit code 1 when a row was altered) or press Verify chain on the screen.
+
+A nightly job (`audit.export`) writes the new audit rows to `wp-content/uploads/wiw-private/audit/audit-FIRST-LAST.jsonl`, with a `.sig` file holding an HMAC of its contents. The folder carries a deny-all `.htaccess`; download or sync it off the host (never email it). To restore, import the rows in id order into an empty audit table, then run `audit:verify`; check a copy against its `.sig` with the same site key.

@@ -10,9 +10,18 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Visibility;
 
+use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Tests\WpTestCase;
 
 final class ExposureTest extends WpTestCase {
+
+	/**
+	 * Build the real tables once (the story search index writes to one on every save).
+	 */
+	public static function set_up_before_class(): void {
+		parent::set_up_before_class();
+		( new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
+	}
 
 	public function test_REQ_229_rest_requires_staff_login(): void {
 		wp_set_current_user( 0 );
