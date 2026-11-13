@@ -11,6 +11,7 @@ namespace WhoIsWho\Tests\Integration\Curation;
 
 use WhoIsWho\Core\Content\Curation\Admin\CurationScreen;
 use WhoIsWho\Core\Content\Curation\CurationSettings;
+use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -133,5 +134,162 @@ final class CurationScreenTest extends WpTestCase {
 		$this->assertStringContainsString( 'Count must be', $message );
 		$this->assertFalse( get_option( CurationSettings::OPTION_PREFIX . CurationSettings::ON_THE_RECORD, false ) );
 		$this->assertSame( 'Unknown block.', $screen->handle( new Request( array( 'block' => 'nope' ) ) ) );
+	}
+
+	/**
+	 * Create a story post.
+	 *
+	 * @param string $title  Title.
+	 * @param string $status Post status.
+	 */
+	private function story( string $title, string $status = 'publish' ): int {
+		return (int) self::factory()->post->create(
+			array(
+				'post_title'  => $title,
+				'post_status' => $status,
+			)
+		);
+	}
+
+	public function test_REQ_257_a_save_cannot_add_a_pin_that_is_not_public(): void {
+		$screen  = $this->screen_as( 'wiw_editor' );
+		$draft   = $this->story( 'Pin Draft Story', 'draft' );
+		$live    = $this->story( 'Pin Live Story' );
+		$input   = array(
+			'block' => CurationSettings::STORIES_HOME,
+			'mode'  => 'manual',
+			'count' => '3',
+			'fill'  => 'latest',
+		);
+		$message = $screen->handle( new Request( array_merge( $input, array( 'pinned' => (string) $draft ) ) ) );
+		$this->assertStringContainsString( 'cannot be pinned', $message );
+		$this->assertFalse( get_option( CurationSettings::OPTION_PREFIX . CurationSettings::STORIES_HOME, false ), 'a refused save changes nothing' );
+		$this->assertSame( 'Saved.', $screen->handle( new Request( array_merge( $input, array( 'pinned' => (string) $live ) ) ) ) );
+	}
+
+	public function test_REQ_257_pin_actions_add_move_and_remove_in_the_chosen_order(): void {
+		$screen = $this->screen_as( 'wiw_editor' );
+		$one    = $this->story( 'Pin One' );
+		$two    = $this->story( 'Pin Two' );
+		$three  = $this->story( 'Pin Three' );
+		$draft  = $this->story( 'Pin Hidden', 'draft' );
+		$block  = CurationSettings::STORIES_PAGE;
+		$pins   = static fn (): array => get_option( CurationSettings::OPTION_PREFIX . $block )['pinned'];
+		$do     = static fn ( string $op, int $id ): array => array(
+			'block' => $block,
+			'op'    => $op,
+			'id'    => (string) $id,
+		);
+		foreach ( array( $one, $two, $three ) as $id ) {
+			$this->assertSame( 'Saved.', $screen->handle_pin( new Request( $do( 'add', $id ) ) ) );
+		}
+		$this->assertSame( array( $one, $two, $three ), $pins() );
+		$this->assertSame( 'Already pinned.', $screen->handle_pin( new Request( $do( 'add', $two ) ) ) );
+		$this->assertStringContainsString( 'cannot be pinned', $screen->handle_pin( new Request( $do( 'add', $draft ) ) ) );
+		$screen->handle_pin( new Request( $do( 'up', $three ) ) );
+		$this->assertSame( array( $one, $three, $two ), $pins() );
+		$screen->handle_pin( new Request( $do( 'down', $one ) ) );
+		$this->assertSame( array( $three, $one, $two ), $pins() );
+		$screen->handle_pin( new Request( $do( 'up', $three ) ) );
+		$this->assertSame( array( $three, $one, $two ), $pins(), 'the first item cannot move up' );
+		$screen->handle_pin( new Request( $do( 'remove', $one ) ) );
+		$this->assertSame( array( $three, $two ), $pins() );
+		$this->assertSame( 'Unknown change.', $screen->handle_pin( new Request( $do( 'sideways', $two ) ) ) );
+		$this->assertSame( 'Unknown block.', $screen->handle_pin( new Request( array( 'block' => 'nope' ) ) ) );
+	}
+
+	public function test_REQ_257_the_screen_lists_pins_search_results_and_the_block_now(): void {
+		$screen = $this->screen_as( 'wiw_editor' );
+		$one    = $this->story( 'Findable Gleam Story' );
+		$this->story( 'Findable Gleam Draft', 'draft' );
+		$screen->handle_pin(
+			new Request(
+				array(
+					'block' => CurationSettings::STORIES_HOME,
+					'op'    => 'add',
+					'id'    => (string) $one,
+				)
+			)
+		);
+		$screen->handle(
+			new Request(
+				array(
+					'block'  => CurationSettings::STORIES_HOME,
+					'mode'   => 'manual',
+					'count'  => '3',
+					'fill'   => 'latest',
+					'pinned' => (string) $one,
+				)
+			)
+		);
+		$html = $screen->html(
+			'',
+			new Request(
+				array(
+					'pick' => CurationSettings::STORIES_HOME,
+					'q'    => 'Gleam',
+				)
+			)
+		);
+		$this->assertStringContainsString( '<ol class="wiw-pins" data-block="stories_home">', $html );
+		$this->assertStringContainsString( 'Findable Gleam Story', $html );
+		$this->assertStringNotContainsString( 'Findable Gleam Draft', $html, 'a story that is not public is not offered' );
+		$this->assertStringContainsString( '(pinned)', $html );
+		$this->assertStringContainsString( 'The block now', $html );
+		$this->assertStringContainsString( '<ol class="wiw-preview"><li>Findable Gleam Story</li></ol>', $html );
+	}
+
+	public function test_REQ_257_preview_without_saving_shows_the_unsaved_setting_and_saves_nothing(): void {
+		$screen = $this->screen_as( 'wiw_editor' );
+		$first  = $this->story( 'Preview First Story' );
+		$second = $this->story( 'Preview Second Story' );
+		$html   = $screen->html(
+			'',
+			new Request(
+				array(
+					'preview' => '1',
+					'block'   => CurationSettings::STORIES_PAGE,
+					'mode'    => 'manual',
+					'count'   => '3',
+					'fill'    => 'latest',
+					'pinned'  => $second . ',' . $first,
+				)
+			)
+		);
+		$this->assertStringContainsString( 'Preview of your unsaved changes', $html );
+		$this->assertStringContainsString( 'Nothing is saved until you press Save.', $html );
+		$this->assertStringContainsString( '<li>Preview Second Story</li><li>Preview First Story</li>', $html );
+		$this->assertFalse( get_option( CurationSettings::OPTION_PREFIX . CurationSettings::STORIES_PAGE, false ) );
+	}
+
+	public function test_REQ_257_the_printed_screen_keeps_the_pin_controls(): void {
+		$screen = $this->screen_as( 'wiw_editor' );
+		$one    = $this->story( 'Printed Pin Story' );
+		$screen->handle_pin(
+			new Request(
+				array(
+					'block' => CurationSettings::STORIES_HOME,
+					'op'    => 'add',
+					'id'    => (string) $one,
+				)
+			)
+		);
+		ob_start();
+		$screen->render( new Request( array() ) );
+		$printed = (string) ob_get_clean();
+		$this->assertStringContainsString( 'name="op" value="remove"', $printed );
+		$this->assertStringContainsString( 'name="action" value="' . CurationScreen::PIN . '"', $printed );
+		$this->assertStringContainsString( 'formmethod="get"', $printed );
+		$this->assertStringContainsString( 'data-id="' . $one . '"', $printed );
+	}
+
+	public function test_REQ_257_the_pin_action_needs_the_curate_capability(): void {
+		$check = static function ( string $role ): ?string {
+			wp_set_current_user( self::factory()->user->create( array( 'role' => $role ) ) );
+			$request = new Request( array( '_wpnonce' => ActionGuard::nonce_for( CurationScreen::PIN ) ) );
+			return ActionGuard::check( CurationScreen::PIN, CurationScreen::CAP, $request );
+		};
+		$this->assertNotNull( $check( 'wiw_reviewer' ) );
+		$this->assertNull( $check( 'wiw_editor' ) );
 	}
 }
