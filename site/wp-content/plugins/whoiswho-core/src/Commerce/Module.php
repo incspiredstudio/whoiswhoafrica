@@ -29,5 +29,6 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		SponsorPostType::hooks();
 		PlacementJob::register();
+		DashboardTiles::hooks();
 	}
 }
