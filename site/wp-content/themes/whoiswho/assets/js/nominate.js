@@ -90,7 +90,8 @@ function init(wiz) {
     alertBox.focus();
   }
 
-  function show(n) {
+  // Moving to a step moves focus to its heading, except when the page has only just loaded: focus must not skip the skip link.
+  function show(n, moveFocus = true) {
     current = n;
     steps.forEach((s) => {
       s.hidden = Number(s.dataset.step) !== n;
@@ -104,7 +105,7 @@ function init(wiz) {
     });
     if (n === 6) review();
     const h = form.querySelector('[data-step="' + n + '"] h2');
-    if (h) h.focus();
+    if (h && moveFocus) h.focus();
   }
 
   function review() {
@@ -330,7 +331,7 @@ function init(wiz) {
 
   wiz.hidden = false;
   // A returning nominator (the emailed link opened in this tab and back) continues from the verification step.
-  show(draft ? 2 : 1);
+  show(draft ? 2 : 1, Boolean(draft));
 }
 
 const mount = root();
