@@ -56,3 +56,8 @@ export async function loginAs(page: Page, baseURL: string, role: StaffRole): Pro
   const base = new URL(page.url()).pathname.match(/^(.*\/wp-admin\/)/);
   if (base) adminBase = base[1];
 }
+
+/** Clear the form rate limits (comments, enquiries, newsletter, nominations and so on) so repeated runs are not throttled. */
+export function resetRateLimits(): void {
+  runHelper("reset-limits.php");
+}
