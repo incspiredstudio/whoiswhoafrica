@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Compliance\Admin\Requests;
 
+use WhoIsWho\Core\Compliance\Info\InformationSender;
 use WhoIsWho\Core\Compliance\Removals\RemovalDecisions;
 use WhoIsWho\Core\Compliance\Support\ItemStatus;
 use WhoIsWho\Core\Compliance\Support\ItemType;
@@ -294,6 +295,15 @@ final class RequestsScreen {
 				case 'escalate':
 					$this->escalate( $id );
 					break;
+				case 'send_info':
+					$kinds = array();
+					foreach ( array_keys( InformationSender::KINDS ) as $kind ) {
+						if ( $request->has( 'kind_' . $kind ) ) {
+							$kinds[] = $kind;
+						}
+					}
+					InformationSender::for_site()->send( $id, $kinds );
+					break;
 				default:
 					break;
 			}//end switch
@@ -397,6 +407,14 @@ final class RequestsScreen {
 				$out .= $this->button( $id, 'close', __( 'Close: fulfilled', 'whoiswho' ), self::ACTION );
 		}
 		$out .= $this->button( $id, 'escalate', __( 'Escalate to the Administrator', 'whoiswho' ), self::ACTION );
+		if ( '' !== (string) $item['requester_email'] ) {
+			$boxes = '';
+			foreach ( InformationSender::KINDS as $kind => $label ) {
+				$boxes .= '<label style="margin-right:1em"><input type="checkbox" name="kind_' . esc_attr( $kind ) . '" value="1" /> ' . esc_html( $label ) . '</label>';
+			}
+			$out .= '<h2>' . esc_html__( 'Send information to the requester', 'whoiswho' ) . '</h2>'
+				. $this->button( $id, 'send_info', __( 'Send', 'whoiswho' ), self::ACTION, $boxes );
+		}
 		return $out . '</div>';
 	}
 
