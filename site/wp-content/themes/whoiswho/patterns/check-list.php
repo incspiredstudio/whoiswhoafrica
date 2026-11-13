@@ -23,29 +23,35 @@
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"ab-how-list"} -->
-<div class="wp-block-group ab-how-list"><!-- wp:heading {"level":3} -->
+<div class="wp-block-group ab-how-list"><!-- wp:group {"className":"ab-how-item"} -->
+<div class="wp-block-group ab-how-item"><!-- wp:heading {"level":3} -->
 <h3 class="wp-block-heading"><?php echo esc_html_x( 'First point', 'pattern text', 'whoiswho' ); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph -->
 <p><?php echo esc_html_x( 'One sentence that backs it up.', 'pattern text', 'whoiswho' ); ?></p>
-<!-- /wp:paragraph -->
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
 
-<!-- wp:heading {"level":3} -->
+<!-- wp:group {"className":"ab-how-item"} -->
+<div class="wp-block-group ab-how-item"><!-- wp:heading {"level":3} -->
 <h3 class="wp-block-heading"><?php echo esc_html_x( 'Second point', 'pattern text', 'whoiswho' ); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph -->
 <p><?php echo esc_html_x( 'One sentence that backs it up.', 'pattern text', 'whoiswho' ); ?></p>
-<!-- /wp:paragraph -->
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
 
-<!-- wp:heading {"level":3} -->
+<!-- wp:group {"className":"ab-how-item"} -->
+<div class="wp-block-group ab-how-item"><!-- wp:heading {"level":3} -->
 <h3 class="wp-block-heading"><?php echo esc_html_x( 'Third point', 'pattern text', 'whoiswho' ); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph -->
 <p><?php echo esc_html_x( 'One sentence that backs it up.', 'pattern text', 'whoiswho' ); ?></p>
 <!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group --></section>
 <!-- /wp:group -->
