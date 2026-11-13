@@ -1,0 +1,1491 @@
+{
+ "note": "Fictional sample data for local and staging previews only. Built from the prototype. Not real people, organisations or events.",
+ "places": {
+  "Nigeria": [
+   "Lagos",
+   "Abuja",
+   "Port Harcourt",
+   "Ibadan",
+   "Kano",
+   "Enugu"
+  ],
+  "Ghana": [
+   "Accra",
+   "Tema"
+  ],
+  "Kenya": [
+   "Nairobi"
+  ],
+  "Rwanda": [
+   "Kigali"
+  ],
+  "South Africa": [
+   "Cape Town"
+  ],
+  "Tanzania": [
+   "Dar es Salaam"
+  ]
+ },
+ "industries": [
+  "Agriculture & Agritech",
+  "Financial Services & Fintech",
+  "Technology",
+  "Health & Life Sciences",
+  "Education",
+  "Energy",
+  "Media & Creative",
+  "Legal & Professional Services",
+  "Manufacturing",
+  "Public Sector"
+ ],
+ "org_types": [
+  "Company",
+  "Public body",
+  "University",
+  "Professional association",
+  "NGO / social enterprise"
+ ],
+ "profiles": [
+  {
+   "key": "ngozi-balogun-mensah",
+   "type": "individual",
+   "slug": "ngozi-balogun-mensah",
+   "name": "Ngozi Balogun-Mensah",
+   "industry": "Agriculture & Agritech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Ngozi Balogun-Mensah",
+    "current_title": "Chief Strategy Officer",
+    "current_organisation": "Savanna Loop Agritech",
+    "bio": "Ngozi Balogun-Mensah leads strategy at Savanna Loop Agritech, where she oversees the expansion of crop-monitoring services to smallholder cooperatives in south-west Nigeria. She joined the company in 2019 after a decade in agricultural development finance.",
+    "official_website": "https://example.net/ngozi-balogun-mensah"
+   }
+  },
+  {
+   "key": "savanna-loop-agritech",
+   "type": "organisation",
+   "slug": "savanna-loop-agritech",
+   "name": "Savanna Loop Agritech",
+   "industry": "Agriculture & Agritech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Savanna Loop Agritech",
+    "org_type": "Company",
+    "summary": "Savanna Loop Agritech builds crop-monitoring software and advisory services for smallholder cooperatives. Founded in Lagos in 2015, it works with farmer groups across the south-west and in the Middle Belt.",
+    "hq_city": "Lagos",
+    "website": "https://example.net/savanna-loop"
+   }
+  },
+  {
+   "key": "tiderail-payments",
+   "type": "organisation",
+   "slug": "tiderail-payments",
+   "name": "Tiderail Payments",
+   "industry": "Financial Services & Fintech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": true,
+   "fields": {
+    "name": "Tiderail Payments",
+    "org_type": "Company",
+    "summary": "Tiderail Payments provides merchant payment tools and settlement services for small businesses. The company supplied its own profile and passed the the directory verification checklist in 2026.",
+    "hq_city": "Lagos",
+    "website": "https://example.net/tiderail"
+   }
+  },
+  {
+   "key": "bonny-reach-logistics",
+   "type": "organisation",
+   "slug": "bonny-reach-logistics",
+   "name": "Bonny Reach Logistics",
+   "industry": "Technology",
+   "country": "Nigeria",
+   "city": "Port Harcourt",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Bonny Reach Logistics",
+    "org_type": "Company",
+    "summary": "Bonny Reach Logistics moves freight between Port Harcourt, Onitsha and Lagos and runs route-planning software for its fleet. It is a listed company.",
+    "hq_city": "Port Harcourt",
+    "website": "https://example.net/bonny-reach"
+   }
+  },
+  {
+   "key": "confluence-health-network",
+   "type": "organisation",
+   "slug": "confluence-health-network",
+   "name": "Confluence Health Network",
+   "industry": "Health & Life Sciences",
+   "country": "Nigeria",
+   "city": "Abuja",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Confluence Health Network",
+    "org_type": "Company",
+    "summary": "Confluence Health Network runs a group of outpatient clinics in the Federal Capital Territory and neighbouring states. Editors chose it for the the directory spotlight series on primary care.",
+    "hq_city": "Abuja",
+    "website": "https://example.net/confluence-health"
+   }
+  },
+  {
+   "key": "harmattan-grid-energy",
+   "type": "organisation",
+   "slug": "harmattan-grid-energy",
+   "name": "Harmattan Grid Energy",
+   "industry": "Energy",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "pending",
+   "verified": false,
+   "fields": {
+    "name": "Harmattan Grid Energy",
+    "org_type": "Company",
+    "summary": "Harmattan Grid Energy provides mini-grid energy services. Contact the head office on 0800-000-0000 for details.",
+    "hq_city": "Lagos",
+    "website": "https://example.net/harmattan-grid"
+   }
+  },
+  {
+   "key": "palmline-media-house",
+   "type": "organisation",
+   "slug": "palmline-media-house",
+   "name": "Palmline Media House",
+   "industry": "Media & Creative",
+   "country": "Nigeria",
+   "city": "Ibadan",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Palmline Media House",
+    "org_type": "Company",
+    "summary": "Palmline Media House publishes regional business titles and runs a radio network from Ibadan.",
+    "hq_city": "Ibadan",
+    "website": "https://example.net/palmline"
+   }
+  },
+  {
+   "key": "deltaline-cold-chain",
+   "type": "organisation",
+   "slug": "deltaline-cold-chain",
+   "name": "Deltaline Cold Chain",
+   "industry": "Agriculture & Agritech",
+   "country": "Nigeria",
+   "city": "Port Harcourt",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Deltaline Cold Chain",
+    "org_type": "Company",
+    "summary": "Deltaline Cold Chain operates cold storage and refrigerated distribution for fresh produce. This summary was compiled from the public sources listed below and has not yet been checked by a person.",
+    "hq_city": "Port Harcourt",
+    "website": "https://example.net/deltaline"
+   }
+  },
+  {
+   "key": "lake-basin-water-institute",
+   "type": "institution",
+   "slug": "lake-basin-water-institute",
+   "name": "Lake Basin Water Institute",
+   "industry": "Public Sector",
+   "country": "Kenya",
+   "city": "Nairobi",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Lake Basin Water Institute",
+    "org_type": "Public body",
+    "summary": "Lake Basin Water Institute carries out research and training on water resources. This summary was compiled from the public sources listed below and has not yet been checked by a person.",
+    "hq_city": "Nairobi",
+    "website": "https://example.net/lake-basin",
+    "mandate": "Research institute"
+   }
+  },
+  {
+   "key": "osu-harbour-foods",
+   "type": "organisation",
+   "slug": "osu-harbour-foods",
+   "name": "Osu Harbour Foods",
+   "industry": "Manufacturing",
+   "country": "Ghana",
+   "city": "Accra",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Osu Harbour Foods",
+    "org_type": "Company",
+    "summary": "Osu Harbour Foods processes and exports shelf-stable foods from Accra to markets in West Africa.",
+    "hq_city": "Accra",
+    "website": "https://example.net/osu-harbour"
+   }
+  },
+  {
+   "key": "kigali-data-foundry",
+   "type": "organisation",
+   "slug": "kigali-data-foundry",
+   "name": "Kigali Data Foundry",
+   "industry": "Technology",
+   "country": "Rwanda",
+   "city": "Kigali",
+   "state": "reviewed",
+   "verified": true,
+   "fields": {
+    "name": "Kigali Data Foundry",
+    "org_type": "Company",
+    "summary": "Kigali Data Foundry runs data infrastructure and analytics services for public agencies and banks in East Africa. Its details passed the the directory verification checklist in 2026.",
+    "hq_city": "Kigali",
+    "website": "https://example.net/kigali-data"
+   }
+  },
+  {
+   "key": "oyo-crest-university",
+   "type": "institution",
+   "slug": "oyo-crest-university",
+   "name": "Oyo Crest University",
+   "industry": "Education",
+   "country": "Nigeria",
+   "city": "Ibadan",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Oyo Crest University",
+    "org_type": "University / school",
+    "summary": "Oyo Crest University is an accredited public university in Ibadan, known for its agricultural sciences faculty.",
+    "hq_city": "Ibadan",
+    "website": "https://example.net/oyo-crest",
+    "mandate": "University"
+   }
+  },
+  {
+   "key": "guild-of-practising-mediators",
+   "type": "institution",
+   "slug": "guild-of-practising-mediators",
+   "name": "Guild of Practising Mediators",
+   "industry": "Legal & Professional Services",
+   "country": "Nigeria",
+   "city": "Abuja",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Guild of Practising Mediators",
+    "org_type": "Professional association",
+    "summary": "The Guild of Practising Mediators sets professional standards for commercial mediators and accredits training providers.",
+    "hq_city": "Abuja",
+    "website": "https://example.net/mediators-guild",
+    "mandate": "Professional association"
+   }
+  },
+  {
+   "key": "sahel-commons-foundation",
+   "type": "institution",
+   "slug": "sahel-commons-foundation",
+   "name": "Sahel Commons Foundation",
+   "industry": "Public Sector",
+   "country": "Nigeria",
+   "city": "Kano",
+   "state": "pending",
+   "verified": false,
+   "fields": {
+    "name": "Sahel Commons Foundation",
+    "org_type": "NGO / social enterprise",
+    "summary": "Sahel Commons Foundation runs community water and school projects in northern Nigeria.",
+    "hq_city": "Kano",
+    "website": "https://example.net/sahel-commons",
+    "mandate": "NGO / social enterprise"
+   }
+  },
+  {
+   "key": "tunde-achebe-wanjala",
+   "type": "individual",
+   "slug": "tunde-achebe-wanjala",
+   "name": "Tunde Achebe-Wanjala",
+   "industry": "Agriculture & Agritech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Tunde Achebe-Wanjala",
+    "current_title": "Chief Executive",
+    "current_organisation": "Savanna Loop Agritech",
+    "bio": "Tunde Achebe-Wanjala is Chief Executive of Savanna Loop Agritech, a post he has held since 2017. Company filings list him as a director.",
+    "official_website": "https://example.net/tunde-achebe-wanjala"
+   }
+  },
+  {
+   "key": "halima-osei-danjuma",
+   "type": "individual",
+   "slug": "halima-osei-danjuma",
+   "name": "Halima Osei-Danjuma",
+   "industry": "Agriculture & Agritech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Halima Osei-Danjuma",
+    "current_title": "Chief Operating Officer",
+    "current_organisation": "Savanna Loop Agritech",
+    "bio": "Halima Osei-Danjuma is Chief Operating Officer of Savanna Loop Agritech, responsible for field operations and partner cooperatives.",
+    "official_website": "https://example.net/halima-osei-danjuma"
+   }
+  },
+  {
+   "key": "ifeoma-kariuki-bello",
+   "type": "entrepreneur",
+   "slug": "ifeoma-kariuki-bello",
+   "name": "Ifeoma Kariuki-Bello",
+   "industry": "Financial Services & Fintech",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": true,
+   "fields": {
+    "name": "Ifeoma Kariuki-Bello",
+    "current_title": "Founder",
+    "current_organisation": "Tiderail Payments",
+    "bio": "Ifeoma Kariuki-Bello founded Tiderail Payments in 2018 after working in bank settlement operations. She remains its largest shareholder and leads product strategy.",
+    "official_website": "https://example.net/ifeoma-kariuki-bello"
+   }
+  },
+  {
+   "key": "kofi-adeleke-nkosi",
+   "type": "individual",
+   "slug": "kofi-adeleke-nkosi",
+   "name": "Prof. Kofi Adeleke-Nkosi",
+   "industry": "Education",
+   "country": "Nigeria",
+   "city": "Ibadan",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Prof. Kofi Adeleke-Nkosi",
+    "current_title": "Professor of Soil Science",
+    "current_organisation": "Oyo Crest University",
+    "bio": "Professor Kofi Adeleke-Nkosi teaches soil science at Oyo Crest University. His published work focuses on soil health in smallholder farming systems.",
+    "official_website": "https://example.net/kofi-adeleke-nkosi"
+   }
+  },
+  {
+   "key": "zainab-mwangi-okoro",
+   "type": "individual",
+   "slug": "zainab-mwangi-okoro",
+   "name": "Zainab Mwangi-Okoro",
+   "industry": "Energy",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "pending",
+   "verified": false,
+   "fields": {
+    "name": "Zainab Mwangi-Okoro",
+    "current_title": "Director",
+    "current_organisation": "Harmattan Grid Energy",
+    "bio": "Zainab Mwangi-Okoro is listed as a director of Harmattan Grid Energy. This record is waiting for a reviewer.",
+    "official_website": "https://example.net/zainab-mwangi-okoro"
+   }
+  },
+  {
+   "key": "emeka-diallo-hassan",
+   "type": "individual",
+   "slug": "emeka-diallo-hassan",
+   "name": "Emeka Diallo-Hassan",
+   "industry": "Media & Creative",
+   "country": "Nigeria",
+   "city": "Ibadan",
+   "state": "unpublished",
+   "verified": false,
+   "fields": {
+    "name": "Emeka Diallo-Hassan",
+    "current_title": "Board member",
+    "current_organisation": "Palmline Media House",
+    "bio": "Emeka Diallo-Hassan was listed as a board member of Palmline Media House.",
+    "official_website": "https://example.net/emeka-diallo-hassan"
+   }
+  },
+  {
+   "key": "aisha-nwosu-tetteh",
+   "type": "individual",
+   "slug": "aisha-nwosu-tetteh",
+   "name": "Aisha Nwosu-Tetteh",
+   "industry": "Legal & Professional Services",
+   "country": "Nigeria",
+   "city": "Abuja",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Aisha Nwosu-Tetteh",
+    "current_title": "Legal Counsel",
+    "current_organisation": "Guild of Practising Mediators",
+    "bio": "Aisha Nwosu-Tetteh is Legal Counsel to the Guild of Practising Mediators and advises on its code of practice.",
+    "official_website": "https://example.net/aisha-nwosu-tetteh"
+   }
+  },
+  {
+   "key": "chidi-sesay-abara",
+   "type": "entrepreneur",
+   "slug": "chidi-sesay-abara",
+   "name": "Chidi Sesay-Abara",
+   "industry": "Manufacturing",
+   "country": "Nigeria",
+   "city": "Enugu",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Chidi Sesay-Abara",
+    "current_title": "Founder",
+    "current_organisation": "Greenweave Textile Works",
+    "bio": "Chidi Sesay-Abara founded Greenweave Textile Works in Enugu in 2017. The company makes uniforms and workwear from locally woven cotton.",
+    "official_website": "https://example.net/chidi-sesay-abara"
+   }
+  },
+  {
+   "key": "kwame-adebayo-mensah",
+   "type": "individual",
+   "slug": "kwame-adebayo-mensah",
+   "name": "Kwame Adebayo-Mensah",
+   "industry": "Media & Creative",
+   "country": "Ghana",
+   "city": "Accra",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Kwame Adebayo-Mensah",
+    "current_title": "Creative Director",
+    "current_organisation": "Harbourlight Studio",
+    "bio": "Kwame Adebayo-Mensah is Creative Director of Harbourlight Studio in Accra, which makes campaigns and short films for public-health and education programmes.",
+    "official_website": "https://example.net/kwame-adebayo-mensah"
+   }
+  },
+  {
+   "key": "folake-nduka-asante",
+   "type": "entrepreneur",
+   "slug": "folake-nduka-asante",
+   "name": "Folake Nduka-Asante",
+   "industry": "Public Sector",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Folake Nduka-Asante",
+    "current_title": "Founder",
+    "current_organisation": "Greenbelt Youth Network",
+    "bio": "Folake Nduka-Asante founded Greenbelt Youth Network in 2022. Its volunteers plant and maintain trees along school routes in Lagos and Ogun states.",
+    "official_website": "https://example.net/folake-nduka-asante"
+   }
+  },
+  {
+   "key": "babatunde-ekwueme-sowah",
+   "type": "individual",
+   "slug": "babatunde-ekwueme-sowah",
+   "name": "Babatunde Ekwueme-Sowah",
+   "industry": "Health & Life Sciences",
+   "country": "Nigeria",
+   "city": "Kano",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Babatunde Ekwueme-Sowah",
+    "current_title": "Programme Director",
+    "current_organisation": "Northgate Community Health Volunteers",
+    "bio": "Babatunde Ekwueme-Sowah directs Northgate Community Health Volunteers, which trains neighbourhood health workers in Kano State.",
+    "official_website": "https://example.net/babatunde-ekwueme-sowah"
+   }
+  },
+  {
+   "key": "wanjiru-owusu-eze",
+   "type": "entrepreneur",
+   "slug": "wanjiru-owusu-eze",
+   "name": "Wanjiru Owusu-Eze",
+   "industry": "Energy",
+   "country": "Kenya",
+   "city": "Nairobi",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Wanjiru Owusu-Eze",
+    "current_title": "Founder and Chief Executive",
+    "current_organisation": "Lakeside Solar Kiosks",
+    "bio": "Wanjiru Owusu-Eze founded Lakeside Solar Kiosks in 2020 to sell solar power and phone charging through small kiosks in market towns in western Kenya.",
+    "official_website": "https://example.net/wanjiru-owusu-eze"
+   }
+  },
+  {
+   "key": "sahel-grain-cooperative",
+   "type": "organisation",
+   "slug": "sahel-grain-cooperative",
+   "name": "Sahel Grain Cooperative",
+   "industry": "Technology",
+   "country": "Ghana",
+   "city": "Accra",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Sahel Grain Cooperative",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For lifting incomes across 3,000 smallholder farms.",
+    "hq_city": "Accra"
+   }
+  },
+  {
+   "key": "mara-fresh-logistics",
+   "type": "organisation",
+   "slug": "mara-fresh-logistics",
+   "name": "Mara Fresh Logistics",
+   "industry": "Agriculture & Agritech",
+   "country": "Kenya",
+   "city": "Nairobi",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Mara Fresh Logistics",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For cutting produce loss by half on the Nairobi corridor.",
+    "hq_city": "Nairobi"
+   }
+  },
+  {
+   "key": "ndlovu-vision-labs",
+   "type": "organisation",
+   "slug": "ndlovu-vision-labs",
+   "name": "Ndlovu Vision Labs",
+   "industry": "Technology",
+   "country": "South Africa",
+   "city": "Cape Town",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Ndlovu Vision Labs",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For crop-disease detection that works on a basic phone.",
+    "hq_city": "Cape Town"
+   }
+  },
+  {
+   "key": "zanele-dube-ferreira",
+   "type": "individual",
+   "slug": "zanele-dube-ferreira",
+   "name": "Zanele Dube-Ferreira",
+   "industry": "Technology",
+   "country": "South Africa",
+   "city": "Cape Town",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Zanele Dube-Ferreira",
+    "current_title": "Managing Director",
+    "current_organisation": "Sample Technology Group",
+    "bio": "Fictional profile. For turning a family manufacturer into a regional exporter."
+   }
+  },
+  {
+   "key": "samuel-mwangi-otieno",
+   "type": "individual",
+   "slug": "samuel-mwangi-otieno",
+   "name": "Dr. Samuel Mwangi-Otieno",
+   "industry": "Health & Life Sciences",
+   "country": "Kenya",
+   "city": "Nairobi",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Dr. Samuel Mwangi-Otieno",
+    "current_title": "Programme Lead",
+    "current_organisation": "Sample Health Group",
+    "bio": "Fictional profile. For a rural surgical outreach that has treated 20,000 patients."
+   }
+  },
+  {
+   "key": "nomsa-khumalo-adeyemi",
+   "type": "individual",
+   "slug": "nomsa-khumalo-adeyemi",
+   "name": "Nomsa Khumalo-Adeyemi",
+   "industry": "Public Sector",
+   "country": "South Africa",
+   "city": "Cape Town",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Nomsa Khumalo-Adeyemi",
+    "current_title": "Chief Medical Officer",
+    "current_organisation": "Sample Public Group",
+    "bio": "Fictional profile. For moving a provincial government's services online."
+   }
+  },
+  {
+   "key": "lagos-mainland-teaching-hospital",
+   "type": "institution",
+   "slug": "lagos-mainland-teaching-hospital",
+   "name": "Lagos Mainland Teaching Hospital",
+   "industry": "Health & Life Sciences",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Lagos Mainland Teaching Hospital",
+    "org_type": "Public body",
+    "summary": "Fictional organisation. For a records system that halved patient waiting times.",
+    "hq_city": "Lagos",
+    "mandate": "Fictional institution created for the sample directory."
+   }
+  },
+  {
+   "key": "adaeze-onyekachi-mbeki",
+   "type": "individual",
+   "slug": "adaeze-onyekachi-mbeki",
+   "name": "Adaeze Onyekachi-Mbeki",
+   "industry": "Technology",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Adaeze Onyekachi-Mbeki",
+    "current_title": "Director of Digital Services",
+    "current_organisation": "Sample Technology Group",
+    "bio": "Fictional profile. For a food brand that grew from a market stall to 14 countries."
+   }
+  },
+  {
+   "key": "accra-loop-mobility",
+   "type": "organisation",
+   "slug": "accra-loop-mobility",
+   "name": "Accra Loop Mobility",
+   "industry": "Agriculture & Agritech",
+   "country": "Ghana",
+   "city": "Accra",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Accra Loop Mobility",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For shared transport that reached profit in its second year.",
+    "hq_city": "Accra"
+   }
+  },
+  {
+   "key": "mwanga-pay",
+   "type": "organisation",
+   "slug": "mwanga-pay",
+   "name": "Mwanga Pay",
+   "industry": "Financial Services & Fintech",
+   "country": "Tanzania",
+   "city": "Dar es Salaam",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Mwanga Pay",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For mobile savings used by two million first-time savers.",
+    "hq_city": "Dar es Salaam"
+   }
+  },
+  {
+   "key": "lerato-mokoena-eze",
+   "type": "individual",
+   "slug": "lerato-mokoena-eze",
+   "name": "Dr. Lerato Mokoena-Eze",
+   "industry": "Technology",
+   "country": "South Africa",
+   "city": "Cape Town",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Dr. Lerato Mokoena-Eze",
+    "current_title": "Head of Research",
+    "current_organisation": "Sample Technology Group",
+    "bio": "Fictional profile. For low-cost diagnostics now in use across southern Africa."
+   }
+  },
+  {
+   "key": "hauwa-bello-gyamfi",
+   "type": "individual",
+   "slug": "hauwa-bello-gyamfi",
+   "name": "Hauwa Bello-Gyamfi",
+   "industry": "Technology",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Hauwa Bello-Gyamfi",
+    "current_title": "Chief Executive",
+    "current_organisation": "Sample Technology Group",
+    "bio": "Fictional profile. For leading a national utility through its first profitable decade."
+   }
+  },
+  {
+   "key": "rift-valley-power",
+   "type": "organisation",
+   "slug": "rift-valley-power",
+   "name": "Rift Valley Power",
+   "industry": "Energy",
+   "country": "Kenya",
+   "city": "Nairobi",
+   "state": "reviewed",
+   "verified": false,
+   "fields": {
+    "name": "Rift Valley Power",
+    "org_type": "Company",
+    "summary": "Fictional organisation. For off-grid power that now reaches half a million homes.",
+    "hq_city": "Nairobi"
+   }
+  },
+  {
+   "key": "kasai-trade-house",
+   "type": "organisation",
+   "slug": "kasai-trade-house",
+   "name": "Kasai Trade House",
+   "industry": "Manufacturing",
+   "country": "Nigeria",
+   "city": "Lagos",
+   "state": "rejected",
+   "verified": false,
+   "fields": {
+    "name": "Kasai Trade House",
+    "org_type": "Company",
+    "summary": "Fictional organisation used to test a publication state.",
+    "hq_city": "Lagos"
+   }
+  },
+  {
+   "key": "unreviewed-import-ltd",
+   "type": "organisation",
+   "slug": "unreviewed-import-ltd",
+   "name": "Unreviewed Import Limited",
+   "industry": "Technology",
+   "country": "Ghana",
+   "city": "Accra",
+   "state": "imported",
+   "verified": false,
+   "fields": {
+    "name": "Unreviewed Import Limited",
+    "org_type": "Company",
+    "summary": "Fictional organisation used to test a publication state.",
+    "hq_city": "Accra"
+   }
+  },
+  {
+   "key": "withdrawn-holdings",
+   "type": "organisation",
+   "slug": "withdrawn-holdings",
+   "name": "Withdrawn Holdings",
+   "industry": "Financial Services & Fintech",
+   "country": "Nigeria",
+   "city": "Abuja",
+   "state": "removed",
+   "verified": false,
+   "fields": {
+    "name": "Withdrawn Holdings",
+    "org_type": "Company",
+    "summary": "Fictional organisation used to test a publication state.",
+    "hq_city": "Abuja"
+   }
+  }
+ ],
+ "stories": [
+  {
+   "slug": "building-for-the-smallholder",
+   "title": "Building for the smallholder: how Savanna Loop thinks about scale",
+   "type": "interview",
+   "industry": "Agriculture & Agritech",
+   "author": "Sade Mwale-Okafor",
+   "days": -4,
+   "scheduled": false,
+   "excerpt": "Fictional interview. A conversation about why software for farmers has to start with the cooperative, not the phone.",
+   "paras": [
+    "Most agricultural software assumes a farmer with a smartphone and a data plan. Savanna Loop started somewhere else: with the cooperative secretary who keeps the group's records in an exercise book.",
+    "The company's first product was a weekly printed sheet, generated from satellite data and delivered through cooperative meetings. The app came later, and it was built for the secretary rather than the farmer.",
+    "That order mattered. By the time the software arrived, the cooperatives already trusted the advice, because it had been right about planting dates for two seasons in a row.",
+    "The harder problem now is money. Cooperatives can see that better planning raises yields, but paying for it means changing how a group collects and holds its savings."
+   ],
+   "quote": "We did not set out to digitise farmers. We set out to be useful to the person who already keeps the records.",
+   "profiles": [
+    "savanna-loop-agritech",
+    "tunde-achebe-wanjala"
+   ],
+   "event": "lagos-agri-finance-forum-2026",
+   "featured": true,
+   "sponsor": null
+  },
+  {
+   "slug": "route-planning-on-bad-roads",
+   "title": "Route planning on bad roads: what freight data can and cannot fix",
+   "type": "feature",
+   "industry": "Technology",
+   "author": "Editorial desk",
+   "days": -5,
+   "scheduled": false,
+   "excerpt": "Fictional feature. Logistics firms are rich in data and short on certainty. Here is what they do about it.",
+   "paras": [
+    "A route that takes nine hours in January can take twenty in July. Freight operators in the Niger Delta have learned to plan for the range, not the average.",
+    "Bonny Reach Logistics now records every delay against a cause, from a washed-out culvert to a closed market. Three years of those records have changed which routes it offers and when.",
+    "Software cannot fix the road. It can tell a customer on Monday what Friday will probably look like, and for most of them that is worth paying for."
+   ],
+   "quote": "We stopped promising arrival times. We started promising ranges, and complaints went down.",
+   "profiles": [
+    "bonny-reach-logistics"
+   ],
+   "event": "kigali-data-infrastructure-summit",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "merchant-settlement-spotlight",
+   "title": "Same-day settlement and the small merchant",
+   "type": "spotlight",
+   "industry": "Financial Services & Fintech",
+   "author": "Editorial desk",
+   "days": -3,
+   "scheduled": false,
+   "excerpt": "Fictional sponsored spotlight. A look at what faster settlement changes for a market trader.",
+   "paras": [
+    "For a trader buying stock every morning, money that arrives tomorrow is money that did not arrive. Settlement speed decides how much she can buy.",
+    "Tiderail Payments built its service around that morning purchase. Merchants see the day's takings settled by the close of business, with a statement a bookkeeper can read.",
+    "This story is sponsored. The sponsor did not write it, did not review it, and has no influence over the labels on any profile mentioned here."
+   ],
+   "quote": "Faster money changes what a small business can plan for.",
+   "profiles": [
+    "tiderail-payments",
+    "ifeoma-kariuki-bello"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": {
+    "name": "Amber Coast Insurance",
+    "placement": "both",
+    "start": -9,
+    "end": 21
+   }
+  },
+  {
+   "slug": "soil-before-software",
+   "title": "Soil before software: a case for slower agricultural innovation",
+   "type": "opinion",
+   "industry": "Education",
+   "author": "Prof. Kofi Adeleke-Nkosi",
+   "days": -8,
+   "scheduled": false,
+   "excerpt": "Fictional opinion. The fastest way to help a farm is often the oldest one: find out what the soil needs.",
+   "paras": [
+    "We have more ways than ever to tell a farmer what to do, and no more certainty that the advice fits the ground under their feet.",
+    "A soil test costs little and lasts for years. Yet most extension programmes still lead with an app, because an app is easier to count.",
+    "Better measurement should come first. The software can follow, and it will work better when it does."
+   ],
+   "quote": "An app is easier to count than a healthier field.",
+   "profiles": [
+    "kofi-adeleke-nkosi"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": {
+    "name": "Lodestar Building Supplies",
+    "placement": "home",
+    "start": -2,
+    "end": 28
+   }
+  },
+  {
+   "slug": "introducing-the-maiden-edition",
+   "title": "Introducing the Maiden Edition",
+   "type": "announcement",
+   "industry": "Media & Creative",
+   "author": "Editorial desk",
+   "days": -6,
+   "scheduled": false,
+   "excerpt": "Fictional announcement. What the first the directory edition is, how recognition works, and when nominations open.",
+   "paras": [
+    "The Maiden Edition is the first public record from the directory: a reviewed directory of the people, businesses and institutions shaping Africa, starting in Nigeria.",
+    "Recognition follows the same discipline as the directory. Categories and rules are published before nominations open, and no payment or sponsorship can affect the outcome.",
+    "Nominations open once the rules are published. Anyone can leave an email address to be told when they do."
+   ],
+   "quote": "Rules first. Nominations second. Outcomes that money cannot touch.",
+   "profiles": [],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "primary-care-spotlight",
+   "title": "Confluence Health Network opens two new outpatient clinics",
+   "type": "news",
+   "industry": "Health & Life Sciences",
+   "author": "Editorial desk",
+   "days": -2,
+   "scheduled": false,
+   "excerpt": "Fictional news item. The network extends maternal health services to two more communities.",
+   "paras": [
+    "Confluence Health Network has opened two outpatient clinics, extending its maternal health services to communities that previously travelled to the capital for routine care.",
+    "The clinics will offer antenatal checks, vaccination and basic diagnostics, with referrals to the network's main site for anything more complex."
+   ],
+   "quote": "",
+   "profiles": [
+    "confluence-health-network"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": {
+    "name": "Lodestar Building Supplies",
+    "placement": "stories",
+    "start": -40,
+    "end": -9
+   }
+  },
+  {
+   "slug": "scheduled-feature-diagnostics",
+   "title": "The diagnostic gap in secondary cities",
+   "type": "feature",
+   "industry": "Health & Life Sciences",
+   "author": "Editorial desk",
+   "days": 13,
+   "scheduled": true,
+   "excerpt": "Scheduled for later; not public yet.",
+   "paras": [
+    "Scheduled for later; not public yet."
+   ],
+   "quote": "",
+   "profiles": [],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "fintech-without-a-branch",
+   "title": "Fintech without a branch",
+   "type": "feature",
+   "industry": "Financial Services & Fintech",
+   "author": "Editorial desk",
+   "days": -12,
+   "scheduled": false,
+   "excerpt": "Fictional feature. How mobile savings reached people who never had a bank branch nearby.",
+   "paras": [
+    "Mobile savings products grew fastest where branches were furthest away. Agents, not apps, carried the first wave of customers.",
+    "The next phase depends on reliable identity checks that do not shut out people without formal documents."
+   ],
+   "quote": "",
+   "profiles": [
+    "tiderail-payments",
+    "mwanga-pay"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "a-year-of-the-cold-chain",
+   "title": "A year of the cold chain",
+   "type": "interview",
+   "industry": "Agriculture & Agritech",
+   "author": "Editorial desk",
+   "days": -16,
+   "scheduled": false,
+   "excerpt": "Fictional interview. A cold-storage operator on a year of lost harvests saved.",
+   "paras": [
+    "Cold rooms are only as useful as the road to them. The operator describes how routes, not refrigeration, set the limit.",
+    "Produce that once spoiled in two days now reaches a market three days away."
+   ],
+   "quote": "",
+   "profiles": [
+    "deltaline-cold-chain"
+   ],
+   "event": "kigali-data-infrastructure-summit",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "what-a-reviewed-profile-means",
+   "title": "What a reviewed profile means",
+   "type": "announcement",
+   "industry": "Media & Creative",
+   "author": "Editorial desk",
+   "days": -20,
+   "scheduled": false,
+   "excerpt": "Fictional announcement. A plain account of what Reviewed means on a profile.",
+   "paras": [
+    "A Reviewed profile has been read by an editor against its sources. It is not an endorsement.",
+    "A profile that has not yet been reviewed says so on its page."
+   ],
+   "quote": "",
+   "profiles": [],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "teaching-soil-science-at-scale",
+   "title": "Teaching soil science at scale",
+   "type": "opinion",
+   "industry": "Education",
+   "author": "Editorial desk",
+   "days": -24,
+   "scheduled": false,
+   "excerpt": "Fictional opinion. Why agricultural teaching needs fewer lectures and more fieldwork.",
+   "paras": [
+    "Students who spend a season on a working farm ask different questions from those who only read about one.",
+    "Universities can make this the rule rather than the elective."
+   ],
+   "quote": "",
+   "profiles": [
+    "oyo-crest-university"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  },
+  {
+   "slug": "power-for-lakeside-towns",
+   "title": "Power for lakeside towns",
+   "type": "news",
+   "industry": "Energy",
+   "author": "Editorial desk",
+   "days": -28,
+   "scheduled": false,
+   "excerpt": "Fictional news. Solar kiosks reach another group of lakeside towns.",
+   "paras": [
+    "The kiosks charge phones, lamps and small tools, and let traders keep shops open after dark.",
+    "Operators say repairs, not hardware, are the harder problem."
+   ],
+   "quote": "",
+   "profiles": [
+    "wanjiru-owusu-eze"
+   ],
+   "event": "",
+   "featured": false,
+   "sponsor": null
+  }
+ ],
+ "events": [
+  {
+   "slug": "lagos-agri-finance-forum-2026",
+   "title": "Lagos Agri-Finance Forum 2026",
+   "industry": "Agriculture & Agritech",
+   "summary": "Fictional event. Two days on how lenders, cooperatives and software firms finance the next planting season.",
+   "paras": [
+    "The forum brings lenders, farmer cooperatives and agricultural software firms into one room for two days of working sessions rather than speeches.",
+    "Sessions cover seasonal credit, crop insurance and the records a cooperative needs to borrow. Organisers ask each speaker to bring one real case.",
+    "Registration is on the organiser's site. the directory lists the event as information and takes no payment."
+   ],
+   "days": 19,
+   "venue": "Eko Convention Hall",
+   "city": "Lagos",
+   "country": "Nigeria",
+   "organiser": "Lagos Agri-Finance Forum (sample organiser)",
+   "url": "https://example.net/lagos-agri-forum",
+   "price": "Free to attend. Registration is required.",
+   "online": false,
+   "time": "09:00",
+   "span": 1
+  },
+  {
+   "slug": "kigali-data-infrastructure-summit",
+   "title": "Kigali Data and Infrastructure Summit",
+   "industry": "Technology",
+   "summary": "Fictional event. A half-day online summit on data centres, connectivity and the people who run them.",
+   "paras": [
+    "A half-day online summit on the data centres, networks and teams that keep African services running.",
+    "Four short sessions, each ending with questions from the audience. Recordings go to everyone who registers.",
+    "The organiser sets the registration and any fee. This page is information only."
+   ],
+   "days": 6,
+   "venue": "Online",
+   "city": "",
+   "country": "",
+   "organiser": "Kigali Data Foundry (sample organiser)",
+   "url": "https://example.net/kigali-data-summit",
+   "price": "Free. Online sessions, with recordings sent afterwards.",
+   "online": true,
+   "time": "10:00",
+   "span": 0
+  },
+  {
+   "slug": "tema-manufacturing-open-day",
+   "title": "Tema Manufacturing Open Day",
+   "industry": "Manufacturing",
+   "summary": "Fictional event. A day of factory visits for buyers, students and investors.",
+   "paras": [
+    "Seven manufacturers open their floors for a day of guided visits, followed by a buyers' meeting.",
+    "Visits run in small groups and need advance registration. The buyers' meeting is open to everyone who attends a visit.",
+    "Tickets, if any, are sold by the organiser. the directory does not sell or collect payment for events."
+   ],
+   "days": 15,
+   "venue": "Tema Industrial Park",
+   "city": "Tema",
+   "country": "Ghana",
+   "organiser": "Tema Industrial Park Association (sample organiser)",
+   "url": "https://example.net/tema-open-day",
+   "price": "Ticket price is set by the organiser (sample: GHS 150).",
+   "online": false,
+   "time": "09:30",
+   "span": 0
+  },
+  {
+   "slug": "abuja-mediators-roundtable",
+   "title": "Abuja Mediators' Roundtable",
+   "industry": "Legal & Professional Services",
+   "summary": "Fictional event, now past. A roundtable on commercial mediation standards.",
+   "paras": [
+    "Practising mediators met to compare standards for accrediting training providers and handling conflicts of interest.",
+    "The roundtable ended with a short list of shared standards, to be published by the guild.",
+    "This event has taken place. The page stays as a record."
+   ],
+   "days": -30,
+   "venue": "Guild Hall",
+   "city": "Abuja",
+   "country": "Nigeria",
+   "organiser": "Guild of Practising Mediators (sample organiser)",
+   "url": "https://example.net/mediators-roundtable",
+   "price": "Free to attend.",
+   "online": false,
+   "time": "14:00",
+   "span": 0
+  },
+  {
+   "slug": "nairobi-fintech-open-evening",
+   "title": "Nairobi Fintech Open Evening",
+   "industry": "Financial Services & Fintech",
+   "summary": "Fictional event. An evening of short talks from payments and savings teams.",
+   "paras": [
+    "Six teams show one product each and take questions from the room.",
+    "Registration is on the organiser's site. The directory takes no payment."
+   ],
+   "days": 33,
+   "time": "17:30",
+   "span": 0,
+   "venue": "Riverside Hall",
+   "city": "Nairobi",
+   "country": "Kenya",
+   "organiser": "Nairobi Fintech Circle (sample organiser)",
+   "url": "https://example.net/nairobi-fintech",
+   "price": "Free to attend.",
+   "online": false
+  },
+  {
+   "slug": "accra-creative-industries-day",
+   "title": "Accra Creative Industries Day",
+   "industry": "Media & Creative",
+   "summary": "Fictional event, now past. A day of talks on design, film and publishing.",
+   "paras": [
+    "Designers, editors and producers compared how they price and protect their work.",
+    "This event has taken place. The page stays as a record."
+   ],
+   "days": -75,
+   "time": "10:00",
+   "span": 0,
+   "venue": "Osu Arts Centre",
+   "city": "Accra",
+   "country": "Ghana",
+   "organiser": "Accra Creative Forum (sample organiser)",
+   "url": "https://example.net/accra-creative",
+   "price": "",
+   "online": false
+  }
+ ],
+ "categories": [
+  {
+   "group": "leadership-public-impact",
+   "title": "Outstanding Public Sector Leader"
+  },
+  {
+   "group": "leadership-public-impact",
+   "title": "Outstanding Business Leader"
+  },
+  {
+   "group": "leadership-public-impact",
+   "title": "Emerging Leader of the Year"
+  },
+  {
+   "group": "leadership-public-impact",
+   "title": "Outstanding Woman Leader"
+  },
+  {
+   "group": "leadership-public-impact",
+   "title": "Outstanding Community Impact"
+  },
+  {
+   "group": "entrepreneurship-business",
+   "title": "Entrepreneur of the Year"
+  },
+  {
+   "group": "entrepreneurship-business",
+   "title": "Startup of the Year"
+  },
+  {
+   "group": "entrepreneurship-business",
+   "title": "SME of the Year"
+  },
+  {
+   "group": "entrepreneurship-business",
+   "title": "Outstanding Business Innovation"
+  },
+  {
+   "group": "entrepreneurship-business",
+   "title": "Company of the Year"
+  },
+  {
+   "group": "technology-innovation",
+   "title": "Technology Innovator of the Year"
+  },
+  {
+   "group": "technology-innovation",
+   "title": "Outstanding Fintech Company"
+  },
+  {
+   "group": "technology-innovation",
+   "title": "Digital Transformation Leader"
+  },
+  {
+   "group": "technology-innovation",
+   "title": "AI Innovation of the Year"
+  },
+  {
+   "group": "technology-innovation",
+   "title": "Outstanding Technology Entrepreneur"
+  },
+  {
+   "group": "professional-excellence",
+   "title": "Outstanding Legal Professional"
+  },
+  {
+   "group": "professional-excellence",
+   "title": "Outstanding Healthcare Professional"
+  },
+  {
+   "group": "professional-excellence",
+   "title": "Outstanding Educator"
+  },
+  {
+   "group": "professional-excellence",
+   "title": "Outstanding Financial Professional"
+  },
+  {
+   "group": "professional-excellence",
+   "title": "Outstanding Creative Professional"
+  },
+  {
+   "group": "industry-institutional-recog",
+   "title": "Outstanding Educational Institution"
+  },
+  {
+   "group": "industry-institutional-recog",
+   "title": "Outstanding Healthcare Institution"
+  },
+  {
+   "group": "industry-institutional-recog",
+   "title": "Outstanding NGO or Social Enterprise"
+  },
+  {
+   "group": "industry-institutional-recog",
+   "title": "Outstanding Professional Association"
+  },
+  {
+   "group": "industry-institutional-recog",
+   "title": "Outstanding Corporate Institution"
+  }
+ ],
+ "nominations": [
+  {
+   "profile": "ifeoma-kariuki-bello",
+   "category": "Entrepreneur of the Year",
+   "winner": true,
+   "citation": "For building a payments business from the settlement desk up."
+  },
+  {
+   "profile": "halima-osei-danjuma",
+   "category": "Outstanding Woman Leader",
+   "winner": true,
+   "citation": "For taking a regional health network into five new markets."
+  },
+  {
+   "profile": "babatunde-ekwueme-sowah",
+   "category": "Outstanding Community Impact",
+   "winner": true,
+   "citation": "For twelve years of volunteer-led primary care in the north."
+  },
+  {
+   "profile": "aisha-nwosu-tetteh",
+   "category": "Outstanding Legal Professional",
+   "winner": true,
+   "citation": "For making mediation a first resort for small businesses."
+  },
+  {
+   "profile": "kigali-data-foundry",
+   "category": "Technology Innovator of the Year",
+   "winner": true,
+   "citation": "For open data tools now used by four national statistics offices."
+  },
+  {
+   "profile": "oyo-crest-university",
+   "category": "Outstanding Educational Institution",
+   "winner": true,
+   "citation": "For a graduate employment rate that has held above ninety per cent."
+  },
+  {
+   "profile": "sahel-grain-cooperative",
+   "category": "SME of the Year",
+   "winner": true,
+   "citation": "For lifting incomes across 3,000 smallholder farms."
+  },
+  {
+   "profile": "bonny-reach-logistics",
+   "category": "Company of the Year",
+   "winner": true,
+   "citation": "For reliable freight across the Niger Delta at scale."
+  },
+  {
+   "profile": "confluence-health-network",
+   "category": "Outstanding NGO or Social Enterprise",
+   "winner": true,
+   "citation": "For clinics that stayed open through two floods."
+  },
+  {
+   "profile": "tiderail-payments",
+   "category": "Outstanding Fintech Company",
+   "winner": true,
+   "citation": "For settlement that reaches informal traders in under a day."
+  },
+  {
+   "profile": "folake-nduka-asante",
+   "category": "Emerging Leader of the Year",
+   "winner": false,
+   "citation": "For a youth network that now runs in nine states."
+  },
+  {
+   "profile": "kwame-adebayo-mensah",
+   "category": "Outstanding Creative Professional",
+   "winner": false,
+   "citation": "For a body of design work that redefined a regional brand."
+  },
+  {
+   "profile": "wanjiru-owusu-eze",
+   "category": "Entrepreneur of the Year",
+   "winner": false,
+   "citation": "For solar kiosks that now serve 40 lakeside towns."
+  },
+  {
+   "profile": "mara-fresh-logistics",
+   "category": "Startup of the Year",
+   "winner": false,
+   "citation": "For cutting produce loss by half on the Nairobi corridor."
+  },
+  {
+   "profile": "ndlovu-vision-labs",
+   "category": "AI Innovation of the Year",
+   "winner": false,
+   "citation": "For crop-disease detection that works on a basic phone."
+  },
+  {
+   "profile": "zanele-dube-ferreira",
+   "category": "Outstanding Business Leader",
+   "winner": false,
+   "citation": "For turning a family manufacturer into a regional exporter."
+  },
+  {
+   "profile": "samuel-mwangi-otieno",
+   "category": "Outstanding Healthcare Professional",
+   "winner": false,
+   "citation": "For a rural surgical outreach that has treated 20,000 patients."
+  },
+  {
+   "profile": "guild-of-practising-mediators",
+   "category": "Outstanding Professional Association",
+   "winner": false,
+   "citation": "For training 1,500 mediators to a common standard."
+  },
+  {
+   "profile": "nomsa-khumalo-adeyemi",
+   "category": "Digital Transformation Leader",
+   "winner": false,
+   "citation": "For moving a provincial government's services online."
+  },
+  {
+   "profile": "savanna-loop-agritech",
+   "category": "Outstanding Corporate Institution",
+   "winner": false,
+   "citation": "For a supply chain model other firms have since adopted."
+  },
+  {
+   "profile": "tunde-achebe-wanjala",
+   "category": "Outstanding Public Sector Leader",
+   "winner": false,
+   "citation": "For a transport reform that cut commuting times by a third."
+  },
+  {
+   "profile": "kofi-adeleke-nkosi",
+   "category": "Outstanding Educator",
+   "winner": false,
+   "citation": "For a teacher-training programme now in 300 schools."
+  },
+  {
+   "profile": "chidi-sesay-abara",
+   "category": "Outstanding Technology Entrepreneur",
+   "winner": false,
+   "citation": "For textile technology that cut water use by 60 per cent."
+  },
+  {
+   "profile": "lagos-mainland-teaching-hospital",
+   "category": "Outstanding Healthcare Institution",
+   "winner": false,
+   "citation": "For a records system that halved patient waiting times."
+  },
+  {
+   "profile": "adaeze-onyekachi-mbeki",
+   "category": "Entrepreneur of the Year",
+   "winner": false,
+   "citation": "For a food brand that grew from a market stall to 14 countries."
+  },
+  {
+   "profile": "accra-loop-mobility",
+   "category": "Startup of the Year",
+   "winner": false,
+   "citation": "For shared transport that reached profit in its second year."
+  },
+  {
+   "profile": "mwanga-pay",
+   "category": "Outstanding Fintech Company",
+   "winner": false,
+   "citation": "For mobile savings used by two million first-time savers."
+  },
+  {
+   "profile": "lerato-mokoena-eze",
+   "category": "Technology Innovator of the Year",
+   "winner": false,
+   "citation": "For low-cost diagnostics now in use across southern Africa."
+  },
+  {
+   "profile": "hauwa-bello-gyamfi",
+   "category": "Outstanding Woman Leader",
+   "winner": false,
+   "citation": "For leading a national utility through its first profitable decade."
+  },
+  {
+   "profile": "rift-valley-power",
+   "category": "Company of the Year",
+   "winner": false,
+   "citation": "For off-grid power that now reaches half a million homes."
+  }
+ ],
+ "pin_profiles": [
+  "ngozi-balogun-mensah",
+  "tiderail-payments",
+  "kigali-data-foundry",
+  "ifeoma-kariuki-bello",
+  "oyo-crest-university",
+  "wanjiru-owusu-eze",
+  "savanna-loop-agritech",
+  "confluence-health-network"
+ ],
+ "pin_stories": [
+  "building-for-the-smallholder",
+  "merchant-settlement-spotlight",
+  "route-planning-on-bad-roads"
+ ]
+}
