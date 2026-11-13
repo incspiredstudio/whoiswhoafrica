@@ -19,7 +19,8 @@
     "johnpbloch/wordpress-core": "^7.1",
     "johnpbloch/wordpress-core-installer": "^2.0",
     "nikic/php-parser": "^5.9",
-    "woocommerce/action-scheduler": "^4.2"
+    "woocommerce/action-scheduler": "^4.2",
+    "wpackagist-plugin/two-factor": "0.17.0"
   },
   "config": {
     "optimize-autoloader": true,

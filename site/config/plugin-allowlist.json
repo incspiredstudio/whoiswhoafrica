@@ -6,6 +6,12 @@
       "version": "4.2.0",
       "reason": "Background jobs, used as a library inside whoiswho-core (docs/plugins/third-party.md: Background jobs, Chosen). Touches no personal data of its own.",
       "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/two-factor",
+      "version": "0.17.0",
+      "reason": "Staff two-factor sign-in, enforced for every user with recovery codes (docs/plugins/third-party.md: Staff two-factor; D-050, Q76; owner approved on issue #2). Stores the user's second-factor secrets in user meta; loaded by whoiswho-core so it cannot be deactivated.",
+      "docs": "docs/plugins/third-party.md"
     }
   ]
 }
