@@ -208,7 +208,7 @@ final class M3LogsHoldNoPersonalDataTest extends TestCase {
 			static fn (): array => array( 'inbox@example.org' ),
 			static function ( string $to, string $subject, string $text, string $html ): bool {
 				unset( $subject, $text, $html );
-				throw new \RuntimeException( 'SMTP refused ' . $to );
+				throw new \RuntimeException( 'SMTP refused ' . $to ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- a test double that fails on purpose.
 			},
 			'hash-key',
 			new SignedLinks( new MemoryLinkStore(), static fn (): int => 1800000000 )
