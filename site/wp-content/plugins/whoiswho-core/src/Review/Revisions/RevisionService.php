@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Review\Revisions;
 
+use WhoIsWho\Core\Directory\Edit\SideFields;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ProfileType;
@@ -99,6 +100,10 @@ final class RevisionService {
 		$fields = new ProfileFields( new FieldAllowlist() );
 		foreach ( $new as $key => $value ) {
 			$key = (string) $key;
+			if ( SideFields::is_side( $key ) ) {
+				SideFields::apply( $id, $key, $value );
+				continue;
+			}
 			if ( 0 === strpos( $key, 'terms:' ) ) {
 				$taxonomy = substr( $key, 6 );
 				if ( in_array( $taxonomy, Taxonomies::all(), true ) ) {
@@ -115,8 +120,8 @@ final class RevisionService {
 				'type' => 'profile',
 				'id'   => $id,
 			),
-			$old,
-			$new,
+			self::without_contact_values( $old ),
+			self::without_contact_values( $new ),
 			(string) $row['reason']
 		);
 		$state = ( new StateRepository() )->get( $id );
@@ -125,6 +130,21 @@ final class RevisionService {
 		}
 		( $this->notify )( (int) $row['author_id'], 'approved', '', $id );
 		return $decision;
+	}
+
+	/**
+	 * A value map with the contact details reduced to a marker, for the audit trail: it names the detail that changed, never its value.
+	 *
+	 * @param array<string, mixed> $values Values.
+	 * @return array<string, mixed>
+	 */
+	private static function without_contact_values( array $values ): array {
+		foreach ( array_keys( SideFields::CONTACT ) as $key ) {
+			if ( array_key_exists( $key, $values ) ) {
+				$values[ $key ] = empty( $values[ $key ] ) ? '' : '(changed)';
+			}
+		}
+		return $values;
 	}
 
 	/**
@@ -152,8 +172,8 @@ final class RevisionService {
 				'type' => 'profile',
 				'id'   => $id,
 			),
-			$new,
-			$old,
+			self::without_contact_values( $new ),
+			self::without_contact_values( $old ),
 			$reason
 		);
 		( $this->notify )( (int) $row['author_id'], 'rejected', $reason, $id );

@@ -12,7 +12,9 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Trust\Admin;
 
+use WhoIsWho\Core\Commerce\Invitations\ImageCheck;
 use WhoIsWho\Core\Directory\Edit\EditRefused;
+use WhoIsWho\Core\Directory\Edit\SideFields;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
@@ -147,7 +149,45 @@ final class MyProfilesScreen {
 				$changes[ $key ] = trim( $value );
 			}
 		}
+		$side = SideFields::current( $profile_id );
+		foreach ( array_keys( SideFields::CONTACT ) as $key ) {
+			if ( $request->has( $key ) && trim( $request->string( $key ) ) !== (string) $side[ $key ] ) {
+				$changes[ $key ] = trim( $request->string( $key ) );
+			}
+		}
+		$image = $request->file( 'image' );
+		if ( null !== $image && UPLOAD_ERR_NO_FILE !== $image['error'] ) {
+			$changes[ SideFields::IMAGE ] = $this->store_image( $image );
+		}
 		return $this->profiles->submit( $profile_id, $changes, $user_id );
+	}
+
+	/**
+	 * Keep a proposed photograph in the media library, checked for type and size. It is not the profile's picture until a reviewer
+	 * approves the change.
+	 *
+	 * @param array{name: string, tmp_name: string, size: int, error: int} $image Upload.
+	 * @return int Attachment id.
+	 * @throws EditRefused When the file is not an acceptable picture.
+	 */
+	private function store_image( array $image ): int {
+		if ( null !== ImageCheck::check( $image ) ) {
+			throw EditRefused::because( 'The picture must be a JPEG, PNG or WebP file up to 2 MB.' );
+		}
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$attachment = media_handle_sideload(
+			array(
+				'name'     => $image['name'],
+				'tmp_name' => $image['tmp_name'],
+			),
+			0
+		);
+		if ( ! is_int( $attachment ) ) {
+			throw EditRefused::because( 'The picture could not be saved.' );
+		}
+		return $attachment;
 	}
 
 	/**
@@ -202,7 +242,7 @@ final class MyProfilesScreen {
 			$out .= '<div class="notice notice-error inline"><p>' . esc_html__( 'Nothing was sent: there was no change, or a value was not accepted.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= '<p>' . esc_html__( 'Edits are checked by a reviewer before they appear on the public profile.', 'whoiswho' ) . '</p>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out .= '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" /><input type="hidden" name="profile" value="' . esc_attr( (string) $id ) . '" />';
 		$out .= '<table class="form-table"><tbody>';
 		foreach ( $this->profiles->form( $id ) as $key => $value ) {
@@ -215,6 +255,22 @@ final class MyProfilesScreen {
 			}
 			$out .= '</td></tr>';
 		}
+		$side = SideFields::current( $id );
+		foreach ( SideFields::CONTACT as $key => $kind ) {
+			$labels = array(
+				'email'   => __( 'Contact email', 'whoiswho' ),
+				'phone'   => __( 'Contact phone', 'whoiswho' ),
+				'address' => __( 'Contact address', 'whoiswho' ),
+			);
+			$out   .= '<tr><th><label for="wiw-mp-' . esc_attr( $key ) . '">' . esc_html( $labels[ $kind ] ) . '</label></th><td>';
+			$out   .= '<input class="regular-text" id="wiw-mp-' . esc_attr( $key ) . '" type="' . ( 'email' === $kind ? 'email' : 'text' ) . '" name="' . esc_attr( $key ) . '" maxlength="300" value="' . esc_attr( (string) $side[ $key ] ) . '" />';
+			$out   .= '<p class="description">' . esc_html__( 'Staff decide whether this is shown publicly. A change waits for a reviewer.', 'whoiswho' ) . '</p></td></tr>';
+		}
+		$out .= '<tr><th><label for="wiw-mp-image">' . esc_html__( 'Photograph', 'whoiswho' ) . '</label></th><td>';
+		if ( null !== $side[ SideFields::IMAGE ] ) {
+			$out .= wp_get_attachment_image( (int) $side[ SideFields::IMAGE ], 'thumbnail' );
+		}
+		$out .= '<input id="wiw-mp-image" type="file" name="image" accept="image/jpeg,image/png,image/webp" /><p class="description">' . esc_html__( 'JPEG, PNG or WebP, up to 2 MB. The current photograph stays until a reviewer approves the new one.', 'whoiswho' ) . '</p></td></tr>';
 		return $out . '</tbody></table><button class="button button-primary">' . esc_html__( 'Send for review', 'whoiswho' ) . '</button></form></div>';
 	}
 }

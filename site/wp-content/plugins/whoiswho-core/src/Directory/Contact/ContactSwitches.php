@@ -86,6 +86,35 @@ final class ContactSwitches {
 	 */
 	public function set_value( int $profile_id, string $kind, string $value ): void {
 		$this->guard( $kind );
+		$this->write_value( $profile_id, $kind, $value );
+	}
+
+	/**
+	 * Store a detail that a Reviewer has just approved as part of a pending revision (REQ-253). The approval service has already
+	 * checked wiw_review_records and that the approver is not the author, so the profile-edit capability, which a Reviewer does not
+	 * hold, is not asked for again; the same checks on the value apply.
+	 *
+	 * @param int    $profile_id Profile.
+	 * @param string $kind       One of KINDS.
+	 * @param string $value      The detail; empty clears it.
+	 * @throws \RuntimeException When the value is refused.
+	 */
+	public function apply_approved( int $profile_id, string $kind, string $value ): void {
+		if ( ! in_array( $kind, self::KINDS, true ) ) {
+			throw new \RuntimeException( 'Unknown contact detail.' );
+		}
+		$this->write_value( $profile_id, $kind, $value );
+	}
+
+	/**
+	 * Check and store a value.
+	 *
+	 * @param int    $profile_id Profile.
+	 * @param string $kind       One of KINDS.
+	 * @param string $value      The detail; empty clears it.
+	 * @throws \RuntimeException When the value is refused.
+	 */
+	private function write_value( int $profile_id, string $kind, string $value ): void {
 		$value = trim( wp_strip_all_tags( $value ) );
 		if ( 'email' === $kind && '' !== $value && ! is_email( $value ) ) {
 			throw new \RuntimeException( 'That is not a valid email address.' );

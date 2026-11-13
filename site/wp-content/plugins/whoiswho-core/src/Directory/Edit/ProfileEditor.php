@@ -114,8 +114,27 @@ final class ProfileEditor {
 		$old       = array();
 		$new       = array();
 		$clear     = array();
+		$side      = SideFields::current( $profile_id );
 		foreach ( $changes as $key => $value ) {
 			$key = (string) $key;
+			if ( SideFields::is_side( $key ) ) {
+				if ( ! $limited ) {
+					throw EditRefused::because( 'Contact details and the photograph are changed on their own panels.' );
+				}
+				if ( ! SideFields::acceptable( $key, $value, $actor_id ) ) {
+					throw EditRefused::because( 'That value is not acceptable for the field.' );
+				}
+				$empty = null === $value || '' === $value;
+				$was   = $side[ $key ];
+				if ( $empty && null !== $was && '' !== (string) $was ) {
+					$old[ $key ] = $was;
+					$new[ $key ] = null;
+				} elseif ( ! $empty && (string) $was !== (string) $value ) {
+					$old[ $key ] = $was;
+					$new[ $key ] = SideFields::IMAGE === $key ? (int) $value : $value;
+				}
+				continue;
+			}
 			if ( $this->allowlist->is_forbidden( $key ) || ! $this->allowlist->is_allowed( $type, $key ) ) {
 				throw EditRefused::because( 'That field cannot be stored on a profile.' );
 			}
@@ -168,14 +187,23 @@ final class ProfileEditor {
 				wp_set_object_terms( $profile_id, $change['new'], $taxonomy );
 			}
 		}
+		// The audit trail names a contact detail that changed but never holds its value; the pending revision does.
+		$audit_old = $old;
+		$audit_new = $new;
+		foreach ( array_keys( SideFields::CONTACT ) as $contact_key ) {
+			if ( array_key_exists( $contact_key, $audit_new ) ) {
+				$audit_old[ $contact_key ] = null === $old[ $contact_key ] || '' === $old[ $contact_key ] ? '' : '(changed)';
+				$audit_new[ $contact_key ] = null === $new[ $contact_key ] ? '' : '(changed)';
+			}
+		}
 		AuditLogger::for_site()->log(
 			$pending ? 'profile.revision_submitted' : 'profile.edit',
 			array(
 				'type' => 'profile',
 				'id'   => $profile_id,
 			),
-			$old,
-			$new,
+			$audit_old,
+			$audit_new,
 			$reason
 		);
 		if ( ! $pending && null !== $item ) {
