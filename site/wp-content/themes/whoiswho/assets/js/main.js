@@ -3,11 +3,11 @@ import { trapFocus } from "./focus-trap.js";
 import { announce } from "./live-region.js";
 import { initFilterBars } from "./filter-bar.js";
 import { initHeader } from "./header.js";
-import { initMotion, motionAllowed } from "./motion.js";
+import { initMotion, motionAllowed, scrollToY } from "./motion.js";
 import { initCookieNotice } from "./cookie.js";
 import { initReportDialog } from "./report-dialog.js";
 
-window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed });
+window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed, scrollToY });
 initFilterBars();
 initHeader();
 initMotion();

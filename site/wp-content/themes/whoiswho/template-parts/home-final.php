@@ -18,7 +18,7 @@ $wiw_cta  = isset( $wiw_home['ctas']['primary'] ) && is_array( $wiw_home['ctas']
 <section class="h-final" aria-labelledby="home-final-title">
 	<div class="wrap">
 		<p class="h-kicker"><?php esc_html_e( 'Starting in Nigeria. Built for the continent.', 'whoiswho' ); ?></p>
-		<h2 class="h-final-title" id="home-final-title"><?php esc_html_e( 'Who should the continent know?', 'whoiswho' ); ?></h2>
+		<h2 class="h-final-title h-rv" id="home-final-title"><span class="h-line"><span><?php echo esc_html_x( 'Who should', 'home closing title, line 1', 'whoiswho' ); ?></span></span> <span class="h-line"><span><?php echo esc_html_x( 'the continent', 'home closing title, line 2', 'whoiswho' ); ?></span></span> <span class="h-line"><span><em><?php echo esc_html_x( 'know?', 'home closing title, line 3', 'whoiswho' ); ?></em></span></span></h2>
 		<?php if ( ! empty( $wiw_cta['url'] ) ) : ?>
 			<div class="h-final-cta">
 				<a class="btn h-btn" href="<?php echo esc_url( (string) $wiw_cta['url'] ); ?>"><?php echo esc_html( (string) $wiw_cta['label'] ); ?></a>

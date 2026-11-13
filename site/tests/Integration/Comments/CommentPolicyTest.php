@@ -187,6 +187,29 @@ final class CommentPolicyTest extends TestCase {
 		$this->submit( $post );
 	}
 
+	public function test_REQ_258_refusal_without_consent_answers_409_not_500(): void {
+		$post  = $this->story();
+		$_POST = array();
+		$seen  = array();
+		add_filter(
+			'wp_die_handler',
+			static function () use ( &$seen ) {
+				return static function ( $message, $title = '', $args = array() ) use ( &$seen ): void {
+					unset( $message, $title );
+					$seen = (array) $args;
+					throw new \RuntimeException( 'wp_die called' );
+				};
+			}
+		);
+		try {
+			$this->submit( $post );
+			$this->fail( 'A comment without the consent tick must be refused.' );
+		} catch ( \RuntimeException $refusal ) {
+			unset( $refusal );
+		}
+		$this->assertSame( 409, $seen['response'] ?? null );
+	}
+
 	public function test_REQ_258_no_gravatar_request(): void {
 		$post    = $this->story();
 		$comment = $this->submit( $post );

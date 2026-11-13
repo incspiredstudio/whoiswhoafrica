@@ -22,6 +22,7 @@ if ( array() === $wiw_stories ) {
 $wiw_types = wiw_story_types();
 ?>
 <section class="h-stories" id="home-stories" aria-labelledby="home-stories-title">
+	<div class="h-stories-pin"><?php /* the pinned frame: on wide screens the section scrolls the track sideways, see home.js */ ?>
 	<div class="wrap h-sec-head">
 		<h2 class="h-kicker" id="home-stories-title"><?php esc_html_e( 'Stories from the record', 'whoiswho' ); ?></h2>
 		<a class="h-link" href="<?php echo esc_url( home_url( '/stories/' ) ); ?>"><?php esc_html_e( 'All stories', 'whoiswho' ); ?><?php echo wiw_icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?></a>
@@ -37,7 +38,7 @@ $wiw_types = wiw_story_types();
 				$wiw_type    = $wiw_types[ (string) ( $wiw_s['type'] ?? '' ) ] ?? '';
 				$wiw_cover   = wiw_story_cover( $wiw_s, '(min-width: 64rem) 32vw, 82vw' );
 				?>
-				<li class="h-story<?php echo null !== $wiw_sponsor ? ' is-sponsored' : ''; ?>">
+				<li class="h-story<?php echo null !== $wiw_sponsor ? ' is-sponsored' : ''; ?>" data-cursor="<?php esc_attr_e( 'Read', 'whoiswho' ); ?>">
 					<div class="h-story-media<?php echo '' === $wiw_cover ? ' is-empty' : ''; ?>"><?php echo $wiw_cover; // phpcs:ignore WordPress.Security.EscapeOutput -- core image markup. ?></div>
 					<div class="h-story-text">
 						<p class="h-story-meta">
@@ -54,5 +55,6 @@ $wiw_types = wiw_story_types();
 				</li>
 			<?php endforeach; ?>
 		</ul>
+	</div>
 	</div>
 </section>

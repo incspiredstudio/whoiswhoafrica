@@ -128,16 +128,56 @@ final class HomeFrontPageTest extends WpTestCase {
 
 	public function test_REQ_001_the_four_doors_link_to_the_four_directory_lists(): void {
 		$out = $this->render();
-		$this->assertSame( 4, substr_count( $out, 'class="h-door h-door--' ) );
+		$this->assertSame( 4, substr_count( $out, 'class="h-door h-rv-clip h-door--' ) );
 		foreach ( array( '/people/', '/entrepreneurs/', '/businesses/', '/institutions/' ) as $path ) {
 			$this->assertStringContainsString( 'href="' . home_url( $path ) . '"', $out );
 		}
 	}
 
+	public function test_REQ_043_the_motion_hooks_are_plain_classes_that_leave_the_static_page_complete(): void {
+		$out = $this->render();
+		// The closing title is three mask lines inside one h2 and still reads as one sentence.
+		preg_match( '~<h2 class="h-final-title[^>]*>(.*?)</h2>~s', $out, $title );
+		$this->assertSame( 3, substr_count( $title[1] ?? '', 'class="h-line"' ) );
+		$this->assertStringContainsString( 'class="h-final-title h-rv"', $out );
+		// The doors carry their stagger index and a cursor label; nothing is hidden by the markup itself (hiding is CSS behind html.home-live).
+		$this->assertSame( 4, substr_count( $out, 'data-cursor="Browse"' ) );
+		$this->assertStringContainsString( 'style="--d:3"', $out );
+		$this->assertStringNotContainsString( 'style="opacity', $out );
+	}
+
+	public function test_REQ_043_the_stories_section_has_a_pinned_frame_around_its_track(): void {
+		$out = $this->render();
+		if ( false === strpos( $out, 'id="home-stories"' ) ) {
+			$this->markTestSkipped( 'no public stories in this database' );
+		}
+		$this->assertMatchesRegularExpression( '/id="home-stories".*?<div class="h-stories-pin">.*?class="h-track-wrap".*?</section>/s', $out );
+	}
+
+	public function test_REQ_041_the_home_page_hands_the_stage_urls_to_home_js_and_never_enqueues_three_with_the_page(): void {
+		add_filter(
+			'wiw_manifest',
+			static fn () => array(
+				'home-js.js'    => 'home-js.1.js',
+				'three.js'      => 'three.1.js',
+				'home-stage.js' => 'home-stage.1.js',
+			)
+		);
+		$this->go_to( home_url( '/' ) );
+		wp_dequeue_script( 'wiw-home' );
+		wp_deregister_script( 'wiw-home' );
+		do_action( 'wp_enqueue_scripts' );
+		$before = implode( '', (array) wp_scripts()->get_data( 'wiw-home', 'before' ) );
+		$this->assertStringContainsString( 'window.wiwHome=', $before );
+		$this->assertStringContainsString( 'three.1.js', $before );
+		$this->assertStringContainsString( 'home-stage.1.js', $before );
+		$this->assertFalse( wp_script_is( 'wiw-three', 'registered' ), 'Three.js is fetched on demand, not enqueued' );
+		remove_all_filters( 'wiw_manifest' );
+	}
 	public function test_REQ_002_the_closing_call_has_one_button_that_follows_the_nominations_switch(): void {
 		add_filter( 'wiw_nominations_are_open', '__return_false' );
 		$out = $this->render();
-		$this->assertStringContainsString( 'Who should the continent know?', $out );
+		$this->assertStringContainsString( 'Who should the continent know?', preg_replace( '/\s+/', ' ', wp_strip_all_tags( $out ) ) );
 		$this->assertSame( 1, substr_count( $out, 'class="h-final-cta"' ) );
 		$part = substr( $out, (int) strpos( $out, 'h-final-cta' ) );
 		$this->assertStringContainsString( 'Get listed', $part );

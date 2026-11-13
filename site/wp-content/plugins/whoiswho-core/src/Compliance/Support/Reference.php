@@ -50,4 +50,15 @@ final class Reference {
 	public static function is_valid( string $value ): bool {
 		return 1 === preg_match( '/^WIW-[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/', $value );
 	}
+
+	/**
+	 * The one rule for printing a reference a person brought back in an address: two to six capitals, a hyphen and up to twelve
+	 * capitals or digits. It covers WIW-5MQHD6QV (requests), ENQ-0001 (enquiries), CLM-0004 (claims) and NOM-1A2B3C
+	 * (nominations), and returns an empty string for anything else, so it is safe to print (still escape it).
+	 *
+	 * @param string $value Value from the address.
+	 */
+	public static function display_safe( string $value ): string {
+		return 1 === preg_match( '/^[A-Z]{2,6}-[A-Z0-9]{1,12}$/', $value ) ? $value : '';
+	}
 }

@@ -154,6 +154,30 @@ final class FormPagesTest extends WpTestCase {
 		$this->assertStringContainsString( 'ENQ-0005', $out );
 	}
 
+	public function test_REQ_233_done_page_shows_every_reference_shape_we_generate(): void {
+		foreach ( array( 'WIW-5MQHD6QV', 'NOM-1A2B3C', 'CLM-0004', 'ENQ-0001' ) as $reference ) {
+			$this->done_vars(
+				array(
+					'kind' => 'correction',
+					'ref'  => $reference,
+				)
+			);
+			$this->assertStringContainsString( $reference, $this->render( 'done' ), $reference );
+		}
+	}
+
+	public function test_REQ_233_done_page_still_drops_references_of_the_wrong_shape(): void {
+		foreach ( array( 'wiw-5MQHD6QV', 'WIW-<b>x</b>', 'WIW-', 'NOPE', 'WIW-5MQHD6QVABCDEFG' ) as $reference ) {
+			$this->done_vars(
+				array(
+					'kind' => 'correction',
+					'ref'  => $reference,
+				)
+			);
+			$this->assertStringNotContainsString( 'Your reference', $this->render( 'done' ), $reference );
+		}
+	}
+
 	public function test_REQ_081_a_made_up_reference_is_not_echoed(): void {
 		$this->done_vars(
 			array(

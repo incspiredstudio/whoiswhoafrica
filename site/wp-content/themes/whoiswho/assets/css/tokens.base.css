@@ -102,6 +102,9 @@
   --m-fast: 140ms;
   --m-base: 240ms;
   --m-slow: 620ms;
+  --m-reveal: 800ms; /* a block fading and rising in */
+  --m-rise: 1100ms; /* a line of display type rising out of its mask */
+  --m-hero: 1200ms; /* the hero title on arrival */
   --ease-out: cubic-bezier(.2, .7, .2, 1);
   --ease-inout: cubic-bezier(.6, 0, .2, 1);
   --rise: 14px;

@@ -246,6 +246,60 @@ html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }
 
 @keyframes h-marquee { to { transform: translateX(-50%); } }
 
+/* ---------- choreography added by home-fx.js (issue 744): transform and opacity only, nothing hidden without html.home-live ---------- */
+
+/* The intro: the logo covers the first view once per visit, then wipes upward. */
+.h-intro { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: var(--c-dark-deep); color: var(--c-on-dark); clip-path: inset(0); transition: clip-path 620ms var(--ease-inout); pointer-events: none; }
+.h-intro.is-out { clip-path: inset(0 0 100% 0); }
+.h-intro-logo { height: auto; width: min(34vw, 12rem); }
+
+/* The two title lines part as the hero leaves, and the foot fades first. */
+html.home-live .h-title .h-line:first-child { transform: translate3d(calc(var(--hx, 0) * -9vw), 0, 0); }
+html.home-live .h-title .h-line--r { transform: translate3d(calc(var(--hx, 0) * 9vw), 0, 0); }
+html.home-live .h-lede, html.home-live .h-hero-ctas, html.home-live .h-cue { opacity: calc(1 - min(var(--hx, 0) * 2.4, 1)); }
+
+/* Header: slides away while reading down, returns on any upward scroll or when it has keyboard focus. */
+html.is-home.head-hidden .site-head { transform: translateY(-110%); box-shadow: none; }
+html.is-home.head-hidden .site-head:focus-within { transform: none; }
+
+/* Mask-line headings and the doors' colour blocks open as they enter. */
+html.home-live .h-rv .h-line > span { transform: translateY(104%); transition: transform var(--m-rise) var(--ease-out); }
+html.home-live .h-rv.in .h-line > span { transform: none; }
+html.home-live .h-rv .h-line + .h-line > span { transition-delay: 90ms; }
+html.home-live .h-rv .h-line + .h-line + .h-line > span { transition-delay: 180ms; }
+html.home-live .h-door.h-rv-clip { clip-path: inset(100% 0 0); transition: clip-path var(--m-rise) var(--ease-out), flex-grow 800ms var(--ease-out); transition-delay: calc(var(--d, 0) * 90ms), 0ms; }
+html.home-live .h-door.h-rv-clip.in { clip-path: inset(0); }
+
+/* Stories on wide screens: the section pins and its sideways track follows the scroll (home-fx.js sets the section height). */
+@media (width >= 64rem) {
+  html.home-live .h-stories.is-pinned { padding: 0; overflow: clip; }
+  html.home-live .h-stories.is-pinned .h-stories-pin { position: sticky; top: 0; display: flex; flex-direction: column; justify-content: center; height: 100svh; overflow: hidden; }
+  html.home-live .h-stories.is-pinned .h-track-wrap { overflow: visible; }
+  html.home-live .h-stories.is-pinned .h-track { will-change: transform; gap: var(--s-6); }
+}
+
+/* Cursor: a dot that grows into a ring over links and a labelled disc over names, doors and stories (mouse only). */
+.h-cursor { position: fixed; inset: 0 auto auto 0; z-index: 26; display: none; pointer-events: none; }
+html.home-cursor .h-cursor { display: block; opacity: 0; transition: opacity 200ms; }
+html.home-cursor .h-cursor.is-ready { opacity: 1; }
+.h-cursor span { display: grid; place-items: center; width: .625rem; height: .625rem; margin: -.3125rem 0 0 -.3125rem; border-radius: 50%; background: var(--c-highlight); color: transparent; font-size: var(--t-xs); font-weight: 600; transition: width var(--m-base) var(--ease-out), height var(--m-base) var(--ease-out), margin var(--m-base) var(--ease-out), color var(--m-fast); }
+.h-cursor.is-link span { width: 1.75rem; height: 1.75rem; margin: -.875rem 0 0 -.875rem; background: transparent; box-shadow: inset 0 0 0 2px var(--c-highlight); }
+.h-cursor.has-label span { width: 4.25rem; height: 4.25rem; margin: -2.125rem 0 0 -2.125rem; color: var(--charcoal-900); }
+.h-magnetic { transition: transform 280ms var(--ease-out), background-color var(--m-fast), border-color var(--m-fast), color var(--m-fast); }
+
+@media (prefers-reduced-motion: reduce) {
+  .h-intro, .h-cursor span, .h-magnetic { transition: none; }
+}
+
+/* Particle stage (home-stage.js): a fixed, decorative canvas shown only inside the three colour scenes. The static marks stand in until it runs. */
+.h-stage { position: fixed; inset: 0; z-index: -1; display: none; pointer-events: none; }
+html.stage-on .h-stage { z-index: 1; display: block; }
+.h-stage canvas { display: block; width: 100%; height: 100%; animation: h-stage-in 900ms ease both; }
+html.stage-on .h-act-mark { display: none; }
+html.stage-on .h-act-in { z-index: 2; }
+
+@keyframes h-stage-in { from { opacity: 0; } to { opacity: 1; } }
+
 /* ---------- Nominees block (REQ-198): dark band, heading, group filter and a grid of posters ---------- */
 .h-noms { position: relative; padding-block: var(--s-9); background: var(--charcoal-950); color: var(--c-on-dark); }
 .h-noms .h-kicker { color: var(--c-on-dark-muted); }
@@ -288,3 +342,7 @@ html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }
   .h-noms-side .btn { justify-content: center; width: 100%; min-height: 3.25rem; }
   .h-nom-filter { display: none; }
 }
+
+/* Nominee posters rise in one after another when the block scrolls into view. */
+html.home-live .h-noms .hn-item { opacity: 0; transform: translateY(32px); transition: opacity 700ms ease, transform var(--m-rise) var(--ease-out); transition-delay: calc(var(--d, 0) * 70ms); }
+html.home-live .h-noms.in .hn-item { opacity: 1; transform: none; }

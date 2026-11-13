@@ -78,8 +78,25 @@ add_action(
 			$js = wiw_asset_url( $key . '-js.js' ) ?? wiw_asset_url( $key . '.js' );
 			if ( null !== $js ) {
 				wp_enqueue_script( 'wiw-' . $key, $js, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
+				// The particle stage (home only): Three.js and the stage script are fetched on demand by home-js, never with the page.
+				if ( 'home' === $key ) {
+					$three = wiw_asset_url( 'three.js' );
+					$stage = wiw_asset_url( 'home-stage.js' );
+					if ( null !== $three && null !== $stage ) {
+						wp_add_inline_script(
+							'wiw-home',
+							'window.wiwHome=' . wp_json_encode(
+								array(
+									'three' => $three,
+									'stage' => $stage,
+								)
+							) . ';',
+							'before'
+						);
+					}
+				}
 			}
-		}
+		}//end if
 		$main = wiw_asset_url( 'main.js' );
 		if ( null !== $main ) {
 			wp_enqueue_script( 'wiw-main', $main, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
