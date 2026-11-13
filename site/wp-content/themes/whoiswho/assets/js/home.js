@@ -6,25 +6,40 @@ const root = document.documentElement;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 function startVideos(hero) {
-  const videos = hero.querySelectorAll("video[data-src]");
-  const play = () => {
-    videos.forEach((v) => {
-      if (!v.getAttribute("src")) v.setAttribute("src", v.dataset.src || "");
-      v.muted = true;
-      const p = v.play();
-      if (p && p.catch) p.catch(() => {});
-    });
+  const videos = Array.from(hero.querySelectorAll("video")).sort((x, y) => Number(x.dataset.turn || 0) - Number(y.dataset.turn || 0));
+  if (!videos.length) return;
+  const started = new Set();
+  const playing = () => (document.hidden ? false : heroVisible);
+  let heroVisible = true;
+  const play = (v) => {
+    v.muted = true;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => {});
   };
-  // Wait until the page has painted so the videos never delay the first view.
-  if (document.readyState === "complete") window.setTimeout(play, 0);
-  else window.addEventListener("load", () => window.setTimeout(play, 0), { once: true });
-  // Pause while the hero is off screen or the tab is hidden.
+  // One clip at a time: the next one is fetched and started only once the one before it is running (or has failed), so the first
+  // clip gets the whole connection. Until a clip's turn its <video> has preload="none" and fetches nothing.
+  const start = (i) => {
+    const v = videos[i];
+    if (!v) return;
+    started.add(v);
+    const next = () => { v.removeEventListener("playing", next); v.removeEventListener("error", next); window.setTimeout(() => start(i + 1), 150); };
+    v.addEventListener("playing", next);
+    v.addEventListener("error", next, true);
+    v.preload = "auto";
+    if (playing()) play(v);
+    else v.load();
+  };
+  // Wait until the page has painted so the videos never delay the first view (the first poster is the largest contentful paint).
+  const go = () => window.setTimeout(() => start(0), 0);
+  if (document.readyState === "complete") go();
+  else window.addEventListener("load", go, { once: true });
+  // Pause while the hero is off screen or the tab is hidden; resume the clips that have had their turn.
+  const sync = () => videos.forEach((v) => { if (!started.has(v)) return; if (playing()) play(v); else v.pause(); });
+  document.addEventListener("visibilitychange", sync);
   if ("IntersectionObserver" in window) {
     new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) videos.forEach((v) => v.pause());
-        else videos.forEach((v) => { if (v.getAttribute("src")) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } });
-      });
+      entries.forEach((e) => { heroVisible = e.isIntersecting; });
+      sync();
     }).observe(hero);
   }
 }

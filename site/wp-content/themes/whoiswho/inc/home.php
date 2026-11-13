@@ -54,25 +54,44 @@ if ( ! function_exists( 'wiw_home_title_lines' ) ) {
 
 if ( ! function_exists( 'wiw_home_hero_videos' ) ) {
 	/**
-	 * The four hero videos with their still posters. Files live in the child theme's assets/home folder (brand media). A missing
-	 * video is skipped; a poster alone still gives a complete, static hero.
+	 * The four hero videos with their still posters (REQ-001, REQ-041). Files live in the child theme's assets/home folder (brand
+	 * media; see the README there). Each clip has an MP4 and, when smaller, a WebM; each poster has 360 and 540 px widths in AVIF, WebP
+	 * and JPEG (the 540 JPEG is the fallback). A missing video is skipped; a poster alone still gives a complete, static hero.
 	 *
-	 * @return array<int, array{video: string, poster: string}>
+	 * @return array<int, array{video: string, webm: string, poster: string, sets: array<string, string>, width: int, height: int}>
 	 */
 	function wiw_home_hero_videos(): array {
 		$dir = trailingslashit( get_stylesheet_directory() ) . 'assets/home/';
 		$url = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/home/';
 		$out = array();
 		for ( $i = 1; $i <= 4; $i++ ) {
-			$poster = is_readable( $dir . 'hero-' . $i . '.jpg' ) ? $url . 'hero-' . $i . '.jpg' : '';
-			$video  = is_readable( $dir . 'hero-' . $i . '.mp4' ) ? $url . 'hero-' . $i . '.mp4' : '';
+			$base   = 'hero-' . $i;
+			$poster = is_readable( $dir . $base . '-540.jpg' ) ? $url . $base . '-540.jpg' : '';
+			$video  = is_readable( $dir . $base . '.mp4' ) ? $url . $base . '.mp4' : '';
+			$webm   = is_readable( $dir . $base . '.webm' ) ? $url . $base . '.webm' : '';
+			$sets   = array();
+			foreach ( array( 'avif', 'webp', 'jpg' ) as $ext ) {
+				$parts = array();
+				foreach ( array( 360, 540 ) as $w ) {
+					if ( is_readable( $dir . $base . '-' . $w . '.' . $ext ) ) {
+						$parts[] = $url . $base . '-' . $w . '.' . $ext . ' ' . $w . 'w';
+					}
+				}
+				if ( array() !== $parts ) {
+					$sets[ $ext ] = implode( ', ', $parts );
+				}
+			}
 			if ( '' !== $poster || '' !== $video ) {
 				$out[] = array(
 					'video'  => $video,
+					'webm'   => $webm,
 					'poster' => $poster,
+					'sets'   => $sets,
+					'width'  => 540,
+					'height' => 960,
 				);
 			}
-		}
+		}//end for
 		return $out;
 	}
 }//end if
