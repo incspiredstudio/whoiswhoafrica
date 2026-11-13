@@ -177,7 +177,7 @@ final class CustomersScreen {
 			} else {
 				$id = $this->service->create( $fields );
 			}
-		} catch ( \LogicException $e ) { // An empty name or an unknown customer: the form is shown again without a change.
+		} catch ( \LogicException $e ) {
 			unset( $e );
 		}
 		wp_safe_redirect( admin_url( 'admin.php?page=' . self::SCREEN . ( $id > 0 ? '&customer=' . $id : '' ) ) );
