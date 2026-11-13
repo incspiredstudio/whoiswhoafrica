@@ -78,8 +78,17 @@ final class RequesterConfirmation {
 		if ( ! in_array( (string) $item['item_type'], self::types(), true ) ) {
 			throw new \InvalidArgumentException( 'That kind of item needs no email confirmation.' );
 		}
-		$token = $this->links->reissue( self::PURPOSE, self::SUBJECT_TYPE, (string) $item['id'], (string) $item['requester_email'] );
-		return $this->links->url( $token );
+		return $this->links->url( $this->issue_token( $item ) );
+	}
+
+	/**
+	 * Issue the confirmation link and return its token, for a mail that builds the URL itself; any earlier link stops working.
+	 *
+	 * @param array<string, mixed> $item A support item row.
+	 * @return string The signed link token.
+	 */
+	public function issue_token( array $item ): string {
+		return $this->links->reissue( self::PURPOSE, self::SUBJECT_TYPE, (string) $item['id'], (string) $item['requester_email'] );
 	}
 
 	/**
