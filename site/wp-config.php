@@ -58,6 +58,12 @@ $table_prefix = 'wiw_'; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlo
 
 $wiw_production = 'production' === wiw_secret( 'WIW_ENV', 'production' );
 
+// Page cache (WP Super Cache, deploy/cache): on only when the secrets file says so. WP_CACHE makes WordPress load the advanced-cache.php drop-in.
+if ( 'true' === wiw_secret( 'WIW_PAGE_CACHE', 'false' ) ) {
+	define( 'WP_CACHE', true );
+	define( 'WPCACHEHOME', __DIR__ . '/wp-content/plugins/wp-super-cache/' );
+}
+
 define( 'WP_ENVIRONMENT_TYPE', $wiw_production ? 'production' : 'local' );
 define( 'WP_DEBUG', ! $wiw_production );
 define( 'WP_DEBUG_DISPLAY', false );
