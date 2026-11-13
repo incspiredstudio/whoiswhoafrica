@@ -240,3 +240,34 @@ The page cache is WP Super Cache (pinned through composer, on the plugin allowli
 ## Customer and enquiry CSV export (REQ-077, #324)
 
 The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.
+
+## Profile manager role recipe (M3-CLM-14; REQ-253, REQ-261, REQ-244)
+
+No fourth role ships. When a claim is approved, the Administrator creates a limited role once and gives the claimant a staff user with it. The claimant then sees only the My profiles screen and can change only the profiles assigned to them; each change waits as a pending revision until a Reviewer or Administrator other than the author approves it.
+
+### Create the role (once)
+
+1. Sign in as an Administrator. Open Users, then Role editor (the role-editor plugin, Administrator-only).
+2. Add a new role named `Profile manager` (slug `wiw_profile_manager`). Do not copy Editor or Reviewer: start empty.
+3. Tick exactly these capabilities and no others:
+   - `read` (needed to sign in to the dashboard shell)
+   - `wiw_edit_assigned_profiles` (opens My profiles and the assigned profiles only)
+4. Make sure none of the following are ticked on the role or on the user. Each one lets the person act as staff and would remove the limit, so the role must not have them: `wiw_review_records`, `wiw_review_claims`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_resolve_duplicates`, `wiw_run_imports`, `wiw_export_data`, `wiw_view_audit`, `wiw_view_suppression`, `wiw_edit_suppression`, `wiw_manage_register`, `wiw_set_sponsored`, `wiw_manage_capabilities`, and every `edit_*`, `publish_*`, `delete_*`, `upload_files` and `moderate_comments` capability of core. A user who holds a staff profile capability as well is no longer limited to assigned profiles.
+5. Save. Audit rows: `role.create` (and `role.capabilities` for any later change) with the actor and the granted capabilities.
+
+### Create the claimant and assign the profile (each claim)
+
+1. Users, Add new. Username and email of the claimant; role `Profile manager`. Send the new-user email so they set their own password.
+2. Open the profile in the directory editor and, in the Claim and profile manager card, pick the user as the profile manager (it needs `wiw_review_claims`). The profile must be claimed (an approved claim). Audit row: `profile.assign_manager`, with the before and after user, the actor and the reason.
+3. The user must enrol a second factor on first sign-in (Two-factor enforcement applies to every user whatever the role). Nothing else opens until they do. Check this yourself by signing in as the user in a private window.
+4. The user's own screens: only My profiles and their own account page. A pending revision appears in the Review queue for a Reviewer or Administrator who is not the author. Approve or return it with a note; each decision writes an audit row (`profile.revision_approved` or `profile.revision_rejected`) with actor and reason.
+
+### Checklist for the claim reviewer after approval
+
+- [ ] The claim is approved on the Claims screen (audit row `claim.approve`).
+- [ ] A `Profile manager` user exists for the claimant and holds only `read` and `wiw_edit_assigned_profiles` (Role editor, user screen: no extra grants).
+- [ ] The profile is assigned to that user (audit row `profile.assign_manager`).
+- [ ] The claimant has enrolled a second factor.
+- [ ] Signing in as the claimant shows My profiles and nothing else: no Posts, Pages, Media, Users, Tools menus; opening another profile's edit address answers 403.
+- [ ] A test change from the claimant appears as a pending revision and the live profile is unchanged; approve or return it from the Review queue as a different user.
+- [ ] To end the arrangement, remove the manager from the profile (audit row `profile.assign_manager`, "Manager removed") and deactivate the user.
