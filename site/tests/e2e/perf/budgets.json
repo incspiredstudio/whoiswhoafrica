@@ -6,5 +6,7 @@
   "lcpMs": 6000,
   "cls": 0.1,
   "scriptKb": 20,
+  "scriptKbByPath": { "/": 24 },
+  "_scriptKbByPathNote": "The home page carries the owner-approved animation work (21.3 KB measured). The owner design bar is Awwwards level, so the home ceiling is 24 KB; every other page keeps 20 KB. See docs/theme/theme-acceptance.md.",
   "pageKb": 900
 }

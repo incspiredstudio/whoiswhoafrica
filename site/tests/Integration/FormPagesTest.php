@@ -178,6 +178,36 @@ final class FormPagesTest extends WpTestCase {
 		}
 	}
 
+	public function test_REQ_059_data_rights_page_has_the_request_form_and_links_to_the_profile_forms(): void {
+		$out = $this->render( 'data-rights' );
+		$this->assertSame( 1, substr_count( $out, '<h1>' ) );
+		$this->assertStringContainsString( 'action="' . home_url( '/data-rights/' ) . '"', $out );
+		foreach ( array( 'kind', 'name', 'email', 'details', 'wiw_form_token', 'wiw_website' ) as $field ) {
+			$this->assertStringContainsString( 'name="' . $field . '"', $out, $field );
+		}
+		foreach ( array( 'access', 'correction', 'erasure', 'objection', 'portability' ) as $kind ) {
+			$this->assertStringContainsString( 'value="' . $kind . '"', $out, $kind );
+		}
+		$this->assertStringContainsString( home_url( '/directory/' ), $out );
+		$this->assertStringContainsString( home_url( '/complaints/' ), $out );
+		$this->assertStringContainsString( 'notice--draft', $out );
+	}
+
+	public function test_REQ_059_done_page_after_a_data_request_shows_the_reference_and_the_confirmation_step(): void {
+		$this->done_vars(
+			array(
+				'kind' => 'data_rights',
+				'from' => 'data_rights',
+				'ref'  => 'DSR-0007',
+			)
+		);
+		$out = $this->render( 'done' );
+		$this->assertStringContainsString( 'Request received', $out );
+		$this->assertStringContainsString( 'DSR-0007', $out );
+		$this->assertStringContainsString( 'confirmation email', $out );
+		$this->assertStringContainsString( '30 days', $out );
+	}
+
 	public function test_REQ_081_a_made_up_reference_is_not_echoed(): void {
 		$this->done_vars(
 			array(
@@ -197,7 +227,7 @@ final class FormPagesTest extends WpTestCase {
 	}
 
 	public function test_REQ_081_the_routes_and_the_template_choice(): void {
-		$this->assertSame( array( 'contact', 'subscribe', 'get-listed', 'claim', 'unsubscribe', 'search', 'newsletter', 'nominate', 'done' ), array_keys( wiw_form_pages() ) );
+		$this->assertSame( array( 'contact', 'subscribe', 'get-listed', 'claim', 'unsubscribe', 'search', 'newsletter', 'nominate', 'data-rights', 'done' ), array_keys( wiw_form_pages() ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'contact' );
 		$this->assertStringEndsWith( 'templates/contact.php', wiw_form_template( 'x.php' ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'subscribe' );

@@ -76,6 +76,8 @@ A page is checked at 360, 768, 1280 and 1600 pixels.
 | Main script bundle `main` | 3.6 KB gzipped (reported by the build) |
 | Lazy animation stage | about 10 KB gzipped, plus three.js at about 164 KB gzipped, loaded only when the stage runs (the vendor file gzips to 162 KB when checked) |
 
+Script budget: pages keep a 20 KB script ceiling (`scriptKb` in `site/tests/e2e/perf/budgets.json`). The home page is raised to 24 KB (`scriptKbByPath`) because the owner-approved animation work measures 21.3 KB and the owner design bar is Awwwards level; the heavy parts stay lazy-loaded.
+
 The Largest Contentful Paint target stays an assumed target until measured on a real device.
 
 ## Per page checks

@@ -47,6 +47,57 @@ final class ProfileImagesTest extends TestCase {
 		}
 	}
 
+	public function test_REQ_042_lcp_image_not_lazy_loaded(): void {
+		$head = wiw_poster_image_attrs( 'Portrait of A', 'head' );
+		$this->assertSame( 'eager', $head['loading'] );
+		$this->assertSame( 'high', $head['fetchpriority'], 'the profile header portrait is the largest paint' );
+		$card = wiw_poster_image_attrs( '', 'card' );
+		$this->assertSame( 'lazy', $card['loading'] );
+		$this->assertArrayNotHasKey( 'fetchpriority', $card );
+		$template = (string) file_get_contents( get_template_directory() . '/template-parts/profile-head.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'wiw_poster_image_attrs(', $template );
+		$this->assertStringContainsString( "'head'", $template, 'the profile header asks for the head attributes' );
+	}
+
+	public function test_REQ_042_images_have_srcset_and_modern_format_and_REQ_080_the_original_is_kept_after_resize(): void {
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$dir  = wp_upload_dir();
+		$file = $dir['path'] . '/wiw-test-portrait-' . bin2hex( random_bytes( 3 ) ) . '.jpg';
+		$im   = imagecreatetruecolor( 1200, 1600 );
+		imagefilledrectangle( $im, 0, 0, 1200, 1600, 0x336699 );
+		imagejpeg( $im, $file, 85 );
+		$original = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$id       = (int) wp_insert_attachment(
+			array(
+				'post_title'     => 'Portrait',
+				'post_mime_type' => 'image/jpeg',
+				'post_status'    => 'inherit',
+			),
+			$file
+		);
+		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file ) );
+		$meta = wp_get_attachment_metadata( $id );
+		foreach ( array( 'wiw-poster-sm', 'wiw-poster', 'wiw-poster-lg' ) as $size ) {
+			$this->assertArrayHasKey( $size, $meta['sizes'], $size );
+		}
+		$this->assertFileExists( $file, 'the original file is kept in the media library' );
+		$this->assertSame( $original, (string) file_get_contents( $file ), 'the original is not changed by the resize' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		if ( wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) ) ) {
+			$this->assertSame( 'image/webp', $meta['sizes']['wiw-poster']['mime-type'], 'the served sizes are WebP' );
+		}
+		$html = wp_get_attachment_image( $id, 'wiw-poster', false, wiw_poster_image_attrs( 'Portrait of A', 'head' ) );
+		$this->assertStringContainsString( 'srcset="', $html );
+		preg_match( '/srcset="([^"]+)"/', $html, $found );
+		$this->assertGreaterThanOrEqual( 3, count( explode( ',', $found[1] ) ), 'the srcset offers at least the three portrait widths' );
+		$this->assertMatchesRegularExpression( '/\swidth="\d+"/', $html );
+		$this->assertMatchesRegularExpression( '/\sheight="\d+"/', $html );
+		$this->assertStringContainsString( 'loading="eager"', $html );
+		$this->assertStringContainsString( 'fetchpriority="high"', $html );
+		$this->assertStringContainsString( 'sizes="', $html );
+		wp_delete_attachment( $id, true );
+		@unlink( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions
+	}
+
 	public function test_REQ_042_attributes_carry_sizes_lazy_loading_and_the_alt_text(): void {
 		$card = wiw_poster_image_attrs( '', 'card' );
 		$this->assertSame( 'lazy', $card['loading'] );

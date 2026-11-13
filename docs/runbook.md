@@ -191,6 +191,19 @@ Baseline on the local PHP built-in server (Windows, no page cache; time to first
 
 Proposed ceilings (for the owner to agree; docs/theme/theme-acceptance.md still lists the numeric budget as an open point): LCP 6000 ms enforced now with 2500 ms the REQ-041 target reported as a warning, CLS 0.1, scripts 20 KB, page weight 900 KB. Tighten LCP to 2500 ms once measured on the staging host.
 
+## Concurrency baseline (M5-PRF-04; REQ-054)
+
+`site/tests/Performance/concurrency.mjs` sends 50 concurrent anonymous visitors, each walking the home page, the directory, one profile and one story four times (the cache is warmed first), and records response times and the error rate. Command: `BASE_URL=http://127.0.0.1:<port> CONCURRENCY=50 ROUNDS=4 node tests/Performance/concurrency.mjs`. It writes one JSON line and exits 1 over the budget (`MAX_ERROR_RATE`, default 0; `P95_MS`, default 3000).
+
+Baseline on the local build (2026-11-13; Windows dev machine shared with three other builds and test runs; PHP built-in server with 4 workers, WP Super Cache on via `WIW_PAGE_CACHE=true`; 30 sample profiles and stories). This is a worst case: the built-in server serves one request per worker and the machine was busy, so it says little about the live host.
+
+| Walk | Requests | Errors | p50 | p95 | Notes |
+|---|---|---|---|---|---|
+| Home, directory, profile, story, 50 users x 4 rounds | 800 | 0 | 13.9 s | 39.6 s | Home and the story page were cache hits (p50 about 1.3 s, p95 1.5 s and 16.6 s). The directory and the profile page were not cached (the profile page sends no-cache headers; the reason was not investigated) and took p50 22.7 s and 32.5 s. |
+| Same plus search, 50 users x 2 rounds, cold | 500 | 40 (8%) | 58.5 s | 92.7 s | Search carries a query string and is never cached. The 40 errors were not classified (the script counts a status of 400 or more, or a network failure, on the saturated built-in server). |
+
+Findings: (1) no error on the cached walk; (2) the page-cache policy lists `/profiles` but the directory lists live at `/directory/`, `/people/` and the other list paths, so the main lists are never cached (follow-up issue); (3) the response-time pass criterion is not in the docs: the proposal is no errors and p95 under 3 s at 50 concurrent users on the staging host, which the owner has to confirm. Re-run on staging in the launch rehearsal (M5-LCH-04) and record the figures here.
+
 ## Live-host check results
 
 Filled in at M5 from the checks listed in Deployment (Q87 still open).
@@ -240,3 +253,34 @@ The page cache is WP Super Cache (pinned through composer, on the plugin allowli
 ## Customer and enquiry CSV export (REQ-077, #324)
 
 The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.
+
+## Profile manager role recipe (M3-CLM-14; REQ-253, REQ-261, REQ-244)
+
+No fourth role ships. When a claim is approved, the Administrator creates a limited role once and gives the claimant a staff user with it. The claimant then sees only the My profiles screen and can change only the profiles assigned to them; each change waits as a pending revision until a Reviewer or Administrator other than the author approves it.
+
+### Create the role (once)
+
+1. Sign in as an Administrator. Open Users, then Role editor (the role-editor plugin, Administrator-only).
+2. Add a new role named `Profile manager` (slug `wiw_profile_manager`). Do not copy Editor or Reviewer: start empty.
+3. Tick exactly these capabilities and no others:
+   - `read` (needed to sign in to the dashboard shell)
+   - `wiw_edit_assigned_profiles` (opens My profiles and the assigned profiles only)
+4. Make sure none of the following are ticked on the role or on the user. Each one lets the person act as staff and would remove the limit, so the role must not have them: `wiw_review_records`, `wiw_review_claims`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_resolve_duplicates`, `wiw_run_imports`, `wiw_export_data`, `wiw_view_audit`, `wiw_view_suppression`, `wiw_edit_suppression`, `wiw_manage_register`, `wiw_set_sponsored`, `wiw_manage_capabilities`, and every `edit_*`, `publish_*`, `delete_*`, `upload_files` and `moderate_comments` capability of core. A user who holds a staff profile capability as well is no longer limited to assigned profiles.
+5. Save. Audit rows: `role.create` (and `role.capabilities` for any later change) with the actor and the granted capabilities.
+
+### Create the claimant and assign the profile (each claim)
+
+1. Users, Add new. Username and email of the claimant; role `Profile manager`. Send the new-user email so they set their own password.
+2. Open the profile in the directory editor and, in the Claim and profile manager card, pick the user as the profile manager (it needs `wiw_review_claims`). The profile must be claimed (an approved claim). Audit row: `profile.assign_manager`, with the before and after user, the actor and the reason.
+3. The user must enrol a second factor on first sign-in (Two-factor enforcement applies to every user whatever the role). Nothing else opens until they do. Check this yourself by signing in as the user in a private window.
+4. The user's own screens: only My profiles and their own account page. A pending revision appears in the Review queue for a Reviewer or Administrator who is not the author. Approve or return it with a note; each decision writes an audit row (`profile.revision_approved` or `profile.revision_rejected`) with actor and reason.
+
+### Checklist for the claim reviewer after approval
+
+- [ ] The claim is approved on the Claims screen (audit row `claim.approve`).
+- [ ] A `Profile manager` user exists for the claimant and holds only `read` and `wiw_edit_assigned_profiles` (Role editor, user screen: no extra grants).
+- [ ] The profile is assigned to that user (audit row `profile.assign_manager`).
+- [ ] The claimant has enrolled a second factor.
+- [ ] Signing in as the claimant shows My profiles and nothing else: no Posts, Pages, Media, Users, Tools menus; opening another profile's edit address answers 403.
+- [ ] A test change from the claimant appears as a pending revision and the live profile is unchanged; approve or return it from the Review queue as a different user.
+- [ ] To end the arrangement, remove the manager from the profile (audit row `profile.assign_manager`, "Manager removed") and deactivate the user.

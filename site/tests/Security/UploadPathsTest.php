@@ -77,8 +77,11 @@ final class UploadPathsTest extends TestCase {
 		// InvitationRoute.php: the public customer invitation form takes one picture. It is checked by Commerce\Invitations\ImageCheck
 		// (real JPEG, PNG or WebP by content, 2 MB, extension must match) before it is stored through the media library, whose upload
 		// filters are the guard's (REQ-013).
+		// MyProfilesScreen.php: a signed-in assigned user (not public) proposes a new photograph for a claimed profile. The same
+		// ImageCheck runs, the file goes to the media library, and it becomes the profile's picture only when a Reviewer approves
+		// the pending revision (REQ-261, REQ-253).
 		sort( $callers );
-		$this->assertSame( array( 'ImportScreen.php', 'InvitationRoute.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
+		$this->assertSame( array( 'ImportScreen.php', 'InvitationRoute.php', 'MyProfilesScreen.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
 	}
 
 	public function test_REQ_127_evidence_not_served_inline(): void {

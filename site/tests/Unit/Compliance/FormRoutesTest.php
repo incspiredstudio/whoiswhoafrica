@@ -23,6 +23,22 @@ final class FormRoutesTest extends TestCase {
 	 */
 	private array $calls = array();
 
+	private function routes_with( string $form ): FormRoutes {
+		return new FormRoutes(
+			array(
+				$form => function () use ( $form ): array {
+					$this->calls[] = array( 'form' => $form );
+					return array(
+						'status'    => PublicSubmission::RECEIVED,
+						'message'   => 'm',
+						'errors'    => array(),
+						'reference' => 'DSR-0001',
+					);
+				},
+			)
+		);
+	}
+
 	private function routes( string $status = PublicSubmission::RECEIVED ): FormRoutes {
 		$make = function ( string $form ) use ( $status ): callable {
 			return function ( FormInput $input, string $ip, string $slug = '' ) use ( $form, $status ): array {
@@ -81,6 +97,13 @@ final class FormRoutesTest extends TestCase {
 	public function test_REQ_061_post_newsletter_is_the_newsletter_form(): void {
 		$this->routes()->dispatch( 'POST', '/newsletter/', new FormInput( array() ), '' );
 		$this->assertSame( 'newsletter', $this->calls[0]['form'] );
+	}
+
+	public function test_REQ_059_post_data_rights_is_the_data_rights_form_and_done_url_names_the_kind(): void {
+		$result = $this->routes_with( 'data_rights' )->dispatch( 'POST', '/data-rights/', new FormInput( array() ), '' );
+		$this->assertSame( 'data_rights', $this->calls[0]['form'] );
+		$this->assertSame( 303, $result['http'] );
+		$this->assertStringContainsString( 'kind=data_rights', FormRoutes::done_url( $result ) );
 	}
 
 	public function test_REQ_060_enquiries_switched_off_is_refused_with_409(): void {
