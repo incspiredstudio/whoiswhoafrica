@@ -220,7 +220,7 @@ final class LegalDrafts {
 			. self::h( 'How to ask' )
 			. self::ol(
 				array(
-					'Send us your name, your email address and what you want, by email to ' . self::CONTACT . '. An online request form for this page is being added.',
+					'Fill in the request form on the ' . self::link( '/data-rights/', 'Your data rights' ) . ' page with your name, your email address and what you want. If you prefer, you can send the same details by email to ' . self::CONTACT . '.',
 					'We send a single-use link to that email address to confirm that it is yours. An unconfirmed request cannot be acted on and lapses.',
 					'We find the information, check that nothing in it belongs to someone else, and reply to the same email address.',
 				)

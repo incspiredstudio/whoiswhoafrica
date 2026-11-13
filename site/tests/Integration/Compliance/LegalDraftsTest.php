@@ -124,6 +124,13 @@ final class LegalDraftsTest extends TestCase {
 		}
 	}
 
+	public function test_REQ_059_data_rights_page_describes_the_request_form_with_email_as_the_alternative(): void {
+		$text = $this->text( 'data-rights' );
+		$this->assertStringContainsString( 'request form', $text );
+		$this->assertStringContainsString( 'send the same details by email', $text );
+		$this->assertStringNotContainsString( 'is being added', $text );
+	}
+
 	public function test_REQ_158_complaints_page_states_the_removal_commitments(): void {
 		$text = $this->text( 'complaints' );
 		foreach ( array( 'one business day', 'two business days', 'seven days', 'suppression list', 'suggest a correction', 'request removal', 'report this profile' ) as $needle ) {
