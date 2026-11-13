@@ -83,11 +83,20 @@ add_action(
 					$three = wiw_asset_url( 'three.js' );
 					$stage = wiw_asset_url( 'home-stage.js' );
 					if ( null !== $three && null !== $stage ) {
-						wp_add_inline_script( 'wiw-home', 'window.wiwHome=' . wp_json_encode( array( 'three' => $three, 'stage' => $stage ) ) . ';', 'before' );
+						wp_add_inline_script(
+							'wiw-home',
+							'window.wiwHome=' . wp_json_encode(
+								array(
+									'three' => $three,
+									'stage' => $stage,
+								)
+							) . ';',
+							'before'
+						);
 					}
 				}
 			}
-		}
+		}//end if
 		$main = wiw_asset_url( 'main.js' );
 		if ( null !== $main ) {
 			wp_enqueue_script( 'wiw-main', $main, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
