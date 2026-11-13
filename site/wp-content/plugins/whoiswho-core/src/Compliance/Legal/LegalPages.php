@@ -68,6 +68,7 @@ final class LegalPages {
 					'post_name'    => $slug,
 					'post_title'   => $draft['title'],
 					'post_content' => $draft['body'],
+					'meta_input'   => array( LegalDrafts::DRAFT_META => '1' ),
 				)
 			);
 			if ( $id > 0 ) {
@@ -75,6 +76,38 @@ final class LegalPages {
 			}
 		}//end foreach
 		return $created;
+	}
+
+	/**
+	 * Replace a page that still holds the original short draft (unchanged, byte for byte) with the fuller draft. A page that
+	 * anyone edited, or that is missing, is left alone.
+	 *
+	 * @return int How many pages were replaced.
+	 */
+	public function upgrade_untouched(): int {
+		$first_drafts = array(
+			'privacy'     => '09ad6bc0f51a0d8010b3ae5402a874f6',
+			'terms'       => 'c72a1ac546b6102c2485e04a2e25ab36',
+			'cookies'     => '078088c624790066642f6739adaef6c3',
+			'data-rights' => '3fd6eb48a94e605ef63d964be4502610',
+			'complaints'  => 'd08e04be220bc15570ba7d63a44c00ab',
+		);
+		$replaced     = 0;
+		foreach ( $first_drafts as $slug => $hash ) {
+			$page = get_page_by_path( $slug, OBJECT, 'page' );
+			if ( ! $page instanceof \WP_Post || md5( $page->post_content ) !== $hash ) {
+				continue;
+			}
+			wp_update_post(
+				array(
+					'ID'           => $page->ID,
+					'post_content' => LegalDrafts::for_slug( $slug )['body'],
+				)
+			);
+			update_post_meta( $page->ID, LegalDrafts::DRAFT_META, '1' );
+			++$replaced;
+		}
+		return $replaced;
 	}
 
 	/**
@@ -97,36 +130,11 @@ final class LegalPages {
 	}
 
 	/**
-	 * The draft text for each page. Plain and short; Legal replaces it. Nothing here states prices, packages or fees.
+	 * The draft text for each page (see LegalDrafts). Nothing here states prices, packages or fees.
 	 *
 	 * @return array<string, array{title: string, body: string}>
 	 */
 	private static function drafts(): array {
-		return array(
-			'privacy'     => array(
-				'title' => __( 'Privacy policy', 'whoiswho' ),
-				'body'  => '<p>' . __( 'This is draft wording. It explains what personal information this site collects, why, how long it is kept and who can see it. It will be replaced by the reviewed policy.', 'whoiswho' ) . '</p>'
-					. '<h2>' . __( 'What we collect', 'whoiswho' ) . '</h2><p>' . __( 'Details you give us in a form, and the public information shown in directory listings.', 'whoiswho' ) . '</p>'
-					. '<h2>' . __( 'Your choices', 'whoiswho' ) . '</h2><p>' . __( 'You can ask to see, correct or remove your information at any time from the data rights page.', 'whoiswho' ) . '</p>',
-			),
-			'terms'       => array(
-				'title' => __( 'Terms of use', 'whoiswho' ),
-				'body'  => '<p>' . __( 'This is draft wording. It sets out the rules for using this site. It will be replaced by the reviewed terms.', 'whoiswho' ) . '</p>'
-					. '<h2>' . __( 'Using the site', 'whoiswho' ) . '</h2><p>' . __( 'The directory and stories are provided for information. Listings are published after review.', 'whoiswho' ) . '</p>'
-					. '<h2>' . __( 'Corrections', 'whoiswho' ) . '</h2><p>' . __( 'If something about you or your organisation is wrong, tell us and we will look at it.', 'whoiswho' ) . '</p>',
-			),
-			'cookies'     => array(
-				'title' => __( 'Cookie policy', 'whoiswho' ),
-				'body'  => '<p>' . __( 'This is draft wording. It lists the cookies this site sets and what each one is for. Cookies that are not essential are off until you accept them.', 'whoiswho' ) . '</p>',
-			),
-			'data-rights' => array(
-				'title' => __( 'Your data rights', 'whoiswho' ),
-				'body'  => '<p>' . __( 'This is draft wording. You may ask to see, correct, export, or remove the personal information we hold about you. Use the request form and we will reply within the legal time limit.', 'whoiswho' ) . '</p>',
-			),
-			'complaints'  => array(
-				'title' => __( 'Complaints and takedown', 'whoiswho' ),
-				'body'  => '<p>' . __( 'This is draft wording. If a listing is wrong, harmful or should not be public, tell us. We confirm who you are, look at it, and answer within the stated time.', 'whoiswho' ) . '</p>',
-			),
-		);
+		return LegalDrafts::all();
 	}
 }
