@@ -86,6 +86,7 @@ final class ClaimButtonTest extends TestCase {
 	 */
 	private function rail( PublicProfile $profile ): string {
 		ob_start();
+		get_template_part( 'template-parts/profile-rail', null, array( 'profile' => $profile ) );
 		do_action( 'wiw_profile_rail', $profile );
 		return (string) ob_get_clean();
 	}
@@ -95,6 +96,16 @@ final class ClaimButtonTest extends TestCase {
 		$out     = $this->rail( $profile );
 		$this->assertStringContainsString( 'Claim this profile', $out );
 		$this->assertStringContainsString( 'href="' . home_url( '/claim/' . $profile->slug . '/' ) . '"', $out );
+	}
+
+	public function test_REQ_156_the_rail_has_one_something_wrong_panel_and_one_claim_button_and_the_report_link_opens_the_dialog(): void {
+		$out = $this->rail( $this->profile( 'Single Ltd', true ) );
+		$this->assertSame( 1, substr_count( $out, 'Something wrong?' ), 'one panel, not two' );
+		$this->assertSame( 1, substr_count( $out, 'Claim this profile' ) );
+		$this->assertSame( 1, substr_count( $out, 'Suggest a correction' ) );
+		$this->assertSame( 1, substr_count( $out, 'Request removal' ) );
+		$this->assertStringContainsString( 'data-report-open="report-dialog"', $out );
+		$this->assertSame( 1, substr_count( $out, 'id="report-dialog"' ), 'the report dialog is still there, once' );
 	}
 
 	public function test_REQ_252_claimed_profile_has_no_claim_button(): void {
