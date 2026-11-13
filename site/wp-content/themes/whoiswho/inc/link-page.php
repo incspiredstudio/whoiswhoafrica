@@ -28,6 +28,34 @@ function wiw_link_is_unsubscribe( string $kind, string $message, string $token )
 }
 
 /**
+ * Which answer to the complimentary-listing consent request a link carries: accept, decline, or an empty string for any other link
+ * (REQ-175, REQ-233). A usable link is looked up without being used; after use the plugin's fixed sentences tell the two apart.
+ *
+ * @param string $kind    State: confirm, done, expired or limited.
+ * @param string $message The plugin's message.
+ * @param string $token   The link token.
+ */
+function wiw_link_consent_choice( string $kind, string $message, string $token ): string {
+	if ( 'done' === $kind ) {
+		$done = array(
+			'Thank you. Your consent is recorded.' => 'accept',
+			'Your choice is recorded. The profile will not be published.' => 'decline',
+		);
+		return $done[ $message ] ?? '';
+	}
+	if ( 'confirm' !== $kind || '' === $token || ! class_exists( '\WhoIsWho\Core\Platform\Links\SignedLinks' ) ) {
+		return '';
+	}
+	$row     = \WhoIsWho\Core\Platform\Links\SignedLinks::for_site()->peek( $token );
+	$purpose = is_array( $row ) ? (string) ( $row['purpose'] ?? '' ) : '';
+	$map     = array(
+		'complimentary_listing'         => 'accept',
+		'complimentary_listing_decline' => 'decline',
+	);
+	return $map[ $purpose ] ?? '';
+}
+
+/**
  * Render the link page inside the site header and footer.
  *
  * @param string                                  $html  The plugin's bare default markup (ignored).
@@ -39,12 +67,28 @@ function wiw_link_page( string $html, array $state = array() ): string {
 	$message = isset( $state['message'] ) ? (string) $state['message'] : '';
 	$token   = (string) get_query_var( 'wiw_link' );
 	$unsub   = wiw_link_is_unsubscribe( $kind, $message, $token );
+	$consent = $unsub ? '' : wiw_link_consent_choice( $kind, $message, $token );
 
 	ob_start();
 	get_header();
 	?>
 	<div class="wrap wrap--text section link-page">
-		<?php if ( 'confirm' === $kind && $unsub ) : ?>
+		<?php if ( 'confirm' === $kind && '' !== $consent ) : ?>
+			<h1><?php echo 'accept' === $consent ? esc_html__( 'Agree to a complimentary listing', 'whoiswho' ) : esc_html__( 'Decline a complimentary listing', 'whoiswho' ); ?></h1>
+			<p><?php esc_html_e( 'We would like to publish a profile about you in the directory at no charge: a complimentary listing. Nothing is public until you agree and a reviewer has approved the profile. Opening this page does nothing until you press the button.', 'whoiswho' ); ?></p>
+			<form method="post" data-personal-data="none" action="<?php echo esc_url( home_url( '/link/' . rawurlencode( $token ) ) ); ?>">
+				<button type="submit" class="btn"><?php echo 'accept' === $consent ? esc_html__( 'I agree', 'whoiswho' ) : esc_html__( 'I decline', 'whoiswho' ); ?></button>
+			</form>
+		<?php elseif ( 'done' === $kind && '' !== $consent ) : ?>
+			<h1 role="status"><?php echo 'accept' === $consent ? esc_html__( 'Consent recorded', 'whoiswho' ) : esc_html__( 'Choice recorded', 'whoiswho' ); ?></h1>
+			<p>
+				<?php
+				echo 'accept' === $consent
+					? esc_html__( 'Thank you. The profile is not public until a reviewer approves it.', 'whoiswho' )
+					: esc_html__( 'We have noted your choice. The profile will not be published.', 'whoiswho' );
+				?>
+			</p>
+		<?php elseif ( 'confirm' === $kind && $unsub ) : ?>
 			<h1><?php esc_html_e( 'Unsubscribe from the newsletter', 'whoiswho' ); ?></h1>
 			<p><?php esc_html_e( 'Press the button and we take your email address off the list. Opening this page does nothing until you do. No account is needed.', 'whoiswho' ); ?></p>
 			<form method="post" data-personal-data="none" action="<?php echo esc_url( home_url( '/link/' . rawurlencode( $token ) ) ); ?>">
