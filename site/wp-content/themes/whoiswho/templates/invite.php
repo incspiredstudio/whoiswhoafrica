@@ -148,6 +148,7 @@ $wiw_file_error = wiw_invitation_error_text( $wiw_errors, 'image' );
 				<?php endif; ?>
 			</div>
 			<?php get_template_part( 'template-parts/forms/privacy-notice' ); ?>
+			<?php get_template_part( 'template-parts/forms/bot-check', null, array( 'form' => 'invitation' ) ); ?>
 			<div class="row">
 				<button class="btn alt" type="submit" name="submit" value="draft"><?php esc_html_e( 'Save draft', 'whoiswho' ); ?></button>
 				<button class="btn" type="submit" name="submit" value="send"><?php esc_html_e( 'Send for review', 'whoiswho' ); ?></button>
