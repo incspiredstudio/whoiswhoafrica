@@ -138,22 +138,144 @@ final class SampleSeeder {
 	 * @return array<string, int> What was created, by kind.
 	 */
 	public function seed( Output $output ): array {
-		wp_set_current_user( $this->actor );
-		$this->terms();
-		$this->profiles();
-		$this->stories();
-		$this->events();
-		$this->images();
-		$this->awards();
-		$this->curation();
-		$this->pages();
-		$this->nominations_switch();
-		SampleMarker::save_registry( $this->registry );
-		flush_rewrite_rules( false );
+		foreach ( self::STEPS as $step ) {
+			$total  = $this->step_total( $step );
+			$offset = 0;
+			do {
+				$offset = $this->run_step( $step, $offset, max( 1, $total ) );
+			} while ( $offset < $total );
+		}
 		foreach ( $this->created as $kind => $count ) {
 			$output->line( sprintf( 'Created %d %s.', $count, $kind ) );
 		}
 		return $this->created;
+	}
+
+	/**
+	 * The steps, in order. Each is safe to repeat; the setup screen runs them a batch at a time (see Setup\DemoImport).
+	 */
+	public const STEPS = array( 'terms', 'profiles', 'stories', 'events', 'images', 'awards', 'curation', 'pages', 'settings' );
+
+	/**
+	 * How many units of work a step has, so a caller can run it in batches and show progress.
+	 *
+	 * @param string $step One of STEPS.
+	 */
+	public function step_total( string $step ): int {
+		$profiles = count( (array) $this->data['profiles'] );
+		$stories  = count( (array) $this->data['stories'] );
+		$events   = count( (array) $this->data['events'] );
+		switch ( $step ) {
+			case 'profiles':
+				return $profiles;
+			case 'stories':
+				return $stories;
+			case 'events':
+				return $events;
+			case 'images':
+				return $profiles + $stories + $events;
+			case 'awards':
+				return count( (array) $this->data['categories'] ) + count( (array) $this->data['nominations'] );
+			default:
+				return 1;
+		}
+	}
+
+	/**
+	 * What this run created so far, by kind.
+	 *
+	 * @return array<string, int>
+	 */
+	public function created(): array {
+		return $this->created;
+	}
+
+	/**
+	 * Run one batch of a step: `$limit` units starting at `$offset`. Safe to repeat, so a batch that failed or timed out is simply run again.
+	 *
+	 * @param string $step   One of STEPS.
+	 * @param int    $offset Where to start.
+	 * @param int    $limit  Units in this batch.
+	 * @return int The offset to continue from (the step's total or more once the step is finished).
+	 * @throws \InvalidArgumentException For an unknown step.
+	 */
+	public function run_step( string $step, int $offset, int $limit ): int {
+		if ( ! in_array( $step, self::STEPS, true ) ) {
+			throw new \InvalidArgumentException( 'Unknown sample step.' );
+		}
+		wp_set_current_user( $this->actor );
+		$offset = max( 0, $offset );
+		$limit  = max( 1, $limit );
+		switch ( $step ) {
+			case 'terms':
+				$this->terms();
+				break;
+			case 'profiles':
+				$this->profiles( $offset, $limit );
+				break;
+			case 'stories':
+				$this->stories( $offset, $limit );
+				break;
+			case 'events':
+				$this->events( $offset, $limit );
+				break;
+			case 'images':
+				$this->images( $offset, $limit );
+				break;
+			case 'awards':
+				$this->awards( $offset, $limit );
+				break;
+			case 'curation':
+				$this->curation();
+				break;
+			case 'pages':
+				$this->pages();
+				break;
+			case 'settings':
+				$this->nominations_switch();
+				break;
+		}//end switch
+		SampleMarker::save_registry( $this->registry );
+		if ( 'settings' === $step ) {
+			flush_rewrite_rules( false );
+		}
+		return $offset + $limit;
+	}
+
+	/**
+	 * The post id of a sample profile, or 0.
+	 *
+	 * @param string $key Sample key.
+	 */
+	private function profile_id( string $key ): int {
+		if ( ! isset( $this->profile_ids[ $key ] ) ) {
+			$this->profile_ids[ $key ] = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE ) ?? 0;
+		}
+		return $this->profile_ids[ $key ];
+	}
+
+	/**
+	 * The post id of a sample story, or 0.
+	 *
+	 * @param string $key Sample key (slug).
+	 */
+	private function story_id( string $key ): int {
+		if ( ! isset( $this->story_ids[ $key ] ) ) {
+			$this->story_ids[ $key ] = SampleMarker::find_post( 'story:' . $key, 'post' ) ?? 0;
+		}
+		return $this->story_ids[ $key ];
+	}
+
+	/**
+	 * The post id of a sample event, or 0.
+	 *
+	 * @param string $key Sample key (slug).
+	 */
+	private function event_id( string $key ): int {
+		if ( ! isset( $this->event_ids[ $key ] ) ) {
+			$this->event_ids[ $key ] = SampleMarker::find_post( 'event:' . $key, EventPostType::TYPE ) ?? 0;
+		}
+		return $this->event_ids[ $key ];
 	}
 
 	/**
@@ -230,13 +352,15 @@ final class SampleSeeder {
 	/**
 	 * The profiles, each through the state machine.
 	 *
+	 * @param int $offset First profile of the batch.
+	 * @param int $limit  Profiles in the batch.
 	 * @throws \RuntimeException When a sample item cannot be created.
 	 */
-	private function profiles(): void {
+	private function profiles( int $offset, int $limit ): void {
 		$machine    = new StateMachine();
 		$fields     = new ProfileFields();
 		$provenance = new ProvenanceRepository();
-		foreach ( (array) $this->data['profiles'] as $row ) {
+		foreach ( array_slice( (array) $this->data['profiles'], $offset, $limit ) as $row ) {
 			$key = (string) $row['key'];
 			$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
 			if ( null !== $id ) {
@@ -346,11 +470,13 @@ final class SampleSeeder {
 	/**
 	 * The stories: a type first (a story without one cannot publish), then dates, links, Featured and Sponsored.
 	 *
+	 * @param int $offset First story of the batch.
+	 * @param int $limit  Stories in the batch.
 	 * @throws \RuntimeException When a sample item cannot be created.
 	 */
-	private function stories(): void {
+	private function stories( int $offset, int $limit ): void {
 		$flags = new StoryFlags( $this->audit );
-		foreach ( (array) $this->data['stories'] as $row ) {
+		foreach ( array_slice( (array) $this->data['stories'], $offset, $limit ) as $row ) {
 			$key = (string) $row['slug'];
 			$id  = SampleMarker::find_post( 'story:' . $key, 'post' );
 			if ( null !== $id ) {
@@ -383,8 +509,8 @@ final class SampleSeeder {
 			}
 			$linked = array();
 			foreach ( (array) $row['profiles'] as $profile_key ) {
-				if ( isset( $this->profile_ids[ (string) $profile_key ] ) ) {
-					$linked[] = $this->profile_ids[ (string) $profile_key ];
+				if ( $this->profile_id( (string) $profile_key ) > 0 ) {
+					$linked[] = $this->profile_id( (string) $profile_key );
 				}
 			}
 			update_post_meta( $id, LinkedProfiles::META, LinkedProfiles::sanitise( $linked ) );
@@ -417,11 +543,13 @@ final class SampleSeeder {
 	/**
 	 * The events, checked by the same validator the staff screen uses.
 	 *
+	 * @param int $offset First event of the batch.
+	 * @param int $limit  Events in the batch.
 	 * @throws \RuntimeException When a sample item cannot be created.
 	 */
-	private function events(): void {
+	private function events( int $offset, int $limit ): void {
 		$validator = new EventValidator();
-		foreach ( (array) $this->data['events'] as $row ) {
+		foreach ( array_slice( (array) $this->data['events'], $offset, $limit ) as $row ) {
 			$key = (string) $row['slug'];
 			$id  = SampleMarker::find_post( 'event:' . $key, EventPostType::TYPE );
 			if ( null !== $id ) {
@@ -474,9 +602,12 @@ final class SampleSeeder {
 			}
 			$this->count( 'events' );
 		}//end foreach
+		if ( $offset + $limit < count( (array) $this->data['events'] ) ) {
+			return;
+		}
 		foreach ( (array) $this->data['stories'] as $row ) {
-			$story = $this->story_ids[ (string) $row['slug'] ] ?? 0;
-			$event = $this->event_ids[ (string) $row['event'] ] ?? 0;
+			$story = $this->story_id( (string) $row['slug'] );
+			$event = $this->event_id( (string) $row['event'] );
 			if ( $story > 0 && $event > 0 && 0 === (int) get_post_meta( $story, 'related_event_id', true ) ) {
 				update_post_meta( $story, 'related_event_id', $event );
 			}
@@ -485,45 +616,56 @@ final class SampleSeeder {
 
 	/**
 	 * Generated placeholder images: a portrait for each profile, a cover for each story and a poster for each event. A item that
-	 * already has one keeps it, so running again makes nothing twice.
+	 * already has one keeps it, so running again makes nothing twice. The units are the profiles, then the stories, then the events.
+	 *
+	 * @param int $offset First unit of the batch.
+	 * @param int $limit  Units in the batch.
 	 */
-	private function images(): void {
-		foreach ( (array) $this->data['profiles'] as $row ) {
-			$id = $this->profile_ids[ (string) $row['key'] ] ?? 0;
-			if ( $id < 1 || (int) get_post_meta( $id, PublicProfile::IMAGE_META, true ) > 0 ) {
-				continue;
-			}
-			$image = SampleImages::portrait( 'profile:' . (string) $row['key'], (string) $row['name'] . ' (sample portrait)' );
-			if ( $image > 0 ) {
-				update_post_meta( $id, PublicProfile::IMAGE_META, $image );
-				$this->count( 'images' );
-			}
-		}
-		foreach ( array(
-			'story' => array( (array) $this->data['stories'], $this->story_ids, 'title' ),
-			'event' => array( (array) $this->data['events'], $this->event_ids, 'title' ),
-		) as $kind => $set ) {
-			foreach ( $set[0] as $row ) {
-				$id = $set[1][ (string) $row['slug'] ] ?? 0;
-				if ( $id < 1 || (int) get_post_thumbnail_id( $id ) > 0 ) {
+	private function images( int $offset, int $limit ): void {
+		$profiles = (array) $this->data['profiles'];
+		$stories  = (array) $this->data['stories'];
+		$events   = (array) $this->data['events'];
+		$last     = min( $offset + $limit, count( $profiles ) + count( $stories ) + count( $events ) );
+		for ( $unit = $offset; $unit < $last; $unit++ ) {
+			if ( $unit < count( $profiles ) ) {
+				$row = $profiles[ $unit ];
+				$id  = $this->profile_id( (string) $row['key'] );
+				if ( $id < 1 || (int) get_post_meta( $id, PublicProfile::IMAGE_META, true ) > 0 ) {
 					continue;
 				}
-				$image = SampleImages::cover( $kind . ':' . (string) $row['slug'], (string) $row[ $set[2] ] . ' (sample cover)' );
+				$image = SampleImages::portrait( 'profile:' . (string) $row['key'], (string) $row['name'] . ' (sample portrait)' );
 				if ( $image > 0 ) {
-					set_post_thumbnail( $id, $image );
+					update_post_meta( $id, PublicProfile::IMAGE_META, $image );
 					$this->count( 'images' );
 				}
+				continue;
 			}
-		}
+			$is_story = $unit < count( $profiles ) + count( $stories );
+			$row      = $is_story ? $stories[ $unit - count( $profiles ) ] : $events[ $unit - count( $profiles ) - count( $stories ) ];
+			$id       = $is_story ? $this->story_id( (string) $row['slug'] ) : $this->event_id( (string) $row['slug'] );
+			if ( $id < 1 || (int) get_post_thumbnail_id( $id ) > 0 ) {
+				continue;
+			}
+			$image = SampleImages::cover( ( $is_story ? 'story:' : 'event:' ) . (string) $row['slug'], (string) $row['title'] . ' (sample cover)' );
+			if ( $image > 0 ) {
+				set_post_thumbnail( $id, $image );
+				$this->count( 'images' );
+			}
+		}//end for
 	}
 
 	/**
-	 * Award categories, and nominees and winners for the profiles above, through the Awards services.
+	 * Award categories, and nominees and winners for the profiles above, through the Awards services. The units are the categories,
+	 * then the nominations.
+	 *
+	 * @param int $offset First unit of the batch.
+	 * @param int $limit  Units in the batch.
 	 */
-	private function awards(): void {
+	private function awards( int $offset, int $limit ): void {
 		$categories = CategoryService::for_site();
 		$ids        = (array) ( $this->registry['categories'] ?? array() );
-		foreach ( (array) $this->data['categories'] as $row ) {
+		$cats       = (array) $this->data['categories'];
+		foreach ( array_slice( $cats, $offset, $limit ) as $row ) {
 			$title = (string) $row['title'];
 			if ( isset( $ids[ $title ] ) && null !== $categories->find( (int) $ids[ $title ] ) ) {
 				continue;
@@ -534,23 +676,27 @@ final class SampleSeeder {
 		$this->registry['categories'] = $ids;
 		$service                      = NominationService::for_site();
 		$noms                         = (array) ( $this->registry['nominations'] ?? array() );
-		foreach ( (array) $this->data['nominations'] as $row ) {
-			$key = (string) $row['profile'] . '|' . (string) $row['category'];
-			if ( isset( $noms[ $key ] ) && null !== $service->find( (int) $noms[ $key ] ) ) {
-				continue;
+		$first                        = max( 0, $offset - count( $cats ) );
+		$room                         = $limit - max( 0, count( $cats ) - $offset );
+		if ( $room > 0 ) {
+			foreach ( array_slice( (array) $this->data['nominations'], $first, $room ) as $row ) {
+				$key = (string) $row['profile'] . '|' . (string) $row['category'];
+				if ( isset( $noms[ $key ] ) && null !== $service->find( (int) $noms[ $key ] ) ) {
+					continue;
+				}
+				$profile  = $this->profile_id( (string) $row['profile'] );
+				$category = (int) ( $ids[ (string) $row['category'] ] ?? 0 );
+				if ( $profile < 1 || $category < 1 ) {
+					continue;
+				}
+				$id = $service->add_profile( $profile, $category, (string) $row['citation'] );
+				if ( ! empty( $row['winner'] ) ) {
+					$service->set_stage( $id, 'winner' );
+				}
+				$service->set_status( $id, 'live' );
+				$noms[ $key ] = $id;
+				$this->count( 'nominations' );
 			}
-			$profile  = $this->profile_ids[ (string) $row['profile'] ] ?? 0;
-			$category = (int) ( $ids[ (string) $row['category'] ] ?? 0 );
-			if ( $profile < 1 || $category < 1 ) {
-				continue;
-			}
-			$id = $service->add_profile( $profile, $category, (string) $row['citation'] );
-			if ( ! empty( $row['winner'] ) ) {
-				$service->set_stage( $id, 'winner' );
-			}
-			$service->set_status( $id, 'live' );
-			$noms[ $key ] = $id;
-			$this->count( 'nominations' );
 		}
 		$this->registry['nominations'] = $noms;
 	}
@@ -561,8 +707,8 @@ final class SampleSeeder {
 	private function curation(): void {
 		$settings = new CurationSettings( $this->audit );
 		$pins     = array(
-			CurationSettings::ON_THE_RECORD => array_values( array_filter( array_map( fn ( $key ) => $this->profile_ids[ (string) $key ] ?? 0, (array) $this->data['pin_profiles'] ) ) ),
-			CurationSettings::STORIES_HOME  => array_values( array_filter( array_map( fn ( $key ) => $this->story_ids[ (string) $key ] ?? 0, (array) $this->data['pin_stories'] ) ) ),
+			CurationSettings::ON_THE_RECORD => array_values( array_filter( array_map( fn ( $key ) => $this->profile_id( (string) $key ), (array) $this->data['pin_profiles'] ) ) ),
+			CurationSettings::STORIES_HOME  => array_values( array_filter( array_map( fn ( $key ) => $this->story_id( (string) $key ), (array) $this->data['pin_stories'] ) ) ),
 		);
 		foreach ( $pins as $block => $pinned ) {
 			$option = CurationSettings::OPTION_PREFIX . $block;

@@ -62,6 +62,7 @@ final class Module implements ModuleInterface {
 		require_once __DIR__ . '/Settings/functions.php';
 		Settings\SprintScreen::hooks();
 		Migrations\PendingNotice::register();
+		Setup\SetupScreen::hooks();
 		Cli\WpCliBridge::register();
 		TwoFactor\TwoFactor::register();
 		RoleEditor\RoleEditor::register();
