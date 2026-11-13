@@ -30,6 +30,7 @@ final class Module implements ModuleInterface {
 		Consent\ListingConsent::register_gate();
 		( new Consent\ListingConsent() )->register_links( \WhoIsWho\Core\Platform\Links\SignedLinks::for_site() );
 		Support\EnquiryIntake::register();
+		Support\DataRightsIntake::register();
 		Deadlines\DeadlineTracker::register();
 		Retention\RetentionJob::register();
 		Privacy\PersonalData::hooks();
