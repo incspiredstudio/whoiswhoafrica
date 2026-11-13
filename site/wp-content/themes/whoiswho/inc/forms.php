@@ -13,7 +13,7 @@ declare(strict_types=1);
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
 const WIW_FORM_PAGE_VAR  = 'wiw_form_page';
-const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_3';
+const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_4';
 const WIW_CLAIM_SLUG_VAR = 'wiw_claim_slug';
 
 if ( ! function_exists( 'wiw_form_pages' ) ) {
@@ -29,6 +29,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 				'title'    => __( 'Contact', 'whoiswho' ),
 			),
 			'subscribe'   => array(
+				'template' => 'templates/get-listed.php',
+				'title'    => __( 'Get listed', 'whoiswho' ),
+			),
+			'get-listed'  => array(
 				'template' => 'templates/get-listed.php',
 				'title'    => __( 'Get listed', 'whoiswho' ),
 			),
@@ -82,6 +86,32 @@ if ( ! function_exists( 'wiw_form_template' ) ) {
 	}
 }
 add_filter( 'template_include', 'wiw_form_template', 11 );
+
+if ( ! function_exists( 'wiw_form_old_address' ) ) {
+	/**
+	 * Where a visit to the old Get listed address should go. The form is served at /get-listed/ (the address every link uses); /subscribe/
+	 * stays only as the place the form posts to, so only a plain visit is redirected, never the post or its refusal page (REQ-043).
+	 *
+	 * @param string $page   Form page of the request.
+	 * @param string $method Request method.
+	 * @return string Address to redirect to, or an empty string for no redirect.
+	 */
+	function wiw_form_old_address( string $page, string $method ): string {
+		return 'subscribe' === $page && in_array( strtoupper( $method ), array( 'GET', 'HEAD' ), true ) ? home_url( '/get-listed/' ) : '';
+	}
+}
+add_action(
+	'template_redirect',
+	static function (): void {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
+		$to     = wiw_form_old_address( wiw_form_current(), $method );
+		if ( '' !== $to ) {
+			wp_safe_redirect( $to, 301 );
+			exit;
+		}
+	},
+	0
+);
 
 if ( ! function_exists( 'wiw_form_result' ) ) {
 	/**

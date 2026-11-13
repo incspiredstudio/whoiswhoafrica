@@ -67,7 +67,7 @@ final class FormPagesTest extends WpTestCase {
 		$this->assertStringContainsString( 'privacy-notice', $out );
 		$this->assertStringContainsString( 'A person reads every message', $out );
 		$this->assertStringContainsString( 'correction form', $out );
-		foreach ( array( '/directory/', '/subscribe/', '/complaints/', '/data-rights/' ) as $link ) {
+		foreach ( array( '/directory/', '/get-listed/', '/complaints/', '/data-rights/' ) as $link ) {
 			$this->assertStringContainsString( 'href="' . home_url( $link ) . '"', $out, $link );
 		}
 	}
@@ -164,8 +164,16 @@ final class FormPagesTest extends WpTestCase {
 		$this->assertStringNotContainsString( '<script>alert', $this->render( 'done' ) );
 	}
 
+	public function test_REQ_043_get_listed_is_served_at_get_listed_and_the_old_subscribe_address_redirects_a_visit_but_not_the_post(): void {
+		$this->assertSame( home_url( '/get-listed/' ), wiw_form_old_address( 'subscribe', 'GET' ) );
+		$this->assertSame( home_url( '/get-listed/' ), wiw_form_old_address( 'subscribe', 'HEAD' ) );
+		$this->assertSame( '', wiw_form_old_address( 'subscribe', 'POST' ), 'the form post and its refusal page stay at /subscribe/' );
+		$this->assertSame( '', wiw_form_old_address( 'get-listed', 'GET' ) );
+		$this->assertSame( '', wiw_form_old_address( 'contact', 'GET' ) );
+	}
+
 	public function test_REQ_081_the_routes_and_the_template_choice(): void {
-		$this->assertSame( array( 'contact', 'subscribe', 'claim', 'unsubscribe', 'search', 'newsletter', 'done' ), array_keys( wiw_form_pages() ) );
+		$this->assertSame( array( 'contact', 'subscribe', 'get-listed', 'claim', 'unsubscribe', 'search', 'newsletter', 'done' ), array_keys( wiw_form_pages() ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'contact' );
 		$this->assertStringEndsWith( 'templates/contact.php', wiw_form_template( 'x.php' ) );
 		set_query_var( WIW_FORM_PAGE_VAR, 'subscribe' );
