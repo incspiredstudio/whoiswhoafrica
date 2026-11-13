@@ -204,6 +204,9 @@ final class Notifier {
 		}
 		$context = (array) ( $args['context'] ?? array() );
 		$headers = array();
+		if ( isset( $args['record'] ) && is_array( $args['record'] ) ) {
+			$context['name'] = $this->resolve_name( $args['record'] );
+		}
 		if ( Marketing::is_marketing( $event ) ) {
 			// REQ-061: a marketing message needs opt-in consent and always carries one-click unsubscribe; no gate means no send.
 			if ( null === $this->marketing || ! $this->marketing->may_send( $to ) ) {
@@ -211,7 +214,11 @@ final class Notifier {
 				return;
 			}
 			$context['unsubscribe_url'] = $this->marketing->unsubscribe_url( $to );
-			$headers                    = Marketing::headers( $context['unsubscribe_url'] );
+			$headers                    = array_merge( $headers, Marketing::headers( $context['unsubscribe_url'] ) );
+		}
+		$reply = MailSettings::reply_to();
+		if ( '' !== $reply ) {
+			$headers[] = 'Reply-To: ' . $reply;
 		}
 		$message = $this->render( $event, $context );
 		$ok      = (bool) ( $this->mailer )( $to, $message['subject'], $message['text'], $message['html'], $headers );
@@ -236,6 +243,21 @@ final class Notifier {
 	}
 
 	/**
+	 * Look up the recipient's name for the greeting when the job runs, so a name is never queued. A resolver for the source is
+	 * registered through the wiw_mail_name_resolvers filter as source => callable( int $id ): string; none means no name.
+	 *
+	 * @param array<string, mixed> $record Source and id.
+	 */
+	private function resolve_name( array $record ): string {
+		$resolvers = function_exists( 'apply_filters' ) ? apply_filters( 'wiw_mail_name_resolvers', array() ) : array();
+		$source    = (string) ( $record['source'] ?? '' );
+		if ( ! is_array( $resolvers ) || ! isset( $resolvers[ $source ] ) || ! is_callable( $resolvers[ $source ] ) ) {
+			return '';
+		}
+		return (string) call_user_func( $resolvers[ $source ], (int) ( $record['id'] ?? 0 ) );
+	}
+
+	/**
 	 * Keyed hash of a recipient, the only form in the log.
 	 *
 	 * @param string $address Address.
@@ -245,49 +267,103 @@ final class Notifier {
 	}
 
 	/**
-	 * Render an event: subject, plain text and simple HTML. Templates are overridable with the wiw_mail_templates filter
-	 * (event => callable( context ): array{subject, body}); the HTML layout wrapper is added by the theme (M0-EML-04).
+	 * Render an event: subject, plain text and HTML in the shared layout (MailLayout). The wording comes from EmailCopy; a caller can
+	 * pass its own opening line as context "lead", short "details" (label => text), a "reference", a "reason", a signed "link_token"
+	 * or a plain "cta_url". Templates are overridable with the wiw_mail_templates filter (event => callable( context ): array
+	 * with subject and lines). The greeting uses the recipient's first name when "name" is in the context (looked up when the job
+	 * runs, never queued); no name ever goes into a subject.
 	 *
 	 * @param string               $event   Event id.
 	 * @param array<string, mixed> $context Context.
 	 * @return array{subject: string, text: string, html: string}
 	 */
 	public function render( string $event, array $context ): array {
-		$definition = Events::all()[ $event ] ?? array( 'subject' => 'Notification' );
+		$definition = Events::all()[ $event ] ?? array(
+			'subject'  => 'Notification',
+			'audience' => 'public',
+		);
+		$public     = 'public' === $definition['audience'];
 		$subject    = $definition['subject'];
-		$lines      = array();
-		if ( isset( $context['lead'] ) && is_string( $context['lead'] ) ) {
-			$lines[] = $context['lead'];
+		$copy       = EmailCopy::for_event( $event );
+
+		$window = MailSettings::response_window();
+		$body   = array();
+		foreach ( $copy['body'] as $line ) {
+			$body[] = '{window}' === $line ? ( '' !== $window ? 'We aim to reply within ' . $window . '.' : 'We will reply as soon as we can.' ) : $line;
+		}
+		if ( isset( $context['lead'] ) && is_string( $context['lead'] ) && '' !== $context['lead'] ) {
+			$body = array( $context['lead'] );
+		}
+
+		$details = array();
+		foreach ( (array) ( $context['details'] ?? array() ) as $label => $value ) {
+			if ( is_string( $label ) && is_string( $value ) && '' !== $value ) {
+				$details[ $label ] = $value;
+			}
 		}
 		if ( isset( $context['reason'] ) && is_string( $context['reason'] ) && '' !== $context['reason'] ) {
-			$lines[] = 'Reason: ' . $context['reason'];
+			$details['Reason'] = $context['reason'];
 		}
 		if ( isset( $context['reference'] ) && is_string( $context['reference'] ) && '' !== $context['reference'] ) {
-			$lines[] = ( 'public' === ( $definition['audience'] ?? 'public' ) ? 'Your reference: ' : 'Reference: ' ) . $context['reference'];
+			$details[ $public ? 'Your reference' : 'Reference' ] = $context['reference'];
 		}
+
+		$cta   = null;
+		$admin = $public ? '' : EmailCopy::admin_url( $event, $context );
 		if ( isset( $context['link_token'] ) && is_string( $context['link_token'] ) && null !== $this->links ) {
-			$lines[] = 'Link: ' . $this->links->url( $context['link_token'] );
+			$cta = array(
+				'label' => $copy['cta'] ?? 'Open the link',
+				'url'   => $this->links->url( $context['link_token'] ),
+			);
+		} elseif ( isset( $context['cta_url'] ) && is_string( $context['cta_url'] ) && 1 === preg_match( '~^https?://~i', $context['cta_url'] ) ) {
+			$cta = array(
+				'label' => $copy['cta'] ?? 'Open the link',
+				'url'   => $context['cta_url'],
+			);
+		} elseif ( '' !== $admin ) {
+			$cta = array(
+				'label' => 'Open it in the admin',
+				'url'   => $admin,
+			);
 		}
-		if ( isset( $context['unsubscribe_url'] ) && is_string( $context['unsubscribe_url'] ) ) {
-			$lines[] = 'Unsubscribe: ' . $context['unsubscribe_url'];
-		}
+
 		if ( function_exists( 'apply_filters' ) ) {
 			$custom = apply_filters( 'wiw_mail_templates', array() );
 			if ( is_array( $custom ) && isset( $custom[ $event ] ) && is_callable( $custom[ $event ] ) ) {
 				$out     = (array) $custom[ $event ]( $context );
 				$subject = (string) ( $out['subject'] ?? $subject );
-				$lines   = array_map( 'strval', (array) ( $out['lines'] ?? $lines ) );
+				if ( isset( $out['lines'] ) ) {
+					$body = array_map( 'strval', (array) $out['lines'] );
+				}
 			}
 		}
-		$text = implode( "\n\n", $lines );
-		$html = '';
-		foreach ( $lines as $line ) {
-			$html .= '<p>' . self::link_urls( htmlspecialchars( $line, ENT_QUOTES, 'UTF-8' ) ) . '</p>';
+
+		$greeting = '';
+		if ( $public ) {
+			$name     = isset( $context['name'] ) && is_string( $context['name'] ) ? trim( $context['name'] ) : '';
+			$parts    = '' !== $name ? preg_split( '/\s+/', $name ) : array();
+			$first    = is_array( $parts ) && isset( $parts[0] ) ? (string) $parts[0] : '';
+			$greeting = '' !== $first ? 'Hello ' . $first . ',' : 'Hello,';
 		}
+		$layout = MailLayout::render(
+			array(
+				'subject'         => $subject,
+				'preheader'       => $body[0] ?? '',
+				'heading'         => $copy['heading'],
+				'greeting'        => $greeting,
+				'paragraphs'      => $body,
+				'details'         => $details,
+				'act'             => $public ? '' : ( $copy['act'] ?? '' ),
+				'cta'             => $cta,
+				'class'           => Marketing::is_marketing( $event ) ? 'marketing' : 'transactional',
+				'bare'            => ! empty( $copy['bare'] ),
+				'unsubscribe_url' => isset( $context['unsubscribe_url'] ) && is_string( $context['unsubscribe_url'] ) ? $context['unsubscribe_url'] : '',
+			)
+		);
 		return array(
 			'subject' => $subject,
-			'text'    => $text,
-			'html'    => $html,
+			'text'    => $layout['text'],
+			'html'    => $layout['html'],
 		);
 	}
 
@@ -305,10 +381,6 @@ final class Notifier {
 			set_time_limit( 120 );
 			// A slow mail server must not end the job after it accepted the message.
 		}
-		if ( function_exists( 'set_time_limit' ) ) {
-			set_time_limit( 120 );
-			// A slow mail server must not end the job after it accepted the message.
-		}
 		$alt = static function ( $mailer ) use ( $text ): void {
 			$mailer->AltBody = $text; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 		};
@@ -316,15 +388,6 @@ final class Notifier {
 		$sent = wp_mail( $to, $subject, $html, array_merge( array( 'Content-Type: text/html; charset=UTF-8' ), $headers ) );
 		remove_action( 'phpmailer_init', $alt );
 		return $sent;
-	}
-
-	/**
-	 * Turn the web addresses in escaped text into links. A full stop or bracket at the end is not part of the address.
-	 *
-	 * @param string $escaped HTML-escaped text.
-	 */
-	private static function link_urls( string $escaped ): string {
-		return (string) preg_replace( '~(https?://[^\s<]*[^\s<.,;:!?)])~', '<a href="$1">$1</a>', $escaped );
 	}
 
 	/**

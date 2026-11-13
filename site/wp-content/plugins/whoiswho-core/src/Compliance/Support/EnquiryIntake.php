@@ -62,6 +62,17 @@ final class EnquiryIntake {
 				return $resolvers;
 			}
 		);
+		add_filter(
+			'wiw_mail_name_resolvers',
+			static function ( $resolvers ): array {
+				$resolvers                           = is_array( $resolvers ) ? $resolvers : array();
+				$resolvers[ self::RECIPIENT_SOURCE ] = static function ( int $id ): string {
+					$item = ( new SupportItems() )->get( $id );
+					return null === $item ? '' : (string) $item['requester_name'];
+				};
+				return $resolvers;
+			}
+		);
 	}
 
 	/**
@@ -87,10 +98,18 @@ final class EnquiryIntake {
 		if ( 'profile' === $input['source'] && null !== $profile_id ) {
 			$input['profile_id'] = $profile_id;
 		}
-		$row     = $this->items->create( $input );
-		$context = array(
+		$row      = $this->items->create( $input );
+		$interest = (string) ( $values['interest'] ?? '' );
+		$context  = array(
 			'reference' => (string) $row['reference'],
 			'id'        => (int) $row['id'],
+			'details'   => array_filter(
+				array(
+					'Type'          => 'profile' === ( $values['source'] ?? '' ) ? 'Enquiry about a profile' : 'General enquiry',
+					'Interested in' => $interest,
+				),
+				static fn ( string $v ): bool => '' !== $v
+			),
 		);
 		$this->notifier->send_to_record( Events::ENQUIRY_ACKNOWLEDGED, self::RECIPIENT_SOURCE, (int) $row['id'], $context );
 		$this->notifier->send( Events::ENQUIRY_STAFF_NOTICE, '', $context );

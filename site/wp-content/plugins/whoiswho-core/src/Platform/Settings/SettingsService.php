@@ -139,6 +139,27 @@ final class SettingsService {
 				'capability' => 'manage_options',
 				'audited'    => true,
 			),
+			'mail_reply_to'                  => array(
+				'type'       => 'string',
+				'default'    => '',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'max'        => 190,
+			),
+			'contact_email'                  => array(
+				'type'       => 'string',
+				'default'    => '',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'max'        => 190,
+			),
+			'enquiry_response_window'        => array(
+				'type'       => 'string',
+				'default'    => '',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'max'        => 80,
+			),
 			'import_all_not_public'          => array(
 				'type'       => 'bool',
 				'default'    => true,

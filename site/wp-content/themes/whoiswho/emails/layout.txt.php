@@ -30,6 +30,12 @@ if ( is_array( $args['cta'] ) && ! empty( $args['cta']['url'] ) ) {
 $wiw_txt_lines[] = '';
 $wiw_txt_lines[] = '--';
 $wiw_txt_lines[] = wiw_brand( 'legal_name' ) . ' - ' . wiw_brand( 'domain' );
+if ( '' !== (string) $args['contact_email'] ) {
+	$wiw_txt_lines[] = __( 'Questions? Write to', 'whoiswho' ) . ' ' . (string) $args['contact_email'];
+}
+if ( '' !== (string) $args['privacy_url'] ) {
+	$wiw_txt_lines[] = __( 'Privacy', 'whoiswho' ) . ': ' . (string) $args['privacy_url'];
+}
 if ( 'marketing' === $args['class'] && '' !== (string) $args['unsubscribe_url'] ) {
 	$wiw_txt_lines[] = __( 'You receive this because you asked for it. Unsubscribe:', 'whoiswho' ) . ' ' . (string) $args['unsubscribe_url'];
 }
