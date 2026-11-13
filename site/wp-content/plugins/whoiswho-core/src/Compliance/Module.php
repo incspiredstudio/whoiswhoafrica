@@ -35,6 +35,7 @@ final class Module implements ModuleInterface {
 		Deadlines\DeadlineTracker::register();
 		Retention\RetentionJob::register();
 		Privacy\PersonalData::hooks();
+		Export\ExportGate::for_site()->register();
 		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
 		Admin\Requests\RequestsScreen::hooks();
