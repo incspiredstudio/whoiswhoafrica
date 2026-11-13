@@ -32,7 +32,7 @@ use WhoIsWho\Core\Content\Stories\RelatedEvent;
 
 $wiw_mode = isset( $argv[1] ) ? (string) $argv[1] : 'seed';
 
-$wiw_events = array(
+$wiw_events  = array(
 	'e2e-evt-upcoming' => array( 'E2E Event Upcoming', 30, 'publish', false ),
 	'e2e-evt-online'   => array( 'E2E Event Online', 40, 'publish', true ),
 	'e2e-evt-past'     => array( 'E2E Event Past', -30, 'publish', false ),
