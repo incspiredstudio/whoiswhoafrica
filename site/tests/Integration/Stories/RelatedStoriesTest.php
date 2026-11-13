@@ -129,4 +129,31 @@ final class RelatedStoriesTest extends TestCase {
 		$this->assertSame( array(), $profile->related_stories() );
 		$this->assertNotSame( $draft, $live );
 	}
+
+	/**
+	 * Render the related stories part for a profile.
+	 *
+	 * @param PublicProfile $profile Profile.
+	 */
+	private function render_part( PublicProfile $profile ): string {
+		switch_theme( 'whoiswho-child' );
+		ob_start();
+		get_template_part( 'template-parts/profile-related-stories', null, array( 'profile' => $profile ) );
+		return (string) ob_get_clean();
+	}
+
+	public function test_REQ_028_profile_page_lists_related_stories_without_markers(): void {
+		$profile = $this->profile();
+		$story   = $this->story( array( $profile->id ) );
+		stick_post( $story );
+		$out = $this->render_part( $profile );
+		$this->assertStringContainsString( 'id="stories"', $out );
+		$this->assertStringContainsString( 'scard', $out );
+		$this->assertStringNotContainsStringIgnoringCase( 'sponsored', $out );
+		$this->assertStringNotContainsStringIgnoringCase( 'featured', $out );
+	}
+
+	public function test_REQ_028_related_stories_section_is_absent_when_there_are_none(): void {
+		$this->assertSame( '', trim( $this->render_part( $this->profile() ) ) );
+	}
 }
