@@ -21,3 +21,81 @@
 .done h1 {
   margin-bottom: var(--s-3);
 }
+
+/* The six-step nomination form (REQ-030): a progress list that wraps on a phone, the steps, and the review list. */
+.nm-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+  list-style: none;
+}
+
+.nm-progress li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--c-line);
+  border-radius: 99px;
+  color: var(--c-muted);
+  font-size: var(--t-sm);
+}
+
+.nm-progress li.is-now {
+  border-color: var(--c-text);
+  background: var(--c-text);
+  color: var(--c-surface);
+}
+
+.nm-progress li.is-done {
+  border-color: var(--c-ok);
+  color: var(--c-ok);
+}
+
+.nm-progress-n {
+  font-weight: 700;
+}
+
+@media (width < 40rem) {
+  .nm-progress li:not(.is-now) .nm-progress-t {
+    display: none;
+  }
+}
+
+.nm-form .nm-step > * + * {
+  margin-top: var(--s-4);
+}
+
+.nm-step h2:focus {
+  outline: none;
+}
+
+.nm-alert {
+  margin-bottom: var(--s-4);
+}
+
+.nm-review {
+  display: grid;
+  gap: var(--s-2) var(--s-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.nm-review dt {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.nm-review dd {
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+@media (width >= 48rem) {
+  .nm-review {
+    grid-template-columns: 12rem minmax(0, 1fr);
+  }
+}

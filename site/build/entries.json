@@ -9,6 +9,7 @@
     "main": "wp-content/themes/whoiswho/assets/js/main.js",
     "home": "wp-content/themes/whoiswho/assets/css/home.css",
     "home-js": "wp-content/themes/whoiswho/assets/js/home.js",
-    "story": "wp-content/themes/whoiswho/assets/css/story.css"
+    "story": "wp-content/themes/whoiswho/assets/css/story.css",
+    "nominate-js": "wp-content/themes/whoiswho/assets/js/nominate.js"
   }
 }

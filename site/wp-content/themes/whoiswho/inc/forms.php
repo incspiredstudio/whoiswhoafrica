@@ -226,3 +226,15 @@ add_action(
 	},
 	3
 );
+
+// The nomination form script loads only on the open Nominate page (REQ-030).
+add_action(
+	'wp_enqueue_scripts',
+	static function (): void {
+		$src = 'nominate' === wiw_form_current() && wiw_awards_stage()['open'] ? wiw_asset_url( 'nominate-js.js' ) : null;
+		if ( null !== $src ) {
+			wp_enqueue_script( 'wiw-nominate', $src, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
+		}
+	},
+	31
+);
