@@ -310,4 +310,16 @@ final class RequestsScreenTest extends TestCase {
 		$this->assertStringContainsString( 'Dismiss', $html );
 		$this->assertStringNotContainsString( 'Not valid', $html );
 	}
+
+	public function test_REQ_236_detail_offers_to_send_information_when_there_is_an_address(): void {
+		wp_set_current_user( $this->user( 'wiw_editor' ) );
+		$profile = $this->profile( 'Info Detail Co' );
+		$item    = $this->item( ItemType::DATA_REQUEST, $profile );
+
+		$html = $this->screen()->html( new Request( array( 'item' => (string) $item['id'] ) ) );
+
+		$this->assertStringContainsString( 'Send information to the requester', $html );
+		$this->assertStringContainsString( 'name="kind_views"', $html );
+		$this->assertStringContainsString( 'value="send_info"', $html );
+	}
 }
