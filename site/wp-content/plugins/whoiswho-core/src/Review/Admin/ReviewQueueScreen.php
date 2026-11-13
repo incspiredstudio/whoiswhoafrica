@@ -14,6 +14,7 @@ use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
+use WhoIsWho\Core\Review\Metrics\ReviewMetrics;
 
 /**
  * Review queue screen.
@@ -133,6 +134,7 @@ final class ReviewQueueScreen {
 		echo '<div class="wrap"><h1>' . esc_html__( 'Review queue', 'whoiswho' ) . '</h1>';
 		/* translators: %d: number of items. */
 		echo '<p>' . esc_html( sprintf( _n( '%d item to review', '%d items to review', $result['total'], 'whoiswho' ), $result['total'] ) ) . '</p>';
+		echo ( new ReviewMetrics() )->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 		echo '<table class="widefat striped"><thead><tr>';
 		foreach ( array( 'Item', 'Kind', 'Type', 'State', 'Waiting since', 'Marks', 'Assigned', '' ) as $heading ) {
 			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
@@ -142,7 +144,7 @@ final class ReviewQueueScreen {
 			echo '<tr><td colspan="8">' . esc_html__( 'Nothing to review.', 'whoiswho' ) . '</td></tr>';
 		}
 		foreach ( $result['items'] as $item ) {
-			$edit  = get_edit_post_link( $item['profile_id'] );
+			$edit  = ReviewItemScreen::url( (int) $item['profile_id'] );
 			$marks = array_filter(
 				array(
 					$item['pilot'] ? __( 'Pilot', 'whoiswho' ) : '',

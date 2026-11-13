@@ -6,6 +6,7 @@
 		<testsuite name="Arch"><directory suffix="Test.php">tests/Arch</directory></testsuite>
 		<testsuite name="Visibility"><directory suffix="Test.php">tests/Visibility</directory></testsuite>
 		<testsuite name="Security"><directory suffix="Test.php">tests/Security</directory></testsuite>
+		<testsuite name="Performance"><directory suffix="Test.php">tests/Performance</directory></testsuite>
 	</testsuites>
 	<coverage processUncoveredFiles="true">
 		<include><directory suffix=".php">wp-content/plugins/whoiswho-core/src</directory></include>

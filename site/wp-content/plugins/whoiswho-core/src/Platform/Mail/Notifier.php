@@ -17,6 +17,7 @@ namespace WhoIsWho\Core\Platform\Mail;
 
 use WhoIsWho\Core\Platform\Jobs\JobRunner;
 use WhoIsWho\Core\Platform\Links\SignedLinks;
+use WhoIsWho\Core\Platform\Mail\Marketing\Marketing;
 
 /**
  * Notifier.
@@ -47,7 +48,7 @@ final class Notifier {
 	private $resolver;
 
 	/**
-	 * Sends one message: fn( string $to, string $subject, string $text, string $html ): bool.
+	 * Sends one message: fn( string $to, string $subject, string $text, string $html, array $headers ): bool.
 	 *
 	 * @var callable
 	 */
@@ -68,6 +69,13 @@ final class Notifier {
 	private ?SignedLinks $links;
 
 	/**
+	 * Marketing gate (consent and unsubscribe), or null when marketing is not wired.
+	 *
+	 * @var Marketing|null
+	 */
+	private ?Marketing $marketing;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param JobRunner        $jobs     Job runner.
@@ -76,14 +84,16 @@ final class Notifier {
 	 * @param callable         $mailer   Mailer.
 	 * @param string           $key      Hash key.
 	 * @param SignedLinks|null $links    Signed links.
+	 * @param Marketing|null   $marketing Marketing gate; without it a marketing message is never sent.
 	 */
-	public function __construct( JobRunner $jobs, EmailLogStore $log, callable $resolver, callable $mailer, string $key, ?SignedLinks $links = null ) {
-		$this->jobs     = $jobs;
-		$this->log      = $log;
-		$this->resolver = $resolver;
-		$this->mailer   = $mailer;
-		$this->key      = $key;
-		$this->links    = $links;
+	public function __construct( JobRunner $jobs, EmailLogStore $log, callable $resolver, callable $mailer, string $key, ?SignedLinks $links = null, ?Marketing $marketing = null ) {
+		$this->jobs      = $jobs;
+		$this->log       = $log;
+		$this->resolver  = $resolver;
+		$this->mailer    = $mailer;
+		$this->key       = $key;
+		$this->links     = $links;
+		$this->marketing = $marketing;
 		$this->jobs->handle( self::JOB, array( $this, 'deliver' ) );
 	}
 
@@ -99,7 +109,8 @@ final class Notifier {
 				array( StaffAudience::class, 'addresses' ),
 				array( self::class, 'wp_mail_send' ),
 				wp_salt( 'secure_auth' ),
-				SignedLinks::for_site()
+				SignedLinks::for_site(),
+				Marketing::for_site()
 			);
 		}
 		return $shared;
@@ -191,8 +202,19 @@ final class Notifier {
 			$this->log->add( $ref, $event, '', 'sent', 'skipped' );
 			return;
 		}
-		$message = $this->render( $event, (array) ( $args['context'] ?? array() ) );
-		$ok      = (bool) ( $this->mailer )( $to, $message['subject'], $message['text'], $message['html'] );
+		$context = (array) ( $args['context'] ?? array() );
+		$headers = array();
+		if ( Marketing::is_marketing( $event ) ) {
+			// REQ-061: a marketing message needs opt-in consent and always carries one-click unsubscribe; no gate means no send.
+			if ( null === $this->marketing || ! $this->marketing->may_send( $to ) ) {
+				$this->log->add( $ref, $event, $this->recipient_ref( $to ), 'sent', 'refused' );
+				return;
+			}
+			$context['unsubscribe_url'] = $this->marketing->unsubscribe_url( $to );
+			$headers                    = Marketing::headers( $context['unsubscribe_url'] );
+		}
+		$message = $this->render( $event, $context );
+		$ok      = (bool) ( $this->mailer )( $to, $message['subject'], $message['text'], $message['html'], $headers );
 		$this->log->add( $ref, $event, $this->recipient_ref( $to ), 'sent', $ok ? 'sent' : 'failed' );
 		if ( ! $ok ) {
 			throw new \RuntimeException( 'Send failed.' );
@@ -246,6 +268,9 @@ final class Notifier {
 		if ( isset( $context['link_token'] ) && is_string( $context['link_token'] ) && null !== $this->links ) {
 			$lines[] = 'Link: ' . $this->links->url( $context['link_token'] );
 		}
+		if ( isset( $context['unsubscribe_url'] ) && is_string( $context['unsubscribe_url'] ) ) {
+			$lines[] = 'Unsubscribe: ' . $context['unsubscribe_url'];
+		}
 		if ( function_exists( 'apply_filters' ) ) {
 			$custom = apply_filters( 'wiw_mail_templates', array() );
 			if ( is_array( $custom ) && isset( $custom[ $event ] ) && is_callable( $custom[ $event ] ) ) {
@@ -269,17 +294,18 @@ final class Notifier {
 	/**
 	 * Default mailer: wp_mail with an HTML body and a plain-text alternative.
 	 *
-	 * @param string $to      Address.
-	 * @param string $subject Subject.
-	 * @param string $text    Plain text.
-	 * @param string $html    HTML.
+	 * @param string   $to      Address.
+	 * @param string   $subject Subject.
+	 * @param string   $text    Plain text.
+	 * @param string   $html    HTML.
+	 * @param string[] $headers Extra headers, for example the one-click unsubscribe pair.
 	 */
-	public static function wp_mail_send( string $to, string $subject, string $text, string $html ): bool {
+	public static function wp_mail_send( string $to, string $subject, string $text, string $html, array $headers = array() ): bool {
 		$alt = static function ( $mailer ) use ( $text ): void {
 			$mailer->AltBody = $text; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 		};
 		add_action( 'phpmailer_init', $alt );
-		$sent = wp_mail( $to, $subject, $html, array( 'Content-Type: text/html; charset=UTF-8' ) );
+		$sent = wp_mail( $to, $subject, $html, array_merge( array( 'Content-Type: text/html; charset=UTF-8' ), $headers ) );
 		remove_action( 'phpmailer_init', $alt );
 		return $sent;
 	}

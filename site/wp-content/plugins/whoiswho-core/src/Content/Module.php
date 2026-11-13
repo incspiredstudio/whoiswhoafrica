@@ -29,9 +29,16 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		Stories\StoryFields::hooks();
 		Stories\StoryFlags::hooks();
+		Stories\StoryRoute::hooks();
 		( new Pages\PageRoutes() )->register();
 		Stories\RelatedEvent::hooks();
 		Events\EventPostType::hooks();
 		Events\EventFields::hooks();
+		( new Comments\CommentPolicy() )->register();
+		Newsletter\NewsletterSignup::register();
+		Curation\Admin\CurationScreen::hooks();
+		Curation\CurationCache::register();
+		( new Newsletter\ConfirmRoute() )->register();
+		( new Newsletter\SendGuard() )->register();
 	}
 }

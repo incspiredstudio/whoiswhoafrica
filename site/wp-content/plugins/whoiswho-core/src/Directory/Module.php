@@ -29,7 +29,9 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		( new Url\ProfileRoute() )->register();
 		( new Seo\Output() )->register();
+		( new Seo\StructuredData() )->register();
 		Admin\ProfilesScreen::hooks();
+		Admin\ProfileEditScreen::hooks();
 		( new Views\ViewCounter() )->register();
 		( new Sitemap\Sitemap() )->register();
 		Purge\PurgeQueue::for_site()->register();

@@ -6,10 +6,29 @@ function go(form) {
     if (typeof value === "string" && value !== "") params.append(name, value);
   });
   const query = params.toString();
+  try {
+    window.sessionStorage.setItem("wiw-fbar-announce", "1");
+  } catch {
+    /* storage can be blocked; the count is still in the page */
+  }
   window.location.assign(form.getAttribute("action") + (query ? "?" + query : ""));
 }
 
+/* After a filter change the page reloads: say the new count once, since a status region present on load is not read out. */
+function announceCount() {
+  let flagged;
+  try {
+    flagged = window.sessionStorage.getItem("wiw-fbar-announce") === "1";
+    window.sessionStorage.removeItem("wiw-fbar-announce");
+  } catch {
+    return;
+  }
+  const count = document.querySelector("form.fbar .fbar-n");
+  if (flagged && count && count.textContent && window.wiw && window.wiw.announce) window.wiw.announce(count.textContent.trim());
+}
+
 export function initFilterBars() {
+  announceCount();
   document.querySelectorAll("form.fbar[data-filter]").forEach((form) => {
     form.addEventListener("change", (event) => {
       if (event.target instanceof HTMLSelectElement) go(form);

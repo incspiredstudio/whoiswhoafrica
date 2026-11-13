@@ -310,7 +310,7 @@ final class ProfileApplier {
 	 * @param array<string, mixed> $record Record.
 	 * @return array<string, mixed>
 	 */
-	private static function new_values( array $record ): array {
+	public static function new_values( array $record ): array {
 		$out = array();
 		foreach ( (array) $record['fields'] as $key => $field ) {
 			$out[ (string) $key ] = $field['value'];
@@ -326,7 +326,7 @@ final class ProfileApplier {
 	 * @param string $entity_type Entity type.
 	 * @return array<string, mixed>
 	 */
-	private function current_values( int $profile_id, string $entity_type ): array {
+	public function current_values( int $profile_id, string $entity_type ): array {
 		$out = array();
 		foreach ( array_keys( ( new FieldAllowlist() )->for_type( $entity_type ) ) as $key ) {
 			if ( 'name' === $key ) {

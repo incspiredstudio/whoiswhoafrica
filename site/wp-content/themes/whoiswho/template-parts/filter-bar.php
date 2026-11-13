@@ -11,6 +11,7 @@
  * - search   array   name, value, placeholder, label (optional).
  * - controls array   each: name, label, blank (text of the "all" option), options (value => label), value.
  * - sort     array   name, value, options (value => label) (optional).
+ * - view     array   Grid or list switch (optional): value (grid|list), grid and list (addresses that keep the filters).
  * - count    string  Result count text, for example "12 stories".
  * - clear    bool    Whether any filter is on.
  *
@@ -32,6 +33,7 @@ $wiw_fb = wp_parse_args(
 		'search'   => null,
 		'controls' => array(),
 		'sort'     => null,
+		'view'     => null,
 		'count'    => null,
 		'clear'    => false,
 	)
@@ -67,6 +69,9 @@ $wiw_fb_select = static function ( array $control ): void {
 ?>
 <form class="fbar" method="get" action="<?php echo esc_url( (string) $wiw_fb['action'] ); ?>" data-filter aria-label="<?php echo esc_attr( (string) $wiw_fb['label'] ); ?>">
 	<div class="fbar-l">
+		<?php if ( is_array( $wiw_fb['view'] ) && 'list' === ( $wiw_fb['view']['value'] ?? '' ) ) : ?>
+			<input type="hidden" name="view" value="list">
+		<?php endif; ?>
 		<?php foreach ( (array) $wiw_fb['hidden'] as $wiw_name => $wiw_val ) : ?>
 			<input type="hidden" name="<?php echo esc_attr( (string) $wiw_name ); ?>" value="<?php echo esc_attr( (string) $wiw_val ); ?>">
 		<?php endforeach; ?>
@@ -103,6 +108,13 @@ $wiw_fb_select = static function ( array $control ): void {
 	<div class="fbar-r">
 		<?php if ( null !== $wiw_fb['count'] ) : ?>
 			<span class="fbar-n" role="status"><?php echo esc_html( (string) $wiw_fb['count'] ); ?></span>
+		<?php endif; ?>
+		<?php if ( is_array( $wiw_fb['view'] ) && ! empty( $wiw_fb['view']['grid'] ) && ! empty( $wiw_fb['view']['list'] ) ) : ?>
+			<?php $wiw_is_list = 'list' === ( $wiw_fb['view']['value'] ?? '' ); ?>
+			<nav class="view-toggle" aria-label="<?php esc_attr_e( 'Layout', 'whoiswho' ); ?>">
+				<a href="<?php echo esc_url( (string) $wiw_fb['view']['grid'] ); ?>"<?php echo $wiw_is_list ? '' : ' aria-current="true"'; ?>><?php echo wiw_icon( 'grid' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?><span><?php esc_html_e( 'Grid', 'whoiswho' ); ?></span></a>
+				<a href="<?php echo esc_url( (string) $wiw_fb['view']['list'] ); ?>"<?php echo $wiw_is_list ? ' aria-current="true"' : ''; ?>><?php echo wiw_icon( 'list' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?><span><?php esc_html_e( 'List', 'whoiswho' ); ?></span></a>
+			</nav>
 		<?php endif; ?>
 		<?php if ( ! empty( $wiw_fb['clear'] ) ) : ?>
 			<a class="fbar-clear" href="<?php echo esc_url( (string) $wiw_fb['action'] ); ?>"><?php esc_html_e( 'Clear', 'whoiswho' ); ?></a>

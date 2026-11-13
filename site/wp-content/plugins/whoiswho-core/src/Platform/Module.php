@@ -31,9 +31,11 @@ final class Module implements ModuleInterface {
 		Jobs\JobRunner::for_site()->register();
 		Links\LinkRoute::for_site()->register();
 		Mail\Notifier::for_site();
+		Mail\Marketing\Marketing::for_site()->register();
 		Log\Logger::for_site()->register();
 		Users\Deactivation::for_site()->register();
 		Health\HealthEndpoint::for_site()->register();
+		Dashboard\DashboardScreen::hooks();
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',
 			86400,
@@ -56,6 +58,10 @@ final class Module implements ModuleInterface {
 		);
 		Mail\Admin\EmailLogScreen::hooks();
 		Audit\Admin\AuditScreen::hooks();
+		require_once __DIR__ . '/Settings/functions.php';
+		Settings\SprintScreen::hooks();
+		Cache\PurgeService::for_site()->register();
+		Cache\Admin\PurgeLogScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
 	}
 }
