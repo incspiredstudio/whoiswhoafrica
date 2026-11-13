@@ -56,10 +56,15 @@ function wiw_poster_sizes( string $context = 'card' ): string {
  * @return array<string, string>
  */
 function wiw_poster_image_attrs( string $alt = '', string $context = 'card' ): array {
-	return array(
+	$attrs = array(
 		'alt'      => $alt,
 		'sizes'    => wiw_poster_sizes( $context ),
 		'loading'  => 'head' === $context ? 'eager' : 'lazy',
 		'decoding' => 'async',
 	);
+	if ( 'head' === $context ) {
+		// The portrait or logo in the profile header is the largest paint on a profile page: fetch it first and never lazily.
+		$attrs['fetchpriority'] = 'high';
+	}
+	return $attrs;
 }
