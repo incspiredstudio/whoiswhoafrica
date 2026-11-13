@@ -66,7 +66,17 @@ A page is checked at 360, 768, 1280 and 1600 pixels.
 - [ ] Images are resized and in modern formats (REQ-042).
 - [ ] Fonts are loaded in a way that shows text at once.
 - [ ] The theme adds JavaScript only where a page needs it. Video loads without delaying the first view.
-- [ ] A numeric budget for page weight and script size is not written down yet. Set one from a measurement of the finished shell and add it here.
+- [ ] The measured weights below stay within their recorded size (measured during the integration rounds; re-measure after any change to the home page assets):
+
+| Item | Measured |
+|---|---|
+| Home hero videos (four MP4 files together) | 1.85 MB (1,851,034 bytes, checked in the repository) |
+| Hero poster images | AVIF, in two widths (360 and 540) |
+| Home script bundle `home-js` | 3.1 KB gzipped (reported by the build) |
+| Main script bundle `main` | 3.6 KB gzipped (reported by the build) |
+| Lazy animation stage | about 10 KB gzipped, plus three.js at about 164 KB gzipped, loaded only when the stage runs (the vendor file gzips to 162 KB when checked) |
+
+The Largest Contentful Paint target stays an assumed target until measured on a real device.
 
 ## Per page checks
 
@@ -97,6 +107,6 @@ A page is checked at 360, 768, 1280 and 1600 pixels.
 
 ## Open points
 
-- A numeric performance budget beyond the Largest Contentful Paint target.
+- A hard numeric performance budget beyond the Largest Contentful Paint target; the measurements above are the starting point.
 - The final list of tested widths and devices.
 - Which parts of the prototype's audit script move into the Playwright suite. The prototype's audit script is not kept in the repository.

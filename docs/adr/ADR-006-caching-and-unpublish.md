@@ -8,6 +8,6 @@ Status: Proposed v2 for WordPress (Gate 2) · Date: 2026-11-08 · REQs: REQ-041,
 
 **Why.** Staleness is bounded to two minutes even if a purge fails; the edge cache gives LCP.
 
-**Rejected.** No HTML caching (slower). A long TTL with tag purge (not on the free plan; verify). A page-cache plugin (another leak surface).
+**Rejected.** No HTML caching (slower). A long TTL with tag purge (not on the free plan; verify). A page-cache plugin as the primary mechanism (another leak surface). **Update after the build:** the owner approved WP Super Cache 3.1.5 as a swappable page cache, off by default until the CSP-nonce question (issue #719) is settled and the visibility matrix passes with it on. The origin 410 never depends on it.
 
 **Consequences.** Search engines may still hold URLs; N21 covers manual removal requests. The real time to 410 is checked on the live host at import time.

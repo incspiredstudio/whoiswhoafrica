@@ -42,14 +42,15 @@ Few plugins, all pinned by a lockfile and updated through the pipeline. File mod
 
 | Purpose | Plugin | Status |
 |---|---|---|
-| Staff two-factor | A maintained plugin, enforced for every staff role | Decided (D-050, Q76) |
+| Staff two-factor | Two Factor 0.17.0, enforced for every staff role | Approved (owner; D-050, Q76) |
 | Background jobs | Action Scheduler, used as a library inside the plugin | Decided (Q79) |
 | Story comments | wpDiscuz | Decided (D-059, REQ-258) |
-| Per-user capability screen | A maintained role-editor plugin | Decided (D-060, Q86) |
+| Per-user capability screen | User Role Editor 4.67, Administrator only | Approved (owner; D-060, Q86) |
 | Page editor | The native block editor with theme patterns | Decided (D-060, Q98) |
-| Caching | A cache plugin | Decided (D-060, Q82) |
+| Page cache | WP Super Cache 3.1.5, swappable, **off by default** until the CSP-nonce question (issue #719) is settled | Approved (owner; D-060, Q82) |
+| Spam checking | Honeypot and rate limits in the plugin; no Akismet | Decided (owner) |
 
-There is **no SEO plugin**. The guard plugin emits all SEO markup so nothing can add a sitemap, feed or structured data entry for a profile that is not public.
+Vetting rule (owner answer, Q81): actively maintained, small, open licence, and no personal data without a processor-register entry. The state table `wiw_profile_state` stays (Q82). There is **no SEO plugin**. The guard plugin emits all SEO markup so nothing can add a sitemap, feed or structured data entry for a profile that is not public.
 
 ## Cost
 

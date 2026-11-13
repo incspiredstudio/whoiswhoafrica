@@ -39,9 +39,10 @@ The architecture proposes `wiw_story` as its own type. D-059 describes stories a
 | `wiw_suppression` | Permanent list of removed or declined people and organisations |
 | `wiw_bulk_actions` | Filter, reason, count and actor for each bulk unpublish |
 | `wiw_support_items` | Enquiry, correction, removal, report, complaint, data request: requester, message, status, owner, due date |
-| `wiw_customers` | Customers |
-| `wiw_arrangements`, `wiw_arrangement_links` | Sponsored story deals (type is always sponsored post) and their placements. Never joined to awards tables |
-| Awards tables | Editions, categories, nominations with stage and status. Not live nominations are private. The Contact email is personal data in the PII catalogue |
+| `wiw_customers` | Customers: a stable `external_id` (UUID), name, segment, contact email and phone, notes, and an optional link to the enquiry it came from. A customer can be sent a single-use profile invitation (signed link, 14 days, purpose `profile_invitation`, Administrator only through `wiw_manage_register`); the submission creates a profile in the review queue with origin customer, not public |
+| `wiw_arrangements`, `wiw_placements` | Sponsored story deals (type is always sponsored post; money in integer kobo plus currency) and their placements, one row per slot for a deal and a story. The docs earlier named the second table `wiw_arrangement_links`; the built name is `wiw_placements`. Never joined to awards tables |
+| `wiw_editions`, `wiw_award_categories`, `wiw_nominations`, `wiw_nomination_changes` | Editions, categories (under five award groups), nominations and a stage, status and removal history. Nomination columns: `category_id`, optional `profile_id`, `nominee_name`, `nominee_org`, `nominator_name`, `nominator_email`, `nominator_verified_at`, `contact_email`, `reference` (unique, at most 24 characters), `relationship_declared` and `relationship_note`, `evidence`, `citation`, `notes`, `stage` (nominated or winner), `status` (live or not live), `source` (public form or staff), and who sent the nomination and winner emails and when. Not live nominations are private. Names, emails and notes are personal data in the PII catalogue. No Awards table has a key to a commercial table |
+| Request and enquiry references | Support items (`wiw_support_items`) carry a reference shown on the received page and in email, in the form `WIW-` plus eight characters from an alphabet without look-alike letters (for example `WIW-7K3Q9XPD`); nominations carry their own `reference` |
 | `wiw_signed_links` | Hashed token, purpose, subject, expiry, use and revocation |
 | `wiw_notes` | Internal notes, never public |
 | `wiw_consents` | Who agreed to what, with policy version and time |

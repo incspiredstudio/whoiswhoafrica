@@ -227,6 +227,23 @@ Build time is not the constraint. Merchant approval is removed (no payments).
 
 ---
 
+## Owner answers recorded after the build (2026-11-13)
+
+These refine existing questions; no question was renumbered.
+
+| Topic | Owner answer | Refines |
+|---|---|---|
+| Plugins approved | Two Factor 0.17.0, User Role Editor 4.67 (Administrator only), WP Super Cache 3.1.5 (swappable page cache) | Q76, Q81, Q82, Q86 |
+| Page cache | Off by default until the CSP-nonce question (issue #719) is settled | Q82 |
+| State table | Keep the `wiw_profile_state` table | Q82 |
+| Akismet | Not used. Honeypot and rate limits only | REQ-258, Q97 |
+| Vetting rule | Actively maintained, small, open licence, no personal data without a processor-register entry | Q81 |
+| Data-request retention | A 30-day data-request period is recommended (a recommendation, not yet a confirmed rule) | REQ-059 |
+| Evidence uploads | Out of launch scope | Q92 |
+| Legal pages | Deferred | D-051 |
+| Backups and restores | Deferred | Q83 |
+| Email | A free SMTP service the owner sets up; credentials only in the secrets file | D-050 |
+
 ## Risk register
 
 **Not yet rewritten for D-033 as amended.** Entries citing "100% human review" before publishing now hold for individuals and entrepreneurs, not imported organisations; current risks are in acquisition/docs/acquisition-plan.md section 10.2.

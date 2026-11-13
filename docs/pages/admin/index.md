@@ -26,22 +26,37 @@ The full matrix is on [Roles and capabilities](./roles-and-capabilities).
 
 ## The menu each role sees
 
-The left menu is built from the user's capabilities. These are the defaults from the prototype (REQ-240); the Administrator can change them per user.
+The left menu is built from the user's capabilities, in the code of `ScreenRegistry` (plugin `whoiswho-core`, `src/Platform/Admin/`). Each screen names one capability; WordPress answers 403 without it, and a group with no screen the user can open is not shown (REQ-240). The Administrator can change capabilities per user. This is what the code registers; it was checked by reading the code, not by clicking through every role.
 
-| Menu group | Reviewer | Editor | Administrator |
-|---|---|---|---|
-| Dashboard | Review and directory tiles | Adds support and nominations counts | Everything, including sprint and revenue |
-| Review: Review queue, Duplicates | Yes | Yes | Yes |
-| Directory: Profiles, Sources, Suppression list (read-only) | Yes | Yes | Yes |
-| Directory: Claims | No | Yes | Yes |
-| Directory: Import | No | No | Yes |
-| Inbox: Enquiries, Corrections | No | Yes | Yes |
-| Inbox: Requests and reports | No | Yes | Yes |
-| Content: Events | No | Yes | Yes |
-| Commercial: Sponsored stories (steps 3 and 4; no amounts) | No | Yes | Yes |
-| Commercial: Customers, and the money steps on Sponsored stories | No | No | Yes |
-| Awards: Nominations, Award categories | No | Yes | Yes |
-| Platform: Audit log, Email log, Purge log, Sprint thresholds | No | No | Yes |
+**The staff dashboard is the WordPress Dashboard.** There is no WHOISWHO Dashboard screen: the tiles are dashboard widgets on `index.php`, one per tile, shown only to a user who holds the tile's capability (`wiw_view_dashboard_review` for review and directory tiles, `wiw_view_dashboard_commercial` for commercial tiles). The old URL `admin.php?page=wiw-dashboard` redirects to the Dashboard.
+
+The menu is split into top-level groups by job. The default WHOISWHO group (slug `wiw`) holds no screens of its own and is hidden when empty.
+
+| Top-level group | Screen | Capability | Reviewer | Editor | Administrator |
+|---|---|---|---|---|---|
+| Directory | Profiles | `read_private_wiw_profiles` | yes | yes | yes |
+| Directory | Edit profile (opens from Profiles) | `edit_wiw_profiles` | no | yes | yes |
+| Directory | My profiles | `wiw_edit_assigned_profiles` | no | no | yes |
+| Directory | Duplicates | `wiw_resolve_duplicates` | yes | yes | yes |
+| Directory | Home page settings | `wiw_curate_home` | no | yes | yes |
+| Review | Review queue (and Review item) | `wiw_review_records` | yes | yes | yes |
+| Review | Claims | `wiw_review_claims` | no | yes | yes |
+| Review | Corrections | `wiw_support_inbox` | no | yes | yes |
+| Review | Requests and reports | `wiw_handle_requests` | no | yes | yes |
+| Imports | Import | `wiw_run_imports` | no | no | yes |
+| Imports | Sources (read-only) | `wiw_view_sources` | yes | yes | yes |
+| Audience | Enquiries | `wiw_support_inbox` | no | yes | yes |
+| Audience | Subscribers | `wiw_manage_subscribers` | no | yes | yes |
+| Audience | Customers | `wiw_support_inbox` (as coded; the money details stay behind `wiw_manage_register`) | no | yes | yes |
+| Audience | Email log | `wiw_view_audit` | no | no | yes |
+| Commercial | Sponsored stories | `wiw_set_sponsored` | no | yes | yes |
+| Awards | Nominations, Nomination (detail), Award categories | `wiw_manage_awards` | no | yes | yes |
+| Compliance | Suppression list | `wiw_view_suppression` | yes (read-only) | yes (read-only) | yes |
+| Compliance | Audit log, Purge log | `wiw_view_audit` | no | no | yes |
+| Settings | Sprint thresholds | `manage_options` | no | no | yes |
+| Events (own menu, the `wiw_event` post type) | Events | `wiw_manage_events` | no | yes | yes |
+
+Notes. Bulk unpublish by filter sits on the Profiles screen and needs `wiw_bulk_unpublish` (Reviewer and Administrator). The Nominations open or closed switch is on the Nominations screen and needs `wiw_toggle_nominations` (Administrator). Stories, Pages and Comments are core WordPress menus, gated by core capabilities (Editors hold `moderate_comments`).
 
 ## What WordPress already provides
 
