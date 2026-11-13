@@ -18,7 +18,16 @@ Skeleton created at M0. Each section names the issue that completes it; "TODO" m
 
 ## Deploy
 
-TODO. Owner: M0-INF-12 (release artifact script), M0-INF-13 (go-live migration) and M5.
+A release is a built artifact, never a checkout. Steps, in order (the owner approves the first go-live; later deploys follow the same steps):
+
+1. On the build machine, from `site/`: `deploy/build-release --version <label>`. It builds pinned WordPress core, the plugins from the lockfile, the first-party plugin, the guard mu-plugin, both themes (parent `whoiswho` and child `whoiswho-child`), the production autoloader and built assets, and refuses to finish if a theme is missing or a `.env`, test or secret file is in the artifact. Output: `build/release/` and a `.tar.gz`.
+2. Print the go-live checklist for the day: `deploy/migrate-live --print-checklist`.
+3. Rehearse: `deploy/migrate-live --release <unpacked artifact> --target <web root> --secrets <secrets file> --dry-run`. It prints every step and changes nothing.
+4. Run it for real on the live host: `deploy/migrate-live --release <artifact> --target <web root> --secrets <secrets file> --url https://<site> --production` (add `--db-import <dump.sql> --uploads <dir>` for the first go-live, and `--releases-layout` to keep each release in `releases/<timestamp>` with a `current` symlink). It copies the code, checks the secrets file is outside the web root, takes an encrypted pre-migration database dump, runs the forward-only migrations (the only way migrations run in production) and runs the smoke checks. It never prints a secret.
+5. Confirm the smoke check (below) is all PASS and paste its output into the release notes.
+6. Confirm the child theme is the active theme and the parent is present (the script checks this; REQ-273).
+
+Local rehearsals use `php bin/wiw.php migrate` instead of the script. Never edit files on the host by hand.
 
 ### Smoke check after every deploy (M5-LCH-03)
 
@@ -74,15 +83,24 @@ Two steps are by hand, because no vulnerability database is wired in and the Adm
 
 ## Rollback
 
-TODO. Owner: M0-INF-12. Rule: migrations are forward-only; roll back code, not the database (see Deployment).
+Rule: migrations are forward-only and additive (expand, then contract), so the previous release runs against the new schema. Roll back code, not the database.
+
+- **Bad code release.** With `--releases-layout`, point `current` back at the previous `releases/<timestamp>` folder (instant), then run the smoke check. Without it, redeploy the previous artifact with `deploy/migrate-live --release <previous artifact> --target <web root> --secrets <secrets file>`.
+- **Bad migration (a schema step that must be undone).** Do not edit tables by hand. Redeploy the previous artifact (the previous code ignores added columns and tables). If data was damaged, `deploy/migrate-live --rollback --release <previous artifact> --target <web root> --secrets <secrets file> --restore-dump <the pre-migration dump from that deploy>` redeploys it and restores that encrypted dump. This loses everything written since the deploy, so use it only in the first minutes and tell the owner first.
+- **Bad import.** Imported profiles carry their import batch. In the admin open Directory, then Profiles, filter by Batch, check the count and the first names shown, give a reason and choose Unpublish these profiles (see Bulk unpublish). Every profile in the batch answers 410 and leaves search and the sitemap; Restore this batch reverses it. Fix the source file and import again.
+- **Bad publication (a profile or story that should not be public).** Unpublish it from Directory, then Profiles (row action, reason required) or from its review screen; for a story set it to draft. A profile that must never return is a removal request: use Compliance, then Requests and reports, Valid: hide and suppress, which also keeps the name off future imports. Then check the page answers 410 (profile) or 404 (story) and look at the Purge log screen to confirm the public cache was purged.
 
 ## Backup restore
 
-TODO. Owner: M5 (restore test). Backups are cPanel daily database and weekly files with an off-server copy (launch checklist items 1 and 2).
+Owner decision: backups, restore tests and cPanel backups are outside the scope of this build, so this runbook does not promise them and no restore test is recorded. The only database copy the project takes is the encrypted pre-migration dump that `deploy/migrate-live` makes at every deploy (kept beside the secrets file in `wiw-dumps/`, outside the web root; the passphrase is `BACKUP_PASSPHRASE` in the secrets file). It is used only by `deploy/migrate-live --rollback` (see Rollback). If the owner later adds scheduled backups, add the schedule, the off-server copy and a dated restore test here.
 
 ## Incidents
 
-TODO. Owner: M5. Who is paged, first checks, how to take the site to maintenance, how to write the incident note.
+1. **Who is told.** The alert contact named under Who receives alerts. Staff who notice a problem tell that person first.
+2. **First checks (five minutes).** Open the public home page, a profile, Stories and the search page; run the smoke check (`php deploy/smoke-check.php --url=https://<site> ...`); look at Tools, Site Health and the PHP error log in cPanel; check the Email log and Purge log screens for failed jobs and run `php bin/wiw.php jobs:run` to see whether queued jobs complete.
+3. **Contain.** If wrong information is public, unpublish it first (see Rollback, bad publication) and ask questions after. If the whole site must go down, put WordPress in maintenance (create `.maintenance` in the site root, or use cPanel to point the domain at a static page) and tell the alert contact.
+4. **Suspected personal-data breach.** Follow the Personal-data breach procedure below; do not wait to finish diagnosing.
+5. **Write the note.** Copy the Incident template at the end of this section: what happened, when it started and ended, who was affected, what was done, what changes. No personal data in the note (use ids and counts).
 
 ### Personal-data breach procedure (M3-PRV-18, REQ-066)
 
@@ -138,7 +156,7 @@ No incident has been recorded yet.
 
 ## Bulk unpublish
 
-TODO. Owner: the bulk unpublish issue in M1. Capability, the audit record it writes, and how to reverse it.
+Who: holders of `wiw_bulk_unpublish` (Reviewer and Administrator by default). Where: Directory, then Profiles; set the filters (name, state, type, origin, source, batch) and the panel shows how many published profiles match and the first five names. Give a reason (no personal data) and choose Unpublish these profiles; the count shown must still match when you submit or it is refused. The work runs as a background job through the state machine, so each profile is audited with the batch reference and the reason, then answers 410 and leaves search and the sitemap. To reverse, choose Restore this batch in the Recent bulk actions list: each profile returns to its earlier published state (reviewed if it was reviewed). On a host without a scheduler run `php bin/wiw.php jobs:run` to make the job run now. Every bulk action and restore is in the Audit log screen.
 
 ## Key rotation
 
@@ -146,16 +164,16 @@ Keys to rotate (values live only in the secrets file, mode 600, outside the web 
 
 | Key | Rotate when | Steps | Owner issue |
 |---|---|---|---|
-| SMTP credentials | Staff change, suspected leak | TODO | M0-EML-01 |
-| Signed-link signing key (`SIGNED_LINK_KEY`) | Suspected leak; invalidates outstanding links | TODO | M0-PLG-17 |
-| Form-token signing key (`FORM_TOKEN_KEY`) | Suspected leak | TODO | M0-PLG-18 |
-| Backup passphrase (`BACKUP_PASSPHRASE`) | Staff change | TODO | M5 |
-| WordPress salts | Suspected session theft; logs everyone out | TODO | M0-INF-11 follow-up |
-| Health-check token (`HEALTHZ_TOKEN`) | Suspected leak | TODO | M5 |
+| SMTP credentials | Staff change, suspected leak | Change the password of the cPanel mail account; put the new `SMTP_PASSWORD` in the secrets file; check a test message in the Email log screen shows Sent after `php bin/wiw.php jobs:run`; no deploy needed | M0-EML-01 |
+| Signed-link signing key (`SIGNED_LINK_KEY`) | Suspected leak; invalidates outstanding links | Generate 64 random hex characters and replace the value in the secrets file. Every outstanding confirm, unsubscribe and claim link stops working (people ask again), so do it off-peak and tell the editor | M0-PLG-17 |
+| Form-token signing key (`FORM_TOKEN_KEY`) | Suspected leak | Generate 64 random hex characters and replace the value in the secrets file. Forms open at that moment must be reloaded; nothing else changes | M0-PLG-18 |
+| Backup passphrase (`BACKUP_PASSPHRASE`) | Staff change | Only the pre-migration dumps use it. Keep the old passphrase with the old dumps (they cannot be opened without it) and set the new one before the next deploy | M5 |
+| WordPress salts | Suspected session theft; logs everyone out | Fetch new values from `https://api.wordpress.org/secret-key/1.1/salt/` and replace the eight keys and salts in the secrets file. All staff sign in again, so tell them first | M0-INF-11 follow-up |
+| Health-check token (`HEALTHZ_TOKEN`) | Suspected leak | Generate a new random value, replace it in the secrets file, update the uptime monitor's address and check `/healthz` with the new token | M5 |
 
 ## Moving to a VPS
 
-TODO. Owner: M5. Fallback hosting is described in Deployment.
+Only if the live-host checks fail or the site outgrows the shared host. Steps: build a release (`deploy/build-release`); prepare PHP 8.3 with the extensions in the check table, MariaDB and a web server with the same deny rules as the cPanel setup; create the secrets file outside the web root; run `deploy/migrate-live` with `--db-import` of a fresh database dump and `--uploads` of the media folder; run the smoke check; lower the DNS time to live a day before; switch DNS; keep the old host read-only for a week; set a system cron that runs `php bin/wiw.php jobs:run` every minute. Fallback hosting is described in Deployment.
 
 ## Performance budget (REQ-041, REQ-042)
 
@@ -191,7 +209,16 @@ The guard calls `header_remove('X-Powered-By')` on every response. As a second l
 
 ## Who receives alerts
 
-TODO. Owner: M5 (monitoring and launch).
+The alert contact is the site owner: **TODO(owner): write the name and the email address here before launch.** This file cannot name a person the owner has not given. Alerts that reach them: the uptime monitor, the deadline-breach emails for corrections, removals and data requests, and failed-job notices. Name a second person as cover for when the owner is away.
+
+## Quarterly tasks
+
+- Review installed plugins against the register and apply updates (Updates and plugin policy above).
+- Run `composer audit` and `npm audit --audit-level=high` in `site/` and fix or record each finding.
+- Rotate or check the keys in the table above that are due; check outgoing mail still passes SPF, DKIM and DMARC.
+- Open the Audit log screen and press Verify chain (or run `php bin/wiw.php audit:verify`); copy the audit export off the host.
+- Run the smoke check and the performance budget (below) and compare with the last numbers.
+- Check who has staff accounts and capabilities; deactivate people who left.
 
 ## Audit log protection and export
 
@@ -209,3 +236,7 @@ The page cache is WP Super Cache (pinned through composer, on the plugin allowli
 - **Unpublish:** the unpublish hook queues a purge job (`PurgeService`) that clears the page from the cache through `wpsc_delete_url_cache`; the origin then answers 404 or 410 and is never cached (non-200).
 - **After any plugin, guard or theme change:** rerun the visibility suite (`composer test -- --testsuite Visibility`) and, on a served site with the cache on, request a pending-review profile twice and confirm the `X-Robots-Tag: noindex` header both times.
 - **Known limits:** WP Super Cache expires files by garbage collection (every shutdown here), not at serve time, so staleness after an edit is bounded by the unpublish purge and the 60-second GC, not strictly by the lifetime. The guard's per-request Content-Security-Policy nonce is in the page body, so a cached page would carry an old nonce: see the follow-up issue before turning the cache on in production.
+
+## Customer and enquiry CSV export (REQ-077, #324)
+
+The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.

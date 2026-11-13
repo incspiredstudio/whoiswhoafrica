@@ -167,8 +167,8 @@ final class ProfileEditScreen {
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::SAVE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
 		$out .= '<table class="form-table" role="presentation"><tbody>' . $this->fields( $id, (string) $state['entity_type'] ) . '</tbody></table>';
 		$out .= $this->terms( $id );
-		$out .= '<p><label>' . esc_html__( 'Reason or request reference (required)', 'whoiswho' ) . '<br /><input type="text" name="reason" class="large-text" required="required" /></label></p>';
-		$out .= $this->resolves( $id );
+		$out .= '<p><label>' . esc_html__( 'Reason or request reference (required)', 'whoiswho' ) . '<br /><input type="text" name="reason" class="large-text" required="required" value="' . esc_attr( rawurldecode( $request->string( 'reason' ) ) ) . '" /></label></p>';
+		$out .= $this->resolves( $id, $request->int( 'resolves' ) );
 		return $out . '<p><button class="button button-primary">' . esc_html__( 'Save changes', 'whoiswho' ) . '</button></p></form>' . ( new ProfilePanels() )->html( $id, $state ) . '</div>';
 	}
 
@@ -249,9 +249,10 @@ final class ProfileEditScreen {
 	/**
 	 * The "this resolves the open item" select: the open corrections on this profile.
 	 *
-	 * @param int $id Profile.
+	 * @param int $id       Profile.
+	 * @param int $selected Item to preselect (from the Corrections screen's Apply link).
 	 */
-	private function resolves( int $id ): string {
+	private function resolves( int $id, int $selected = 0 ): string {
 		$open = array();
 		foreach ( ( new SupportItems() )->list_by_types( array( ItemType::CORRECTION ), '', 200 ) as $item ) {
 			if ( (int) $item['profile_id'] === $id && ! ItemStatus::is_closed( (string) $item['status'] ) ) {
@@ -263,7 +264,7 @@ final class ProfileEditScreen {
 		}
 		$out = '<p><label>' . esc_html__( 'This resolves the open item', 'whoiswho' ) . '<br /><select name="resolves"><option value="0">' . esc_html__( 'None', 'whoiswho' ) . '</option>';
 		foreach ( $open as $item ) {
-			$out .= '<option value="' . esc_attr( (string) $item['id'] ) . '">' . esc_html( (string) $item['reference'] ) . '</option>';
+			$out .= '<option value="' . esc_attr( (string) $item['id'] ) . '"' . selected( $selected, (int) $item['id'], false ) . '>' . esc_html( (string) $item['reference'] ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}
 		return $out . '</select></label></p>';
 	}

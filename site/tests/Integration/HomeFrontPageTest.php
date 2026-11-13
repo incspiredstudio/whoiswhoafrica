@@ -64,10 +64,45 @@ final class HomeFrontPageTest extends WpTestCase {
 	public function test_REQ_002_the_hero_has_four_decorative_muted_looping_videos_with_poster_fallback(): void {
 		$out = $this->render();
 		$this->assertSame( 4, substr_count( $out, '<video' ) );
-		$this->assertStringContainsString( 'muted loop playsinline preload="none"', $out );
+		$this->assertSame( 4, substr_count( $out, 'muted loop playsinline preload="none"' ) );
 		$this->assertStringNotContainsString( ' autoplay', $out, 'no autoplay before the script confirms motion is allowed' );
+		$this->assertStringNotContainsString( ' controls', $out, 'decoration: no controls' );
 		$this->assertMatchesRegularExpression( '/<div class="h-vids" aria-hidden="true">/', $out );
-		$this->assertSame( 4, substr_count( $out, 'poster="' ) );
+		$this->assertSame( 4, substr_count( $out, 'class="h-vid-poster"' ) );
+	}
+
+	public function test_REQ_041_hero_posters_have_dimensions_modern_formats_and_only_the_first_is_high_priority(): void {
+		$out = $this->render();
+		preg_match_all( '/<img class="h-vid-poster"[^>]*>/', $out, $imgs );
+		$this->assertCount( 4, $imgs[0] );
+		foreach ( $imgs[0] as $img ) {
+			$this->assertStringContainsString( 'width="540" height="960"', $img, 'the poster reserves its space (no layout shift)' );
+			$this->assertStringContainsString( 'alt=""', $img );
+			$this->assertStringContainsString( '-540.jpg', $img );
+		}
+		$this->assertStringContainsString( 'fetchpriority="high"', $imgs[0][0], 'the first poster is the largest contentful paint' );
+		$this->assertSame( 1, substr_count( $out, 'fetchpriority="high"' ) );
+		$this->assertSame( 4, substr_count( $out, 'type="image/avif"' ) );
+		$this->assertSame( 4, substr_count( $out, 'type="image/webp"' ) );
+		$this->assertStringNotContainsString( 'loading="lazy"', implode( '', $imgs[0] ), 'above-the-fold posters are never lazy' );
+	}
+
+	public function test_REQ_041_hero_clips_declare_size_a_webm_before_the_mp4_and_fetch_nothing_until_their_turn(): void {
+		$out = $this->render();
+		preg_match_all( '/<video[^>]*>.*?<\/video>/s', $out, $vids );
+		$this->assertCount( 4, $vids[0] );
+		foreach ( $vids[0] as $i => $video ) {
+			$this->assertStringContainsString( 'width="540" height="960"', $video );
+			$this->assertStringContainsString( 'preload="none"', $video, 'a clip fetches nothing until home.js starts it' );
+			$this->assertStringContainsString( 'data-turn="' . $i . '"', $video );
+			$this->assertStringContainsString( 'type="video/mp4"', $video );
+			$this->assertStringNotContainsString( 'src="" ', $video );
+			$this->assertStringNotContainsString( ' poster=', $video, 'the still is the picture beneath, not a second download' );
+			$webm = strpos( $video, 'video/webm' );
+			if ( false !== $webm ) {
+				$this->assertLessThan( (int) strpos( $video, 'video/mp4' ), $webm, 'WebM is listed first' );
+			}
+		}
 	}
 
 	public function test_REQ_046_the_header_state_script_is_inline_in_the_head_and_marks_the_home_page(): void {

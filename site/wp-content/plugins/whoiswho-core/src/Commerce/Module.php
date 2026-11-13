@@ -31,5 +31,8 @@ final class Module implements ModuleInterface {
 		PlacementJob::register();
 		DashboardTiles::hooks();
 		SponsoredStoriesScreen::hooks();
+		Admin\CustomersScreen::hooks();
+		CustomerExport::hooks();
+		Invitations\InvitationRoute::hooks();
 	}
 }

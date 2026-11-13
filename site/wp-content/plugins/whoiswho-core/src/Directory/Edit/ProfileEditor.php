@@ -26,6 +26,7 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\VersionRepository;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
+use WhoIsWho\Core\Trust\AssignedProfiles;
 
 /**
  * Profile editor.
@@ -91,8 +92,13 @@ final class ProfileEditor {
 	 * @throws EditRefused With a message fit to show.
 	 */
 	public function edit( int $profile_id, array $changes, string $reason, int $actor_id, int $resolves = 0, array $terms = array() ): array {
-		if ( ! user_can( $actor_id, self::EDIT_CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- generated for the profile type, listed in config/capabilities.php.
+		$assigned = new AssignedProfiles();
+		$limited  = $assigned->is_limited( $actor_id );
+		if ( $limited ? ! $assigned->is_assigned( $actor_id, $profile_id ) : ! user_can( $actor_id, self::EDIT_CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- generated for the profile type, listed in config/capabilities.php.
 			throw EditRefused::because( 'You are not allowed to edit profiles.' );
+		}
+		if ( $limited && ( 0 !== $resolves || array() !== $terms ) ) {
+			throw EditRefused::because( 'You can change only the descriptive text and links of your profiles.' );
 		}
 		$reason = trim( $reason );
 		if ( '' === $reason ) {
@@ -112,6 +118,9 @@ final class ProfileEditor {
 			$key = (string) $key;
 			if ( $this->allowlist->is_forbidden( $key ) || ! $this->allowlist->is_allowed( $type, $key ) ) {
 				throw EditRefused::because( 'That field cannot be stored on a profile.' );
+			}
+			if ( $limited && ! AssignedProfiles::field_allowed( $key ) ) {
+				throw EditRefused::because( 'You can change only the descriptive text and links of your profiles.' );
 			}
 			$rule  = $this->allowlist->for_type( $type )[ $key ];
 			$empty = null === $value || '' === $value || array() === $value;
@@ -145,7 +154,7 @@ final class ProfileEditor {
 		}
 		$item = $this->correction( $resolves, $profile_id );
 
-		$pending = (int) ( $state['claimed'] ?? 0 ) > 0 && (int) ( $state['assigned_user_id'] ?? 0 ) === $actor_id && $actor_id > 0;
+		$pending = $limited || ( (int) ( $state['claimed'] ?? 0 ) > 0 && (int) ( $state['assigned_user_id'] ?? 0 ) === $actor_id && $actor_id > 0 );
 		$version = ( new VersionRepository() )->append( $profile_id, $actor_id, $pending ? 'revision' : 'edit', $reason, $old, $new, $pending ? 'pending' : null );
 		if ( ! $pending ) {
 			$fields = new ProfileFields( $this->allowlist );

@@ -42,6 +42,8 @@ final class CustomerServiceTest extends TestCase {
 		wp_set_current_user( 0 );
 		( new RoleSync( new CapabilityCatalogue() ) )->activate();
 		$wpdb->query( 'TRUNCATE TABLE ' . CustomerRepository::table() ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed name.
+		$wpdb->query( 'TRUNCATE TABLE ' . SupportItems::table() ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed name.
+		delete_option( 'wiw_enquiry_sequence' );
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::PROBE ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed name.
 		Schema::create_table( self::PROBE, AuditLogger::TABLE_DEFINITION );
 	}
