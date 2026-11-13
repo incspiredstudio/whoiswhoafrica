@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Content\Curation\Admin;
 
 use WhoIsWho\Core\Content\Curation\CurationSettings;
+use WhoIsWho\Core\Content\Home\HeroVideos;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
@@ -51,14 +52,23 @@ final class CurationScreen {
 	private PinPicker $picker;
 
 	/**
+	 * Hero video slots.
+	 *
+	 * @var HeroVideos
+	 */
+	private HeroVideos $hero;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param CurationSettings $settings Settings.
 	 * @param PinPicker|null   $picker   Picker; the default one when omitted.
+	 * @param HeroVideos|null  $hero     Hero video service; the site's one when omitted.
 	 */
-	public function __construct( CurationSettings $settings, ?PinPicker $picker = null ) {
+	public function __construct( CurationSettings $settings, ?PinPicker $picker = null, ?HeroVideos $hero = null ) {
 		$this->settings = $settings;
 		$this->picker   = $picker ?? new PinPicker();
+		$this->hero     = $hero ?? new HeroVideos( AuditLogger::for_site() );
 	}
 
 	/**
@@ -94,6 +104,15 @@ final class CurationScreen {
 					}
 				);
 				ActionGuard::register(
+					HeroVideosSection::ACTION,
+					self::CAP,
+					static function ( Request $request ): void {
+						$notice = ( new HeroVideosSection( new HeroVideos( AuditLogger::for_site() ) ) )->handle( $request );
+						wp_safe_redirect( add_query_arg( 'wiw_notice', rawurlencode( $notice ), admin_url( 'admin.php?page=' . self::SCREEN ) ) . '#wiw-hero-videos' );
+						exit;
+					}
+				);
+				ActionGuard::register(
 					self::ACTION,
 					self::CAP,
 					static function ( Request $request ): void {
@@ -115,6 +134,9 @@ final class CurationScreen {
 			return;
 		}
 		wp_enqueue_script( 'wiw-curation-pins', plugins_url( 'assets/admin/curation/pins.js', WIW_CORE_FILE ), array(), WIW_CORE_VERSION, true );
+		// The hero video slots choose files from the media library through the WordPress media modal.
+		wp_enqueue_media();
+		wp_enqueue_script( 'wiw-hero-videos', plugins_url( 'assets/admin/curation/hero-videos.js', WIW_CORE_FILE ), array( 'media-views' ), WIW_CORE_VERSION, true );
 	}
 
 	/**
@@ -393,6 +415,7 @@ final class CurationScreen {
 		foreach ( CurationSettings::BLOCKS as $block ) {
 			$out .= $this->section( $block, $request );
 		}
+		$out .= ( new HeroVideosSection( $this->hero ) )->html();
 		return $out . '</div>';
 	}
 
@@ -404,49 +427,52 @@ final class CurationScreen {
 	public function render( Request $request ): void {
 		echo wp_kses(
 			$this->html( $request->string( 'wiw_notice' ), $request ),
-			array(
-				'div'    => array( 'class' => true ),
-				'h1'     => array(),
-				'h2'     => array(),
-				'h3'     => array(),
-				'p'      => array(),
-				'ol'     => array(
-					'class'      => true,
-					'data-block' => true,
+			array_replace_recursive(
+				array(
+					'div'    => array( 'class' => true ),
+					'h1'     => array(),
+					'h2'     => array(),
+					'h3'     => array(),
+					'p'      => array(),
+					'ol'     => array(
+						'class'      => true,
+						'data-block' => true,
+					),
+					'ul'     => array( 'class' => true ),
+					'li'     => array( 'data-id' => true ),
+					'span'   => array(),
+					'em'     => array(),
+					'label'  => array(),
+					'form'   => array(
+						'method' => true,
+						'action' => true,
+						'class'  => true,
+					),
+					'input'  => array(
+						'type'      => true,
+						'name'      => true,
+						'value'     => true,
+						'min'       => true,
+						'max'       => true,
+						'maxlength' => true,
+						'class'     => true,
+						'checked'   => true,
+					),
+					'select' => array( 'name' => true ),
+					'option' => array(
+						'value'    => true,
+						'selected' => true,
+					),
+					'button' => array(
+						'type'       => true,
+						'class'      => true,
+						'name'       => true,
+						'value'      => true,
+						'formmethod' => true,
+						'formaction' => true,
+					),
 				),
-				'ul'     => array( 'class' => true ),
-				'li'     => array( 'data-id' => true ),
-				'span'   => array(),
-				'em'     => array(),
-				'label'  => array(),
-				'form'   => array(
-					'method' => true,
-					'action' => true,
-					'class'  => true,
-				),
-				'input'  => array(
-					'type'      => true,
-					'name'      => true,
-					'value'     => true,
-					'min'       => true,
-					'max'       => true,
-					'maxlength' => true,
-					'class'     => true,
-					'checked'   => true,
-				),
-				'select' => array( 'name' => true ),
-				'option' => array(
-					'value'    => true,
-					'selected' => true,
-				),
-				'button' => array(
-					'type'       => true,
-					'class'      => true,
-					'name'       => true,
-					'value'      => true,
-					'formmethod' => true,
-					'formaction' => true,
-				),
+				HeroVideosSection::allowed_html()
 			)
 		);
 	}

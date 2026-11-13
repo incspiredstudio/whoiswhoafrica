@@ -18,7 +18,7 @@ $wiw_admin  = array( 'administrator' );
 $wiw_review = array( 'reviewer', 'administrator' );
 
 return array(
-	'version'      => 4,
+	'version'      => 5,
 	'roles'        => array(
 		'wiw_reviewer' => array(
 			'label'  => 'Reviewer',
@@ -295,6 +295,11 @@ return array(
 		'wiw_edit_assigned_profiles'    => array(
 			'source' => 'plugin',
 			'roles'  => $wiw_admin,
+		),
+		'wiw_run_setup'                 => array(
+			'source' => 'plugin',
+			'roles'  => $wiw_admin,
+			'fixed'  => true,
 		),
 		'wiw_manage_capabilities'       => array(
 			'source' => 'plugin',

@@ -8,7 +8,7 @@
 #   whoiswho-install-bundle/whoiswho-child.zip        the child theme (brand values; the theme to activate)
 #   whoiswho-install-bundle/whoiswho-core.zip         the core plugin, with Action Scheduler, Two Factor and User Role Editor in bundled/
 #   whoiswho-install-bundle/whoiswho-guard-mu-plugin.zip   the must-use plugin: unzip into wp-content/mu-plugins (not uploaded in wp-admin)
-#   whoiswho-install-bundle/wiw.php                   the command line runner: copy it into the WordPress folder (beside wp-load.php)
+#   whoiswho-install-bundle/wiw.php                   the optional command line runner (the Setup screen needs no command line)
 #   whoiswho-install-bundle/INSTALL.md, SHA256SUMS.txt
 # No tests, dev tools, .env files, wp-config or secrets go in. The page cache plugin (WP Super Cache) is optional and is not bundled
 # (it must live in wp-content/plugins/wp-super-cache; see INSTALL.md).

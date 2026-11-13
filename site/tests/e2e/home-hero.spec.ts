@@ -5,12 +5,17 @@ import { assertNoHorizontalScroll, disableScripts, setReducedMotion } from "./he
 test.describe("home hero and first screen (REQ-001, REQ-002, REQ-046)", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
-  test("first screen on a 360 px phone says what the brand is and offers a way in", async ({ page }) => {
+  test("first screen on a 360 px phone says what the brand is: headline, lede and scroll cue, no buttons (issue 798)", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("/");
     await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator(".h-lede")).toBeInViewport();
-    await expect(page.locator(".h-hero-ctas a").first()).toBeInViewport();
+    await expect(page.locator(".h-cue")).toBeInViewport();
+    await expect(page.locator(".h-hero-ctas")).toHaveCount(0);
+    await expect(page.locator(".h-hero a.btn, .h-hero .h-link")).toHaveCount(0);
+    await expect(page.locator(".h-hero").getByText(/get listed|browse the directory|nominate/i)).toHaveCount(0);
+    // The ways in stay further down the page.
+    await expect(page.locator(".h-final a.btn")).toHaveCount(1);
     await assertNoHorizontalScroll(page);
   });
 

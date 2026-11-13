@@ -56,15 +56,29 @@ if ( ! function_exists( 'wiw_home_hero_videos' ) ) {
 	/**
 	 * The four hero videos with their still posters (REQ-001, REQ-041). Files live in the child theme's assets/home folder (brand
 	 * media; see the README there). Each clip has an MP4 and, when smaller, a WebM; each poster has 360 and 540 px widths in AVIF, WebP
-	 * and JPEG (the 540 JPEG is the fallback). A missing video is skipped; a poster alone still gives a complete, static hero.
+	 * and JPEG (the 540 JPEG is the fallback). A missing video is skipped; a poster alone still gives a complete, static hero. A slot an
+	 * editor filled on the Home page settings screen (issue 799) replaces the bundled clip for that slot only; the plugin hands it over
+	 * through wiw_home_hero_overrides() already checked, so an invalid or removed choice is simply absent and the bundled clip shows.
 	 *
 	 * @return array<int, array{video: string, webm: string, poster: string, sets: array<string, string>, width: int, height: int}>
 	 */
 	function wiw_home_hero_videos(): array {
-		$dir = trailingslashit( get_stylesheet_directory() ) . 'assets/home/';
-		$url = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/home/';
-		$out = array();
+		$dir    = trailingslashit( get_stylesheet_directory() ) . 'assets/home/';
+		$url    = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/home/';
+		$out    = array();
+		$custom = function_exists( 'wiw_home_hero_overrides' ) ? wiw_home_hero_overrides() : array();
 		for ( $i = 1; $i <= 4; $i++ ) {
+			if ( isset( $custom[ $i ] ) ) {
+				$out[] = array(
+					'video'  => $custom[ $i ]['video'],
+					'webm'   => $custom[ $i ]['webm'],
+					'poster' => $custom[ $i ]['poster'],
+					'sets'   => $custom[ $i ]['sets'],
+					'width'  => $custom[ $i ]['width'],
+					'height' => $custom[ $i ]['height'],
+				);
+				continue;
+			}
 			$base   = 'hero-' . $i;
 			$poster = is_readable( $dir . $base . '-540.jpg' ) ? $url . $base . '-540.jpg' : '';
 			$video  = is_readable( $dir . $base . '.mp4' ) ? $url . $base . '.mp4' : '';
@@ -248,8 +262,9 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 			'title'      => wiw_home_title_lines( '' !== $long ? $long : $name ),
 			'lede'       => __( 'Documenting the influence, achievements and legacy of the people and institutions shaping Africa.', 'whoiswho' ),
 			'nominating' => $nominating,
+			// Only the closing section's button reads this (the hero has none, issue 798).
 			'ctas'       => array(
-				'primary'   => $nominating
+				'primary' => $nominating
 					? array(
 						'label' => __( 'Nominate someone', 'whoiswho' ),
 						'url'   => home_url( '/nominate/' ),
@@ -258,10 +273,6 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 						'label' => __( 'Get listed', 'whoiswho' ),
 						'url'   => home_url( '/get-listed/' ),
 					),
-				'secondary' => array(
-					'label' => __( 'Browse the directory', 'whoiswho' ),
-					'url'   => home_url( '/people/' ),
-				),
 			),
 			'videos'     => wiw_home_hero_videos(),
 			'acts'       => wiw_home_acts( $tagline ),

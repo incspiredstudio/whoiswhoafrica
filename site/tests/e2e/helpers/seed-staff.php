@@ -69,6 +69,8 @@ foreach ( $wiw_users as $login => $role ) {
 		wp_set_password( $pass, $user->ID );
 		$user->set_role( $role );
 	}
+	// Test mode only (the seed refused above unless it is on): skip the two-factor enrolment redirect for these throw-away users.
+	update_user_meta( $user->ID, 'wiw_e2e_staff', '1' );
 	$out[ $login ] = $user->ID;
 }
 echo wp_json_encode( $out ) . "\n";

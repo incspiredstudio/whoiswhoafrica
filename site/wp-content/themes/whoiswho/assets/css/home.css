@@ -17,7 +17,7 @@
 
 /* Header over the hero: fixed and transparent while the page is at the top, solid once it scrolls. The state classes are set by the
    inline script before first paint (assets/js/header-state.js), so a refresh does not flash. */
-html.is-home .site-head { position: fixed; inset: 0 0 auto; }
+html.is-home .site-head { position: fixed; inset: var(--wiw-bar) 0 auto; }
 html.is-home.at-top .site-head:not(:hover, :focus-within) { background: transparent; border-color: transparent; color: var(--c-on-dark); box-shadow: none; backdrop-filter: none; }
 
 html.is-home.at-top .site-head:not(:hover, :focus-within) .logo,
@@ -57,7 +57,6 @@ html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:foc
 .h-hero-foot { display: grid; gap: var(--s-4); align-items: end; }
 .h-lede { max-width: 26rem; margin: 0; font-size: var(--t-md); font-weight: 300; line-height: 1.4; color: var(--c-on-dark); }
 .h-hero-in :is(a, button) { pointer-events: auto; }
-.h-hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); }
 .h-btn { min-height: 3.25rem; padding-inline: 1.75rem; border-radius: var(--r-pill); }
 
 /* Scroll cue: a word and a thin line with a light running down it. */
@@ -71,7 +70,6 @@ html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:foc
 
 @media (width >= 56.25rem) {
   .h-hero-foot { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--s-6); }
-  .h-hero-ctas { justify-content: flex-end; }
 }
 
 /* Phones: the four videos sit in two rows of two, with no widening on touch. */
@@ -256,10 +254,10 @@ html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }
 /* The two title lines part as the hero leaves, and the foot fades first. */
 html.home-live .h-title .h-line:first-child { transform: translate3d(calc(var(--hx, 0) * -9vw), 0, 0); }
 html.home-live .h-title .h-line--r { transform: translate3d(calc(var(--hx, 0) * 9vw), 0, 0); }
-html.home-live .h-lede, html.home-live .h-hero-ctas, html.home-live .h-cue { opacity: calc(1 - min(var(--hx, 0) * 2.4, 1)); }
+html.home-live .h-lede, html.home-live .h-cue { opacity: calc(1 - min(var(--hx, 0) * 2.4, 1)); }
 
 /* Header: slides away while reading down, returns on any upward scroll or when it has keyboard focus. */
-html.is-home.head-hidden .site-head { transform: translateY(-110%); box-shadow: none; }
+html.is-home.head-hidden .site-head { transform: translateY(calc(-110% - var(--wiw-bar))); box-shadow: none; }
 html.is-home.head-hidden .site-head:focus-within { transform: none; }
 
 /* Mask-line headings and the doors' colour blocks open as they enter. */
@@ -273,7 +271,7 @@ html.home-live .h-door.h-rv-clip.in { clip-path: inset(0); }
 /* Stories on wide screens: the section pins and its sideways track follows the scroll (home-fx.js sets the section height). */
 @media (width >= 64rem) {
   html.home-live .h-stories.is-pinned { padding: 0; overflow: clip; }
-  html.home-live .h-stories.is-pinned .h-stories-pin { position: sticky; top: 0; display: flex; flex-direction: column; justify-content: center; height: 100svh; overflow: hidden; }
+  html.home-live .h-stories.is-pinned .h-stories-pin { position: sticky; top: var(--wiw-bar); display: flex; flex-direction: column; justify-content: center; height: calc(100svh - var(--wiw-bar)); overflow: hidden; }
   html.home-live .h-stories.is-pinned .h-track-wrap { overflow: visible; }
   html.home-live .h-stories.is-pinned .h-track { will-change: transform; gap: var(--s-6); }
 }

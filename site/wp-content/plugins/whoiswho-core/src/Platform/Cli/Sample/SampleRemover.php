@@ -47,7 +47,35 @@ final class SampleRemover {
 	 * @return array<string, int> What was removed, by kind.
 	 */
 	public function remove( Output $output ): array {
+		$removed = array();
+		do {
+			$chunk = $this->remove_chunk( null );
+			foreach ( $chunk['removed'] as $kind => $count ) {
+				$removed[ $kind ] = ( $removed[ $kind ] ?? 0 ) + $count;
+			}
+		} while ( ! $chunk['done'] );
+		foreach ( array( 'posts', 'terms', 'award categories', 'nominations' ) as $kind ) {
+			$output->line( sprintf( 'Removed %d %s.', $removed[ $kind ] ?? 0, $kind ) );
+		}
+		return array(
+			'posts'            => $removed['posts'] ?? 0,
+			'terms'            => $removed['terms'] ?? 0,
+			'award categories' => $removed['award categories'] ?? 0,
+			'nominations'      => $removed['nominations'] ?? 0,
+		);
+	}
+
+	/**
+	 * Remove sample content for at most about this many seconds, so a shared host with a short time limit can do it in several
+	 * requests. Safe to repeat: the markers say what is left, and the settings are put back only on the first call.
+	 *
+	 * @param float|null $seconds Time budget; null means no limit.
+	 * @return array{done: bool, removed: array<string, int>, left: int} Whether nothing is left, what this call removed, and how many sample posts and terms remain.
+	 */
+	public function remove_chunk( ?float $seconds ): array {
 		wp_set_current_user( $this->actor );
+		$until    = null === $seconds ? null : microtime( true ) + $seconds;
+		$over     = static fn (): bool => null !== $until && microtime( true ) >= $until;
 		$registry = SampleMarker::registry();
 		$removed  = array(
 			'posts'            => 0,
@@ -55,9 +83,14 @@ final class SampleRemover {
 			'award categories' => 0,
 			'nominations'      => 0,
 		);
-		$this->restore( (array) ( $registry['prev'] ?? array() ) );
-		$removed['nominations']      = $this->delete_rows( AwardsTables::NOMINATIONS, array_values( (array) ( $registry['nominations'] ?? array() ) ), 'id', array( AwardsTables::CHANGES => 'nomination_id' ) );
-		$removed['award categories'] = $this->delete_rows( AwardsTables::CATEGORIES, array_values( (array) ( $registry['categories'] ?? array() ) ), 'id', array() );
+		if ( empty( $registry['restored'] ) ) {
+			$this->restore( (array) ( $registry['prev'] ?? array() ) );
+			$removed['nominations']      = $this->delete_rows( AwardsTables::NOMINATIONS, array_values( (array) ( $registry['nominations'] ?? array() ) ), 'id', array( AwardsTables::CHANGES => 'nomination_id' ) );
+			$removed['award categories'] = $this->delete_rows( AwardsTables::CATEGORIES, array_values( (array) ( $registry['categories'] ?? array() ) ), 'id', array() );
+			$registry['restored']        = true;
+			unset( $registry['nominations'], $registry['categories'] );
+			SampleMarker::save_registry( $registry );
+		}
 		foreach ( SampleMarker::all_post_ids() as $id ) {
 			if ( ProfileType::POST_TYPE === get_post_type( $id ) ) {
 				global $wpdb;
@@ -66,18 +99,32 @@ final class SampleRemover {
 			if ( false !== wp_delete_post( $id, true ) ) {
 				++$removed['posts'];
 			}
-		}
-		foreach ( SampleMarker::all_terms( Taxonomies::all() ) as $term_id => $taxonomy ) {
-			if ( true === wp_delete_term( $term_id, $taxonomy ) ) {
-				++$removed['terms'];
+			if ( $over() ) {
+				break;
+				// At least one item per call, so a call with no time left still makes progress.
 			}
 		}
-		delete_option( SampleMarker::REGISTRY );
-		flush_rewrite_rules( false );
-		foreach ( $removed as $kind => $count ) {
-			$output->line( sprintf( 'Removed %d %s.', $count, $kind ) );
+		$left = count( SampleMarker::all_post_ids() );
+		if ( 0 === $left ) {
+			foreach ( SampleMarker::all_terms( Taxonomies::all() ) as $term_id => $taxonomy ) {
+				if ( true === wp_delete_term( $term_id, $taxonomy ) ) {
+					++$removed['terms'];
+				}
+				if ( $over() ) {
+					break;
+				}
+			}
+			$left = count( SampleMarker::all_terms( Taxonomies::all() ) );
 		}
-		return $removed;
+		if ( 0 === $left ) {
+			delete_option( SampleMarker::REGISTRY );
+			flush_rewrite_rules( false );
+		}
+		return array(
+			'done'    => 0 === $left,
+			'removed' => $removed,
+			'left'    => $left,
+		);
 	}
 
 	/**

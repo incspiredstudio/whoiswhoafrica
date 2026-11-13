@@ -2,6 +2,8 @@
 /**
  * Upload rules: an allowlist of image types for the media library, the real type read from the file content, a size limit,
  * server-side re-encoding with metadata stripped, and a scanner hook. Anything else is refused with a plain message.
+ * The two hero-video types (MP4, WebM) are allowed only for people who may change the home page (issue 799), up to 6 MB, checked
+ * by content; they are never re-encoded here (the site cannot transcode), so editors upload files already optimised.
  * Evidence files (JPG, PNG, PDF) are private and handled in M3; their allowed types are listed here for that issue.
  *
  * @package WhoIsWho
@@ -25,6 +27,24 @@ final class Uploads {
 		'webp'         => 'image/webp',
 		'avif'         => 'image/avif',
 	);
+
+	/**
+	 * Allowed in the media library for people holding VIDEO_CAPABILITY: extension pattern => MIME type.
+	 */
+	public const VIDEO_TYPES = array(
+		'mp4'  => 'video/mp4',
+		'webm' => 'video/webm',
+	);
+
+	/**
+	 * The capability that lets a person upload a hero video (the Home page settings capability).
+	 */
+	public const VIDEO_CAPABILITY = 'wiw_curate_home';
+
+	/**
+	 * Largest video in bytes (6 MB, the hero video block limit).
+	 */
+	public const VIDEO_MAX_BYTES = 6291456;
 
 	/**
 	 * Allowed as private evidence files (used by the claims issue in M3).
@@ -53,7 +73,23 @@ final class Uploads {
 	 * @return array<string, string>
 	 */
 	public static function allowed_types( array $mimes ): array {  // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- hook signature.
-		return self::IMAGE_TYPES;
+		return self::may_upload_video() ? array_merge( self::IMAGE_TYPES, self::VIDEO_TYPES ) : self::IMAGE_TYPES;
+	}
+
+	/**
+	 * Whether the current person may put hero videos in the media library.
+	 */
+	public static function may_upload_video(): bool {
+		return function_exists( 'current_user_can' ) && current_user_can( self::VIDEO_CAPABILITY );
+	}
+
+	/**
+	 * Whether a real (content) type is allowed for this person: an image, or a hero video for someone who may upload one.
+	 *
+	 * @param string $real Type read from the file content.
+	 */
+	private static function real_type_allowed( string $real ): bool {
+		return in_array( $real, self::IMAGE_TYPES, true ) || ( in_array( $real, self::VIDEO_TYPES, true ) && self::may_upload_video() );
 	}
 
 	/**
@@ -81,7 +117,7 @@ final class Uploads {
 	 */
 	public static function check_real_type( $data, $file, $filename ) {  // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- hook signature.
 		$real = self::real_mime( (string) $file );
-		if ( ! in_array( $real, self::IMAGE_TYPES, true ) ) {
+		if ( ! self::real_type_allowed( $real ) ) {
 			return array(
 				'ext'             => false,
 				'type'            => false,
@@ -101,11 +137,22 @@ final class Uploads {
 		$path = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
 		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
 
+		$real = '' === $path ? '' : self::real_mime( $path );
+		if ( in_array( $real, self::VIDEO_TYPES, true ) && self::may_upload_video() ) {
+			if ( $size > self::VIDEO_MAX_BYTES ) {
+				$file['error'] = __( 'That video is too large. The limit is 6 MB; aim for 2 MB (optimise it with site/bin/optimise-hero-video.sh).', 'whoiswho' );
+				return $file;
+			}
+			if ( ! self::scanner()->is_clean( $path ) ) {
+				$file['error'] = __( 'That file did not pass the safety check.', 'whoiswho' );
+			}
+			return $file;
+		}
 		if ( $size > self::MAX_BYTES ) {
 			$file['error'] = __( 'That file is too large. The limit is 10 MB.', 'whoiswho' );
 			return $file;
 		}
-		if ( '' === $path || ! in_array( self::real_mime( $path ), self::IMAGE_TYPES, true ) ) {
+		if ( '' === $path || ! in_array( $real, self::IMAGE_TYPES, true ) ) {
 			$file['error'] = __( 'That file type is not allowed. Use a JPG, PNG, WebP or AVIF image.', 'whoiswho' );
 			return $file;
 		}

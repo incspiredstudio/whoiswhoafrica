@@ -69,7 +69,7 @@ final class SampleSeedCommandTest extends WpTestCase {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private function small(): array {
+	public static function small(): array {
 		$person = array(
 			'name'                 => 'Test Person',
 			'current_title'        => 'Director',

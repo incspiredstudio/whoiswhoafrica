@@ -43,17 +43,25 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertStringContainsString( 'in Africa.', $out );
 	}
 
-	public function test_REQ_001_the_first_screen_states_what_the_brand_is_and_offers_a_way_in(): void {
-		$out = $this->render();
-		$this->assertStringContainsString( 'Documenting the influence, achievements and legacy', $out );
-		$this->assertStringContainsString( '/get-listed/', $out );
-		$this->assertStringContainsString( 'Browse the directory', $out );
+	public function test_REQ_001_the_first_screen_states_what_the_brand_is_and_has_only_the_headline_lede_and_scroll_cue(): void {
+		$out  = $this->render();
+		$hero = substr( $out, 0, (int) strpos( $out, 'id="home-after-hero"' ) );
+		$this->assertStringContainsString( 'Documenting the influence, achievements and legacy', $hero );
+		$this->assertStringContainsString( 'class="h-cue"', $hero );
+		// The prototype hero has no buttons; the ways in sit further down (issue 798).
+		$this->assertStringNotContainsString( 'h-hero-ctas', $out );
+		$this->assertStringNotContainsString( 'Browse the directory', $out );
+		$this->assertStringNotContainsString( 'Get listed', $hero );
+		$this->assertStringNotContainsString( 'Nominate someone', $hero );
+		$this->assertStringNotContainsString( '<a class="btn', $hero );
+		$this->assertStringContainsString( '/get-listed/', $out, 'the closing section still offers Get listed' );
 	}
 
 	public function test_REQ_259_the_primary_button_follows_the_nominations_switch(): void {
 		add_filter( 'wiw_nominations_are_open', '__return_false' );
 		$closed = wiw_home_model();
 		$this->assertSame( 'Get listed', $closed['ctas']['primary']['label'] );
+		$this->assertArrayNotHasKey( 'secondary', $closed['ctas'], 'the hero link is gone from the model' );
 		remove_all_filters( 'wiw_nominations_are_open' );
 		add_filter( 'wiw_nominations_are_open', '__return_true' );
 		$open = wiw_home_model();

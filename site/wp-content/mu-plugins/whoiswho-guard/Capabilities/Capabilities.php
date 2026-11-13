@@ -34,6 +34,7 @@ final class Capabilities {
 		'edit_theme_options',
 		'wiw_manage_register',
 		'wiw_toggle_nominations',
+		'wiw_run_setup',
 		'wiw_manage_capabilities',
 	);
 

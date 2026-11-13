@@ -108,6 +108,29 @@ final class UploadRulesTest extends WpTestCase {
 		$this->assertSame( 0, $this->prefilter( $jpeg, 'ok.jpg', (int) filesize( $jpeg ) )['error'], 'a normal image passes' );
 	}
 
+	public function test_REQ_041_hero_videos_are_allowed_only_for_people_who_may_change_the_home_page(): void {
+		$mp4  = "\0\0\0\x18ftypmp42\0\0\0\0mp42isom" . str_repeat( 'x', 40 );
+		$path = $this->temp( $mp4, 'mp4' );
+		wp_set_current_user( 0 );
+		$this->assertArrayNotHasKey( 'mp4', Uploads::allowed_types( array() ) );
+		$this->assertNotSame( '', (string) $this->prefilter( $path, 'clip.mp4', strlen( $mp4 ) )['error'], 'A visitor cannot upload a video.' );
+		$this->assertFalse( (bool) ( wp_check_filetype_and_ext( $path, 'clip.mp4' )['type'] ) );
+
+		$editor = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $editor );
+		( new \WP_User( $editor ) )->add_cap( Uploads::VIDEO_CAPABILITY );
+		$this->assertArrayHasKey( 'mp4', Uploads::allowed_types( array() ) );
+		$this->assertArrayHasKey( 'webm', Uploads::allowed_types( array() ) );
+		$this->assertSame( 0, (int) $this->prefilter( $path, 'clip.mp4', strlen( $mp4 ) )['error'] );
+		$this->assertSame( 'video/mp4', wp_check_filetype_and_ext( $path, 'clip.mp4' )['type'] );
+		$too_big = $this->prefilter( $path, 'clip.mp4', Uploads::VIDEO_MAX_BYTES + 1 );
+		$this->assertStringContainsString( 'too large', (string) $too_big['error'] );
+		// A script renamed to .mp4 is still refused, whoever uploads it.
+		$script = $this->temp( "<?php echo 'x';", 'mp4' );
+		$this->assertNotSame( '', (string) $this->prefilter( $script, 'clip.mp4', 20 )['error'] );
+		wp_set_current_user( 0 );
+	}
+
 	public function test_REQ_127_renamed_php_file_is_refused(): void {
 		$php    = $this->temp( "<?php\necho 'owned';\n", 'jpg' );
 		$result = $this->prefilter( $php, 'photo.jpg', (int) filesize( $php ) );
