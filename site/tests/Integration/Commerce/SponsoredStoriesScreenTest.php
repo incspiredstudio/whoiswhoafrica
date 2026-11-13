@@ -160,6 +160,10 @@ final class SponsoredStoriesScreenTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'SECRET-9', $html );
 		$this->assertStringNotContainsString( '<th>Amount', $html );
 		$this->assertStringNotContainsString( 'New sponsored story', $html );
+		$this->assertStringNotContainsString( 'Export deals as CSV', $html, 'REQ-087: the export button needs wiw_export_data' );
+		$this->as_role( 'administrator' );
+		$this->assertStringContainsString( 'Export deals as CSV', ( new SponsoredStoriesScreen() )->html() );
+		$this->as_role( 'wiw_editor' );
 		$this->assertStringContainsString(
 			'refused',
 			strtolower(

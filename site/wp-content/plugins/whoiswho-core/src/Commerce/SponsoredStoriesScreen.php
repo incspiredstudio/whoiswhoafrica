@@ -204,6 +204,9 @@ final class SponsoredStoriesScreen {
 			$out .= '<tr><td colspan="6">' . esc_html__( 'No sponsored stories yet.', 'whoiswho' ) . '</td></tr>';
 		}
 		$out .= '</tbody></table>';
+		if ( current_user_can( DealExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( DealExport::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( DealExport::ACTION ) ) . '" /><p><button class="button">' . esc_html__( 'Export deals as CSV', 'whoiswho' ) . '</button></p></form>';
+		}
 		if ( $money ) {
 			$out .= $this->new_deal_form();
 		}
