@@ -26,6 +26,7 @@ final class DuplicateRepository {
 		status varchar(12) NOT NULL DEFAULT \'open\',
 		decided_by bigint(20) unsigned NULL,
 		decided_at datetime NULL,
+		reason varchar(500) NULL,
 		created_at datetime NOT NULL,
 		PRIMARY KEY  (id),
 		UNIQUE KEY pair (profile_a, profile_b),
@@ -144,9 +145,10 @@ final class DuplicateRepository {
 	 * @param int    $other   Profile id.
 	 * @param string $status  merged or dismissed.
 	 * @param int    $user_id Reviewer.
+	 * @param string $reason  Why (required by the screen; stored with the decision).
 	 * @throws \InvalidArgumentException For an unknown status.
 	 */
-	public function decide( int $one, int $other, string $status, int $user_id ): void {
+	public function decide( int $one, int $other, string $status, int $user_id, string $reason = '' ): void {
 		global $wpdb;
 		if ( ! in_array( $status, array( 'merged', 'dismissed' ), true ) ) {
 			throw new \InvalidArgumentException( 'A duplicate decision is merged or dismissed.' );
@@ -158,6 +160,7 @@ final class DuplicateRepository {
 				'status'     => $status,
 				'decided_by' => $user_id,
 				'decided_at' => gmdate( 'Y-m-d H:i:s' ),
+				'reason'     => '' === $reason ? null : substr( $reason, 0, 500 ),
 			),
 			array(
 				'profile_a' => $a,

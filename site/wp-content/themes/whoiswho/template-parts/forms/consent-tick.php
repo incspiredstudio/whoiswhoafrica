@@ -3,7 +3,7 @@
  * Consent tick for a form that records consent (REQ-058, REQ-081): an unticked checkbox with a link to the privacy notice, and a
  * hidden field carrying the policy version the visitor saw. The plugin stamps the time when it receives the form, so the moment of
  * consent is the server's, not the browser's. Args: name (field name, default "consent"), label (text before the link), purpose
- * (a short code for what is consented to, sent as "consent_purpose").
+ * (a short code for what is consented to, sent as "consent_purpose"), error (words for a refused tick).
  *
  * @package WhoIsWho
  */
@@ -26,6 +26,7 @@ get_template_part(
 		'type'     => 'checkbox',
 		'required' => true,
 		'label'    => esc_html( $wiw_label ) . ' ' . $wiw_link,
+		'error'    => isset( $args['error'] ) ? (string) $args['error'] : '',
 	)
 );
 ?>

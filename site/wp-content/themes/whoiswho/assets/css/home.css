@@ -1,0 +1,208 @@
+/* stylelint-disable no-descending-specificity -- the live-motion rules are written next to their section and read the same elements as the static rules above them */
+
+/* Front page (M2-HOM-08..12). The default rules are the complete static page: scripts off, reduced motion, data saver.
+   html.home-live (set by home.js only when motion is allowed) adds the scroll effects. Colours, type and spacing come from the
+   child theme's tokens; nothing here names a brand value. Ported from prototype/theme/home.css. */
+.home { position: relative; isolation: isolate; overflow: clip; background: var(--c-dark-deep); color: var(--c-on-dark); }
+.home h2, .home h3 { letter-spacing: -.01em; }
+.home .wrap { max-width: none; }
+.home a:focus-visible, .home button:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 3px; }
+.h-line { display: block; overflow: hidden; padding-block: .14em .22em; margin-block: -.14em -.22em; }
+.h-line > span { display: block; white-space: nowrap; }
+.h-kicker { margin: 0; font-size: var(--t-sm); font-weight: 500; letter-spacing: .01em; }
+.h-link { display: inline-flex; align-items: center; gap: var(--s-2); padding-block: var(--s-1); color: inherit; font-weight: 500; text-decoration: none; background: linear-gradient(currentcolor, currentcolor) 0 100% / 100% 1px no-repeat; transition: background-size var(--m-base) var(--ease-out); }
+.h-link .ico { transition: transform var(--m-base) var(--ease-out); }
+.h-link:hover { background-size: 0 1px; background-position: 100% 100%; }
+.h-link:hover .ico { transform: translateX(5px); }
+
+/* Header over the hero: fixed and transparent while the page is at the top, solid once it scrolls. The state classes are set by the
+   inline script before first paint (assets/js/header-state.js), so a refresh does not flash. */
+html.is-home .site-head { position: fixed; inset: 0 0 auto; }
+html.is-home.at-top .site-head:not(:hover, :focus-within) { background: transparent; border-color: transparent; color: var(--c-on-dark); box-shadow: none; backdrop-filter: none; }
+
+html.is-home.at-top .site-head:not(:hover, :focus-within) .logo,
+html.is-home.at-top .site-head:not(:hover, :focus-within) .nav-link,
+html.is-home.at-top .site-head:not(:hover, :focus-within) .icon-btn { color: var(--c-on-dark); }
+html.is-home.at-top .site-head:not(:hover, :focus-within) .icon-btn { border-color: var(--c-line-on-dark); }
+
+html.is-home.at-top .site-head:not(:hover, :focus-within) .search-link,
+html.is-home.at-top .site-head:not(:hover, :focus-within) .menu-btn { border-color: transparent; }
+html.is-home.at-top .site-head::before { opacity: 1; }
+html.is-home.at-top .site-head:hover::before, html.is-home.at-top .site-head:focus-within::before { opacity: 0; }
+
+/* Touch screens keep "hover" after a tap, which would turn the header solid over the hero: use keyboard focus only there. */
+@media (hover: none) {
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) { background: transparent; border-color: transparent; color: var(--c-on-dark); box-shadow: none; backdrop-filter: none; }
+
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .logo,
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .nav-link,
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .icon-btn { color: var(--c-on-dark); }
+  html.is-home.at-top .site-head:not(:has(:focus-visible)) .icon-btn { border-color: var(--c-line-on-dark); }
+  html.is-home.at-top .site-head:hover:not(:has(:focus-visible))::before { opacity: 1; }
+}
+
+/* Hero: four vertical videos side by side behind the title; the one under the pointer grows wider (no scale). */
+.h-hero { position: relative; isolation: isolate; min-height: 100svh; overflow: hidden; background: var(--c-dark-deep); color: var(--c-on-dark); }
+.h-vids { position: absolute; inset: 0; z-index: -1; display: flex; gap: 2px; background: var(--c-dark-deep); }
+.h-vids::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 55% 45%, transparent 40%, color-mix(in srgb, var(--c-dark-deep) 70%, transparent) 100%), linear-gradient(to top, color-mix(in srgb, var(--c-dark-deep) 92%, transparent), transparent 50%); }
+.h-vid { position: relative; flex: 1 1 0; min-width: 0; overflow: hidden; background: var(--poster, none) center / cover no-repeat; transition: flex-grow 700ms var(--ease-out); }
+.h-vid video { position: absolute; inset: 0 auto 0 50%; width: max(54vw, 100%); height: 100%; object-fit: cover; transform: translateX(-50%); filter: saturate(.8) contrast(.95) brightness(.7); transition: filter 500ms ease; }
+.h-vids:hover .h-vid { flex-grow: .7; }
+.h-vids .h-vid:hover { flex-grow: 2.4; }
+.h-vid:hover video { filter: saturate(1.3) contrast(1.18) brightness(1); }
+.h-hero-in { position: relative; display: flex; pointer-events: none; flex-direction: column; min-height: 100svh; padding-block: calc(var(--head-h) + var(--s-6)) var(--s-5); }
+.h-title { margin-block: auto; padding-block: var(--s-6); font: 400 clamp(3.25rem, 1.2rem + 7.6vw, 8.5rem)/.98 var(--font-display); letter-spacing: -.012em; text-shadow: 0 2px 30px color-mix(in srgb, var(--c-dark-deep) 45%, transparent); }
+.h-line--r { text-align: right; }
+.h-hero-foot { display: grid; gap: var(--s-4); align-items: end; }
+.h-lede { max-width: 26rem; margin: 0; font-size: var(--t-md); font-weight: 300; line-height: 1.4; color: var(--c-on-dark); }
+.h-hero-in :is(a, button) { pointer-events: auto; }
+.h-hero-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-5); }
+.h-btn { min-height: 3.25rem; padding-inline: 1.75rem; border-radius: var(--r-pill); }
+
+/* Scroll cue: a word and a thin line with a light running down it. */
+.h-cue { display: inline-flex; flex-direction: column; align-items: center; gap: var(--s-3); justify-self: center; padding: var(--s-2); color: var(--c-on-dark); text-decoration: none; }
+.h-cue-label { font-size: var(--t-xs); letter-spacing: .2em; text-transform: uppercase; color: var(--c-on-dark-muted); transition: color var(--m-fast); }
+.h-cue-line { position: relative; width: 1px; height: 3.5rem; overflow: hidden; background: var(--c-line-on-dark); }
+.h-cue-line::after { content: ""; position: absolute; inset: 0 auto auto 0; width: 1px; height: 45%; background: var(--c-on-dark); animation: h-run 2.2s var(--ease-inout) infinite; }
+
+@keyframes h-run { 0% { transform: translateY(-100%); } 100% { transform: translateY(225%); } }
+.h-cue:hover .h-cue-label { color: var(--c-on-dark); }
+
+@media (width >= 56.25rem) {
+  .h-hero-foot { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--s-6); }
+  .h-hero-ctas { justify-content: flex-end; }
+}
+
+/* Phones: the four videos sit in two rows of two, with no widening on touch. */
+@media (width <= 47.99rem) {
+  .h-title { margin-block: auto 0; }
+  .h-vids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .h-vids:hover .h-vid, .h-vids .h-vid:hover { flex-grow: 0; }
+  .h-vid video, .h-vid:hover video { inset: 0; width: 100%; transform: none; }
+  .h-vid:hover video { filter: saturate(.8) contrast(.95) brightness(.7); }
+}
+
+/* Live motion only: the title rises out of its lines, and the hero pulls in from the sides as it scrolls away (--hx, 0 to 1). */
+html.home-live .h-title .h-line > span { transform: translateY(105%); }
+html.home-live.home-in .h-title .h-line > span { transform: none; transition: transform 1200ms var(--ease-out) 200ms; }
+html.home-live.home-in .h-title .h-line + .h-line > span { transition-delay: 320ms; }
+html.home-live .h-hero-foot { opacity: 0; }
+html.home-live.home-in .h-hero-foot { opacity: 1; transition: opacity 900ms ease 700ms; }
+
+@media (width >= 48rem) {
+  html.home-live .h-vids { transform: scale(calc(1 - var(--hx, 0) * .12)); transform-origin: 50% 0; border-radius: calc(var(--hx, 0) * 28px); overflow: hidden; filter: brightness(calc(1 - var(--hx, 0) * .3)); }
+  html.home-live .h-hero-in { transform: translate3d(0, calc(var(--hx, 0) * -7vh), 0); }
+  html.home-live .h-hero-in .h-title { opacity: calc(1 - var(--hx, 0) * .9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .h-vid, .h-vid video { transition: none; }
+  .h-cue-line::after { animation: none; inset: 0; height: 100%; }
+}
+
+/* Brand marks: images from the child theme's tokens (--img-mark-*). */
+.h-mark { display: block; background: center / contain no-repeat; }
+.h-mark--star { background-image: var(--img-mark-star); }
+.h-mark--comb { background-image: var(--img-mark-comb); }
+.h-mark--link { background-image: var(--img-mark-link); }
+.h-mark--spiral { background-image: var(--img-mark-spiral); }
+
+/* Three acts: stacked full-height colour scenes (pinned and animated only when motion is allowed). */
+.h-act { position: relative; display: flex; min-height: 90svh; overflow: hidden; }
+.h-act--blue { background: var(--blue); color: var(--c-white); }
+.h-act--orange { background: var(--orange); color: var(--charcoal-900); }
+.h-act--purple { background: var(--purple); color: var(--c-white); }
+.h-act-mark { position: absolute; right: 5vw; top: 8%; width: min(46vw, 62svh); aspect-ratio: 1; }
+.h-act--orange .h-act-mark { filter: brightness(.19); }
+.h-act-in { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s-4); padding-block: calc(var(--head-h) + var(--s-3)) var(--s-7); }
+.h-act-n { position: absolute; top: calc(var(--head-h) + var(--s-3)); margin: 0; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.h-act-word { margin: 0; font: 400 min(calc((100vw - 2 * var(--gutter)) / 6.02), 38svh)/.96 var(--font-display); }
+.h-act-foot { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s-4) var(--s-7); }
+.h-act-foot p { max-width: 25em; margin: 0; font-size: clamp(1.5rem, 1.25rem + .6vw, 1.875rem); line-height: 1.22; }
+.h-act .h-link { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.h-act .h-link:focus-visible { outline-color: currentcolor; }
+html.home-live .h-act { min-height: 100svh; }
+html.home-live .h-act .h-line > span { transform: translateY(105%); }
+html.home-live .h-act.in .h-line > span { transform: none; transition: transform 1100ms var(--ease-out) 60ms; }
+html.home-live .h-act-foot, html.home-live .h-act-n { opacity: 0; transform: translateY(24px); }
+html.home-live .h-act.in .h-act-foot, html.home-live .h-act.in .h-act-n { opacity: 1; transform: none; transition: opacity 700ms 260ms, transform 1000ms var(--ease-out) 260ms; }
+
+/* Four doors: the brand's colour blocks, a 2 by 2 grid on phones and one row that widens under the pointer on desktop. */
+.h-doors { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--c-bg); }
+.h-door { position: relative; display: flex; align-items: flex-end; min-height: 60vw; padding: var(--s-4); overflow: hidden; color: var(--c-white); text-decoration: none; }
+.h-door--blue { background: var(--blue-700); }
+.h-door--orange { background: var(--orange); color: var(--charcoal-900); }
+.h-door--green { background: var(--green); }
+.h-door--purple { background: var(--purple); }
+.h-door-mark { position: absolute; left: 50%; top: 40%; width: 62%; aspect-ratio: 1; transform: translate(-50%, -50%); filter: brightness(0); transition: transform 900ms var(--ease-out); }
+.h-door:hover .h-door-mark { transform: translate(-50%, -50%) rotate(14deg) scale(1.12); }
+.h-door-text { position: relative; display: grid; gap: var(--s-1); }
+.h-door strong { font: 400 clamp(1.1rem, 4.6vw, 1.5rem)/1 var(--font-display); overflow-wrap: anywhere; }
+.h-door-text > span { display: none; font-size: var(--t-sm); line-height: 1.3; }
+.h-door:focus-visible { outline-offset: -6px; outline-color: currentcolor; }
+
+@media (width >= 64rem) {
+  .h-doors { display: flex; height: 84svh; }
+  .h-door { flex: 1 1 0; min-height: 0; padding: var(--s-5); transition: flex-grow 800ms var(--ease-out); }
+  .h-door:hover, .h-door:focus-visible { flex-grow: 1.7; }
+  .h-door-mark { width: min(70%, 20rem); top: 42%; }
+  .h-door strong { font-size: clamp(1.5rem, 1rem + 1.5vw, 2.25rem); }
+  .h-door-text > span { display: block; max-width: 18rem; }
+}
+
+/* Closing call. */
+.h-final { position: relative; padding-block: var(--s-8); background: var(--orange); color: var(--charcoal-900); }
+.h-final-title { margin: var(--s-3) 0 0; max-width: 11em; font: 400 clamp(2.5rem, 1.4rem + 4.4vw, 5.5rem)/.96 var(--font-display); text-wrap: balance; }
+.h-final-cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4) var(--s-6); margin-top: var(--s-6); }
+.h-final .btn { border-color: var(--charcoal-900); background: var(--charcoal-900); color: var(--c-on-dark); }
+.h-final .btn:hover { border-color: var(--charcoal-800); background: var(--charcoal-800); }
+.h-final a:focus-visible { outline-color: var(--charcoal-900); }
+
+@media (width >= 56.25rem) {
+  .h-final .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-7); align-items: end; }
+  .h-final .h-kicker { grid-column: 1 / -1; }
+  .h-final .h-final-cta { margin-top: 0; padding-bottom: var(--s-3); }
+}
+
+/* On the record: a ruled name index on desktop with a hover card, a swipeable rail of posters on phones and tablets. */
+.h-record, .h-stories { position: relative; background: var(--c-bg); color: var(--c-text); }
+.h-record { padding-block: var(--s-9) var(--s-8); }
+.h-record a:focus-visible, .h-stories a:focus-visible, .h-track-wrap:focus-visible { outline-color: var(--c-focus); }
+.h-sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); margin-bottom: var(--s-6); }
+.h-index { display: none; margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--c-text); }
+.h-index a { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-2); padding-block: var(--s-4); border-top: 1px solid var(--c-text); color: inherit; text-decoration: none; transition: opacity var(--m-base), padding var(--m-slow) var(--ease-out); }
+.h-index-name { font: 400 clamp(2.125rem, 1.15rem + 3.9vw, 5.25rem)/1.04 var(--font-display); letter-spacing: -.012em; }
+.h-index-meta { display: grid; gap: 2px; font-size: var(--t-sm); color: var(--c-muted); }
+.h-rail { display: flex; gap: var(--s-3); margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--s-2); list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; }
+.h-rail::-webkit-scrollbar { display: none; }
+.h-rail-item { flex: none; width: min(68vw, 17rem); scroll-snap-align: start; }
+.h-rail-end { display: grid; width: min(44vw, 11rem); }
+.h-rail-all { display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 4 / 5; padding: var(--s-4); background: var(--charcoal-900); color: var(--c-on-dark); text-decoration: none; font: 400 var(--t-lg)/1.1 var(--font-display); }
+.h-rail-all .ico { width: 1.75rem; height: 1.75rem; color: var(--c-highlight); transition: transform var(--m-base); }
+.h-rail-all:hover .ico { transform: translateX(6px); }
+
+@media (width >= 64rem) {
+  .h-rail { display: none; }
+  .h-index { display: block; }
+  .h-index a { grid-template-columns: minmax(0, 1fr) 20rem 17rem; align-items: center; column-gap: var(--s-5); padding-block: var(--s-3); }
+  .h-index-name { white-space: nowrap; font-size: min(calc((100vw - 2 * var(--gutter) - 40rem) / 12.5), 6rem); }
+  .h-index:hover a { opacity: .3; }
+  .h-index a:hover, .h-index a:focus-visible { opacity: 1; padding-left: var(--s-5); }
+}
+.h-peek { position: fixed; inset: 0 auto auto 0; z-index: 25; display: none; flex-direction: column; justify-content: flex-end; width: 19rem; height: 15rem; padding: var(--s-4); overflow: hidden; pointer-events: none; opacity: 0; clip-path: inset(100% 0 0); transition: opacity 200ms, clip-path 420ms var(--ease-out); font: 400 var(--t-xl)/1.05 var(--font-display); color: var(--c-white); background: var(--charcoal-900); }
+
+@media (width >= 64rem) and (pointer: fine) { .h-peek { display: flex; } }
+.h-peek.is-on { opacity: 1; clip-path: inset(0); }
+.h-peek span { position: relative; z-index: 1; }
+.h-peek img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.h-peek--photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, color-mix(in srgb, var(--c-dark-deep) 78%, transparent), transparent 55%); }
+.h-peek--blue { background: var(--blue); }
+.h-peek--orange { background: var(--orange); color: var(--charcoal-900); }
+.h-peek--green { background: var(--green); }
+.h-peek--purple { background: var(--purple); }
+.h-peek--red { background: var(--red); }
+
+@media (prefers-reduced-motion: reduce) { .h-peek { transition: none; } }
+html.home-live [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity 800ms ease, transform 1000ms var(--ease-out); transition-delay: calc(var(--d, 0) * 70ms); }
+html.home-live [data-reveal].in { opacity: 1; transform: none; }
+html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }

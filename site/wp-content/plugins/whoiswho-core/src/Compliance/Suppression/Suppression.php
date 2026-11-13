@@ -124,10 +124,11 @@ class Suppression {
 	/**
 	 * Remove an entry by hand.
 	 *
-	 * @param int $id Entry id.
+	 * @param int    $id     Entry id.
+	 * @param string $reason Why it is removed (the Suppression screen requires one).
 	 * @throws \DomainException Without wiw_edit_suppression.
 	 */
-	public function remove_manual( int $id ): void {
+	public function remove_manual( int $id, string $reason = '' ): void {
 		global $wpdb;
 		$this->require_edit();
 		$entry = $this->get( $id );
@@ -144,7 +145,9 @@ class Suppression {
 			array(
 				'entity_type' => $entry['entity_type'],
 				'source'      => $entry['source'],
-			)
+			),
+			null,
+			$reason
 		);
 	}
 

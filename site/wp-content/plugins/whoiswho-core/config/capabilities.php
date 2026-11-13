@@ -18,7 +18,7 @@ $wiw_admin  = array( 'administrator' );
 $wiw_review = array( 'reviewer', 'administrator' );
 
 return array(
-	'version'      => 1,
+	'version'      => 3,
 	'roles'        => array(
 		'wiw_reviewer' => array(
 			'label'  => 'Reviewer',
@@ -40,6 +40,10 @@ return array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
 		),
+		'moderate_comments'             => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
 		'edit_others_posts'             => array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
@@ -57,6 +61,24 @@ return array(
 			'roles'  => $wiw_edit,
 		),
 		'upload_files'                  => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
+
+		// Pages: About, FAQ, rules and legal pages (REQ-260). Editors and Administrators; a Reviewer has none.
+		'edit_pages'                    => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
+		'edit_others_pages'             => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
+		'publish_pages'                 => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
+		'edit_published_pages'          => array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
 		),
@@ -217,6 +239,10 @@ return array(
 			'roles'  => $wiw_edit,
 		),
 		'wiw_manage_awards'             => array(
+			'source' => 'plugin',
+			'roles'  => $wiw_edit,
+		),
+		'wiw_manage_subscribers'        => array(
 			'source' => 'plugin',
 			'roles'  => $wiw_edit,
 		),

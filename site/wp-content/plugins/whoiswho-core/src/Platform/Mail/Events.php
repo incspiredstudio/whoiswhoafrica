@@ -17,6 +17,8 @@ namespace WhoIsWho\Core\Platform\Mail;
 final class Events {
 
 	public const ENQUIRY_RECEIVED        = 'enquiry_received';
+	public const ENQUIRY_ACKNOWLEDGED    = 'enquiry_acknowledged';
+	public const ENQUIRY_STAFF_NOTICE    = 'enquiry_staff_notice';
 	public const PROFILE_RECEIVED        = 'profile_received';
 	public const PROFILE_APPROVED        = 'profile_approved';
 	public const PROFILE_REJECTED        = 'profile_rejected';
@@ -25,6 +27,8 @@ final class Events {
 	public const REMOVAL_RECEIVED        = 'removal_received';
 	public const REPORT_RECEIVED         = 'report_received';
 	public const REQUEST_RESOLVED        = 'request_resolved';
+	public const REQUEST_ACKNOWLEDGED    = 'request_acknowledged';
+	public const INFORMATION_SENT        = 'information_sent';
 	public const CLAIM_ACKNOWLEDGED      = 'claim_acknowledged';
 	public const CLAIM_DECISION          = 'claim_decision';
 	public const CLAIM_REMINDER          = 'claim_reminder';
@@ -33,11 +37,17 @@ final class Events {
 	public const NOMINATION_WINNER       = 'nomination_winner';
 	public const DATA_REQUEST_ACK        = 'data_request_ack';
 	public const COMMENT_ACKNOWLEDGED    = 'comment_acknowledged';
+	public const COMMENT_HELD            = 'comment_held';
 	public const CUSTOMER_INVITATION     = 'customer_invitation';
 	public const NEWSLETTER_CONFIRMATION = 'newsletter_confirmation';
 	public const RENEWAL_REMINDER        = 'renewal_reminder';
 	public const EXPIRY_REMINDER         = 'expiry_reminder';
 	public const STAFF_ITEM_NEEDS_ATTEND = 'staff_item_needs_attention';
+	public const NEWSLETTER_ISSUE        = 'newsletter_issue';
+	public const DEADLINE_DISPUTES       = 'deadline_disputes';
+	public const DEADLINE_REQUESTS       = 'deadline_requests';
+	public const DEADLINE_ENQUIRIES      = 'deadline_enquiries';
+	public const DISPUTE_ESCALATED       = 'dispute_escalated';
 
 	/**
 	 * Audience and placeholder subject by event.
@@ -49,6 +59,14 @@ final class Events {
 			self::ENQUIRY_RECEIVED        => array(
 				'audience' => 'capability:wiw_receive_enquiries',
 				'subject'  => 'New enquiry received',
+			),
+			self::ENQUIRY_ACKNOWLEDGED    => array(
+				'audience' => 'public',
+				'subject'  => 'We received your enquiry',
+			),
+			self::ENQUIRY_STAFF_NOTICE    => array(
+				'audience' => 'capability:wiw_support_inbox',
+				'subject'  => 'New enquiry in the inbox',
 			),
 			self::PROFILE_RECEIVED        => array(
 				'audience' => 'public',
@@ -82,6 +100,14 @@ final class Events {
 				'audience' => 'public',
 				'subject'  => 'Your request has been resolved',
 			),
+			self::INFORMATION_SENT        => array(
+				'audience' => 'public',
+				'subject'  => 'Information about your request',
+			),
+			self::REQUEST_ACKNOWLEDGED    => array(
+				'audience' => 'public',
+				'subject'  => 'We received your request',
+			),
 			self::CLAIM_ACKNOWLEDGED      => array(
 				'audience' => 'public',
 				'subject'  => 'We received your claim',
@@ -114,6 +140,10 @@ final class Events {
 				'audience' => 'public',
 				'subject'  => 'We received your comment',
 			),
+			self::COMMENT_HELD            => array(
+				'audience' => 'capability:moderate_comments',
+				'subject'  => 'A comment is waiting for moderation',
+			),
 			self::CUSTOMER_INVITATION     => array(
 				'audience' => 'public',
 				'subject'  => 'An invitation',
@@ -134,6 +164,40 @@ final class Events {
 				'audience' => 'capability:wiw_review_records',
 				'subject'  => 'An item needs attention',
 			),
+			self::NEWSLETTER_ISSUE        => array(
+				'audience' => 'public',
+				'subject'  => 'Our latest news',
+			),
+			self::DEADLINE_DISPUTES       => array(
+				'audience' => 'capability:wiw_handle_disputes',
+				'subject'  => 'A correction is nearly or past due',
+			),
+			self::DEADLINE_REQUESTS       => array(
+				'audience' => 'capability:wiw_handle_requests',
+				'subject'  => 'A removal or report is nearly or past due',
+			),
+			self::DEADLINE_ENQUIRIES      => array(
+				'audience' => 'capability:wiw_support_inbox',
+				'subject'  => 'An enquiry is waiting for a reply',
+			),
+			self::DISPUTE_ESCALATED       => array(
+				'audience' => 'administrators',
+				'subject'  => 'An unresolved dispute needs the Administrator',
+			),
 		);
+	}
+
+	/**
+	 * Marketing events: they pass the consent and unsubscribe gate (REQ-061). Modules add their own through the
+	 * wiw_mail_marketing_events filter.
+	 *
+	 * @return string[]
+	 */
+	public static function marketing(): array {
+		$events = array( self::NEWSLETTER_ISSUE );
+		if ( function_exists( 'apply_filters' ) ) {
+			$events = array_map( 'strval', (array) apply_filters( 'wiw_mail_marketing_events', $events ) );
+		}
+		return $events;
 	}
 }
