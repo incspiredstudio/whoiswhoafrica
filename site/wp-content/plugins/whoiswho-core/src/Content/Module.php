@@ -27,6 +27,7 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		require_once __DIR__ . '/Home/functions.php';
 		Stories\StoryFields::hooks();
 		Stories\StoryFlags::hooks();
 		( new Search\StoryIndexer() )->register();

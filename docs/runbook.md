@@ -203,6 +203,16 @@ Baseline on the local PHP built-in server (Windows, no page cache; time to first
 
 Proposed ceilings (for the owner to agree; docs/theme/theme-acceptance.md still lists the numeric budget as an open point): LCP 6000 ms enforced now with 2500 ms the REQ-041 target reported as a warning, CLS 0.1, scripts 20 KB, page weight 900 KB. Tighten LCP to 2500 ms once measured on the staging host.
 
+## Change the hero videos (#799; REQ-001, REQ-041, REQ-052)
+
+The four clips behind the home page title can be replaced without a developer. This host cannot convert video (no ffmpeg), so prepare the files first on a computer with ffmpeg: run `bash site/bin/optimise-hero-video.sh <folder with hero-1.mp4 .. hero-4.mp4>` (it writes portrait 540 x 960, silent H.264 MP4 clips of about 0.5 to 2 MB, optional AV1 WebM files, and 360 and 540 px posters in AVIF, WebP and JPEG). Then, signed in as a person who holds `wiw_curate_home` (Editor and Administrator by default):
+
+1. Open Directory, Home page settings, and scroll to Home page hero videos.
+2. For the clip you are replacing, press Choose from the media library for the MP4, optionally the WebM, and the poster (use the 540 px JPEG or WebP). Uploading from the modal works for MP4, WebM and images only; a video over 6 MB is refused.
+3. Press Save clip. The screen refuses a file that is not really an MP4 or WebM, a poster that is not an image, or a clip over 6 MB. It warns, and still saves, when a file is over 2 MB or is not about 540 x 960. The total weight of the four MP4 clips is shown; keep it under 8 MB.
+4. Check the home page in a private window. Each change is in the audit log (`home.hero_video.change`) and purges the page cache.
+5. To go back, press Reset to bundled on that clip. An empty slot, or one whose files were deleted from the media library, always shows the bundled clip, so the hero is never blank.
+
 ## Concurrency baseline (M5-PRF-04; REQ-054)
 
 `site/tests/Performance/concurrency.mjs` sends 50 concurrent anonymous visitors, each walking the home page, the directory, one profile and one story four times (the cache is warmed first), and records response times and the error rate. Command: `BASE_URL=http://127.0.0.1:<port> CONCURRENCY=50 ROUNDS=4 node tests/Performance/concurrency.mjs`. It writes one JSON line and exits 1 over the budget (`MAX_ERROR_RATE`, default 0; `P95_MS`, default 3000).
