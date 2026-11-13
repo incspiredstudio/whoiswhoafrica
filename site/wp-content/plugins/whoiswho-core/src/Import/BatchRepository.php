@@ -107,6 +107,48 @@ final class BatchRepository {
 	}
 
 	/**
+	 * Store the dry run on the batch: the hash of the previewed file and the counts by code, in the settings snapshot, and the
+	 * status dry_run. Apply refuses a file whose hash differs.
+	 *
+	 * @param string             $batch_id  Batch id.
+	 * @param string             $file_hash Previewed file hash.
+	 * @param array<string, int> $counts    Counts by result code.
+	 */
+	public function record_dry_run( string $batch_id, string $file_hash, array $counts ): void {
+		global $wpdb;
+		$batch    = $this->get( $batch_id );
+		$snapshot = null === $batch ? array() : json_decode( (string) $batch['settings_snapshot'], true );
+		$snapshot = is_array( $snapshot ) ? $snapshot : array();
+
+		$snapshot['dry_run'] = array(
+			'file_hash' => $file_hash,
+			'counts'    => $counts,
+			'at'        => gmdate( 'Y-m-d H:i:s' ),
+		);
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::table(),
+			array(
+				'settings_snapshot' => wp_json_encode( $snapshot ),
+				'status'            => 'dry_run',
+				'updated_at'        => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'batch_id' => $batch_id )
+		);
+	}
+
+	/**
+	 * The newest batches, for the history list.
+	 *
+	 * @param int $limit How many.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function recent( int $limit = 20 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d', max( 1, $limit ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Whether a batch id is registered.
 	 *
 	 * @param string $batch_id Batch id.

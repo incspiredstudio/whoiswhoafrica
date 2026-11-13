@@ -23,6 +23,11 @@ final class SubscriberRepository {
 	public const PURPOSE = ConsentRecorder::STORIES_NEWSLETTER;
 
 	/**
+	 * Days a confirmation link works after it is sent (REQ-249).
+	 */
+	public const CONFIRM_DAYS = 7;
+
+	/**
 	 * Clock returning a UTC time string.
 	 *
 	 * @var callable
@@ -130,12 +135,15 @@ final class SubscriberRepository {
 		if ( '' === $token ) {
 			return false;
 		}
+		$now     = ( $this->clock )();
+		$oldest  = gmdate( 'Y-m-d H:i:s', (int) strtotime( $now . ' UTC' ) - self::CONFIRM_DAYS * DAY_IN_SECONDS );
 		$changed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
-				'UPDATE ' . self::table() . ' SET confirmed_at = %s, token_hash = NULL WHERE token_hash = %s AND purpose = %s AND revoked_at IS NULL AND confirmed_at IS NULL', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
-				( $this->clock )(),
+				'UPDATE ' . self::table() . ' SET confirmed_at = %s, token_hash = NULL WHERE token_hash = %s AND purpose = %s AND revoked_at IS NULL AND confirmed_at IS NULL AND granted_at >= %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+				$now,
 				self::hash_token( $token ),
-				self::PURPOSE
+				self::PURPOSE,
+				$oldest
 			)
 		);
 		return 1 === $changed;

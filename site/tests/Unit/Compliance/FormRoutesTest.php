@@ -42,9 +42,11 @@ final class FormRoutesTest extends TestCase {
 		};
 		return new FormRoutes(
 			array(
-				'claim'      => $make( 'claim' ),
-				'get_listed' => $make( 'get_listed' ),
-				'contact'    => $make( 'contact' ),
+				'claim'           => $make( 'claim' ),
+				'get_listed'      => $make( 'get_listed' ),
+				'contact'         => $make( 'contact' ),
+				'profile_enquiry' => $make( 'profile_enquiry' ),
+				'newsletter'      => $make( 'newsletter' ),
 			)
 		);
 	}
@@ -68,6 +70,23 @@ final class FormRoutesTest extends TestCase {
 		$this->assertSame( 'contact', $this->calls[0]['form'] );
 	}
 
+	public function test_REQ_018_post_enquire_slug_calls_profile_enquiry_with_the_slug(): void {
+		$result = $this->routes()->dispatch( 'POST', 'enquire/acme-ltd', new FormInput( array( 'name' => 'Bola' ) ), '203.0.113.4' );
+		$this->assertSame( 'profile_enquiry', $this->calls[0]['form'] );
+		$this->assertSame( 'acme-ltd', $this->calls[0]['slug'] );
+		$this->assertSame( 303, $result['http'] );
+		$this->assertNull( $this->routes()->dispatch( 'POST', 'enquire/', new FormInput( array() ), '' ) );
+	}
+
+	public function test_REQ_061_post_newsletter_is_the_newsletter_form(): void {
+		$this->routes()->dispatch( 'POST', '/newsletter/', new FormInput( array() ), '' );
+		$this->assertSame( 'newsletter', $this->calls[0]['form'] );
+	}
+
+	public function test_REQ_060_enquiries_switched_off_is_refused_with_409(): void {
+		$this->assertSame( 409, FormRoutes::http_status( 'enquiries_off' ) );
+	}
+
 	public function test_REQ_058_get_requests_and_other_paths_are_left_alone(): void {
 		$routes = $this->routes();
 		$this->assertNull( $routes->dispatch( 'GET', 'contact', new FormInput( array() ), '' ) );
@@ -85,5 +104,38 @@ final class FormRoutesTest extends TestCase {
 		$this->assertSame( 409, FormRoutes::http_status( 'already_claimed' ) );
 		$this->assertSame( 409, FormRoutes::http_status( 'review_first' ) );
 		$this->assertSame( 400, FormRoutes::http_status( 'something_else' ) );
+	}
+
+	public function test_REQ_030_post_nominate_routes_reach_the_nomination_steps(): void {
+		$make   = function ( string $form ): callable {
+			return function ( FormInput $input, string $ip ) use ( $form ): array {
+				$this->calls[] = array(
+					'form' => $form,
+					'ip'   => $ip,
+					'slug' => '',
+					'name' => $input->raw( 'name' ),
+				);
+				return array(
+					'status'    => 'duplicate',
+					'message'   => 'm',
+					'errors'    => array(),
+					'reference' => '',
+				);
+			};
+		};
+		$routes = new FormRoutes(
+			array(
+				'nomination_start' => $make( 'nomination_start' ),
+				'nomination'       => $make( 'nomination' ),
+			)
+		);
+		$start  = $routes->dispatch( 'POST', 'nominate/start/', new FormInput( array() ), '203.0.113.7' );
+		$final  = $routes->dispatch( 'POST', '/nominate', new FormInput( array() ), '203.0.113.7' );
+		$this->assertSame( 'nomination_start', $start['form'] );
+		$this->assertSame( 'nomination', $final['form'] );
+		$this->assertSame( 409, $final['http'], 'a duplicate warning is a 409 the visitor can continue past' );
+		$this->assertNull( $routes->dispatch( 'GET', 'nominate', new FormInput( array() ), '' ), 'the page itself is the theme\'s' );
+		$this->assertSame( 409, FormRoutes::http_status( 'closed' ) );
+		$this->assertSame( 409, FormRoutes::http_status( 'unverified' ) );
 	}
 }

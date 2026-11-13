@@ -26,9 +26,37 @@ final class Request {
 	 * Constructor.
 	 *
 	 * @param array<string, mixed> $values Request values (query and body merged).
+	 * @param array<string, mixed> $files  Uploaded files.
 	 */
-	public function __construct( array $values ) {
+	public function __construct( array $values, array $files = array() ) {
 		$this->values = $values;
+		$this->files  = $files;
+	}
+
+	/**
+	 * Uploaded files, as PHP reports them.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $files;
+
+	/**
+	 * One uploaded file, or null when none was sent. Name, temporary path, size and error code only.
+	 *
+	 * @param string $key Field name.
+	 * @return array{name: string, tmp_name: string, size: int, error: int}|null
+	 */
+	public function file( string $key ): ?array {
+		$file = $this->files[ $key ] ?? null;
+		if ( ! is_array( $file ) || ! isset( $file['tmp_name'], $file['error'] ) || is_array( $file['tmp_name'] ) ) {
+			return null;
+		}
+		return array(
+			'name'     => sanitize_file_name( (string) ( $file['name'] ?? '' ) ),
+			'tmp_name' => (string) $file['tmp_name'],
+			'size'     => (int) ( $file['size'] ?? 0 ),
+			'error'    => (int) $file['error'],
+		);
 	}
 
 	/**
@@ -37,7 +65,7 @@ final class Request {
 	public static function from_globals(): self {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing -- ActionGuard verifies the nonce before any handler reads a value.
 		$values = array_merge( wp_unslash( $_GET ), wp_unslash( $_POST ) );
-		return new self( $values );
+		return new self( $values, $_FILES ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- ActionGuard verifies the nonce; file() returns only name, path, size and error.
 	}
 
 	/**
@@ -48,6 +76,25 @@ final class Request {
 	public function string( string $key ): string {
 		$value = $this->values[ $key ] ?? '';
 		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+	}
+
+	/**
+	 * Whether a value was sent for a name (an empty value counts as sent).
+	 *
+	 * @param string $key Name.
+	 */
+	public function has( string $key ): bool {
+		return array_key_exists( $key, $this->values );
+	}
+
+	/**
+	 * A multi-line text value (a textarea), line breaks kept, or an empty string.
+	 *
+	 * @param string $key Name.
+	 */
+	public function text( string $key ): string {
+		$value = $this->values[ $key ] ?? '';
+		return is_scalar( $value ) ? sanitize_textarea_field( (string) $value ) : '';
 	}
 
 	/**
