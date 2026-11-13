@@ -27,6 +27,7 @@ use WhoIsWho\Core\Content\Stories\StoryTypes;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\PlaceSeeder;
 use WhoIsWho\Core\Directory\ProfileType;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
@@ -142,6 +143,7 @@ final class SampleSeeder {
 		$this->profiles();
 		$this->stories();
 		$this->events();
+		$this->images();
 		$this->awards();
 		$this->curation();
 		$this->pages();
@@ -477,6 +479,40 @@ final class SampleSeeder {
 			$event = $this->event_ids[ (string) $row['event'] ] ?? 0;
 			if ( $story > 0 && $event > 0 && 0 === (int) get_post_meta( $story, 'related_event_id', true ) ) {
 				update_post_meta( $story, 'related_event_id', $event );
+			}
+		}
+	}
+
+	/**
+	 * Generated placeholder images: a portrait for each profile, a cover for each story and a poster for each event. A item that
+	 * already has one keeps it, so running again makes nothing twice.
+	 */
+	private function images(): void {
+		foreach ( (array) $this->data['profiles'] as $row ) {
+			$id = $this->profile_ids[ (string) $row['key'] ] ?? 0;
+			if ( $id < 1 || (int) get_post_meta( $id, PublicProfile::IMAGE_META, true ) > 0 ) {
+				continue;
+			}
+			$image = SampleImages::portrait( 'profile:' . (string) $row['key'], (string) $row['name'] . ' (sample portrait)' );
+			if ( $image > 0 ) {
+				update_post_meta( $id, PublicProfile::IMAGE_META, $image );
+				$this->count( 'images' );
+			}
+		}
+		foreach ( array(
+			'story' => array( (array) $this->data['stories'], $this->story_ids, 'title' ),
+			'event' => array( (array) $this->data['events'], $this->event_ids, 'title' ),
+		) as $kind => $set ) {
+			foreach ( $set[0] as $row ) {
+				$id = $set[1][ (string) $row['slug'] ] ?? 0;
+				if ( $id < 1 || (int) get_post_thumbnail_id( $id ) > 0 ) {
+					continue;
+				}
+				$image = SampleImages::cover( $kind . ':' . (string) $row['slug'], (string) $row[ $set[2] ] . ' (sample cover)' );
+				if ( $image > 0 ) {
+					set_post_thumbnail( $id, $image );
+					$this->count( 'images' );
+				}
 			}
 		}
 	}
