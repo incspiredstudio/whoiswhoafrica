@@ -8,6 +8,27 @@
 
 declare(strict_types=1);
 
+if ( ! function_exists( 'wiw_dist_dir' ) ) {
+	/**
+	 * The built-assets folder: dist/ inside the theme when the install bundle put it there (a theme uploaded as a zip must carry its
+	 * own assets), otherwise dist/ beside wp-content (the release build and the local site).
+	 */
+	function wiw_dist_dir(): string {
+		$own = get_template_directory() . '/dist';
+		return is_readable( $own . '/manifest.json' ) ? $own : WP_CONTENT_DIR . '/../dist';
+	}
+}
+
+if ( ! function_exists( 'wiw_dist_url' ) ) {
+	/**
+	 * URL of the folder wiw_dist_dir() names, with a trailing slash.
+	 */
+	function wiw_dist_url(): string {
+		$own = get_template_directory() . '/dist';
+		return is_readable( $own . '/manifest.json' ) ? trailingslashit( get_template_directory_uri() ) . 'dist/' : trailingslashit( dirname( content_url() ) ) . 'dist/';
+	}
+}
+
 if ( ! function_exists( 'wiw_manifest' ) ) {
 	/**
 	 * The build manifest: logical name => hashed file in dist/. Empty when nothing has been built.
@@ -18,7 +39,7 @@ if ( ! function_exists( 'wiw_manifest' ) ) {
 		static $cache = null;
 		if ( null === $cache ) {
 			$cache = array();
-			$file  = WP_CONTENT_DIR . '/../dist/manifest.json';
+			$file  = wiw_dist_dir() . '/manifest.json';
 			if ( is_readable( $file ) ) {
 				$data = json_decode( (string) file_get_contents( $file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 				if ( is_array( $data ) ) {
@@ -47,7 +68,7 @@ if ( ! function_exists( 'wiw_asset_url' ) ) {
 		if ( empty( $manifest[ $name ] ) ) {
 			return null;
 		}
-		return trailingslashit( dirname( content_url() ) ) . 'dist/' . rawurlencode( (string) $manifest[ $name ] );
+		return wiw_dist_url() . rawurlencode( (string) $manifest[ $name ] );
 	}
 }
 
