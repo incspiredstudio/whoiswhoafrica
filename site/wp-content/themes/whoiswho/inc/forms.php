@@ -52,6 +52,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 				'template' => 'templates/newsletter.php',
 				'title'    => __( 'Newsletter', 'whoiswho' ),
 			),
+			'nominate'    => array(
+				'template' => 'templates/nominate.php',
+				'title'    => __( 'Nominate', 'whoiswho' ),
+			),
 			'done'        => array(
 				'template' => 'templates/done.php',
 				'title'    => __( 'Received', 'whoiswho' ),
