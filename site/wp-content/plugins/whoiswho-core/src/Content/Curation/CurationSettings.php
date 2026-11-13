@@ -152,6 +152,7 @@ final class CurationSettings {
 			$new,
 			$reason
 		); // phpcs:ignore Universal.Arrays.MultipleStatementAlignment
+		do_action( 'wiw_curation_changed', $block );
 	}
 
 	/**

@@ -72,9 +72,27 @@ final class EventPageTest extends TestCase {
 			)
 		); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 		$wp_query->get_posts();
+		// get_header() and get_footer() use require_once, so a template rendered by an earlier test in the same run leaves
+		// nothing for this one: load the file ourselves when it was already included.
+		$reload    = static function ( string $file ): void {
+			if ( in_array( $file, array_map( 'realpath', get_included_files() ), true ) ) {
+				include $file;
+			}
+		};
+		$on_header = static function () use ( $reload ): void {
+			$reload( (string) realpath( get_template_directory() . '/header.php' ) );
+		};
+		$on_footer = static function () use ( $reload ): void {
+			$reload( (string) realpath( get_template_directory() . '/footer.php' ) );
+		};
+		add_action( 'get_header', $on_header );
+		add_action( 'get_footer', $on_footer );
 		ob_start();
 		include get_template_directory() . '/single-wiw_event.php';
-		return (string) ob_get_clean();
+		$out = (string) ob_get_clean();
+		remove_action( 'get_header', $on_header );
+		remove_action( 'get_footer', $on_footer );
+		return $out;
 	}
 
 	public function test_REQ_264_upcoming_event_shows_poster_details_body_and_registration_in_a_new_tab(): void {

@@ -29,5 +29,13 @@ final class Module implements ModuleInterface {
 	public function register(): void {
 		require_once __DIR__ . '/functions.php';
 		NominationsSwitch::hooks();
+		( new AwardsRoutes() )->register();
+		CategoriesScreen::hooks();
+		AwardsStage::hooks();
+		NominationIntake::register();
+		NominationsScreen::hooks();
+		Admin\AddProfileForm::hooks();
+		NominationExport::hooks();
+		NominationPrivacy::hooks();
 	}
 }

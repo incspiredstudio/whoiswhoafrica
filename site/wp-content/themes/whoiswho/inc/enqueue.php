@@ -68,7 +68,7 @@ add_action(
 		/**
 		 * Per-template assets: map of template key => logical names. Only the current template's files load.
 		 */
-		$key = is_front_page() ? 'home' : ( is_singular( 'post' ) ? 'story' : '' );
+		$key = wiw_is_home_request() ? 'home' : ( is_singular( 'post' ) ? 'story' : '' );
 		if ( '' !== $key ) {
 			$css = wiw_asset_url( $key . '.css' );
 			if ( null !== $css ) {
@@ -122,7 +122,7 @@ if ( ! function_exists( 'wiw_print_header_state_script' ) ) {
 		printf(
 			'<script nonce="%1$s" data-home="%2$s">%3$s</script>' . "\n",
 			esc_attr( $nonce ),
-			is_front_page() ? '1' : '0',
+			wiw_is_home_request() ? '1' : '0',
 			$code // phpcs:ignore WordPress.Security.EscapeOutput -- theme-owned file, not user input.
 		);
 	}
