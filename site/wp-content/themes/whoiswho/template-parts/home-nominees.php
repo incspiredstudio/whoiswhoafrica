@@ -54,7 +54,7 @@ $wiw_summary .= ' ' . sprintf( _n( 'in %d category.', 'in %d categories.', $wiw_
 		<div class="h-noms-head">
 			<div>
 				<p class="h-kicker"><?php echo esc_html( $wiw_wins ? __( 'The winners and nominees', 'whoiswho' ) : __( 'The nominees', 'whoiswho' ) ); ?></p>
-				<h2 class="h-big" id="home-noms-title"><span class="h-line"><span><?php esc_html_e( 'Meet the', 'whoiswho' ); ?></span></span> <span class="h-line"><span><?php esc_html_e( 'nominees.', 'whoiswho' ); ?></span></span></h2>
+				<h2 class="h-big h-rv" id="home-noms-title"><span class="h-line"><span><?php esc_html_e( 'Meet the', 'whoiswho' ); ?></span></span> <span class="h-line"><span><?php esc_html_e( 'nominees.', 'whoiswho' ); ?></span></span></h2>
 			</div>
 			<div class="h-noms-side">
 				<p><?php echo esc_html( $wiw_summary ); ?></p>

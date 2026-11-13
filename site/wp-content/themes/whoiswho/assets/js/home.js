@@ -1,6 +1,7 @@
 /* Front page script (M2-HOM-08). Everything here is added on top of a page that already reads in full. With reduced motion, data saver
    or a 2G connection it does almost nothing: the videos stay posters and no scroll effect runs. */
 import { motionAllowed } from "./motion.js";
+import { initHomeFx, intro } from "./home-fx.js";
 
 const root = document.documentElement;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -62,38 +63,13 @@ function init() {
   if (!hero) return;
   if (!motionAllowed()) return;
   root.classList.add("home-live");
-  window.requestAnimationFrame(() => window.requestAnimationFrame(() => root.classList.add("home-in")));
+  intro(() => window.requestAnimationFrame(() => window.requestAnimationFrame(() => root.classList.add("home-in"))));
   startVideos(hero);
   scrollExit(hero);
+  initHomeFx();
 }
 
 init();
-
-/* On the record: a preview card follows the pointer over the name index (desktop with a mouse only). */
-function initPeek() {
-  const peek = document.getElementById("home-peek");
-  const list = document.getElementById("home-index");
-  if (!peek || !list || !window.matchMedia("(width >= 64rem) and (pointer: fine)").matches) return;
-  let on = null;
-  const place = (e) => { peek.style.transform = `translate3d(${e.clientX + 56}px, ${e.clientY - 170}px, 0)`; };
-  const show = (a) => {
-    on = a;
-    const photo = a.getAttribute("data-peek-photo");
-    peek.className = "h-peek is-on h-peek--" + (a.getAttribute("data-peek-tone") || "orange") + (photo ? " h-peek--photo" : "");
-    peek.textContent = "";
-    if (photo) { const img = document.createElement("img"); img.src = photo; img.alt = ""; peek.appendChild(img); }
-    const name = document.createElement("span");
-    name.textContent = a.getAttribute("data-peek-name") || "";
-    peek.appendChild(name);
-  };
-  list.addEventListener("pointermove", (e) => {
-    const a = e.target instanceof Element ? e.target.closest("[data-peek-name]") : null;
-    if (a) { if (a !== on) show(a); place(e); }
-  });
-  list.addEventListener("pointerleave", () => { on = null; peek.classList.remove("is-on"); });
-}
-
-initPeek();
 
 /* Nominees block: the group filter. The chips are hidden until this runs, so without scripts everyone is shown. */
 function initNomineeFilter() {

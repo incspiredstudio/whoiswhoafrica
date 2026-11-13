@@ -90,6 +90,12 @@ function startSmooth() {
   frame = requestAnimationFrame(tick);
 }
 
+/** Glide to a scroll position: through the smooth-scroll library when it runs, otherwise native (instant with reduced motion). */
+export function scrollToY(y, duration = 1.4) {
+  if (smooth) smooth.scrollTo(y, { duration });
+  else window.scrollTo({ top: y, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+}
+
 /** Smooth wheel scrolling: only with a fine pointer and motion allowed. The library is loaded only then. */
 export function initSmoothScroll() {
   const url = window.wiwMotion && window.wiwMotion.lenis;
