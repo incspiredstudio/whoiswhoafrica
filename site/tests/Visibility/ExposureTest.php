@@ -31,7 +31,10 @@ final class ExposureTest extends WpTestCase {
 
 		$staff = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $staff );
-		$this->assertNull( apply_filters( 'rest_authentication_errors', null ), 'a signed-in user passes' );
+		// Staff must have a second factor before REST answers (REQ-047); give this one an authenticator app.
+		update_user_meta( $staff, '_two_factor_enabled_providers', array( 'Two_Factor_Totp' ) );
+		update_user_meta( $staff, '_two_factor_totp_key', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567' );
+		$this->assertNull( apply_filters( 'rest_authentication_errors', null ), 'a signed-in user with a second factor passes' );
 	}
 
 	public function test_REQ_229_user_enumeration_is_blocked(): void {

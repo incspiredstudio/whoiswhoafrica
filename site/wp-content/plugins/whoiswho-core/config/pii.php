@@ -513,4 +513,22 @@ return array(
 		'erase'     => 'anonymise',
 		'note'      => 'Internal notes; never public; may name people.',
 	),
+	array(
+		'kind'      => 'meta',
+		'name'      => '_two_factor_totp_key',
+		'class'     => 'pii',
+		'retention' => 'account_life',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'Authenticator secret (Two Factor plugin). Credential: never exported or logged.',
+	),
+	array(
+		'kind'      => 'meta',
+		'name'      => '_two_factor_backup_codes',
+		'class'     => 'pii',
+		'retention' => 'account_life',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'Hashed recovery codes (Two Factor plugin). Credential: never exported or logged.',
+	),
 );
