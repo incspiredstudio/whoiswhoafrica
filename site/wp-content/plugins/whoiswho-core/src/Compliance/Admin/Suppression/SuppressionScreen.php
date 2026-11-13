@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Compliance\Admin\Suppression;
 
+use WhoIsWho\Core\Compliance\Suppression\SnapshotExport;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
@@ -128,6 +129,9 @@ final class SuppressionScreen {
 		$can_edit = current_user_can( self::EDIT_CAP ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 		$out      = '<div class="wrap"><h1>' . esc_html__( 'Suppression list', 'whoiswho' ) . '</h1>' . $this->notice( $request );
 		$out     .= '<p>' . esc_html__( 'Names that are never imported or published. The reason is for staff only.', 'whoiswho' ) . '</p>';
+		if ( current_user_can( SnapshotExport::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			$out .= '<p><a class="button" href="' . esc_url( SnapshotExport::url() ) . '">' . esc_html__( 'Download snapshot for acquisition', 'whoiswho' ) . '</a> ' . esc_html__( 'The file contains personal data: keep it out of shared folders and delete it after the run.', 'whoiswho' ) . '</p>';
+		}
 		if ( $can_edit ) {
 			$out .= $this->add_form();
 		}

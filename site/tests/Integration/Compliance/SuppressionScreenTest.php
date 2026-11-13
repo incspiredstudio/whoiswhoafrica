@@ -127,4 +127,16 @@ final class SuppressionScreenTest extends TestCase {
 		$this->expectException( \DomainException::class );
 		( new SuppressionScreen() )->html( new Request( array() ) );
 	}
+
+	public function test_REQ_207_snapshot_download_button_shows_only_with_the_export_capability(): void {
+		$this->as_role( 'administrator' );
+		$html = ( new SuppressionScreen() )->html( new Request( array() ) );
+		$this->assertStringContainsString( 'Download snapshot for acquisition', $html );
+		$this->assertStringContainsString( 'action=wiw_suppression_snapshot', html_entity_decode( $html ) );
+		$this->assertStringContainsString( 'personal data', strtolower( $html ), 'the file is labelled as personal data' );
+
+		$this->as_role( 'wiw_reviewer' );
+		$html = ( new SuppressionScreen() )->html( new Request( array() ) );
+		$this->assertStringNotContainsString( 'Download snapshot', $html );
+	}
 }
