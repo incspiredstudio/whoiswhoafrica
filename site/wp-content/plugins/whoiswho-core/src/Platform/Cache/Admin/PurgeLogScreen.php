@@ -61,7 +61,9 @@ final class PurgeLogScreen {
 			self::CAP,
 			static function (): void {
 				echo ( new self( new WpdbPurgeLog() ) )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-			}
+			},
+			false,
+			'compliance'
 		);
 		$registry->hook();
 	}

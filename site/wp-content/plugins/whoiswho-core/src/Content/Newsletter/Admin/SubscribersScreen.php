@@ -78,7 +78,9 @@ final class SubscribersScreen {
 					self::CAP,
 					static function (): void {
 						self::for_site()->render( Request::from_globals() );
-					}
+					},
+					false,
+					'audience'
 				);
 				$registry->hook();
 				ActionGuard::register(

@@ -48,7 +48,9 @@ final class DuplicatesScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'directory'
 				);
 				$registry->hook();
 				ActionGuard::register( self::MERGE_ACTION, self::CAPABILITY, array( self::class, 'handle_merge' ) );

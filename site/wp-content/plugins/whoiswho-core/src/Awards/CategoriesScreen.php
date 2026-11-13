@@ -57,7 +57,9 @@ final class CategoriesScreen {
 					self::CAP,
 					static function (): void {
 						( new self( CategoryService::for_site() ) )->render();
-					}
+					},
+					false,
+					'awards'
 				);
 				$registry->hook();
 				ActionGuard::register(
