@@ -63,5 +63,7 @@ final class Module implements ModuleInterface {
 		Cache\PurgeService::for_site()->register();
 		Cache\Admin\PurgeLogScreen::hooks();
 		Capabilities\CapabilityAudit::for_site()->register();
+		( new Monitoring\Alerts() )->register();
+		( new Monitoring\BackupCheck() )->register();
 	}
 }
