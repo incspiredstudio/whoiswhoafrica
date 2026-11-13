@@ -26,7 +26,7 @@ get_template_part(
 		'type'     => 'checkbox',
 		'required' => true,
 		'label'    => esc_html( $wiw_label ) . ' ' . $wiw_link,
-		'error'    => isset( $args['error'] ) ? (string) $args['error'] : '',
+		'error'    => isset( $args['error'] ) ? (string) $args['error'] : wiw_form_error( $wiw_name ),
 	)
 );
 ?>

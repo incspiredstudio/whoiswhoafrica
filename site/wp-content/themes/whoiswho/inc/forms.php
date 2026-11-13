@@ -44,6 +44,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 				'template' => 'templates/search.php',
 				'title'    => __( 'Search', 'whoiswho' ),
 			),
+			'newsletter'  => array(
+				'template' => 'templates/newsletter.php',
+				'title'    => __( 'Newsletter', 'whoiswho' ),
+			),
 			'done'        => array(
 				'template' => 'templates/done.php',
 				'title'    => __( 'Received', 'whoiswho' ),
