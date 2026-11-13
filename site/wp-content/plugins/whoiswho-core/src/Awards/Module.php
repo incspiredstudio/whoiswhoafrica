@@ -35,5 +35,6 @@ final class Module implements ModuleInterface {
 		NominationIntake::register();
 		NominationsScreen::hooks();
 		Admin\AddProfileForm::hooks();
+		NominationPrivacy::hooks();
 	}
 }
