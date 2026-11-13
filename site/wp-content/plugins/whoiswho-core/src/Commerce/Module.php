@@ -30,5 +30,6 @@ final class Module implements ModuleInterface {
 		SponsorPostType::hooks();
 		PlacementJob::register();
 		DashboardTiles::hooks();
+		SponsoredStoriesScreen::hooks();
 	}
 }
