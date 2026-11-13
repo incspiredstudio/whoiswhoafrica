@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Awards;
 
+use WhoIsWho\Core\Awards\Admin\AddProfileForm;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 
@@ -217,9 +218,10 @@ final class NominationsScreen {
 	 * @param string                $notice  Message to show after an action.
 	 * @param int                   $confirm Nomination awaiting a removal confirmation.
 	 * @param bool|null             $on      Toggle state to show; the stored state when null.
+	 * @param string                $profile_q Search text for the Add profile form.
 	 * @throws \DomainException When the user may not manage awards.
 	 */
-	public function html( array $filters = array(), int $page = 1, string $notice = '', int $confirm = 0, ?bool $on = null ): string {
+	public function html( array $filters = array(), int $page = 1, string $notice = '', int $confirm = 0, ?bool $on = null, string $profile_q = '' ): string {
 		if ( ! current_user_can( self::CAP ) ) {
 			throw new \DomainException( 'You are not allowed to manage nominations.' );
 		}
@@ -229,6 +231,7 @@ final class NominationsScreen {
 		if ( '' !== $notice ) {
 			$out .= '<div class="notice notice-info"><p>' . esc_html( $notice ) . '</p></div>';
 		}
+		$out   .= ( new AddProfileForm( $this->service ) )->html( $profile_q );
 		$out   .= $this->filter_form( $filters );
 		$result = ( new NominationList() )->run( $filters, $page );
 		/* translators: %d: number of nominations. */
@@ -291,42 +294,49 @@ final class NominationsScreen {
 			$filters[ $name ] = $request->string( $name );
 		}
 		echo wp_kses(
-			$this->html( $filters, max( 1, $request->int( 'paged' ) ), $request->string( 'wiw_notice' ), $request->int( 'confirm' ) ),
+			$this->html( $filters, max( 1, $request->int( 'paged' ) ), $request->string( 'wiw_notice' ), $request->int( 'confirm' ), null, $request->string( 'profile_q' ) ),
 			array(
-				'div'    => array( 'class' => true ),
-				'h1'     => array(),
-				'p'      => array(),
-				'br'     => array(),
-				'strong' => array(),
-				'a'      => array( 'href' => true ),
-				'label'  => array(),
-				'table'  => array( 'class' => true ),
-				'thead'  => array(),
-				'tbody'  => array(),
-				'tr'     => array(),
-				'th'     => array( 'scope' => true ),
-				'td'     => array( 'colspan' => true ),
-				'form'   => array(
+				'div'      => array( 'class' => true ),
+				'h1'       => array(),
+				'h2'       => array(),
+				'textarea' => array(
+					'name'      => true,
+					'rows'      => true,
+					'cols'      => true,
+					'maxlength' => true,
+				),
+				'p'        => array(),
+				'br'       => array(),
+				'strong'   => array(),
+				'a'        => array( 'href' => true ),
+				'label'    => array(),
+				'table'    => array( 'class' => true ),
+				'thead'    => array(),
+				'tbody'    => array(),
+				'tr'       => array(),
+				'th'       => array( 'scope' => true ),
+				'td'       => array( 'colspan' => true ),
+				'form'     => array(
 					'method' => true,
 					'action' => true,
 					'style'  => true,
 				),
-				'select' => array(
+				'select'   => array(
 					'name'       => true,
 					'aria-label' => true,
 				),
-				'option' => array(
+				'option'   => array(
 					'value'    => true,
 					'selected' => true,
 				),
-				'input'  => array(
+				'input'    => array(
 					'type'      => true,
 					'name'      => true,
 					'value'     => true,
 					'maxlength' => true,
 					'class'     => true,
 				),
-				'button' => array(
+				'button'   => array(
 					'type'  => true,
 					'class' => true,
 				),
