@@ -1,0 +1,2 @@
+# The golden bundle is hashed byte for byte (records_sha256), so git must never change its line endings.
+* -text

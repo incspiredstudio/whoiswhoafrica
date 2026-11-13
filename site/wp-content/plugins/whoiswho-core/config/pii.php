@@ -45,6 +45,35 @@ return array(
 		'note'      => '',
 	),
 
+	// Guest comments on stories (REQ-258). The email is for the moderator only and is never in public HTML.
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Name a guest typed on a story comment; shown with an approved comment.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Guest email; moderator only, never public.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'comments.comment_author_IP',
+		'class'     => 'pii',
+		'retention' => 'log_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Address WordPress stores for spam checks.',
+	),
+
 	// Tables added in the foundation milestone and the ones planned next.
 	array(
 		'kind'      => 'column',
@@ -255,6 +284,42 @@ return array(
 		'export'    => 'include',
 		'erase'     => 'anonymise',
 		'note'      => 'How staff can check the claim; free text that may name people.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.nominator_name',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Who nominated; never shown to the nominee or the public. Empty for a staff-added nomination.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.nominator_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Verified by single-use link; never public.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.contact_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'exclude',
+		'erase'     => 'delete',
+		'note'      => 'Optional staff-only Contact email (REQ-268). Never public, never in an export or a log; removed with the nomination.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.evidence',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Evidence or note typed by the nominator or staff; may name people.',
 	),
 	array(
 		'kind'      => 'column',
