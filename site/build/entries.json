@@ -10,6 +10,7 @@
     "home": "wp-content/themes/whoiswho/assets/css/home.css",
     "home-js": "wp-content/themes/whoiswho/assets/js/home.js",
     "story": "wp-content/themes/whoiswho/assets/css/story.css",
-    "winners-js": "wp-content/themes/whoiswho/assets/js/winners.js"
+    "winners-js": "wp-content/themes/whoiswho/assets/js/winners.js",
+    "nominate-js": "wp-content/themes/whoiswho/assets/js/nominate.js"
   }
 }
