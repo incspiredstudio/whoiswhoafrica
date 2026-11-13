@@ -37,6 +37,7 @@ final class Module implements ModuleInterface {
 		Events\Admin\EventLifecycle::hooks();
 		Events\Admin\EventListScreen::hooks();
 		( new Comments\CommentPolicy() )->register();
+		Comments\CommentPrivacy::hooks();
 		( new Comments\CommentModeratorNotice() )->register();
 		Newsletter\NewsletterSignup::register();
 		Curation\Admin\CurationScreen::hooks();
