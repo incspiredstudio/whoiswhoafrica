@@ -12,7 +12,7 @@ add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
 		if ( function_exists( 'wiw_core_ready' ) && ! wiw_core_ready() ) {
-			return; // The holding page loads none of the theme's styles.
+			return;
 		}
 		wp_enqueue_style( 'wiw-tokens-brand', get_stylesheet_directory_uri() . '/assets/css/tokens.css', array( 'wiw-tokens-base' ), WIW_CHILD_VERSION );
 		// A url() inside a custom property resolves against the stylesheet that uses it, which is the built bundle, not tokens.css. Absolute addresses keep the brand images working everywhere.
