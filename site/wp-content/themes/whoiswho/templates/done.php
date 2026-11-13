@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $wiw_kind = sanitize_key( (string) get_query_var( 'kind', '' ) );
 $wiw_from = sanitize_key( (string) get_query_var( 'from', '' ) );
 $wiw_ref  = sanitize_text_field( (string) get_query_var( 'ref', '' ) );
-$wiw_ref  = 1 === preg_match( '/^[A-Z]{2,6}-[0-9]{1,8}$/', $wiw_ref ) ? $wiw_ref : '';
+$wiw_ref  = class_exists( '\WhoIsWho\Core\Compliance\Support\Reference' ) ? \WhoIsWho\Core\Compliance\Support\Reference::display_safe( $wiw_ref ) : '';
 
 if ( 'claim' === $wiw_kind ) {
 	$wiw_title = __( 'Claim received', 'whoiswho' );
