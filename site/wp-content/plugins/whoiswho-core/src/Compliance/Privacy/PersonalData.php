@@ -38,6 +38,9 @@ final class PersonalData {
 		'wiw_profile_versions' => 'Profile edit history; erased with the profile.',
 		'wiw_claims'           => 'Sentences extracted from public sources about a profile; no requester.',
 		'wiw_passages'         => 'Source passages about a profile; no requester.',
+		'wiw_customers'        => 'Customer records staff keep for sponsored story deals; contact details are changed or erased by an Administrator, never looked up by address.',
+		'wiw_arrangements'     => 'Sponsored story deals: financial records and internal notes kept by an Administrator; no requester.',
+		'wiw_placements'       => 'Sponsored placements: a business name and dates; no requester.',
 		'wiw_consents'         => 'Newsletter subscriber rows: handled by the newsletter privacy exporter and eraser (M2-NWS-06).',
 	);
 
