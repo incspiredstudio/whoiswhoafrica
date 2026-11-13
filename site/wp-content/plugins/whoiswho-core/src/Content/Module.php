@@ -45,6 +45,7 @@ final class Module implements ModuleInterface {
 		( new Comments\CommentPolicy() )->register();
 		Comments\CommentPrivacy::hooks();
 		( new Comments\CommentModeratorNotice() )->register();
+		( new Comments\CommentSpamGuard() )->register();
 		Newsletter\NewsletterSignup::register();
 		Curation\Admin\CurationScreen::hooks();
 		Curation\CurationCache::register();
