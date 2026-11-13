@@ -174,6 +174,44 @@ if ( ! function_exists( 'wiw_home_record' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wiw_home_stories' ) ) {
+	/**
+	 * The six latest stories, read through PublicStory only. A story with a live placement for the Home surface leads as a labelled
+	 * slot and the others keep their order (REQ-263). The curation engine for story blocks (M2-HOM-03) can replace this through the
+	 * wiw_home_model filter; until then the newest stories are used.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	function wiw_home_stories(): array {
+		if ( ! class_exists( '\WhoIsWho\Core\Content\PublicStory' ) ) {
+			return array();
+		}
+		$list  = \WhoIsWho\Core\Content\PublicStory::list(
+			array(
+				'per_page' => 6,
+				'surface'  => 'home',
+			)
+		);
+		$items = $list['items'];
+		$slot  = $list['slot'];
+		if ( is_array( $slot ) && ! empty( $slot['id'] ) ) {
+			$items = array_merge( array( $slot ), array_values( array_filter( $items, static fn ( array $s ): bool => (int) ( $s['id'] ?? 0 ) !== (int) $slot['id'] ) ) );
+		}
+		return array_slice( $items, 0, 6 );
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_home_events' ) ) {
+	/**
+	 * The next three upcoming events, soonest first (REQ-264).
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	function wiw_home_events(): array {
+		return class_exists( '\WhoIsWho\Core\Content\PublicEvent' ) ? \WhoIsWho\Core\Content\PublicEvent::next_upcoming( 3 ) : array();
+	}
+}
+
 if ( ! function_exists( 'wiw_home_model' ) ) {
 	/**
 	 * Everything the front page needs that is not a profile, story or event.
@@ -210,6 +248,8 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 			'acts'       => wiw_home_acts( $tagline ),
 			'doors'      => wiw_home_doors(),
 			'record'     => wiw_home_record(),
+			'stories'    => wiw_home_stories(),
+			'events'     => wiw_home_events(),
 		);
 		/**
 		 * Filters the home model (the plugin's HomeData view model plugs in here).

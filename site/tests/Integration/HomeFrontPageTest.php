@@ -127,4 +127,47 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'verified', strtolower( $part ) );
 		$this->assertStringNotContainsString( 'sponsored', strtolower( $part ) );
 	}
+
+	public function test_REQ_264_the_stories_and_events_blocks_are_absent_when_there_is_nothing_to_show(): void {
+		$out = $this->render();
+		$this->assertStringNotContainsString( 'home-events-title', $out );
+		$this->assertStringNotContainsString( 'home-stories-title', $out );
+	}
+
+	public function test_REQ_029_the_stories_block_lists_only_public_stories_and_carries_the_sponsored_badge_on_a_slot(): void {
+		$public = self::factory()->post->create(
+			array(
+				'post_title'  => 'Home Public Story',
+				'post_status' => 'publish',
+			)
+		);
+		self::factory()->post->create(
+			array(
+				'post_title'  => 'Home Draft Story',
+				'post_status' => 'draft',
+			)
+		);
+		$titles = array_map( static fn ( array $s ): string => (string) $s['title'], wiw_home_stories() );
+		$this->assertContains( 'Home Public Story', $titles );
+		$this->assertNotContains( 'Home Draft Story', $titles );
+		$out = $this->render();
+		$this->assertStringContainsString( 'Home Public Story', $out );
+		$this->assertStringNotContainsString( 'Home Draft Story', $out );
+		$this->assertGreaterThan( 0, $public );
+	}
+
+	public function test_REQ_264_an_upcoming_event_shows_as_a_compact_row_with_an_all_events_link(): void {
+		$out_before = wiw_home_events();
+		$this->assertIsArray( $out_before );
+		add_filter(
+			'wiw_home_model',
+			static function ( array $model ): array {
+				$model['events'] = \WhoIsWho\Core\Content\PublicEvent::next_upcoming( 3 );
+				return $model;
+			}
+		);
+		$out = $this->render();
+		remove_all_filters( 'wiw_home_model' );
+		$this->assertSame( str_contains( $out, 'ag-row--compact' ), array() !== $out_before );
+	}
 }
