@@ -1389,3 +1389,10 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .comment-form { display: grid; gap: var(--s-4); }
 .comment-form .form-submit { margin: 0; }
 .comment-form .btn { width: auto; }
+
+/* Report dialog: a native modal, so focus stays inside and Escape closes it. */
+.dlg { width: min(36rem, calc(100% - 2 * var(--gutter))); max-height: calc(100dvh - 2 * var(--s-5)); padding: var(--s-5); border: 1px solid var(--c-line); border-top: 3px solid var(--c-text); border-radius: var(--r-1); background: var(--c-surface); color: var(--c-text); box-shadow: var(--sh-3); overflow-y: auto; }
+.dlg::backdrop { background: color-mix(in srgb, var(--c-dark) 60%, transparent); }
+.dlg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-3); }
+.dlg-head h2 { margin: 0; font: 400 var(--t-xl)/1.1 var(--font-display); }
+.dlg .form { margin-top: var(--s-4); padding: 0; border: 0; box-shadow: none; background: transparent; }

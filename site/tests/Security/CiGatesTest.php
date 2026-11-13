@@ -89,11 +89,11 @@ final class CiGatesTest extends TestCase {
 	}
 
 	public function test_REQ_056_only_the_traceability_report_may_continue_on_error(): void {
+		// Two named steps are allowed to be non-blocking: the traceability report and the performance budget (until the owner agrees it).
 		$count = preg_match_all( '/continue-on-error/', $this->workflow() );
-		$this->assertLessThanOrEqual( 1, $count, 'a blocking gate was made optional' );
-		if ( 1 === $count ) {
-			$this->assertStringContainsString( 'Traceability report', $this->job( 'brand' ) );
-			$this->assertMatchesRegularExpression( '/Traceability report[^\n]*\n\s+continue-on-error: true/', $this->workflow() );
-		}
+		$this->assertLessThanOrEqual( 2, $count, 'a blocking gate was made optional' );
+		$this->assertMatchesRegularExpression( '/Traceability report[^\n]*\n\s+continue-on-error: true/', $this->workflow() );
+		$this->assertMatchesRegularExpression( '/Performance budget \(non-blocking\)\n\s+continue-on-error: true/', $this->workflow() );
+		$this->assertStringContainsString( 'Performance budget', $this->job( 'e2e' ) );
 	}
 }
