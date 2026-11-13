@@ -12,6 +12,12 @@
       "version": "0.17.0",
       "reason": "Staff two-factor sign-in, enforced for every user with recovery codes (docs/plugins/third-party.md: Staff two-factor; D-050, Q76; owner approved on issue #2). Stores the user's second-factor secrets in user meta; loaded by whoiswho-core so it cannot be deactivated.",
       "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/user-role-editor",
+      "version": "4.67",
+      "reason": "Per-user capability and role screen (docs/plugins/third-party.md: Per-user capability screen, Decided Q86; owner approved on issue #2). Limited to wiw_manage_capabilities (Administrator only), loaded by whoiswho-core; the guard still refuses fixed capabilities. Touches no visitor data.",
+      "docs": "docs/plugins/third-party.md"
     }
   ]
 }

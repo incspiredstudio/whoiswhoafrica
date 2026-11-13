@@ -20,7 +20,8 @@
     "johnpbloch/wordpress-core-installer": "^2.0",
     "nikic/php-parser": "^5.9",
     "woocommerce/action-scheduler": "^4.2",
-    "wpackagist-plugin/two-factor": "0.17.0"
+    "wpackagist-plugin/two-factor": "0.17.0",
+    "wpackagist-plugin/user-role-editor": "4.67"
   },
   "config": {
     "optimize-autoloader": true,
