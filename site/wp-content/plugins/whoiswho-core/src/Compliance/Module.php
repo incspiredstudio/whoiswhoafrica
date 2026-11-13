@@ -32,6 +32,7 @@ final class Module implements ModuleInterface {
 		Retention\RetentionJob::register();
 		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
+		Admin\Requests\RequestsScreen::hooks();
 		Admin\Suppression\SuppressionScreen::hooks();
 		Forms\FormRoutes::register_for_site();
 		( new Legal\LegalPages() )->register();
