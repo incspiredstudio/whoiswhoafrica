@@ -8,6 +8,18 @@ Skeleton created at M0. Each section names the issue that completes it; "TODO" m
 - Studio uses SQLite; PHPUnit integration tests needing MariaDB wait on the test-environment issue (#366). Mail catcher: #367.
 - Owner issue: M0-INF-02 (done).
 
+## Install on a plain WordPress or WordPress Studio (#787, #786, #788; REQ-046, REQ-056)
+
+For a site that is not built from the repository (no composer, no deploy script): build the bundle once, then install the zips by hand. The bundle's own `INSTALL.md` is the step-by-step list; this section is the maintainer's view.
+
+- **Build:** in `site/`, `composer install`, `npm ci`, then `bash bin/package-release.sh` (or `npm run package`). It runs `npm run build` and writes `build/install-bundle/whoiswho-install-bundle/` (git-ignored): `whoiswho.zip` (parent theme, built assets inside its `dist/`), `whoiswho-child.zip`, `whoiswho-core.zip` (with Action Scheduler, Two Factor and User Role Editor in `bundled/`), `whoiswho-guard-mu-plugin.zip`, `wiw.php`, `INSTALL.md`, `SHA256SUMS.txt`. It refuses to package tests, `.env*`, logs, `wp-config.php` or `.git`. Needs PHP with the zip extension. Options: `--out DIR`, `--skip-assets`.
+- **Order to install:** (1) `WP_ENVIRONMENT_TYPE` local or staging in `wp-config.php`; (2) upload the two themes, activate the child; (3) unzip the guard into `wp-content/mu-plugins/`; (4) upload and activate the core plugin; (5) optional `php wiw.php sample:seed`.
+- **Why the plugin zip is enough:** `Platform\ThirdParty::dir_for()` finds Action Scheduler, Two Factor and User Role Editor beside the plugin (`wp-content/plugins/<slug>`, the composer layout) first, otherwise in `whoiswho-core/bundled/<slug>`. Nothing is downloaded and nothing needs wordpress.org. The loading itself (the plugin requires the files, so they cannot be deactivated in wp-admin) is unchanged.
+- **No `Requires Plugins:` header (WordPress 6.5+ plugin dependencies):** it would make WordPress demand separately installed copies of those plugins from wordpress.org, which is the opposite of the bundled, always-on design (D-050). It is therefore not used. WP Super Cache is the one third-party plugin that is not bundled (it computes its paths from `wp-content/plugins/wp-super-cache`); it is loaded from there only when `WP_CACHE` is on.
+- **What the theme does without the plugin:** the parent theme's `functions.php` loads only `inc/dependencies.php` and `inc/safe-mode.php` when `wiw_core_ready()` is false (plugin missing, inactive or not started). wp-admin shows a notice on the Dashboard, Plugins and Themes screens (one-click Activate through WordPress's own nonce-checked link, an upload link when missing, a copy instruction for the must-use guard), and the public site answers 503 with a plain holding page. No template that calls plugin code runs.
+- **Migrations on activation:** activating the plugin applies pending migrations and sets pretty permalinks when the site still has plain ones. In production they are refused (only the deploy script migrates); a first install on a production host runs `WIW_DEPLOY_MIGRATE=1 php wiw.php migrate` once. `wiw.php` finds WordPress through `WIW_WP_LOAD`, the composer layout, or its own folder. `wp wiw <command>` exists when WP-CLI is present.
+- **WordPress Studio:** its default SQLite database cannot host the plugin's tables (triggers); use a MySQL or MariaDB database.
+
 ## Code quality settings
 
 | Tool | Setting | Owner issue |

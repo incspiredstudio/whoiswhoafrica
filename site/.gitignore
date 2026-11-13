@@ -24,6 +24,7 @@
 /build/coverage/
 /.phpunit.cache/
 /build/release/
+/build/install-bundle/
 /wp-content/wiw-logs/
 /wp-content/advanced-cache.php
 /wp-content/wp-cache-config.php

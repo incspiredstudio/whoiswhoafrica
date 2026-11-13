@@ -7,6 +7,7 @@
     "lint:js": "eslint .",
     "lint:css": "stylelint \"**/*.css\" --allow-empty-input",
     "test:e2e": "playwright test",
+    "package": "bash bin/package-release.sh",
     "build:sample": "node build/build.mjs --sample",
     "theme-json": "node build/theme-json.mjs",
     "theme-json:check": "node build/theme-json.mjs --check"
