@@ -136,6 +136,9 @@ add_action(
 			'wiw/edition'             => array( 'Edition label', 'wiw_render_edition_block' ),
 		);
 		foreach ( $blocks as $name => list( $title, $callback ) ) {
+			if ( WP_Block_Type_Registry::get_instance()->is_registered( $name ) ) {
+				continue;
+			}
 			register_block_type(
 				$name,
 				array(
