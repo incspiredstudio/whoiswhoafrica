@@ -32,6 +32,38 @@ function showAll() {
   document.querySelectorAll("[data-reveal]").forEach((n) => n.classList.add("in"));
 }
 
+/* Blocks on the inner pages that rise in as they are scrolled to (issue 746). Only blocks that start below the first screen are tagged, so
+   nothing flashes; the tag is dropped again a moment after the block has appeared, so hover and focus transforms work as written. */
+const AUTO_REVEAL = [
+  ".section-head", ".aw-head", ".aw-group", ".aw-steps", ".aw-crit", ".aw-sponsors", ".np-group-head", ".np-grid", ".nom-how", ".nom-card",
+  ".scard", ".pcard", ".ab-purpose-text", ".ab-pillar", ".ab-do-head", ".ab-do-list > li", ".ab-how-list > li", ".ab-figs", ".ab-cta h2",
+  ".index-list", ".profile-main > *", ".profile-rail > *",
+].join(",");
+const NOT_AUTO = ".home, .dlg, .drawer, .mega, .sov, .site-head, .site-foot, footer, [data-no-reveal]";
+
+function tagBelowTheFold() {
+  const fold = window.innerHeight * 0.95;
+  const counts = new Map();
+  document.querySelectorAll(AUTO_REVEAL).forEach((n) => {
+    if (n.hasAttribute("data-reveal") || n.closest(NOT_AUTO) || n.getBoundingClientRect().top < fold) return;
+    n.setAttribute("data-reveal", "");
+    n.setAttribute("data-reveal-auto", "");
+    const i = counts.get(n.parentElement) || 0;
+    counts.set(n.parentElement, i + 1);
+    n.style.setProperty("--i", String(i % 4));
+  });
+}
+
+function releaseAuto(n) {
+  if (!n.hasAttribute("data-reveal-auto")) return;
+  window.setTimeout(() => {
+    n.removeAttribute("data-reveal");
+    n.removeAttribute("data-reveal-auto");
+    n.classList.remove("in");
+    n.style.removeProperty("--i");
+  }, 1000);
+}
+
 /** Reveal-on-scroll. Safe to call again after content changes. */
 export function initReveals() {
   if (observer) observer.disconnect();
@@ -39,6 +71,7 @@ export function initReveals() {
     showAll();
     return;
   }
+  tagBelowTheFold();
   root.classList.add("js-motion");
   observer = new IntersectionObserver(
     (entries) => {
@@ -46,6 +79,7 @@ export function initReveals() {
         if (entry.isIntersecting) {
           entry.target.classList.add("in");
           observer.unobserve(entry.target);
+          releaseAuto(entry.target);
         }
       });
     },
@@ -55,7 +89,10 @@ export function initReveals() {
   // Safety net: nothing stays hidden if the observer never fires.
   setTimeout(() => {
     document.querySelectorAll("[data-reveal]:not(.in)").forEach((n) => {
-      if (n.getBoundingClientRect().top < window.innerHeight) n.classList.add("in");
+      if (n.getBoundingClientRect().top < window.innerHeight) {
+        n.classList.add("in");
+        releaseAuto(n);
+      }
     });
   }, 1200);
 }
