@@ -24,6 +24,7 @@ use WhoIsWho\Core\Platform\Pii\PiiCatalogue;
 final class NominationPrivacy {
 
 	public const GROUP          = 'whoiswho-nominations';
+	public const TABLES         = array( 'wiw_nominations' );
 	public const DEFAULT_DAYS   = 730;
 	public const RETENTION_HOOK = 'wiw_retention_run';
 

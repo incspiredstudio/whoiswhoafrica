@@ -30,6 +30,7 @@ final class Module implements ModuleInterface {
 		Support\EnquiryIntake::register();
 		Deadlines\DeadlineTracker::register();
 		Retention\RetentionJob::register();
+		Privacy\PersonalData::hooks();
 		Confirm\RequesterConfirmation::register();
 		Admin\EnquiriesScreen::hooks();
 		Admin\Requests\RequestsScreen::hooks();
