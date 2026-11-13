@@ -27,7 +27,7 @@ $wiw_slug = rawurlencode( $wiw_profile->slug );
  */
 ob_start();
 do_action( 'wiw_profile_contact', $wiw_profile );
-$wiw_contact   = trim( (string) ob_get_clean() );
+$wiw_contact = trim( (string) ob_get_clean() );
 // One rule for the Claim button: reviewed and not yet claimed (REQ-156, REQ-226).
 $wiw_can_claim = $wiw_profile->claimable;
 ?>
