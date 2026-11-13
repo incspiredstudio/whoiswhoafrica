@@ -130,6 +130,16 @@ class PlacementRepository {
 	}
 
 	/**
+	 * Every placement with its deal's cancelled flag, for the label job.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function all_with_deal_state(): array {
+		global $wpdb;
+		return (array) $wpdb->get_results( 'SELECT p.*, a.cancelled AS deal_cancelled FROM ' . self::table() . ' p JOIN ' . ArrangementRepository::table() . ' a ON a.id = p.arrangement_id ORDER BY p.story_id, p.starts_on', ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table names.
+	}
+
+	/**
 	 * Placements of a deal, oldest first.
 	 *
 	 * @param int $arrangement_id Deal id.
