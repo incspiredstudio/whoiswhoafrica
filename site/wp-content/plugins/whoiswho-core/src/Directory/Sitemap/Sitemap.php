@@ -4,7 +4,7 @@
  * and published pages; /sitemap-profiles-N.xml lists profiles whose state allows a sitemap entry (StatePolicy::in_sitemap, read
  * from the state table, so only Published - reviewed). Pending, unpublished, removed, suppressed, draft and hidden profiles never
  * appear. Built on request, cached five minutes, and the cache is dropped as soon as a profile changes state or a page changes.
- * Core and user sitemaps stay off (the guard turns them off). Published stories join in M2.
+ * Core and user sitemaps stay off (the guard turns them off). Published stories are listed in /sitemap-stories.xml.
  *
  * @package WhoIsWho
  */
@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Sitemap;
 
+use WhoIsWho\Core\Content\Stories\StoryUrls;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
@@ -35,6 +36,7 @@ final class Sitemap {
 		add_action( 'parse_request', array( $this, 'on_parse_request' ), 0 );
 		add_action( 'wiw_profile_state_changed', array( $this, 'purge' ) );
 		add_action( 'save_post_page', array( $this, 'purge' ) );
+		add_action( 'transition_post_status', array( $this, 'purge_for_story' ), 10, 3 );
 		add_action( 'deleted_post', array( $this, 'purge' ) );
 		add_action( 'trashed_post', array( $this, 'purge' ) );
 	}
@@ -77,6 +79,12 @@ final class Sitemap {
 				'body'   => $this->cached( 'pages', fn (): string => $this->pages() ),
 			);
 		}
+		if ( 'sitemap-stories.xml' === $path ) {
+			return array(
+				'status' => 200,
+				'body'   => $this->cached( 'stories', fn (): string => $this->stories() ),
+			);
+		}
 		if ( 1 === preg_match( '/^sitemap-profiles-([0-9]{1,6})\.xml$/', $path, $m ) ) {
 			$part = (int) $m[1];
 			if ( $part < 1 || $part > max( 1, $this->part_count() ) ) {
@@ -91,6 +99,19 @@ final class Sitemap {
 			);
 		}
 		return null;
+	}
+
+	/**
+	 * A story entered or left the published state: drop the cache.
+	 *
+	 * @param string   $to    New status.
+	 * @param string   $from  Old status.
+	 * @param \WP_Post $post Post.
+	 */
+	public function purge_for_story( string $to, string $from, \WP_Post $post ): void {
+		if ( 'post' === $post->post_type && ( 'publish' === $to || 'publish' === $from ) && $to !== $from ) {
+			$this->purge();
+		}
 	}
 
 	/**
@@ -121,7 +142,7 @@ final class Sitemap {
 	 * The index.
 	 */
 	private function index(): string {
-		$parts   = array( home_url( '/sitemap-pages.xml' ) );
+		$parts   = array( home_url( '/sitemap-pages.xml' ), home_url( '/sitemap-stories.xml' ) );
 		$profile = max( 1, $this->part_count() );
 		for ( $i = 1; $i <= $profile; $i++ ) {
 			$parts[] = home_url( '/sitemap-profiles-' . $i . '.xml' );
@@ -142,6 +163,17 @@ final class Sitemap {
 		$pages = get_pages( array( 'sort_column' => 'ID' ) );
 		foreach ( $pages as $page ) {
 			$xml .= $this->url( (string) get_permalink( $page ), $page->post_modified_gmt );
+		}
+		return $this->wrap( 'urlset', $xml );
+	}
+
+	/**
+	 * Published stories, from the story read-side list.
+	 */
+	private function stories(): string {
+		$xml = '';
+		foreach ( StoryUrls::published( self::PER_PART ) as $row ) {
+			$xml .= $this->url( $row['url'], $row['modified'] );
 		}
 		return $this->wrap( 'urlset', $xml );
 	}
