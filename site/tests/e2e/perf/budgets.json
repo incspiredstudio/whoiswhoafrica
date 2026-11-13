@@ -1,0 +1,10 @@
+{
+  "_note": "Regression ceilings proposed from the measured baseline (docs/runbook.md, Performance budget). The REQ-041 target is lcpTargetMs; lcpMs is the ceiling enforced today. Non-blocking in CI until the owner agrees the numbers.",
+  "profile": "Mid-range Android: 412x823 viewport, 4x CPU slowdown, 1.6 Mbps down, 750 kbps up, 150 ms round trip, cold cache, median of runs",
+  "runs": 3,
+  "lcpTargetMs": 2500,
+  "lcpMs": 6000,
+  "cls": 0.1,
+  "scriptKb": 20,
+  "pageKb": 900
+}

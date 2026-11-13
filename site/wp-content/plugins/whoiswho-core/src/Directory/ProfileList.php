@@ -110,6 +110,13 @@ final class ProfileList {
 			$args   = array_merge( $args, $tt_ids );
 		}
 
+		$text = isset( $params['q'] ) && is_string( $params['q'] ) ? trim( mb_substr( trim( wp_strip_all_tags( $params['q'] ) ), 0, 80 ) ) : '';
+		if ( '' !== $text ) {
+			$applied['q'] = $text;
+			$where       .= ' AND p.post_title LIKE %s';
+			$args[]       = '%' . $wpdb->esc_like( $text ) . '%';
+		}
+
 		$from  = ' FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID';
 		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from . $where, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders -- fixed names; values prepared.
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );

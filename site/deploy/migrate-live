@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+# The go-live migration (M0-INF-13; REQ-056, REQ-273, REQ-095). Moves the finished local site to the live host:
+# copy the code, import the database and uploads, check the secrets file sits outside the web root, take an encrypted
+# pre-migration dump, run the forward-only migrations through the plugin command, run the smoke checks.
+# Production migrations run only through this script, which sets WIW_DEPLOY_MIGRATE=1 for that one command.
+# Run it on the live host only after the owner approves (docs/build/deployment.md).
+#
+# Usage:
+#   deploy/migrate-live --release DIR --target DIR --secrets FILE [options]
+#   deploy/migrate-live --rollback --release PREVIOUS_ARTIFACT --target DIR --secrets FILE --restore-dump FILE
+#   deploy/migrate-live --print-checklist
+#
+#   --release DIR        the artifact built by deploy/build-release (the unpacked folder)
+#   --target DIR         the web root on the host (with --releases-layout: the folder that holds releases/ and current)
+#   --secrets FILE       the secrets file; must be outside the web root (wp-config finds it through WIW_SECRETS_FILE)
+#   --db-import FILE     a .sql file to import before migrating (the local database dump)
+#   --uploads DIR        the local uploads folder to copy to wp-content/uploads
+#   --dump-dir DIR       where the pre-migration dump goes (default: a "wiw-dumps" folder beside the secrets file)
+#   --url URL            the public address, for the HTTP smoke checks (default: WordPress facts only)
+#   --production         production mode: the dump and the migration flag are mandatory (they are taken in every mode;
+#                        this flag also turns a missing BACKUP_PASSPHRASE into a failure)
+#   --dry-run            print every step and every command; change nothing and run nothing
+#   --releases-layout    copy into releases/<timestamp> and point the current symlink at it (instant rollback)
+#   --rollback           redeploy the artifact given by --release and restore --restore-dump (an encrypted dump)
+#   --restore-dump FILE  with --rollback: the pre-migration dump to restore
+#   --skip-smoke         do not run the smoke checks (never for go-live)
+# Environment: WIW_PHP, WIW_MYSQL, WIW_MYSQLDUMP name the commands (defaults php, mysql, mysqldump).
+# Exit codes: 0 done, 1 a step or a smoke check failed, 2 bad usage. The script never prints a secret value.
+
+set -euo pipefail
+
+PHP="${WIW_PHP:-php}"
+MYSQL="${WIW_MYSQL:-mysql}"
+MYSQLDUMP="${WIW_MYSQLDUMP:-mysqldump}"
+
+RELEASE="" TARGET="" SECRETS="" DB_IMPORT="" UPLOADS="" DUMP_DIR="" URL="" RESTORE=""
+PRODUCTION=0 DRY=0 LAYOUT=0 ROLLBACK=0 SKIP_SMOKE=0 CHECKLIST_ONLY=0
+
+usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--release) RELEASE="${2:?}"; shift 2 ;;
+		--target) TARGET="${2:?}"; shift 2 ;;
+		--secrets) SECRETS="${2:?}"; shift 2 ;;
+		--db-import) DB_IMPORT="${2:?}"; shift 2 ;;
+		--uploads) UPLOADS="${2:?}"; shift 2 ;;
+		--dump-dir) DUMP_DIR="${2:?}"; shift 2 ;;
+		--url) URL="${2:?}"; shift 2 ;;
+		--restore-dump) RESTORE="${2:?}"; shift 2 ;;
+		--production) PRODUCTION=1; shift ;;
+		--dry-run) DRY=1; shift ;;
+		--releases-layout) LAYOUT=1; shift ;;
+		--rollback) ROLLBACK=1; shift ;;
+		--skip-smoke) SKIP_SMOKE=1; shift ;;
+		--print-checklist) CHECKLIST_ONLY=1; shift ;;
+		-h|--help) usage ;;
+		*) echo "migrate-live: unknown option $1" >&2; usage ;;
+	esac
+done
+
+checklist() {
+	cat <<'EOF'
+
+LIVE-HOST CHECKLIST (docs/build/deployment.md). A human runs these once and writes each result in docs/runbook.md.
+  [ ] PHP version, memory and time limits are enough for imports and the plugin
+  [ ] A database and user exist
+  [ ] SMTP sends, and SPF, DKIM and DMARC pass
+  [ ] The uploads folder is writable
+  [ ] Cron or WP-Cron runs jobs (purge, email, imports, reminders)
+  [ ] A 1,000-record import in chunks finishes
+  [ ] 410 behaviour for unpublished profiles (and purge by URL if a CDN is added)
+  [ ] TRIGGER privilege for the audit-log triggers
+  [ ] A restore test: restore the dump taken by this script into a scratch database
+EOF
+}
+
+if [ "$CHECKLIST_ONLY" -eq 1 ]; then checklist; exit 0; fi
+
+[ -n "$RELEASE" ] && [ -n "$TARGET" ] && [ -n "$SECRETS" ] || { echo "migrate-live: --release, --target and --secrets are required" >&2; usage; }
+if [ "$ROLLBACK" -eq 1 ] && [ -z "$RESTORE" ]; then echo "migrate-live: --rollback needs --restore-dump" >&2; usage; fi
+
+fail() { echo "migrate-live: FAILED: $1" >&2; exit 1; }
+step() { echo; echo "STEP $1/9: $2"; }
+# Print the command in dry-run mode, run it otherwise. Arguments only; no secret value is ever in an argument.
+act() { if [ "$DRY" -eq 1 ]; then echo "  [dry run] $*"; else "$@"; fi; }
+say() { echo "  $*"; }
+
+[ "$DRY" -eq 1 ] && echo "DRY RUN: every step is shown; nothing is changed and no command runs."
+[ "$ROLLBACK" -eq 1 ] && echo "ROLLBACK: redeploying the previous artifact and restoring the dump."
+
+abs() { (cd "$1" 2>/dev/null && pwd) || echo "$1"; }
+
+# Read one KEY from the secrets file. Used for the database name, user, password, host and the backup passphrase only.
+secret() { [ -r "$SECRETS" ] || return 0; grep -E "^$1=" "$SECRETS" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//" || true; }
+
+# ---- STEP 1: preflight ------------------------------------------------------------------------------------------
+step 1 "Preflight: the artifact, the themes, the secrets file"
+[ -d "$RELEASE" ] || fail "the release folder does not exist: $RELEASE"
+[ -f "$RELEASE/wp-content/themes/whoiswho/style.css" ] || fail "the release has no parent theme whoiswho"
+[ -f "$RELEASE/wp-content/themes/whoiswho-child/style.css" ] || fail "the release has no child theme whoiswho-child"
+grep -Eq '^[[:space:]]*Template:[[:space:]]*whoiswho[[:space:]]*$' "$RELEASE/wp-content/themes/whoiswho-child/style.css" || fail "the child theme does not declare 'Template: whoiswho'"
+[ -f "$RELEASE/bin/wiw.php" ] || fail "the release has no bin/wiw.php"
+[ -d "$TARGET" ] || { [ "$DRY" -eq 1 ] || fail "the target folder does not exist: $TARGET"; }
+[ -r "$SECRETS" ] || fail "the secrets file is not readable: $SECRETS"
+SECRETS_DIR="$(abs "$(dirname "$SECRETS")")"
+TARGET_ABS="$(abs "$TARGET")"
+case "$SECRETS_DIR/" in "$TARGET_ABS"/*) fail "the secrets file must be outside the web root ($TARGET)" ;; esac
+[ -n "$DB_IMPORT" ] && { [ -r "$DB_IMPORT" ] || fail "the database file is not readable: $DB_IMPORT"; }
+[ -n "$UPLOADS" ] && { [ -d "$UPLOADS" ] || fail "the uploads folder does not exist: $UPLOADS"; }
+[ -n "$DUMP_DIR" ] || DUMP_DIR="$SECRETS_DIR/wiw-dumps"
+say "release version: $(grep -o '"version"[^,}]*' "$RELEASE/release.json" 2>/dev/null | head -1 || echo unknown)"
+say "ok: both themes present, child declares its parent, secrets file is outside the web root"
+export WIW_SECRETS_FILE="$SECRETS"
+
+STAMP="$(date -u +%Y%m%d%H%M%S)"
+if [ "$LAYOUT" -eq 1 ] && [ "$ROLLBACK" -eq 0 ]; then DEST="$TARGET/releases/$STAMP"; else DEST="$TARGET"; fi
+
+db_args() { printf '%s\n' "--host=$(secret DB_HOST)" "--user=$(secret DB_USER)" "$(secret DB_NAME)"; }
+dump_file="$DUMP_DIR/pre-migration-$STAMP.sql.gz.enc"
+
+copy_code() {
+	mkdir -p "$DEST"
+	if command -v rsync >/dev/null 2>&1; then
+		rsync -a --delete --exclude='/wp-content/uploads' --exclude='/wp-config.php.local' "$RELEASE/" "$DEST/"
+	else
+		(cd "$RELEASE" && tar -cf - .) | (cd "$DEST" && tar -xf -)
+	fi
+}
+
+restore_dump() {
+	local pass; pass="$(secret BACKUP_PASSPHRASE)"
+	[ -n "$pass" ] || fail "BACKUP_PASSPHRASE is not set in the secrets file"
+	( export MYSQL_PWD; MYSQL_PWD="$(secret DB_PASSWORD)"; export WIW_DUMP_PASS="$pass"
+	  openssl enc -d -aes-256-cbc -pbkdf2 -pass env:WIW_DUMP_PASS -in "$1" | gunzip | "$MYSQL" "--host=$(secret DB_HOST)" "--user=$(secret DB_USER)" "$(secret DB_NAME)" ) || fail "the restore failed"
+}
+
+take_dump() {
+	local pass; pass="$(secret BACKUP_PASSPHRASE)"
+	if [ -z "$pass" ]; then
+		[ "$PRODUCTION" -eq 1 ] && fail "BACKUP_PASSPHRASE is not set in the secrets file; production never migrates without an encrypted dump"
+		fail "BACKUP_PASSPHRASE is not set in the secrets file; the dump is encrypted with it"
+	fi
+	mkdir -p "$DUMP_DIR"
+	( export MYSQL_PWD; MYSQL_PWD="$(secret DB_PASSWORD)"; export WIW_DUMP_PASS="$pass"
+	  set -o pipefail
+	  "$MYSQLDUMP" --single-transaction "--host=$(secret DB_HOST)" "--user=$(secret DB_USER)" "$(secret DB_NAME)" | gzip -9 | openssl enc -aes-256-cbc -pbkdf2 -pass env:WIW_DUMP_PASS -out "$dump_file" ) || { rm -f "$dump_file"; fail "the pre-migration dump failed; nothing was migrated"; }
+	chmod 600 "$dump_file" 2>/dev/null || true
+}
+
+import_db() {
+	( export MYSQL_PWD; MYSQL_PWD="$(secret DB_PASSWORD)"
+	  "$MYSQL" "--host=$(secret DB_HOST)" "--user=$(secret DB_USER)" "$(secret DB_NAME)" < "$DB_IMPORT" ) || fail "the database import failed"
+}
+
+point_current() { ln -sfn "$DEST" "$TARGET/current"; }
+
+# ---- ROLLBACK ---------------------------------------------------------------------------------------------------
+if [ "$ROLLBACK" -eq 1 ]; then
+	step 2 "Redeploy the previous artifact"
+	if [ "$DRY" -eq 1 ]; then say "[dry run] copy $RELEASE to $DEST"; else copy_code; say "copied"; fi
+	step 3 "Restore the pre-migration dump"
+	[ -r "$RESTORE" ] || [ "$DRY" -eq 1 ] || fail "the dump is not readable: $RESTORE"
+	if [ "$DRY" -eq 1 ]; then say "[dry run] decrypt $RESTORE and import it"; else restore_dump "$RESTORE"; say "restored"; fi
+	if [ "$LAYOUT" -eq 1 ]; then say "with the releases layout, switch the current symlink to the previous release instead of copying"; fi
+	step 4 "Smoke checks"
+	if [ "$SKIP_SMOKE" -eq 0 ]; then
+		args=(); [ -n "$URL" ] && args+=("--url=$URL")
+		act "$PHP" "$DEST/deploy/smoke-check.php" "${args[@]+"${args[@]}"}" || fail "smoke checks failed after the rollback"
+	fi
+	echo; echo "ROLLBACK done."; exit 0
+fi
+
+# ---- STEP 2: copy the code --------------------------------------------------------------------------------------
+step 2 "Copy the code to ${DEST} (rsync when present, otherwise tar; the cPanel file manager variant is in docs/runbook.md)"
+if [ "$DRY" -eq 1 ]; then say "[dry run] copy $RELEASE to $DEST, keeping wp-content/uploads"; else copy_code; say "copied"; fi
+
+# ---- STEP 3: import the database --------------------------------------------------------------------------------
+step 3 "Import the database"
+if [ -n "$DB_IMPORT" ]; then
+	if [ "$DRY" -eq 1 ]; then say "[dry run] import $DB_IMPORT into the database named in the secrets file"; else import_db; say "imported"; fi
+else
+	say "no --db-import given: using the database as it is"
+fi
+
+# ---- STEP 4: uploads --------------------------------------------------------------------------------------------
+step 4 "Import the uploads"
+if [ -n "$UPLOADS" ]; then
+	if [ "$DRY" -eq 1 ]; then say "[dry run] copy $UPLOADS to $DEST/wp-content/uploads"; else mkdir -p "$DEST/wp-content/uploads"; (cd "$UPLOADS" && tar -cf - .) | (cd "$DEST/wp-content/uploads" && tar -xf -); say "copied"; fi
+else
+	say "no --uploads given: the uploads folder is left as it is"
+fi
+
+# ---- STEP 5: configuration --------------------------------------------------------------------------------------
+step 5 "Place wp-config.php and point it at the secrets file outside the web root"
+say "wp-config.php is the template shipped in the release; it reads the secrets file named by WIW_SECRETS_FILE"
+say "set WIW_SECRETS_FILE=$SECRETS in the host's PHP environment (cPanel: .htaccess SetEnv or the MultiPHP INI editor)"
+[ "$DRY" -eq 1 ] || [ -f "$DEST/wp-config.php" ] || fail "wp-config.php is missing in $DEST"
+[ "$DRY" -eq 1 ] || [ "$LAYOUT" -eq 0 ] || { point_current; say "current -> releases/$STAMP"; }
+
+# ---- STEP 6: pre-migration dump ---------------------------------------------------------------------------------
+step 6 "Pre-migration database dump (encrypted with BACKUP_PASSPHRASE) into $DUMP_DIR"
+if [ "$DRY" -eq 1 ]; then say "[dry run] $MYSQLDUMP | gzip | openssl enc -aes-256-cbc -> $dump_file"; else take_dump; say "written: $dump_file"; fi
+
+# ---- STEP 7: migrate --------------------------------------------------------------------------------------------
+step 7 "Run the forward-only migrations through the plugin command (the only way production migrates)"
+if [ "$DRY" -eq 1 ]; then say "[dry run] WIW_DEPLOY_MIGRATE=1 $PHP $DEST/bin/wiw.php migrate"; else WIW_DEPLOY_MIGRATE=1 "$PHP" "$DEST/bin/wiw.php" migrate || { echo "migrate-live: FAILED: the migration failed. ROLLBACK: deploy/migrate-live --rollback --release PREVIOUS --target $TARGET --secrets $SECRETS --restore-dump $dump_file" >&2; exit 1; }; fi
+
+# ---- STEP 8: smoke checks ---------------------------------------------------------------------------------------
+step 8 "Smoke checks (home, /healthz, child theme active, registration closed, no unreviewed profile public)"
+if [ "$SKIP_SMOKE" -eq 1 ]; then
+	say "skipped by --skip-smoke"
+else
+	args=(); [ -n "$URL" ] && args+=("--url=$URL")
+	if [ "$DRY" -eq 1 ]; then say "[dry run] $PHP $DEST/deploy/smoke-check.php ${args[*]:-}"; else
+		"$PHP" "$DEST/deploy/smoke-check.php" "${args[@]+"${args[@]}"}" || { echo "migrate-live: FAILED: a smoke check failed. ROLLBACK: deploy/migrate-live --rollback --release PREVIOUS --target $TARGET --secrets $SECRETS --restore-dump $dump_file" >&2; exit 1; }
+	fi
+fi
+
+# ---- STEP 9: checklist ------------------------------------------------------------------------------------------
+step 9 "Live-host checklist for a human"
+checklist
+echo
+if [ "$DRY" -eq 1 ]; then echo "migrate-live: dry run: nothing was changed."; else echo "migrate-live: done. Dump kept at $dump_file"; fi

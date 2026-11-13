@@ -88,6 +88,29 @@ wiw_page_band(
 					'placeholder' => __( 'Narrow this list by name', 'whoiswho' ),
 				),
 				'controls' => $wiw_controls,
+				'view'     => array(
+					'value' => (string) $wiw_params['view'],
+					'grid'  => wiw_directory_url(
+						$wiw_key,
+						array_merge(
+							$wiw_params,
+							array(
+								'view' => '',
+								'page' => 1,
+							)
+						)
+					),
+					'list'  => wiw_directory_url(
+						$wiw_key,
+						array_merge(
+							$wiw_params,
+							array(
+								'view' => 'list',
+								'page' => 1,
+							)
+						)
+					),
+				),
 				'sort'     => array(
 					'name'    => 'sort',
 					'value'   => (string) $wiw_params['sort'],
@@ -116,7 +139,7 @@ wiw_page_band(
 			);
 			?>
 		<?php else : ?>
-			<div class="grid grid--4 results">
+			<div class="<?php echo 'list' === $wiw_params['view'] ? 'results results--list' : 'grid grid--4 results'; ?>">
 				<?php foreach ( $wiw_result['profiles'] as $wiw_profile ) : ?>
 					<div><?php get_template_part( 'template-parts/profile-card', null, array( 'profile' => $wiw_profile ) ); ?></div>
 				<?php endforeach; ?>

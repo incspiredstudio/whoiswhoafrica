@@ -138,7 +138,7 @@ final class PublicStory {
 	 * @param string $surface home or stories.
 	 * @return array<string, mixed>|null
 	 */
-	private static function slot( string $surface ): ?array {
+	public static function slot( string $surface ): ?array {
 		if ( ! in_array( $surface, array( 'home', 'stories' ), true ) ) {
 			return null;
 		}
@@ -151,6 +151,26 @@ final class PublicStory {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Ids of public stories, newest first, for the curation blocks.
+	 *
+	 * @return array<int, int>
+	 */
+	public static function public_ids(): array {
+		return self::ids( '', '', 0 );
+	}
+
+	/**
+	 * The card of one story if it is public now, else null (a curated pin that was unpublished simply drops out).
+	 *
+	 * @param int $id Story post id.
+	 * @return array<string, mixed>|null
+	 */
+	public static function card_if_public( int $id ): ?array {
+		$post = get_post( $id );
+		return $post instanceof \WP_Post && 'post' === $post->post_type && self::is_public( $post ) ? self::card( $post ) : null;
 	}
 
 	/**

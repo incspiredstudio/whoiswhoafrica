@@ -61,7 +61,7 @@ final class NominationsSwitch {
 			__( 'Nominations', 'whoiswho' ),
 			self::SCREEN_CAP,
 			static function (): void {
-				( new self( SettingsService::for_site() ) )->render();
+				( new NominationsScreen( new self( SettingsService::for_site() ), NominationService::for_site() ) )->render();
 			}
 		);
 		$registry->hook();
@@ -109,11 +109,20 @@ final class NominationsSwitch {
 	 * @param bool|null $on State to show; the stored state when null.
 	 */
 	public function html( ?bool $on = null ): string {
+		return '<div class="wrap"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>' . $this->body_html( $on ) . '</div>';
+	}
+
+	/**
+	 * The state line and, for an Administrator, the toggle form (the screen puts the list below it).
+	 *
+	 * @param bool|null $on State to show; the stored state when null.
+	 */
+	public function body_html( ?bool $on = null ): string {
 		$on    = $on ?? $this->is_on();
 		$state = $on ? __( 'Nominations are on.', 'whoiswho' ) : __( 'Nominations are off.', 'whoiswho' );
-		$out   = '<div class="wrap"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1><p>' . esc_html( $state ) . '</p>';
+		$out   = '<p>' . esc_html( $state ) . '</p>';
 		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
-			return $out . '<p>' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p></div>';
+			return $out . '<p>' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p>';
 		}
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
@@ -121,7 +130,7 @@ final class NominationsSwitch {
 		$out .= '<input type="hidden" name="state" value="' . ( $on ? '0' : '1' ) . '" />';
 		$out .= '<p><label>' . esc_html__( 'Reason (optional)', 'whoiswho' ) . '<br /><input type="text" name="reason" maxlength="300" class="regular-text" /></label></p>';
 		$out .= '<p><button type="submit" class="button button-primary">' . esc_html( $on ? __( 'Turn Nominations off', 'whoiswho' ) : __( 'Turn Nominations on', 'whoiswho' ) ) . '</button></p>';
-		return $out . '</form></div>';
+		return $out . '</form>';
 	}
 
 	/**

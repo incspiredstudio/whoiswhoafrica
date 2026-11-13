@@ -1358,3 +1358,41 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
   .stories-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .stories-signup-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
+
+/* Form pages: side panel rows and tick list (Contact, Get listed). */
+.link-rows { list-style: none; margin: 0; padding: 0; }
+.link-rows li { border-top: 1px solid var(--c-line); }
+.link-rows li:last-child { border-bottom: 1px solid var(--c-line); }
+.link-rows a { display: grid; gap: var(--s-1); padding-block: var(--s-4); padding-right: var(--s-5); position: relative; color: inherit; text-decoration: none; }
+.link-rows a::after { content: "\2192"; position: absolute; right: 0; top: 50%; translate: 0 -50%; color: var(--c-accent); transition: translate var(--m-fast); }
+.link-rows a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.link-rows a:hover::after { translate: 4px -50%; }
+.link-rows .meta { color: var(--c-muted); font-size: var(--t-sm); }
+.ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.ticks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+.ticks .ico { margin-top: .2rem; color: var(--c-accent); }
+.form-aside > h2 { font: 600 var(--t-xs)/1.4 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--c-muted); }
+
+/* Comments on a story (REQ-258): initials, never a picture; the form uses the shared fields. */
+.comments h2 { font-size: var(--t-2xl); margin-top: var(--s-2); }
+.cm-list { list-style: none; margin: var(--s-6) 0 var(--s-7); display: grid; gap: 0; border-top: 1px solid var(--c-text); }
+.cm-item { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); gap: var(--s-4); padding-block: var(--s-5); border-bottom: 1px solid var(--c-line); }
+.cm-av { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--blue-700); color: var(--c-white); font: 400 var(--t-md)/1 var(--font-display); }
+.cm-meta { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-3); align-items: baseline; font-size: var(--t-sm); color: var(--c-muted); }
+.cm-name { color: var(--c-text); font-weight: 600; }
+.cm-text { margin-top: var(--s-2); max-width: 40rem; line-height: 1.55; }
+.cm-text p + p { margin-top: var(--s-3); }
+.comment-respond { display: grid; gap: var(--s-4); }
+.comment-respond .comment-reply-title { font: 400 var(--t-xl)/1.1 var(--font-display); }
+.comment-respond textarea { width: 100%; }
+.cm-note { margin-top: var(--s-2); }
+.comment-form { display: grid; gap: var(--s-4); }
+.comment-form .form-submit { margin: 0; }
+.comment-form .btn { width: auto; }
+
+/* Report dialog: a native modal, so focus stays inside and Escape closes it. */
+.dlg { width: min(36rem, calc(100% - 2 * var(--gutter))); max-height: calc(100dvh - 2 * var(--s-5)); padding: var(--s-5); border: 1px solid var(--c-line); border-top: 3px solid var(--c-text); border-radius: var(--r-1); background: var(--c-surface); color: var(--c-text); box-shadow: var(--sh-3); overflow-y: auto; }
+.dlg::backdrop { background: color-mix(in srgb, var(--c-dark) 60%, transparent); }
+.dlg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-3); }
+.dlg-head h2 { margin: 0; font: 400 var(--t-xl)/1.1 var(--font-display); }
+.dlg .form { margin-top: var(--s-4); padding: 0; border: 0; box-shadow: none; background: transparent; }
