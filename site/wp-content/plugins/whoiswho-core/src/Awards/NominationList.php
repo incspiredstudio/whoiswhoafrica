@@ -78,7 +78,7 @@ final class NominationList {
 		$sql   = 'SELECT COUNT(*)' . $from;
 		$cnt   = array() === $args ? $sql : $wpdb->prepare( $sql, $args ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- fixed names; values prepared.
 		$total = (int) $wpdb->get_var( $cnt ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
-		$sql   = 'SELECT n.id, n.category_id, n.profile_id, n.stage, n.status, n.source, n.created_at, c.title AS category, p.post_title AS nominee' . $from . ' ORDER BY n.id DESC LIMIT %d OFFSET %d';
+		$sql   = 'SELECT n.id, n.category_id, n.profile_id, n.stage, n.status, n.source, n.created_at, c.title AS category, p.post_title AS nominee, CHAR_LENGTH( n.contact_email ) > 0 AS has_contact' . $from . ' ORDER BY n.id DESC LIMIT %d OFFSET %d';
 		$rows  = (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $args, array( self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- fixed names; values prepared.
 		return array(
 			'rows'  => $rows,

@@ -177,6 +177,7 @@ final class NominationPrivacy {
 			if ( array() === $values ) {
 				continue;
 			}
+			$values['notes']      = null === $row['notes'] ? null : PiiCatalogue::REDACTED;
 			$values['updated_at'] = gmdate( 'Y-m-d H:i:s' );
 			$wpdb->update( $table, $values, array( 'id' => (int) $row['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$this->audit->log( 'nomination.erase', $this->subject( (int) $row['id'] ), null, array( 'erased' => 'data request' ) );
@@ -212,7 +213,8 @@ final class NominationPrivacy {
 		foreach ( $ids as $id ) {
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->prepare(
-					'UPDATE ' . $table . ' SET contact_email = NULL, nominator_email = NULL, nominator_name = IF(nominator_name IS NULL, NULL, %s), nominee_name = IF(nominee_name IS NULL, NULL, %s), nominee_org = IF(nominee_org IS NULL, NULL, %s), relationship_note = IF(relationship_note IS NULL, NULL, %s), evidence = IF(evidence IS NULL, NULL, %s), updated_at = %s WHERE id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+					'UPDATE ' . $table . ' SET contact_email = NULL, nominator_email = NULL, nominator_name = IF(nominator_name IS NULL, NULL, %s), nominee_name = IF(nominee_name IS NULL, NULL, %s), nominee_org = IF(nominee_org IS NULL, NULL, %s), relationship_note = IF(relationship_note IS NULL, NULL, %s), evidence = IF(evidence IS NULL, NULL, %s), notes = IF(notes IS NULL, NULL, %s), updated_at = %s WHERE id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+					PiiCatalogue::REDACTED,
 					PiiCatalogue::REDACTED,
 					PiiCatalogue::REDACTED,
 					PiiCatalogue::REDACTED,
@@ -246,7 +248,7 @@ final class NominationPrivacy {
 		if ( '' === trim( $email ) ) {
 			return array();
 		}
-		return (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, reference, nominator_name, nominator_email, contact_email, nominee_name, nominee_org, relationship_note, evidence, created_at FROM ' . AwardsTables::table( AwardsTables::NOMINATIONS ) . ' WHERE nominator_email = %s OR contact_email = %s ORDER BY id', $email, $email ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, reference, nominator_name, nominator_email, contact_email, nominee_name, nominee_org, relationship_note, evidence, notes, created_at FROM ' . AwardsTables::table( AwardsTables::NOMINATIONS ) . ' WHERE nominator_email = %s OR contact_email = %s ORDER BY id', $email, $email ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
 	}
 
 	/**

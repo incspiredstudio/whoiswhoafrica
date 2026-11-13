@@ -27,5 +27,9 @@ final class Module implements ModuleInterface {
 	 * Register hooks.
 	 */
 	public function register(): void {
+		SponsorPostType::hooks();
+		PlacementJob::register();
+		DashboardTiles::hooks();
+		SponsoredStoriesScreen::hooks();
 	}
 }

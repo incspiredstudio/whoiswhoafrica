@@ -49,10 +49,13 @@ final class ProfileEditScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'directory'
 				);
 				$registry->hook();
 				ActionGuard::register( self::SAVE, self::CAPABILITY, array( self::class, 'handle_save' ) );
+				ProfilePanels::register_actions();
 			},
 			1
 		);
@@ -166,7 +169,7 @@ final class ProfileEditScreen {
 		$out .= $this->terms( $id );
 		$out .= '<p><label>' . esc_html__( 'Reason or request reference (required)', 'whoiswho' ) . '<br /><input type="text" name="reason" class="large-text" required="required" /></label></p>';
 		$out .= $this->resolves( $id );
-		return $out . '<p><button class="button button-primary">' . esc_html__( 'Save changes', 'whoiswho' ) . '</button></p></form></div>';
+		return $out . '<p><button class="button button-primary">' . esc_html__( 'Save changes', 'whoiswho' ) . '</button></p></form>' . ( new ProfilePanels() )->html( $id, $state ) . '</div>';
 	}
 
 	/**

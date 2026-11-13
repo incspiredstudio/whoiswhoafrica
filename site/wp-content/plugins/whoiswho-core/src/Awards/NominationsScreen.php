@@ -25,7 +25,7 @@ final class NominationsScreen {
 
 	public const ACTION = 'wiw_nomination_op';
 	public const CAP    = 'wiw_manage_awards';
-	public const OPS    = array( 'stage', 'status', 'remove_ask', 'remove' );
+	public const OPS    = array( 'stage', 'status', 'remove_ask', 'remove', 'email_nomination', 'email_winner' );
 
 	/**
 	 * Switch.
@@ -42,14 +42,23 @@ final class NominationsScreen {
 	private NominationService $service;
 
 	/**
+	 * Nomination and winner emails.
+	 *
+	 * @var NominationEmails
+	 */
+	private NominationEmails $emails;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param NominationsSwitch $toggle  The toggle.
-	 * @param NominationService $service The service every control calls.
+	 * @param NominationsSwitch     $toggle  The toggle.
+	 * @param NominationService     $service The service every control calls.
+	 * @param NominationEmails|null $emails  The email sender; this site's by default.
 	 */
-	public function __construct( NominationsSwitch $toggle, NominationService $service ) {
+	public function __construct( NominationsSwitch $toggle, NominationService $service, ?NominationEmails $emails = null ) {
 		$this->toggle  = $toggle;
 		$this->service = $service;
+		$this->emails  = $emails ?? NominationEmails::for_site();
 	}
 
 	/**
@@ -112,7 +121,13 @@ final class NominationsScreen {
 				case 'remove':
 					$this->service->remove( $id, $request->string( 'token' ) );
 					return $this->done( 'Nomination removed.' );
-			}
+				case 'email_nomination':
+					$this->emails->send( $id, NominationEmails::KIND_NOMINATION );
+					return $this->done( 'The nomination email is queued.' );
+				case 'email_winner':
+					$this->emails->send( $id, NominationEmails::KIND_WINNER );
+					return $this->done( 'The winner email is queued.' );
+			}//end switch
 		} catch ( \DomainException $refusal ) {
 			return $this->done( $refusal->getMessage() );
 		}//end try
@@ -265,8 +280,14 @@ final class NominationsScreen {
 			} else {
 				$out .= $this->form( 'remove_ask', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Remove', 'whoiswho' ) . '</button>' );
 			}
-			$out .= '</td></tr>';
-		}
+			if ( $this->emails->row_allows( $row, NominationEmails::KIND_NOMINATION ) ) {
+				$out .= $this->form( 'email_nomination', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Send nomination email', 'whoiswho' ) . '</button>' );
+			}
+			if ( $this->emails->row_allows( $row, NominationEmails::KIND_WINNER ) ) {
+				$out .= $this->form( 'email_winner', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Send winner email', 'whoiswho' ) . '</button>' );
+			}
+			$out .= ' <a href="' . esc_url( NominationDetailScreen::url( $id ) ) . '">' . esc_html__( 'Details', 'whoiswho' ) . '</a></td></tr>';
+		}//end foreach
 		$out .= '</tbody></table>';
 		for ( $i = 1; $result['pages'] > 1 && $i <= $result['pages']; $i++ ) {
 			$url  = add_query_arg(

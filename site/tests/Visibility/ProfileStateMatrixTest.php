@@ -1,9 +1,12 @@
 <?php
 /**
- * The state matrix on real profiles (M1-SEO-11; REQ-208, REQ-209, REQ-217, REQ-218): one profile in each of the six publication
- * states, asked on the page, the robots header, the sitemap, the directory list, search and structured data. The expectations
- * are written out here from the state table in docs/theme/seo-and-sharing.md, not read from StatePolicy, so a change to the
- * policy that breaks the documented table fails this test. Needs the WordPress test suite and the real tables.
+ * The profile state matrix (REQ-208, REQ-209, REQ-217, REQ-218): one profile in each of the six publication states, asked on the
+ * page route, the robots rules, the sitemap, the lists and an industry list, the structured data, the share-card tags, the home
+ * pickers and the search index. The expected answers come from the state table in docs/theme/seo-and-sharing.md, written out
+ * here rather than read back from StatePolicy, so a wrong policy fails. Needs the WordPress test suite and the real tables.
+ *
+ * Not in this file: feeds, REST, oEmbed, shortlinks, core sitemaps and previews, which ProfileExposureTest and the bare-install
+ * matrix cover; the browser smoke (M1-SEO-12, issue 332) and the search results page (M2) are separate issues.
  *
  * @package WhoIsWho
  */
@@ -12,6 +15,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Visibility;
 
+use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ProfileList;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
@@ -22,6 +26,7 @@ use WhoIsWho\Core\Directory\Sitemap\Sitemap;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
+use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Directory\Url\ProfileRoute;
 use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Core\Review\StateMachine;
@@ -30,16 +35,65 @@ use WhoIsWho\Tests\TestCase;
 final class ProfileStateMatrixTest extends TestCase {
 
 	/**
-	 * The documented table: state => HTTP status, noindex, in lists, in search, in sitemap, structured data.
-	 * Source: docs/theme/seo-and-sharing.md, "Visibility by state".
+	 * What each state must do on each surface (docs/theme/seo-and-sharing.md, "Visibility decides everything").
+	 *
+	 * http: the page status; noindex: the robots rule; sitemap, lists, schema, search: presence; card: share-card tags.
 	 */
 	private const TABLE = array(
-		PubState::PUBLISHED_REVIEWED  => array( 200, false, true, true, true, true ),
-		PubState::PUBLISHED_PENDING   => array( 200, true, false, true, false, false ),
-		PubState::UNPUBLISHED         => array( 410, true, false, false, false, false ),
-		PubState::REMOVED_SUPPRESSED  => array( 410, true, false, false, false, false ),
-		PubState::REJECTED            => array( 404, true, false, false, false, false ),
-		PubState::IMPORTED_NOT_PUBLIC => array( 404, true, false, false, false, false ),
+		PubState::PUBLISHED_REVIEWED  => array(
+			'http'    => 200,
+			'noindex' => false,
+			'sitemap' => true,
+			'lists'   => true,
+			'schema'  => true,
+			'search'  => true,
+			'card'    => true,
+		),
+		PubState::PUBLISHED_PENDING   => array(
+			'http'    => 200,
+			'noindex' => true,
+			'sitemap' => false,
+			'lists'   => false,
+			'schema'  => false,
+			'search'  => true,
+			'card'    => true,
+		),
+		PubState::UNPUBLISHED         => array(
+			'http'    => 410,
+			'noindex' => true,
+			'sitemap' => false,
+			'lists'   => false,
+			'schema'  => false,
+			'search'  => false,
+			'card'    => false,
+		),
+		PubState::REMOVED_SUPPRESSED  => array(
+			'http'    => 410,
+			'noindex' => true,
+			'sitemap' => false,
+			'lists'   => false,
+			'schema'  => false,
+			'search'  => false,
+			'card'    => false,
+		),
+		PubState::REJECTED            => array(
+			'http'    => 404,
+			'noindex' => true,
+			'sitemap' => false,
+			'lists'   => false,
+			'schema'  => false,
+			'search'  => false,
+			'card'    => false,
+		),
+		PubState::IMPORTED_NOT_PUBLIC => array(
+			'http'    => 404,
+			'noindex' => true,
+			'sitemap' => false,
+			'lists'   => false,
+			'schema'  => false,
+			'search'  => false,
+			'card'    => false,
+		),
 	);
 
 	/**
@@ -49,11 +103,26 @@ final class ProfileStateMatrixTest extends TestCase {
 	 */
 	private array $posts = array();
 
+	/**
+	 * Profile id by state.
+	 *
+	 * @var array<string, int>
+	 */
+	private array $by_state = array();
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->requireWordPress();
 		( new Runner( dirname( __DIR__, 2 ) . '/wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		wp_set_current_user( 0 );
+		if ( ! taxonomy_exists( Taxonomies::INDUSTRY ) ) {
+			( new Taxonomies() )->register();
+		}
+		$this->by_state = array();
+		foreach ( array_keys( self::TABLE ) as $state ) {
+			$this->by_state[ $state ] = $this->profile( $state );
+		}
+		( new Sitemap() )->purge();
 	}
 
 	protected function tearDown(): void {
@@ -62,13 +131,7 @@ final class ProfileStateMatrixTest extends TestCase {
 			wp_delete_post( $id, true );
 			$wpdb->delete( StateRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->delete( ProvenanceRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->delete(
-				SearchIndexer::table(),
-				array(
-					'item_type' => SearchIndexer::ITEM_TYPE,
-					'item_id'   => $id,
-				)
-			); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( SearchIndexer::table(), array( 'item_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 		$this->posts = array();
 		( new Sitemap() )->purge();
@@ -76,137 +139,147 @@ final class ProfileStateMatrixTest extends TestCase {
 	}
 
 	/**
-	 * Create an organisation profile and walk it to the state, through the state machine only.
+	 * A fictional organisation in a state, with an industry and a sourced fact.
 	 *
-	 * @param string $state A PubState value.
-	 * @return array{id: int, slug: string, name: string}
+	 * @param string $state Target state.
 	 */
-	private function profile_in( string $state ): array {
-		$name          = 'Matrix ' . ucwords( str_replace( '_', ' ', $state ) ) . ' Qwv';
+	private function profile( string $state ): int {
 		$id            = (int) wp_insert_post(
 			array(
 				'post_type'  => ProfileType::POST_TYPE,
-				'post_title' => $name,
+				'post_title' => 'Matrix ' . str_replace( '_', ' ', $state ) . ' Qzx',
 			)
 		);
 		$this->posts[] = $id;
 		$machine       = new StateMachine();
-		$values        = array( 'entity_type' => 'organisation' );
-		switch ( $state ) {
-			case PubState::IMPORTED_NOT_PUBLIC:
-				$machine->enter( $id, PubState::IMPORTED_NOT_PUBLIC, $values );
-				break;
-			case PubState::REJECTED:
-				$machine->enter( $id, PubState::IMPORTED_NOT_PUBLIC, $values );
-				$machine->transition( $id, PubState::REJECTED, 'Matrix fixture' );
-				break;
-			case PubState::PUBLISHED_PENDING:
-				$machine->enter( $id, PubState::PUBLISHED_PENDING, $values );
-				break;
-			case PubState::PUBLISHED_REVIEWED:
-				$machine->enter( $id, PubState::PUBLISHED_PENDING, $values );
-				$machine->transition( $id, PubState::PUBLISHED_REVIEWED );
-				break;
-			case PubState::UNPUBLISHED:
-				$machine->enter( $id, PubState::PUBLISHED_PENDING, $values );
-				$machine->transition( $id, PubState::PUBLISHED_REVIEWED );
-				$machine->transition( $id, PubState::UNPUBLISHED, 'Matrix fixture' );
-				break;
-			case PubState::REMOVED_SUPPRESSED:
-				$machine->enter( $id, PubState::PUBLISHED_PENDING, $values );
-				$machine->transition( $id, PubState::REMOVED_SUPPRESSED, 'Matrix fixture' );
-				break;
-		}
-		return array(
-			'id'   => $id,
-			'slug' => (string) get_post_field( 'post_name', $id ),
-			'name' => $name,
+		$start         = in_array( $state, array( PubState::IMPORTED_NOT_PUBLIC, PubState::REJECTED ), true ) ? PubState::IMPORTED_NOT_PUBLIC : PubState::PUBLISHED_PENDING;
+		$machine->enter( $id, $start, array( 'entity_type' => 'organisation' ) );
+		( new ProfileFields() )->set( $id, 'summary', 'A fictional organisation used to test visibility.' );
+		( new ProvenanceRepository() )->record(
+			$id,
+			array(
+				'field'        => 'summary',
+				'source_url'   => 'https://example.org/src',
+				'retrieved_at' => '2026-11-10T09:00:00Z',
+				'confidence'   => 'high',
+				'method'       => 'import',
+			)
 		);
+		$term = term_exists( 'matrix-industry-qzx', Taxonomies::INDUSTRY );
+		if ( ! $term ) {
+			$term = wp_insert_term( 'Matrix Industry Qzx', Taxonomies::INDUSTRY, array( 'slug' => 'matrix-industry-qzx' ) );
+		}
+		wp_set_object_terms( $id, array( (int) ( is_array( $term ) ? $term['term_id'] : $term ) ), Taxonomies::INDUSTRY );
+		if ( PubState::PUBLISHED_REVIEWED === $state ) {
+			$machine->transition( $id, PubState::PUBLISHED_REVIEWED, '', 1 );
+		} elseif ( PubState::REJECTED === $state ) {
+			$machine->transition( $id, PubState::REJECTED, 'test' );
+		} elseif ( PubState::UNPUBLISHED === $state ) {
+			$machine->transition( $id, PubState::UNPUBLISHED, 'test' );
+		} elseif ( PubState::REMOVED_SUPPRESSED === $state ) {
+			$machine->transition( $id, PubState::REMOVED_SUPPRESSED, 'test' );
+		}
+		( new SearchIndexer() )->on_state_change( $id, null, (string) ( new StateRepository() )->pub_state( $id ) );
+		return $id;
+	}
+
+	private function slug( string $state ): string {
+		return (string) get_post_field( 'post_name', $this->by_state[ $state ] );
 	}
 
 	/**
-	 * Ask every surface about one profile.
+	 * Ids of our profiles in a list of profiles.
 	 *
-	 * @param array{id: int, slug: string, name: string} $p Profile.
-	 * @return array{status: int, noindex: bool, list: bool, search: bool, sitemap: bool, schema: bool}
+	 * @param PublicProfile[] $profiles Profiles.
+	 * @return int[]
 	 */
-	private function surfaces( array $p ): array {
-		global $wpdb;
-		$decision = ( new ProfileRoute() )->resolve( $p['slug'] );
-		$headers  = ProfileRoute::headers_for( $decision );
+	private function ours( array $profiles ): array {
+		return array_values( array_intersect( array_map( static fn ( PublicProfile $p ): int => $p->id, $profiles ), $this->by_state ) );
+	}
 
-		$listed = false;
-		foreach ( ( new ProfileList() )->query( 'all', array( 'q' => $p['name'] ) )['profiles'] as $found ) {
-			$listed = $listed || $found->id === $p['id'];
+	/**
+	 * The profile sitemaps as text.
+	 */
+	private function sitemap_xml(): string {
+		$sitemap = new Sitemap();
+		$index   = $sitemap->respond( 'sitemap.xml' )['body'];
+		$xml     = '';
+		$parts   = substr_count( $index, 'sitemap-profiles-' );
+		for ( $n = 1; $n <= $parts; $n++ ) {
+			$xml .= $sitemap->respond( 'sitemap-profiles-' . $n . '.xml' )['body'];
 		}
-
-		$searched = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . SearchIndexer::table() . ' WHERE item_type = %s AND item_id = %d', SearchIndexer::ITEM_TYPE, $p['id'] ) ) > 0; // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name.
-
-		$sitemap = ( new Sitemap() )->respond( 'sitemap-profiles-1.xml' );
-		$in_map  = null !== $sitemap && false !== strpos( $sitemap['body'], '/profile/' . $p['slug'] . '/' );
-
-		$public = PublicProfile::find_by_id( $p['id'] );
-		$schema = null !== $public && null !== ( new StructuredData() )->for_profile( $public );
-
-		return array(
-			'status'  => (int) $decision['status'],
-			'noindex' => isset( $headers['X-Robots-Tag'] ) && false !== strpos( $headers['X-Robots-Tag'], 'noindex' ),
-			'list'    => $listed,
-			'search'  => $searched,
-			'sitemap' => $in_map,
-			'schema'  => $schema,
-		);
+		return $xml;
 	}
 
 	public function test_REQ_208_state_matrix_on_every_surface(): void {
 		$failures = array();
-		foreach ( self::TABLE as $state => $want ) {
-			$got = $this->surfaces( $this->profile_in( $state ) );
-			$exp = array(
-				'status'  => $want[0],
-				'noindex' => $want[1],
-				'list'    => $want[2],
-				'search'  => $want[3],
-				'sitemap' => $want[4],
-				'schema'  => $want[5],
+		$xml      = $this->sitemap_xml();
+		$route    = new ProfileRoute();
+		$all      = ( new ProfileList() )->query( 'all' );
+		$industry = ( new ProfileList() )->query( 'all', array( 'industry' => 'matrix-industry-qzx' ) );
+		$choices  = array_keys( PublicProfile::public_choices() );
+		$indexed  = $this->indexed();
+		foreach ( self::TABLE as $state => $expect ) {
+			$id     = $this->by_state[ $state ];
+			$slug   = $this->slug( $state );
+			$result = $route->resolve( $slug );
+			$found  = PublicProfile::find( $slug );
+			$seen   = array(
+				'http'    => $result['status'],
+				'noindex' => array_key_exists( 'X-Robots-Tag', ProfileRoute::headers_for( $result ) ),
+				'sitemap' => false !== strpos( $xml, '/profile/' . $slug . '/' ),
+				'lists'   => in_array( $id, $this->ours( $all['profiles'] ), true ) || in_array( $id, $this->ours( $industry['profiles'] ), true ) || ( PubState::PUBLISHED_REVIEWED !== $state && in_array( $id, $choices, true ) ),
+				'schema'  => null !== $found && null !== ( new StructuredData() )->for_profile( $found ),
+				'search'  => in_array( $id, $indexed, true ),
+				'card'    => null !== $found && array() !== ( new Tags() )->for_profile( $found )['og'],
 			);
-			foreach ( $exp as $surface => $value ) {
-				if ( $value !== $got[ $surface ] ) {
-					$failures[] = sprintf( '%s on %s: expected %s, got %s', $state, $surface, var_export( $value, true ), var_export( $got[ $surface ], true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- building a failure message.
+			foreach ( $expect as $surface => $want ) {
+				if ( $seen[ $surface ] !== $want ) {
+					$failures[] = sprintf( '%s on %s: expected %s, got %s', $state, $surface, wp_json_encode( $want ), wp_json_encode( $seen[ $surface ] ) );
 				}
 			}
 		}
 		$this->assertSame( array(), $failures, "State matrix failures:\n" . implode( "\n", $failures ) );
+		$this->assertContains( $this->by_state[ PubState::PUBLISHED_REVIEWED ], array_keys( PublicProfile::public_choices() ), 'the reviewed profile is offered by the home and story pickers' );
 	}
 
 	public function test_REQ_218_pending_profile_in_search_but_not_in_lists(): void {
-		$p   = $this->profile_in( PubState::PUBLISHED_PENDING );
-		$got = $this->surfaces( $p );
-		$this->assertTrue( $got['search'], 'A pending profile is found by search.' );
-		$this->assertFalse( $got['list'], 'A pending profile is not on lists, the home page or industry pages.' );
-		$public = PublicProfile::find_by_id( $p['id'] );
-		$this->assertNotNull( $public );
-		$tags = ( new Tags() )->for_profile( $public );
-		$this->assertSame( 'noindex', $tags['robots'], 'The robots meta tag says noindex.' );
-		$this->assertStringContainsString( 'Human review pending', (string) wp_json_encode( $tags ), 'The pending label reaches the share text.' );
+		$pending = $this->by_state[ PubState::PUBLISHED_PENDING ];
+		$this->assertContains( $pending, $this->indexed(), 'the pending profile is searchable' );
+		global $wpdb;
+		$flag = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT pending FROM ' . SearchIndexer::table() . ' WHERE item_type = %s AND item_id = %d', SearchIndexer::ITEM_TYPE, $pending ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		$this->assertSame( 1, $flag, 'and carries the pending flag the result card turns into the label' );
+		$this->assertNotContains( $pending, $this->ours( ( new ProfileList() )->query( 'all' )['profiles'] ) );
+		$this->assertNotContains( $pending, $this->ours( ( new ProfileList() )->query( 'all', array( 'industry' => 'matrix-industry-qzx' ) )['profiles'] ) );
+		$this->assertNotContains( $pending, array_keys( PublicProfile::public_choices() ) );
+		$this->assertStringNotContainsString( '/profile/' . $this->slug( PubState::PUBLISHED_PENDING ) . '/', $this->sitemap_xml() );
+		$found = PublicProfile::find( $this->slug( PubState::PUBLISHED_PENDING ) );
+		$this->assertNotNull( $found );
+		$this->assertSame( 'noindex', ( new Tags() )->for_profile( $found )['robots'], 'the robots meta tag' );
+		$this->assertNotNull( $found->label, 'the pending label' );
 	}
 
 	public function test_REQ_209_removed_profile_410_across_surfaces(): void {
-		foreach ( array( PubState::UNPUBLISHED, PubState::REMOVED_SUPPRESSED ) as $state ) {
-			$p   = $this->profile_in( $state );
-			$got = $this->surfaces( $p );
-			$this->assertSame( 410, $got['status'], $state );
-			$this->assertTrue( $got['noindex'], $state . ' carries noindex.' );
-			$this->assertFalse( $got['list'] || $got['search'] || $got['sitemap'] || $got['schema'], $state . ' appears nowhere.' );
-			$this->assertNull( PublicProfile::find_by_id( $p['id'] ), $state . ' has no public read model.' );
+		foreach ( array( PubState::REMOVED_SUPPRESSED, PubState::UNPUBLISHED ) as $state ) {
+			$result  = ( new ProfileRoute() )->resolve( $this->slug( $state ) );
+			$headers = ProfileRoute::headers_for( $result );
+			$this->assertSame( 410, $result['status'], $state );
+			$this->assertSame( 'noindex', $headers['X-Robots-Tag'] ?? '', $state );
+			$this->assertStringContainsString( 'no-cache', $headers['Cache-Control'], 'a takedown is never cached: ' . $state );
+			$this->assertNull( PublicProfile::find( $this->slug( $state ) ), 'no read model, so no card, schema or link: ' . $state );
+			$this->assertNotContains( $this->by_state[ $state ], $this->indexed(), $state );
+			$this->assertStringNotContainsString( $this->slug( $state ), $this->sitemap_xml(), $state );
 		}
 	}
 
-	public function test_REQ_217_pending_profile_has_noindex_and_no_sitemap_or_schema_entry(): void {
-		$got = $this->surfaces( $this->profile_in( PubState::PUBLISHED_PENDING ) );
-		$this->assertSame( 200, $got['status'] );
-		$this->assertTrue( $got['noindex'] );
-		$this->assertFalse( $got['sitemap'] );
-		$this->assertFalse( $got['schema'] );
+	/**
+	 * Ids of our profiles in the search index.
+	 *
+	 * @return int[]
+	 */
+	private function indexed(): array {
+		global $wpdb;
+		$ids = array_map( 'intval', (array) $wpdb->get_col( 'SELECT item_id FROM ' . SearchIndexer::table() ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return array_values( array_intersect( $ids, $this->by_state ) );
 	}
 }

@@ -25,6 +25,7 @@ final class BlockPatternsTest extends TestCase {
 		'whoiswho/guidance-section',
 		'whoiswho/draft-note',
 		'whoiswho/about-page',
+		'whoiswho/faq-groups',
 	);
 
 	protected function setUp(): void {

@@ -30,13 +30,17 @@ if ( 'claim' === $wiw_kind ) {
 } elseif ( 'report' === $wiw_kind ) {
 	$wiw_title = __( 'Report received', 'whoiswho' );
 	$wiw_text  = __( 'A member of staff will look at it. If you gave an email address, we sent a link to confirm it.', 'whoiswho' );
+} elseif ( 'newsletter' === $wiw_kind ) {
+	$wiw_title = __( 'Check your email to finish signing up', 'whoiswho' );
+	$wiw_text  = __( 'We sent you a link to confirm. You are subscribed only after you use it. Every email has an unsubscribe link.', 'whoiswho' );
+	$wiw_ref   = '';
 } elseif ( 'contact' === $wiw_from ) {
 	$wiw_title = __( 'Message sent', 'whoiswho' );
 	$wiw_text  = __( 'A member of staff will reply. The message is logged.', 'whoiswho' );
 } else {
 	$wiw_title = __( 'Enquiry received', 'whoiswho' );
 	$wiw_text  = __( 'Our team will contact you. Terms are agreed offline; nothing is charged on this site.', 'whoiswho' );
-}
+}//end if
 
 get_header();
 get_template_part(

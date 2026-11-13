@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "whoiswho/faq-question",
+  "title": "FAQ question",
+  "category": "text",
+  "parent": ["whoiswho/faq-group"],
+  "icon": "editor-help",
+  "description": "A question and its answer. The answer can hold paragraphs, lists and links to pages.",
+  "textdomain": "whoiswho",
+  "attributes": {
+    "title": { "type": "string", "default": "" }
+  },
+  "supports": { "html": false }
+}

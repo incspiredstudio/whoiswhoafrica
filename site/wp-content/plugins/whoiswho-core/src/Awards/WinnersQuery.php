@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Awards;
 
 use WhoIsWho\Core\Directory\Taxonomies;
+use WhoIsWho\Core\Platform\Admin\Request;
 
 /**
  * Winners query.
@@ -50,6 +51,21 @@ final class WinnersQuery {
 			'sort'     => in_array( $sort, self::SORTS, true ) ? $sort : 'newest',
 			'page'     => max( 1, (int) $text( 'page' ) ),
 		);
+	}
+
+	/**
+	 * The filter values of the current address, read through the request layer.
+	 *
+	 * @param Request|null $request Request; the current one by default.
+	 * @return array<string, string>
+	 */
+	public static function from_request( ?Request $request = null ): array {
+		$request = $request ?? Request::from_globals();
+		$out     = array();
+		foreach ( array( 'year', 'group', 'category', 'type', 'country', 'q', 'sort', 'page' ) as $key ) {
+			$out[ $key ] = $request->string( $key );
+		}
+		return $out;
 	}
 
 	/**

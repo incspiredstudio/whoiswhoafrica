@@ -87,7 +87,9 @@ add_action(
 						),
 					)
 				);
-			}
+			},
+			false,
+			'settings'
 		);
 		$registry->hook();
 		ActionGuard::register(

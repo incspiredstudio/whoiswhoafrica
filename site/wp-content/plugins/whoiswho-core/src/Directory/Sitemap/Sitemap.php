@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Sitemap;
 
+use WhoIsWho\Core\Content\Events\EventPostType;
+use WhoIsWho\Core\Content\Events\EventUrls;
 use WhoIsWho\Core\Content\Stories\StoryUrls;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
@@ -85,6 +87,12 @@ final class Sitemap {
 				'body'   => $this->cached( 'stories', fn (): string => $this->stories() ),
 			);
 		}
+		if ( 'sitemap-events.xml' === $path ) {
+			return array(
+				'status' => 200,
+				'body'   => $this->cached( 'events', fn (): string => $this->events() ),
+			);
+		}
 		if ( 1 === preg_match( '/^sitemap-profiles-([0-9]{1,6})\.xml$/', $path, $m ) ) {
 			$part = (int) $m[1];
 			if ( $part < 1 || $part > max( 1, $this->part_count() ) ) {
@@ -109,7 +117,7 @@ final class Sitemap {
 	 * @param \WP_Post $post Post.
 	 */
 	public function purge_for_story( string $to, string $from, \WP_Post $post ): void {
-		if ( 'post' === $post->post_type && ( 'publish' === $to || 'publish' === $from ) && $to !== $from ) {
+		if ( in_array( $post->post_type, array( 'post', EventPostType::TYPE ), true ) && ( 'publish' === $to || 'publish' === $from ) && $to !== $from ) {
 			$this->purge();
 		}
 	}
@@ -142,7 +150,7 @@ final class Sitemap {
 	 * The index.
 	 */
 	private function index(): string {
-		$parts   = array( home_url( '/sitemap-pages.xml' ), home_url( '/sitemap-stories.xml' ) );
+		$parts   = array( home_url( '/sitemap-pages.xml' ), home_url( '/sitemap-stories.xml' ), home_url( '/sitemap-events.xml' ) );
 		$profile = max( 1, $this->part_count() );
 		for ( $i = 1; $i <= $profile; $i++ ) {
 			$parts[] = home_url( '/sitemap-profiles-' . $i . '.xml' );
@@ -173,6 +181,17 @@ final class Sitemap {
 	private function stories(): string {
 		$xml = '';
 		foreach ( StoryUrls::published( self::PER_PART ) as $row ) {
+			$xml .= $this->url( $row['url'], $row['modified'] );
+		}
+		return $this->wrap( 'urlset', $xml );
+	}
+
+	/**
+	 * Published events (REQ-264).
+	 */
+	private function events(): string {
+		$xml = '';
+		foreach ( EventUrls::published( self::PER_PART ) as $row ) {
 			$xml .= $this->url( $row['url'], $row['modified'] );
 		}
 		return $this->wrap( 'urlset', $xml );
