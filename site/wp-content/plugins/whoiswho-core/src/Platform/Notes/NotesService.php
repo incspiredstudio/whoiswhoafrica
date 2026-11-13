@@ -20,7 +20,7 @@ class NotesService {
 
 	public const TABLE = 'wiw_notes';
 
-	public const TYPES = array( 'profile', 'customer', 'nomination' );
+	public const TYPES = array( 'profile', 'customer', 'nomination', 'enquiry' );
 
 	public const MAX_LENGTH = 5000;
 

@@ -18,11 +18,21 @@ final class CookieNoticeTest extends TestCase {
 		$this->requireWordPress();
 		switch_theme( 'whoiswho-child' );
 		unset( $_COOKIE[ WIW_CONSENT_COOKIE ] );
+		$this->resetShared();
+	}
+
+	/**
+	 * Another test in the same process may leave print state, a manifest filter or an analytics filter behind (REQ-062).
+	 */
+	private function resetShared(): void {
+		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- reset shared print state between tests.
+		remove_all_filters( 'wiw_analytics_url' );
+		remove_all_filters( 'wiw_manifest' );
 	}
 
 	protected function tearDown(): void {
 		unset( $_COOKIE[ WIW_CONSENT_COOKIE ] );
-		remove_all_filters( 'wiw_analytics_url' );
+		$this->resetShared();
 		parent::tearDown();
 	}
 

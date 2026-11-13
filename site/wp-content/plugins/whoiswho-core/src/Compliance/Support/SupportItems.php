@@ -24,6 +24,11 @@ class SupportItems {
 		requester_name varchar(190) NOT NULL DEFAULT \'\',
 		requester_relationship varchar(60) NOT NULL DEFAULT \'\',
 		requester_email varchar(190) NOT NULL DEFAULT \'\',
+		requester_phone varchar(40) NOT NULL DEFAULT \'\',
+		organisation varchar(190) NOT NULL DEFAULT \'\',
+		interest varchar(120) NOT NULL DEFAULT \'\',
+		source varchar(20) NOT NULL DEFAULT \'\',
+		external_id char(36) NOT NULL DEFAULT \'\',
 		message text NULL,
 		status varchar(16) NOT NULL DEFAULT \'new\',
 		owner_id bigint(20) unsigned NULL,
@@ -31,12 +36,13 @@ class SupportItems {
 		confirmed_at datetime NULL,
 		acknowledged_at datetime NULL,
 		ack_due_at datetime NOT NULL,
-		due_at datetime NOT NULL,
+		due_at datetime NULL,
 		resolved_at datetime NULL,
 		created_at datetime NOT NULL,
 		updated_at datetime NOT NULL,
 		PRIMARY KEY  (id),
 		UNIQUE KEY reference (reference),
+		KEY external_id (external_id),
 		KEY type_status (item_type, status),
 		KEY due_at (due_at),
 		KEY profile (profile_id),
@@ -101,17 +107,22 @@ class SupportItems {
 		$received = $received ?? new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) );
 		$ip       = (string) ( $input['ip'] ?? '' );
 		$row      = array(
-			'reference'              => Reference::generate(),
+			'reference'              => ItemType::ENQUIRY === $type ? Reference::next_enquiry() : Reference::generate(),
 			'item_type'              => $type,
 			'profile_id'             => isset( $input['profile_id'] ) ? (int) $input['profile_id'] : null,
 			'requester_name'         => (string) ( $input['name'] ?? '' ),
 			'requester_relationship' => (string) ( $input['relationship'] ?? '' ),
 			'requester_email'        => (string) ( $input['email'] ?? '' ),
+			'requester_phone'        => (string) ( $input['phone'] ?? '' ),
+			'organisation'           => (string) ( $input['organisation'] ?? '' ),
+			'interest'               => (string) ( $input['interest'] ?? '' ),
+			'source'                 => (string) ( $input['source'] ?? '' ),
+			'external_id'            => wp_generate_uuid4(),
 			'message'                => (string) ( $input['message'] ?? '' ),
 			'status'                 => ItemStatus::NEW,
 			'ip_hash'                => '' === $ip ? null : $this->hash_ip( $ip ),
 			'ack_due_at'             => $this->stamp( $this->due_dates->acknowledge_due( $received ) ),
-			'due_at'                 => $this->stamp( $this->due_dates->resolve_due( $type, $received ) ),
+			'due_at'                 => ItemType::ENQUIRY === $type ? null : $this->stamp( $this->due_dates->resolve_due( $type, $received ) ),
 			'created_at'             => $this->stamp( $received ),
 			'updated_at'             => $this->stamp( $received ),
 		);
@@ -168,6 +179,20 @@ class SupportItems {
 		$sql   .= ' ORDER BY due_at ASC, id ASC LIMIT %d';
 		$args[] = max( 1, $limit );
 		return (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table; placeholders built from a count.
+	}
+
+	/**
+	 * Every item still open (not resolved or declined), oldest first. Used by the deadline job.
+	 *
+	 * @param int $limit Maximum rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function list_open( int $limit = 1000 ): array {
+		global $wpdb;
+		$closed = ItemStatus::closed();
+		$marks  = implode( ', ', array_fill( 0, count( $closed ), '%s' ) );
+		$sql    = 'SELECT * FROM ' . self::table() . " WHERE status NOT IN ({$marks}) ORDER BY id ASC LIMIT %d";
+		return (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $closed, array( max( 1, $limit ) ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table; placeholders built from a count.
 	}
 
 	/**
@@ -246,7 +271,7 @@ class SupportItems {
 		return DueDates::is_breach(
 			(string) $item['status'],
 			$now ?? new \DateTimeImmutable( 'now', $utc ),
-			new \DateTimeImmutable( (string) $item['due_at'], $utc ),
+			null === $item['due_at'] ? null : new \DateTimeImmutable( (string) $item['due_at'], $utc ),
 			new \DateTimeImmutable( (string) $item['ack_due_at'], $utc )
 		);
 	}

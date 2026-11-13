@@ -49,6 +49,8 @@ foreach ( $wiw_map as $wiw_pattern => $wiw_root ) {
 }
 
 $_SERVER['SCRIPT_NAME']     = '/index.php';
+$_SERVER['PHP_SELF']        = '/index.php';
+unset( $_SERVER['PATH_INFO'] );
 $_SERVER['SCRIPT_FILENAME'] = $wiw_site . '/index.php';
 chdir( $wiw_site );
 require $wiw_site . '/index.php';
