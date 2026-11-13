@@ -40,6 +40,8 @@ final class Application {
 		$app->add( new MigrateCommand( Runner::for_site() ) );
 		$app->add( new JobsRun( \WhoIsWho\Core\Platform\Jobs\JobRunner::for_site() ) );
 		$app->add( new BackupRecord() );
+		$app->add( new SampleSeedCommand() );
+		$app->add( new SampleRemoveCommand() );
 		$app->add( new AuditVerify( \WhoIsWho\Core\Platform\Audit\AuditLogger::for_site() ) );
 		foreach ( (array) apply_filters( 'wiw_cli_commands', array() ) as $command ) {
 			if ( $command instanceof Command ) {
