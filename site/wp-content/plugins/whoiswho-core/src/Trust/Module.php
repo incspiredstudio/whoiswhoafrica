@@ -31,5 +31,6 @@ final class Module implements ModuleInterface {
 		ClaimCard::hooks();
 		ClaimReminders::register();
 		Admin\ClaimsScreen::hooks();
+		AssignedProfiles::hooks();
 	}
 }
