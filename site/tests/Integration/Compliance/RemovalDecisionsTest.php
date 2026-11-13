@@ -261,16 +261,16 @@ final class RemovalDecisionsTest extends TestCase {
 		$seen    = array();
 		add_action(
 			'wiw_removal_upheld',
-			static function ( int $profile_id, int $item_id ) use ( &$seen ): void {
-				$seen = array( $profile_id, $item_id );
+			static function ( int $item_id, int $profile_id, string $name, string $entity_type, array $external_ids ) use ( &$seen ): void {
+				$seen = array( $item_id, $profile_id, $name, $entity_type, $external_ids );
 			},
 			10,
-			2
+			5
 		);
 
 		$this->service()->uphold( (int) $item['id'] );
 
-		$this->assertSame( array( $profile, (int) $item['id'] ), $seen );
+		$this->assertSame( array( (int) $item['id'], $profile, 'Announce Co', 'organisation', array( 'rc_number' => 'RC-777' ) ), $seen );
 		global $wpdb;
 		$actions = (array) $wpdb->get_col( 'SELECT action FROM ' . $wpdb->prefix . self::PROBE ); // phpcs:ignore WordPress.DB
 		$this->assertContains( 'removal.upheld', $actions );

@@ -110,7 +110,9 @@ final class RemovalDecisions {
 		if ( PubState::REMOVED_SUPPRESSED !== $state[ StateRepository::STATE_COLUMN ] ) {
 			$this->machine->transition( $profile_id, PubState::REMOVED_SUPPRESSED, 'Removal ' . (string) $item['reference'], (int) get_current_user_id() );
 		}
-		$this->suppression->add_from_removal( (string) get_the_title( $profile_id ), (string) $state['entity_type'], self::external_ids( $profile_id ), $item_id );
+		$name         = (string) get_the_title( $profile_id );
+		$external_ids = self::external_ids( $profile_id );
+		$this->suppression->add_from_removal( $name, (string) $state['entity_type'], $external_ids, $item_id );
 		$this->items->set_status( $item_id, ItemStatus::RESOLVED );
 		$this->audit->log(
 			'removal.upheld',
@@ -128,10 +130,13 @@ final class RemovalDecisions {
 		/**
 		 * Fires when a removal request is upheld, after the profile is removed and suppressed.
 		 *
-		 * @param int $profile_id Profile.
-		 * @param int $item_id    Removal item.
+		 * @param int                  $item_id      Removal item.
+		 * @param int                  $profile_id   Profile.
+		 * @param string               $name         The profile's name.
+		 * @param string               $entity_type  person or organisation.
+		 * @param array<string, string> $external_ids The profile's external ids, source => id.
 		 */
-		do_action( 'wiw_removal_upheld', $profile_id, $item_id );
+		do_action( 'wiw_removal_upheld', $item_id, $profile_id, $name, (string) $state['entity_type'], $external_ids );
 	}
 
 	/**
