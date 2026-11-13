@@ -47,7 +47,8 @@ for (const entry of pages) {
     }
     expect(result.lcpMs, `LCP ms (budget ${budgets.lcpMs})`).toBeLessThanOrEqual(budgets.lcpMs);
     expect(result.cls, `CLS (budget ${budgets.cls})`).toBeLessThanOrEqual(budgets.cls);
-    expect(result.scriptKb, `script KB (budget ${budgets.scriptKb})`).toBeLessThanOrEqual(budgets.scriptKb);
+    const scriptBudget = (budgets.scriptKbByPath as Record<string, number>)[path] ?? budgets.scriptKb;
+    expect(result.scriptKb, `script KB (budget ${scriptBudget})`).toBeLessThanOrEqual(scriptBudget);
     expect(result.pageKb, `page KB (budget ${budgets.pageKb})`).toBeLessThanOrEqual(budgets.pageKb);
   });
 }
