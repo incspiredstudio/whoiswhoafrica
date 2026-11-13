@@ -80,7 +80,10 @@ final class BatchRepository {
 		if ( false === $ok ) {
 			throw new \RuntimeException( 'That batch id is already registered.' );
 		}
-		return (int) $wpdb->insert_id;
+		$row_id = (int) $wpdb->insert_id;
+		do_action( 'wiw_import_batch_registered', (string) $m['batch_id'], (array) ( $m['sources'] ?? array() ) );
+		// The sources snapshot listens (REQ-136).
+		return $row_id;
 	}
 
 	/**
@@ -134,6 +137,18 @@ final class BatchRepository {
 			),
 			array( 'batch_id' => $batch_id )
 		);
+	}
+
+	/**
+	 * The newest batches, for the history list.
+	 *
+	 * @param int $limit How many.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function recent( int $limit = 20 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d', max( 1, $limit ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**
