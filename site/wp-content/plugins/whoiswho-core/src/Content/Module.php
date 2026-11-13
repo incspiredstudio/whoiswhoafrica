@@ -38,6 +38,8 @@ final class Module implements ModuleInterface {
 		( new Newsletter\Privacy\SubscriberPrivacy() )->register();
 		Events\Admin\EventLifecycle::hooks();
 		Events\Admin\EventListScreen::hooks();
+		Events\EventCache::hooks();
+		Events\EventCache::register_job();
 		( new Comments\CommentPolicy() )->register();
 		Comments\CommentPrivacy::hooks();
 		( new Comments\CommentModeratorNotice() )->register();
