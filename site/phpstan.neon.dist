@@ -12,6 +12,7 @@ parameters:
 	scanDirectories:
 		- wordpress
 		- wp-content/plugins/action-scheduler
+		- wp-content/plugins/two-factor
 	stubFiles: []
 	ignoreErrors: []
 	reportUnmatchedIgnoredErrors: true

@@ -298,3 +298,50 @@ html.stage-on .h-act-mark { display: none; }
 html.stage-on .h-act-in { z-index: 2; }
 
 @keyframes h-stage-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Nominees block (REQ-198): dark band, heading, group filter and a grid of posters ---------- */
+.h-noms { position: relative; padding-block: var(--s-9); background: var(--charcoal-950); color: var(--c-on-dark); }
+.h-noms .h-kicker { color: var(--c-on-dark-muted); }
+.h-noms-head { display: grid; gap: var(--s-5); margin-bottom: var(--s-6); }
+.h-noms .h-big { margin-top: var(--s-3); font-size: clamp(2.75rem, 1.2rem + 6.4vw, 7.25rem); line-height: .98; }
+.h-noms-side { display: grid; gap: var(--s-5); align-content: end; justify-items: start; max-width: 26rem; }
+.h-noms-side p { margin: 0; font-weight: 300; font-size: var(--t-md); line-height: 1.4; }
+.h-noms a:focus-visible, .h-noms button:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+
+@media (width >= 64rem) { .h-noms-head { grid-template-columns: minmax(0, 1fr) auto; align-items: end; } }
+.h-nom-filter { display: flex; gap: var(--s-2); margin-bottom: var(--s-7); overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.h-nom-filter[hidden] { display: none; }
+.h-nom-filter .chip { flex: none; min-height: 2.75rem; padding-inline: 1rem; border-color: var(--c-line-on-dark); background: none; color: var(--c-on-dark); cursor: pointer; font: 500 var(--t-sm)/1 var(--font-body); }
+.h-nom-filter .chip:hover, .h-nom-filter .chip[aria-pressed="true"] { background: var(--offwhite); border-color: var(--offwhite); color: var(--charcoal-900); }
+.hn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); }
+.hn-item[hidden] { display: none; }
+.hn-card { display: grid; gap: var(--s-3); color: var(--c-on-dark); text-decoration: none; }
+.hn-card .poster { aspect-ratio: 4 / 5; }
+.hn-body { display: grid; gap: 2px; }
+.hn-cat { font-size: .6875rem; letter-spacing: .08em; text-transform: uppercase; color: var(--c-on-dark-muted); }
+.hn-name { font: 400 clamp(1.125rem, .9rem + 1vw, 1.75rem)/1.08 var(--font-display); transition: color var(--m-fast); }
+.hn-role { font-size: var(--t-sm); font-weight: 300; color: var(--stone-400); }
+.hn-card:hover .hn-name { color: var(--orange); }
+
+@media (width >= 48rem) { .hn-grid { gap: var(--s-7) var(--s-5); } }
+
+@media (width >= 64rem) {
+  .hn-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hn-item:nth-child(4n + 2), .hn-item:nth-child(4n + 4) { margin-top: var(--s-7); }
+}
+
+@media (width <= 29.99rem) { .hn-role { display: none; } }
+
+@media (width <= 47.99rem) {
+  .h-noms { padding-block: var(--s-8); }
+  .h-noms-head { gap: var(--s-4); margin-bottom: var(--s-6); }
+  .h-noms .h-big { font-size: clamp(2.5rem, 12vw, 3.25rem); }
+  .h-noms-side { max-width: none; justify-items: stretch; }
+  .h-noms-side p { font-size: var(--t-base); line-height: 1.5; color: var(--c-on-dark-muted); max-width: 28em; }
+  .h-noms-side .btn { justify-content: center; width: 100%; min-height: 3.25rem; }
+  .h-nom-filter { display: none; }
+}
+
+/* Nominee posters rise in one after another when the block scrolls into view. */
+html.home-live .h-noms .hn-item { opacity: 0; transform: translateY(32px); transition: opacity 700ms ease, transform var(--m-rise) var(--ease-out); transition-delay: calc(var(--d, 0) * 70ms); }
+html.home-live .h-noms.in .hn-item { opacity: 1; transform: none; }

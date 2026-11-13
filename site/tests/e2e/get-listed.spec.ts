@@ -7,7 +7,7 @@ test.describe("get listed page", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
   test("shows the enquiry form with a consent tick and no price, package or checkout wording", async ({ page }) => {
-    const res = await page.goto("/subscribe/");
+    const res = await page.goto("/get-listed/");
     expect(res?.status()).toBe(200);
     for (const name of ["name", "organisation", "interest", "email", "phone", "message", "consent"]) {
       await expect(page.locator(`form [name=${name}]`)).toHaveCount(1);

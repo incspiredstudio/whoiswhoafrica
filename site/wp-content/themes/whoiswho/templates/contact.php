@@ -23,7 +23,7 @@ wiw_page_band(
 );
 $wiw_alternatives = array(
 	array( __( 'Correct or remove a profile', 'whoiswho' ), __( 'Find the profile, then use its correction or removal form.', 'whoiswho' ), home_url( '/directory/' ) ),
-	array( __( 'Get listed', 'whoiswho' ), __( 'Ask us to create or improve a listing.', 'whoiswho' ), home_url( '/subscribe/' ) ),
+	array( __( 'Get listed', 'whoiswho' ), __( 'Ask us to create or improve a listing.', 'whoiswho' ), home_url( '/get-listed/' ) ),
 	array( __( 'Complaints and takedown', 'whoiswho' ), __( 'How we handle complaints and removal requests.', 'whoiswho' ), home_url( '/complaints/' ) ),
 	array( __( 'Your data rights', 'whoiswho' ), __( 'See, correct or erase what we hold about you.', 'whoiswho' ), home_url( '/data-rights/' ) ),
 );

@@ -222,7 +222,7 @@ function pointerFx() {
 
 /* ---------- reveals: mask-line headings and the doors' clip, once, as they enter ---------- */
 function reveals() {
-  const nodes = document.querySelectorAll(".h-rv, .h-doors");
+  const nodes = document.querySelectorAll(".h-rv, .h-doors, .h-noms");
   const show = (n) => {
     n.classList.add("in");
     n.querySelectorAll(".h-rv-clip").forEach((c) => c.classList.add("in"));

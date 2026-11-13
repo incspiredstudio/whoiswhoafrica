@@ -23,6 +23,11 @@ if ( ! is_readable( WP_CONTENT_DIR . "/themes/{$wiw_theme}/style.css" ) ) {
 }
 switch_theme( $wiw_theme );
 
+// Test mode only (never production): mark the seeded staff user so the browser login skips the two-factor prompt.
+if ( defined( 'WIW_E2E_TEST_MODE' ) && true === WIW_E2E_TEST_MODE ) {
+	update_user_meta( 1, 'wiw_e2e_staff', '1' );
+}
+
 // Activate the core plugin so pages that need it (profiles, link pages, legal pages) render. The guard is a must-use plugin and loads by itself.
 $wiw_plugin = 'whoiswho-core/whoiswho-core.php';
 if ( is_readable( WP_PLUGIN_DIR . '/' . $wiw_plugin ) ) {

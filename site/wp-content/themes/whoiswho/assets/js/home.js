@@ -55,3 +55,21 @@ function init() {
 }
 
 init();
+
+/* Nominees block: the group filter. The chips are hidden until this runs, so without scripts everyone is shown. */
+function initNomineeFilter() {
+  document.querySelectorAll("[data-nom-scope]").forEach((scope) => {
+    const bar = scope.querySelector(".h-nom-filter");
+    if (!bar) return;
+    bar.hidden = false;
+    const items = scope.querySelectorAll(".hn-item");
+    bar.addEventListener("click", (event) => {
+      const chip = event.target instanceof Element ? event.target.closest("[data-nom-filter]") : null;
+      if (!chip) return;
+      const group = chip.getAttribute("data-nom-filter");
+      bar.querySelectorAll("[data-nom-filter]").forEach((c) => c.setAttribute("aria-pressed", c === chip ? "true" : "false"));
+      items.forEach((item) => { item.hidden = group !== "all" && item.getAttribute("data-group") !== group; });
+    });
+  });
+}
+initNomineeFilter();

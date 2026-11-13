@@ -168,5 +168,18 @@ while ( have_posts() ) {
 		<?php do_action( 'wiw_awards_overview_after_judging' ); ?>
 	</section>
 	<?php
+	// Sponsors attached to this page, with the independence note; the editor block shows the same thing, so print it once.
+	if ( ! has_block( 'wiw/supported-by' ) ) {
+		get_template_part(
+			'template-parts/supported-by',
+			null,
+			array(
+				'kind' => 'page',
+				'id'   => get_the_ID(),
+			)
+		);
+	}
+	?>
+	<?php
 }//end while
 get_footer();

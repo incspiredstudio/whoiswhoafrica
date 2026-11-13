@@ -131,14 +131,12 @@ $wiw_interests = array(
 				)
 			);
 			get_template_part(
-				'template-parts/forms/field',
+				'template-parts/forms/consent-tick',
 				null,
 				array(
-					'name'     => 'consent',
-					'type'     => 'checkbox',
-					'required' => true,
-					'label'    => esc_html__( 'I have read the', 'whoiswho' ) . ' <a href="' . esc_url( home_url( '/privacy/' ) ) . '">' . esc_html__( 'privacy notice', 'whoiswho' ) . '</a> ' . esc_html__( 'and agree to be contacted about this enquiry.', 'whoiswho' ),
-					'error'    => wiw_form_error( 'consent' ),
+					'name'  => 'consent',
+					'label' => __( 'I agree to be contacted about this enquiry, as set out in the', 'whoiswho' ),
+					'error' => wiw_form_error( 'consent' ),
 				)
 			);
 			get_template_part( 'template-parts/forms/bot-check', null, array( 'form' => 'get_listed' ) );
