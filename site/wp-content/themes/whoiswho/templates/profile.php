@@ -9,6 +9,8 @@
 
 declare(strict_types=1);
 
+use WhoIsWho\Core\Content\PublicStory;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -72,11 +74,36 @@ $wiw_site     = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, '
 					<a href="<?php echo esc_url( $wiw_site ); ?>" rel="nofollow noopener"><?php echo esc_html( (string) preg_replace( '#^https?://#', '', $wiw_site ) ); ?></a>
 				</p>
 			<?php endif; ?>
+			<?php
+			get_template_part( 'template-parts/profile-facts', null, array( 'profile' => $wiw_profile ) );
+			// The award panel is absent until a published nomination or win exists (the awards feature supplies it through this filter).
+			$wiw_award = trim( (string) apply_filters( 'wiw_profile_award_panel', '', $wiw_profile ) );
+			if ( '' !== $wiw_award ) :
+				?>
+				<section id="award" aria-labelledby="award-h">
+					<h2 id="award-h"><?php esc_html_e( 'Award', 'whoiswho' ); ?></h2>
+					<?php echo wp_kses_post( $wiw_award ); ?>
+				</section>
+			<?php endif; ?>
+			<?php
+			$wiw_stories = class_exists( PublicStory::class ) ? PublicStory::for_profile( $wiw_profile->id ) : array();
+			if ( array() !== $wiw_stories ) :
+				?>
+				<section id="related-stories" aria-labelledby="related-stories-h">
+					<h2 id="related-stories-h"><?php esc_html_e( 'Related stories', 'whoiswho' ); ?></h2>
+					<ul class="ev-rel-list">
+						<?php foreach ( $wiw_stories as $wiw_story ) : ?>
+							<li><a href="<?php echo esc_url( (string) ( $wiw_story['url'] ?? '' ) ); ?>"><?php echo esc_html( (string) ( $wiw_story['title'] ?? '' ) ); ?></a><span class="muted small"> <?php echo esc_html( (string) ( $wiw_story['type'] ?? '' ) ); ?></span></li>
+						<?php endforeach; ?>
+					</ul>
+				</section>
+			<?php endif; ?>
 		</div>
 		<aside class="profile-rail" aria-label="<?php esc_attr_e( 'Actions', 'whoiswho' ); ?>">
 			<?php
+			get_template_part( 'template-parts/profile-rail', null, array( 'profile' => $wiw_profile ) );
 			/**
-			 * The right rail of a profile: enquiry, claim, correction, removal and report actions are added by their own issues.
+			 * Further rail blocks added by other features.
 			 *
 			 * @param \WhoIsWho\Core\Directory\PublicProfile $profile Profile.
 			 */

@@ -105,6 +105,42 @@ if ( ! function_exists( 'wiw_profile_list' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wiw_profile_key_facts' ) ) {
+	/**
+	 * Rows of the key facts table (REQ-144, REQ-133): label, text value, source link, source host and retrieval date. A fact
+	 * with no source link or no valid retrieval date is left out. The long text fields shown in the body (biography, summary)
+	 * are not table rows.
+	 *
+	 * @param PublicProfile $profile Profile.
+	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, retrieved: string, retrieved_iso: string}>
+	 */
+	function wiw_profile_key_facts( PublicProfile $profile ): array {
+		$rows = array();
+		foreach ( $profile->facts as $key => $fact ) {
+			if ( in_array( $key, array( 'bio', 'summary' ), true ) ) {
+				continue;
+			}
+			$source = esc_url_raw( (string) ( $fact['source_url'] ?? '' ) );
+			$when   = strtotime( (string) ( $fact['retrieved_at'] ?? '' ) );
+			$value  = $fact['value'] ?? '';
+			$value  = is_array( $value ) ? implode( ', ', array_filter( $value, 'is_string' ) ) : (string) $value;
+			if ( '' === $source || false === $when || '' === trim( $value ) ) {
+				continue;
+			}
+			$host   = (string) wp_parse_url( $source, PHP_URL_HOST );
+			$rows[] = array(
+				'label'         => ucfirst( str_replace( '_', ' ', (string) $key ) ),
+				'value'         => $value,
+				'source_url'    => $source,
+				'source_host'   => '' !== $host ? (string) preg_replace( '#^www\.#', '', $host ) : $source,
+				'retrieved'     => wp_date( (string) get_option( 'date_format' ), $when ),
+				'retrieved_iso' => gmdate( 'Y-m-d', $when ),
+			);
+		}//end foreach
+		return $rows;
+	}
+}//end if
+
 if ( ! function_exists( 'wiw_profile_sections' ) ) {
 	/**
 	 * The body sections of a profile, in order; a section appears only when it has content (REQ-003, REQ-004, REQ-005).
