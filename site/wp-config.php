@@ -60,6 +60,11 @@ $wiw_production = 'production' === wiw_secret( 'WIW_ENV', 'production' );
 
 // Test-environment-only sign-in hook for Playwright (see Platform\TwoFactor\TestMode). Always false in production.
 define( 'WIW_E2E_TEST_MODE', ! $wiw_production && 'true' === wiw_secret( 'WIW_E2E_TEST_MODE', 'false' ) );
+// Page cache (WP Super Cache, deploy/cache): on only when the secrets file says so. WP_CACHE makes WordPress load the advanced-cache.php drop-in.
+if ( 'true' === wiw_secret( 'WIW_PAGE_CACHE', 'false' ) ) {
+	define( 'WP_CACHE', true );
+	define( 'WPCACHEHOME', __DIR__ . '/wp-content/plugins/wp-super-cache/' );
+}
 
 define( 'WP_ENVIRONMENT_TYPE', $wiw_production ? 'production' : 'local' );
 define( 'WP_DEBUG', ! $wiw_production );

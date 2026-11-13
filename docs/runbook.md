@@ -198,3 +198,14 @@ TODO. Owner: M5 (monitoring and launch).
 The audit table has database triggers that refuse UPDATE and DELETE where the database account may create triggers (the Audit log screen shows "Database triggers: on" or "off"). Without them the hash chain still detects tampering: run `php bin/wiw.php audit:verify` (exit code 1 when a row was altered) or press Verify chain on the screen.
 
 A nightly job (`audit.export`) writes the new audit rows to `wp-content/uploads/wiw-private/audit/audit-FIRST-LAST.jsonl`, with a `.sig` file holding an HMAC of its contents. The folder carries a deny-all `.htaccess`; download or sync it off the host (never email it). To restore, import the rows in id order into an empty audit table, then run `audit:verify`; check a copy against its `.sig` with the same site key.
+
+## Page cache (M5-PRF-03, M0-PLG-29; REQ-041, REQ-054, REQ-121, REQ-209, REQ-217)
+
+The page cache is WP Super Cache (pinned through composer, on the plugin allowlist). It is off unless the secrets file has `WIW_PAGE_CACHE=true`, which sets `WP_CACHE` in `wp-config.php`. Its settings are code, not clicks: the plugin's own settings screen is hidden.
+
+- **Turn on:** set `WIW_PAGE_CACHE=true` in the secrets file, then from the site root run `php deploy/cache/install.php`. It copies the plugin's `advanced-cache.php` drop-in and `deploy/cache/wp-cache-config.php` into `wp-content/` and creates `wp-content/cache/`. Running it twice changes nothing. Run it again after every plugin update.
+- **Turn off:** remove `WIW_PAGE_CACHE` (or set it to `false`), and delete `wp-content/advanced-cache.php` and `wp-content/cache/`.
+- **What is stored:** only an anonymous GET of a named public path (`PageCachePolicy`, filter `wiw_page_cache_public_paths`), answered 200, no query string, not noindex. Never stored: any login, commenter or post-password cookie, previews, form pages, signed-link and confirm pages, the admin, REST, feeds. Lifetime 60 seconds for every page (the ceiling is 120; 60 for lists and search).
+- **Unpublish:** the unpublish hook queues a purge job (`PurgeService`) that clears the page from the cache through `wpsc_delete_url_cache`; the origin then answers 404 or 410 and is never cached (non-200).
+- **After any plugin, guard or theme change:** rerun the visibility suite (`composer test -- --testsuite Visibility`) and, on a served site with the cache on, request a pending-review profile twice and confirm the `X-Robots-Tag: noindex` header both times.
+- **Known limits:** WP Super Cache expires files by garbage collection (every shutdown here), not at serve time, so staleness after an edit is bounded by the unpublish purge and the 60-second GC, not strictly by the lifetime. The guard's per-request Content-Security-Policy nonce is in the page body, so a cached page would carry an old nonce: see the follow-up issue before turning the cache on in production.
