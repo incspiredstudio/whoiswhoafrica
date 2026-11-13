@@ -30,6 +30,11 @@ if ( 'claim' === $wiw_kind ) {
 } elseif ( 'report' === $wiw_kind ) {
 	$wiw_title = __( 'Report received', 'whoiswho' );
 	$wiw_text  = __( 'A member of staff will look at it. If you gave an email address, we sent a link to confirm it.', 'whoiswho' );
+} elseif ( 'data_rights' === $wiw_kind ) {
+	$wiw_days  = class_exists( '\WhoIsWho\Core\Compliance\Support\DueDates' ) ? \WhoIsWho\Core\Compliance\Support\DueDates::data_request_days() : 30;
+	$wiw_title = __( 'Request received', 'whoiswho' );
+	/* translators: %d: number of days */
+	$wiw_text = sprintf( __( 'We sent a confirmation email. Please open the link in it: the request counts once you confirm. We then answer within %d days. Keep your reference.', 'whoiswho' ), $wiw_days );
 } elseif ( 'nomination' === $wiw_kind ) {
 	$wiw_title = __( 'Nomination submitted', 'whoiswho' );
 	$wiw_text  = __( 'It is private until our team checks it and makes it live. Nothing is published without staff approval. Keep your reference.', 'whoiswho' );

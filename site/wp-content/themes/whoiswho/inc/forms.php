@@ -13,7 +13,7 @@ declare(strict_types=1);
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
 const WIW_FORM_PAGE_VAR  = 'wiw_form_page';
-const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_5';
+const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_6';
 const WIW_CLAIM_SLUG_VAR = 'wiw_claim_slug';
 
 if ( ! function_exists( 'wiw_form_pages' ) ) {
@@ -55,6 +55,10 @@ if ( ! function_exists( 'wiw_form_pages' ) ) {
 			'nominate'    => array(
 				'template' => 'templates/nominate.php',
 				'title'    => __( 'Nominate', 'whoiswho' ),
+			),
+			'data-rights' => array(
+				'template' => 'templates/data-rights.php',
+				'title'    => __( 'Your data rights', 'whoiswho' ),
 			),
 			'done'        => array(
 				'template' => 'templates/done.php',
