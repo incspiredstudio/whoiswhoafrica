@@ -198,3 +198,7 @@ TODO. Owner: M5 (monitoring and launch).
 The audit table has database triggers that refuse UPDATE and DELETE where the database account may create triggers (the Audit log screen shows "Database triggers: on" or "off"). Without them the hash chain still detects tampering: run `php bin/wiw.php audit:verify` (exit code 1 when a row was altered) or press Verify chain on the screen.
 
 A nightly job (`audit.export`) writes the new audit rows to `wp-content/uploads/wiw-private/audit/audit-FIRST-LAST.jsonl`, with a `.sig` file holding an HMAC of its contents. The folder carries a deny-all `.htaccess`; download or sync it off the host (never email it). To restore, import the rows in id order into an empty audit table, then run `audit:verify`; check a copy against its `.sig` with the same site key.
+
+## Customer and enquiry CSV export (REQ-077, #324)
+
+The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.
