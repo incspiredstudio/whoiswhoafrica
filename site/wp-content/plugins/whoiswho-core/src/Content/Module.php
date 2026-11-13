@@ -32,6 +32,7 @@ final class Module implements ModuleInterface {
 		( new Search\StoryIndexer() )->register();
 		Stories\StoryRoute::hooks();
 		( new Pages\PageRoutes() )->register();
+		add_filter( 'wiw_cli_commands', static fn ( $commands ): array => array_merge( is_array( $commands ) ? $commands : array(), array( new Pages\SeedPagesCommand() ) ) );
 		Stories\RelatedEvent::hooks();
 		Stories\StorySeo::hooks();
 		Events\EventPostType::hooks();
