@@ -18,7 +18,7 @@ $wiw_admin  = array( 'administrator' );
 $wiw_review = array( 'reviewer', 'administrator' );
 
 return array(
-	'version'      => 2,
+	'version'      => 3,
 	'roles'        => array(
 		'wiw_reviewer' => array(
 			'label'  => 'Reviewer',
@@ -37,6 +37,10 @@ return array(
 
 		// Stories.
 		'edit_posts'                    => array(
+			'source' => 'core',
+			'roles'  => $wiw_edit,
+		),
+		'moderate_comments'             => array(
 			'source' => 'core',
 			'roles'  => $wiw_edit,
 		),
@@ -235,6 +239,10 @@ return array(
 			'roles'  => $wiw_edit,
 		),
 		'wiw_manage_awards'             => array(
+			'source' => 'plugin',
+			'roles'  => $wiw_edit,
+		),
+		'wiw_manage_subscribers'        => array(
 			'source' => 'plugin',
 			'roles'  => $wiw_edit,
 		),
