@@ -21,7 +21,8 @@ use WhoIsWho\Core\Platform\Audit\AuditLogger;
  */
 final class NominationService {
 
-	public const CAP = 'wiw_manage_awards';
+	public const CAP       = 'wiw_manage_awards';
+	public const NOTES_MAX = 2000;
 
 	/**
 	 * Audit logger.
@@ -195,6 +196,63 @@ final class NominationService {
 	public function history( int $id ): array {
 		global $wpdb;
 		return (array) $wpdb->get_results( $wpdb->prepare( 'SELECT change_type, old_value, new_value, user_id, changed_at FROM ' . AwardsTables::table( AwardsTables::CHANGES ) . ' WHERE nomination_id = %d ORDER BY id', $id ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+	}
+
+	/**
+	 * Save the internal notes. They are staff only: never public, never in an export. The audit entry records that they changed and
+	 * how long they are, never what they say.
+	 *
+	 * @param int    $id    Nomination.
+	 * @param string $notes Notes (plain text, up to 2000 characters).
+	 * @throws \DomainException When not allowed, unknown or too long.
+	 */
+	public function save_notes( int $id, string $notes ): void {
+		$this->require_cap();
+		$this->require_row( $id );
+		$notes = trim( wp_strip_all_tags( $notes ) );
+		if ( strlen( $notes ) > self::NOTES_MAX ) {
+			throw new \DomainException( 'The notes are too long.' );
+		}
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			AwardsTables::table( AwardsTables::NOMINATIONS ),
+			array(
+				'notes'      => '' === $notes ? null : $notes,
+				'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $id )
+		);
+		$this->audit->log( 'nomination.notes', $this->subject( $id ), null, array( 'length' => strlen( $notes ) ) );
+	}
+
+	/**
+	 * Link a nomination that came from the public form, and has no profile yet, to an existing reviewed or pending-review profile.
+	 * It stays Not live until staff set it live (and a nomination cannot go live before its profile is reviewed).
+	 *
+	 * @param int $id         Nomination.
+	 * @param int $profile_id Existing profile.
+	 * @throws \DomainException When not allowed, unknown, already linked or the profile is not eligible.
+	 */
+	public function link_profile( int $id, int $profile_id ): void {
+		$this->require_cap();
+		$row = $this->require_row( $id );
+		if ( (int) $row['profile_id'] > 0 ) {
+			throw new \DomainException( 'This nomination is already linked to a profile.' );
+		}
+		$state = ( $this->profile_state )( $profile_id );
+		if ( ! in_array( $state, array( PubState::PUBLISHED_REVIEWED, PubState::PUBLISHED_PENDING ), true ) ) {
+			throw new \DomainException( 'Choose an existing reviewed or pending-review profile.' );
+		}
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			AwardsTables::table( AwardsTables::NOMINATIONS ),
+			array(
+				'profile_id' => $profile_id,
+				'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $id )
+		);
+		$this->audit->log( 'nomination.link_profile', $this->subject( $id ), array( 'profile' => null ), array( 'profile' => $profile_id ) );
 	}
 
 	/**
