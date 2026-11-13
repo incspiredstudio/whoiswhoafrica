@@ -72,6 +72,8 @@ final class PublicFormMatrixTest extends TestCase {
 		}
 		$this->assertStringContainsString( 'PublicSubmission', $this->source( 'plugins/whoiswho-core/src/Content/Newsletter/NewsletterSignup.php' ) );
 		$this->assertStringContainsString( 'PublicSubmission', $this->source( 'plugins/whoiswho-core/src/Trust/ClaimIntake.php' ) );
+		$this->assertStringContainsString( 'BotChallenge', $this->source( 'plugins/whoiswho-core/src/Commerce/Invitations/InvitationRoute.php' ), 'the invitation handler verifies the bot challenge (REQ-081)' );
+		$this->assertStringContainsString( 'verify( $input, ' . chr( 39 ) . 'invitation' . chr( 39 ) . ' )', $this->source( 'plugins/whoiswho-core/src/Commerce/Invitations/InvitationRoute.php' ) );
 		$this->assertStringContainsString( 'FormGate', $this->source( 'plugins/whoiswho-core/src/Compliance/Forms/PublicSubmission.php' ) );
 	}
 

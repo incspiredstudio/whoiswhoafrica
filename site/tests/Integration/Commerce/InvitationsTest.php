@@ -23,6 +23,8 @@ use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Audit\WpdbConnection;
 use WhoIsWho\Core\Platform\Capabilities\CapabilityCatalogue;
 use WhoIsWho\Core\Platform\Capabilities\RoleSync;
+use WhoIsWho\Core\Platform\Forms\BotChallenge;
+use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Forms\RateLimiter;
 use WhoIsWho\Core\Platform\Jobs\JobRunner;
 use WhoIsWho\Core\Platform\Links\SignedLinks;
@@ -234,6 +236,81 @@ final class InvitationsTest extends TestCase {
 		);
 	}
 
+	/**
+	 * A route with a stub bot challenge that answers the given verdict.
+	 *
+	 * @param Invitations $service Invitations.
+	 * @param string      $verdict Challenge verdict.
+	 */
+	private function route( Invitations $service, string $verdict = BotChallenge::OK ): InvitationRoute {
+		$challenge = new class( $verdict ) implements BotChallenge {
+			/**
+			 * Verdict.
+			 *
+			 * @var string
+			 */
+			private string $verdict;
+
+			/**
+			 * Constructor.
+			 *
+			 * @param string $verdict Verdict.
+			 */
+			public function __construct( string $verdict ) {
+				$this->verdict = $verdict;
+			}
+
+			/**
+			 * Verify.
+			 *
+			 * @param FormInput $input Input.
+			 * @param string    $form  Form.
+			 */
+			public function verify( FormInput $input, string $form ): string {
+				return 'invitation' === $form ? $this->verdict : 'wrong_form';
+			}
+		};
+		return new InvitationRoute( $service, new RateLimiter( new MemoryStore(), 'secret', InvitationRoute::LIMITS + RateLimiter::LIMITS ), $challenge );
+	}
+
+	public function test_REQ_081_a_post_without_a_passing_challenge_is_refused_and_does_not_reveal_the_link(): void {
+		list( $service, $token ) = $this->issued();
+		$route                   = $this->route( $service, 'honeypot' );
+		$post                    = new Request(
+			array(
+				'submit'  => 'send',
+				'name'    => 'Bot Ltd',
+				'type'    => 'organisation',
+				'summary' => 'x',
+			)
+		);
+		$good                    = $route->respond( 'POST', $token, $post, '203.0.113.5', new FormInput( array() ) );
+		$unused                  = $route->respond( 'POST', 'abcdefghijklmnopqrstuvwxyz', $post, '203.0.113.5', new FormInput( array() ) );
+		$this->assertSame( 'form', $good['state'] );
+		$this->assertSame( array( 'form' => 'challenge' ), $good['errors'] );
+		$this->assertSame( $good, $unused, 'A valid link and an unknown link give the same refusal.' );
+		$this->assertSame( array(), $this->customer_profiles(), 'Nothing is created.' );
+		$this->assertSame( array(), $service->draft( $token ), 'No draft is saved either.' );
+		$this->assertTrue( $service->usable( $token ), 'The link is not used up by a refused post.' );
+	}
+
+	public function test_REQ_081_a_passing_challenge_lets_the_post_through(): void {
+		list( $service, $token ) = $this->issued();
+		$saved                   = $this->route( $service )->respond(
+			'POST',
+			$token,
+			new Request(
+				array(
+					'submit' => 'draft',
+					'name'   => 'Ok Ltd',
+				)
+			),
+			'203.0.113.5',
+			new FormInput( array() )
+		);
+		$this->assertSame( 'saved', $saved['state'] );
+	}
+
 	public function test_REQ_233_invitation_link_second_use_shows_expired(): void {
 		list( $service, $token ) = $this->issued();
 		$this->assertTrue( $service->usable( $token ) );
@@ -245,9 +322,9 @@ final class InvitationsTest extends TestCase {
 		$this->assertSame( 'expired', $second['state'], 'A second use shows Link expired or already used.' );
 		$this->assertCount( 1, $this->customer_profiles(), 'A second use creates nothing.' );
 
-		$route = new InvitationRoute( $service, new RateLimiter( new MemoryStore(), 'secret', InvitationRoute::LIMITS + RateLimiter::LIMITS ) );
-		$this->assertSame( 'expired', $route->respond( 'GET', $token, new Request( array() ), '203.0.113.5' )['state'] );
-		$this->assertSame( 'expired', $route->respond( 'GET', 'abcdefghijklmnopqrstuvwxyz', new Request( array() ), '203.0.113.5' )['state'], 'An unknown link looks the same.' );
+		$route = $this->route( $service );
+		$this->assertSame( 'expired', $route->respond( 'GET', $token, new Request( array() ), '203.0.113.5', new FormInput( array() ) )['state'] );
+		$this->assertSame( 'expired', $route->respond( 'GET', 'abcdefghijklmnopqrstuvwxyz', new Request( array() ), '203.0.113.5', new FormInput( array() ) )['state'], 'An unknown link looks the same.' );
 	}
 
 	public function test_REQ_233_issuing_emails_the_link_and_audits_without_personal_data(): void {
@@ -374,8 +451,8 @@ final class InvitationsTest extends TestCase {
 		);
 		$this->assertSame( 'Draft Ltd', $service->draft( $token )['name'] );
 
-		$route = new InvitationRoute( $service, new RateLimiter( new MemoryStore(), 'secret', InvitationRoute::LIMITS + RateLimiter::LIMITS ) );
-		$form  = $route->respond( 'GET', $token, new Request( array() ), '203.0.113.5' );
+		$route = $this->route( $service );
+		$form  = $route->respond( 'GET', $token, new Request( array() ), '203.0.113.5', new FormInput( array() ) );
 		$this->assertSame( 'form', $form['state'] );
 		$this->assertSame( 'Draft Ltd', $form['values']['name'], 'Opening the link again shows the draft.' );
 
@@ -388,7 +465,8 @@ final class InvitationsTest extends TestCase {
 					'name'   => 'Changed Ltd',
 				)
 			),
-			'203.0.113.5'
+			'203.0.113.5',
+			new FormInput( array() )
 		);
 		$this->assertSame( 'saved', $saved['state'] );
 		$this->assertSame( 'Changed Ltd', $service->draft( $token )['name'] );
