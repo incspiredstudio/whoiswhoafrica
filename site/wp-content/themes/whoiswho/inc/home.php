@@ -248,8 +248,9 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 			'title'      => wiw_home_title_lines( '' !== $long ? $long : $name ),
 			'lede'       => __( 'Documenting the influence, achievements and legacy of the people and institutions shaping Africa.', 'whoiswho' ),
 			'nominating' => $nominating,
+			// Only the closing section's button reads this (the hero has none, issue 798).
 			'ctas'       => array(
-				'primary'   => $nominating
+				'primary' => $nominating
 					? array(
 						'label' => __( 'Nominate someone', 'whoiswho' ),
 						'url'   => home_url( '/nominate/' ),
@@ -258,10 +259,6 @@ if ( ! function_exists( 'wiw_home_model' ) ) {
 						'label' => __( 'Get listed', 'whoiswho' ),
 						'url'   => home_url( '/get-listed/' ),
 					),
-				'secondary' => array(
-					'label' => __( 'Browse the directory', 'whoiswho' ),
-					'url'   => home_url( '/people/' ),
-				),
 			),
 			'videos'     => wiw_home_hero_videos(),
 			'acts'       => wiw_home_acts( $tagline ),
