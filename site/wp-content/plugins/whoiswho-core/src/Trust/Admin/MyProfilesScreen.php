@@ -80,7 +80,9 @@ final class MyProfilesScreen {
 			self::CAP,
 			static function (): void {
 				echo ( new self() )->html( Request::from_globals(), get_current_user_id() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-			}
+			},
+			false,
+			'directory'
 		);
 		$registry->hook();
 		ActionGuard::register(
