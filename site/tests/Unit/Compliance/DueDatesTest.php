@@ -83,4 +83,13 @@ final class DueDatesTest extends TestCase {
 		}
 		$this->assertFalse( Reference::is_valid( 'WIW-0OIL1111' ) );
 	}
+
+	public function test_REQ_233_one_display_rule_covers_every_reference_shape(): void {
+		foreach ( array( Reference::generate(), 'NOM-1A2B3C', 'CLM-0004', 'ENQ-0001' ) as $shape ) {
+			$this->assertSame( $shape, Reference::display_safe( $shape ), $shape );
+		}
+		foreach ( array( '', 'wiw-5MQHD6QV', 'WIW-<b>', 'ENQ-', 'X-1', 'WIW-1234567890123' ) as $bad ) {
+			$this->assertSame( '', Reference::display_safe( $bad ), $bad );
+		}
+	}
 }
