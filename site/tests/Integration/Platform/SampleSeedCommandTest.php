@@ -312,6 +312,28 @@ final class SampleSeedCommandTest extends WpTestCase {
 		$this->assertSame( 0, ( new SampleRemoveCommand( 'local' ) )->run( array(), new Output( false ) ), 'a second run is harmless' );
 	}
 
+	public function test_REQ_208_seeded_profiles_stories_and_events_carry_generated_placeholder_images_that_are_marked_and_removed(): void {
+		$this->seed();
+		$person = SampleMarker::find_post( 'profile:test-person', ProfileType::POST_TYPE );
+		$this->assertNotNull( $person );
+		$image = (int) get_post_meta( (int) $person, PublicProfile::IMAGE_META, true );
+		$this->assertGreaterThan( 0, $image, 'a sample profile has a portrait' );
+		$this->assertSame( 'attachment', get_post_type( $image ) );
+		$this->assertSame( 'image/png', get_post_mime_type( $image ) );
+		$this->assertSame( '1', (string) get_post_meta( $image, SampleMarker::META, true ), 'the image carries the sample marker' );
+		$story = SampleMarker::find_post( 'story:test-story', 'post' );
+		$this->assertGreaterThan( 0, (int) get_post_thumbnail_id( (int) $story ), 'a sample story has a cover' );
+		$event = SampleMarker::find_post( 'event:test-event', EventPostType::TYPE );
+		$this->assertGreaterThan( 0, (int) get_post_thumbnail_id( (int) $event ), 'a sample event has a poster' );
+
+		$count = count( SampleMarker::all_post_ids() );
+		$this->seed();
+		$this->assertSame( $count, count( SampleMarker::all_post_ids() ), 'running again makes no second image' );
+
+		( new SampleRemoveCommand( 'local' ) )->run( array(), new Output( false ) );
+		$this->assertNull( get_post( $image ), 'the image is deleted with the sample content' );
+	}
+
 	public function test_REQ_208_the_shipped_dataset_builds_about_forty_profiles_twelve_stories_and_six_events(): void {
 		$data = SampleSeeder::load_data();
 		$this->assertGreaterThanOrEqual( 40, count( $data['profiles'] ) );
