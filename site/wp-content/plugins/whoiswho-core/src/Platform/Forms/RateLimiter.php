@@ -20,9 +20,14 @@ final class RateLimiter {
 	 * Form issues in M1 and M3 add their own entries.
 	 */
 	public const LIMITS = array(
-		'default' => array(
+		'default'    => array(
 			'ip'      => array( 10, 3600 ),
 			'subject' => array( 3, 3600 ),
+		),
+		// A nominator may put several people forward in a day, so the email allowance is wider (REQ-122, REQ-196).
+		'nomination' => array(
+			'ip'      => array( 10, 3600 ),
+			'subject' => array( 8, 86400 ),
 		),
 	);
 

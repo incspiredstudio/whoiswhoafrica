@@ -37,6 +37,7 @@ final class CliTest extends TestCase {
 		rmdir( $this->dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		if ( defined( 'WIW_WP_TESTS' ) && WIW_WP_TESTS ) {
 			delete_option( Runner::OPTION_VERSION );
+			delete_option( Runner::OPTION_APPLIED );
 			delete_option( Runner::OPTION_LOCK );
 		}
 		parent::tearDown();
@@ -66,6 +67,7 @@ PHP;
 	private function app( bool $production = false, bool $flag = false ): Application {
 		$this->requireWordPress();
 		delete_option( Runner::OPTION_VERSION );
+		delete_option( Runner::OPTION_APPLIED );
 		delete_option( Runner::OPTION_LOCK );
 		$app = new Application();
 		$app->add( new MigrateCommand( new Runner( $this->dir, $production, $flag ) ) );

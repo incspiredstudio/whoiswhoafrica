@@ -12,6 +12,14 @@ add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
 		wp_enqueue_style( 'wiw-tokens-brand', get_stylesheet_directory_uri() . '/assets/css/tokens.css', array( 'wiw-tokens-base' ), WIW_CHILD_VERSION );
+		// A url() inside a custom property resolves against the stylesheet that uses it, which is the built bundle, not tokens.css. Absolute addresses keep the brand images working everywhere.
+		$brand = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/brand/';
+		$css   = ':root{';
+		foreach ( array( 'star', 'comb', 'link', 'spiral' ) as $mark ) {
+			$css .= '--img-mark-' . $mark . ':url("' . esc_url_raw( $brand . 'mark-' . $mark . '.webp' ) . '");';
+		}
+		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-tile.png' ) . '");}';
+		wp_add_inline_style( 'wiw-tokens-brand', $css );
 	},
 	20
 );

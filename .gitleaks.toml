@@ -13,6 +13,8 @@ paths = [
   '''site/package-lock\.json''',
   '''handbook/package-lock\.json''',
   '''docs/package-lock\.json''',
+  # Test fixture for the pre-launch audit scanner: fake salt values proving the scanner finds them. Earlier commits on the branch contain one.
+  '''scripts/__tests__/prelaunch-audit\.test\.js''',
 ]
 regexes = [
   # The documented placeholder in .env.example and the docs: names only, never values.

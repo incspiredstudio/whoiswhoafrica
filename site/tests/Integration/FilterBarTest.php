@@ -130,4 +130,30 @@ final class FilterBarTest extends TestCase {
 		$this->assertStringContainsString( 'aria-label="Story types"', $out );
 		$this->assertSame( '', trim( $this->render( 'template-parts/text-tabs', array( 'label' => 'x' ) ) ) );
 	}
+
+	public function test_REQ_007_view_switch_marks_the_current_view_and_links_keep_the_filters(): void {
+		$out = $this->render(
+			'template-parts/filter-bar',
+			$this->args(
+				array(
+					'view' => array(
+						'value' => 'list',
+						'grid'  => '/people/?industry=energy',
+						'list'  => '/people/?industry=energy&view=list',
+					),
+				)
+			)
+		);
+		$this->assertStringContainsString( 'class="view-toggle"', $out );
+		$this->assertStringContainsString( 'href="/people/?industry=energy"', $out );
+		$this->assertSame( 1, substr_count( $out, 'aria-current="true"' ) );
+		$this->assertMatchesRegularExpression( '/aria-current="true"[^>]*>.*?List/s', $out );
+		$this->assertStringContainsString( 'name="view" value="list"', $out );
+	}
+
+	public function test_REQ_007_no_view_switch_when_not_asked_for(): void {
+		$out = $this->render( 'template-parts/filter-bar', $this->args() );
+		$this->assertStringNotContainsString( 'view-toggle', $out );
+		$this->assertStringNotContainsString( 'name="view"', $out );
+	}
 }
