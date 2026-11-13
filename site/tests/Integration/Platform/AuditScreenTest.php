@@ -118,6 +118,7 @@ final class AuditScreenTest extends TestCase {
 		$this->as_role( 'administrator' );
 		$html = $this->screen()->html( new Request( array() ) );
 		$this->assertStringContainsString( 'profile.unpublish', $html );
+		$this->assertStringContainsString( 'Database triggers:', $html );
 		$this->assertStringNotContainsString( 'type="submit" name="delete"', $html );
 		$this->assertStringNotContainsString( 'Delete', $html );
 		$this->assertStringNotContainsString( 'Edit', $html, 'the screen offers no edit or delete control' );
