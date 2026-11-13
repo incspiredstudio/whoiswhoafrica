@@ -1,6 +1,7 @@
 /* Front page script (M2-HOM-08). Everything here is added on top of a page that already reads in full. With reduced motion, data saver
    or a 2G connection it does almost nothing: the videos stay posters and no scroll effect runs. */
 import { motionAllowed } from "./motion.js";
+import "./home-nominees.js";
 
 const root = document.documentElement;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
