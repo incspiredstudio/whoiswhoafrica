@@ -31,6 +31,9 @@ return array(
 	// no subject yet. Flagged for the shared-docs owner.
 	'subscriber_after_last_payment_days' => 2190,
 
+	// Comments (REQ-258): kept while the story is public and erased on request, so no number of days. null purges nothing.
+	'comments_days'                      => null,
+
 	// Never purged.
 	'suppression'                        => 'indefinite',
 	'audit_log'                          => 'kept',
