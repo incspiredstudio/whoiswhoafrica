@@ -74,6 +74,36 @@ return array(
 		'note'      => 'Address WordPress stores for spam checks.',
 	),
 
+	// wpDiscuz's own tables (REQ-258). They exist only while that plugin is active; listed here so the data-request flow and the
+	// retention schedule know them. Column names follow wpDiscuz 7; check them again when the plugin version changes.
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_comments_subscription.email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Address that subscribed to replies on a story (wpDiscuz); deleted on request.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_follow_users.user_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Address of a commenter who is followed (wpDiscuz); deleted on request.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wc_follow_users.follower_email',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'delete',
+		'note'      => 'Address of a commenter who follows another (wpDiscuz); deleted on request.',
+	),
+
 	// Tables added in the foundation milestone and the ones planned next.
 	array(
 		'kind'      => 'column',
@@ -311,6 +341,33 @@ return array(
 		'export'    => 'exclude',
 		'erase'     => 'delete',
 		'note'      => 'Optional staff-only Contact email (REQ-268). Never public, never in an export or a log; removed with the nomination.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.nominee_name',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Nominee name as typed by the nominator on the public form; the public pages use the reviewed profile, never this.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.nominee_org',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => 'Nominee organisation as typed by the nominator; never public.',
+	),
+	array(
+		'kind'      => 'column',
+		'name'      => 'wiw_nominations.relationship_note',
+		'class'     => 'pii',
+		'retention' => 'case_life',
+		'export'    => 'include',
+		'erase'     => 'anonymise',
+		'note'      => "The nominator's declaration of a relationship with the nominee; may name people; never public.",
 	),
 	array(
 		'kind'      => 'column',

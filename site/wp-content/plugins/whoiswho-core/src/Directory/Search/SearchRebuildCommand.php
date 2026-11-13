@@ -1,6 +1,6 @@
 <?php
 /**
- * The search:rebuild command: rebuilds wiw_profile_search from public profiles only (REQ-254). Prints a count only.
+ * The search:rebuild command: rebuilds wiw_profile_search from public profiles and published stories only (REQ-254). Prints a count only.
  *
  * @package WhoIsWho
  */
@@ -41,6 +41,7 @@ final class SearchRebuildCommand implements Command {
 		unset( $args );
 		$count = ( new SearchIndexer() )->rebuild();
 		$output->line( 'Indexed profiles: ' . $count );
+		$output->line( 'Indexed stories: ' . ( new \WhoIsWho\Core\Content\Search\StoryIndexer() )->rebuild() );
 		return 0;
 	}
 }

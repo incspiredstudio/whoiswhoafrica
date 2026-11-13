@@ -105,4 +105,37 @@ final class FormRoutesTest extends TestCase {
 		$this->assertSame( 409, FormRoutes::http_status( 'review_first' ) );
 		$this->assertSame( 400, FormRoutes::http_status( 'something_else' ) );
 	}
+
+	public function test_REQ_030_post_nominate_routes_reach_the_nomination_steps(): void {
+		$make   = function ( string $form ): callable {
+			return function ( FormInput $input, string $ip ) use ( $form ): array {
+				$this->calls[] = array(
+					'form' => $form,
+					'ip'   => $ip,
+					'slug' => '',
+					'name' => $input->raw( 'name' ),
+				);
+				return array(
+					'status'    => 'duplicate',
+					'message'   => 'm',
+					'errors'    => array(),
+					'reference' => '',
+				);
+			};
+		};
+		$routes = new FormRoutes(
+			array(
+				'nomination_start' => $make( 'nomination_start' ),
+				'nomination'       => $make( 'nomination' ),
+			)
+		);
+		$start  = $routes->dispatch( 'POST', 'nominate/start/', new FormInput( array() ), '203.0.113.7' );
+		$final  = $routes->dispatch( 'POST', '/nominate', new FormInput( array() ), '203.0.113.7' );
+		$this->assertSame( 'nomination_start', $start['form'] );
+		$this->assertSame( 'nomination', $final['form'] );
+		$this->assertSame( 409, $final['http'], 'a duplicate warning is a 409 the visitor can continue past' );
+		$this->assertNull( $routes->dispatch( 'GET', 'nominate', new FormInput( array() ), '' ), 'the page itself is the theme\'s' );
+		$this->assertSame( 409, FormRoutes::http_status( 'closed' ) );
+		$this->assertSame( 409, FormRoutes::http_status( 'unverified' ) );
+	}
 }
