@@ -47,6 +47,6 @@ final class SearchTemplateTest extends TestCase {
 	public function test_REQ_254_the_search_route_is_registered_and_not_indexed(): void {
 		$forms = (string) file_get_contents( dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho/inc/forms.php' );
 		$this->assertStringContainsString( "'search'", $forms );
-		$this->assertMatchesRegularExpression( "/array\( 'done', 'claim', 'search' \), true/", $forms );
+		$this->assertMatchesRegularExpression( "/array\( 'done', 'claim', 'unsubscribe', 'search' \), true/", $forms );
 	}
 }

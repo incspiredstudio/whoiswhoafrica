@@ -70,9 +70,11 @@ if ( ! function_exists( 'wiw_faq_render_question' ) ) {
 	}
 }
 
-add_action(
-	'init',
-	static function (): void {
+if ( ! function_exists( 'wiw_faq_register' ) ) {
+	/**
+	 * Register the editor script and the two blocks (safe to call again: the blocks are registered once).
+	 */
+	function wiw_faq_register(): void {
 		wp_register_script(
 			'wiw-faq-editor',
 			get_template_directory_uri() . '/blocks/faq-group/editor.js',
@@ -88,7 +90,9 @@ add_action(
 			register_block_type( get_template_directory() . '/blocks/faq-question', array( 'render_callback' => 'wiw_faq_render_question' ) );
 		}
 	}
-);
+}//end if
+
+add_action( 'init', 'wiw_faq_register' );
 
 if ( ! function_exists( 'wiw_faq_items' ) ) {
 	/**

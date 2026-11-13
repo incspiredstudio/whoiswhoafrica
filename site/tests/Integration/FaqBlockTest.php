@@ -47,6 +47,8 @@ final class FaqBlockTest extends TestCase {
 	}
 
 	public function test_REQ_260_the_blocks_are_registered_and_a_question_only_lives_in_a_group(): void {
+		// The WordPress test case resets the script registry between tests, so register again (the blocks register once).
+		wiw_faq_register();
 		$registry = \WP_Block_Type_Registry::get_instance();
 		$this->assertTrue( $registry->is_registered( 'whoiswho/faq-group' ) );
 		$question = $registry->get_registered( 'whoiswho/faq-question' );

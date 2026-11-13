@@ -190,7 +190,12 @@ final class ImportThousandRecordsTest extends TestCase {
 
 	public function test_REQ_237_thousand_records_import_within_limits(): void {
 		$bundle = $this->bundle( 'B-perf' );
-		$t0     = microtime( true );
+		// The ceiling is for this import, not for the whole PHPUnit process: measure from the memory in use now.
+		$memory_base = memory_get_usage( true );
+		if ( function_exists( 'memory_reset_peak_usage' ) ) {
+			memory_reset_peak_usage();
+		}
+		$t0 = microtime( true );
 
 		$dry = ( new DryRun( new Suppression( AuditLogger::for_site() ) ) )->run( $bundle, 'B-perf' );
 		$this->assertIsArray( $dry );
@@ -204,7 +209,7 @@ final class ImportThousandRecordsTest extends TestCase {
 		$this->assertSame( self::RECORDS, $this->profile_count(), 'one profile per record, none twice' );
 		$this->assertSame( array( 'CREATED' => self::RECORDS ), $first['counts'] );
 		$this->assertGreaterThan( self::RECORDS / self::CHUNK, $first['requests'], 'at least one request was cut off and resumed' );
-		$this->assertLessThan( self::MEMORY_CEILING, memory_get_peak_usage( true ), 'peak memory over the host ceiling' );
+		$this->assertLessThan( self::MEMORY_CEILING, memory_get_peak_usage( true ) - ( function_exists( 'memory_reset_peak_usage' ) ? $memory_base : 0 ), 'peak memory over the host ceiling' );
 		$this->assertLessThan( self::TOTAL_CEILING, $total, 'the whole import took too long' );
 
 		$second_batch = $this->bundle( 'B-perf-2' );
