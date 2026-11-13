@@ -130,6 +130,26 @@ final class PersonalData {
 				)
 			),
 			new TableHandler(
+				'customers',
+				'Customer records',
+				'wiw_customers',
+				'contact_email',
+				array(
+					'external_id'   => 'Customer id',
+					'name'          => 'Name',
+					'contact_email' => 'Email address',
+					'contact_phone' => 'Phone',
+					'notes'         => 'Internal notes',
+					'created_at'    => 'Created',
+				),
+				array(
+					'name'          => 'redact',
+					'contact_email' => 'redact',
+					'contact_phone' => 'redact',
+					'notes'         => 'redact',
+				)
+			),
+			new TableHandler(
 				'signed-links',
 				'Email confirmation links',
 				'wiw_signed_links',
