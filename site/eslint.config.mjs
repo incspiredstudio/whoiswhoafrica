@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist/**", "build/coverage/**", "playwright-report/**", "test-results/**", "vendor/**", "**/assets/vendor/**", "node_modules/**", "wordpress/**", ".studio/**", "wp-content/plugins/*/vendor/**"] },
+  { ignores: ["dist/**", "build/coverage/**", "playwright-report/**", "test-results/**", "vendor/**", "**/assets/vendor/**", "node_modules/**", "wordpress/**", ".studio/**", "wp-content/plugins/*/vendor/**", "wp-content/plugins/two-factor/**", "wp-content/plugins/user-role-editor/**", "wp-content/plugins/wp-super-cache/**", "wp-content/plugins/action-scheduler/**"] },
   js.configs.recommended,
   {
     files: ["**/*.js", "**/*.mjs"],
