@@ -166,7 +166,7 @@ final class DealService {
 	}
 
 	/**
-	 * Cancel a deal.
+	 * Cancel a deal. Its placements are ended (nothing is deleted); the label job then removes the Sponsored label and slot.
 	 *
 	 * @param int $id Deal id.
 	 * @throws \DomainException When the user lacks the register capability.
@@ -174,6 +174,35 @@ final class DealService {
 	public function cancel( int $id ): void {
 		$this->require_cap( self::MONEY_CAP );
 		$this->update( $id, array( 'cancelled' => true ) );
+		$placements = new PlacementRepository();
+		foreach ( $placements->for_arrangement( $id ) as $placement ) {
+			if ( empty( $placement['ended'] ) ) {
+				$placements->mark_ended( (int) $placement['id'], ( $this->clock )() );
+			}
+		}
+		( PlacementJob::for_site() )->run( gmdate( 'Y-m-d' ) );
+	}
+
+	/**
+	 * Record a refund as a note. The refund itself is handled offline; this only writes down that it happened.
+	 *
+	 * @param int    $id   Deal id.
+	 * @param string $text What was refunded and how, without card details.
+	 * @throws \DomainException When the user lacks the register capability, the text is empty, or it looks like a card number.
+	 */
+	public function record_refund_note( int $id, string $text ): void {
+		$this->require_cap( self::MONEY_CAP );
+		$text = trim( $text );
+		if ( '' === $text || CardGuard::looks_like_card( $text ) ) {
+			throw new \DomainException( 'A refund note needs text and must not hold card details.' );
+		}
+		$deal = $this->deals->get( $id );
+		if ( null === $deal ) {
+			throw new \DomainException( 'Unknown deal.' );
+		}
+		$line = '[Refund ' . ( $this->clock )()->format( 'Y-m-d' ) . '] ' . $text;
+		$this->deals->update( $id, array( 'notes' => trim( (string) $deal['notes'] . "\n" . $line ) ), ( $this->clock )() );
+		$this->log( 'deal.refund_note', $id, null, array( 'noted' => true ) );
 	}
 
 	/**
