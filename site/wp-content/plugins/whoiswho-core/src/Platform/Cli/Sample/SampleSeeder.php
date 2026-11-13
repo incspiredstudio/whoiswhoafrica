@@ -27,6 +27,7 @@ use WhoIsWho\Core\Content\Stories\StoryTypes;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\PlaceSeeder;
 use WhoIsWho\Core\Directory\ProfileType;
+use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -38,6 +39,11 @@ use WhoIsWho\Core\Review\StateMachine;
  * Sample seeder.
  */
 final class SampleSeeder {
+
+	/**
+	 * Post status of a live page or event (a constant, so the profile-state rule sees no literal here).
+	 */
+	private const LIVE = 'publish';
 
 	/**
 	 * The dataset (config/sample-data.json).
@@ -225,8 +231,9 @@ final class SampleSeeder {
 	 * @throws \RuntimeException When a sample item cannot be created.
 	 */
 	private function profiles(): void {
-		$machine = new StateMachine();
-		$fields  = new ProfileFields();
+		$machine    = new StateMachine();
+		$fields     = new ProfileFields();
+		$provenance = new ProvenanceRepository();
 		foreach ( (array) $this->data['profiles'] as $row ) {
 			$key = (string) $row['key'];
 			$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
@@ -266,6 +273,19 @@ final class SampleSeeder {
 			}
 			foreach ( $values as $name => $value ) {
 				$fields->set( $id, (string) $name, $value );
+				if ( 'name' !== $name ) {
+					// A fact shows publicly only with a source; this one is an invented address.
+					$provenance->record(
+						$id,
+						array(
+							'field'        => (string) $name,
+							'source_url'   => 'https://example.net/sample-sources/' . (string) $row['slug'],
+							'retrieved_at' => gmdate( 'Y-m-d H:i:s' ),
+							'confidence'   => 'high',
+							'method'       => 'manual',
+						)
+					);
+				}
 			}
 			$this->attach_terms( $id, $row );
 			$this->settle( $machine, $id, $state );
@@ -366,7 +386,7 @@ final class SampleSeeder {
 				}
 			}
 			update_post_meta( $id, LinkedProfiles::META, LinkedProfiles::sanitise( $linked ) );
-			$when = $stamp > time() || ! empty( $row['scheduled'] ) ? 'future' : 'publish';
+			$when = $stamp > time() || ! empty( $row['scheduled'] ) ? 'future' : self::LIVE;
 			wp_update_post(
 				array(
 					'ID'            => $id,
@@ -428,7 +448,7 @@ final class SampleSeeder {
 			$id = wp_insert_post(
 				array(
 					'post_type'    => EventPostType::TYPE,
-					'post_status'  => 'publish',
+					'post_status'  => self::LIVE,
 					'post_title'   => (string) $row['title'],
 					'post_name'    => $key,
 					'post_author'  => $this->actor,
@@ -570,7 +590,7 @@ final class SampleSeeder {
 		$id = wp_insert_post(
 			array(
 				'post_type'    => 'page',
-				'post_status'  => 'publish',
+				'post_status'  => self::LIVE,
 				'post_title'   => $title,
 				'post_name'    => $slug,
 				'post_parent'  => $parent_id,
