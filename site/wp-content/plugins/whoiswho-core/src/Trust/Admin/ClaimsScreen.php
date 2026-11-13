@@ -89,7 +89,9 @@ final class ClaimsScreen {
 					self::CAP,
 					static function (): void {
 						self::for_site()->render( Request::from_globals() );
-					}
+					},
+					false,
+					'review'
 				);
 				$registry->hook();
 				ActionGuard::register(

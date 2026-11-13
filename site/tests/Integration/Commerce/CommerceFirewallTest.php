@@ -83,9 +83,25 @@ final class CommerceFirewallTest extends TestCase {
 	}
 
 	/**
-	 * Run the whole life of a deal as the Administrator and an Editor.
+	 * Publish the story a deal will sponsor. Publishing a story is a content change (it adds a search row), so tests do it before
+	 * they take the "before" snapshot.
 	 */
-	private function live_a_deal(): void {
+	private function sponsored_story(): int {
+		return (int) wp_insert_post(
+			array(
+				'post_title'  => 'Sponsored story',
+				'post_status' => 'publish',
+				'post_type'   => 'post',
+			)
+		);
+	}
+
+	/**
+	 * Run the whole life of a deal as the Administrator and an Editor.
+	 *
+	 * @param int $story The story to sponsor, published before the snapshot.
+	 */
+	private function live_a_deal( int $story ): void {
 		$make  = function ( string $role ): int {
 			$user = wp_insert_user(
 				array(
@@ -117,13 +133,6 @@ final class CommerceFirewallTest extends TestCase {
 			)
 		);
 		$deals->update( $deal, array( 'amount_minor' => 250 ) );
-		$story = (int) wp_insert_post(
-			array(
-				'post_title'  => 'Sponsored story',
-				'post_status' => 'publish',
-				'post_type'   => 'post',
-			)
-		);
 		$make( 'wiw_editor' );
 		$places = new PlacementService( new ArrangementRepository(), new PlacementRepository(), new CustomerRepository(), $audit, $clock );
 		$places->choose_story( $deal, $story );
@@ -150,8 +159,9 @@ final class CommerceFirewallTest extends TestCase {
 			)
 		);
 		update_post_meta( $profile, 'wiw_example', 'x' );
+		$story  = $this->sponsored_story();
 		$before = $this->snapshot();
-		$this->live_a_deal();
+		$this->live_a_deal( $story );
 		$after = $this->snapshot();
 		unset( $before['story_order'], $after['story_order'] );
 		$this->assertSame( $before, $after, 'No profile, state row, nomination or search row changed.' );
@@ -175,8 +185,9 @@ final class CommerceFirewallTest extends TestCase {
 			)
 		);
 		$this->assertGreaterThan( 0, $old + $new );
+		$story  = $this->sponsored_story();
 		$before = $this->snapshot();
-		$this->live_a_deal();
+		$this->live_a_deal( $story );
 		$after = $this->snapshot();
 		$ids   = json_decode( $after['story_order'], true );
 		$this->assertIsArray( $ids );

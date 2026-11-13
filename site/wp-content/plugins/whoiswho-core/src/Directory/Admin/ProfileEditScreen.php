@@ -49,7 +49,9 @@ final class ProfileEditScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'directory'
 				);
 				$registry->hook();
 				ActionGuard::register( self::SAVE, self::CAPABILITY, array( self::class, 'handle_save' ) );

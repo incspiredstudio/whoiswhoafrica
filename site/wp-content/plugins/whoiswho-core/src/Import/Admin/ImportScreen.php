@@ -54,7 +54,9 @@ final class ImportScreen {
 					self::CAPABILITY,
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-					}
+					},
+					false,
+					'imports'
 				);
 				$registry->hook();
 				foreach ( array(
