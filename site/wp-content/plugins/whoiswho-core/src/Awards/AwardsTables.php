@@ -72,6 +72,7 @@ final class AwardsTables {
 		relationship_declared tinyint(1) unsigned NOT NULL DEFAULT 0,
 		relationship_note text NULL,
 		evidence text NULL,
+		citation text NULL,
 		stage enum(\'nominated\',\'winner\') NOT NULL DEFAULT \'nominated\',
 		status enum(\'not_live\',\'live\') NOT NULL DEFAULT \'not_live\',
 		source enum(\'public_form\',\'staff\') NOT NULL DEFAULT \'public_form\',
