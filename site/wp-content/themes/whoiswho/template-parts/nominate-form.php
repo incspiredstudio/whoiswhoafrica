@@ -243,7 +243,7 @@ $wiw_words = array(
 				<p><strong><?php esc_html_e( 'This nominee may already be nominated.', 'whoiswho' ); ?></strong> <?php esc_html_e( 'You can still send yours: our team merges duplicates. We never show who nominated them.', 'whoiswho' ); ?></p>
 			</div>
 			<?php get_template_part( 'template-parts/forms/privacy-notice' ); ?>
-			<div class="row"><button class="btn alt" type="button" data-back><?php esc_html_e( 'Back', 'whoiswho' ); ?></button><button class="btn" type="button" data-submit><?php esc_html_e( 'Submit nomination', 'whoiswho' ); ?></button></div>
+			<div class="row"><button class="btn alt" type="button" data-back><?php esc_html_e( 'Back', 'whoiswho' ); ?></button><button class="btn" type="submit" data-submit><?php esc_html_e( 'Submit nomination', 'whoiswho' ); ?></button></div>
 		</section>
 	</form>
 </div>
