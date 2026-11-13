@@ -115,6 +115,21 @@ class PlacementRepository {
 	}
 
 	/**
+	 * Count placements that are not ended, belong to a deal that is not cancelled, share the page and overlap the dates.
+	 *
+	 * @param string $slot   home, stories or both.
+	 * @param string $starts Start date.
+	 * @param string $ends   End date.
+	 */
+	public function overlapping_count( string $slot, string $starts, string $ends ): int {
+		global $wpdb;
+		$clashes = 'home' === $slot ? array( 'home', 'both' ) : ( 'stories' === $slot ? array( 'stories', 'both' ) : self::SLOTS );
+		$marks   = implode( ',', array_fill( 0, count( $clashes ), '%s' ) );
+		$sql     = 'SELECT COUNT(*) FROM ' . self::table() . ' p JOIN ' . ArrangementRepository::table() . ' a ON a.id = p.arrangement_id WHERE p.ended = 0 AND a.cancelled = 0 AND p.slot IN (' . $marks . ') AND p.starts_on <= %s AND p.ends_on >= %s';
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, array_merge( $clashes, array( $ends, $starts ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table names; values are placeholders.
+	}
+
+	/**
 	 * Placements of a deal, oldest first.
 	 *
 	 * @param int $arrangement_id Deal id.
