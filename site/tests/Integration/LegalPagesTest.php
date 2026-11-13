@@ -37,12 +37,17 @@ final class LegalPagesTest extends WpTestCase {
 	}
 
 	public function test_REQ_100_legal_pages_render_with_the_draft_note(): void {
-		foreach ( array( 'privacy', 'terms' ) as $slug ) {
+		foreach ( array( 'privacy', 'terms', 'complaints', 'data-rights' ) as $slug ) {
 			$out = $this->render_page( $slug );
 			$this->assertStringContainsString( 'notice--draft', $out, $slug );
 			$this->assertSame( 1, substr_count( $out, '<h1>' ), $slug );
 			$this->assertStringNotContainsString( 'data-cookie-prefs', $out, $slug );
 		}
+	}
+
+	public function test_REQ_100_complaints_and_data_rights_are_legal_pages(): void {
+		$this->assertContains( 'complaints', wiw_legal_slugs() );
+		$this->assertContains( 'data-rights', wiw_legal_slugs() );
 	}
 
 	public function test_REQ_248_cookie_policy_offers_cookie_preferences(): void {

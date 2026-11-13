@@ -14,6 +14,7 @@ namespace WhoIsWho\Core\Review;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Import\Scan\ScanBlock;
+use WhoIsWho\Core\Review\Metrics\DecisionLog;
 
 /**
  * Review service.
@@ -63,6 +64,7 @@ final class ReviewService {
 			throw StateException::refuse( 'The free-text scan flagged this record. Clear the block before approving.' );
 		}
 		$this->machine->transition( $profile_id, PubState::PUBLISHED_REVIEWED, '', $actor_id );
+		( new DecisionLog() )->record( $profile_id, $actor_id, DecisionLog::APPROVED, '', self::waited( $row ) );
 	}
 
 	/**
@@ -72,9 +74,10 @@ final class ReviewService {
 	 * @param int    $profile_id Profile.
 	 * @param string $reason     Why; required.
 	 * @param int    $actor_id   Reviewer.
+	 * @param string $reason_code One of DecisionLog::REASON_CODES, for the review metrics (REQ-149); anything else counts as other.
 	 * @throws StateException When refused.
 	 */
-	public function reject( int $profile_id, string $reason, int $actor_id ): void {
+	public function reject( int $profile_id, string $reason, int $actor_id, string $reason_code = 'other' ): void {
 		$this->require_cap( $actor_id, 'wiw_review_records' );
 		$row = $this->row( $profile_id );
 		if ( PubState::PUBLISHED_REVIEWED === $row['pub_state'] ) {
@@ -82,6 +85,17 @@ final class ReviewService {
 		}
 		$to = PubState::is_public( (string) $row['pub_state'] ) ? PubState::UNPUBLISHED : PubState::REJECTED;
 		$this->machine->transition( $profile_id, $to, $reason, $actor_id );
+		( new DecisionLog() )->record( $profile_id, $actor_id, DecisionLog::REJECTED, $reason_code, self::waited( $row ) );
+	}
+
+	/**
+	 * Seconds an item has waited since its state row was last updated.
+	 *
+	 * @param array<string, mixed> $row State row.
+	 */
+	private static function waited( array $row ): int {
+		$since = strtotime( (string) ( $row['updated_at'] ?? '' ) . ' UTC' );
+		return false === $since ? 0 : max( 0, time() - $since );
 	}
 
 	/**

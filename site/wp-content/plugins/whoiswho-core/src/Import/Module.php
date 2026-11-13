@@ -28,5 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( new Apply\ApplyJob() )->register();
+		Result\ImportResult::hooks();
+		add_filter( 'wiw_cli_commands', static fn ( $commands ): array => array_merge( is_array( $commands ) ? $commands : array(), array( new Cli\ImportCommand() ) ) );
 	}
 }
