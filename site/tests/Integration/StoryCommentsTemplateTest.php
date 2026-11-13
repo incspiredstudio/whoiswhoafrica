@@ -78,6 +78,18 @@ final class StoryCommentsTemplateTest extends WpTestCase {
 		$this->assertStringContainsString( 'Comments are checked before they appear', $html );
 	}
 
+	public function test_REQ_122_the_form_draws_the_hidden_honeypot_field(): void {
+		$post = self::factory()->post->create(
+			array(
+				'post_status'    => 'publish',
+				'comment_status' => 'open',
+			)
+		);
+		$html = $this->render( $post );
+		$this->assertMatchesRegularExpression( '/<input[^>]*name="wiw_comment_url"[^>]*tabindex="-1"[^>]*autocomplete="off"/', $html );
+		$this->assertMatchesRegularExpression( '/<div[^>]*aria-hidden="true"[^>]*>\s*<label[^>]*>[^<]*<\/label>\s*<input[^>]*wiw_comment_url/', $html );
+	}
+
 	public function test_REQ_258_nothing_is_drawn_where_comments_are_closed_and_empty(): void {
 		$post = self::factory()->post->create(
 			array(

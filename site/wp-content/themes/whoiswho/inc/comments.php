@@ -121,6 +121,15 @@ function wiw_comment_fields( $fields ): array {
 		);
 		$out[ $name ] = (string) ob_get_clean();
 	}
+	// The honeypot (REQ-122): a labelled field people leave empty, out of the tab order and hidden from assistive technology.
+	ob_start();
+	?>
+	<div class="bot-check" aria-hidden="true">
+		<label for="wiw_comment_url"><?php esc_html_e( 'Leave this field empty', 'whoiswho' ); ?></label>
+		<input type="text" id="wiw_comment_url" name="wiw_comment_url" value="" tabindex="-1" autocomplete="off">
+	</div>
+	<?php
+	$out['wiw_comment_url'] = (string) ob_get_clean();
 	ob_start();
 	get_template_part(
 		'template-parts/forms/consent-tick',
