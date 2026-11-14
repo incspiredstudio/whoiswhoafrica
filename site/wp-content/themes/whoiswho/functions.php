@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WIW_THEME_VERSION', '0.1.0' );
+define( 'WIW_THEME_VERSION', '0.2.0' );
 
 // The theme's files call the core plugin. Without it, load only the required-plugin notice and the holding page (REQ-046, REQ-056).
 require_once get_template_directory() . '/inc/dependencies.php';

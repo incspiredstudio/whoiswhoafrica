@@ -53,6 +53,13 @@ done
 
 VERSION="$(sed -n 's/^ \* Version: *//p' "$PLUGINS/whoiswho-core/whoiswho-core.php" | head -n 1 | tr -d '\r')"
 [ -n "$VERSION" ] || fail "cannot read the plugin version"
+# Every part of the release carries the same version, so WordPress shows the change on an update of each one.
+for part in "$THEMES/whoiswho/style.css" "$THEMES/whoiswho-child/style.css"; do
+	got="$(sed -n 's/^Version: *//p' "$part" | head -n 1 | tr -d '\r')"
+	[ "$got" = "$VERSION" ] || fail "$part says version $got, the plugin says $VERSION"
+done
+got="$(sed -n 's/^ \* Version: *//p' "$MU/whoiswho-guard.php" | head -n 1 | tr -d '\r')"
+[ "$got" = "$VERSION" ] || fail "the guard says version $got, the plugin says $VERSION"
 COMMIT="$(git -C "$SOURCE" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 # Built assets (the theme's CSS and JavaScript). The theme zip carries them in its own dist/ folder.
