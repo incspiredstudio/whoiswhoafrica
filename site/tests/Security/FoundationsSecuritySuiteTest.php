@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace WhoIsWho\Tests\Security;
 
 use WhoIsWho\Core\Platform\Capabilities\CapabilityCatalogue;
-use WhoIsWho\Core\Platform\TwoFactor\Enforcement;
+use WhoIsWho\Core\Platform\TwoFactor\PluginStatus;
+use WhoIsWho\Core\Platform\TwoFactor\StaffStatus;
 use WhoIsWho\Guard\Headers\Headers;
 use WhoIsWho\Tests\WpTestCase;
 
@@ -61,16 +62,16 @@ final class FoundationsSecuritySuiteTest extends WpTestCase {
 		$this->assertFalse( wp_is_application_passwords_available_for_user( $user ), 'not even for staff' );
 	}
 
-	public function test_REQ_047_two_factor_required(): void {
-		$enforcement = Enforcement::for_site();
-		$catalogue   = new CapabilityCatalogue();
-		foreach ( array_keys( $catalogue->roles() ) as $role ) {
+	public function test_REQ_047_two_factor_available_for_every_role_and_never_blocking(): void {
+		$catalogue = new CapabilityCatalogue();
+		$status    = new PluginStatus();
+		$this->assertTrue( $status->available(), 'the two-factor software is loaded for every role' );
+		$this->assertFalse( class_exists( '\WhoIsWho\Core\Platform\TwoFactor\Enforcement' ), 'nothing enforces it (D-070)' );
+		foreach ( array_merge( array_keys( $catalogue->roles() ), array( 'administrator' ) ) as $role ) {
 			$id = self::factory()->user->create( array( 'role' => $role ) );
-			$this->assertSame( Enforcement::ENROL, $enforcement->decide( $id, 'index.php' ), "$role: admin screen" );
-			$this->assertSame( Enforcement::ENROL, $enforcement->decide( $id, '', 0, '/wp/v2/posts' ), "$role: REST" );
+			$this->assertContains( $role, StaffStatus::staff_roles(), "$role is listed on the Setup screen's two-factor advice" );
+			$this->assertFalse( $status->is_enrolled( $id ), "$role: optional, so a new account starts without it" );
 		}
-		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$this->assertSame( Enforcement::ENROL, $enforcement->decide( $admin, 'index.php' ), 'the Administrator too' );
 	}
 
 	public function test_REQ_235_role_capability_matrix_matches_defaults(): void {
