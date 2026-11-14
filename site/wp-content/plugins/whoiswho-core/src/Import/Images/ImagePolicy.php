@@ -58,7 +58,7 @@ final class ImagePolicy {
 	public static function licence_choices(): array {
 		$choices = array();
 		foreach ( self::LICENCES as $id ) {
-			$choices[ $id ] = self::DEEDS[ $id ][0] ?? $id;
+			$choices[ $id ] = self::DEEDS[ $id ][0];
 		}
 		return $choices;
 	}

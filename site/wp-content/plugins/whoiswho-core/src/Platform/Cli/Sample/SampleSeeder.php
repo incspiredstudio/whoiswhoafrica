@@ -440,10 +440,10 @@ final class SampleSeeder {
 	/**
 	 * Create one invented profile through the state machine, once: an existing one is reused.
 	 *
-	 * @param array<string, mixed>  $row        Sample row.
-	 * @param StateMachine          $machine    State machine.
-	 * @param ProfileFields         $fields     Field store.
-	 * @param ProvenanceRepository  $provenance Provenance.
+	 * @param array<string, mixed> $row        Sample row.
+	 * @param StateMachine         $machine    State machine.
+	 * @param ProfileFields        $fields     Field store.
+	 * @param ProvenanceRepository $provenance Provenance.
 	 * @return int The profile id.
 	 * @throws \RuntimeException When the profile cannot be created.
 	 */
