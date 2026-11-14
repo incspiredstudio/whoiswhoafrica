@@ -2,65 +2,77 @@
 
 **Shared-docs owner: the website session** (Gate 2 and Gate 3 are done; stages are in `CLAUDE.md`). To hand over, commit and change this line.
 
-**Updated 2026-11-13** after integration rounds 1 to 4 were merged into `chore/structured-build-setup`. Counts come from `gh issue list`; statements about what is built come from reading the code in `site/`, not from a fresh end-to-end run, so they are not claims of verification. The verification step (M5 issues #107, #85, #87) is still open.
+**Updated 2026-11-14** after the no-code production build (integration rounds 9 and 10 and the release-blocker PR #825) was merged into `chore/structured-build-setup`. Release **0.2.0** (build ff6f79d) is in the local `dist/` folder (git-ignored).
 
-**Repo layout:** `docs/` shared (a VitePress site); `site/` the WordPress code; `prototype/` the wireframe; `acquisition/` data acquisition. Interface between acquisition and the website: `docs/contracts/import-format.md`. Other sessions keep their own status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
+**Repo layout:** `docs/` shared (a VitePress site); `site/` the WordPress code; `prototype/` the wireframe; `acquisition/` data acquisition; `handbook/` the staff handbook (VitePress). Interface between acquisition and the website: `docs/contracts/import-format.md` (**v1.1**). Other sessions keep their own status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
 ## Where the project is
 
-**355 issues closed, 43 open** (398 in total) across milestones M0 to M5.
+The site installs and runs with **no code and no command line**. You upload the zips in wp-admin, the Setup screen walks you through the rest, and demo content is optional (you choose the parts). This was verified on fresh production-style WordPress 7.1.4 sites on MariaDB:
+- The environment was left at production and only the `dist/` zips were used.
+- Email was real SMTP through FluentSMTP to mail.wiwi.africa. The site reported "delivered".
+- An upgrade from 0.1.0 to 0.2.0 lost nothing.
+- axe found 0 violations on 38 public pages at 360 and 1280.
+- The full acquisition import (13,407 records, 5,286 open-licence images) ran through the admin Import screen with 0 failures.
 
-| Milestone | Closed | Open |
-|---|---|---|
-| M0 Foundations | 76 | 3 (all human: #1, #2, #3) |
-| M1 The record | 78 | 3 (all human: #5, #6, #7) |
-| M2 Reading and finding | 51 | 2 (human: #8, #9) |
-| M3 Trust and revenue | 56 | 9 |
-| M4 Recognition | 41 | 3 (human: #18, #20, #26) |
-| M5 Launch | 20 | 18 |
-| No milestone (discovered during the build) | 33 | 5 |
+The production-level test results are summarised in `docs/gaps.md` (sources section).
 
 ## What is built (in `site/`)
 
-- **M0 Foundations:** scaffold, PHPCS, PHPStan, PHPUnit on the WordPress test suite, Playwright with axe, asset build, wp-config template, runbook, CI, plugin `whoiswho-core`, must-use plugin `whoiswho-guard`, parent theme `whoiswho` and active child theme `whoiswho-child`, migration framework, capability catalogue (`config/capabilities.php`, version 4) and roles.
-- **M1 The record:** profile post type and the `wiw_profile_state` table, the review state machine and queue, duplicates, import path and Sources, suppression, corrections and removals, public profile read model, sitemap and SEO output.
-- **M2 Reading and finding:** home and curation, stories, search, newsletter and Subscribers screen.
-- **M3 Trust and revenue:** claims and My profiles, enquiries and requests with `WIW-` references, customers and single-use invitations, sponsored stories (`wiw_arrangements`, `wiw_placements`), data-rights intake.
-- **M4 Recognition:** award categories, nominations and the Nominations switch, events, comments policy, pages and templates, home animation stage.
-- **Staff admin:** the dashboard tiles are widgets on the WordPress Dashboard (the old WHOISWHO Dashboard screen is gone; its URL redirects). The menu is split into top-level groups by job. See `docs/pages/admin/index.md`.
-- **Plugins approved by the owner:** Two Factor 0.17.0, User Role Editor 4.67 (Administrator only), WP Super Cache 3.1.5 (off by default until #719 is settled). No Akismet. See `docs/plugins/third-party.md`.
-- **Sample content:** seeded and removed with `php bin/wiw.php sample:seed` and `sample:remove`; `content:find-sample` reports what is left; `pages:seed` creates the starter pages. See `docs/build/launch-checklist.md`.
+- **Foundations to Recognition (M0 to M4):** as before. These cover the profile record and review state machine, imports, suppression, corrections, search, stories, newsletter capture, claims, enquiries, sponsored stories, data rights, awards and nominations, events, comments and pages. See `docs/plugins/*` and `docs/pages/*`.
+- **No-code setup:**
+  - Site keys are generated automatically.
+  - Mail goes through FluentSMTP, or the SMTP constants, or plain `wp_mail`; FluentSMTP's email logging is forced off.
+  - Turnstile keys are entered on the Setup screen.
+  - The Setup checklist (11 lines) has a guarded **Update the database** button for live updates, after a backup.
+  - The Required plugins screen installs and activates FluentSMTP and wpDiscuz in one click.
+  - Two-factor is available and recommended, not enforced (D-070).
+  - Plain-language messages throughout; MySQL or MariaDB only (no SQLite or WordPress Studio).
+- **Profiles:**
+  - Bio, Achievement, Influence and Legacy sections on every type, with lifespan and field for people.
+  - Open-licence photos and logos, with a credit line.
+  - Edit profile has paragraph boxes with counters and a photo panel; Directory > Add profile (`wiw_add_profile`) has a duplicate check, and new profiles enter the review queue.
+  - Non-Latin profile URLs work. List fields keep accents and quotes, and the database update repairs earlier damage.
+- **Import (contract v1.1):**
+  - Bundles come in by zip upload (sent in 1 MB pieces) or by "Import from the server" (`wp-content/uploads/wiw-import/`).
+  - Dry run, "Add all as new list entries", chunked and resumable apply, and undo, then re-import.
+  - The exporter is `acquisition/pipeline/export_bundle.py` (full export or `--sample 50`).
+- **Demo content:**
+  - A chooser on the Setup screen (profiles, stories, comments, events, awards, curation, pages, settings), with per-part removal that keeps anything staff edited.
+  - The 50 real sample profiles ship only inside the plugin zip (`SAMPLE_BUNDLE`, never committed); demo awards use invented stand-ins.
+- **Theme:**
+  - Matches the prototype pages, using only the four approved Adinkra marks.
+  - Three.js is replaced by a small WebGL helper; CSS went from 179 KB to 104 KB; story CLS is 0.
+  - wpDiscuz is styled with tokens.
+- **Security:** the review is in `docs/security-review.md` (no Critical or High findings; SEC-01 to SEC-06 fixed). The guard's HTTPS redirect waits for an https site address. Theme and plugin zip updates work with the guard active (update the guard first).
+- **Docs:**
+  - The staff handbook in `handbook/` (getting started, staff tasks, operations, troubleshooting).
+  - `site/deploy/install-bundle/INSTALL.md`.
+  - The gaps record in `docs/gaps.md`.
 
-## What remains (43 open issues)
+## What remains
 
-**Human-only (need the owner or an outside party):**
-#1 sending mailbox and SPF, DKIM, DMARC; #2 approve plugin choices and the vetting rule (answered by the owner, see `docs/questions.md`; the issue still needs closing); #3, #8, #26, #31 font, video and photograph licences and final copy; #5, #6, #7 response promises, label wording, import contract unknowns; #9 newsletter sending; #10 claim evidence standard; #12 processor register; #13 DPIA and data-protection contact; #14 retention schedule with Legal; #18 awards programme details; #20 comment questions; #37 live host limits; #38 deliverability; #68 enrol two-factor; #69 weekly plugin review; #70 remove sample content from the live site; #85 screen reader and real device pass; #128 the live migration with the owner's approval; #299 acquisition dry run; #544 response period for data requests (a 30-day period is recommended, not yet confirmed).
+- **Owner decisions:** #813 to #821 (G1 to G9 in `docs/gaps.md`). First is #813, the guard's DISALLOW_FILE_MODS/EDIT notice, which shows on every no-code install. Then #814 two-factor before go-live, and #815 cleaning up the 2,437 raw list values created by the full import before profiles go public.
+- **Follow-ups:** #822 (gaps G10 to G53, each with a recommended option).
+- **Human-only issues from earlier:** licences (#8, #31), host check (#37), mailbox and DNS (#1, #38), data-rights period (#544), legal pages and backups (deferred), the live migration (#128).
+- Run `gh issue list --state open` for the full list.
 
-**Deferred by owner decision:** legal pages (#11, #32), backups and restores (#36, #72). Evidence file uploads are out of launch scope (#638).
+## How to run it
 
-**Blocked or waiting:** #719 the page cache stores a stale CSP nonce (the cache stays off until it is settled); #128 waits on the owner's approval and on #71, the staging rehearsal.
-
-**Built, waiting to merge:** the sponsored-deals CSV export (#260, PR #769), the Your data rights page (#266, PR #767) and the Profile manager role recipe (#341, PR #768) are open pull requests that go into the next integration round. Merged work lands through integration rounds into `chore/structured-build-setup`, and `Closes #N` closes the issue when the round is merged.
-
-**Buildable (no human needed):** #343 invitation and consent pages (the invitation route exists in code; confirm the pages); #67 and #73 accessibility and image fixes; #71 staging rehearsal; #40 analytics cookie check; #87 concurrency check; #107 verify each launch checklist item; #690 importable demo content with page templates; #733 My profiles contact and photograph edits.
-
-## How to run it locally
-
-- From `site/`: `composer install` and `npm ci`; copy `.env.example` to the secrets file yourself.
-- Main path without Docker: `powershell -File deploy/local/setup.ps1` (WordPress Studio). Optional: `npx wp-env start` with Docker. Mail goes to Mailpit with `deploy/local/mailpit.ps1`. Details in `site/README.md` and `docs/runbook.md`.
-- Seed demonstration content: `php bin/wiw.php sample:seed`; remove it with `sample:remove`. Run jobs with `php bin/wiw.php jobs:run`.
-- A bare `php -S` router has been used for quick checks in the integration rounds; it is not documented or kept in the repository.
+- **No-code install:** follow `dist/INSTALL.md` (or `site/deploy/install-bundle/INSTALL.md`) and the handbook's Getting started section.
+- **Build the bundle:** in `site/`, `composer install && npm ci`, then `SAMPLE_BUNDLE=<path to sample-50.zip> npm run package`. The parts must share one version.
+- **Developers:** in `site/`, `composer test`, `composer lint`, `composer analyse`, `npm run build`, `npx playwright test`. Set `git config core.autocrlf false` in worktrees; `.gitattributes` forces LF.
 
 ## CI gates (every pull request)
 
-Eleven checks in `.github/workflows/ci.yml`: lint, analyse, test, visibility, build, e2e, audit, plugins, brand, secrets, pr-body. A weekly scan runs audit and secrets (`security-weekly.yml`). One pull request per issue, with `Closes #N` and the REQ list in the body.
+Eleven checks in `.github/workflows/ci.yml`: lint, analyse, test, visibility, build, e2e, audit, plugins, brand, secrets, pr-body.
 
 ## Decisions and questions
 
-See `docs/decisions.md` and `docs/questions.md` (it has a section with the owner answers recorded on 2026-11-13). Earlier history of the planning stage (gates, rulings, wireframe review rounds) is in `docs/decisions.md` and `docs/archive/`.
+See `docs/decisions.md` (D-070: two-factor optional) and `docs/questions.md`, which records the owner answers of 2026-11-13 and 2026-11-14 (no-code setup, MySQL only, the Adinkra symbols, the guard kept as is, real sample profiles only in the bundle).
 
 ## Next up
 
-- Owner: close or answer the human issues above, starting with the licences (#8, #31), the host check (#37), the mailbox (#1) and the data-rights period (#544).
-- Website session: the buildable issues listed above, then the verification pass (#107).
-- Acquisition session: see `acquisition/STATUS.md`; the first real import batch is #299.
+- Owner: decide #813 to #821; check the test inboxes (+prodtest, +clean, +final, +upgrade) for delivery.
+- Website session: the #822 follow-ups. Before going live, measure directory and search with published profiles, and add a cPanel cron.
+- Acquisition session: a curated term map (G3), provenance labels (G10), and the README update for the exporter (G15).
