@@ -170,10 +170,45 @@ final class Headers {
 	}
 
 	/**
-	 * In production, redirect HTTP to HTTPS.
+	 * Whether a request should be redirected to HTTPS: only in production, only over plain HTTP, and only when the
+	 * site address (Settings > General) is already https. A new host without a certificate yet keeps working over
+	 * HTTP until the owner switches the site address, so nobody is locked out at install time (REQ-046, REQ-056).
+	 *
+	 * @param string $env  Environment type.
+	 * @param bool   $ssl  Whether this request is HTTPS.
+	 * @param string $home The site address.
+	 */
+	public static function should_redirect( string $env, bool $ssl, string $home ): bool {
+		return 'production' === $env && ! $ssl && self::is_https_url( $home );
+	}
+
+	/**
+	 * Whether cookies must be marked secure: in production once the site address is https.
+	 *
+	 * @param string $env  Environment type.
+	 * @param string $home The site address.
+	 */
+	public static function wants_secure_cookie( string $env, string $home ): bool {
+		return 'production' === $env && self::is_https_url( $home );
+	}
+
+	/**
+	 * Whether a URL uses https.
+	 *
+	 * @param string $url URL.
+	 */
+	private static function is_https_url( string $url ): bool {
+		return 0 === strpos( strtolower( trim( $url ) ), 'https://' );
+	}
+
+	/**
+	 * In production, redirect HTTP to HTTPS once the site address is https.
 	 */
 	public static function redirect_to_https(): void {
-		if ( 'production' !== wp_get_environment_type() || is_ssl() || wp_doing_cron() || 'cli' === PHP_SAPI || ( defined( 'WP_CLI' ) && constant( 'WP_CLI' ) ) ) {
+		if ( wp_doing_cron() || 'cli' === PHP_SAPI || ( defined( 'WP_CLI' ) && constant( 'WP_CLI' ) ) ) {
+			return;
+		}
+		if ( ! self::should_redirect( wp_get_environment_type(), is_ssl(), (string) get_option( 'home' ) ) ) {
 			return;
 		}
 		$host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
@@ -186,11 +221,11 @@ final class Headers {
 	}
 
 	/**
-	 * Cookies are secure in production.
+	 * Cookies are secure in production once the site address is https.
 	 *
 	 * @param bool $secure Current value.
 	 */
 	public static function secure_cookie( $secure ): bool {
-		return 'production' === wp_get_environment_type() ? true : (bool) $secure;
+		return self::wants_secure_cookie( wp_get_environment_type(), (string) get_option( 'home' ) ) ? true : (bool) $secure;
 	}
 }
