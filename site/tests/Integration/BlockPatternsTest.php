@@ -83,10 +83,12 @@ final class BlockPatternsTest extends TestCase {
 		$this->assertSame( 3, substr_count( $content, '"lock":{"move":true,"remove":true}' ) );
 	}
 
-	public function test_REQ_260_about_page_pattern_has_one_h1_and_a_deletable_draft_note(): void {
+	public function test_REQ_260_about_page_pattern_has_one_h1_and_no_public_draft_note(): void {
 		$content = (string) \WP_Block_Patterns_Registry::get_instance()->get_registered( 'whoiswho/about-page' )['content'];
 		$this->assertSame( 1, substr_count( $content, '<h1 ' ) );
-		$this->assertSame( 1, substr_count( $content, 'notice--draft' ) );
+		// The About page (starter and demo) is public at once, so it carries no "Draft copy for review" note (issue 806).
+		$this->assertSame( 0, substr_count( $content, 'notice--draft' ) );
+		$this->assertStringNotContainsString( 'Delete this note', $content );
 		$this->assertSame( 3, substr_count( $content, '"lock":{"move":true,"remove":true}' ), 'only the three pillars are locked' );
 	}
 

@@ -76,10 +76,6 @@ $wiw_checks  = array(
 
 <!-- wp:paragraph -->
 <p><?php echo esc_html_x( 'Around the record we publish stories that explain it, and an awards programme that recognises what it shows. We are a curated destination, not another social network.', 'pattern text', 'whoiswho' ); ?></p>
-<!-- /wp:paragraph -->
-
-<!-- wp:paragraph {"className":"notice notice--draft"} -->
-<p class="notice notice--draft"><?php echo esc_html_x( 'Draft copy for review. The final mission, vision and values come from Brand. Delete this note when they are in.', 'pattern text', 'whoiswho' ); ?></p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group --></section>

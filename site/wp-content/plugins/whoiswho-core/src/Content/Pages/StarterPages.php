@@ -211,8 +211,8 @@ final class StarterPages {
 				return (string) $pattern['content'];
 			}
 		}
-		return $this->note( 'Draft copy for review. Delete this note when the wording is signed off.' )
-			. $this->heading( 'Africa’s influence, on the record.', 1 )
+		// No draft note: the About page is public as soon as it exists, and a review note would show to visitors (issue 806).
+		return $this->heading( 'Africa’s influence, on the record.', 1 )
 			. $this->para( 'An African discovery, recognition and media platform. We document the people, businesses and institutions shaping the continent, tell the stories behind them, and recognise achievement through independent awards.' )
 			. $this->sections(
 				array(

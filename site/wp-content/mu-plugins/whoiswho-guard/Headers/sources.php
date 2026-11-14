@@ -13,7 +13,8 @@ return array(
 	'script-src'  => array( 'https://challenges.cloudflare.com' ),
 	'style-src'   => array(),
 	'img-src'     => array(),
-	'font-src'    => array(),
+	// The admin bar a signed-in user sees on public pages loads WordPress's Dashicons, whose font is embedded as a data: URL (issue 806).
+	'font-src'    => array( 'data:' ),
 	'connect-src' => array(),
 	'frame-src'   => array( 'https://challenges.cloudflare.com' ),
 	'media-src'   => array(),
