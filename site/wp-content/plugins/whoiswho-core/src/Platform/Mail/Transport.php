@@ -8,6 +8,9 @@
  * A local mail catcher is used only when WIW_SMTP_HOST points at it. The hourly cap is recorded for bulk mail, and no credential
  * or address is ever written to a log or an error message.
  *
+ * A failed send leaves a notice for Administrators on the Dashboard and the Setup screen, saying how long ago it happened. It clears
+ * itself on the next email that goes out, or when a FluentSMTP connection is saved, and it can be dismissed (issue 829).
+ *
  * @package WhoIsWho
  */
 
@@ -15,12 +18,21 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Platform\Mail;
 
+use WhoIsWho\Core\Platform\Admin\ActionGuard;
+use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Audit\AuditLogger;
+use WhoIsWho\Core\Platform\Setup\SetupScreen;
+
 /**
  * Transport.
  */
 final class Transport {
 
-	public const OPTION_ERROR = 'wiw_mail_error';
+	public const OPTION_ERROR    = 'wiw_mail_error';
+	public const OPTION_ERROR_AT = 'wiw_mail_error_at';
+
+	public const ACTION_DISMISS = 'wiw_mail_error_dismiss';
+	public const DISMISS_CAP    = SetupScreen::CAP;
 
 	/**
 	 * Mail plugins that replace the SMTP connection themselves, by plugin file. FluentSMTP is the recommended one.
@@ -154,7 +166,86 @@ final class Transport {
 		add_filter( 'wp_mail_from', array( $this, 'mail_from' ) );
 		add_filter( 'wp_mail_from_name', array( $this, 'from_name' ) );
 		add_action( 'wp_mail_failed', array( $this, 'log_failure' ) );
+		add_action( 'wp_mail_succeeded', array( self::class, 'clear_error' ) );
+		add_action( 'add_option_' . self::FLUENT_SMTP_OPTION, array( self::class, 'fluent_settings_added' ), 10, 2 );
+		add_action( 'update_option_' . self::FLUENT_SMTP_OPTION, array( self::class, 'fluent_settings_updated' ), 10, 2 );
 		add_action( 'admin_notices', array( $this, 'notice' ) );
+		ActionGuard::register( self::ACTION_DISMISS, self::DISMISS_CAP, array( self::class, 'handle_dismiss' ) );
+	}
+
+	/**
+	 * Forget the last failed send: an email has gone out since (wp_mail_succeeded, which FluentSMTP fires too, also for its test
+	 * email).
+	 */
+	public static function clear_error(): void {
+		delete_option( self::OPTION_ERROR );
+		delete_option( self::OPTION_ERROR_AT );
+	}
+
+	/**
+	 * FluentSMTP saved its settings for the first time.
+	 *
+	 * @param string $option Option name.
+	 * @param mixed  $value  Saved value.
+	 */
+	public static function fluent_settings_added( $option, $value ): void {
+		unset( $option );
+		self::fluent_settings_saved( $value );
+	}
+
+	/**
+	 * FluentSMTP saved its settings.
+	 *
+	 * @param mixed $old_value Previous value.
+	 * @param mixed $value     Saved value.
+	 */
+	public static function fluent_settings_updated( $old_value, $value ): void {
+		unset( $old_value );
+		self::fluent_settings_saved( $value );
+	}
+
+	/**
+	 * A FluentSMTP save with at least one sending connection clears the old error: the failure came before the connection was set.
+	 *
+	 * @param mixed $value Saved value.
+	 */
+	private static function fluent_settings_saved( $value ): void {
+		$settings = maybe_unserialize( $value );
+		if ( is_array( $settings ) && ! empty( $settings['connections'] ) && is_array( $settings['connections'] ) ) {
+			self::clear_error();
+		}
+	}
+
+	/**
+	 * The Dismiss button (admin-post, through ActionGuard): clear the notice, then go back to the screen it was on.
+	 *
+	 * @param Request $request Request.
+	 */
+	public static function handle_dismiss( Request $request ): void {
+		unset( $request );
+		self::dismiss();
+		$back = wp_get_referer();
+		wp_safe_redirect( false !== $back ? $back : admin_url( 'index.php' ) );
+		exit;
+	}
+
+	/**
+	 * Clear the notice and audit the dismissal (no output, so it can be tested). The caller has checked the capability and nonce.
+	 */
+	public static function dismiss(): void {
+		self::clear_error();
+		try {
+			AuditLogger::for_site()->log(
+				'mail.error_dismissed',
+				array(
+					'type' => 'site',
+					'id'   => 'mail',
+				)
+			);
+		} catch ( \Throwable $e ) {
+			unset( $e );
+			// The audit log being busy must not keep the notice on screen.
+		}
 	}
 
 	/**
@@ -253,6 +344,7 @@ final class Transport {
 		$message = $error->get_error_message();
 		$message = $this->scrub( $message );
 		update_option( self::OPTION_ERROR, 'send_failed', false );
+		update_option( self::OPTION_ERROR_AT, time(), false );
 		error_log( 'wiw mail: send failed: ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	}
 
@@ -280,12 +372,32 @@ final class Transport {
 			delete_option( self::OPTION_ERROR );
 			return;
 		}
-		if ( ! $code || ! current_user_can( 'manage_options' ) ) {
+		if ( ! $code || ! self::on_notice_screen() || ! current_user_can( 'manage_options' ) || ! current_user_can( self::DISMISS_CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return;
 		}
+		$at   = (int) get_option( self::OPTION_ERROR_AT, 0 );
+		$when = $at > 0
+			/* translators: %s: how long ago, for example "3 hours". */
+			? sprintf( __( 'The last email could not be sent (%s ago).', 'whoiswho' ), human_time_diff( $at, time() ) )
+			: __( 'The last email could not be sent.', 'whoiswho' );
 		$text = $this->uses_mail_plugin()
-			? __( 'The last email could not be sent. Open your mail plugin\'s settings (for example Settings > FluentSMTP) and send a test email.', 'whoiswho' )
-			: __( 'The last email could not be sent. For reliable email, install the free FluentSMTP plugin and connect it to your email account; the Setup screen shows how.', 'whoiswho' );
-		echo '<div class="notice notice-error"><p>' . esc_html( $text ) . '</p></div>';
+			? __( 'If email still does not arrive, open your mail plugin\'s settings (for example Settings > FluentSMTP) and send a test email. This notice goes away by itself once an email is sent.', 'whoiswho' )
+			: __( 'For reliable email, install the free FluentSMTP plugin and connect it to your email account; the Setup screen shows how. This notice goes away by itself once an email is sent.', 'whoiswho' );
+		$form = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_DISMISS ) . '" />'
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_DISMISS ) ) . '" />'
+			. '<p><button type="submit" class="button">' . esc_html__( 'Dismiss', 'whoiswho' ) . '</button></p></form>';
+		echo '<div class="notice notice-error wiw-mail-notice"><p><strong>' . esc_html( $when ) . '</strong> ' . esc_html( $text ) . '</p>' . $form . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $form is built from escaped parts.
+	}
+
+	/**
+	 * Whether the current admin screen is the Dashboard or the Setup screen, the only places the notice shows.
+	 */
+	private static function on_notice_screen(): bool {
+		if ( SetupScreen::SCREEN === Request::from_globals()->string( 'page' ) ) {
+			return true;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return null !== $screen && 'dashboard' === $screen->id;
 	}
 }

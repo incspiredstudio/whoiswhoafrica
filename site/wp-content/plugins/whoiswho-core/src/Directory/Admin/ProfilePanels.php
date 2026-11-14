@@ -182,7 +182,7 @@ final class ProfilePanels {
 	 */
 	private function status( array $state ): string {
 		$rows = array(
-			__( 'State', 'whoiswho' )   => Labels::state( (string) $state['pub_state'] ),
+			__( 'State', 'whoiswho' )   => Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ),
 			__( 'Origin', 'whoiswho' )  => Labels::origin( (string) ( $state['origin'] ?? '' ) ),
 			__( 'Source', 'whoiswho' )  => 'manual' === (string) ( $state['source'] ?? '' ) ? Labels::origin( 'manual' ) : (string) ( $state['source'] ?? '' ),
 			__( 'Batch', 'whoiswho' )   => (string) ( $state['import_batch'] ?? '' ),

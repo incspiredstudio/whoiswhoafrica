@@ -117,4 +117,37 @@ final class EditProfileWordsTest extends TestCase {
 			$this->assertStringNotContainsString( $code, $html, $code );
 		}
 	}
+
+	public function test_REQ_208_a_profile_added_by_hand_and_waiting_for_review_is_not_called_imported(): void {
+		$this->assertSame( 'Added by hand, not public yet', Labels::state( PubState::IMPORTED_NOT_PUBLIC, 'manual' ) );
+		$this->assertSame( 'Imported, not public', Labels::state( PubState::IMPORTED_NOT_PUBLIC, 'import' ) );
+		$this->assertSame( 'Imported, not public', Labels::state( PubState::IMPORTED_NOT_PUBLIC ) );
+		$this->assertSame( 'Published and reviewed', Labels::state( PubState::PUBLISHED_REVIEWED, 'manual' ), 'only the not-public state depends on the origin' );
+
+		$this->user = (int) wp_insert_user(
+			array(
+				'user_login' => 'words_' . bin2hex( random_bytes( 4 ) ),
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $this->user );
+		$this->profile = (int) wp_insert_post(
+			array(
+				'post_type'  => ProfileType::POST_TYPE,
+				'post_title' => 'Hand-added test person',
+			)
+		);
+		( new StateMachine() )->enter(
+			$this->profile,
+			PubState::IMPORTED_NOT_PUBLIC,
+			array(
+				'entity_type' => 'individual',
+				'origin'      => 'manual',
+			)
+		);
+		$html = ( new ProfileEditScreen() )->html( new Request( array( 'profile_id' => (string) $this->profile ) ) );
+		$this->assertStringContainsString( '<p>' . Labels::entity_type( 'individual' ) . ' · Added by hand, not public yet</p>', $html );
+		$this->assertStringNotContainsString( 'Imported, not public', $html );
+	}
 }

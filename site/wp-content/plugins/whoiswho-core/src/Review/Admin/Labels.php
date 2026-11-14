@@ -30,11 +30,16 @@ final class Labels {
 	}
 
 	/**
-	 * A publication state's name (the wording of the Dashboard tiles).
+	 * A publication state's name (the wording of the Dashboard tiles). A profile added by hand that is not public yet is not called
+	 * imported (issue 829).
 	 *
-	 * @param string $state State code.
+	 * @param string $state  State code.
+	 * @param string $origin Where the profile came from, when known.
 	 */
-	public static function state( string $state ): string {
+	public static function state( string $state, string $origin = '' ): string {
+		if ( PubState::IMPORTED_NOT_PUBLIC === $state && 'manual' === $origin ) {
+			return __( 'Added by hand, not public yet', 'whoiswho' );
+		}
 		$labels = array(
 			PubState::IMPORTED_NOT_PUBLIC => __( 'Imported, not public', 'whoiswho' ),
 			PubState::PUBLISHED_PENDING   => __( 'Published, waiting for review', 'whoiswho' ),

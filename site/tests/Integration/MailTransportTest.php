@@ -11,7 +11,10 @@ declare(strict_types=1);
 namespace WhoIsWho\Tests\Integration;
 
 use PHPMailer\PHPMailer\PHPMailer;
+use WhoIsWho\Core\Platform\Admin\ActionGuard;
+use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Mail\Transport;
+use WhoIsWho\Core\Platform\Setup\SetupScreen;
 use WhoIsWho\Tests\WpTestCase;
 
 final class MailTransportTest extends WpTestCase {
@@ -136,6 +139,7 @@ final class MailTransportTest extends WpTestCase {
 	public function test_REQ_075_a_stale_credentials_missing_flag_from_the_old_rule_is_cleared(): void {
 		update_option( Transport::OPTION_ERROR, 'smtp_credentials_missing', false );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		set_current_screen( 'dashboard' );
 		ob_start();
 		$this->bare()->notice();
 		$this->assertSame( '', (string) ob_get_clean() );
@@ -150,6 +154,7 @@ final class MailTransportTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'secrets file', $html );
 		delete_option( Transport::OPTION_ERROR );
 		wp_set_current_user( 0 );
+		set_current_screen( 'front' );
 	}
 
 	public function test_REQ_204_no_credential_or_address_reaches_the_log(): void {
@@ -205,5 +210,110 @@ final class MailTransportTest extends WpTestCase {
 		$this->assertStringStartsWith( 'no-reply@', $this->transport( array( 'from' => '' ) )->from_address( 'wordpress@localhost' ) );
 		$this->assertSame( 100, $this->transport()->hourly_cap() );
 		$this->assertSame( 100, Transport::DEFAULT_HOURLY_CAP );
+	}
+
+	/**
+	 * The notice as printed for the current user and screen.
+	 */
+	private function notice_html(): string {
+		ob_start();
+		$this->bare( true )->notice();
+		return (string) ob_get_clean();
+	}
+
+	public function test_REQ_075_a_successful_send_clears_the_mail_error(): void {
+		update_option( Transport::OPTION_ERROR, 'send_failed', false );
+		update_option( Transport::OPTION_ERROR_AT, time() - 60, false );
+		$transport = $this->bare( true );
+		$transport->register();
+		do_action( 'wp_mail_succeeded', array( 'to' => array( 'someone@example.org' ) ) );
+		$this->assertFalse( get_option( Transport::OPTION_ERROR ), 'the next email that goes out clears the old error' );
+		$this->assertFalse( get_option( Transport::OPTION_ERROR_AT ) );
+	}
+
+	public function test_REQ_075_a_failed_send_records_when_it_happened(): void {
+		$before = time();
+		$log    = sys_get_temp_dir() . '/wiw-mail-' . uniqid() . '.log';
+		// phpcs:ignore WordPress.PHP.IniSet.Risky -- sends error_log output to a temp file for this test only.
+		$previous = ini_set( 'error_log', $log );
+		$this->bare()->log_failure( new \WP_Error( 'wp_mail_failed', 'Could not connect' ) );
+		ini_set( 'error_log', (string) $previous ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		if ( file_exists( $log ) ) {
+			unlink( $log ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+		$this->assertSame( 'send_failed', get_option( Transport::OPTION_ERROR ) );
+		$this->assertGreaterThanOrEqual( $before, (int) get_option( Transport::OPTION_ERROR_AT ) );
+		delete_option( Transport::OPTION_ERROR );
+		delete_option( Transport::OPTION_ERROR_AT );
+	}
+
+	public function test_REQ_075_saving_a_fluentsmtp_connection_clears_the_mail_error(): void {
+		$this->bare( true )->register();
+
+		update_option( Transport::OPTION_ERROR, 'send_failed', false );
+		update_option( Transport::FLUENT_SMTP_OPTION, array( 'misc' => array( 'log_emails' => 'no' ) ) );
+		$this->assertSame( 'send_failed', get_option( Transport::OPTION_ERROR ), 'settings with no connection do not clear it' );
+
+		update_option( Transport::FLUENT_SMTP_OPTION, array( 'connections' => array( 'abc' => array( 'provider_settings' => array() ) ) ) );
+		$this->assertFalse( get_option( Transport::OPTION_ERROR ), 'a saved connection clears it' );
+
+		delete_option( Transport::FLUENT_SMTP_OPTION );
+		update_option( Transport::OPTION_ERROR, 'send_failed', false );
+		add_option( Transport::FLUENT_SMTP_OPTION, array( 'connections' => array( 'abc' => array() ) ) );
+		$this->assertFalse( get_option( Transport::OPTION_ERROR ), 'the first save (add_option) clears it too' );
+		delete_option( Transport::FLUENT_SMTP_OPTION );
+	}
+
+	public function test_REQ_075_the_notice_shows_only_to_administrators_on_the_dashboard_and_setup_screens_with_its_age(): void {
+		update_option( Transport::OPTION_ERROR, 'send_failed', false );
+		update_option( Transport::OPTION_ERROR_AT, time() - 3 * HOUR_IN_SECONDS, false );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		set_current_screen( 'dashboard' );
+		$html = $this->notice_html();
+		$this->assertStringContainsString( 'could not be sent', $html );
+		$this->assertStringContainsString( '3 hours ago', $html );
+		$this->assertStringContainsString( 'name="action" value="' . Transport::ACTION_DISMISS . '"', $html );
+		$this->assertStringContainsString( 'name="_wpnonce" value="' . ActionGuard::nonce_for( Transport::ACTION_DISMISS ) . '"', $html );
+		$this->assertStringContainsString( '>Dismiss</button>', $html );
+
+		set_current_screen( 'edit-post' );
+		$this->assertSame( '', $this->notice_html(), 'not on other admin screens' );
+
+		$_GET['page'] = SetupScreen::SCREEN; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- test input.
+		set_current_screen( 'toplevel_page_' . SetupScreen::SCREEN );
+		$this->assertStringContainsString( 'could not be sent', $this->notice_html(), 'shown on the Setup screen' );
+		unset( $_GET['page'] );
+
+		set_current_screen( 'dashboard' );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$this->assertSame( '', $this->notice_html(), 'not for other staff' );
+
+		wp_set_current_user( 0 );
+		set_current_screen( 'front' );
+		delete_option( Transport::OPTION_ERROR );
+		delete_option( Transport::OPTION_ERROR_AT );
+	}
+
+	public function test_REQ_075_dismissing_the_notice_clears_it_and_is_audited(): void {
+		global $wpdb;
+		update_option( Transport::OPTION_ERROR, 'send_failed', false );
+		update_option( Transport::OPTION_ERROR_AT, time() - 60, false );
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$denied = new Request( array( '_wpnonce' => 'wrong' ) );
+		$this->assertSame( ActionGuard::REFUSED_NONCE, ActionGuard::check( Transport::ACTION_DISMISS, Transport::DISMISS_CAP, $denied ) );
+		$this->assertNull( ActionGuard::check( Transport::ACTION_DISMISS, Transport::DISMISS_CAP, new Request( array( '_wpnonce' => ActionGuard::nonce_for( Transport::ACTION_DISMISS ) ) ) ) );
+
+		Transport::dismiss();
+		$this->assertFalse( get_option( Transport::OPTION_ERROR ) );
+		$this->assertFalse( get_option( Transport::OPTION_ERROR_AT ) );
+		$rows = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wiw_audit_log WHERE action = %s AND actor_id = %d", 'mail.error_dismissed', $admin ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		$this->assertSame( 1, $rows );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$this->assertSame( ActionGuard::REFUSED_CAPABILITY, ActionGuard::check( Transport::ACTION_DISMISS, Transport::DISMISS_CAP, new Request( array( '_wpnonce' => ActionGuard::nonce_for( Transport::ACTION_DISMISS ) ) ) ) );
+		wp_set_current_user( 0 );
 	}
 }
