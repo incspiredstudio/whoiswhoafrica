@@ -279,23 +279,42 @@ final class SampleSeeder {
 	}
 
 	/**
-	 * The profile an award nomination or a home page pin uses for a sample key: the invented profile when it exists, otherwise
-	 * one of the shipped sample profiles, chosen by the key's position so every run picks the same one. Stories never link to a
-	 * shipped profile: their text is invented.
+	 * The profile an award nomination or a home page pin uses for a sample key. It is always an invented profile, never one of
+	 * the shipped sample profiles: those are real people and organisations, and the demo's awards, citations and home page picks
+	 * are invented, so they must not name anyone real. When the shipped profiles replaced the invented ones, a few invented
+	 * stand-ins (STAND_INS of them) are created here for the awards and the home page; other keys are skipped.
 	 *
 	 * @param string $key Sample key.
 	 */
 	private function linked_profile_id( string $key ): int {
 		$id = $this->profile_id( $key );
-		if ( $id > 0 ) {
+		if ( $id > 0 || null === $this->bundle || ! in_array( $key, $this->stand_in_keys(), true ) ) {
 			return $id;
 		}
-		$shipped = SampleBundle::public_profile_ids();
-		if ( array() === $shipped ) {
-			return 0;
+		foreach ( (array) $this->data['profiles'] as $row ) {
+			if ( (string) $row['key'] === $key ) {
+				return $this->invent_profile( (array) $row, new StateMachine(), new ProfileFields(), new ProvenanceRepository() );
+			}
 		}
-		$position = array_search( $key, array_map( static fn ( $row ): string => (string) $row['key'], (array) $this->data['profiles'] ), true );
-		return $shipped[ ( false === $position ? 0 : (int) $position ) % count( $shipped ) ];
+		return 0;
+	}
+
+	/**
+	 * How many invented stand-in profiles the awards and the home page use when the shipped sample profiles are imported.
+	 */
+	public const STAND_INS = 8;
+
+	/**
+	 * The invented profile keys used as stand-ins: the home page pins first, then the nominees, at most STAND_INS.
+	 *
+	 * @return string[]
+	 */
+	private function stand_in_keys(): array {
+		$keys = array_map( 'strval', (array) $this->data['pin_profiles'] );
+		foreach ( (array) $this->data['nominations'] as $row ) {
+			$keys[] = (string) $row['profile'];
+		}
+		return array_slice( array_values( array_unique( $keys ) ), 0, self::STAND_INS );
 	}
 
 	/**
@@ -414,63 +433,78 @@ final class SampleSeeder {
 		$fields     = new ProfileFields();
 		$provenance = new ProvenanceRepository();
 		foreach ( array_slice( (array) $this->data['profiles'], $offset, $limit ) as $row ) {
-			$key = (string) $row['key'];
-			$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
-			if ( null !== $id ) {
-				$this->profile_ids[ $key ] = $id;
-				continue;
-			}
-			$id = wp_insert_post(
-				array(
-					'post_type'   => ProfileType::POST_TYPE,
-					'post_status' => ProfileType::STATUS_HIDDEN,
-					'post_title'  => (string) $row['name'],
-					'post_name'   => (string) $row['slug'],
-				),
-				true
-			);
-			if ( is_wp_error( $id ) || (int) $id < 1 ) {
-				throw new \RuntimeException( 'A sample profile could not be created.' );
-			}
-			$id = (int) $id;
-			SampleMarker::mark_post( $id, 'profile:' . $key );
+			$this->invent_profile( (array) $row, $machine, $fields, $provenance );
+		}
+	}
+
+	/**
+	 * Create one invented profile through the state machine, once: an existing one is reused.
+	 *
+	 * @param array<string, mixed>  $row        Sample row.
+	 * @param StateMachine          $machine    State machine.
+	 * @param ProfileFields         $fields     Field store.
+	 * @param ProvenanceRepository  $provenance Provenance.
+	 * @return int The profile id.
+	 * @throws \RuntimeException When the profile cannot be created.
+	 */
+	private function invent_profile( array $row, StateMachine $machine, ProfileFields $fields, ProvenanceRepository $provenance ): int {
+		$key = (string) $row['key'];
+		$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
+		if ( null !== $id ) {
 			$this->profile_ids[ $key ] = $id;
-			$state                     = (string) $row['state'];
-			$start                     = in_array( $state, array( 'rejected', 'imported', 'removed' ), true ) ? PubState::IMPORTED_NOT_PUBLIC : PubState::PUBLISHED_PENDING;
-			$machine->enter(
-				$id,
-				$start,
-				array(
-					'entity_type' => (string) $row['type'],
-					'origin'      => 'import',
-					'source'      => 'sample',
-				)
-			);
-			$values = (array) $row['fields'];
-			if ( isset( $row['industry'] ) ) {
-				$values['industry'] = (string) $row['industry'];
+			return $id;
+		}
+		$id = wp_insert_post(
+			array(
+				'post_type'   => ProfileType::POST_TYPE,
+				'post_status' => ProfileType::STATUS_HIDDEN,
+				'post_title'  => (string) $row['name'],
+				'post_name'   => (string) $row['slug'],
+			),
+			true
+		);
+		if ( is_wp_error( $id ) || (int) $id < 1 ) {
+			throw new \RuntimeException( 'A sample profile could not be created.' );
+		}
+		$id = (int) $id;
+		SampleMarker::mark_post( $id, 'profile:' . $key );
+		$this->profile_ids[ $key ] = $id;
+		$state                     = (string) $row['state'];
+		$start                     = in_array( $state, array( 'rejected', 'imported', 'removed' ), true ) ? PubState::IMPORTED_NOT_PUBLIC : PubState::PUBLISHED_PENDING;
+		$machine->enter(
+			$id,
+			$start,
+			array(
+				'entity_type' => (string) $row['type'],
+				'origin'      => 'import',
+				'source'      => 'sample',
+			)
+		);
+		$values = (array) $row['fields'];
+		if ( isset( $row['industry'] ) ) {
+			$values['industry'] = (string) $row['industry'];
+		}
+		foreach ( $values as $name => $value ) {
+			$fields->set( $id, (string) $name, $value );
+			if ( 'name' !== $name ) {
+				// A fact shows publicly only with a source; this one is an invented address.
+				$provenance->record(
+					$id,
+					array(
+						'field'        => (string) $name,
+						'source_url'   => 'https://example.net/sample-sources/' . (string) $row['slug'],
+						'retrieved_at' => gmdate( 'Y-m-d H:i:s' ),
+						'confidence'   => 'high',
+						'method'       => 'manual',
+					)
+				);
 			}
-			foreach ( $values as $name => $value ) {
-				$fields->set( $id, (string) $name, $value );
-				if ( 'name' !== $name ) {
-					// A fact shows publicly only with a source; this one is an invented address.
-					$provenance->record(
-						$id,
-						array(
-							'field'        => (string) $name,
-							'source_url'   => 'https://example.net/sample-sources/' . (string) $row['slug'],
-							'retrieved_at' => gmdate( 'Y-m-d H:i:s' ),
-							'confidence'   => 'high',
-							'method'       => 'manual',
-						)
-					);
-				}
-			}
-			$this->attach_terms( $id, $row );
-			$this->settle( $machine, $id, $state );
-			SampleMarker::seal_post( $id );
-			$this->count( 'profiles' );
-		}//end foreach
+		}
+		$this->attach_terms( $id, $row );
+		$this->settle( $machine, $id, $state );
+		SampleMarker::seal_post( $id );
+		$this->count( 'profiles' );
+		return $id;
 	}
 
 	/**

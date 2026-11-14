@@ -20,6 +20,7 @@ use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Import\Admin\BundleStore;
 use WhoIsWho\Core\Import\Admin\ImportService;
+use WhoIsWho\Core\Import\Apply\ApplyJob;
 use WhoIsWho\Core\Import\Apply\ChunkApplier;
 use WhoIsWho\Core\Import\Apply\ProfileApplier;
 use WhoIsWho\Core\Import\Apply\RecordMap;
@@ -155,16 +156,28 @@ final class SampleBundle {
 		if ( '' === $batch_id || null === $batches->get( $batch_id ) ) {
 			$batch_id = $this->stage( $actor );
 		}
-		$batch = (array) $batches->get( $batch_id );
-		if ( in_array( (string) $batch['status'], array( 'dry_run', 'applying' ), true ) ) {
+		$started = time();
+		$stop    = static fn (): bool => time() - $started >= self::BUDGET;
+		$batch   = (array) $batches->get( $batch_id );
+		if ( 'checked' === (string) $batch['status'] ) {
+			// A large bundle's dry run is stepped, as on the Import screen: it continues on the next call until it is complete.
+			( new DryRun( new Suppression( AuditLogger::for_site() ), $batches ) )->step( ( new ImportService() )->bundle( $batch_id ), $batch_id, $stop );
+			$batch = (array) $batches->get( $batch_id );
+		}
+		if ( in_array( (string) $batch['status'], array( 'dry_run', 'applying' ), true ) && ! $stop() ) {
 			if ( 'dry_run' === (string) $batch['status'] ) {
 				$this->confirm( $batch_id );
 			}
-			$bundle  = ( new ImportService() )->bundle( $batch_id );
-			$started = time();
-			$out     = ( new ChunkApplier( new ProfileApplier( new Suppression( AuditLogger::for_site() ) ), $batches ) )->run( $bundle, $batch_id, $limit, static fn (): bool => time() - $started >= self::BUDGET );
-			if ( $out['done'] ) {
-				( new ImportAudit() )->record( (array) $batches->get( $batch_id ) );
+			if ( str_starts_with( str_replace( '\\', '/', ApplyJob::bundle_dir( $batch ) ), ( new BundleStore() )->root() . '/' ) ) {
+				// The zip was unpacked into the private import folder: the import's own chunk step applies it (images included),
+				// writes the audit row and deletes the unpacked copy when the batch is complete.
+				ApplyJob::chunk( $batch_id, max( 1, self::BUDGET - ( time() - $started ) ) );
+			} else {
+				// A sample folder inside the plugin: applied the same way, but the folder itself is never deleted.
+				$out = ( new ChunkApplier( new ProfileApplier( new Suppression( AuditLogger::for_site() ) ), $batches ) )->run( ( new ImportService() )->bundle( $batch_id ), $batch_id, $limit, $stop );
+				if ( ! empty( $out['finished'] ) ) {
+					( new ImportAudit() )->record( (array) $batches->get( $batch_id ) );
+				}
 			}
 		}
 		$this->approve( $batch_id, $actor );

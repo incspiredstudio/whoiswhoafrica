@@ -425,16 +425,22 @@ final class DemoChooserTest extends WpTestCase {
 			$this->assertStringStartsWith( SampleBundle::KEY_PREFIX . 'rec_demo_', (string) get_post_meta( $id, SampleMarker::KEY_META, true ) );
 			$this->assertNotSame( array(), ( new ProvenanceRepository() )->for_profile( $id ), 'provenance from the bundle' );
 		}
-		$this->assertNull( SampleMarker::find_post( 'profile:test-person', ProfileType::POST_TYPE ), 'no invented profiles when the bundle ships' );
-		$this->assertSame( 3, $demo->parts_status()['profiles']['count'] );
-		$this->assertGreaterThan( 0, $demo->parts_status()['awards']['count'], 'awards use the shipped profiles' );
+		$this->assertNull( SampleMarker::find_post( 'profile:test-pending', ProfileType::POST_TYPE ), 'no invented directory when the bundle ships' );
+		$this->assertGreaterThan( 0, $demo->parts_status()['awards']['count'] );
+		// The awards are invented, so they never name a shipped (real) profile: they use invented stand-ins.
 		global $wpdb;
+		$nominees = array_map( 'intval', (array) $wpdb->get_col( 'SELECT profile_id FROM ' . AwardsTables::table( AwardsTables::NOMINATIONS ) . ' WHERE profile_id IS NOT NULL' ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		$this->assertNotSame( array(), $nominees );
+		$this->assertSame( array(), array_intersect( $nominees, $created ), 'no award names a shipped profile' );
+		$stand_ins = array_filter( array( SampleMarker::find_post( 'profile:test-person', ProfileType::POST_TYPE ), SampleMarker::find_post( 'profile:test-org', ProfileType::POST_TYPE ) ) );
+		$this->assertEqualsCanonicalizing( array_values( $stand_ins ), array_values( array_unique( $nominees ) ) );
+		$this->assertSame( 5, $demo->parts_status()['profiles']['count'], 'three shipped profiles and two invented stand-ins' );
 		$audited = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wiw_audit_log WHERE action = %s", 'demo.profiles_approved' ) ); // phpcs:ignore WordPress.DB
 		$this->assertGreaterThan( 0, $audited );
 
 		// Removing Profiles removes Awards first, the profiles and the demo batch, and leaves the shipped folder alone.
 		$this->remove_part( $demo, 'profiles' );
-		foreach ( $created as $id ) {
+		foreach ( array_merge( $created, $stand_ins ) as $id ) {
 			$this->assertNull( get_post( $id ) );
 		}
 		$this->assertNull( ( new BatchRepository() )->get( 'B-demo' ) );
