@@ -133,3 +133,28 @@ if ( ! function_exists( 'wiw_industry_sectors' ) ) {
 		return $sectors;
 	}
 }//end if
+
+if ( ! function_exists( 'wiw_sector_industries' ) ) {
+	/**
+	 * The industries of one sector that have public profiles, in name order (REQ-009, REQ-007): the chips on a sector page.
+	 *
+	 * @param array<int, array{term_id: int, slug: string, name: string, count: int, parent: int}> $rows      From ProfileList::industry_counts().
+	 * @param int                                                                                  $sector_id The sector's term id.
+	 * @return list<array{slug: string, name: string, count: int, url: string}>
+	 */
+	function wiw_sector_industries( array $rows, int $sector_id ): array {
+		$out = array();
+		foreach ( $rows as $row ) {
+			if ( $sector_id > 0 && $sector_id === $row['parent'] && $row['count'] > 0 ) {
+				$out[] = array(
+					'slug'  => $row['slug'],
+					'name'  => $row['name'],
+					'count' => $row['count'],
+					'url'   => home_url( '/industries/' . $row['slug'] . '/' ),
+				);
+			}
+		}
+		usort( $out, static fn ( array $a, array $b ): int => strcasecmp( $a['name'], $b['name'] ) );
+		return $out;
+	}
+}//end if

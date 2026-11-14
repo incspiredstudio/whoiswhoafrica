@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { expectNoA11yViolations } from "./helpers/a11y";
-import { assertNoHorizontalScroll, disableScripts } from "./helpers/page";
+import { assertNoHorizontalScroll, chooseFilter, disableScripts } from "./helpers/page";
 
 // The directory filter bar and shareable filter URLs (REQ-007, REQ-040, REQ-043). Works on an empty site and on a seeded one.
 test.describe("directory filters", () => {
@@ -11,7 +11,7 @@ test.describe("directory filters", () => {
     const select = page.locator("form.fbar select[name=industry]");
     const values = await select.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean));
     test.skip(values.length === 0, "no industries seeded");
-    await Promise.all([page.waitForURL(/industry=/), select.selectOption(values[0])]);
+    await chooseFilter(page, "industry", values[0]);
     const url = page.url();
     const count = await page.locator(".fbar-n").innerText();
     const fresh = await browser.newContext();

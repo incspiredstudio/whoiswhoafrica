@@ -127,6 +127,7 @@ $wiw_country_opts  = isset( $wiw_data['countries'] ) && is_array( $wiw_data['cou
 				),
 				/* translators: %d: number of winners. */
 				'count'    => sprintf( _n( '%d winner', '%d winners', $wiw_total, 'whoiswho' ), $wiw_total ),
+				'total'    => $wiw_total,
 				'clear'    => $wiw_on,
 			)
 		);

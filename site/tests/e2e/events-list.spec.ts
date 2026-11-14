@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseFilter } from "./helpers/page";
 
 // Needs the core plugin active and at least one published event (a seeded site or the events import). With none the page still
 // answers 200 and says so; the ordering and filter rules are covered in tests/Integration/EventsListTest.php (REQ-264).
@@ -22,7 +23,7 @@ test.describe("events list", () => {
     const select = page.locator("form.fbar select[name='city']");
     const cities = await select.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean));
     test.skip(cities.length === 0, "no cities to filter by");
-    await Promise.all([page.waitForURL(/city=/), select.selectOption(cities[0])]);
+    await chooseFilter(page, "city", cities[0]);
     expect(new URL(page.url()).searchParams.get("city")).toBe(cities[0]);
     await expect(page.locator(".fbar-clear")).toHaveCount(1);
     await expect(page.locator(".fbar-n")).toHaveAttribute("role", "status");

@@ -1219,6 +1219,71 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 
 @media (width <= 40rem) { .fbar { align-items: flex-start; } .fbar-l { gap: 0 var(--s-4); } }
 
+/* Phones (REQ-044, REQ-007): one Filters button, the filters that are on as removable chips, and a bottom sheet that holds the
+   selects. Script adds .is-sheet; without it none of this shows and the bar above stays as it is. Desktop is unchanged. */
+.fbar-open, .fbar-chips { display: none; }
+.fbar-sheet { display: none; }
+.fbar-sheet[open] { display: flex; }
+
+@media (width < 48rem) {
+  .fbar-box.is-sheet .fbar { align-items: center; margin-bottom: var(--s-3); }
+  .fbar-box.is-sheet .fbar-l:not(:has(.fbar-q)) { display: none; }
+  .fbar-box.is-sheet .fbar-l { flex-basis: 100%; }
+  .fbar-box.is-sheet .fbar-q { flex: 1 1 100%; }
+  .fbar-box.is-sheet .fbar-r { flex: 1 1 100%; gap: var(--s-2) var(--s-4); }
+  .fbar-box.is-sheet .fbar-clear { display: none; }
+  .fbar-box.is-sheet .fbar-open { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 2.75rem; padding: 0 var(--s-4); border: 1px solid var(--c-text); border-radius: var(--r-pill); background: var(--c-text); color: var(--c-surface); font: 600 var(--t-sm)/1 var(--font-body); cursor: pointer; transition: transform var(--m-fast) var(--ease-out); }
+  .fbar-box.is-sheet .fbar-open:active { transform: scale(.97); }
+  .fbar-box.is-sheet .fbar-open:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 3px; }
+  .fbar-box.is-sheet .fbar-open .ico { width: 1rem; height: 1rem; }
+  .fbar-open-n { font-variant-numeric: tabular-nums; }
+  .fbar-box.is-sheet .fbar-r { flex-wrap: nowrap; }
+  .fbar-box.is-sheet .fbar-n { margin-right: auto; white-space: nowrap; }
+  .fbar-box.is-sheet .view-toggle a { min-width: 2.75rem; min-height: 2.75rem; justify-content: center; }
+  .fbar-box.is-sheet .view-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .fbar-box.is-sheet .fbar-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0 0 var(--s-5); padding: 0; list-style: none; }
+}
+.fbar-chip { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 2.75rem; max-width: 100%; padding: 0 var(--s-3) 0 var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-pill); color: var(--c-text); font-size: var(--t-sm); font-weight: 600; text-decoration: none; transition: background var(--m-fast), color var(--m-fast), border-color var(--m-fast); }
+.fbar-chip > span:not(.sr) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fbar-chip .ico { flex: none; width: .875rem; height: .875rem; }
+.fbar-chip:hover { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.fbar-chip:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+
+/* The sheet: a native modal pinned to the bottom edge, rounded top corners, a grip, a sticky footer. */
+.fbar-sheet { position: fixed; inset: auto 0 0; flex-direction: column; width: 100%; max-width: 100%; max-height: min(88dvh, 44rem); margin: 0; padding: 0; border: 0; border-radius: var(--r-3) var(--r-3) 0 0; background: var(--c-surface); color: var(--c-text); box-shadow: var(--sh-3); overflow: hidden; }
+.fbar-sheet::backdrop { background: color-mix(in srgb, var(--c-dark) 60%, transparent); }
+.fbar-sheet-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-5) var(--gutter) var(--s-3); border-bottom: 1px solid var(--c-line); }
+.fbar-sheet-head::before { content: ""; position: absolute; top: var(--s-2); left: 50%; width: 2.5rem; height: 4px; border-radius: var(--r-pill); background: var(--c-line-strong); opacity: .35; transform: translateX(-50%); }
+.fbar-sheet-head h2 { margin: 0; font: 400 var(--t-xl)/1.1 var(--font-display); }
+.fbar-sheet-x .ico { width: 1rem; height: 1rem; }
+.fbar-sheet-x:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+.fbar-sheet-body { flex: 1 1 auto; display: grid; gap: var(--s-5); padding: var(--s-5) var(--gutter); overflow-y: auto; overscroll-behavior: contain; }
+.fbar-sheet-fields { display: grid; gap: var(--s-4); }
+.fbar-sheet .fbar-sel { display: grid; gap: var(--s-2); width: 100%; }
+.fbar-sheet .fbar-sel > .sr { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; font-size: var(--t-sm); font-weight: 600; }
+.fbar .fbar-sheet .fbar-sel select { width: 100%; max-width: none; field-sizing: fixed; min-height: 3rem; padding: .5rem 2.5rem .5rem var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-2); background-color: var(--c-surface); background-position: right var(--s-4) center; font-size: 1rem; font-weight: 500; }
+.fbar .fbar-sheet .fbar-sel select:hover { border-color: var(--c-text); }
+.fbar .fbar-sheet .fbar-sel.is-on select { border-color: var(--c-text); box-shadow: inset 4px 0 0 var(--orange); }
+.fbar-sheet-group { display: grid; gap: var(--s-2); }
+.fbar-sheet-k { margin: 0; font-size: var(--t-sm); font-weight: 600; }
+.fbar-sheet-tabs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+.fbar-sheet-tabs a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-pill); color: var(--c-text); font-size: var(--t-sm); font-weight: 600; text-decoration: none; }
+.fbar-sheet-tabs a[aria-current="true"] { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.fbar-sheet-tabs a:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+.fbar-sheet-foot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--c-line); background: var(--c-surface); }
+.fbar-sheet-foot .btn { min-height: 3rem; }
+.fbar-sheet-go { font-variant-numeric: tabular-nums; }
+html.fbar-locked, html.fbar-locked body { overflow: hidden; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .fbar-sheet[open] { animation: fbar-up var(--m-slow) var(--ease-out); }
+  .fbar-sheet[open]::backdrop { animation: fbar-fade var(--m-base) ease-out; }
+}
+
+@keyframes fbar-up { from { transform: translateY(100%); } to { transform: none; } }
+
+@keyframes fbar-fade { from { opacity: 0; } to { opacity: 1; } }
+
 /* Story types as a plain text tab row, not bordered chips. */
 .bl-pills { gap: var(--s-5); padding: 0; }
 .bl-pills a { padding: .5rem 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--c-muted); font-weight: 600; }
@@ -1337,6 +1402,13 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ind-count { display: inline-flex; flex: none; align-items: center; gap: var(--s-2); font: 400 var(--t-sm)/1 var(--font-body); color: var(--c-muted); white-space: nowrap; }
 .index-list a:hover .ind-count { color: inherit; }
 .ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
+.ind-chips { margin-bottom: var(--s-6); }
+.ind-chips ul { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+.ind-chip { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 2.75rem; padding: 0 var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-pill); color: var(--c-text); font-size: var(--t-sm); font-weight: 600; text-decoration: none; transition: background var(--m-fast), color var(--m-fast), border-color var(--m-fast); }
+.ind-chip-n { color: var(--c-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.ind-chip:hover { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.ind-chip:hover .ind-chip-n { color: inherit; }
+.ind-chip:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
 .ind-sectors { display: grid; gap: var(--s-7) var(--s-8); grid-template-columns: minmax(0, 1fr); margin-block: var(--s-4) var(--s-6); }
 
 @media (width >= 64rem) { .ind-sectors { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -22,6 +22,8 @@ Events are not part of site search. Visitors find them through the Events link i
 
 Each directory list also has its own search box. That box only narrows the list you are on, and it works together with the filters. The site search crosses profiles and stories.
 
+The filters, and how they work on a phone, are described in [Directory and profiles](/visitor/directory-and-profiles#filters-on-a-phone).
+
 ## Rules
 
 1. **Nothing non-public appears.** Removed, suppressed, rejected, draft and hidden profiles are never returned. Draft, scheduled and removed stories are never returned.

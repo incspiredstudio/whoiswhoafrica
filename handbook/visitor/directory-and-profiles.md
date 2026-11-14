@@ -16,7 +16,30 @@ The directory is a browsable record of people, entrepreneurs, businesses and ins
 | Profession | People and Entrepreneurs |
 | Organisation type | Businesses and Institutions |
 
-The filters are kept in the page address, so a filtered view can be shared as a link. The industries page lists every sector with a count, and each industry page shows that sector's profiles and stories.
+The filters are kept in the page address, so a filtered view can be shared as a link.
+
+## Filters on a phone
+
+On a phone the filter bar folds into one **Filters** button. The same applies to Stories, Events and the award winners.
+
+1. Tap **Filters**. The button shows how many filters are on, for example "Filters (2)".
+2. A panel slides up from the bottom of the screen. It holds the list types as chips, then each filter as a full-width field: Industry (grouped by sector), Country, City, and Organisation type or Profession where the list has them, then the sort order.
+3. Choose values. Nothing changes on the page yet. The button at the foot of the panel shows how many results your choices would give, for example "Show 12 results".
+4. Tap **Show N results** to apply them, or **Clear all** to remove every filter. Close the panel with the cross or the Escape key to keep the page as it was.
+5. Under the Filters button, each filter that is on shows as a chip. Tap a chip to remove that one filter.
+
+On a computer the filters stay in one line above the results, as before. Without JavaScript the same fields show in that line on every screen, with an Apply button for keyboard users. The page addresses are the same in every case.
+
+## Industries and sectors
+
+Every industry belongs to one sector.
+
+- **The industries page** lists the sectors in name order. Each sector shows its count of reviewed profiles and its industries underneath, each with its own count.
+- **A sector page** (open a sector's name) shows every profile in the sector. Its industries show as chips at the top, each with its count; tap one to narrow to that industry.
+- **An industry page** shows that industry's profiles and, when there are any, its stories.
+- **In the directory's Industry filter** the industries are grouped under their sector. Choosing the sector itself, the first option in each group, shows the whole sector.
+
+Profiles not yet placed in an industry are not listed under any sector.
 
 Lists show reviewed profiles only. A profile that is still waiting for review is never named on a list.
 

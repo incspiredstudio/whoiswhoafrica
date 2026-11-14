@@ -81,6 +81,7 @@ get_header();
 				),
 				/* translators: %d: number of events. */
 				'count'    => sprintf( _n( '%d event', '%d events', $wiw_total, 'whoiswho' ), $wiw_total ),
+				'total'    => $wiw_total,
 				'clear'    => $wiw_on,
 			)
 		);
