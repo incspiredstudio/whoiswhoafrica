@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
       - run: composer analyse
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, coverage: "${{ env.COVERAGE == 'true' && 'pcov' || 'none' }}", extensions: "mbstring, mysqli, zip, intl, gd", ini-values: "pcov.directory=." }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
       - name: PHPUnit, all suites (pull requests and other pushes, no coverage)
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, extensions: "mbstring, mysqli, zip, intl, gd" }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - run: composer install --no-interaction --prefer-dist
       - name: Visibility matrix (every surface, every publication state); rerun after any plugin, guard or theme change
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: "${{ env.PHP_VERSION }}", tools: composer, extensions: "mbstring, mysqli, zip, intl, gd" }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/composer, key: "composer-${{ hashFiles('site/composer.lock') }}" }
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: site/package-lock.json }
@@ -186,7 +186,7 @@ jobs:
       - name: Playwright version (browser cache key)
         id: pw
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with: { path: ~/.cache/ms-playwright, key: "ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium" }
       - name: Install Chromium (a no-op when the cache restored it)
         timeout-minutes: 8
