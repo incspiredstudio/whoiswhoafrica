@@ -286,6 +286,172 @@ final class PublicProfile {
 	}
 
 	/**
+	 * The profile's place in the classification tree, for the breadcrumb `Country › Sector › Industry › Name` (REQ-009 as amended
+	 * 2026-11-14): the primary country, the sector and industry of the primary industry, and the extra industries. Each entry has
+	 * its plain-text name (the template escapes it), slug and the directory list filtered to it. An unclassified profile has no
+	 * sector or industry; a profile with no country has no country. Read from the terms on every call, never from the import text.
+	 *
+	 * @return array{country: array{name: string, slug: string, code: string, url: string}|null, sector: array{name: string, slug: string, url: string}|null, industry: array{name: string, slug: string, url: string}|null, extra: list<array{name: string, slug: string, url: string}>}
+	 */
+	public function classification(): array {
+		$country_term = $this->primary_country_term();
+		$country      = null;
+		$args         = array();
+		if ( null !== $country_term ) {
+			$args    = array( 'country' => $country_term->slug );
+			$country = array(
+				'name' => self::term_name( $country_term ),
+				'slug' => $country_term->slug,
+				'code' => (string) get_term_meta( $country_term->term_id, Taxonomies::META_ISO, true ),
+				'url'  => self::directory_url( $args ),
+			);
+		}
+		$sector   = null;
+		$industry = null;
+		$primary  = $this->primary_industry_term();
+		if ( null !== $primary ) {
+			$parent = get_term( (int) $primary->parent, Taxonomies::INDUSTRY );
+			if ( $parent instanceof \WP_Term ) {
+				$sector   = array(
+					'name' => self::term_name( $parent ),
+					'slug' => $parent->slug,
+					'url'  => self::directory_url( $args + array( 'industry' => $parent->slug ) ),
+				);
+				$industry = array(
+					'name' => self::term_name( $primary ),
+					'slug' => $primary->slug,
+					'url'  => self::directory_url( $args + array( 'industry' => $primary->slug ) ),
+				);
+			}
+		}
+		$extra = array();
+		foreach ( $this->terms( Taxonomies::INDUSTRY ) as $term ) {
+			if ( 0 === (int) $term->parent || ( null !== $primary && $term->term_id === $primary->term_id ) ) {
+				continue;
+			}
+			$extra[] = array(
+				'name' => self::term_name( $term ),
+				'slug' => $term->slug,
+				'url'  => self::directory_url( $args + array( 'industry' => $term->slug ) ),
+			);
+		}
+		return array(
+			'country'  => $country,
+			'sector'   => $sector,
+			'industry' => $industry,
+			'extra'    => $extra,
+		);
+	}
+
+	/**
+	 * The organisation type (organisations and institutions), or null.
+	 *
+	 * @return array{name: string, slug: string}|null
+	 */
+	public function org_type(): ?array {
+		$terms = $this->terms( Taxonomies::ORG_TYPE );
+		if ( array() === $terms ) {
+			return null;
+		}
+		return array(
+			'name' => self::term_name( $terms[0] ),
+			'slug' => $terms[0]->slug,
+		);
+	}
+
+	/**
+	 * The city and the primary country as plain-text names, or null when the profile has neither.
+	 *
+	 * @return array{city: string|null, country: string|null}|null
+	 */
+	public function place(): ?array {
+		$city = null;
+		foreach ( $this->terms( Taxonomies::PLACE ) as $term ) {
+			if ( Taxonomies::KIND_CITY === (string) get_term_meta( $term->term_id, Taxonomies::META_KIND, true ) ) {
+				$city = self::term_name( $term );
+				break;
+			}
+		}
+		$country = $this->primary_country_term();
+		if ( null === $city && null === $country ) {
+			return null;
+		}
+		return array(
+			'city'    => $city,
+			'country' => null === $country ? null : self::term_name( $country ),
+		);
+	}
+
+	/**
+	 * The primary industry leaf: the stored primary when it is still a leaf, else the first assigned leaf. Null when the profile is
+	 * unclassified (or has no industry).
+	 */
+	private function primary_industry_term(): ?\WP_Term {
+		$id   = (int) get_post_meta( $this->id, Classification::PRIMARY_INDUSTRY_META, true );
+		$term = $id > 0 ? get_term( $id, Taxonomies::INDUSTRY ) : null;
+		if ( $term instanceof \WP_Term ) {
+			return 0 !== (int) $term->parent ? $term : null;
+		}
+		foreach ( $this->terms( Taxonomies::INDUSTRY ) as $candidate ) {
+			if ( 0 !== (int) $candidate->parent ) {
+				return $candidate;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The primary country (or the Pan-African body): the stored primary, else the top-level place of the first place term.
+	 */
+	private function primary_country_term(): ?\WP_Term {
+		$id   = (int) get_post_meta( $this->id, Classification::PRIMARY_COUNTRY_META, true );
+		$term = $id > 0 ? get_term( $id, Taxonomies::PLACE ) : null;
+		if ( $term instanceof \WP_Term ) {
+			return $term;
+		}
+		foreach ( $this->terms( Taxonomies::PLACE ) as $candidate ) {
+			$top  = ( new ProfileClassifier() )->country_of( $candidate->term_id );
+			$term = null === $top ? null : get_term( $top, Taxonomies::PLACE );
+			if ( $term instanceof \WP_Term ) {
+				return $term;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The profile's terms in a taxonomy.
+	 *
+	 * @param string $taxonomy Taxonomy.
+	 * @return \WP_Term[]
+	 */
+	private function terms( string $taxonomy ): array {
+		if ( ! taxonomy_exists( $taxonomy ) ) {
+			return array();
+		}
+		$terms = get_the_terms( $this->id, $taxonomy );
+		return is_array( $terms ) ? array_values( $terms ) : array();
+	}
+
+	/**
+	 * A term name as plain text (WordPress stores "&" as an entity).
+	 *
+	 * @param \WP_Term $term Term.
+	 */
+	private static function term_name( \WP_Term $term ): string {
+		return html_entity_decode( $term->name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * The directory list filtered by country and industry slugs.
+	 *
+	 * @param array<string, string> $args Query arguments.
+	 */
+	private static function directory_url( array $args ): string {
+		return add_query_arg( $args, home_url( '/directory/' ) );
+	}
+
+	/**
 	 * The portrait or logo with its credit (REQ-162, REQ-203, D-024): attachment id, address, alternative text, kind (photo or
 	 * logo), the credit line text (the attribution text, else the creator), licence id, licence link and source page. Null when
 	 * the profile has no image or the attachment is gone.
@@ -434,7 +600,8 @@ final class PublicProfile {
 	 * @return array<string, mixed>
 	 */
 	private static function share( self $profile ): array {
-		$title = $profile->facts['current_title']['value'] ?? ( $profile->facts['org_type']['value'] ?? '' );
+		$type  = $profile->org_type();
+		$title = $profile->facts['current_title']['value'] ?? ( null === $type ? '' : $type['name'] );
 		$org   = $profile->facts['current_organisation']['value'] ?? '';
 		return array(
 			'name'         => $profile->name,

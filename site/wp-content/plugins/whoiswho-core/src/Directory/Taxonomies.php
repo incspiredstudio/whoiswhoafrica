@@ -1,6 +1,8 @@
 <?php
 /**
- * Registers the controlled-list taxonomies (REQ-009): industry, sector, profession, organisation type and place.
+ * Registers the controlled-list taxonomies (REQ-009 as amended 2026-11-14): the industry tree (sectors at the top, their industries
+ * under them, and the Unclassified term), profession, organisation type and place (country, then city). The flat sector taxonomy
+ * is retired: it stays registered without any screen, so the upgrade migration can read and empty it, and nothing public uses it.
  *
  * Term capabilities use the generic names the role catalogue defines: Reviewers hold assign_terms only, Editors and
  * Administrators also hold manage_terms, edit_terms and delete_terms. Terms are managed on the native term screens.
@@ -24,17 +26,18 @@ final class Taxonomies {
 	public const PLACE        = 'wiw_place';
 	public const META_ISO     = 'wiw_iso_code';
 	public const META_KIND    = 'wiw_place_kind';
+	public const META_ALIAS   = 'wiw_alias';
 	public const KIND_COUNTRY = 'country';
 	public const KIND_BODY    = 'body';
 	public const KIND_CITY    = 'city';
 
 	/**
-	 * All taxonomy names.
+	 * All taxonomy names in use (the retired sector taxonomy is not one of them).
 	 *
 	 * @return string[]
 	 */
 	public static function all(): array {
-		return array( self::INDUSTRY, self::SECTOR, self::PROFESSION, self::ORG_TYPE, self::PLACE );
+		return array( self::INDUSTRY, self::PROFESSION, self::ORG_TYPE, self::PLACE );
 	}
 
 	/**
@@ -42,13 +45,14 @@ final class Taxonomies {
 	 */
 	public function register(): void {
 		$labels = array(
-			self::INDUSTRY   => array( __( 'Industries', 'whoiswho' ), __( 'Industry', 'whoiswho' ), false ),
+			self::INDUSTRY   => array( __( 'Industries', 'whoiswho' ), __( 'Industry', 'whoiswho' ), true ),
 			self::SECTOR     => array( __( 'Sectors', 'whoiswho' ), __( 'Sector', 'whoiswho' ), false ),
 			self::PROFESSION => array( __( 'Professions', 'whoiswho' ), __( 'Profession', 'whoiswho' ), false ),
 			self::ORG_TYPE   => array( __( 'Organisation types', 'whoiswho' ), __( 'Organisation type', 'whoiswho' ), false ),
 			self::PLACE      => array( __( 'Places', 'whoiswho' ), __( 'Place', 'whoiswho' ), true ),
 		);
 		foreach ( $labels as $taxonomy => list( $plural, $singular, $hierarchical ) ) {
+			$retired = self::SECTOR === $taxonomy;
 			register_taxonomy(
 				$taxonomy,
 				ProfileType::POST_TYPE,
@@ -59,12 +63,12 @@ final class Taxonomies {
 					),
 					'public'             => false,
 					'publicly_queryable' => false,
-					'show_ui'            => true,
-					'show_in_menu'       => true,
+					'show_ui'            => ! $retired,
+					'show_in_menu'       => ! $retired,
 					'show_in_nav_menus'  => false,
 					'show_in_rest'       => false,
 					'show_tagcloud'      => false,
-					'show_admin_column'  => true,
+					'show_admin_column'  => ! $retired,
 					'hierarchical'       => $hierarchical,
 					'rewrite'            => false,
 					'query_var'          => false,
@@ -78,6 +82,17 @@ final class Taxonomies {
 			);
 		}//end foreach
 
+		foreach ( array( self::INDUSTRY, self::ORG_TYPE ) as $taxonomy ) {
+			register_term_meta(
+				$taxonomy,
+				self::META_ALIAS,
+				array(
+					'single'            => true,
+					'show_in_rest'      => false,
+					'sanitize_callback' => array( self::class, 'sanitize_aliases' ),
+				)
+			);
+		}
 		register_term_meta(
 			self::PLACE,
 			self::META_ISO,
@@ -98,5 +113,23 @@ final class Taxonomies {
 				'sanitize_callback' => static fn ( $value ): string => in_array( $value, array( self::KIND_COUNTRY, self::KIND_BODY, self::KIND_CITY ), true ) ? (string) $value : self::KIND_CITY,
 			)
 		);
+	}
+
+	/**
+	 * Aliases as a clean list of strings: an array, or a comma list.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string[]
+	 */
+	public static function sanitize_aliases( $value ): array {
+		$items = is_array( $value ) ? $value : explode( ',', is_scalar( $value ) ? (string) $value : '' );
+		$out   = array();
+		foreach ( $items as $item ) {
+			$item = is_scalar( $item ) ? trim( sanitize_text_field( (string) $item ) ) : '';
+			if ( '' !== $item && ! in_array( $item, $out, true ) ) {
+				$out[] = mb_substr( $item, 0, 120 );
+			}
+		}
+		return $out;
 	}
 }

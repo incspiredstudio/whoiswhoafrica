@@ -38,7 +38,7 @@ final class StructuredData {
 	public function print_schema(): void {
 		$profile = $this->current_profile();
 		if ( null !== $profile ) {
-			echo $this->render( $profile ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with the hex flags; no markup can break out of the script element.
+			echo $this->render( $profile ) . $this->render_breadcrumb( $profile ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with the hex flags; no markup can break out of the script element.
 		}
 	}
 
@@ -68,7 +68,8 @@ final class StructuredData {
 					'name'  => $org,
 				);
 			}
-			$this->put( $data, 'knowsAbout', $this->text( $profile, 'industry' ) );
+			$industry = $profile->classification()['industry'];
+			$this->put( $data, 'knowsAbout', null === $industry ? '' : $industry['name'] );
 			$this->put( $data, 'award', $this->items( $profile, 'published_awards' ) );
 			$roles = $this->items( $profile, 'public_record_roles' );
 			if ( array() !== $roles ) {
@@ -90,12 +91,69 @@ final class StructuredData {
 	}
 
 	/**
-	 * The script element, or an empty string when the profile has no schema.
+	 * The BreadcrumbList for a profile, matching the breadcrumb on the page: Country, Sector, Industry, then the profile. An
+	 * unclassified profile gives Country, then the profile; one with no country gives the directory, then the profile. Null when
+	 * the state allows no schema.
+	 *
+	 * @param PublicProfile $profile Profile (from the read model).
+	 * @return array<string, mixed>|null
+	 */
+	public function breadcrumb_for( PublicProfile $profile ): ?array {
+		if ( ! $profile->policy->has_schema ) {
+			return null;
+		}
+		$tree   = $profile->classification();
+		$crumbs = array();
+		if ( null === $tree['country'] ) {
+			$crumbs[] = array( 'Directory', home_url( '/directory/' ) );
+		} else {
+			$crumbs[] = array( $tree['country']['name'], $tree['country']['url'] );
+			if ( null !== $tree['sector'] && null !== $tree['industry'] ) {
+				$crumbs[] = array( $tree['sector']['name'], $tree['sector']['url'] );
+				$crumbs[] = array( $tree['industry']['name'], $tree['industry']['url'] );
+			}
+		}
+		$crumbs[] = array( $profile->name, $profile->url );
+		$items    = array();
+		foreach ( $crumbs as $i => list( $name, $url ) ) {
+			$items[] = array(
+				'@type'    => 'ListItem',
+				'position' => $i + 1,
+				'name'     => $name,
+				'item'     => $url,
+			);
+		}
+		return array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'BreadcrumbList',
+			'itemListElement' => $items,
+		);
+	}
+
+	/**
+	 * The profile's script element, or an empty string when the profile has no schema.
 	 *
 	 * @param PublicProfile $profile Profile.
 	 */
 	public function render( PublicProfile $profile ): string {
-		$data = $this->for_profile( $profile );
+		return $this->script( $this->for_profile( $profile ) );
+	}
+
+	/**
+	 * The BreadcrumbList script element, or an empty string when the profile has no schema.
+	 *
+	 * @param PublicProfile $profile Profile.
+	 */
+	public function render_breadcrumb( PublicProfile $profile ): string {
+		return $this->script( $this->breadcrumb_for( $profile ) );
+	}
+
+	/**
+	 * One JSON-LD script element, or an empty string for no data.
+	 *
+	 * @param array<string, mixed>|null $data Data.
+	 */
+	private function script( ?array $data ): string {
 		if ( null === $data ) {
 			return '';
 		}

@@ -1,8 +1,9 @@
 <?php
 /**
  * Seeds the place taxonomy: African countries (Nigeria first) as top-level terms with an ISO 3166-1 alpha-2 code, and a
- * top-level term for pan-African bodies. Cities are added by staff or by the import as needed. Idempotent: a country
- * already present (matched by ISO code) is left alone.
+ * top-level term for pan-African bodies (slug `pan-african`, code `PAN`, kind body). Cities are added by staff or by the import as
+ * needed. Idempotent: a country already present (matched by ISO code) is left alone, and a Pan-African term seeded before it had
+ * its code gets the code.
  *
  * @package WhoIsWho
  */
@@ -24,7 +25,7 @@ final class PlaceSeeder {
 	/**
 	 * Seed version; bump when the list changes.
 	 */
-	public const VERSION = 1;
+	public const VERSION = 2;
 
 	/**
 	 * Countries in display order: Nigeria first, then the rest alphabetically.
@@ -114,9 +115,16 @@ final class PlaceSeeder {
 			}
 			$created += $this->insert( $name, $iso, Taxonomies::KIND_COUNTRY );
 		}
-		$body = __( 'Pan-African', 'whoiswho' );
-		if ( ! term_exists( $body, Taxonomies::PLACE, 0 ) ) {
-			$created += $this->insert( $body, '', Taxonomies::KIND_BODY );
+		$body = get_term_by( 'slug', Classification::PAN_SLUG, Taxonomies::PLACE );
+		if ( ! $body instanceof \WP_Term ) {
+			$found = term_exists( __( 'Pan-African', 'whoiswho' ), Taxonomies::PLACE, 0 );
+			$body  = is_array( $found ) ? get_term( (int) $found['term_id'], Taxonomies::PLACE ) : null;
+		}
+		if ( $body instanceof \WP_Term ) {
+			update_term_meta( (int) $body->term_id, Taxonomies::META_ISO, Classification::PAN );
+			update_term_meta( (int) $body->term_id, Taxonomies::META_KIND, Taxonomies::KIND_BODY );
+		} else {
+			$created += $this->insert( __( 'Pan-African', 'whoiswho' ), Classification::PAN, Taxonomies::KIND_BODY, Classification::PAN_SLUG );
 		}
 		return $created;
 	}
@@ -147,10 +155,15 @@ final class PlaceSeeder {
 	 * @param string $name Name.
 	 * @param string $iso  ISO code, may be empty.
 	 * @param string $kind Place kind.
+	 * @param string $slug Slug, or empty for the default.
 	 * @return int 1 when created, else 0.
 	 */
-	private function insert( string $name, string $iso, string $kind ): int {
-		$result = wp_insert_term( $name, Taxonomies::PLACE, array( 'parent' => 0 ) );
+	private function insert( string $name, string $iso, string $kind, string $slug = '' ): int {
+		$args = array( 'parent' => 0 );
+		if ( '' !== $slug ) {
+			$args['slug'] = $slug;
+		}
+		$result = wp_insert_term( $name, Taxonomies::PLACE, $args );
 		if ( is_wp_error( $result ) ) {
 			return 0;
 		}

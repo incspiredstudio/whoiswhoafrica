@@ -1,6 +1,6 @@
 # Import format: the contract between acquisition and the website
 
-Status: **v1.1, 2026-11-14.** The importer accepts `"1.0"` and `"1.1"`; the pipeline exports `"1.1"` (`acquisition/pipeline/export_bundle.py`). v1.1 adds the narrative sections, person `lifespan` and `field`, open-licence images and the zip form, and keeps the hash rule. REQs: REQ-142, 143, 145, 146, 162, 203, 207, 210–212, 214, 221, 237. Decision: D-033 as amended.
+Status: **v1.2, 2026-11-14.** The importer accepts `"1.0"`, `"1.1"` and `"1.2"`; the pipeline exports `"1.2"` with `--contract 1.2` (`acquisition/pipeline/export_bundle.py`). v1.1 adds the narrative sections, person `lifespan` and `field`, open-licence images and the zip form. v1.2 adds the optional record `classification` object (section 3.1) and carries an organisation type slug in `fields.org_type`. Both keep the hash rule. REQs: REQ-009, 142, 143, 145, 146, 162, 203, 207, 210–212, 214, 221, 237. Decision: D-033 as amended.
 
 **This is the only interface between acquisition and the website.** The pipeline never writes to WordPress, its database or its files. The website never reads `acquisition/data/`. Each side works only from what this document defines. Words such as MUST and MUST NOT are requirements on the side named.
 
@@ -33,7 +33,7 @@ JSON Lines is the normative form, because per-field provenance is nested. A REST
 
 | Field | Type | Rule |
 |---|---|---|
-| `contract_version` | string | `"1.1"` for this version. The importer also accepts `"1.0"`. |
+| `contract_version` | string | `"1.2"` for this version. The importer also accepts `"1.0"` and `"1.1"`. |
 | `run_id` | string | The pipeline run |
 | `batch_id` | string | Import batch, unique across runs (REQ-237) |
 | `generated_at` | string | ISO 8601 UTC |
@@ -65,11 +65,38 @@ The manifest MUST NOT name any person. Records that failed verification are not 
 | `passages` | array | Yes | Yes | Section 6; empty for T1 |
 | `images` | array | Yes | Yes | Section 10; may be empty. Open-licence images only (v1.1). |
 | `ai` | object | Yes | Yes | `ai_assisted` (boolean), `model`, `prompt_version`; the last two null if not assisted (REQ-168). Internal; never public. |
+| `classification` | object | No (v1.2) | Yes | Section 3.1. Only in v1.2 records; a v1.0 or v1.1 record that has it is refused (`SCHEMA`). |
 | `flags` | object | Yes | No | `probable_duplicate` (boolean), `duplicate_of` (array of `record_id`), `flag_reasons` (array) |
 | `verification` | object | Yes | No | Section 7 |
 | `content_hash` | string | Yes | — | Section 8 |
 
 **A record MUST NOT contain a state, publish, visibility or status field.** Unknown fields anywhere are refused (`SCHEMA`).
+
+### 3.1 Classification (v1.2)
+
+The website shows every profile under a breadcrumb `Country › Sector › Industry › Name`. The tree is fixed by the website in `site/wp-content/plugins/whoiswho-core/config/classification.php` and shared as `docs/contracts/classification-tree.json` (sectors, their industries, Unclassified, organisation types, and the aliases of each). The pipeline uses only those slugs and never invents a category.
+
+```json
+"classification": {
+  "primary_country": "NG",
+  "primary_industry": "construction-cement",
+  "industries": ["food-beverage", "oil-gas"],
+  "provenance": { "method": "ai", "model": "…", "prompt_version": "…", "confidence": "high" }
+}
+```
+
+| Key | Type | Rule |
+|---|---|---|
+| `primary_country` | string | ISO 3166-1 alpha-2, or `PAN` for pan-African bodies. Organisations: the head-office country. People: the country they are best known for. |
+| `primary_industry` | string | One industry slug (a leaf, never a sector), or `unclassified` when unsure |
+| `industries` | array of strings | Up to 3 extra industry slugs; may be empty |
+| `provenance` | object | `method` (`rule` or `ai`), `model` and `prompt_version` (string or null), `confidence` (`high` or `medium`; a low-confidence result is exported as `unclassified`). Internal; never public. |
+
+No other key is allowed. WordPress checks only the shape; a slug it does not know is not a refusal. When the record is applied:
+
+- **With `classification`:** it wins. The primary industry and the extras are assigned when the tree has them (an unknown slug or a sector slug is ignored, and the raw `industry` then maps as below). The primary country is found by its code on the place terms; a real ISO alpha-2 country the site does not have yet is created, and any other code gives no country. The organisation type comes from `fields.org_type`.
+- **Without it (v1.0, v1.1):** the raw `industry`, then the person's `field`, map to an industry through the tree's slugs, names and aliases, else to Unclassified. `org_type` maps the same way, else to `other`. The primary country is the record's `country`.
+- **A record is never refused for an unknown list value** (industry, sector, organisation type or city). An unknown head-office city is skipped and listed in the dry run, where staff can add it under the record's country or map it.
 
 ## 4. Fields by entity type
 
@@ -80,13 +107,13 @@ These are allowlists. The pipeline MUST NOT export any other field, and WordPres
 | Key | Value | Required | Note |
 |---|---|---|---|
 | `name` | string | Yes | |
-| `org_type` | string | Yes | Controlled list (REQ-009; U5) |
-| `industry` | string | No | Controlled list |
-| `sector` | string | No | Controlled list |
+| `org_type` | string | Yes | Controlled list (REQ-009). From v1.2 an organisation type slug from `classification-tree.json`; other values map through its aliases, else to `other`. |
+| `industry` | string | No | Raw value; maps through the tree's aliases when there is no `classification` (3.1) |
+| `sector` | string | No | Raw value, kept as text; the website no longer has a sector list |
 | `licence_category` | string | No | T1 |
 | `regulator` | string | No | T1 |
 | `mandate` | string | No | Institutions (REQ-005) |
-| `hq_city` | string | No | Controlled list |
+| `hq_city` | string | No | Place list. An unknown city is skipped (not refused) and listed in the dry run (3.1). |
 | `website` | URL | No | |
 | `year_founded` | integer | No | |
 | `summary` | string | T2 | AI-drafted; each sentence backed by a claim. Whether it shows before review is Q46. |
@@ -285,7 +312,7 @@ WordPress stores `licence`, `licence_url`, `creator`, `attribution_text` and `so
 
 ## 13. Versioning
 
-- `contract_version` is `MAJOR.MINOR`. The current version is `1.1`; the importer accepts `1.0` and `1.1`.
+- `contract_version` is `MAJOR.MINOR`. The current version is `1.2`; the importer accepts `1.0`, `1.1` and `1.2`.
 - **MAJOR:** anything an existing importer would misread or refuse: a removed or renamed field, a changed meaning or hash rule.
 - **MINOR:** an added optional field, enum value or refusal code. Because unknown fields are refused, the importer must be updated first.
 - WordPress lists the versions it accepts and refuses others (`CONTRACT_VERSION`).
@@ -301,7 +328,7 @@ WordPress stores `licence`, `licence_url`, `creator`, `attribution_text` and `so
 | U2 | Transport: file upload, WP-CLI or REST; maximum sizes. This contract assumes JSON Lines, while REQ-237 says "CSV or REST". | The nested form does not fit one CSV | Q67, REQ-237 |
 | U3 | How 1,000 records import on cPanel within time limits: chunking, resuming, partial failure | Section 12 assumes record-level results | Q26 |
 | U4 | Which WordPress takes the import, and how the setting in rule 1 is controlled | Section 9 | Q64, D-029 |
-| U5 | Controlled lists (industry, sector, org type, city): who owns the values, and how the pipeline gets them | Unknown values would be refused or need mapping | REQ-009 |
+| U5 | Controlled lists (industry, sector, org type, city): who owns the values, and how the pipeline gets them. **Settled in v1.2:** the website owns the classification tree and the organisation types (`classification-tree.json`); the pipeline classifies into them (3.1). Unknown values are never refused. | Section 3.1 | REQ-009 |
 | U6 | Slugs and the map from `record_id` to post ID | The pipeline does not generate URLs | REQ-006, 129 |
 | U7 | Linking a person to an organisation when one is not public | `current_organisation_ref` must not leak an unapproved person | REQ-208 |
 | U8 | Who holds the approved source list: this repo until the WordPress registry exists, then which is authoritative? `source_id` values must not change. | Two possible sources of truth | REQ-136, T-1 |
@@ -571,3 +598,4 @@ The new fields hash like any other: they sit inside `fields` (and `images`), whi
 |---|---|---|
 | 1.0-draft | 2026-11-08 | First draft |
 | 1.1 | 2026-11-14 | MINOR, hash rule unchanged. Narrative sections `bio`, `achievement`, `influence`, `legacy` for every entity type (4.3); person `current_title` and `current_organisation` optional, new `lifespan` and `field` (4.2); criterion codes `HIST` and `LEAD` (3); open-licence images with a licence allowlist, refused per image (10); zip form of a bundle (2); worked example 15.2. The importer accepts 1.0 and 1.1. Issue #807. |
+| 1.2 | 2026-11-14 | MINOR, hash rule unchanged (`classification` is hashed like any other "In hash" key, so a changed classification re-versions a record). Optional record `classification` object: `primary_country`, `primary_industry`, `industries`, `provenance` (3.1), slugs from `docs/contracts/classification-tree.json`; `fields.org_type` carries an organisation type slug. No record is refused for an unknown list value any more. The importer accepts 1.0, 1.1 and 1.2. Confirmed by the acquisition side, which already exports it (`export_bundle.py --contract 1.2`). Published by the website session. |
