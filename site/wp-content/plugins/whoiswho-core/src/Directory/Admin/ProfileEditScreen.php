@@ -237,7 +237,7 @@ final class ProfileEditScreen {
 			return $out . '<p>' . esc_html__( 'Choose a profile from the Profiles screen.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $state['entity_type'] ) . ' · ' . Labels::state( (string) $state['pub_state'] ) ) . '</p>';
+		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $state['entity_type'] ) . ' · ' . Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ) ) . '</p>';
 		if ( (int) $state['claimed'] > 0 ) {
 			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager goes to review before it shows.', 'whoiswho' ) . '</p></div>';
 		}

@@ -259,7 +259,7 @@ final class ReviewItemScreen {
 			return $out . '<p>' . esc_html__( 'Choose an item from the review queue.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $row['entity_type'] ) . ' · ' . Labels::state( (string) $row['pub_state'] ) ) . '</p>';
+		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $row['entity_type'] ) . ' · ' . Labels::state( (string) $row['pub_state'], (string) ( $row['origin'] ?? '' ) ) ) . '</p>';
 		$out .= $this->importer_note( $row );
 		$out .= $this->diff_html( $id );
 		$out .= $this->claims_html( $id );

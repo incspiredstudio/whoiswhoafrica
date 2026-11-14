@@ -68,7 +68,7 @@ final class ReviewQueue {
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
 		$page  = max( 1, min( $page, $pages ) );
 		$found = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare( "SELECT q.*, p.post_title, st.entity_type, st.pub_state FROM ({$union}) q INNER JOIN {$wpdb->posts} p ON p.ID = q.profile_id INNER JOIN {$states} st ON st.profile_id = q.profile_id ORDER BY q.prio ASC, q.pilot ASC, q.grp ASC, q.ts ASC, q.profile_id ASC, q.version_id ASC LIMIT %d OFFSET %d", $type, $type, self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
+			$wpdb->prepare( "SELECT q.*, p.post_title, st.entity_type, st.pub_state, st.origin FROM ({$union}) q INNER JOIN {$wpdb->posts} p ON p.ID = q.profile_id INNER JOIN {$states} st ON st.profile_id = q.profile_id ORDER BY q.prio ASC, q.pilot ASC, q.grp ASC, q.ts ASC, q.profile_id ASC, q.version_id ASC LIMIT %d OFFSET %d", $type, $type, self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
 			ARRAY_A
 		);
 		$items = array();
@@ -81,6 +81,7 @@ final class ReviewQueue {
 				'name'       => (string) $row['post_title'],
 				'type'       => (string) $row['entity_type'],
 				'state'      => (string) $row[ StateRepository::STATE_COLUMN ],
+				'origin'     => (string) ( $row['origin'] ?? '' ),
 				'pilot'      => 0 === (int) $row['pilot'],
 				'since'      => (string) $row['ts'],
 				'ai_drafted' => (bool) (int) $row['ai'],
