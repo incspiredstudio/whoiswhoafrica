@@ -25,6 +25,7 @@ use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Notes\NotesService;
+use WhoIsWho\Core\Review\Admin\Labels;
 
 /**
  * Profile panels.
@@ -182,9 +183,9 @@ final class ProfilePanels {
 	 */
 	private function status( array $state ): string {
 		$rows = array(
-			__( 'State', 'whoiswho' )   => (string) $state['pub_state'],
-			__( 'Origin', 'whoiswho' )  => (string) ( $state['origin'] ?? '' ),
-			__( 'Source', 'whoiswho' )  => (string) ( $state['source'] ?? '' ),
+			__( 'State', 'whoiswho' )   => Labels::state( (string) $state['pub_state'] ),
+			__( 'Origin', 'whoiswho' )  => Labels::origin( (string) ( $state['origin'] ?? '' ) ),
+			__( 'Source', 'whoiswho' )  => 'manual' === (string) ( $state['source'] ?? '' ) ? Labels::origin( 'manual' ) : (string) ( $state['source'] ?? '' ),
 			__( 'Batch', 'whoiswho' )   => (string) ( $state['import_batch'] ?? '' ),
 			__( 'Claimed', 'whoiswho' ) => (int) ( $state['claimed'] ?? 0 ) > 0 ? __( 'Yes', 'whoiswho' ) : __( 'No', 'whoiswho' ),
 		);
@@ -244,8 +245,9 @@ final class ProfilePanels {
 		}
 		$out    .= '</tr></thead><tbody>';
 		$entries = ( new ProvenanceRepository() )->for_profile( $id );
+		$type    = (string) ( ( new StateRepository() )->get( $id )['entity_type'] ?? '' );
 		foreach ( $entries as $entry ) {
-			$out .= '<tr><th scope="row">' . esc_html( (string) $entry['field'] ) . '</th><td>' . esc_html( (string) $entry['source_url'] ) . '</td><td>' . esc_html( (string) $entry['retrieved_at'] ) . '</td><td>' . esc_html( (string) $entry['confidence'] ) . '</td><td>' . esc_html( (string) $entry['method'] ) . '</td></tr>';
+			$out .= '<tr><th scope="row">' . esc_html( Labels::field( (string) $entry['field'], $type ) ) . '</th><td>' . esc_html( (string) $entry['source_url'] ) . '</td><td>' . esc_html( (string) $entry['retrieved_at'] ) . '</td><td>' . esc_html( '' === (string) $entry['confidence'] ? '' : Labels::humanise( (string) $entry['confidence'] ) ) . '</td><td>' . esc_html( Labels::method( (string) $entry['method'] ) ) . '</td></tr>';
 		}
 		return $out . ( array() === $entries ? '<tr><td colspan="5">' . esc_html__( 'No sources recorded.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
 	}
@@ -279,7 +281,7 @@ final class ProfilePanels {
 		$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'A source changed. The change is flagged for review and has not been applied.', 'whoiswho' ) . '</p><ul>';
 		foreach ( $flagged as $row ) {
 			$fields = array_keys( (array) json_decode( (string) $row['new_value'], true ) );
-			$out   .= '<li>' . esc_html( implode( ', ', array_map( 'strval', $fields ) ) . ' (' . (string) $row['created_at'] . ')' ) . '</li>';
+			$out   .= '<li>' . esc_html( implode( ', ', array_map( static fn ( $key ): string => Labels::field( (string) $key ), $fields ) ) . ' (' . (string) $row['created_at'] . ')' ) . '</li>';
 		}
 		return $out . '</ul></div>';
 	}
@@ -294,7 +296,7 @@ final class ProfilePanels {
 		$rows = ( new VersionRepository() )->for_profile( $id );
 		foreach ( $rows as $row ) {
 			$user = (int) $row['author_id'] > 0 ? get_userdata( (int) $row['author_id'] ) : false;
-			$out .= '<tr><td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( false === $user ? __( 'System', 'whoiswho' ) : (string) $user->display_name ) . '</td><td>' . esc_html( (string) $row['created_via'] . ( null !== $row['approval_status'] ? ' (' . (string) $row['approval_status'] . ')' : '' ) ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td></tr>';
+			$out .= '<tr><td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( false === $user ? __( 'System', 'whoiswho' ) : (string) $user->display_name ) . '</td><td>' . esc_html( Labels::method( (string) $row['created_via'] ) . ( null !== $row['approval_status'] ? ' (' . Labels::humanise( (string) $row['approval_status'] ) . ')' : '' ) ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td></tr>';
 		}
 		return $out . ( array() === $rows ? '<tr><td colspan="4">' . esc_html__( 'No changes yet.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
 	}

@@ -67,6 +67,36 @@ final class Labels {
 	}
 
 	/**
+	 * Where a profile came from, in words (issue 806).
+	 *
+	 * @param string $code Origin code.
+	 */
+	public static function origin( string $code ): string {
+		$labels = array(
+			'import'        => __( 'Imported', 'whoiswho' ),
+			'manual'        => __( 'Added by hand', 'whoiswho' ),
+			'customer'      => __( 'Invited customer', 'whoiswho' ),
+			'complimentary' => __( 'Complimentary listing', 'whoiswho' ),
+		);
+		return '' === $code ? '' : ( $labels[ $code ] ?? self::humanise( $code ) );
+	}
+
+	/**
+	 * How a change or a source entry was made, in words: a version's created_via or a provenance method (issue 806).
+	 *
+	 * @param string $code Method code.
+	 */
+	public static function method( string $code ): string {
+		$labels = array(
+			'import' => __( 'Import', 'whoiswho' ),
+			'edit'   => __( 'Staff edit', 'whoiswho' ),
+			'manual' => __( 'Entered by hand', 'whoiswho' ),
+			'ai'     => __( 'AI draft', 'whoiswho' ),
+		);
+		return '' === $code ? '' : ( $labels[ $code ] ?? self::humanise( $code ) );
+	}
+
+	/**
 	 * A reject reason's label.
 	 *
 	 * @param string $code Reason code (DecisionLog::REASON_CODES).

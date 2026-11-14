@@ -27,6 +27,7 @@ use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Review\Admin\Labels;
 
 /**
  * Profile edit screen.
@@ -68,7 +69,8 @@ final class ProfileEditScreen {
 					},
 					true,
 					// A detail screen, opened from its list: no menu item.
-					'directory'
+					'directory',
+					ProfilesScreen::SCREEN
 				);
 				$registry->hook();
 				ActionGuard::register( self::SAVE, self::CAPABILITY, array( self::class, 'handle_save' ) );
@@ -226,7 +228,7 @@ final class ProfileEditScreen {
 			return $out . '<p>' . esc_html__( 'Choose a profile from the Profiles screen.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( (string) $state['entity_type'] . ' / ' . (string) $state['pub_state'] ) . '</p>';
+		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $state['entity_type'] ) . ' · ' . Labels::state( (string) $state['pub_state'] ) ) . '</p>';
 		if ( (int) $state['claimed'] > 0 ) {
 			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager goes to review before it shows.', 'whoiswho' ) . '</p></div>';
 		}
@@ -375,7 +377,9 @@ final class ProfileEditScreen {
 			if ( ! is_array( $terms ) || array() === $terms ) {
 				continue;
 			}
-			$out .= '<p><label>' . esc_html( ucfirst( str_replace( array( 'wiw_', '_' ), array( '', ' ' ), $taxonomy ) ) ) . '<br /><input type="hidden" name="terms_present_' . esc_attr( $taxonomy ) . '" value="1" /><select multiple="multiple" name="terms_' . esc_attr( $taxonomy ) . '[]" size="5">';
+			$object = get_taxonomy( $taxonomy );
+			$name   = $object instanceof \WP_Taxonomy ? (string) $object->labels->name : Labels::humanise( str_replace( 'wiw_', '', $taxonomy ) );
+			$out   .= '<p><label>' . esc_html( $name ) . '<br /><input type="hidden" name="terms_present_' . esc_attr( $taxonomy ) . '" value="1" /><select multiple="multiple" name="terms_' . esc_attr( $taxonomy ) . '[]" size="5">';
 			foreach ( $terms as $term ) {
 				$out .= '<option value="' . esc_attr( (string) $term->term_id ) . '"' . selected( in_array( (int) $term->term_id, $have, true ), true, false ) . '>' . esc_html( $term->name ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 			}

@@ -49,7 +49,7 @@ final class ScreenRegistry {
 	/**
 	 * Registered screens by slug.
 	 *
-	 * @var array<string, array{title: string, capability: string, callback: callable, hidden: bool, group: string}>
+	 * @var array<string, array{title: string, capability: string, callback: callable, hidden: bool, group: string, current: string}>
 	 */
 	private array $screens = array();
 
@@ -117,9 +117,10 @@ final class ScreenRegistry {
 	 * @param callable $callback   Renders the screen.
 	 * @param bool     $hidden     True for a page reached by a link (a detail screen): it has no menu item but is guarded the same way.
 	 * @param string   $group      The menu group (directory, review, imports, audience, commercial, awards, compliance, settings); the default group when omitted.
+	 * @param string   $current    For a detail screen: the slug of the menu item to show as current while it is open (its list).
 	 * @throws \InvalidArgumentException When the slug is invalid or taken, the capability is empty or the group is unknown.
 	 */
-	public function register( string $slug, string $title, string $capability, callable $callback, bool $hidden = false, string $group = self::DEFAULT_GROUP ): void {
+	public function register( string $slug, string $title, string $capability, callable $callback, bool $hidden = false, string $group = self::DEFAULT_GROUP, string $current = '' ): void {
 		if ( ! preg_match( '/^[a-z0-9-]+$/', $slug ) ) {
 			throw new \InvalidArgumentException( 'A screen slug is lowercase letters, digits and dashes.' );
 		}
@@ -138,13 +139,14 @@ final class ScreenRegistry {
 			'callback'   => $callback,
 			'hidden'     => $hidden,
 			'group'      => $group,
+			'current'    => $current,
 		);
 	}
 
 	/**
 	 * Registered screens.
 	 *
-	 * @return array<string, array{title: string, capability: string, callback: callable, hidden: bool, group: string}>
+	 * @return array<string, array{title: string, capability: string, callback: callable, hidden: bool, group: string, current: string}>
 	 */
 	public function screens(): array {
 		return $this->screens;
@@ -202,7 +204,7 @@ final class ScreenRegistry {
 			$hook = add_submenu_page( $screen['hidden'] ? null : self::menu_slug( $screen['group'] ), $screen['title'], $screen['title'], $screen['capability'], $slug, $screen['callback'] );
 			if ( $screen['hidden'] && is_string( $hook ) && '' !== $hook ) {
 				// A detail screen has no menu item, so WordPress cannot find its title: set it, and keep its group's menu open.
-				add_action( 'load-' . $hook, self::detail_screen_loader( $screen['title'], self::menu_slug( $screen['group'] ) ) );
+				add_action( 'load-' . $hook, self::detail_screen_loader( $screen['title'], self::menu_slug( $screen['group'] ), $slug, $screen['current'] ) );
 			}
 		}
 		foreach ( array_keys( $used ) as $id ) {
@@ -211,16 +213,34 @@ final class ScreenRegistry {
 	}
 
 	/**
-	 * What runs when a detail screen (no menu item) loads: its page title for the browser tab and heading, and its group's menu
-	 * highlighted.
+	 * What runs when a detail screen (no menu item) loads: its page title for the browser tab and heading, its group's menu open
+	 * and highlighted, and the menu item of its list marked current.
+	 *
+	 * WordPress keeps a page registered without a parent under an empty parent key of the submenu list. After the parent_file
+	 * filter, the menu code calls get_admin_page_parent(), which finds the page there and resets the parent to "", so the filter
+	 * alone never highlights anything. This runs on load-{hook}, after WordPress has checked the capability (the entry has done its
+	 * job) and before the menu is drawn, so the entry is dropped here and the filtered parent stays.
 	 *
 	 * @param string $title      Screen title.
 	 * @param string $group_menu Group menu slug.
+	 * @param string $slug       The detail screen's slug.
+	 * @param string $current    The menu item to mark current, or "".
 	 */
-	public static function detail_screen_loader( string $title, string $group_menu ): callable {
-		return static function () use ( $title, $group_menu ): void {
+	public static function detail_screen_loader( string $title, string $group_menu, string $slug = '', string $current = '' ): callable {
+		return static function () use ( $title, $group_menu, $slug, $current ): void {
+			global $submenu;
 			$GLOBALS['title'] = $title; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- WordPress reads the page title from this global.
 			add_filter( 'parent_file', static fn (): string => $group_menu );
+			if ( '' !== $current ) {
+				add_filter( 'submenu_file', static fn (): string => $current );
+			}
+			if ( '' !== $slug && isset( $submenu[''] ) && is_array( $submenu[''] ) ) {
+				foreach ( $submenu[''] as $index => $item ) {
+					if ( isset( $item[2] ) && $slug === $item[2] ) {
+						unset( $submenu[''][ $index ] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- see above: the access check is done.
+					}
+				}
+			}
 		};
 	}
 
