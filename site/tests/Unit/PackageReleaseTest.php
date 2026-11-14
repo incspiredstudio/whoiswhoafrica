@@ -84,5 +84,13 @@ final class PackageReleaseTest extends TestCase {
 			$this->assertDoesNotMatchRegularExpression( '#(^|/)(tests|node_modules|\.git)(/|$)|(^|/)\.env|wp-config\.php|\.log$#', $name, 'no dev files or secrets in the plugin zip: ' . $name );
 		}
 		$this->assertStringNotContainsString( '@VERSION@', (string) file_get_contents( $bundle . '/INSTALL.md' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		// Each checksum line is "<hash>  <file>", the format sha256sum -c reads, with no "*" or "./" (#810).
+		$lines = array_values( array_filter( array_map( 'trim', explode( "\n", (string) file_get_contents( $bundle . '/SHA256SUMS.txt' ) ) ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertCount( 4, $lines );
+		foreach ( $lines as $line ) {
+			$this->assertSame( 1, preg_match( '/^([0-9a-f]{64})  ([a-z-]+\.zip)$/', $line, $m ), 'checksum line: ' . $line );
+			$this->assertSame( hash_file( 'sha256', $bundle . '/' . $m[2] ), $m[1], $m[2] );
+		}
 	}
 }
