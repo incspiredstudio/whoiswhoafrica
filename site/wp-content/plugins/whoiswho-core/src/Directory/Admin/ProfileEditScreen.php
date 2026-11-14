@@ -139,7 +139,7 @@ final class ProfileEditScreen {
 				default:
 					$out[ $key ] = $request->string( $name );
 			}
-		}
+		}//end foreach
 		return $out;
 	}
 

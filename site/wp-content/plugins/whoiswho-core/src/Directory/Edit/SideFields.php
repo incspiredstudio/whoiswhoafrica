@@ -71,7 +71,7 @@ final class SideFields {
 		foreach ( self::CONTACT as $key => $kind ) {
 			$out[ $key ] = $all[ $kind ]['value'];
 		}
-		$image              = (int) get_post_meta( $profile_id, PublicProfile::IMAGE_META, true );
+		$image                     = (int) get_post_meta( $profile_id, PublicProfile::IMAGE_META, true );
 		$out[ self::IMAGE ]        = $image > 0 ? $image : null;
 		$out[ self::IMAGE_CREDIT ] = null;
 		return $out;

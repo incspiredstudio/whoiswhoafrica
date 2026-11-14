@@ -157,20 +157,20 @@ final class ProfileImageEditor {
 	 *
 	 * @param int                  $profile_id Profile.
 	 * @param array<string, mixed> $state      State row.
-	 * @param array<string, mixed> $old        Old values.
-	 * @param array<string, mixed> $new        New values.
+	 * @param array<string, mixed> $before     Old values.
+	 * @param array<string, mixed> $after      New values.
 	 * @param string               $reason     Reason.
 	 * @param int                  $actor_id   Actor.
 	 * @return array{version_id: int, applied: bool, changed: string[]}
 	 */
-	private function record( int $profile_id, array $state, array $old, array $new, string $reason, int $actor_id ): array {
+	private function record( int $profile_id, array $state, array $before, array $after, string $reason, int $actor_id ): array {
 		$pending = (int) ( $state['claimed'] ?? 0 ) > 0 && (int) ( $state['assigned_user_id'] ?? 0 ) === $actor_id;
-		$version = ( new VersionRepository() )->append( $profile_id, $actor_id, $pending ? 'revision' : 'edit', $reason, $old, $new, $pending ? 'pending' : null );
+		$version = ( new VersionRepository() )->append( $profile_id, $actor_id, $pending ? 'revision' : 'edit', $reason, $before, $after, $pending ? 'pending' : null );
 		if ( ! $pending ) {
-			if ( isset( $new[ SideFields::IMAGE_CREDIT ] ) ) {
-				SideFields::apply( $profile_id, SideFields::IMAGE_CREDIT, $new[ SideFields::IMAGE_CREDIT ] );
+			if ( isset( $after[ SideFields::IMAGE_CREDIT ] ) ) {
+				SideFields::apply( $profile_id, SideFields::IMAGE_CREDIT, $after[ SideFields::IMAGE_CREDIT ] );
 			}
-			SideFields::apply( $profile_id, SideFields::IMAGE, $new[ SideFields::IMAGE ] );
+			SideFields::apply( $profile_id, SideFields::IMAGE, $after[ SideFields::IMAGE ] );
 		}
 		AuditLogger::for_site()->log(
 			$pending ? 'profile.revision_submitted' : 'profile.image_change',
@@ -178,8 +178,8 @@ final class ProfileImageEditor {
 				'type' => 'profile',
 				'id'   => $profile_id,
 			),
-			$old,
-			$new,
+			$before,
+			$after,
 			$reason
 		);
 		if ( ! $pending && PubState::is_public( (string) $state['pub_state'] ) ) {
@@ -188,7 +188,7 @@ final class ProfileImageEditor {
 		return array(
 			'version_id' => $version,
 			'applied'    => ! $pending,
-			'changed'    => array_keys( $new ),
+			'changed'    => array_keys( $after ),
 		);
 	}
 
