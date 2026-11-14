@@ -33,13 +33,15 @@ $wiw_checks  = array(
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"level":1,"className":"ab-title"} -->
-<h1 class="wp-block-heading ab-title"><?php echo esc_html_x( 'Africa’s influence, on the record.', 'pattern text', 'whoiswho' ); ?></h1>
+<h1 class="wp-block-heading ab-title"><?php echo esc_html_x( 'Africa’s influence,', 'pattern text', 'whoiswho' ); ?> <span class="ab-accent"><?php echo esc_html_x( 'on the record.', 'pattern text', 'whoiswho' ); ?></span></h1>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"ab-lede"} -->
 <p class="ab-lede"><?php echo esc_html_x( 'An African discovery, recognition and media platform. We document the people, businesses and institutions shaping the continent, tell the stories behind them, and recognise achievement through independent awards.', 'pattern text', 'whoiswho' ); ?></p>
 <!-- /wp:paragraph --></div>
-<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:wiw/portrait-trio /--></div>
 <!-- /wp:group --></header>
 <!-- /wp:group -->
 
@@ -161,7 +163,9 @@ $wiw_checks  = array(
 <!-- /wp:group -->
 <?php endforeach; ?>
 </div>
-<!-- /wp:group --></div>
+<!-- /wp:group -->
+
+<!-- wp:wiw/figures /--></div>
 <!-- /wp:group --></section>
 <!-- /wp:group -->
 

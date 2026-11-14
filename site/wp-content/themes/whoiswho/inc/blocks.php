@@ -14,6 +14,7 @@ use WhoIsWho\Core\Awards\AwardsStage;
 use WhoIsWho\Core\Awards\CategoryService;
 use WhoIsWho\Core\Content\PublicStory;
 use WhoIsWho\Core\Directory\ProfileList;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\Taxonomies;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -84,6 +85,58 @@ if ( ! function_exists( 'wiw_render_figures_block' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wiw_render_portrait_trio_block' ) ) {
+	/**
+	 * Portrait trio block markup (the About hero, as in the prototype): three poster tiles fanned out. Each tile shows the photo of
+	 * a public person profile, read through ProfileList and PublicProfile, so only reviewed public profiles appear and only the
+	 * images they carry (the demo content's placeholder pictures on a fresh install). With fewer than three, the rest are plain
+	 * poster tiles with an approved mark. Decorative: the names are not read out, the page text carries the meaning.
+	 */
+	function wiw_render_portrait_trio_block(): string {
+		$tiles = array();
+		if ( class_exists( ProfileList::class ) ) {
+			$list = new ProfileList();
+			foreach ( array( 'people', 'entrepreneurs' ) as $list_name ) {
+				foreach ( $list->query( $list_name )['profiles'] as $profile ) {
+					if ( count( $tiles ) >= 3 ) {
+						break 2;
+					}
+					if ( ! $profile instanceof PublicProfile || null === $profile->image_id || isset( $tiles[ $profile->id ] ) ) {
+						continue;
+					}
+					$image = $profile->image( 'wiw-poster' );
+					if ( null === $image || 'photo' !== $image['kind'] ) {
+						continue;
+					}
+					$tiles[ $profile->id ] = array(
+						'key'   => $profile->slug,
+						'photo' => wp_get_attachment_image( (int) $profile->image_id, 'wiw-poster', false, array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) ) ),
+					);
+				}
+			}
+		}//end if
+		$tiles = array_values( $tiles );
+		foreach ( array( 'ab-trio-a', 'ab-trio-b', 'ab-trio-c' ) as $i => $key ) {
+			if ( ! isset( $tiles[ $i ] ) ) {
+				$tiles[ $i ] = array(
+					'key'   => $key,
+					'photo' => '',
+				);
+			}
+		}
+		$html = '<div class="ab-stack wiw-portrait-trio" aria-hidden="true">';
+		foreach ( $tiles as $tile ) {
+			$style = wiw_poster_style( (string) $tile['key'] );
+			$html .= '<span class="ab-stack-item"><span class="poster poster--' . esc_attr( $style['tone'] ) . ( '' === $tile['photo'] ? ' poster--org' : '' ) . '">'
+				. '<span class="poster-pat"></span><span class="poster-mark poster-mark--' . esc_attr( $style['mark'] ) . '"></span>'
+				. $tile['photo']
+			// Built by wp_get_attachment_image.
+				. '</span></span>';
+		}
+		return $html . '</div>';
+	}
+}//end if
+
 if ( ! function_exists( 'wiw_render_stage_button_block' ) ) {
 	/**
 	 * Awards stage button block markup: one button whose label and link follow the stage.
@@ -153,6 +206,7 @@ add_action(
 			'wiw/awards-categories'   => array( 'Awards categories', 'wiw_render_award_categories_block' ),
 			'wiw/edition'             => array( 'Edition label', 'wiw_render_edition_block' ),
 			'wiw/supported-by'        => array( 'Supported by', 'wiw_render_supported_by_block' ),
+			'wiw/portrait-trio'       => array( 'Portrait trio', 'wiw_render_portrait_trio_block' ),
 		);
 		foreach ( $blocks as $name => list( $title, $callback ) ) {
 			if ( WP_Block_Type_Registry::get_instance()->is_registered( $name ) ) {

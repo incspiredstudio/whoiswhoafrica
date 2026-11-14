@@ -326,6 +326,20 @@ ul.sponsors { list-style: none; }
 
 @media (width <= 47.99rem) { .title-band--compact .band-main p { display: none; } }
 
+/* Page band (template-parts/page-band.php): the title lines up with the wrap; the lede keeps a reading measure. */
+/* The theme's search form on light pages (404): the field needs its own edge. */
+.site-search-form { max-width: 32rem; margin-top: var(--s-5); }
+.site-search-form input { border-color: var(--stone-500); }
+.site-search-form .btn { flex: none; min-height: 3rem; }
+.site-search-form + * { margin-top: var(--s-5); }
+.title-band .eyebrow { max-width: none; margin-top: 0; font-size: var(--t-xs); }
+.page-band .lede { max-width: 44rem; margin-top: var(--s-3); font-size: var(--t-md); line-height: 1.5; }
+.page-band.title-band--compact .lede { margin-top: var(--s-2); font-size: var(--t-sm); font-weight: 300; }
+.page-band .dir-search .btn { flex: none; min-height: 3rem; }
+.page-band .dir-search input:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 2px; }
+.page-band .tabs { margin: calc(var(--s-4) - 6px) -6px -6px; padding: 6px; }
+.page-band .tabs a:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 2px; }
+
 /* toolbar: filters (collapsed), count, sort, view */
 .result-bar { position: relative; display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-bottom: var(--s-5); padding-bottom: var(--s-4); border-bottom: 1px solid var(--c-line); }
 .result-bar > p { margin-right: auto; font-size: var(--t-sm); color: var(--c-muted); }
@@ -717,7 +731,15 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .np-tab span { font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 .np-tab:hover { color: var(--c-text); }
 .np-tab[aria-pressed="true"] { color: var(--c-text); border-bottom-color: var(--c-accent); }
+.np-tabs[hidden] { display: none; }
+.np-tab:focus-visible { outline: 3px solid var(--c-focus); outline-offset: -3px; }
 .np-group { margin-bottom: var(--s-9); }
+.np-mark { display: none; }
+
+@media (width >= 64rem) {
+  .nom-page .np-group-head { grid-template-columns: auto minmax(0, 1fr) 7rem; }
+  .np-mark { display: block; grid-column: 3; grid-row: 1; justify-self: end; width: 7rem; aspect-ratio: 1; background: var(--c-text); opacity: .14; mask: var(--m) center / contain no-repeat; }
+}
 .np-group[hidden] { display: none; }
 .np-tone--blue { --np-tone: var(--blue-700); } .np-tone--orange { --np-tone: var(--orange-800); } .np-tone--purple { --np-tone: var(--purple-800); } .np-tone--green { --np-tone: var(--green); } .np-tone--red { --np-tone: var(--red); }
 .np-group-head { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-2) var(--s-5); align-items: end; margin-bottom: var(--s-7); padding-bottom: var(--s-5); border-bottom: 1px solid var(--c-line); }
@@ -816,6 +838,10 @@ a:hover .poster-pat, a:focus-visible .poster-pat { mask-position: 14px -10px; ma
 .ab-stack { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); max-width: 30rem; }
 .ab-stack-item { display: block; transform: rotate(calc((var(--i) - 1) * 3deg)) translateY(calc(var(--i) * 12px - 12px)); transition: transform 600ms var(--ease-out); }
 .ab-stack:hover .ab-stack-item { transform: none; }
+.ab-stack-item:nth-child(1) { --i: 0; }
+.ab-stack-item:nth-child(2) { --i: 1; }
+.ab-stack-item:nth-child(3) { --i: 2; }
+.ab-stack .poster { display: block; aspect-ratio: 4 / 5; }
 
 @media (width >= 64rem) { .ab-hero-in { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } .ab-stack { justify-self: end; width: 100%; } }
 .ab-why-in { display: grid; gap: var(--s-6); }
@@ -1303,15 +1329,11 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar-q { min-width: min(100%, 12rem); }
 
 /* ---------- industries (REQ-007) ---------- */
-.ind-grid { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); padding: 0; margin: 0; }
-
-@media (width >= 40rem) { .ind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-@media (width >= 64rem) { .ind-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.ind-tile { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); padding: var(--s-4); border-bottom: 1px solid var(--c-line); color: var(--c-text); text-decoration: none; transition: background var(--m-fast); }
-.ind-tile:hover { background: var(--c-surface); }
-.ind-name { font: 400 var(--t-lg)/1.2 var(--font-display); overflow-wrap: anywhere; }
-.ind-count { font-size: var(--t-sm); color: var(--c-muted); white-space: nowrap; }
+/* The index is the prototype's index list (.index-list): full-width rows that fill dark on hover. */
+.ind-list { margin: var(--s-4) 0 var(--s-6); padding: 0; }
+.ind-name { overflow-wrap: anywhere; }
+.ind-count { display: inline-flex; flex: none; align-items: center; gap: var(--s-2); font: 400 var(--t-sm)/1 var(--font-body); color: var(--c-muted); white-space: nowrap; }
+.index-list a:hover .ind-count { color: inherit; }
 .ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
 
 /* ---------- profile rail (REQ-142, REQ-156) ---------- */
@@ -1320,13 +1342,20 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .rail-actions .btn { justify-content: center; text-align: center; }
 
 /* ---------- FAQ (REQ-260) ---------- */
-.faq-group { margin-block: var(--s-7); }
-.faq-group-h { margin-bottom: var(--s-3); padding-top: var(--s-3); border-top: 3px solid var(--c-text); font-size: var(--t-xl); }
-.faq-q { border-bottom: 1px solid var(--c-line); }
-.faq-q summary { position: relative; padding: var(--s-4) var(--s-6) var(--s-4) 0; font: 500 var(--t-md)/1.35 var(--font-body); cursor: pointer; list-style: none; }
+/* Editor and legal pages: a reading column that lines up with the band's title, as in the prototype. */
+.page-body > :not(.alignwide, .alignfull) { max-width: 48rem; }
+.page-body.section { padding-block: var(--s-6) var(--s-8); }
+
+/* As the prototype's FAQ: large display group headings, display-face questions between hairlines, a chevron that turns. */
+.faq-group { margin-block: var(--s-6) 0; }
+.faq-group + .faq-group { margin-top: var(--s-8); }
+.faq-group-h { margin: 0 0 var(--s-3); font: 400 var(--t-2xl)/1.1 var(--font-display); }
+.faq-q { border-top: 1px solid var(--c-line); }
+.faq-q:last-child { border-bottom: 1px solid var(--c-line); }
+.faq-q summary { position: relative; padding: var(--s-4) var(--s-6) var(--s-4) 0; font: 400 var(--t-lg)/1.25 var(--font-display); cursor: pointer; list-style: none; }
 .faq-q summary::-webkit-details-marker { display: none; }
-.faq-q summary::after { content: "+"; position: absolute; right: var(--s-2); top: 50%; translate: 0 -50%; font-size: var(--t-xl); line-height: 1; transition: rotate var(--m-fast); }
-.faq-q[open] summary::after { rotate: 45deg; }
+.faq-q summary::after { content: ""; position: absolute; right: var(--s-2); top: 50%; width: .625rem; height: .625rem; border-right: 2px solid currentcolor; border-bottom: 2px solid currentcolor; translate: 0 -75%; rotate: 45deg; transition: rotate var(--m-fast), translate var(--m-fast); }
+.faq-q[open] summary::after { rotate: 225deg; translate: 0 -25%; }
 .faq-q summary:focus-visible { outline: 3px solid var(--c-focus, var(--blue)); outline-offset: 2px; }
 .faq-a { padding-bottom: var(--s-4); max-width: 46rem; line-height: 1.6; }
 .faq-a > * + * { margin-top: var(--s-3); }
@@ -1408,7 +1437,29 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ab-do-list li::after { content: "\2197"; grid-column: 3; grid-row: 1 / span 2; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--c-text); border-radius: 50%; color: var(--c-text); transition: background var(--m-fast), color var(--m-fast); }
 .ab-do-list li > a { grid-column: 2; font: 400 clamp(1.75rem, 1.2rem + 2.4vw, 3.5rem)/1 var(--font-display); color: var(--c-text); text-decoration: none; display: block; padding: 0; border: 0; }
 .ab-do-list li > a::after { content: ""; position: absolute; inset: 0; }
-.ab-do-list li:hover::after { background: var(--c-text); color: var(--c-surface); }
+.ab-do-list li:hover::after { background: var(--c-text); color: var(--c-surface); rotate: -45deg; }
+.ab-do-list li::after { content: "\2192"; transition: background var(--m-fast), color var(--m-fast), rotate 500ms var(--ease-out); }
+.ab-do-list li > a { transition: translate 500ms var(--ease-out); }
+.ab-do-list li:hover > a { translate: .5rem 0; }
+
+/* Wide screens, as the prototype: number, title, the description in the middle column, then the arrow. The description is the
+   item's own text after the link, which the grid places as the next cell. */
+@media (width >= 64rem) {
+  .ab-do-list li { grid-template-columns: 4rem minmax(0, 1.2fr) minmax(0, 1fr) 2.75rem; }
+  .ab-do-list li::before { grid-row: 1; }
+  .ab-do-list li::after { grid-column: 4; grid-row: 1; }
+}
+
+/* Core button blocks in editor content look like the theme's buttons: filled orange, and the outline style as the bordered one. */
+.wp-block-button .wp-block-button__link { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: .625rem 1.25rem; border: 2px solid var(--c-cta); border-radius: var(--r-1); background: var(--c-cta); color: var(--c-on-cta); font: 600 var(--t-base)/1.2 var(--font-body); text-decoration: none; transition: background var(--m-fast), border-color var(--m-fast), color var(--m-fast); }
+.wp-block-button .wp-block-button__link:hover { background: var(--c-cta-hover); border-color: var(--c-cta-hover); color: var(--c-on-cta); }
+.wp-block-button.is-style-outline .wp-block-button__link { background: transparent; border-color: currentcolor; color: var(--c-text); }
+.wp-block-button.is-style-outline .wp-block-button__link:hover { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.on-dark .wp-block-button.is-style-outline .wp-block-button__link, .ab-cta .wp-block-button.is-style-outline .wp-block-button__link { color: var(--c-on-dark); }
+.on-dark .wp-block-button.is-style-outline .wp-block-button__link:hover, .ab-cta .wp-block-button.is-style-outline .wp-block-button__link:hover { background: var(--c-on-dark); border-color: var(--c-on-dark); color: var(--charcoal-950); }
+.wp-block-button .wp-block-button__link:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+.ab-cta .wp-block-button .wp-block-button__link:focus-visible { outline-color: var(--c-focus-on-dark); }
+.ab-cta .wp-block-buttons { gap: var(--s-2); }
 .ab-how-item { padding-top: var(--s-4); border-top: 2px solid var(--charcoal-900); display: grid; gap: var(--s-2); align-content: start; }
 .ab-how-item h3 { font: 400 var(--t-xl)/1.1 var(--font-display); }
 .ab-how-item p { font-weight: 300; line-height: 1.5; color: var(--c-muted); max-width: 26em; }
@@ -1441,6 +1492,10 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .search-form { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-5); }
 .search-form input[type="search"] { flex: 1 1 16rem; min-width: 0; min-height: 3.25rem; padding: .5rem var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-1); background: var(--c-surface); color: var(--c-text); font: 400 var(--t-lg)/1.2 var(--font-body); }
 .search-count { margin-top: var(--s-4); }
+.search-band .search-form { flex-wrap: nowrap; max-width: 34rem; }
+.search-band .search-form input[type="search"] { min-height: 3rem; border-color: transparent; font-size: var(--t-base); }
+.search-band .search-form input[type="search"]:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 2px; }
+.search-band .search-form .btn { flex: none; min-height: 3rem; }
 .search-group + .search-group { margin-top: var(--s-9); }
 .search-group > h2 { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: var(--s-5); padding-bottom: var(--s-3); border-bottom: 1px solid var(--c-line); font: 400 var(--t-xl)/1.1 var(--font-display); }
 .search-group .count { font: 600 var(--t-sm)/1 var(--font-body); color: var(--c-muted); }
