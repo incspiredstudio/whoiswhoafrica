@@ -124,7 +124,7 @@ final class ProfileRouteTest extends TestCase {
 	}
 
 	public function test_REQ_121_sitemap_lists_the_home_page_once(): void {
-		$front = wp_insert_post(
+		$front         = wp_insert_post(
 			array(
 				'post_type'   => 'page',
 				'post_title'  => 'Home Qwv',

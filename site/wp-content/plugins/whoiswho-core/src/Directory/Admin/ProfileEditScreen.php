@@ -50,7 +50,8 @@ final class ProfileEditScreen {
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 					},
-					true, // A detail screen, opened from its list: no menu item.
+					true,
+					// A detail screen, opened from its list: no menu item.
 					'directory'
 				);
 				$registry->hook();

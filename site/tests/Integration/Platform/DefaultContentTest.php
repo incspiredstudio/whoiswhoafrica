@@ -48,7 +48,14 @@ final class DefaultContentTest extends WpTestCase {
 		);
 		$this->assertSame( $id, $made );
 		$modified = $edited ? '2026-11-02 09:00:00' : '2026-11-01 10:00:00';
-		$wpdb->update( $wpdb->posts, array( 'post_modified' => $modified, 'post_modified_gmt' => $modified ), array( 'ID' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update(
+			$wpdb->posts,
+			array(
+				'post_modified'     => $modified,
+				'post_modified_gmt' => $modified,
+			),
+			array( 'ID' => $id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		clean_post_cache( $id );
 		return $id;
 	}

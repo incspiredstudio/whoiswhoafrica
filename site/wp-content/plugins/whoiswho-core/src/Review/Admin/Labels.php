@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Review\Admin;
 
 use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
-use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\State\PubState;
 
 /**
@@ -47,18 +46,12 @@ final class Labels {
 	}
 
 	/**
-	 * A profile field's label: the field list's own label when it has one, else the Add profile screen's words, else the key
-	 * humanised.
+	 * A profile field's label: the Add profile screen's words for the fields of config/profile-fields.php, else the key
+	 * humanised. (When the field list gets labels of its own, this is the one place to read them.)
 	 *
 	 * @param string $key Field key.
 	 */
 	public static function field( string $key ): string {
-		if ( method_exists( FieldAllowlist::class, 'label' ) ) {
-			$label = call_user_func( array( new FieldAllowlist(), 'label' ), $key );
-			if ( is_string( $label ) && '' !== $label && $label !== $key ) {
-				return $label;
-			}
-		}
 		return AddProfileScreen::field_label( $key );
 	}
 

@@ -66,12 +66,12 @@ final class ExposureTest extends WpTestCase {
 	 */
 	public function test_REQ_229_editor_gets_only_users_me_route(): void {
 		$all = array(
-			'/wp/v2/users'                                => array(),
-			'/wp/v2/users/(?P<id>[\d]+)'                  => array(),
-			'/wp/v2/users/me'                             => array(),
-			'/wp/v2/users/me/application-passwords'       => array(),
+			'/wp/v2/users'                          => array(),
+			'/wp/v2/users/(?P<id>[\d]+)'            => array(),
+			'/wp/v2/users/me'                       => array(),
+			'/wp/v2/users/me/application-passwords' => array(),
 			'/wp/v2/users/(?P<user_id>(?:[\d]+|me))/application-passwords' => array(),
-			'/wp/v2/posts'                                => array(),
+			'/wp/v2/posts'                          => array(),
 		);
 
 		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );

@@ -49,16 +49,16 @@ final class FormRoutes {
 	 */
 	private const ROUTES = array(
 		'#^claim/([^/]+)/?$#'   => 'claim',
-		'#^subscribe/?$#'                => 'get_listed',
-		'#^contact/?$#'                  => 'contact',
+		'#^subscribe/?$#'       => 'get_listed',
+		'#^contact/?$#'         => 'contact',
 		'#^enquire/([^/]+)/?$#' => 'profile_enquiry',
-		'#^newsletter/?$#'               => 'newsletter',
+		'#^newsletter/?$#'      => 'newsletter',
 		'#^correct/([^/]+)/?$#' => 'correction',
 		'#^remove/([^/]+)/?$#'  => 'removal',
-		'#^nominate/start/?$#'           => 'nomination_start',
-		'#^nominate/?$#'                 => 'nomination',
+		'#^nominate/start/?$#'  => 'nomination_start',
+		'#^nominate/?$#'        => 'nomination',
 		'#^report/([^/]+)/?$#'  => 'report',
-		'#^data-rights/?$#'              => 'data_rights',
+		'#^data-rights/?$#'     => 'data_rights',
 	);
 
 	/**

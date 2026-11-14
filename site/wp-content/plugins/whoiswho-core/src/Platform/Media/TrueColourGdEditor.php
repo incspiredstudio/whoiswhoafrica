@@ -25,7 +25,7 @@ class TrueColourGdEditor extends \WP_Image_Editor_GD {
 	 */
 	public function load() {
 		$loaded = parent::load();
-		if ( true === $loaded && false !== $this->image && ! imageistruecolor( $this->image ) ) {
+		if ( true === $loaded && ! imageistruecolor( $this->image ) ) {
 			imagepalettetotruecolor( $this->image );
 			imagealphablending( $this->image, false );
 			imagesavealpha( $this->image, true );

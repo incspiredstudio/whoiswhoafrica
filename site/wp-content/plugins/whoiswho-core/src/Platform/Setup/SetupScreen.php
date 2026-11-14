@@ -654,24 +654,24 @@ final class SetupScreen {
 			array_unshift( $invented, 'profiles' );
 		}
 		return array(
-			'profiles'               => $ships
+			'profiles'                => $ships
 				/* translators: %d: number of profiles. */
 				? sprintf( __( 'Profiles: %d sample profiles that come with the plugin, about real public figures and organisations, with their sources. They are imported like any import and published as reviewed by you.', 'whoiswho' ), $plan['profiles'] ?? 0 )
 				/* translators: %d: number of profiles. */
 				: sprintf( __( 'Profiles: up to %d invented profiles.', 'whoiswho' ), $plan['profiles'] ?? 0 ),
 			/* translators: %d: number of stories. */
-			'stories'                => sprintf( __( 'Stories: %d invented stories with cover pictures.', 'whoiswho' ), $plan['stories'] ?? 0 ),
+			'stories'                 => sprintf( __( 'Stories: %d invented stories with cover pictures.', 'whoiswho' ), $plan['stories'] ?? 0 ),
 			/* translators: %d: number of comments. */
-			'comments'               => sprintf( __( 'Comments: %d invented reader comments on the stories.', 'whoiswho' ), $plan['comments'] ?? 0 ),
+			'comments'                => sprintf( __( 'Comments: %d invented reader comments on the stories.', 'whoiswho' ), $plan['comments'] ?? 0 ),
 			/* translators: %d: number of events. */
-			'events'                 => sprintf( __( 'Events: %d invented events.', 'whoiswho' ), $plan['events'] ?? 0 ),
+			'events'                  => sprintf( __( 'Events: %d invented events.', 'whoiswho' ), $plan['events'] ?? 0 ),
 			/* translators: %d: number of award categories. */
-			'awards'                 => sprintf( __( 'Awards: %d invented award categories, with nominees and winners.', 'whoiswho' ), $plan['awards'] ?? 0 ),
+			'awards'                  => sprintf( __( 'Awards: %d invented award categories, with nominees and winners.', 'whoiswho' ), $plan['awards'] ?? 0 ),
 			/* translators: %d: number of home page picks. */
-			'curation'               => sprintf( __( 'Home page curation: %d home page picks.', 'whoiswho' ), $plan['pins'] ?? 0 ),
+			'curation'                => sprintf( __( 'Home page curation: %d home page picks.', 'whoiswho' ), $plan['pins'] ?? 0 ),
 			/* translators: %d: number of pages. */
-			'pages'                  => sprintf( __( 'Pages: %d pages. The demo Home page becomes your front page, and your old setting comes back when you remove it.', 'whoiswho' ), $plan['pages'] ?? 0 ),
-			'settings'               => __( 'Settings: switches on Nominations so the Nominate links show, and puts it back when you remove it.', 'whoiswho' ),
+			'pages'                   => sprintf( __( 'Pages: %d pages. The demo Home page becomes your front page, and your old setting comes back when you remove it.', 'whoiswho' ), $plan['pages'] ?? 0 ),
+			'settings'                => __( 'Settings: switches on Nominations so the Nominate links show, and puts it back when you remove it.', 'whoiswho' ),
 			implode( ',', $invented ) => __( 'These parts are invented content: fictional and clearly marked as sample content.', 'whoiswho' ),
 		);
 	}

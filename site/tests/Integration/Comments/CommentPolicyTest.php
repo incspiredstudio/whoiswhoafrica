@@ -218,9 +218,9 @@ final class CommentPolicyTest extends TestCase {
 		update_option( 'moderation_notify', '1' );
 		$this->assertSame( '0', (string) get_option( 'moderation_notify' ) );
 		$sent = 0;
-		$hook = static function ( $return ) use ( &$sent ) {
+		$hook = static function ( $value ) use ( &$sent ) {
 			++$sent;
-			return $return;
+			return $value;
 		};
 		add_filter( 'pre_wp_mail', $hook, 1 );
 		$this->assertInstanceOf( \WP_Comment::class, $this->submit( $this->story() ) );

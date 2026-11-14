@@ -326,23 +326,23 @@ final class PublicStory {
 	private static function card( \WP_Post $post ): array {
 		$industries = wp_get_object_terms( $post->ID, self::INDUSTRY_TAXONOMY, array( 'fields' => 'names' ) );
 		$author     = self::byline( (int) $post->post_author );
-		$cover     = get_the_post_thumbnail_url( $post->ID, 'large' );
+		$cover      = get_the_post_thumbnail_url( $post->ID, 'large' );
 		return array(
-			'id'              => $post->ID,
-			'slug'            => $post->post_name,
-			'url'             => (string) get_permalink( $post ),
-			'title'           => get_the_title( $post ),
-			'lede'            => wp_strip_all_tags( $post->post_excerpt ),
-			'date'            => get_post_time( 'c', true, $post ),
-			'author'          => (string) $author,
+			'id'               => $post->ID,
+			'slug'             => $post->post_name,
+			'url'              => (string) get_permalink( $post ),
+			'title'            => get_the_title( $post ),
+			'lede'             => wp_strip_all_tags( $post->post_excerpt ),
+			'date'             => get_post_time( 'c', true, $post ),
+			'author'           => (string) $author,
 			'author_editorial' => self::byline_needs_name( (int) $post->post_author ),
-			'type'            => StoryTypes::of( $post->ID ),
-			'industries'      => is_array( $industries ) ? array_values( $industries ) : array(),
-			'cover'           => is_string( $cover ) ? $cover : '',
-			'reading_minutes' => ReadingTime::minutes( $post->post_content ),
-			'featured'        => is_sticky( $post->ID ),
-			'sponsor'         => self::sponsor( $post->ID ),
-			'preview'         => false,
+			'type'             => StoryTypes::of( $post->ID ),
+			'industries'       => is_array( $industries ) ? array_values( $industries ) : array(),
+			'cover'            => is_string( $cover ) ? $cover : '',
+			'reading_minutes'  => ReadingTime::minutes( $post->post_content ),
+			'featured'         => is_sticky( $post->ID ),
+			'sponsor'          => self::sponsor( $post->ID ),
+			'preview'          => false,
 		);
 	}
 

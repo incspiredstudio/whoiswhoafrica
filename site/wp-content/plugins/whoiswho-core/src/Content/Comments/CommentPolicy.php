@@ -112,7 +112,7 @@ final class CommentPolicy {
 	}
 
 	/**
-	 * wpDiscuz posts comments through admin-ajax.php and can show only a JSON error ({errorCode, error}); a plain error page
+	 * The wpDiscuz form posts comments through admin-ajax.php and can show only a JSON error ({errorCode, error}); a plain error page
 	 * would leave the visitor with no message at all. Elsewhere this does nothing and the caller's wp_die() answers.
 	 *
 	 * @param string $code    Error code.
