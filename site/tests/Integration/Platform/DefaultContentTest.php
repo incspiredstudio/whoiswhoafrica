@@ -85,6 +85,33 @@ final class DefaultContentTest extends WpTestCase {
 		$this->assertSame( 'trash', get_post_status( $post ) );
 	}
 
+	public function test_REQ_056_an_update_retires_untouched_defaults_once_through_the_database_update(): void {
+		$post   = $this->default_post( 1, 'post', 'hello-world' );
+		$page   = $this->default_post( 2, 'page', 'about-us' );
+		$plugin = dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/migrations';
+		$dir    = sys_get_temp_dir() . '/wiw-defaults-up-' . uniqid();
+		mkdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		copy( $plugin . '/2026112102_retire_default_content.php', $dir . '/2026112102_retire_default_content.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$applied = get_option( \WhoIsWho\Core\Platform\Migrations\Runner::OPTION_APPLIED );
+		update_option( \WhoIsWho\Core\Platform\Migrations\Runner::OPTION_APPLIED, array( '2026112015' ), false );
+		try {
+			// An existing site (not a fresh install) applying an update's database changes after uploading the new plugin.
+			$result = \WhoIsWho\Core\Platform\Setup\FirstRun::activate( $dir, false, false, array() );
+		} finally {
+			unlink( $dir . '/2026112102_retire_default_content.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			false === $applied ? delete_option( \WhoIsWho\Core\Platform\Migrations\Runner::OPTION_APPLIED ) : update_option( \WhoIsWho\Core\Platform\Migrations\Runner::OPTION_APPLIED, $applied, false );
+		}
+		$this->assertSame( 'upgrade', $result['mode'] );
+		$this->assertSame( array( '2026112102' ), $result['applied'] );
+		$this->assertSame( 'trash', get_post_status( $post ), 'the untouched Hello world! goes on an update too' );
+		$this->assertSame( 'publish', get_post_status( $page ), 'a renamed page is the owner\'s content' );
+		wp_untrash_post( $post );
+		$migration = require $plugin . '/2026112102_retire_default_content.php';
+		$migration->up();
+		$this->assertNotSame( 'trash', get_post_status( $post ), 'once only: a post put back by hand stays' );
+	}
+
 	public function test_REQ_056_edited_or_renamed_defaults_are_kept(): void {
 		$post = $this->default_post( 1, 'post', 'hello-world', true );
 		$page = $this->default_post( 2, 'page', 'about-us' );

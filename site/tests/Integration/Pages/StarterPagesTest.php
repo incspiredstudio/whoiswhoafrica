@@ -32,6 +32,12 @@ final class StarterPagesTest extends WpTestCase {
 			}
 			$this->assertInstanceOf( \WP_Post::class, $page, $path );
 			$this->assertSame( 'publish', $page->post_status, $path );
+			if ( 'about' === $path ) {
+				// The About page is public at once, so it carries no review note for visitors (issue 806).
+				$this->assertStringNotContainsString( 'notice--draft', $page->post_content, $path );
+				$this->assertStringNotContainsString( 'Delete this note', $page->post_content, $path );
+				continue;
+			}
 			$this->assertStringContainsString( 'notice--draft', $page->post_content, $path );
 		}
 		$this->assertSame( 'awards', get_post( get_page_by_path( 'awards/rules', OBJECT, 'page' )->post_parent )->post_name );

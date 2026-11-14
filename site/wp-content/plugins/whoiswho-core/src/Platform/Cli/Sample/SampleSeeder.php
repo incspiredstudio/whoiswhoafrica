@@ -683,7 +683,7 @@ final class SampleSeeder {
 			SampleMarker::mark_post( $id, 'event:' . $key );
 			$this->event_ids[ $key ] = $id;
 			foreach ( $result['values'] as $name => $value ) {
-				update_post_meta( $id, EventFields::META_PREFIX . $name, $value );
+				update_post_meta( $id, EventFields::META_PREFIX . $name, wp_slash( $value ) );
 			}
 			$industry = term_exists( (string) $row['industry'], Taxonomies::INDUSTRY, 0 );
 			if ( is_array( $industry ) && taxonomy_exists( Taxonomies::INDUSTRY ) ) {

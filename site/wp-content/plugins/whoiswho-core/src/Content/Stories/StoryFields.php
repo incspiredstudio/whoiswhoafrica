@@ -154,8 +154,8 @@ final class StoryFields {
 			wp_set_object_terms( $post_id, array(), StoryTypes::TAXONOMY );
 		}
 		update_post_meta( $post_id, LinkedProfiles::META, LinkedProfiles::sanitise( $request->ints( 'wiw_linked_profiles' ) ) );
-		update_post_meta( $post_id, 'wiw_seo_title', $request->string( 'wiw_seo_title' ) );
-		update_post_meta( $post_id, 'wiw_seo_description', sanitize_textarea_field( $request->string( 'wiw_seo_description' ) ) );
+		update_post_meta( $post_id, 'wiw_seo_title', wp_slash( $request->string( 'wiw_seo_title' ) ) );
+		update_post_meta( $post_id, 'wiw_seo_description', wp_slash( sanitize_textarea_field( $request->string( 'wiw_seo_description' ) ) ) );
 		$post = get_post( $post_id );
 		if ( $post instanceof \WP_Post ) {
 			StoryRules::enforce_type( $post_id, $post );

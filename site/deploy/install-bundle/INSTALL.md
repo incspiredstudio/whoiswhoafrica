@@ -25,7 +25,7 @@ Make a backup first if the site holds anything you want to keep.
 
 ## Steps, in this order
 
-**0. Check, then raise, the upload limit.** To see the current limit, sign in to wp-admin and open **Media > Add New Media File**: under the upload box it says "Maximum upload file size: …". The child theme zip is about 4 MB and an import bundle up to 50 MB, while PHP often allows only 2 MB, so if it says less than 64 MB, raise it before you upload anything: in cPanel open **MultiPHP INI Editor**, choose your domain, set `upload_max_filesize` and `post_max_size` to `64M` (and `memory_limit` to `256M`), and press **Apply**. Media > Add New Media File then shows the new maximum.
+**0. Check, then raise, the upload limit.** To see the current limit, sign in to wp-admin and open **Media > Add Media File** (the screen is called "Upload Media"): under the upload box it says "Maximum upload file size: …". The child theme zip is about 4 MB and an import bundle up to 50 MB, while PHP often allows only 2 MB, so if it says less than 64 MB, raise it before you upload anything: in cPanel open **MultiPHP INI Editor**, choose your domain, set `upload_max_filesize` and `post_max_size` to `64M` (and `memory_limit` to `256M`), and press **Apply**. The Upload Media screen (Media > Add Media File) then shows the new maximum.
 
 1. **Upload the themes.** Appearance > Themes > Add New Theme > Upload Theme: upload `whoiswho.zip`, then `whoiswho-child.zip`. You can leave them inactive for now.
 2. **Upload the plugin.** Plugins > Add New Plugin > Upload Plugin: upload `whoiswho-core.zip` and click **Activate Plugin**.
@@ -55,7 +55,12 @@ Remove the demo content on the Setup screen (*Remove demo content*, or each part
 
 ## Update the site later
 
-Take a backup, then upload the newer zips the same way (WordPress offers "Replace ... with uploaded") and activate again. Your content and settings are kept. Open the Setup screen afterwards and check every line. If it says database changes are waiting, make a backup in your host's control panel, tick *I have a backup*, and press *Update the database*. It applies the changes once and is safe to press again.
+Take a backup first. Your content and settings are kept. Then, in this order, every time:
+
+1. **Update the guard first (File Manager: replace the whoiswho-guard folder and file in wp-content/mu-plugins).** In cPanel **File Manager**, open `public_html/wp-content/mu-plugins`, delete the old `whoiswho-guard.php` file and the `whoiswho-guard` folder, then **Upload** the new `whoiswho-guard-mu-plugin.zip`, right-click it, **Extract** it into the same folder and delete the zip. Do this before any zip upload, because an older guard refuses theme and plugin zip uploads, and only the new guard lets them through.
+2. **Themes.** Appearance > Themes > Add New Theme > Upload Theme: choose `whoiswho.zip`, press **Install Now**, then **Replace installed with uploaded**. Do the same with `whoiswho-child.zip`. WordPress then shows an **Activate** link: you do not need it, because the child theme stays the active theme (and the parent theme must stay inactive).
+3. **Plugin.** Plugins > Add New Plugin > Upload Plugin: choose `whoiswho-core.zip`, press **Install Now**, then **Replace current with uploaded**. Press **Activate Plugin** only if WordPress offers it.
+4. **Setup screen.** Open it and check every line. If it says database changes are waiting, make a backup in your host's control panel, tick *I have a backup*, and press *Update the database*. It applies the changes once and is safe to press again.
 
 ## If something is wrong
 

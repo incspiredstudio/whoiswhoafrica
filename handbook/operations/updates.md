@@ -31,15 +31,15 @@ The development team sends a new bundle: the same set of zips as at install, wit
 
 1. Take a backup.
 2. Read the notes that come with the bundle.
-3. **Themes:** open **Appearance > Themes > Add New Theme > Upload Theme**, choose `whoiswho.zip` and press **Install Now**. WordPress says the theme is already installed: press **Replace installed with uploaded** (for the active child theme the button reads **Replace active with uploaded**). Do the same with `whoiswho-child.zip`.
-4. **Plugin:** open **Plugins > Add New Plugin > Upload Plugin**, choose `whoiswho-core.zip`, press **Install Now**, then **Replace current with uploaded**. If WordPress offers it, press **Activate Plugin**.
-5. **Guard:** only if the notes say the guard changed. In cPanel **File Manager**, open `wp-content/mu-plugins`, delete the old `whoiswho-guard.php` file and the `whoiswho-guard` folder, then upload and extract the new `whoiswho-guard-mu-plugin.zip` as at [install](/start/install#_3-copy-the-guard-into-mu-plugins).
+3. **Update the guard first (File Manager: replace the whoiswho-guard folder and file in wp-content/mu-plugins).** Do this every time, before any zip upload, because an older guard refuses theme and plugin zip uploads and only the new guard lets them through. In cPanel **File Manager**, open `wp-content/mu-plugins`, delete the old `whoiswho-guard.php` file and the `whoiswho-guard` folder, then upload and extract the new `whoiswho-guard-mu-plugin.zip` as at [install](/start/install#_3-copy-the-guard-into-mu-plugins), and delete the zip.
+4. **Themes:** open **Appearance > Themes > Add New Theme > Upload Theme**, choose `whoiswho.zip` and press **Install Now**. WordPress says the theme is already installed: press **Replace installed with uploaded**. Do the same with `whoiswho-child.zip`. WordPress then shows an **Activate** link: you do not need it, because the child theme stays the active theme (and the parent theme must stay inactive).
+5. **Plugin:** open **Plugins > Add New Plugin > Upload Plugin**, choose `whoiswho-core.zip`, press **Install Now**, then **Replace current with uploaded**. Press **Activate Plugin** only if WordPress offers it.
 6. Open **WHOISWHO > Setup** and check every line. If it shows an **Update the database** button, take a backup, tick **I have a backup** and press it (see below).
 7. Check the site as above.
 
-Uploading a new zip over the old one works with the guard active: the guard allows a theme or plugin `.zip` on WordPress's own upload screens, for an Administrator only, and still refuses zips everywhere else (for example in the media library). If WordPress says "Sorry, you are not allowed to upload this file type", check that you are signed in as an Administrator and that the file is the `.zip` from the bundle, not an unzipped folder.
+Once the new guard is in place, uploading a new zip over the old one works with the guard active: the guard allows a theme or plugin `.zip` on WordPress's own upload screens, for an Administrator only, and still refuses zips everywhere else (for example in the media library). If WordPress says "Sorry, you are not allowed to upload this file type", check that you replaced the guard first (step 3), that you are signed in as an Administrator, and that the file is the `.zip` from the bundle, not an unzipped folder.
 
-Upload the zips in this order: parent theme, child theme, plugin, guard. Replace; do not delete first. Deleting the WHOISWHO plugin does not delete its data, but it switches the site off until the plugin is back.
+Always in this order: guard, parent theme, child theme, plugin. Replace; do not delete the themes or the plugin first. Deleting the WHOISWHO plugin does not delete its data, but it switches the site off until the plugin is back.
 
 ### If Setup says the database has changes waiting
 

@@ -77,7 +77,8 @@ final class ReviewItemScreen {
 					},
 					true,
 					// A detail screen, opened from its list: no menu item.
-					'review'
+					'review',
+					ReviewQueueScreen::SCREEN
 				);
 				$registry->hook();
 				ActionGuard::register( self::APPROVE, self::CAPABILITY, array( self::class, 'handle_approve' ) );

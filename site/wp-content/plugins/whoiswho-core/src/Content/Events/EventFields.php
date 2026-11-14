@@ -121,7 +121,7 @@ final class EventFields {
 		}
 		$result = $validator->validate( $input );
 		foreach ( $result['values'] as $name => $value ) {
-			update_post_meta( $post_id, self::META_PREFIX . $name, $value );
+			update_post_meta( $post_id, self::META_PREFIX . $name, wp_slash( $value ) );
 		}
 		$post = get_post( $post_id );
 		if ( array() !== $result['errors'] ) {

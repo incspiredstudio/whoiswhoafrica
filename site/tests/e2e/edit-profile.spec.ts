@@ -78,6 +78,16 @@ test.describe("edit a profile's sections and photo", () => {
     await addProfile(page);
     const editUrl = page.url();
 
+    // Words, not codes (issue 806): type and state, origin, field names in the sources table.
+    const wrap = page.locator(".wrap").first();
+    await expect(wrap).not.toContainText(/individual \/|published_reviewed|imported_not_public/);
+    await expect(wrap.locator("td", { hasText: /^(manual|import)$/ })).toHaveCount(0);
+    // The Directory menu stays open with Profiles current, and there is no second top-level Profiles menu (issue 806).
+    const menu = page.locator("#adminmenu");
+    await expect(menu.locator("li#toplevel_page_wiw-menu-directory.wp-has-current-submenu")).toHaveCount(1);
+    await expect(menu.locator("li.current > a[href*='page=wiw-profiles']")).toHaveCount(1);
+    await expect(menu.locator("#menu-posts-wiw_profile")).toHaveCount(0);
+
     // Plain labels, and the four sections are multi-line boxes with a counter.
     await expect(page.locator('label[for="wiw-f-current_title"]')).toHaveText("Current title");
     for (const key of ["bio", "achievement", "influence", "legacy"]) {

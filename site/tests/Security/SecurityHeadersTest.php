@@ -48,6 +48,18 @@ final class SecurityHeadersTest extends WpTestCase {
 		$this->assertSame( array( 'script-src', 'style-src', 'img-src', 'font-src', 'connect-src', 'frame-src', 'media-src' ), array_keys( Headers::sources() ) );
 	}
 
+	/**
+	 * Signed in, the admin bar on public pages loads WordPress's Dashicons stylesheet, whose font is embedded as a data: URL, so
+	 * font-src allows data: (and nothing else new) on public pages (issue 806).
+	 */
+	public function test_REQ_046_public_font_src_allows_the_admin_bar_data_font(): void {
+		$dashicons = (string) file_get_contents( ABSPATH . WPINC . '/css/dashicons.css' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'url("data:application/x-font-woff', $dashicons, 'the cause: the admin bar font is a data: URL' );
+		$public = Headers::headers( true, false, 'abc' )['Content-Security-Policy'];
+		$this->assertMatchesRegularExpression( "/(^|; )font-src 'self' data:(;|$)/", $public );
+		$this->assertSame( array( 'data:' ), Headers::sources()['font-src'] );
+	}
+
 	public function test_REQ_046_the_nonce_helper_is_stable_per_request_and_reaches_script_tags(): void {
 		$this->assertTrue( function_exists( 'wiw_csp_nonce' ) );
 		$this->assertSame( wiw_csp_nonce(), wiw_csp_nonce() );

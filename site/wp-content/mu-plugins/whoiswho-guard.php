@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WHOISWHO Guard
  * Description: Must-use safeguard. Keeps unreviewed records out of public output. Owns no data, tables or screens, and needs no other plugin.
- * Version:     0.1.0
+ * Version:     0.2.0
  *
  * @package WhoIsWho
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WIW_GUARD_VERSION', '0.1.0' );
+define( 'WIW_GUARD_VERSION', '0.2.0' );
 define( 'WIW_GUARD_DIR', __DIR__ . '/whoiswho-guard/' );
 
 spl_autoload_register(

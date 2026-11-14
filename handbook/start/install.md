@@ -51,7 +51,7 @@ PHP on many hosts only accepts uploads up to 2 MB. The child theme zip is about 
 | `max_execution_time` | `120` |
 
 4. Press **Apply** at the bottom.
-5. Check it worked: in wp-admin open **Media > Add New**. The page says "Maximum upload file size: 64 MB".
+5. Check it worked: in wp-admin open **Media > Add Media File**. The Upload Media screen says "Maximum upload file size: 64 MB".
 
 If your host does not offer MultiPHP INI Editor, ask their support to raise `upload_max_filesize` and `post_max_size` to 64M. As a fallback you can unzip a theme or plugin on your computer and upload the folder with cPanel **File Manager** into `wp-content/themes` or `wp-content/plugins`.
 

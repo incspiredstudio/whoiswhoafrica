@@ -29,9 +29,32 @@ final class ProfileType {
 	public const STATUS_HIDDEN = 'wiw_hidden';
 
 	/**
+	 * The menu to highlight on WordPress's own profile screens (edit.php or post.php for this type), which have no menu item of
+	 * their own: the Directory group, with Directory > Profiles current. Hooked to parent_file.
+	 *
+	 * @param string $parent_file Parent file.
+	 */
+	public static function menu_parent( $parent_file ): string {
+		global $typenow;
+		return self::POST_TYPE === $typenow ? \WhoIsWho\Core\Platform\Admin\ScreenRegistry::menu_slug( 'directory' ) : (string) $parent_file;
+	}
+
+	/**
+	 * The submenu item to mark current on those screens. Hooked to submenu_file.
+	 *
+	 * @param string|null $submenu_file Submenu file.
+	 */
+	public static function menu_current( $submenu_file ): ?string {
+		global $typenow;
+		return self::POST_TYPE === $typenow ? Admin\ProfilesScreen::SCREEN : $submenu_file;
+	}
+
+	/**
 	 * Register the type. Hooked to init.
 	 */
 	public function register(): void {
+		add_filter( 'parent_file', array( self::class, 'menu_parent' ) );
+		add_filter( 'submenu_file', array( self::class, 'menu_current' ) );
 		// The wiw_hidden status itself is registered by the guard mu-plugin (init, priority 0), so it exists even if this plugin is off.
 		if ( class_exists( '\WhoIsWho\Guard\Guard' ) ) {
 			\WhoIsWho\Guard\Guard::guard_post_type( self::POST_TYPE );
@@ -53,7 +76,10 @@ final class ProfileType {
 				'publicly_queryable'  => false,
 				'exclude_from_search' => true,
 				'show_ui'             => true,
-				'show_in_menu'        => true,
+				// No top-level "Profiles" menu beside Directory > Profiles (issue 806): staff open profiles from the Directory
+				// group. The type's capabilities are unchanged, and a WordPress profile screen opened by its address highlights
+				// Directory (menu_parent()).
+				'show_in_menu'        => false,
 				'show_in_nav_menus'   => false,
 				'show_in_admin_bar'   => false,
 				'show_in_rest'        => false,

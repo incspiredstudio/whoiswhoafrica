@@ -142,7 +142,7 @@ final class AddProfileService {
 		$post = wp_insert_post(
 			array(
 				'post_type'   => ProfileType::POST_TYPE,
-				'post_title'  => $name,
+				'post_title'  => wp_slash( $name ),
 				'post_status' => ProfileType::STATUS_HIDDEN,
 			),
 			true
@@ -167,7 +167,7 @@ final class AddProfileService {
 			wp_set_object_terms( $id, array( $country ), Taxonomies::PLACE, true );
 		}
 		if ( array() !== $external_ids ) {
-			update_post_meta( $id, Matcher::EXTERNAL_IDS_META, (string) wp_json_encode( $external_ids ) );
+			update_post_meta( $id, Matcher::EXTERNAL_IDS_META, wp_slash( (string) wp_json_encode( $external_ids ) ) );
 		}
 		$image_id = $this->attach_image( $id, $type, $image );
 		$this->audit->log(

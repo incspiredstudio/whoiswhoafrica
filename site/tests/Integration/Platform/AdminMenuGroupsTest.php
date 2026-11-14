@@ -85,6 +85,56 @@ final class AdminMenuGroupsTest extends WpTestCase {
 	}
 
 	/**
+	 * While a detail screen is open, its group's menu stays highlighted and its list's item is current, even after the menu code
+	 * calls get_admin_page_parent() (which reset the parent before, issue 806). The capability check is unchanged.
+	 */
+	public function test_REQ_244_a_detail_screen_highlights_its_group_and_list_after_get_admin_page_parent(): void {
+		global $pagenow, $plugin_page, $parent_file, $submenu_file, $submenu;
+		$registry = new ScreenRegistry();
+		$registry->register( 'wiw-probe-list', 'Probe list', 'wiw_run_imports', '__return_null', false, 'awards' );
+		$registry->register( 'wiw-probe-item', 'Probe item', 'wiw_run_imports', '__return_null', true, 'awards', 'wiw-probe-list' );
+		$registry->hook();
+		$this->assertSame( 403, AuthorisationMatrix::status( $this->users['reviewer'], 'wiw-probe-item' ), 'still refused without the capability' );
+		$this->assertSame( 200, AuthorisationMatrix::status( $this->users['administrator'], 'wiw-probe-item' ) );
+		$this->assertContains( 'wiw-probe-item', array_column( $submenu[''] ?? array(), 2 ), 'WordPress keeps the page under an empty parent' );
+
+		$before = array( $pagenow, $plugin_page, $parent_file, $submenu_file );
+		$hook   = get_plugin_page_hookname( 'wiw-probe-item', '' );
+		do_action( 'load-' . $hook );
+		// What wp-admin/menu-header.php does before it draws the menu.
+		$parent_file  = apply_filters( 'parent_file', '' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin menu.
+		$submenu_file = apply_filters( 'submenu_file', null, $parent_file ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin menu.
+		get_admin_page_parent();
+		$this->assertSame( ScreenRegistry::menu_slug( 'awards' ), $parent_file );
+		$this->assertSame( 'wiw-probe-list', $submenu_file );
+		list( $pagenow, $plugin_page, $parent_file, $submenu_file ) = $before; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+	}
+
+	/**
+	 * There is one Profiles menu item, under Directory: the profile type adds no top-level menu, and WordPress's own profile
+	 * screens highlight Directory > Profiles (issue 806).
+	 */
+	public function test_REQ_244_the_profile_type_has_no_top_level_menu(): void {
+		global $typenow;
+		if ( ! post_type_exists( \WhoIsWho\Core\Directory\ProfileType::POST_TYPE ) ) {
+			( new \WhoIsWho\Core\Directory\ProfileType() )->register();
+		}
+		$type = get_post_type_object( \WhoIsWho\Core\Directory\ProfileType::POST_TYPE );
+		$this->assertInstanceOf( \WP_Post_Type::class, $type );
+		$this->assertFalse( $type->show_in_menu );
+		$this->assertTrue( $type->show_ui, 'the type keeps its screens and capabilities' );
+		$this->assertSame( 'edit_wiw_profiles', $type->cap->edit_posts );
+
+		$before  = $typenow;
+		$typenow = \WhoIsWho\Core\Directory\ProfileType::POST_TYPE; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin menu.
+		$this->assertSame( ScreenRegistry::menu_slug( 'directory' ), \WhoIsWho\Core\Directory\ProfileType::menu_parent( 'edit.php?post_type=wiw_profile' ) );
+		$this->assertSame( \WhoIsWho\Core\Directory\Admin\ProfilesScreen::SCREEN, \WhoIsWho\Core\Directory\ProfileType::menu_current( null ) );
+		$typenow = 'post'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin menu.
+		$this->assertSame( 'edit.php', \WhoIsWho\Core\Directory\ProfileType::menu_parent( 'edit.php' ), 'other types are untouched' );
+		$typenow = $before; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+	}
+
+	/**
 	 * The detail screens of the plugin (Edit profile, Review item) are not menu items; WordPress's own "Add profile" under its
 	 * Profiles menu is gone and its address leads to Directory > Add profile (#810).
 	 */
