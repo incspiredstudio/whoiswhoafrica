@@ -20,6 +20,11 @@ final class TestMode {
 	public const META = 'wiw_e2e_staff';
 
 	/**
+	 * Marks a seeded test user who gets no two-factor reminder, so the reminder does not disturb the other browser tests.
+	 */
+	public const QUIET_META = 'wiw_e2e_quiet';
+
+	/**
 	 * Whether test mode is on. Never in production.
 	 */
 	public static function enabled(): bool {
@@ -33,6 +38,15 @@ final class TestMode {
 	 */
 	public static function exempts( int $user_id ): bool {
 		return self::enabled() && '1' === (string) get_user_meta( $user_id, self::META, true );
+	}
+
+	/**
+	 * Whether this user gets no two-factor reminder in test mode. Never in production.
+	 *
+	 * @param int $user_id User id.
+	 */
+	public static function quiet( int $user_id ): bool {
+		return self::enabled() && '1' === (string) get_user_meta( $user_id, self::QUIET_META, true );
 	}
 
 	/**
