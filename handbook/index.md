@@ -22,6 +22,7 @@ WHOISWHO is an African discovery, recognition and media platform. It records the
 
 | Reader | Start here |
 |---|---|
+| Whoever installs the site or sets it up for the first time | [Getting started](/start/) |
 | Anyone who wants to know what a visitor sees and can do | [Visitor flows](/visitor/) |
 | Reviewers, editors and administrators | [Staff guide](/staff/) |
 | Partners and new team members who want the ideas behind the product | [Concepts](/concepts/) |
@@ -45,4 +46,4 @@ WHOISWHO is an African discovery, recognition and media platform. It records the
 | Plugin `whoiswho-core` | The product logic: directory, review, claims, sponsored stories, awards, enquiries, requests and the audit log. |
 | Plugin `whoiswho-guard` | Always-on rules that hold whatever else is installed. |
 | Parent theme `whoiswho` and child theme `whoiswho-child` | The public pages. The child is the active theme and holds the brand values. |
-| Third-party plugins | Two-factor sign-in, comments, spam protection, a role editor and a cache plugin. |
+| Third-party plugins | FluentSMTP for email and wpDiscuz for comments, installed from the Setup screen; Two Factor, User Role Editor and Action Scheduler, carried inside the WHOISWHO plugin; Cloudflare Turnstile for spam protection; optionally a cache plugin. |
