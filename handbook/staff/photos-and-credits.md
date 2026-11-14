@@ -37,7 +37,7 @@ The public profile shows the credit under the photo, for example "Photo: A. Mens
 
 **On a new profile:**
 
-1. Upload the file in **Media > Add New Media File**, or choose an existing one.
+1. Upload the file in **Media > Add Media File** (the Upload Media screen), or choose an existing one.
 2. Open **Directory > Add profile** for a new profile.
 3. Under **Photo (optional)** or **Logo (optional)**, press **Choose from media library** and pick the image.
 4. Fill in **Licence**, **Credit** and **Image source URL**. They are required when an image is set.

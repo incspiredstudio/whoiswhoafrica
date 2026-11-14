@@ -18,7 +18,7 @@ Symptoms: no confirmation emails arrive, the FluentSMTP test fails, or **Audienc
 Symptoms: "The uploaded file exceeds the upload_max_filesize directive" or "The link you followed has expired" when uploading a theme or plugin, or an import bundle that is refused as too big.
 
 1. Raise the limit in cPanel **MultiPHP INI Editor**: `upload_max_filesize` and `post_max_size` to `64M`. See [Raise the upload limit](/start/install#raise-the-upload-limit).
-2. Check in **Media > Add New Media File**: it shows the maximum upload size.
+2. Check in **Media > Add Media File** (the screen is called "Upload Media"): it shows the maximum upload size.
 3. Import bundles are not affected by this limit: the Import screen sends them in small pieces. A bundle cannot be bigger than 512 MB; ask the acquisition team to split a bigger one. If a bundle upload still fails, use **Or import from the server** on the Import screen ([Import data](/staff/importing)).
 4. For a theme or plugin, you can also unzip it on your computer and upload the folder with cPanel **File Manager** into `wp-content/themes` or `wp-content/plugins`.
 
