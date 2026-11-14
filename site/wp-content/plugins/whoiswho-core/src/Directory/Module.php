@@ -28,6 +28,8 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( new Url\ProfileRoute() )->register();
+		( new Url\OldTermSlugRedirect() )->register();
+		Admin\TermFields::hooks();
 		( new Seo\Output() )->register();
 		( new Seo\StructuredData() )->register();
 		Admin\ProfilesScreen::hooks();

@@ -30,9 +30,11 @@ final class AddProfileFields {
 	public const PERSON_TYPES = array( 'individual', 'entrepreneur' );
 
 	/**
-	 * Allowlisted keys the form does not offer: the name has its own input, and the organisation reference is set by the import.
+	 * Allowlisted keys the form does not offer: the name has its own input, the organisation reference is set by the import, and
+	 * industry, sector, organisation type, head office city and a person's field are chosen with the classification pickers
+	 * (REQ-009); they stay allowlisted as import inputs.
 	 */
-	private const NOT_ON_FORM = array( 'name', 'current_organisation_ref' );
+	private const NOT_ON_FORM = array( 'name', 'current_organisation_ref', 'industry', 'sector', 'org_type', 'hq_city', 'field' );
 
 	/**
 	 * Fields rendered as a paragraph box.

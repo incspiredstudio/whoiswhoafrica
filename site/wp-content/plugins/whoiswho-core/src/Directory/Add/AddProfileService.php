@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Directory\Add;
 
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
+use WhoIsWho\Core\Directory\Edit\EditRefused;
+use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Directory\ProfileType;
@@ -23,7 +25,6 @@ use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
-use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Db\Transaction;
 use WhoIsWho\Core\Review\Duplicates\Matcher;
@@ -90,18 +91,20 @@ final class AddProfileService {
 	/**
 	 * Create the profile.
 	 *
-	 * @param string                $type         Entity type.
-	 * @param array<string, mixed>  $fields       Field key => value: name, the type's form fields (a list is an array of strings, a
-	 *                                            controlled-list field is a term id).
-	 * @param string[]              $sources      Source URLs, at least one.
-	 * @param int                   $country      Country term id (0 for none).
-	 * @param array<string, string> $external_ids Identifiers (wikidata_qid, rc_number).
-	 * @param array<string, mixed>  $image        Optional image: id, licence, credit, source.
-	 * @param bool                  $override     The staff member confirmed "create anyway" over possible duplicates.
+	 * @param string                    $type         Entity type.
+	 * @param array<string, mixed>      $fields       Field key => value: name, the type's form fields (a list is an array of strings, a
+	 *                                                controlled-list field is a term id).
+	 * @param string[]                  $sources      Source URLs, at least one.
+	 * @param int                       $country      Country term id (0 for none).
+	 * @param array<string, string>     $external_ids Identifiers (wikidata_qid, rc_number).
+	 * @param array<string, mixed>      $image        Optional image: id, licence, credit, source.
+	 * @param bool                      $override     The staff member confirmed "create anyway" over possible duplicates.
+	 * @param array<string, mixed>|null $classification Main industry, other industries, organisation type, country and city (see
+	 *                                                  ProfileClassifier::normalise()); when given, it decides the country.
 	 * @return int Profile id.
-	 * @throws \DomainException Without the capability, for a suppressed name, an unknown type or no source.
+	 * @throws \DomainException Without the capability, for a suppressed name, an unknown type, no source or a bad classification.
 	 */
-	public function create( string $type, array $fields, array $sources, int $country, array $external_ids = array(), array $image = array(), bool $override = false ): int {
+	public function create( string $type, array $fields, array $sources, int $country, array $external_ids = array(), array $image = array(), bool $override = false, ?array $classification = null ): int {
 		if ( ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			throw new \DomainException( 'You are not allowed to add profiles.' );
 		}
@@ -117,8 +120,16 @@ final class AddProfileService {
 		if ( $this->is_suppressed( $name, $type, $external_ids ) ) {
 			throw new \DomainException( 'This name is on the suppression list, so it cannot be added. Ask an Administrator.' );
 		}
+		$checked = null;
+		if ( null !== $classification ) {
+			try {
+				$checked = ( new ProfileClassifier() )->normalise( $classification + array( 'country' => $country ), $type );
+			} catch ( EditRefused $refused ) {
+				throw new \DomainException( esc_html( $refused->getMessage() ) );
+			}
+		}
 		$actor = get_current_user_id();
-		$id    = (int) Transaction::run( fn (): int => $this->write( $type, $name, $fields, $sources, $country, $external_ids, $image, $actor, $override ) );
+		$id    = (int) Transaction::run( fn (): int => $this->write( $type, $name, $fields, $sources, $country, $external_ids, $image, $actor, $override, $checked ) );
 		// Flag probable duplicates for the Duplicates screen as the import does; this only writes pairs for a person to resolve.
 		( new Matcher() )->scan( $id );
 		return $id;
@@ -127,18 +138,19 @@ final class AddProfileService {
 	/**
 	 * Write the profile inside the transaction.
 	 *
-	 * @param string                $type         Entity type.
-	 * @param string                $name         Name.
-	 * @param array<string, mixed>  $fields       Fields.
-	 * @param string[]              $sources      Sources.
-	 * @param int                   $country      Country term.
-	 * @param array<string, string> $external_ids Identifiers.
-	 * @param array<string, mixed>  $image        Image.
-	 * @param int                   $actor        Staff member.
-	 * @param bool                  $override     Create anyway.
+	 * @param string                                                                                       $type         Entity type.
+	 * @param string                                                                                       $name         Name.
+	 * @param array<string, mixed>                                                                         $fields       Fields.
+	 * @param string[]                                                                                     $sources      Sources.
+	 * @param int                                                                                          $country      Country term.
+	 * @param array<string, string>                                                                        $external_ids Identifiers.
+	 * @param array<string, mixed>                                                                         $image        Image.
+	 * @param int                                                                                          $actor        Staff member.
+	 * @param bool                                                                                         $override     Create anyway.
+	 * @param array{primary_industry: int, industries: int[], org_type: int, country: int, city: int}|null $classification Checked classification.
 	 * @throws \RuntimeException When the post cannot be created.
 	 */
-	private function write( string $type, string $name, array $fields, array $sources, int $country, array $external_ids, array $image, int $actor, bool $override ): int {
+	private function write( string $type, string $name, array $fields, array $sources, int $country, array $external_ids, array $image, int $actor, bool $override, ?array $classification = null ): int {
 		$post = wp_insert_post(
 			array(
 				'post_type'   => ProfileType::POST_TYPE,
@@ -163,7 +175,9 @@ final class AddProfileService {
 			'Added by hand'
 		);
 		$stored = $this->store_fields( $id, $type, $name, $fields, $sources );
-		if ( $country > 0 ) {
+		if ( null !== $classification ) {
+			( new ProfileClassifier() )->apply( $id, $classification );
+		} elseif ( $country > 0 ) {
 			wp_set_object_terms( $id, array( $country ), Taxonomies::PLACE, true );
 		}
 		if ( array() !== $external_ids ) {
@@ -212,15 +226,6 @@ final class AddProfileService {
 			$value = $fields[ $key ] ?? null;
 			if ( null === $value || '' === $value || array() === $value ) {
 				continue;
-			}
-			$taxonomy = TermMapper::FIELDS[ $key ] ?? '';
-			if ( '' !== $taxonomy ) {
-				$term = get_term( (int) $value, $taxonomy );
-				if ( ! $term instanceof \WP_Term ) {
-					continue;
-				}
-				wp_set_object_terms( $id, array( $term->term_id ), $taxonomy, Taxonomies::PLACE === $taxonomy );
-				$value = $term->name;
 			}
 			if ( 'list' === $rule['type'] && ! is_array( $value ) ) {
 				$value = array( (string) $value );

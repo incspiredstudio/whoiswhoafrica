@@ -94,7 +94,7 @@ final class ProfileTypeTest extends WpTestCase {
 			$this->assertContains( ProfileType::POST_TYPE, $object->object_type );
 		}
 		$this->assertTrue( get_taxonomy( Taxonomies::PLACE )->hierarchical );
-		$this->assertFalse( get_taxonomy( Taxonomies::INDUSTRY )->hierarchical );
+		$this->assertTrue( get_taxonomy( Taxonomies::INDUSTRY )->hierarchical, 'sectors are the top level, industries sit under them' );
 	}
 
 	public function test_REQ_009_reviewer_assigns_but_cannot_manage_terms(): void {

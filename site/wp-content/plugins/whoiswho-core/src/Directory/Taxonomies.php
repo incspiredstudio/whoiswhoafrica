@@ -42,7 +42,7 @@ final class Taxonomies {
 	 */
 	public function register(): void {
 		$labels = array(
-			self::INDUSTRY   => array( __( 'Industries', 'whoiswho' ), __( 'Industry', 'whoiswho' ), false ),
+			self::INDUSTRY   => array( __( 'Industries', 'whoiswho' ), __( 'Industry', 'whoiswho' ), true ),
 			self::SECTOR     => array( __( 'Sectors', 'whoiswho' ), __( 'Sector', 'whoiswho' ), false ),
 			self::PROFESSION => array( __( 'Professions', 'whoiswho' ), __( 'Profession', 'whoiswho' ), false ),
 			self::ORG_TYPE   => array( __( 'Organisation types', 'whoiswho' ), __( 'Organisation type', 'whoiswho' ), false ),

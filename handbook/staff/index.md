@@ -58,6 +58,9 @@ Do not confuse **Site settings** (the WHOISWHO menu near the top of the left men
 | Page | Covers |
 |---|---|
 | [Add a profile by hand](/staff/add-profile) | The Add profile screen and the duplicate check |
+| [Edit a profile](/staff/edit-profile) | The Edit profile screen, part by part |
+| [Classification](/staff/classification) | Country, sector and industry of a profile, and the Needs classification view |
+| [Countries, industries and organisation types](/staff/lists) | Add a country with its code, an industry under a sector, or an organisation type |
 | [Profile review and publication states](/staff/profile-review) | The review queue, the six states, editing, bulk unpublish |
 | [Profile sections](/staff/profile-sections) | Writing and editing Bio, Achievement, Influence and Legacy |
 | [Photos and credits](/staff/photos-and-credits) | Open licences, credit lines and adding a photo |

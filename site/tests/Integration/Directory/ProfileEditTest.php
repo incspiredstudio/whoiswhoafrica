@@ -282,13 +282,15 @@ final class ProfileEditTest extends TestCase {
 	public function test_REQ_125_the_screen_reads_only_allowlisted_fields(): void {
 		$request = new Request(
 			array(
+				'f_website' => 'https://bank.example.org',
 				'f_hq_city' => 'Abuja',
 				'f_email'   => 'x@example.org',
 				'f_mandate' => '',
 			)
 		);
 		$changes = ProfileEditScreen::changes_from( $request, 'organisation' );
-		$this->assertSame( 'Abuja', $changes['hq_city'] );
+		$this->assertSame( 'https://bank.example.org', $changes['website'] );
 		$this->assertArrayNotHasKey( 'email', $changes );
+		$this->assertArrayNotHasKey( 'hq_city', $changes, 'the city is chosen with the classification picker (REQ-009)' );
 	}
 }

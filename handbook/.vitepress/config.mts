@@ -71,6 +71,9 @@ export default defineConfig({
           items: [
             { text: "Overview", link: "/staff/" },
             { text: "Add a profile by hand", link: "/staff/add-profile" },
+            { text: "Edit a profile", link: "/staff/edit-profile" },
+            { text: "Classification", link: "/staff/classification" },
+            { text: "Countries, industries and organisation types", link: "/staff/lists" },
             { text: "Profile review and publication states", link: "/staff/profile-review" },
             { text: "Profile sections", link: "/staff/profile-sections" },
             { text: "Photos and credits", link: "/staff/photos-and-credits" },

@@ -1,8 +1,8 @@
 <?php
 /**
  * The panels under the Profile edit screen (REQ-060, REQ-018, REQ-161, REQ-187, REQ-125): status and marks, contact and
- * enquiries switches, public URL, fields with their sources (read-only), source sync flags, revision history, internal notes, and
- * empty placeholders for the Claim and Arrangements panels that Trust and Commerce fill in M3. Each change is an ActionGuard
+ * enquiries switches, public URL, "Where each fact comes from" (read-only), "Changes from the source since review" (only when a
+ * change is pending), revision history, internal notes, and an empty placeholder for the Claim panel that Trust fills in M3. Each change is an ActionGuard
  * action needing edit_wiw_profiles and is audited; the sources panel also needs wiw_view_sources. Notes are staff-only text in
  * wiw_notes and no public read model touches them.
  *
@@ -172,8 +172,7 @@ final class ProfilePanels {
 	public function html( int $id, array $state ): string {
 		return $this->status( $state ) . $this->contact( $id ) . $this->enquiries( $id ) . $this->url_panel( $id )
 			. $this->sources( $id ) . $this->sync( $id ) . $this->history( $id ) . $this->notes( $id )
-			. '<h3>' . esc_html__( 'Claim', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Nothing to show yet.', 'whoiswho' ) . '</p>'
-			. '<h3>' . esc_html__( 'Arrangements', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Nothing to show yet.', 'whoiswho' ) . '</p>';
+			. '<h3>' . esc_html__( 'Claim', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Nothing to show yet.', 'whoiswho' ) . '</p>';
 	}
 
 	/**
@@ -239,7 +238,7 @@ final class ProfilePanels {
 		if ( ! current_user_can( self::SOURCES_CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out = '<h3>' . esc_html__( 'Fields and their sources', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr>';
+		$out = '<h3>' . esc_html__( 'Where each fact comes from', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr>';
 		foreach ( array( 'Field', 'Source', 'Retrieved', 'Confidence', 'Method' ) as $heading ) {
 			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
@@ -268,16 +267,17 @@ final class ProfilePanels {
 	}
 
 	/**
-	 * The source sync panel.
+	 * The "Changes from the source since review" panel, shown only when a re-import brought a change that waits for review.
 	 *
 	 * @param int $id Profile.
 	 */
 	private function sync( int $id ): string {
 		$flagged = $this->flagged_changes( $id );
-		$out     = '<h3>' . esc_html__( 'Source sync', 'whoiswho' ) . '</h3>';
 		if ( array() === $flagged ) {
-			return $out . '<p class="description">' . esc_html__( 'No source has changed since review.', 'whoiswho' ) . '</p>';
+			return '';
 		}
+		$out  = '<h3>' . esc_html__( 'Changes from the source since review', 'whoiswho' ) . '</h3>';
+		$out .= '<p class="description">' . esc_html__( 'A later import found different values at the source. They are not shown publicly until a reviewer accepts them.', 'whoiswho' ) . '</p>';
 		$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'A source changed. The change is flagged for review and has not been applied.', 'whoiswho' ) . '</p><ul>';
 		foreach ( $flagged as $row ) {
 			$fields = array_keys( (array) json_decode( (string) $row['new_value'], true ) );
