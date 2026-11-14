@@ -70,10 +70,14 @@ test.describe("stories journeys", () => {
   test("sponsored: the label and the in-story notice show while the placement is active (REQ-182, REQ-263)", async ({ page }) => {
     const res = await page.goto("/stories/e2e-story-sponsored/");
     expect(res?.status()).toBe(200);
-    await expect(page.locator(".badge--sponsored")).toHaveText("Sponsored by Fictional Sponsor Ltd");
+    await expect(page.locator(".badge--sponsored")).toHaveText("Sponsored");
     await expect(page.locator(".notice--sponsored")).toContainText("did not write it");
+    // Owner 2026-11-14 (REQ-026): the public page never names the sponsor.
+    expect(await page.content()).not.toContain("Fictional Sponsor Ltd");
     await page.goto("/stories/");
     await expect(page.locator(".stories-slot .badge--sponsored")).toHaveCount(1);
+    await expect(page.locator(".stories-slot .badge--sponsored")).toHaveText("Sponsored");
+    expect(await page.content()).not.toContain("Fictional Sponsor Ltd");
   });
 
   test("test_REQ_263_placement_expiry_in_browser: an ended placement leaves the story published with no label (REQ-263)", async ({ page }) => {

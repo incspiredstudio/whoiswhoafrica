@@ -41,7 +41,7 @@ final class SamplePageCopy {
 				array( 'Can I pay to be nominated or to win?', 'No. Judges never see payment, subscription or sponsorship information, and sponsors have no influence over who is nominated or who wins.' ),
 			),
 			'Stories'              => array(
-				array( 'What is a sponsored story?', 'A story whose placement a sponsor paid for: a labelled slot on the home page or the stories page for set dates. It is always marked “Sponsored by” with the sponsor’s name. The sponsor does not write it, and it never changes the order of other stories, search results, profiles, nominations or winners.' ),
+				array( 'What is a sponsored story?', 'A story whose placement a sponsor paid for: a labelled slot on the home page or the stories page for set dates. It is always clearly marked “Sponsored”. The sponsor does not write it, and it never changes the order of other stories, search results, profiles, nominations or winners.' ),
 			),
 			'Your data'            => array(
 				array( 'Do I need an account?', 'No. There are no public accounts. Everything on this site, including corrections, claims and nominations, works without one.' ),

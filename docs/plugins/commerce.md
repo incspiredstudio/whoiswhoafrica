@@ -49,7 +49,7 @@ Fixed means only the Administrator can hold it. It is enforced by a capability f
 | Item | Behaviour |
 |---|---|
 | `POST /subscribe` | The "Get listed" enquiry form. Creates an Enquiries item of type Enquiry (Compliance), emails the Editors and acknowledges the sender |
-| Sponsored label and slot | A story's page, card and share preview show "Sponsored by [name]" while a placement is active. The slot sits on Home, Stories or Both and never reorders other stories or search |
+| Sponsored label and slot | A story's page, card and share preview show the label "Sponsored" while a placement is active, never the sponsor's name (REQ-026, owner 2026-11-14). Staff see the sponsor in admin only. The slot sits on Home, Stories or Both and never reorders other stories or search |
 | Sponsors | Shown on the awards pages where attached |
 
 ## Jobs, hooks and events

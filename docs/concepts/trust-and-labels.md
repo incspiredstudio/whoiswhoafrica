@@ -17,7 +17,7 @@ Profiles are **never Sponsored and never Featured** (D-055). A paid listing is a
 
 ## Sponsored: stories only
 
-The brief limits the label to paid content, such as sponsored interviews, articles and features. A story is marked Sponsored with the sponsor's name, and the story page, the card and the share preview all show it (REQ-182).
+The brief limits the label to paid content, such as sponsored interviews, articles and features. A story is marked Sponsored, and the story page, the card and the share preview all show it (REQ-182). Public pages never show the sponsor's name; staff see it in admin (REQ-026, owner 2026-11-14).
 
 - The sponsor does not write the story and has no influence over any label, profile or award.
 - The label can be set by hand or applied automatically between the start and end dates of a linked arrangement.

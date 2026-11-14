@@ -6,7 +6,7 @@ Requirements: REQ-021 to 023, 112, 116, 182 to 184, 199, 263. Awards decisions a
 
 ## The rule
 
-**Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label. The only thing money can buy is a labelled placement slot for a story, for set dates, always marked "Sponsored by [name]". A sponsored slot never reorders the unsponsored stories or search results.** Payment also never creates a nomination or affects screening, shortlists or winners.
+**Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label. The only thing money can buy is a labelled placement slot for a story, for set dates, always marked "Sponsored" (the sponsor's name is never shown publicly, owner 2026-11-14). A sponsored slot never reorders the unsponsored stories or search results.** Payment also never creates a nomination or affects screening, shortlists or winners.
 
 | What money cannot do | Requirement |
 |---|---|
@@ -16,7 +16,7 @@ Requirements: REQ-021 to 023, 112, 116, 182 to 184, 199, 263. Awards decisions a
 | Buy a paid placement tier. There are no tiers, packages or entitlements; every listing has the same format | D-028, REQ-016 |
 | Make a profile Sponsored. Only stories can be Sponsored | D-055 |
 
-What money can do is one narrow, visible thing: a sponsor can pay for a story to sit in a labelled placement slot (Home, Stories or Both) for set dates (REQ-263, D-062). The story is marked "Sponsored by [name]" on its card, page and share preview. The slot never moves the unsponsored stories, search results, profiles, nominations or winners.
+What money can do is one narrow, visible thing: a sponsor can pay for a story to sit in a labelled placement slot (Home, Stories or Both) for set dates (REQ-263, D-062). The story is marked "Sponsored" on its card, page and share preview, without the sponsor's name (REQ-026, owner 2026-11-14). The slot never moves the unsponsored stories, search results, profiles, nominations or winners.
 
 ## What the platform records about money
 

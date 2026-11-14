@@ -54,7 +54,7 @@ Stories are native WordPress posts: title, body, author, hero image, tags and SE
 | Flag | How it works |
 |---|---|
 | Featured | Applies to stories only, through the native sticky flag. No plugin capability is added (REQ-183) |
-| Sponsored | Applies to stories only. A visible label with the sponsor's name, set by hand or by a linked arrangement. See [Commercial and sponsors](./commercial-and-sponsors) |
+| Sponsored | Applies to stories only. A visible Sponsored label (the sponsor's name shows in admin only, owner 2026-11-14), set by hand or by a linked arrangement. See [Commercial and sponsors](./commercial-and-sponsors) |
 
 Profiles are never Sponsored or Featured.
 

@@ -52,7 +52,7 @@ None for stories. Comments use wpDiscuz (see Comments). The newsletter sign-up i
 
 - Only stories can be Sponsored or Featured. Profiles never are (REQ-155).
 - A paid placement is the only thing money buys. It never reorders unsponsored stories or search, and never touches profiles, nominations or winners (REQ-263, 183).
-- The Sponsored label appears on the story page, the card and the share preview, shows the sponsor's name, and is never styled like a trust status (REQ-026, 182).
+- The Sponsored label appears on the story page, the card and the share preview, never shows the sponsor's name (owner 2026-11-14), and is never styled like a trust status (REQ-026, 182).
 - The notice in a sponsored story reads: the content is paid for by the sponsor, the sponsor did not write it and has no influence over any label or award.
 - Stories are ordered newest first, except that Featured stories come first on the stories page (REQ-257).
 - A story that is draft, scheduled or removed returns 404 to visitors and is not searchable or in the sitemap. Staff see a preview banner.

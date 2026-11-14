@@ -605,7 +605,7 @@ return array(
 		'retention' => 'case_life',
 		'export'    => 'include',
 		'erase'     => 'anonymise',
-		'note'      => 'Sponsor name shown as Sponsored by while a placement is active.',
+		'note'      => 'Sponsor name, shown to staff in admin only; public pages show the plain Sponsored label (REQ-026).',
 	),
 	array(
 		'kind'      => 'meta',
