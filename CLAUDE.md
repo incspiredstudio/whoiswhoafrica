@@ -46,7 +46,7 @@ Stack: WordPress (current stable) built locally and migrated to the live cPanel 
 - Build assets: `npm run build`
 - E2E and accessibility: `npx playwright test`
 - Dependency audit: `composer audit` and `npm audit --audit-level=high`
-- Migrate: `php bin/wiw.php migrate` (local); production runs it only through the deploy script
+- Migrate: `php bin/wiw.php migrate` (local); production runs it through the deploy script. On a live site the Administrator can also apply pending migrations from the Setup screen's guarded "Update the database" button, after a backup
 - Run queued jobs locally: `php bin/wiw.php jobs:run`
 - Go live: migrate the finished local site to the live host with the checklist in docs/architecture.md section 8, after your approval
 

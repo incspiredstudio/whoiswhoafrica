@@ -26,6 +26,8 @@ The module everything else stands on: capabilities and roles, the audit log, set
 
 | Screen | What it does |
 |---|---|
+| Setup | `wiw_run_setup`, Administrator only (fixed). The ten-line checklist with one-click fixes; the Turnstile site key and secret key form (the secret is never shown again; constants win); the guarded **Update the database** button that applies pending migrations on a live site after an "I have a backup" tick (D-070); the demo content chooser. The demo imports the plugin's `sample/sample-50.zip` when a release was packaged with `SAMPLE_BUNDLE=<path to sample-50.zip> bash site/bin/package-release.sh`, else invented profiles; demo awards and home page pins always use invented profiles |
+| Site settings > Required plugins | `wiw_run_setup` plus core `install_plugins` (Install) and `activate_plugins` (Activate). Status, Install and Activate for FluentSMTP and wpDiscuz (required) and Two Factor (recommended). A dismissible notice reminds Administrators while one is missing |
 | Dashboard | Differs by role. Reviewers see review and directory tiles. Editors add support and nominations counts. Administrators add sprint, revenue and arrangement tiles |
 | Audit log | Read and verify the chain |
 | Sprint thresholds | The two sprint targets. Administrator only, audited. Shown only while the `sprint_tracking` theme setting is on (REQ-272) |
@@ -45,6 +47,7 @@ The module everything else stands on: capabilities and roles, the audit log, set
 | `wiw_manage_capabilities` (fixed) | no | no | yes |
 | `wiw_toggle_nominations` (fixed) | no | no | yes |
 | `wiw_export_data` | no | no | yes |
+| `wiw_run_setup` (fixed) | no | no | yes |
 | `manage_options` (core, fixed) | no | no | yes |
 | User, plugin and theme capabilities (core, fixed) | no | no | yes |
 
@@ -78,7 +81,9 @@ Jobs run on Action Scheduler through WP-Cron, with a time budget. A real cron on
 - **Deny by default.** Every admin screen and action checks a named capability. A screen hidden from a menu is also blocked by direct URL.
 - **Audit everything sensitive.** Staff actions on profiles, labels, sponsored story deals, imports, bulk unpublish, suppression, the Nominations flag and capability grants go through `AuditLogger`.
 - **Signed links.** 32 random bytes, stored only as a hash, bound to one purpose and record, expiring (14 days by default, shorter for verification), single use, no personal data in the URL. Staff can revoke or reissue.
-- **Mail.** `wp_mail` through the host's SMTP, with SPF, DKIM and DMARC. Every message is logged. Marketing messages carry a one-click unsubscribe.
+- **Mail.** FluentSMTP is recommended (installed from Site settings > Required plugins and connected to the host's mail account, with SPF, DKIM and DMARC). When it is active the plugin leaves sending to it; otherwise the `WIW_SMTP_*` constants if set, else plain `wp_mail`. FluentSMTP's own email log is forced off, because message bodies carry signed links. Every message is logged in our email log. Marketing messages carry a one-click unsubscribe.
+- **Two-factor.** Available and recommended for staff, not enforced (D-070). The Setup screen shows who has it on.
+- **Imports on a live site.** Bundles up to 512 MB upload in pieces and are applied in short steps; larger ones go in the server import folder `wp-content/uploads/wiw-import/` and are picked on the Import screen.
 - **No PII in logs or errors.** Logs carry identifiers only.
 - **The only feature flag is Nominations.**
 - **Cache.** Public HTML is cached at the edge for at most 120 seconds (60 for lists and search). If Cloudflare is added, unpublish triggers a purge by URL.
@@ -90,7 +95,7 @@ Jobs run on Action Scheduler through WP-Cron, with a time budget. A real cron on
 | Public pages | `/`, `/about`, `/people`, `/businesses`, `/institutions`, `/industries`, `/stories`, `/awards`, `/profile/{slug}`, `/search`, `/sitemap.xml`, `/robots.txt`, legal pages |
 | Public forms | `POST /enquire/{slug}`, `/correct/{slug}`, `/remove/{slug}`, `/report/{slug}`, `/claim/{slug}`, `/subscribe`, `/contact`, `/nominate`, `/newsletter`, `/data-rights` |
 | Signed links | `/link/{token}` |
-| Staff | `/wp-login.php` with two-factor, then wp-admin |
+| Staff | `/wp-login.php` (two-factor when the person switched it on), then wp-admin |
 | Health | `/healthz` |
 
 ## Tests that must exist
