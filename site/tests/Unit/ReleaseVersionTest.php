@@ -30,16 +30,16 @@ final class ReleaseVersionTest extends TestCase {
 
 	public function test_REQ_046_every_part_of_the_release_says_the_same_version(): void {
 		$parts = array(
-			'plugin header'      => array( 'wp-content/plugins/whoiswho-core/whoiswho-core.php', '/^ \* Version:\s*(\S+)/m' ),
-			'plugin constant'    => array( 'wp-content/plugins/whoiswho-core/whoiswho-core.php', "/'WIW_CORE_VERSION',\s*'([^']+)'/" ),
-			'guard header'       => array( 'wp-content/mu-plugins/whoiswho-guard.php', '/^ \* Version:\s*(\S+)/m' ),
-			'guard constant'     => array( 'wp-content/mu-plugins/whoiswho-guard.php', "/'WIW_GUARD_VERSION',\s*'([^']+)'/" ),
-			'parent theme'       => array( 'wp-content/themes/whoiswho/style.css', '/^Version:\s*(\S+)/m' ),
-			'parent constant'    => array( 'wp-content/themes/whoiswho/functions.php', "/'WIW_THEME_VERSION',\s*'([^']+)'/" ),
-			'child theme'        => array( 'wp-content/themes/whoiswho-child/style.css', '/^Version:\s*(\S+)/m' ),
-			'child constant'     => array( 'wp-content/themes/whoiswho-child/functions.php', "/'WIW_CHILD_VERSION',\s*'([^']+)'/" ),
-			'package.json'       => array( 'package.json', '/^  "version":\s*"([^"]+)"/m' ),
-			'package-lock.json'  => array( 'package-lock.json', '/^  "version":\s*"([^"]+)"/m' ),
+			'plugin header'     => array( 'wp-content/plugins/whoiswho-core/whoiswho-core.php', '/^ \* Version:\s*(\S+)/m' ),
+			'plugin constant'   => array( 'wp-content/plugins/whoiswho-core/whoiswho-core.php', "/'WIW_CORE_VERSION',\s*'([^']+)'/" ),
+			'guard header'      => array( 'wp-content/mu-plugins/whoiswho-guard.php', '/^ \* Version:\s*(\S+)/m' ),
+			'guard constant'    => array( 'wp-content/mu-plugins/whoiswho-guard.php', "/'WIW_GUARD_VERSION',\s*'([^']+)'/" ),
+			'parent theme'      => array( 'wp-content/themes/whoiswho/style.css', '/^Version:\s*(\S+)/m' ),
+			'parent constant'   => array( 'wp-content/themes/whoiswho/functions.php', "/'WIW_THEME_VERSION',\s*'([^']+)'/" ),
+			'child theme'       => array( 'wp-content/themes/whoiswho-child/style.css', '/^Version:\s*(\S+)/m' ),
+			'child constant'    => array( 'wp-content/themes/whoiswho-child/functions.php', "/'WIW_CHILD_VERSION',\s*'([^']+)'/" ),
+			'package.json'      => array( 'package.json', '/^  "version":\s*"([^"]+)"/m' ),
+			'package-lock.json' => array( 'package-lock.json', '/^  "version":\s*"([^"]+)"/m' ),
 		);
 		foreach ( $parts as $label => $part ) {
 			$this->assertSame( self::VERSION, $this->found( $part[0], $part[1] ), $label );

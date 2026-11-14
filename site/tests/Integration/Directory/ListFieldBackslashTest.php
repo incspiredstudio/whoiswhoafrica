@@ -193,7 +193,7 @@ final class ListFieldBackslashTest extends TestCase {
 				'provenance' => $provenance,
 			),
 		);
-		$result = ( new ProfileApplier( new Suppression( AuditLogger::for_site() ) ) )->apply( $record, 'B-slash', $this->user( 'wiw_editor' ), true );
+		$result                     = ( new ProfileApplier( new Suppression( AuditLogger::for_site() ) ) )->apply( $record, 'B-slash', $this->user( 'wiw_editor' ), true );
 		$this->assertSame( ProfileApplier::CREATED, $result['code'] );
 		$id            = (int) $result['profile_id'];
 		$this->posts[] = $id;

@@ -77,7 +77,7 @@ final class ListMetaRepair {
 			'repaired'      => 0,
 			'unrecoverable' => 0,
 		);
-		$keys = $this->list_meta_keys();
+		$keys   = $this->list_meta_keys();
 		if ( array() === $keys ) {
 			return $counts;
 		}

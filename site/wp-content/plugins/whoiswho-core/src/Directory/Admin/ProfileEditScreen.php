@@ -384,7 +384,7 @@ final class ProfileEditScreen {
 				$out .= '<option value="' . esc_attr( (string) $term->term_id ) . '"' . selected( in_array( (int) $term->term_id, $have, true ), true, false ) . '>' . esc_html( $term->name ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 			}
 			$out .= '</select></label></p>';
-		}
+		}//end foreach
 		return $out;
 	}
 
