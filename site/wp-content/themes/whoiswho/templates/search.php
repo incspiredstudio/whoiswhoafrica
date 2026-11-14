@@ -37,11 +37,12 @@ if ( SearchService::STATE_RATE_LIMITED === $wiw_r['state'] ) {
 
 get_header();
 ?>
-<section class="section section--tight page-band search-band">
-	<div class="wrap wrap--text">
+<?php // A dark band with the search field, as the prototype's search page. ?>
+<section class="page-band page-band--dark title-band on-dark pattern search-band">
+	<div class="wrap">
 		<p class="eyebrow"><?php esc_html_e( 'Search', 'whoiswho' ); ?></p>
 		<h1><?php echo esc_html( '' === $wiw_q ? __( 'Search the directory and stories', 'whoiswho' ) : sprintf( /* translators: %s: the words searched */ __( 'Results for “%s”', 'whoiswho' ), $wiw_q ) ); ?></h1>
-		<form class="search-form" role="search" method="get" action="<?php echo esc_url( home_url( '/search/' ) ); ?>">
+		<form class="search-form dir-search" role="search" method="get" action="<?php echo esc_url( home_url( '/search/' ) ); ?>">
 			<label class="sr" for="search-page-q"><?php esc_html_e( 'Search people, businesses, institutions and stories', 'whoiswho' ); ?></label>
 			<input id="search-page-q" name="q" type="search" maxlength="80" autocomplete="off" value="<?php echo esc_attr( $wiw_q ); ?>" placeholder="<?php esc_attr_e( 'Type a name, organisation or keyword', 'whoiswho' ); ?>">
 			<button class="btn" type="submit"><?php esc_html_e( 'Search', 'whoiswho' ); ?></button>
