@@ -59,6 +59,17 @@ final class FieldAllowlist {
 	}
 
 	/**
+	 * The plain label staff screens show for a field: the config's label, or a readable form of the key (issue 806).
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param string $key         Field key.
+	 */
+	public function label( string $entity_type, string $key ): string {
+		$label = $this->for_type( $entity_type )[ $key ]['label'] ?? '';
+		return is_string( $label ) && '' !== trim( $label ) ? $label : ucfirst( str_replace( '_', ' ', $key ) );
+	}
+
+	/**
 	 * Whether a key is allowed for an entity type.
 	 *
 	 * @param string $entity_type Entity type.
