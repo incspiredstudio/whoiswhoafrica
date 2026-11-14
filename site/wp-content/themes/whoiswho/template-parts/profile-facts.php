@@ -49,7 +49,11 @@ if ( array() === $wiw_rows ) {
 						<?php echo esc_html( $wiw_row['value'] ); ?>
 						<span class="src">
 							<?php esc_html_e( 'Source:', 'whoiswho' ); ?>
-							<a href="<?php echo esc_url( $wiw_row['source_url'] ); ?>" rel="nofollow noopener"><?php echo esc_html( $wiw_row['source_host'] ); ?></a>
+							<?php if ( '' !== $wiw_row['source_url'] ) : ?>
+								<a href="<?php echo esc_url( $wiw_row['source_url'] ); ?>" rel="nofollow noopener"><?php echo esc_html( $wiw_row['source_host'] ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $wiw_row['source_label'] ); ?>
+							<?php endif; ?>
 							<?php esc_html_e( 'Retrieved', 'whoiswho' ); ?>
 							<time datetime="<?php echo esc_attr( $wiw_row['retrieved_iso'] ); ?>"><?php echo esc_html( $wiw_row['retrieved'] ); ?></time>
 						</span>

@@ -417,6 +417,53 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 		$this->assertSame( array( 'Regulator' ), array_column( $bare, 'label' ), 'an unclassified profile shows no industry, sector, type or city row' );
 	}
 
+	public function test_REQ_144_a_staff_edit_source_is_plain_text_never_a_link(): void {
+		$facts = array(
+			'current_title'        => array(
+				'value'        => 'Governor',
+				'source_url'   => 'Staff edit',
+				'retrieved_at' => '2026-11-14T09:00:00Z',
+			),
+			'current_organisation' => array(
+				'value'        => 'Central Bank',
+				'source_url'   => 'javascript:alert(1)',
+				'retrieved_at' => '2026-11-14T09:00:00Z',
+			),
+		);
+		$rows  = wiw_key_fact_rows(
+			$facts,
+			array(),
+			'',
+			array(
+				'city'    => '',
+				'country' => '',
+			)
+		);
+		$this->assertCount( 2, $rows );
+		$this->assertSame( '', $rows[0]['source_url'] );
+		$this->assertSame( '', $rows[0]['source_host'], 'no host is made up from the text' );
+		$this->assertSame( 'Staff edit', $rows[0]['source_label'] );
+		$this->assertSame( '', $rows[1]['source_url'], 'a non-http address is never linked' );
+
+		$this->setting( 'profile_key_facts', 'show' );
+		$profile = $this->profile( 'Factsmode Staff', array( 'current_title' => 'Governor' ) );
+		( new ProvenanceRepository() )->record(
+			$profile->id,
+			array(
+				'field'        => 'current_title',
+				'source_url'   => 'Staff edit',
+				'retrieved_at' => '2026-11-14T09:00:00Z',
+				'confidence'   => 'medium',
+				'method'       => 'manual',
+			)
+		);
+		$fresh = PublicProfile::find_by_id( $profile->id );
+		$this->assertNotNull( $fresh );
+		$out = $this->render( 'template-parts/profile-facts', $fresh );
+		$this->assertStringContainsString( 'Staff edit', $out );
+		$this->assertStringNotContainsString( '<a href', $out, 'the staff edit source is not a link' );
+	}
+
 	// ---------- key facts setting ----------
 
 	public function test_REQ_144_key_facts_are_hidden_by_default_with_no_heading_or_anchor(): void {

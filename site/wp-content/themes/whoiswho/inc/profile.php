@@ -114,7 +114,7 @@ if ( ! function_exists( 'wiw_profile_key_facts' ) ) {
 	 * source of the fact they came from; the old free-text values are never shown.
 	 *
 	 * @param PublicProfile $profile Profile.
-	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, retrieved: string, retrieved_iso: string}>
+	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, source_label: string, retrieved: string, retrieved_iso: string}>
 	 */
 	function wiw_profile_key_facts( PublicProfile $profile ): array {
 		return wiw_key_fact_rows( $profile->facts, wiw_profile_classification( $profile ), wiw_profile_org_type( $profile ), wiw_profile_place( $profile ) );
@@ -125,13 +125,14 @@ if ( ! function_exists( 'wiw_key_fact_rows' ) ) {
 	/**
 	 * Build the key facts rows from sourced facts and the classified values (REQ-144, REQ-133, REQ-009). The sector and industry
 	 * rows carry the industry fact's source (the sector follows from the industry in the tree); a classified row with no value
-	 * (an unclassified profile, an unknown city) is left out.
+	 * (an unclassified profile, an unknown city) is left out. A source that is not an http(s) address, such as "Staff edit" on a
+	 * staff-edited fact, is kept as plain text in source_label and never linked; source_url and source_host are then empty.
 	 *
 	 * @param array<string, array<string, mixed>>  $facts          Sourced facts from the read model.
 	 * @param array<string, mixed>                 $classification From wiw_profile_classification().
 	 * @param string                               $org_type       Organisation type name.
 	 * @param array{city: string, country: string} $place         From wiw_profile_place().
-	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, retrieved: string, retrieved_iso: string}>
+	 * @return array<int, array{label: string, value: string, source_url: string, source_host: string, source_label: string, retrieved: string, retrieved_iso: string}>
 	 */
 	function wiw_key_fact_rows( array $facts, array $classification, string $org_type, array $place ): array {
 		$name       = static fn ( $part ): string => is_array( $part ) ? (string) ( $part['name'] ?? '' ) : '';
@@ -150,9 +151,10 @@ if ( ! function_exists( 'wiw_key_fact_rows' ) ) {
 			if ( in_array( $key, array( 'bio', 'summary', 'achievement', 'influence', 'legacy' ), true ) ) {
 				continue;
 			}
-			$source = esc_url_raw( (string) ( $fact['source_url'] ?? '' ) );
+			$raw    = trim( (string) ( $fact['source_url'] ?? '' ) );
+			$source = 1 === preg_match( '#^https?://[^\s/]+#i', $raw ) ? esc_url_raw( $raw ) : '';
 			$when   = strtotime( (string) ( $fact['retrieved_at'] ?? '' ) );
-			if ( '' === $source || false === $when ) {
+			if ( '' === $raw || false === $when ) {
 				continue;
 			}
 			if ( isset( $classified[ $key ] ) ) {
@@ -171,7 +173,8 @@ if ( ! function_exists( 'wiw_key_fact_rows' ) ) {
 					'label'         => $pair[0],
 					'value'         => $pair[1],
 					'source_url'    => $source,
-					'source_host'   => '' !== $host ? (string) preg_replace( '#^www\.#', '', $host ) : $source,
+					'source_host'   => '' !== $host ? (string) preg_replace( '#^www\.#', '', $host ) : '',
+					'source_label'  => '' === $source ? $raw : '',
 					'retrieved'     => wp_date( (string) get_option( 'date_format' ), $when ),
 					'retrieved_iso' => gmdate( 'Y-m-d', $when ),
 				);
