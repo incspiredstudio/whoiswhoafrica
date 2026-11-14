@@ -9,6 +9,7 @@
 
 declare(strict_types=1);
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Directory\ProfileList;
 use WhoIsWho\Core\Directory\Taxonomies;
 
@@ -117,10 +118,12 @@ if ( ! function_exists( 'wiw_directory_params' ) ) {
 
 if ( ! function_exists( 'wiw_directory_filter_options' ) ) {
 	/**
-	 * Options of one filter as slug => name, from the controlled lists.
+	 * Options of one filter as slug => name, from the controlled lists. Industries are grouped by sector (REQ-009): each sector is
+	 * a group (key "group:<sector slug>") whose first option is the sector itself (it lists every industry under it), followed by
+	 * its industries. Unclassified is not public navigation and is left out.
 	 *
 	 * @param string $filter industry, country, city, profession or org_type.
-	 * @return array<string, string>
+	 * @return array<string, string|array{label: string, options: array<string, string>}>
 	 */
 	function wiw_directory_filter_options( string $filter ): array {
 		$map      = array(
@@ -142,6 +145,9 @@ if ( ! function_exists( 'wiw_directory_filter_options' ) ) {
 			)
 		);
 		$out   = array();
+		if ( Taxonomies::INDUSTRY === $taxonomy ) {
+			return wiw_directory_industry_groups( is_array( $terms ) ? $terms : array() );
+		}
 		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
 			if ( Taxonomies::PLACE === $taxonomy ) {
 				$kind  = (string) get_term_meta( $term->term_id, Taxonomies::META_KIND, true );
@@ -151,6 +157,43 @@ if ( ! function_exists( 'wiw_directory_filter_options' ) ) {
 				}
 			}
 			$out[ (string) $term->slug ] = (string) $term->name;
+		}
+		return $out;
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_directory_industry_groups' ) ) {
+	/**
+	 * The industry tree as select groups (REQ-009): sector => its own option ("All <sector>") then its industries, sectors and
+	 * industries each in name order. Unclassified and industries without a known sector are left out.
+	 *
+	 * @param array<int, \WP_Term> $terms Industry terms (sectors and industries).
+	 * @return array<string, array{label: string, options: array<string, string>}>
+	 */
+	function wiw_directory_industry_groups( array $terms ): array {
+		$skip    = class_exists( Classification::class ) ? Classification::unclassified_slug() : 'unclassified';
+		$sectors = array();
+		$leaves  = array();
+		foreach ( $terms as $term ) {
+			if ( $skip === $term->slug ) {
+				continue;
+			}
+			if ( 0 === (int) $term->parent ) {
+				$sectors[ (int) $term->term_id ] = $term;
+			} else {
+				$leaves[ (int) $term->parent ][ (string) $term->slug ] = (string) $term->name;
+			}
+		}
+		uasort( $sectors, static fn ( \WP_Term $a, \WP_Term $b ): int => strcasecmp( $a->name, $b->name ) );
+		$out = array();
+		foreach ( $sectors as $id => $sector ) {
+			$options = $leaves[ $id ] ?? array();
+			asort( $options, SORT_NATURAL | SORT_FLAG_CASE );
+			$out[ 'group:' . $sector->slug ] = array(
+				'label'   => (string) $sector->name,
+				/* translators: %s: sector name. */
+				'options' => array( (string) $sector->slug => sprintf( __( 'All %s', 'whoiswho' ), (string) $sector->name ) ) + $options,
+			);
 		}
 		return $out;
 	}

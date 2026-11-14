@@ -1337,6 +1337,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ind-count { display: inline-flex; flex: none; align-items: center; gap: var(--s-2); font: 400 var(--t-sm)/1 var(--font-body); color: var(--c-muted); white-space: nowrap; }
 .index-list a:hover .ind-count { color: inherit; }
 .ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
+.ind-sectors { display: grid; gap: var(--s-7) var(--s-8); grid-template-columns: minmax(0, 1fr); margin-block: var(--s-4) var(--s-6); }
+
+@media (width >= 64rem) { .ind-sectors { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ind-sector { min-width: 0; }
+.ind-sector-h { border-top: 3px solid var(--c-text); }
+.ind-sector-h a { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); padding-block: var(--s-3); color: inherit; font: 400 var(--t-xl)/1.1 var(--font-display); text-decoration: none; }
+.ind-sector-h a:hover .ind-name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .16em; }
+.ind-sector .ind-list { margin: 0; }
+.ind-sector .index-list a { font-size: var(--t-md); }
 
 /* ---------- profile rail (REQ-142, REQ-156) ---------- */
 .rail-card { padding: var(--s-4); border: 1px solid var(--c-line); background: var(--c-surface); }
@@ -1522,3 +1531,51 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .share-media--empty { display: grid; place-items: center; background: var(--c-surface); color: var(--c-muted); font: 400 var(--t-lg)/1 var(--font-display); }
 .rail-share .share div { display: grid; gap: var(--s-1); align-content: center; }
 .rail-share .pending-note { margin: 0; }
+
+/* ---------- profile breadcrumb, compact image credit and folded key facts (REQ-009, REQ-203, REQ-144, REQ-043) ---------- */
+.crumbs-list { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; font-size: var(--t-xs); font-weight: 500; letter-spacing: var(--track-label); text-transform: uppercase; }
+.crumbs-list li { display: inline-flex; flex: none; align-items: center; white-space: nowrap; }
+.crumbs-list li:last-child { flex: 0 1 auto; min-width: 0; }
+.crumbs-sep { margin-inline: var(--s-2); color: var(--c-muted); font-weight: 400; }
+.crumbs-list a { display: inline-flex; align-items: center; min-height: 1.5rem; color: var(--c-muted); text-decoration: none; background: linear-gradient(currentcolor, currentcolor) left calc(100% - .25rem) / 0 1px no-repeat; transition: background-size var(--m-base) var(--ease-out), color var(--m-fast) var(--ease-out); }
+.crumbs-list a:hover, .crumbs-list a:focus-visible { color: var(--c-text); background-size: 100% 1px; }
+.crumbs-list [aria-current="page"] { overflow: hidden; color: var(--c-text); text-overflow: ellipsis; }
+.crumbs-list .crumbs-fold { display: none; color: var(--c-muted); }
+
+@media (width < 40rem) {
+  .crumbs--foldable .crumbs-list .crumbs-fold { display: inline-flex; }
+  .crumbs--foldable .crumbs-mid:not(:focus-within) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+.profile-photo { position: relative; flex: none; align-self: flex-start; }
+.credit-toggle { position: absolute; right: var(--s-1); bottom: var(--s-1); display: grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--c-dark) 82%, transparent); color: var(--c-on-dark); box-shadow: var(--sh-2); cursor: pointer; backdrop-filter: blur(6px); transition: background-color var(--m-fast) var(--ease-out), color var(--m-fast) var(--ease-out), transform var(--m-fast) var(--ease-out); }
+.credit-toggle .ico { width: 1rem; height: 1rem; }
+.credit-toggle:hover { transform: scale(1.08); }
+.credit-toggle[aria-expanded="true"] { background: var(--c-on-dark); color: var(--c-dark); }
+
+@media (width >= 48rem) { .credit-toggle { width: 2rem; height: 2rem; right: var(--s-2); bottom: var(--s-2); } }
+
+.credit-pop { position: absolute; z-index: 3; top: calc(100% + var(--s-2)); left: 0; width: max-content; max-width: min(22rem, calc(100vw - 2 * var(--gutter))); margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-2); background: var(--c-dark); color: var(--c-on-dark); box-shadow: var(--sh-3); font-size: var(--t-xs); line-height: 1.5; overflow-wrap: anywhere; }
+.credit-pop:not([hidden]) { animation: credit-in var(--m-base) var(--ease-out); }
+.credit-pop a { color: inherit; text-decoration: underline; text-underline-offset: .16em; }
+.credit-pop a:focus-visible { outline-color: var(--c-focus-on-dark); }
+
+/* Where the name wraps below the photo, the credit opens beside the photo instead of over the name. */
+@media (width < 25.5rem) {
+  .credit-pop { top: auto; bottom: 0; left: calc(100% + var(--s-3)); max-width: calc(100vw - 2 * var(--gutter) - 6.5rem - var(--s-3)); }
+}
+
+@keyframes credit-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .credit-pop:not([hidden]) { animation: none; }
+  .credit-toggle, .crumbs-list a { transition: none; }
+}
+.profile-credits { margin-top: var(--s-7); padding-top: var(--s-3); border-top: 1px solid var(--c-line); color: var(--c-muted); font-size: var(--t-xs); line-height: 1.5; }
+.profile-credits-h { display: block; margin-bottom: var(--s-1); color: var(--c-text); font-weight: 500; letter-spacing: var(--track-label); text-transform: uppercase; }
+.profile-credits a { color: inherit; text-decoration: underline; }
+.facts-fold { margin-top: var(--s-7); border-top: 3px solid var(--c-text); }
+.facts-fold > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 3rem; padding-block: var(--s-3); font: 400 var(--t-xl)/1.1 var(--font-display); cursor: pointer; list-style: none; }
+.facts-fold > summary::-webkit-details-marker { display: none; }
+.facts-fold > summary .ico { flex: none; width: 1.25rem; height: 1.25rem; transition: transform var(--m-base) var(--ease-out); }
+.facts-fold[open] > summary .ico { transform: rotate(180deg); }
+.facts-fold .facts { width: 100%; }

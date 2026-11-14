@@ -3,8 +3,9 @@
  * Profile page (REQ-003, REQ-004, REQ-005, REQ-247, REQ-082, REQ-033, REQ-162): header, a two-column body (sections left, rail
  * right, stacked on phones), matching the prototype profile view. The award poster leads the body when the profile has a live
  * nomination or win. The narrative sections Bio, Achievement, Influence and Legacy (contract 1.1) follow, each with a heading
- * and its paragraphs, then the other sections, key facts and one related-stories block. The rail holds contact, the "Something
- * wrong?" actions and the "When shared" preview. Reads the profile only through PublicProfile (and the nominee through
+ * and its paragraphs, then the other sections, key facts (as the key facts setting asks: shown here, folded at the foot, or
+ * absent; REQ-144) and one related-stories block, then the Image credits line when the credit is compact (REQ-203). The
+ * rail holds contact, the "Something wrong?" actions and the "When shared" preview. Reads the profile only through PublicProfile (and the nominee through
  * PublicNominee). No cover or banner image, no email or phone.
  *
  * @package WhoIsWho
@@ -36,6 +37,7 @@ $wiw_sections  = wiw_profile_sections( $wiw_profile );
 $wiw_narrative = $wiw_profile->sections();
 $wiw_site      = wiw_profile_fact( $wiw_profile, 'official_website' );
 $wiw_site      = '' !== $wiw_site ? $wiw_site : wiw_profile_fact( $wiw_profile, 'website' );
+$wiw_facts     = wiw_profile_key_facts_mode();
 $wiw_nominee   = class_exists( PublicNominee::class ) ? PublicNominee::for_profile( $wiw_profile->id ) : null;
 ?>
 <article class="profile">
@@ -95,7 +97,11 @@ $wiw_nominee   = class_exists( PublicNominee::class ) ? PublicNominee::for_profi
 					<?php endif; ?>
 				</section>
 			<?php endforeach; ?>
-			<?php get_template_part( 'template-parts/profile-facts', null, array( 'profile' => $wiw_profile ) ); ?>
+			<?php
+			if ( 'show' === $wiw_facts ) {
+				get_template_part( 'template-parts/profile-facts', null, array( 'profile' => $wiw_profile ) );
+			}
+			?>
 			<?php if ( '' !== $wiw_site ) : ?>
 				<p class="profile-website">
 					<?php esc_html_e( 'Website:', 'whoiswho' ); ?>
@@ -103,6 +109,12 @@ $wiw_nominee   = class_exists( PublicNominee::class ) ? PublicNominee::for_profi
 				</p>
 			<?php endif; ?>
 			<?php get_template_part( 'template-parts/profile-related-stories', null, array( 'profile' => $wiw_profile ) ); ?>
+			<?php
+			if ( 'collapsed' === $wiw_facts ) {
+				get_template_part( 'template-parts/profile-facts', null, array( 'profile' => $wiw_profile ) );
+			}
+			echo wp_kses( wiw_profile_foot_credit( $wiw_profile ), wiw_credit_kses() );
+			?>
 		</div>
 		<aside class="profile-rail" aria-label="<?php esc_attr_e( 'Actions', 'whoiswho' ); ?>">
 			<?php

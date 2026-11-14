@@ -1,7 +1,7 @@
 <?php
 /**
- * Industries (REQ-007, REQ-009): the index at /industries with a public count per industry, and the industry page at
- * /industries/{slug} with its reviewed profiles and, only when there are any, its stories. Counts and profiles come from
+ * Industries (REQ-007, REQ-009): the index at /industries lists the sectors, each with its industries grouped under it and a
+ * public count on every row; the industry page at /industries/{slug} (a sector or an industry) shows its reviewed profiles and, only when there are any, its stories. Counts and profiles come from
  * ProfileList, which never includes a profile that is pending review, hidden or removed; stories come from PublicStory.
  * An industry with no public profiles shows an empty state.
  *
@@ -49,24 +49,44 @@ if ( null === $wiw_term ) :
 			?>
 		<?php else : ?>
 			<?php
-			// One row per industry, as the prototype's index list: the name, the count and an arrow.
+			// Sectors in name order, each with its industries under it as the prototype's index list: the name, the count and
+			// an arrow. The sector heading links to the whole sector.
 			?>
-			<ul class="index-list ind-list">
-				<?php foreach ( $wiw_rows as $wiw_row ) : ?>
-					<li>
-						<a class="ind-tile" href="<?php echo esc_url( home_url( '/industries/' . $wiw_row['slug'] . '/' ) ); ?>">
-							<span class="ind-name"><?php echo esc_html( $wiw_row['name'] ); ?></span>
-							<span class="ind-count">
-								<?php
-								/* translators: %d: number of profiles. */
-								echo esc_html( sprintf( _n( '%d profile', '%d profiles', $wiw_row['count'], 'whoiswho' ), $wiw_row['count'] ) );
-								?>
-								<?php echo wiw_icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
-							</span>
-						</a>
-					</li>
+			<div class="ind-sectors">
+				<?php foreach ( wiw_industry_sectors( $wiw_rows ) as $wiw_sector ) : ?>
+					<section class="ind-sector" aria-labelledby="ind-<?php echo esc_attr( $wiw_sector['slug'] ); ?>">
+						<h2 class="ind-sector-h" id="ind-<?php echo esc_attr( $wiw_sector['slug'] ); ?>">
+							<a href="<?php echo esc_url( home_url( '/industries/' . $wiw_sector['slug'] . '/' ) ); ?>">
+								<span class="ind-name"><?php echo esc_html( $wiw_sector['name'] ); ?></span>
+								<span class="ind-count">
+									<?php
+									/* translators: %d: number of profiles. */
+									echo esc_html( sprintf( _n( '%d profile', '%d profiles', $wiw_sector['count'], 'whoiswho' ), $wiw_sector['count'] ) );
+									?>
+								</span>
+							</a>
+						</h2>
+						<?php if ( array() !== $wiw_sector['industries'] ) : ?>
+							<ul class="index-list ind-list">
+								<?php foreach ( $wiw_sector['industries'] as $wiw_row ) : ?>
+									<li>
+										<a class="ind-tile" href="<?php echo esc_url( home_url( '/industries/' . $wiw_row['slug'] . '/' ) ); ?>">
+											<span class="ind-name"><?php echo esc_html( $wiw_row['name'] ); ?></span>
+											<span class="ind-count">
+												<?php
+												/* translators: %d: number of profiles. */
+												echo esc_html( sprintf( _n( '%d profile', '%d profiles', $wiw_row['count'], 'whoiswho' ), $wiw_row['count'] ) );
+												?>
+												<?php echo wiw_icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
+											</span>
+										</a>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						<?php endif; ?>
+					</section>
 				<?php endforeach; ?>
-			</ul>
+			</div>
 		<?php endif; ?>
 	</div>
 </section>

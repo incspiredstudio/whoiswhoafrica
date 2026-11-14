@@ -9,7 +9,8 @@
  * - label    string  Accessible name of the form.
  * - hidden   array   name => value pairs kept when filters change (for example the story type).
  * - search   array   name, value, placeholder, label (optional).
- * - controls array   each: name, label, blank (text of the "all" option), options (value => label), value.
+ * - controls array   each: name, label, blank (text of the "all" option), options (value => label, or a group key =>
+ *                    array( label, options ) printed as an optgroup), value.
  * - sort     array   name, value, options (value => label) (optional).
  * - view     array   Grid or list switch (optional): value (grid|list), grid and list (addresses that keep the filters).
  * - count    string  Result count text, for example "12 stories".
@@ -60,7 +61,15 @@ $wiw_fb_select = static function ( array $control ): void {
 				<option value=""><?php echo esc_html( (string) $control['blank'] ); ?></option>
 			<?php endif; ?>
 			<?php foreach ( $options as $option_value => $option_label ) : ?>
-				<option value="<?php echo esc_attr( (string) $option_value ); ?>"<?php selected( $value, (string) $option_value ); ?>><?php echo esc_html( (string) $option_label ); ?></option>
+				<?php if ( is_array( $option_label ) ) : ?>
+					<optgroup label="<?php echo esc_attr( (string) ( $option_label['label'] ?? '' ) ); ?>">
+						<?php foreach ( (array) ( $option_label['options'] ?? array() ) as $group_value => $group_label ) : ?>
+							<option value="<?php echo esc_attr( (string) $group_value ); ?>"<?php selected( $value, (string) $group_value ); ?>><?php echo esc_html( (string) $group_label ); ?></option>
+						<?php endforeach; ?>
+					</optgroup>
+				<?php else : ?>
+					<option value="<?php echo esc_attr( (string) $option_value ); ?>"<?php selected( $value, (string) $option_value ); ?>><?php echo esc_html( (string) $option_label ); ?></option>
+				<?php endif; ?>
 			<?php endforeach; ?>
 		</select>
 	</label>

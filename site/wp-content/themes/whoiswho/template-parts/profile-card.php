@@ -1,6 +1,7 @@
 <?php
 /**
- * Profile card for lists, home and search (REQ-216, REQ-155, REQ-247): poster, industry, name, role. No Verified, Featured,
+ * Profile card for lists, home and search (REQ-216, REQ-155, REQ-247, REQ-009): poster, industry (the classified industry, none
+ * when unclassified), name, role (title, else the organisation type). No Verified, Featured,
  * Sponsored or Claimed mark and no cover image: the only label is the pending-review one, read from the profile.
  * Reads the profile only through PublicProfile. Args: profile (PublicProfile).
  *
@@ -20,14 +21,12 @@ if ( ! $wiw_profile instanceof PublicProfile ) {
 	return;
 }
 
-$wiw_fact  = static function ( string $key ) use ( $wiw_profile ): string {
-	$value = $wiw_profile->facts[ $key ]['value'] ?? '';
-	return is_string( $value ) ? $value : '';
-};
+$wiw_class = wiw_profile_classification( $wiw_profile );
 $wiw_style = wiw_poster_style( $wiw_profile->slug );
-$wiw_ind   = $wiw_fact( 'industry' );
-$wiw_role  = '' !== $wiw_fact( 'current_title' ) ? $wiw_fact( 'current_title' ) : $wiw_fact( 'org_type' );
-$wiw_org   = '' !== $wiw_fact( 'current_organisation' ) ? $wiw_fact( 'current_organisation' ) : '';
+$wiw_ind   = is_array( $wiw_class['industry'] ) ? $wiw_class['industry']['name'] : '';
+$wiw_title = wiw_profile_fact( $wiw_profile, 'current_title' );
+$wiw_role  = '' !== $wiw_title ? $wiw_title : wiw_profile_org_type( $wiw_profile );
+$wiw_org   = wiw_profile_fact( $wiw_profile, 'current_organisation' );
 $wiw_sub   = $wiw_role;
 if ( '' !== $wiw_org && $wiw_org !== $wiw_profile->name ) {
 	$wiw_sub .= ( '' !== $wiw_sub ? ', ' : '' ) . $wiw_org;

@@ -121,8 +121,8 @@ final class ProfilePageTest extends TestCase {
 		$this->assertStringContainsString( 'Board member, 2019 to 2023', $out );
 		$this->assertStringNotContainsString( 'Mandate', $out );
 		$this->assertStringNotContainsString( 'Achievements', $out, 'no awards, no section' );
-		$this->assertStringContainsString( 'class="crumbs"', $out );
-		$this->assertStringContainsString( '/people/', $out );
+		$this->assertStringContainsString( 'class="crumbs crumbs--profile', $out );
+		$this->assertStringContainsString( 'href="' . esc_url( home_url( '/directory/' ) ) . '"', $out, 'with no country the breadcrumb starts at the directory (REQ-009)' );
 	}
 
 	public function test_REQ_005_institution_shows_mandate_and_organisation_has_no_person_sections(): void {
@@ -138,7 +138,7 @@ final class ProfilePageTest extends TestCase {
 		$out  = $this->render( $inst );
 		$this->assertStringContainsString( 'Mandate', $out );
 		$this->assertStringContainsString( 'To research things.', $out );
-		$this->assertStringContainsString( '/institutions/', $out );
+		$this->assertStringContainsString( 'Institution</p>', $out, 'the place line names the kind of profile' );
 		$org = $this->profile( 'Pagetest Business', 'organisation', true, array( 'summary' => 'A business.' ) );
 		$this->assertStringNotContainsString( 'Mandate', $this->render( $org ) );
 	}
