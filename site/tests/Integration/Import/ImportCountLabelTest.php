@@ -16,12 +16,10 @@ use WhoIsWho\Tests\WpTestCase;
 
 final class ImportCountLabelTest extends WpTestCase {
 
-	public function test_REQ_237_new_list_values_are_named_in_words_in_the_dry_run(): void {
-		$label = ImportScreen::count_label( 'SCHEMA', 1000, true );
-		$this->assertStringContainsString( 'New list values needed (1000)', $label );
-		$this->assertStringContainsString( 'Add all as new list entries', $label );
-		$this->assertStringNotContainsString( 'SCHEMA', $label );
-		$this->assertSame( 'SCHEMA (3)', ImportScreen::count_label( 'SCHEMA', 3 ), 'a real record error keeps its code' );
+	public function test_REQ_009_a_schema_count_is_always_a_real_record_error(): void {
+		// A value missing from the lists no longer refuses a record (REQ-009 as amended 2026-11-14), so SCHEMA keeps its code.
+		$this->assertSame( 'SCHEMA (1000)', ImportScreen::count_label( 'SCHEMA', 1000, true ) );
+		$this->assertSame( 'SCHEMA (3)', ImportScreen::count_label( 'SCHEMA', 3 ) );
 		$this->assertSame( 'CREATED (12)', ImportScreen::count_label( 'CREATED', 12, true ) );
 	}
 }

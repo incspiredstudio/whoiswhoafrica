@@ -18,7 +18,8 @@ namespace WhoIsWho\Core\Import;
 final class ContentHasher {
 
 	/**
-	 * Record fields marked "In hash" in contract section 3.
+	 * Record fields marked "In hash" in contract section 3. `classification` exists from contract 1.2 and is hashed only when the
+	 * record has it, so 1.0 and 1.1 hashes are unchanged.
 	 */
 	public const HASHED_FIELDS = array(
 		'record_id',
@@ -32,6 +33,7 @@ final class ContentHasher {
 		'passages',
 		'images',
 		'ai',
+		'classification',
 	);
 
 	/**

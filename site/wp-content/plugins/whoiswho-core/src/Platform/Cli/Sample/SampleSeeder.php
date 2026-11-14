@@ -24,8 +24,11 @@ use WhoIsWho\Core\Content\Events\EventValidator;
 use WhoIsWho\Core\Content\Stories\LinkedProfiles;
 use WhoIsWho\Core\Content\Stories\StoryFlags;
 use WhoIsWho\Core\Content\Stories\StoryTypes;
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\ClassificationSeeder;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\PlaceSeeder;
+use WhoIsWho\Core\Directory\ProfileClassifier;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
@@ -351,16 +354,12 @@ final class SampleSeeder {
 	}
 
 	/**
-	 * Industries, organisation types and cities under their countries.
+	 * The classification tree (industries and organisation types come from it, not from the sample data) and the cities under
+	 * their countries.
 	 */
 	private function terms(): void {
 		( new PlaceSeeder() )->seed();
-		foreach ( (array) $this->data['industries'] as $name ) {
-			$this->term( (string) $name, Taxonomies::INDUSTRY, 0 );
-		}
-		foreach ( (array) $this->data['org_types'] as $name ) {
-			$this->term( (string) $name, Taxonomies::ORG_TYPE, 0 );
-		}
+		( new ClassificationSeeder() )->seed();
 		foreach ( (array) $this->data['places'] as $country => $cities ) {
 			$parent_id = $this->country_id( (string) $country );
 			foreach ( (array) $cities as $city ) {
@@ -481,9 +480,6 @@ final class SampleSeeder {
 			)
 		);
 		$values = (array) $row['fields'];
-		if ( isset( $row['industry'] ) ) {
-			$values['industry'] = (string) $row['industry'];
-		}
 		foreach ( $values as $name => $value ) {
 			$fields->set( $id, (string) $name, $value );
 			if ( 'name' !== $name ) {
@@ -533,26 +529,41 @@ final class SampleSeeder {
 	}
 
 	/**
-	 * Industry, organisation type and place terms for a profile.
+	 * The classification of a profile (REQ-009 as amended 2026-11-14): primary industry and extras (tree slugs), primary country
+	 * (ISO code) and city, and the organisation type slug for organisations and institutions.
 	 *
 	 * @param int                  $id  Profile.
 	 * @param array<string, mixed> $row Sample row.
 	 */
 	private function attach_terms( int $id, array $row ): void {
-		$industry = term_exists( (string) ( $row['industry'] ?? '' ), Taxonomies::INDUSTRY, 0 );
-		if ( is_array( $industry ) ) {
-			wp_set_object_terms( $id, array( (int) $industry['term_id'] ), Taxonomies::INDUSTRY );
-		}
-		$org_type = (string) ( $row['fields']['org_type'] ?? '' );
-		$type     = '' === $org_type ? false : term_exists( $org_type, Taxonomies::ORG_TYPE, 0 );
-		if ( is_array( $type ) ) {
-			wp_set_object_terms( $id, array( (int) $type['term_id'] ), Taxonomies::ORG_TYPE );
-		}
-		$country = term_exists( (string) ( $row['country'] ?? '' ), Taxonomies::PLACE, 0 );
-		if ( is_array( $country ) ) {
-			$city = term_exists( (string) ( $row['city'] ?? '' ), Taxonomies::PLACE, (int) $country['term_id'] );
-			wp_set_object_terms( $id, array( is_array( $city ) ? (int) $city['term_id'] : (int) $country['term_id'] ), Taxonomies::PLACE );
-		}
+		$country = Classification::country_id( (string) ( $row['country_code'] ?? '' ) );
+		$city    = null === $country ? false : term_exists( (string) ( $row['city'] ?? '' ), Taxonomies::PLACE, $country );
+		( new ProfileClassifier() )->assign(
+			$id,
+			(string) $row['type'],
+			array(
+				'primary_industry' => (string) ( $row['industry'] ?? '' ),
+				'industries'       => (array) ( $row['industries'] ?? array() ),
+				'country'          => (string) ( $row['country_code'] ?? '' ),
+				'city_id'          => is_array( $city ) ? (int) $city['term_id'] : 0,
+				'org_type'         => (string) ( $row['fields']['org_type'] ?? '' ),
+				'provenance'       => array(
+					'method'         => 'manual',
+					'model'          => null,
+					'prompt_version' => null,
+					'confidence'     => 'high',
+				),
+			)
+		);
+	}
+
+	/**
+	 * The industry term of a story or event row (a tree slug), or null.
+	 *
+	 * @param array<string, mixed> $row Sample row.
+	 */
+	private function industry_term( array $row ): ?int {
+		return Classification::term_id( Taxonomies::INDUSTRY, (string) ( $row['industry'] ?? '' ) );
 	}
 
 	/**
@@ -591,9 +602,9 @@ final class SampleSeeder {
 			SampleMarker::mark_post( $id, 'story:' . $key );
 			$this->story_ids[ $key ] = $id;
 			wp_set_object_terms( $id, (string) $row['type'], StoryTypes::TAXONOMY );
-			$industry = term_exists( (string) $row['industry'], Taxonomies::INDUSTRY, 0 );
-			if ( is_array( $industry ) && taxonomy_exists( Taxonomies::INDUSTRY ) ) {
-				wp_set_object_terms( $id, array( (int) $industry['term_id'] ), Taxonomies::INDUSTRY );
+			$industry = $this->industry_term( $row );
+			if ( null !== $industry ) {
+				wp_set_object_terms( $id, array( $industry ), Taxonomies::INDUSTRY );
 			}
 			$linked = array();
 			foreach ( (array) $row['profiles'] as $profile_key ) {
@@ -685,9 +696,9 @@ final class SampleSeeder {
 			foreach ( $result['values'] as $name => $value ) {
 				update_post_meta( $id, EventFields::META_PREFIX . $name, wp_slash( $value ) );
 			}
-			$industry = term_exists( (string) $row['industry'], Taxonomies::INDUSTRY, 0 );
-			if ( is_array( $industry ) && taxonomy_exists( Taxonomies::INDUSTRY ) ) {
-				wp_set_object_terms( $id, array( (int) $industry['term_id'] ), Taxonomies::INDUSTRY );
+			$industry = $this->industry_term( $row );
+			if ( null !== $industry ) {
+				wp_set_object_terms( $id, array( $industry ), Taxonomies::INDUSTRY );
 			}
 			SampleMarker::seal_post( $id );
 			$this->count( 'events' );

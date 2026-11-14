@@ -145,9 +145,11 @@ final class ProfileList {
 	}
 
 	/**
-	 * Industry counts of listed profiles, for the industries index: one row per industry term, empty industries included.
+	 * Industry counts of listed profiles, for the industries index: one row per term of the tree (sectors and industries; a
+	 * sector counts the profiles in any of its industries), empty ones included. Unclassified is not public navigation and is left
+	 * out.
 	 *
-	 * @return array<int, array{term_id: int, slug: string, name: string, count: int}>
+	 * @return array<int, array{term_id: int, slug: string, name: string, count: int, parent: int}>
 	 */
 	public function industry_counts(): array {
 		global $wpdb;
@@ -160,6 +162,12 @@ final class ProfileList {
 		foreach ( $rows as $row ) {
 			$counts[ (int) $row[0] ] = (int) $row[1];
 		}
+		$sql = 'SELECT tt.parent, COUNT(DISTINCT p.ID) FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID'
+			. ' INNER JOIN ' . $wpdb->term_relationships . ' tr ON tr.object_id = p.ID INNER JOIN ' . $wpdb->term_taxonomy . ' tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = %s AND tt.parent > 0'
+			. $where . ' GROUP BY tt.parent';
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( array( Taxonomies::INDUSTRY ), $args ) ), ARRAY_N ) as $row ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed names; values prepared.
+			$counts[ (int) $row[0] ] = max( $counts[ (int) $row[0] ] ?? 0, (int) $row[1] );
+		}
 		$terms = get_terms(
 			array(
 				'taxonomy'   => Taxonomies::INDUSTRY,
@@ -169,11 +177,15 @@ final class ProfileList {
 		);
 		$out   = array();
 		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
+			if ( Classification::unclassified_slug() === $term->slug ) {
+				continue;
+			}
 			$out[] = array(
 				'term_id' => (int) $term->term_id,
 				'slug'    => (string) $term->slug,
 				'name'    => (string) $term->name,
 				'count'   => $counts[ (int) $term->term_id ] ?? 0,
+				'parent'  => (int) $term->parent,
 			);
 		}
 		return $out;
@@ -202,8 +214,8 @@ final class ProfileList {
 	}
 
 	/**
-	 * Term taxonomy ids for a filter slug. A country includes its cities; the city filter takes only city terms and the country
-	 * filter only country or body terms.
+	 * Term taxonomy ids for a filter slug. A country includes its cities and a sector its industries; the city filter takes only
+	 * city terms and the country filter only country or body terms.
 	 *
 	 * @param string $filter Filter name.
 	 * @param string $slug   Term slug.
@@ -222,7 +234,7 @@ final class ProfileList {
 			}
 		}
 		$ids = array( (int) $term->term_taxonomy_id );
-		if ( 'country' === $filter ) {
+		if ( 'country' === $filter || 'industry' === $filter ) {
 			$children = get_term_children( $term->term_id, $taxonomy );
 			foreach ( is_array( $children ) ? $children : array() as $child_id ) {
 				$child = get_term( (int) $child_id, $taxonomy );
