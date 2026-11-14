@@ -71,6 +71,8 @@ foreach ( $wiw_users as $login => $role ) {
 	}
 	// Test mode only (the seed refused above unless it is on): skip the two-factor enrolment redirect for these throw-away users.
 	update_user_meta( $user->ID, 'wiw_e2e_staff', '1' );
+	// And keep the two-factor reminder (issue 814) off for them, so it does not disturb the other specs; two-factor-reminder.spec.ts uses its own users.
+	update_user_meta( $user->ID, 'wiw_e2e_quiet', '1' );
 	$out[ $login ] = $user->ID;
 }
 echo wp_json_encode( $out ) . "\n";

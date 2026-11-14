@@ -55,6 +55,27 @@ final class StaffStatus {
 	}
 
 	/**
+	 * Whether a user is staff: one of the staff roles, or holding any of the plugin's wiw_* capabilities (granted one by one).
+	 *
+	 * @param int $user_id User id.
+	 */
+	public static function is_staff( int $user_id ): bool {
+		$user = $user_id > 0 ? get_userdata( $user_id ) : false;
+		if ( ! $user instanceof \WP_User ) {
+			return false;
+		}
+		if ( array() !== array_intersect( self::staff_roles(), (array) $user->roles ) ) {
+			return true;
+		}
+		foreach ( (array) $user->allcaps as $cap => $granted ) {
+			if ( $granted && 0 === strpos( (string) $cap, 'wiw_' ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Whether the two-factor software is loaded.
 	 */
 	public function available(): bool {

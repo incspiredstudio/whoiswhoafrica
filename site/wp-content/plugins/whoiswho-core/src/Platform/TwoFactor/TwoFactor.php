@@ -6,7 +6,7 @@
  *
  * Two-factor is available and recommended for staff, not enforced (owner decision 2026-11-14, D-070): nobody is redirected or
  * blocked for not having it. A staff member who switches it on is asked for the second step at every sign-in, by the plugin.
- * The Setup screen lists which staff have it on (StaffStatus).
+ * The Setup screen lists which staff have it on (StaffStatus), and staff without it get a reminder (Reminder).
  *
  * @package WhoIsWho
  */
@@ -47,6 +47,7 @@ final class TwoFactor {
 		add_filter( 'two_factor_providers', array( self::class, 'filter_providers' ) );
 		add_action( 'init', array( self::class, 'apply_settings' ) );
 		TestMode::register();
+		Reminder::register();
 	}
 
 	/**
