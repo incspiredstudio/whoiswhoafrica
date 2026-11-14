@@ -391,8 +391,8 @@ final class M3LogsHoldNoPersonalDataTest extends TestCase {
 		$decision->reject( $other->id, $staff, 'We could not verify the evidence.' );
 		$this->drain();
 
-		// 4. A customer made from the enquiry, then edited (audit holds field names only).
-		wp_set_current_user( $staff );
+		// 4. A customer made from the enquiry, then edited (audit holds field names only). Customers are Administrator only.
+		wp_set_current_user( $this->user( 'administrator' ) );
 		$customers = new CustomerService( new CustomerRepository(), $audit, $items );
 		$customer  = $customers->create_from_enquiry( (int) $enquiry['id'] );
 		$customers->update(
