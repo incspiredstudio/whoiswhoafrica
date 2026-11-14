@@ -117,7 +117,7 @@ if ( ! function_exists( 'wiw_profile_key_facts' ) ) {
 	function wiw_profile_key_facts( PublicProfile $profile ): array {
 		$rows = array();
 		foreach ( $profile->facts as $key => $fact ) {
-			if ( in_array( $key, array( 'bio', 'summary' ), true ) ) {
+			if ( in_array( $key, array( 'bio', 'summary', 'achievement', 'influence', 'legacy' ), true ) ) {
 				continue;
 			}
 			$source = esc_url_raw( (string) ( $fact['source_url'] ?? '' ) );
@@ -151,7 +151,9 @@ if ( ! function_exists( 'wiw_profile_sections' ) ) {
 	 */
 	function wiw_profile_sections( PublicProfile $profile ): array {
 		$sections = array();
-		$about    = '' !== wiw_profile_fact( $profile, 'bio' ) ? wiw_profile_fact( $profile, 'bio' ) : wiw_profile_fact( $profile, 'summary' );
+		// The narrative sections (Bio, Achievement, Influence, Legacy) are drawn by wiw_profile_narrative(); an organisation
+		// without a Bio keeps its reviewed summary here.
+		$about = '' === wiw_profile_fact( $profile, 'bio' ) ? wiw_profile_fact( $profile, 'summary' ) : '';
 		if ( '' !== $about ) {
 			$sections[] = array(
 				'id'    => 'about',
@@ -191,3 +193,62 @@ if ( ! function_exists( 'wiw_profile_sections' ) ) {
 		return apply_filters( 'wiw_profile_sections', $sections, $profile );
 	}
 }//end if
+
+if ( ! function_exists( 'wiw_profile_paragraphs' ) ) {
+	/**
+	 * Split plain text into paragraphs at blank lines (contract 1.1 section 4.3). Single line breaks stay inside a paragraph.
+	 *
+	 * @param string $text Plain text.
+	 * @return string[]
+	 */
+	function wiw_profile_paragraphs( string $text ): array {
+		$parts = preg_split( '/\n\s*\n/', str_replace( array( "\r\n", "\r" ), "\n", trim( $text ) ) );
+		return array_values( array_filter( array_map( 'trim', is_array( $parts ) ? $parts : array() ), static fn ( string $p ): bool => '' !== $p ) );
+	}
+}
+
+if ( ! function_exists( 'wiw_profile_section_title' ) ) {
+	/**
+	 * The translated heading of a narrative section.
+	 *
+	 * @param string $key   Section key.
+	 * @param string $title Title from the read model.
+	 */
+	function wiw_profile_section_title( string $key, string $title ): string {
+		$titles = array(
+			'bio'         => __( 'Bio', 'whoiswho' ),
+			'achievement' => __( 'Achievement', 'whoiswho' ),
+			'influence'   => __( 'Influence', 'whoiswho' ),
+			'legacy'      => __( 'Legacy', 'whoiswho' ),
+		);
+		return $titles[ $key ] ?? $title;
+	}
+}
+
+if ( ! function_exists( 'wiw_licence_label' ) ) {
+	/**
+	 * A licence id as people read it: "CC-BY-SA-4.0" becomes "CC BY-SA 4.0"; the public-domain ids get plain words.
+	 *
+	 * @param string $licence Licence id.
+	 */
+	function wiw_licence_label( string $licence ): string {
+		if ( 'PDM-1.0' === $licence ) {
+			return __( 'Public domain', 'whoiswho' );
+		}
+		if ( 'CC0-1.0' === $licence ) {
+			return 'CC0 1.0';
+		}
+		return (string) preg_replace( '/^CC-(BY(?:-SA)?)-(\d\.\d)$/', 'CC $1 $2', $licence );
+	}
+}
+
+if ( ! function_exists( 'wiw_profile_lifespan' ) ) {
+	/**
+	 * The lifespan of a person who has died (for example "1924–2013"), or an empty string.
+	 *
+	 * @param PublicProfile $profile Profile.
+	 */
+	function wiw_profile_lifespan( PublicProfile $profile ): string {
+		return in_array( $profile->entity_type, array( 'individual', 'entrepreneur' ), true ) ? wiw_profile_fact( $profile, 'lifespan' ) : '';
+	}
+}

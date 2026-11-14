@@ -198,6 +198,22 @@ final class PublicNominee {
 	}
 
 	/**
+	 * The live nomination of a profile for its award poster (REQ-033): a win before a nomination, newest edition first. Null when
+	 * the profile has no live nomination or is not reviewed and public.
+	 *
+	 * @param int $profile_id Profile.
+	 */
+	public static function for_profile( int $profile_id ): ?self {
+		$all = self::collect( "n.status = 'live' AND n.profile_id = %d", array( $profile_id ), 20 );
+		foreach ( $all as $nominee ) {
+			if ( $nominee->is_winner ) {
+				return $nominee;
+			}
+		}
+		return $all[0] ?? null;
+	}
+
+	/**
 	 * Build the models for a condition, dropping any whose profile is not reviewed and public.
 	 *
 	 * @param string            $where  Fixed condition with placeholders.

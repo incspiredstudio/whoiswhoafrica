@@ -23,13 +23,13 @@ test.describe("profile facts and actions", () => {
     await expectNoA11yViolations(page);
   });
 
-  test("the rail offers correct, remove and report, and no share preview (REQ-142, REQ-006)", async ({ page }) => {
+  test("the rail offers correct, remove and report, and the When shared preview (REQ-142, REQ-006)", async ({ page }) => {
     await page.goto(`/profile/${slug}/`);
     const rail = page.locator(".profile-rail");
     await expect(rail.locator("a[data-action='correct']")).toHaveAttribute("href", new RegExp(`/correct/${slug}/$`));
     await expect(rail.locator("a[data-action='remove']")).toHaveAttribute("href", new RegExp(`/remove/${slug}/$`));
     await expect(rail.locator("a[data-action='report']")).toHaveAttribute("href", new RegExp(`/report/${slug}/$`));
-    await expect(page.getByText("When shared")).toHaveCount(0);
+    await expect(page.locator(".profile-rail .rail-share")).toHaveCount(1);
   });
 
   test("a profile pending review has no Claim button (REQ-156)", async ({ page }) => {
