@@ -10,9 +10,10 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration\Directory;
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Directory\Admin\ProfilesQuery;
 use WhoIsWho\Core\Directory\Admin\ProfilesScreen;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
@@ -64,21 +65,21 @@ final class NeedsClassificationTest extends WpTestCase {
 		$this->posts[] = $id;
 		( new StateMachine() )->enter( $id, PubState::IMPORTED_NOT_PUBLIC, array( 'entity_type' => 'organisation' ) );
 		if ( $industry > 0 ) {
-			update_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, (string) $industry );
+			update_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, (string) $industry );
 		}
 		if ( $country > 0 ) {
-			update_post_meta( $id, ProfileClassifier::META_PRIMARY_COUNTRY, (string) $country );
+			update_post_meta( $id, Classification::PRIMARY_COUNTRY_META, (string) $country );
 		}
 		return $id;
 	}
 
 	public function test_REQ_009_the_needs_classification_view_lists_unclassified_or_countryless_profiles(): void {
-		$existing = get_term_by( 'slug', ProfileClassifier::UNCLASSIFIED, Taxonomies::INDUSTRY );
+		$existing = get_term_by( 'slug', Classification::unclassified_slug(), Taxonomies::INDUSTRY );
 		$unc      = $existing instanceof \WP_Term ? (int) $existing->term_id : self::factory()->term->create(
 			array(
 				'taxonomy' => Taxonomies::INDUSTRY,
 				'name'     => 'Unclassified',
-				'slug'     => ProfileClassifier::UNCLASSIFIED,
+				'slug'     => Classification::unclassified_slug(),
 			)
 		);
 		$sector   = self::factory()->term->create( array( 'taxonomy' => Taxonomies::INDUSTRY ) );

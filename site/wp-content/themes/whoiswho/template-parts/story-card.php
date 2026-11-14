@@ -1,7 +1,8 @@
 <?php
 /**
  * Story card (REQ-029, REQ-249, REQ-263): a 16:9 cover, the type, date and reading time, the headline, a one-line lede and the author.
- * A story with a live placement carries the dashed Sponsored badge and the sponsor's name; the badge is never styled like a status.
+ * A story with a live placement carries the dashed Sponsored badge, never the sponsor's name (REQ-026, owner 2026-11-14); the badge
+ * is never styled like a status.
  * The whole card is one link, put on the headline.
  * Args: story (a PublicStory card), variant (lead, tile or card), eager (bool, load the cover at once).
  *
@@ -55,20 +56,13 @@ $wiw_minutes = (int) ( $wiw_story['reading_minutes'] ?? 0 );
 		<?php if ( '' !== (string) ( $wiw_story['lede'] ?? '' ) ) : ?>
 			<p class="scard-lede"><?php echo esc_html( (string) $wiw_story['lede'] ); ?></p>
 		<?php endif; ?>
-		<p class="scard-by">
-			<?php if ( null !== $wiw_sponsor ) : ?>
-				<?php
-				/* translators: %s: sponsor name. */
-				echo esc_html( sprintf( __( 'Paid for by %s', 'whoiswho' ), (string) ( $wiw_sponsor['name'] ?? '' ) ) );
-				?>
-				<span aria-hidden="true"> · </span>
-			<?php endif; ?>
-			<?php if ( '' !== (string) ( $wiw_story['author'] ?? '' ) ) : ?>
+		<?php if ( '' !== (string) ( $wiw_story['author'] ?? '' ) ) : ?>
+			<p class="scard-by">
 				<?php
 				/* translators: %s: author name. */
 				echo esc_html( sprintf( __( 'By %s', 'whoiswho' ), (string) $wiw_story['author'] ) );
 				?>
-			<?php endif; ?>
-		</p>
+			</p>
+		<?php endif; ?>
 	</div>
 </article>

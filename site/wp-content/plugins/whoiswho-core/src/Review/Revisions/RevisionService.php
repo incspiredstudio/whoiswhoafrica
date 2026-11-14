@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Review\Revisions;
 
 use WhoIsWho\Core\Directory\Edit\EditRefused;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Edit\ProfileEditor;
 use WhoIsWho\Core\Directory\Edit\SideFields;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
@@ -108,9 +108,10 @@ final class RevisionService {
 				continue;
 			}
 			if ( ProfileEditor::CLASSIFICATION_KEY === $key && is_array( $value ) ) {
-				$classifier = new ProfileClassifier();
+				$classifier = new ClassificationInput();
 				try {
-					$classifier->apply( $id, $classifier->normalise( $value, (string) ( ( new StateRepository() )->get( $id )['entity_type'] ?? '' ) ) );
+					$entity = (string) ( ( new StateRepository() )->get( $id )['entity_type'] ?? '' );
+					$classifier->assign( $id, $entity, $classifier->normalise( $value, $entity ) );
 				} catch ( EditRefused $gone ) {
 					// A term chosen in the revision was deleted since; the rest of the revision still applies.
 					unset( $gone );

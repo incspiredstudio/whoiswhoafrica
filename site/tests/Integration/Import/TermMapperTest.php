@@ -65,46 +65,83 @@ final class TermMapperTest extends WpTestCase {
 		$this->assertSame( $mfb, $mapper->resolve( 'org_type', 'MFB' ), 'By alias, case-insensitive.' );
 	}
 
-	public function test_REQ_009_unknown_term_requires_mapping_before_apply(): void {
+	public function test_REQ_009_an_unknown_city_is_listed_for_the_dry_run_but_never_refuses(): void {
+		$mapper = new TermMapper();
+		$record = $this->record( array( 'hq_city' => 'Qwv Unknown Town' ) ) + array( 'country' => 'NG' );
+		$this->assertSame(
+			array(
+				array(
+					'field'   => 'hq_city',
+					'value'   => 'Qwv Unknown Town',
+					'country' => 'NG',
+				),
+			),
+			$mapper->unmapped( $record ),
+			'The dry run lists the city, with the record country so "Add all as new places" can file it.'
+		);
+		$this->assertSame( array(), $mapper->terms_for( $record ), 'An unmapped city is not written.' );
+		$this->assertFalse( method_exists( $mapper, 'assert_mapped' ), 'Nothing refuses a record for a list value any more.' );
+	}
+
+	public function test_REQ_009_unknown_industry_and_org_type_never_need_a_mapping(): void {
 		$mapper = new TermMapper();
 		$record = $this->record(
 			array(
 				'org_type' => 'Quantum Qwv Bank',
-				'industry' => '',
+				'industry' => 'Qwv Unheard Industry',
 			)
-		);
-		$this->assertSame(
-			array(
-				array(
-					'field' => 'org_type',
-					'value' => 'Quantum Qwv Bank',
-				),
-			),
-			$mapper->unmapped( $record ),
-			'The dry run lists the value as needing a mapping.'
-		);
-		$this->assertSame( array(), $mapper->terms_for( $record ), 'An unmapped value is not written.' );
-		$this->expectException( \RuntimeException::class );
-		$mapper->assert_mapped( $record );
+		) + array( 'entity_type' => 'organisation' );
+		$this->assertSame( array(), $mapper->unmapped( $record ) );
+		$class = $mapper->classification_for( $record );
+		$this->assertSame( 'unclassified', $class['primary_industry'] );
+		$this->assertSame( 'other', $class['org_type'] );
+		$this->assertSame( 'low', $class['provenance']['confidence'] );
 	}
 
-	public function test_REQ_009_mapping_is_reused_on_next_import(): void {
-		$bank   = $this->term( Taxonomies::ORG_TYPE, 'Commercial Bank Two' );
+	public function test_REQ_009_a_city_mapping_is_reused_on_next_import(): void {
+		$town   = $this->term( Taxonomies::PLACE, 'Qwv Mapped Town' );
 		$mapper = new TermMapper();
-		$record = $this->record( array( 'org_type' => 'Qwv Retail Lender' ) );
+		$record = $this->record( array( 'hq_city' => 'Qwv Old Town Name' ) );
 		$this->assertCount( 1, $mapper->unmapped( $record ) );
-		$mapper->save( 'org_type', 'Qwv Retail Lender', $bank );
+		$mapper->save( 'hq_city', 'Qwv Old Town Name', $town );
 
 		$next = new TermMapper();
-		$this->assertSame( array(), $next->unmapped( $this->record( array( 'org_type' => '  qwv   retail lender ' ) ) ) );
-		$this->assertSame( array( 'org_type' => $bank ), $next->terms_for( $record ) );
-		$next->assert_mapped( $record );
+		$this->assertSame( array(), $next->unmapped( $this->record( array( 'hq_city' => '  qwv   old town name ' ) ) ) );
+		$this->assertSame( array( 'hq_city' => $town ), $next->terms_for( $record ) );
+	}
+
+	public function test_REQ_009_add_all_files_a_new_city_under_the_record_country(): void {
+		$added = ( new TermMapper() )->create_missing(
+			array(
+				array(
+					'field'   => 'hq_city',
+					'value'   => 'Qwv New Harbour',
+					'country' => 'GH',
+				),
+				array(
+					'field'   => 'hq_city',
+					'value'   => 'Ghana',
+					'country' => 'GH',
+				),
+				array(
+					'field' => 'industry',
+					'value' => 'Qwv Never Added',
+				),
+			)
+		);
+		$this->assertSame( 1, $added, 'Only the real city is added; a country name and an industry are not.' );
+		$term = get_term_by( 'name', 'Qwv New Harbour', Taxonomies::PLACE );
+		$this->assertInstanceOf( \WP_Term::class, $term );
+		$this->assertSame( \WhoIsWho\Core\Directory\Classification::country_id( 'GH' ), (int) $term->parent );
+		$this->assertSame( Taxonomies::KIND_CITY, get_term_meta( $term->term_id, Taxonomies::META_KIND, true ) );
+		$this->assertFalse( get_term_by( 'name', 'Qwv Never Added', Taxonomies::INDUSTRY ) );
+		wp_delete_term( $term->term_id, Taxonomies::PLACE );
 	}
 
 	public function test_REQ_009_a_skipped_value_passes_apply_but_writes_no_term(): void {
 		$mapper = new TermMapper();
-		$record = $this->record( array( 'sector' => 'Qwv Unlisted Sector' ) );
-		$mapper->save( 'sector', 'Qwv Unlisted Sector', TermMapper::SKIP );
+		$record = $this->record( array( 'hq_city' => 'Qwv Unlisted Town' ) );
+		$mapper->save( 'hq_city', 'Qwv Unlisted Town', TermMapper::SKIP );
 		$this->assertSame( array(), $mapper->unmapped( $record ) );
 		$this->assertSame( array(), $mapper->terms_for( $record ) );
 	}

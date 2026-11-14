@@ -36,14 +36,14 @@ final class StorySeoTest extends WpTestCase {
 
 	public function test_REQ_182_sponsored_story_shows_label_on_card_and_share_preview(): void {
 		$story                   = (array) PublicStory::find( $this->story() );
-		$story['share']['label'] = 'Sponsored by Acme';
+		$story['share']['label'] = 'Sponsored';
 
 		$tags = StorySeo::tags( $story );
 
 		$this->assertSame( 'A Founder Speaks', $tags['og']['og:title'] );
-		$this->assertStringContainsString( 'Sponsored by Acme', $tags['og']['og:description'] );
+		$this->assertStringStartsWith( 'Sponsored. ', $tags['og']['og:description'] );
 		$this->assertStringContainsString( 'How the company began.', $tags['og']['og:description'] );
-		$this->assertStringContainsString( 'Sponsored by Acme', $tags['description'] );
+		$this->assertStringStartsWith( 'Sponsored. ', $tags['description'] );
 		$html = StorySeo::render_tags( $tags );
 		$this->assertStringContainsString( 'property="og:title"', $html );
 		$this->assertStringContainsString( 'name="description"', $html );

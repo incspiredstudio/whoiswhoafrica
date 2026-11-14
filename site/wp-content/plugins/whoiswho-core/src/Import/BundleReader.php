@@ -20,7 +20,7 @@ final class BundleReader {
 	/**
 	 * Contract versions this importer accepts.
 	 */
-	public const ACCEPTED_VERSIONS = array( '1.0', '1.1' );
+	public const ACCEPTED_VERSIONS = array( '1.0', '1.1', '1.2' );
 
 	public const MANIFEST_KEYS = array( 'contract_version', 'run_id', 'batch_id', 'generated_at', 'pipeline_version', 'source_list_version', 'sources', 'suppression_snapshot_id', 'record_count', 'counts', 'records_sha256' );
 

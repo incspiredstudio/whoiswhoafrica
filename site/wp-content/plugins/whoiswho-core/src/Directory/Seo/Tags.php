@@ -54,9 +54,10 @@ final class Tags {
 
 		$text = $this->first_sentence( (string) ( $profile->facts['bio']['value'] ?? $profile->facts['summary']['value'] ?? '' ) );
 		if ( '' === $text ) {
-			$org  = (string) ( $profile->facts['current_organisation']['value'] ?? '' );
-			$city = (string) ( $profile->facts['hq_city']['value'] ?? '' );
-			$text = trim( $profile->name . ( '' !== $role ? ' is ' . $role : '' ) . ( '' !== $org ? ' at ' . $org : '' ) . ( '' !== $city ? ' in ' . $city : '' ), ' ' ) . '.';
+			$org   = (string) ( $profile->facts['current_organisation']['value'] ?? '' );
+			$place = $profile->place();
+			$city  = null === $place ? '' : (string) ( $place['city'] ?? '' );
+			$text  = trim( $profile->name . ( '' !== $role ? ' is ' . $role : '' ) . ( '' !== $org ? ' at ' . $org : '' ) . ( '' !== $city ? ' in ' . $city : '' ), ' ' ) . '.';
 		}
 		$description = $text;
 		if ( null !== $profile->label ) {
@@ -155,18 +156,22 @@ final class Tags {
 	}
 
 	/**
-	 * Title or industry line of a profile.
+	 * Title or industry line of a profile: the sourced current title, else the organisation type, else the primary industry (both
+	 * from the classification terms, never the import text).
 	 *
 	 * @param PublicProfile $profile Profile.
 	 */
 	private function role_line( PublicProfile $profile ): string {
-		foreach ( array( 'current_title', 'org_type', 'industry' ) as $key ) {
-			$value = $profile->facts[ $key ]['value'] ?? '';
-			if ( is_string( $value ) && '' !== $value ) {
-				return $value;
-			}
+		$title = $profile->facts['current_title']['value'] ?? '';
+		if ( is_string( $title ) && '' !== $title ) {
+			return $title;
 		}
-		return '';
+		$type = $profile->org_type();
+		if ( null !== $type && '' !== $type['name'] ) {
+			return $type['name'];
+		}
+		$industry = $profile->classification()['industry'];
+		return null === $industry ? '' : $industry['name'];
 	}
 
 	/**

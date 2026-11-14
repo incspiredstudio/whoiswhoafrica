@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Add;
 
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Platform\Forms\FormInput;
@@ -231,15 +231,15 @@ final class AddProfileValidator extends Validator {
 	 * @param callable              $flag   Error recorder.
 	 */
 	private function check_classification( array $values, callable $flag ): void {
-		$classifier = new ProfileClassifier();
+		$classifier = new ClassificationInput();
 		if ( '' !== $values['city'] && '0' !== $values['city'] ) {
 			$city = ctype_digit( $values['city'] ) ? get_term( (int) $values['city'], Taxonomies::PLACE ) : null;
-			if ( ! $city instanceof \WP_Term || Taxonomies::KIND_CITY !== ProfileClassifier::place_kind( (int) $city->term_id ) || (string) $city->parent !== $values['country'] ) {
+			if ( ! $city instanceof \WP_Term || Taxonomies::KIND_CITY !== ClassificationInput::place_kind( (int) $city->term_id ) || (string) $city->parent !== $values['country'] ) {
 				$flag( 'city', 'invalid' );
 			}
 		}
 		$industry = $values['primary_industry'];
-		if ( '' !== $industry && '0' !== $industry && ( ! ctype_digit( $industry ) || ( ! $classifier->is_industry( (int) $industry ) && ProfileClassifier::unclassified_id() !== (int) $industry ) ) ) {
+		if ( '' !== $industry && '0' !== $industry && ( ! ctype_digit( $industry ) || ( ! $classifier->is_industry( (int) $industry ) && ClassificationInput::unclassified_id() !== (int) $industry ) ) ) {
 			$flag( 'primary_industry', 'invalid' );
 		}
 		if ( '' !== $values['org_type'] && ( ! in_array( $this->type, self::ORG_TYPES, true ) || ! self::is_term( $values['org_type'], Taxonomies::ORG_TYPE ) ) ) {

@@ -1,7 +1,7 @@
 <?php
 /**
  * Direct profile edit (REQ-125, REQ-188, REQ-232, REQ-143, REQ-244, REQ-009): changes allowlisted fields, terms and the
- * classification (main industry, other industries, organisation type, main country and city, through ProfileClassifier) with a
+ * classification (main industry, other industries, organisation type, main country and city, through ClassificationInput) with a
  * mandatory reason, appends a version row (author, time, reason, old and new values), writes an audit row through AuditLogger, and can close
  * the open correction the edit answers. An edit by the assigned user of a claimed profile is not applied: it is stored as a
  * pending revision for the review step (M1-REV-11). Any other edit applies at once and a published page is queued for purge. An
@@ -103,7 +103,7 @@ final class ProfileEditor {
 	 * @param int                       $actor_id   The user making the edit.
 	 * @param int                       $resolves   Support item (a correction) this edit answers, or 0.
 	 * @param array<string, int[]>      $terms      Taxonomy => the full set of term ids to assign.
-	 * @param array<string, mixed>|null $classification The wanted classification (see ProfileClassifier::normalise()), or null to
+	 * @param array<string, mixed>|null $classification The wanted classification (see ClassificationInput::normalise()), or null to
 	 *                                                  leave it alone.
 	 * @return array{version_id: int, applied: bool, changed: string[]}
 	 * @throws EditRefused With a message fit to show.
@@ -185,7 +185,7 @@ final class ProfileEditor {
 			$old[ 'terms:' . $taxonomy ] = $change['old'];
 			$new[ 'terms:' . $taxonomy ] = $change['new'];
 		}
-		$classifier = new ProfileClassifier();
+		$classifier = new ClassificationInput();
 		if ( null !== $classification ) {
 			if ( ! user_can( $actor_id, 'assign_terms' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 				throw EditRefused::because( 'You are not allowed to assign terms.' );
@@ -230,7 +230,7 @@ final class ProfileEditor {
 				wp_set_object_terms( $profile_id, $change['new'], $taxonomy );
 			}
 			if ( isset( $new[ self::CLASSIFICATION_KEY ] ) ) {
-				$classifier->apply( $profile_id, $new[ self::CLASSIFICATION_KEY ] );
+				$classifier->assign( $profile_id, $type, $new[ self::CLASSIFICATION_KEY ] );
 			}
 		}//end if
 		// The audit trail names a contact detail that changed but never holds its value; the pending revision does.

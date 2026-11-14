@@ -21,7 +21,8 @@ if ( 'local' !== wp_get_environment_type() || '1' !== getenv( 'WIW_E2E_TEST_MODE
 	exit( 1 );
 }
 
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\PlaceSeeder;
 use WhoIsWho\Core\Directory\Taxonomies;
 
@@ -64,9 +65,9 @@ $wiw_make = static function ( string $name, string $taxonomy, int $parent_id = 0
 	}
 	return (int) $made['term_id'];
 };
-$wiw_unc = ProfileClassifier::unclassified_id();
+$wiw_unc  = ClassificationInput::unclassified_id();
 if ( 0 === $wiw_unc ) {
-	$wiw_unc = $wiw_make( 'Unclassified', Taxonomies::INDUSTRY, 0, ProfileClassifier::UNCLASSIFIED );
+	$wiw_unc = $wiw_make( 'Unclassified', Taxonomies::INDUSTRY, 0, Classification::unclassified_slug() );
 }
 $wiw_sector  = $wiw_make( 'E2E Sector', Taxonomies::INDUSTRY, 0, 'e2e-sector' );
 $wiw_oil     = $wiw_make( 'E2E Oil', Taxonomies::INDUSTRY, $wiw_sector, 'e2e-oil' );

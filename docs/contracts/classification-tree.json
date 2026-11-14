@@ -1,0 +1,665 @@
+{
+    "note": "Generated from site/wp-content/plugins/whoiswho-core/config/classification.php by site/bin/classification-tree.php. Do not edit by hand. Contract v1.2 carries these slugs.",
+    "version": 1,
+    "sectors": [
+        {
+            "slug": "energy-resources",
+            "label": "Energy & Resources",
+            "industries": [
+                {
+                    "slug": "oil-gas",
+                    "label": "Oil & Gas",
+                    "aliases": [
+                        "Oil and gas",
+                        "Petroleum",
+                        "Oil",
+                        "Gas"
+                    ]
+                },
+                {
+                    "slug": "mining",
+                    "label": "Mining",
+                    "aliases": [
+                        "Mining and metals",
+                        "Metals and mining",
+                        "Mines"
+                    ]
+                },
+                {
+                    "slug": "power-utilities",
+                    "label": "Power & Utilities",
+                    "aliases": [
+                        "Electricity and water",
+                        "Electricity",
+                        "Utilities",
+                        "Power",
+                        "Energy"
+                    ]
+                },
+                {
+                    "slug": "renewables",
+                    "label": "Renewables",
+                    "aliases": [
+                        "Renewable energy",
+                        "Solar energy",
+                        "Clean energy"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "financial-services",
+            "label": "Financial Services",
+            "industries": [
+                {
+                    "slug": "banking",
+                    "label": "Banking",
+                    "aliases": [
+                        "Banking and financial services",
+                        "Banks",
+                        "Financial services",
+                        "Finance"
+                    ]
+                },
+                {
+                    "slug": "insurance",
+                    "label": "Insurance",
+                    "aliases": [
+                        "Insurers",
+                        "Reinsurance"
+                    ]
+                },
+                {
+                    "slug": "investment-asset-management",
+                    "label": "Investment & Asset Management",
+                    "aliases": [
+                        "Investment",
+                        "Asset management",
+                        "Private equity",
+                        "Investment banking"
+                    ]
+                },
+                {
+                    "slug": "fintech",
+                    "label": "Fintech",
+                    "aliases": [
+                        "Financial Services & Fintech",
+                        "Financial technology",
+                        "Payments"
+                    ]
+                },
+                {
+                    "slug": "central-banking-regulation",
+                    "label": "Central Banking & Regulation",
+                    "aliases": [
+                        "Central banking",
+                        "Central bank",
+                        "Financial regulation"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "technology-telecoms",
+            "label": "Technology & Telecoms",
+            "industries": [
+                {
+                    "slug": "telecoms",
+                    "label": "Telecoms",
+                    "aliases": [
+                        "Telecommunications",
+                        "Telecommunication",
+                        "Mobile telecommunications"
+                    ]
+                },
+                {
+                    "slug": "software-internet",
+                    "label": "Software & Internet",
+                    "aliases": [
+                        "Technology and software",
+                        "Technology",
+                        "Software",
+                        "Internet",
+                        "Information technology",
+                        "IT"
+                    ]
+                },
+                {
+                    "slug": "hardware-electronics",
+                    "label": "Hardware & Electronics",
+                    "aliases": [
+                        "Hardware",
+                        "Electronics",
+                        "Consumer electronics"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "industry-manufacturing",
+            "label": "Industry & Manufacturing",
+            "industries": [
+                {
+                    "slug": "manufacturing",
+                    "label": "Manufacturing",
+                    "aliases": [
+                        "Automotive",
+                        "Industry",
+                        "Industrial manufacturing"
+                    ]
+                },
+                {
+                    "slug": "construction-cement",
+                    "label": "Construction & Cement",
+                    "aliases": [
+                        "Construction and materials",
+                        "Construction",
+                        "Cement",
+                        "Building materials",
+                        "Engineering and construction"
+                    ]
+                },
+                {
+                    "slug": "chemicals",
+                    "label": "Chemicals",
+                    "aliases": [
+                        "Chemical industry",
+                        "Petrochemicals"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "consumer-retail",
+            "label": "Consumer & Retail",
+            "industries": [
+                {
+                    "slug": "food-beverage",
+                    "label": "Food & Beverage",
+                    "aliases": [
+                        "Food and beverages",
+                        "Food",
+                        "Beverages",
+                        "Food processing",
+                        "Brewing"
+                    ]
+                },
+                {
+                    "slug": "retail",
+                    "label": "Retail",
+                    "aliases": [
+                        "Retail and trade",
+                        "Trade",
+                        "Wholesale",
+                        "Commerce",
+                        "E-commerce"
+                    ]
+                },
+                {
+                    "slug": "fashion-beauty",
+                    "label": "Fashion & Beauty",
+                    "aliases": [
+                        "Fashion",
+                        "Beauty",
+                        "Cosmetics",
+                        "Textiles and clothing"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "agriculture-food",
+            "label": "Agriculture & Food",
+            "industries": [
+                {
+                    "slug": "agriculture",
+                    "label": "Agriculture",
+                    "aliases": [
+                        "Agriculture & Agritech",
+                        "Farming",
+                        "Agritech",
+                        "Fisheries",
+                        "Forestry"
+                    ]
+                },
+                {
+                    "slug": "agribusiness",
+                    "label": "Agribusiness",
+                    "aliases": [
+                        "Agro-processing",
+                        "Agricultural commodities"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "transport-logistics",
+            "label": "Transport & Logistics",
+            "industries": [
+                {
+                    "slug": "aviation",
+                    "label": "Aviation",
+                    "aliases": [
+                        "Aviation and aerospace",
+                        "Airlines",
+                        "Aerospace",
+                        "Airline"
+                    ]
+                },
+                {
+                    "slug": "shipping-ports",
+                    "label": "Shipping & Ports",
+                    "aliases": [
+                        "Shipping",
+                        "Ports",
+                        "Maritime"
+                    ]
+                },
+                {
+                    "slug": "logistics",
+                    "label": "Logistics",
+                    "aliases": [
+                        "Transport and logistics",
+                        "Transport",
+                        "Transportation",
+                        "Railways",
+                        "Road transport"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "real-estate",
+            "label": "Real Estate",
+            "industries": [
+                {
+                    "slug": "real-estate-property",
+                    "label": "Real Estate & Property",
+                    "aliases": [
+                        "Real estate",
+                        "Property",
+                        "Property development"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "health",
+            "label": "Health",
+            "industries": [
+                {
+                    "slug": "healthcare",
+                    "label": "Healthcare",
+                    "aliases": [
+                        "Health care",
+                        "Health",
+                        "Health & Life Sciences",
+                        "Hospitals",
+                        "Medicine"
+                    ]
+                },
+                {
+                    "slug": "pharmaceuticals",
+                    "label": "Pharmaceuticals",
+                    "aliases": [
+                        "Pharmaceutical industry",
+                        "Pharma"
+                    ]
+                },
+                {
+                    "slug": "public-health",
+                    "label": "Public Health",
+                    "aliases": [
+                        "Global health",
+                        "Epidemiology"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "education-research",
+            "label": "Education & Research",
+            "industries": [
+                {
+                    "slug": "universities",
+                    "label": "Universities",
+                    "aliases": [
+                        "Education",
+                        "Higher education",
+                        "University",
+                        "University / school"
+                    ]
+                },
+                {
+                    "slug": "schools",
+                    "label": "Schools",
+                    "aliases": [
+                        "School",
+                        "Secondary education",
+                        "Primary education"
+                    ]
+                },
+                {
+                    "slug": "research",
+                    "label": "Research",
+                    "aliases": [
+                        "Research and science",
+                        "Science",
+                        "Scientific research"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "government-public-service",
+            "label": "Government & Public Service",
+            "industries": [
+                {
+                    "slug": "government",
+                    "label": "Government",
+                    "aliases": [
+                        "Public administration",
+                        "Politics and government",
+                        "Royalty and traditional rulers",
+                        "Public Sector",
+                        "Politics",
+                        "Public service"
+                    ]
+                },
+                {
+                    "slug": "diplomacy-international-bodies",
+                    "label": "Diplomacy & International Bodies",
+                    "aliases": [
+                        "Diplomacy",
+                        "International relations",
+                        "International organisations"
+                    ]
+                },
+                {
+                    "slug": "law-justice",
+                    "label": "Law & Justice",
+                    "aliases": [
+                        "Law and justice",
+                        "Law",
+                        "Legal",
+                        "Legal & Professional Services",
+                        "Judiciary"
+                    ]
+                },
+                {
+                    "slug": "military-security",
+                    "label": "Military & Security",
+                    "aliases": [
+                        "Military",
+                        "Armed forces",
+                        "Security"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "media-entertainment",
+            "label": "Media & Entertainment",
+            "industries": [
+                {
+                    "slug": "media-publishing",
+                    "label": "Media & Publishing",
+                    "aliases": [
+                        "Media and publishing",
+                        "Media & Creative",
+                        "Media",
+                        "Publishing",
+                        "Journalism",
+                        "Broadcasting"
+                    ]
+                },
+                {
+                    "slug": "film-tv",
+                    "label": "Film & TV",
+                    "aliases": [
+                        "Film, theatre and broadcasting",
+                        "Film",
+                        "Television",
+                        "Cinema",
+                        "Theatre"
+                    ]
+                },
+                {
+                    "slug": "music",
+                    "label": "Music",
+                    "aliases": [
+                        "Musician",
+                        "Music industry"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "arts-culture-sport",
+            "label": "Arts, Culture & Sport",
+            "industries": [
+                {
+                    "slug": "literature",
+                    "label": "Literature",
+                    "aliases": [
+                        "Literature and journalism",
+                        "Writing",
+                        "Poetry"
+                    ]
+                },
+                {
+                    "slug": "visual-arts",
+                    "label": "Visual Arts",
+                    "aliases": [
+                        "Visual arts and architecture",
+                        "Art",
+                        "Architecture",
+                        "Photography",
+                        "Design"
+                    ]
+                },
+                {
+                    "slug": "sport",
+                    "label": "Sport",
+                    "aliases": [
+                        "Sports",
+                        "Football",
+                        "Athletics"
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "civil-society",
+            "label": "Civil Society",
+            "industries": [
+                {
+                    "slug": "nonprofits-ngos",
+                    "label": "Non-profits & NGOs",
+                    "aliases": [
+                        "Humanitarian and development",
+                        "Environment and conservation",
+                        "Non-profit",
+                        "NGO",
+                        "Charity",
+                        "Philanthropy"
+                    ]
+                },
+                {
+                    "slug": "religion",
+                    "label": "Religion",
+                    "aliases": [
+                        "Religious",
+                        "Faith"
+                    ]
+                },
+                {
+                    "slug": "activism-human-rights",
+                    "label": "Activism & Human Rights",
+                    "aliases": [
+                        "Activism and liberation",
+                        "Activism",
+                        "Human rights"
+                    ]
+                }
+            ]
+        }
+    ],
+    "unclassified": "unclassified",
+    "org_types": [
+        {
+            "slug": "company",
+            "label": "Company",
+            "aliases": [
+                "Business",
+                "Private company",
+                "Limited company",
+                "Enterprise"
+            ]
+        },
+        {
+            "slug": "listed-company",
+            "label": "Listed company",
+            "aliases": [
+                "Public company",
+                "Publicly listed company",
+                "Listed"
+            ]
+        },
+        {
+            "slug": "state-owned-enterprise",
+            "label": "State-owned enterprise",
+            "aliases": [
+                "State enterprise",
+                "State-owned company",
+                "Parastatal"
+            ]
+        },
+        {
+            "slug": "government-body",
+            "label": "Government body",
+            "aliases": [
+                "Public body",
+                "Government agency",
+                "Government",
+                "Ministry",
+                "Public institution"
+            ]
+        },
+        {
+            "slug": "regulator",
+            "label": "Regulator",
+            "aliases": [
+                "Regulatory body",
+                "Regulatory agency"
+            ]
+        },
+        {
+            "slug": "central-bank",
+            "label": "Central bank",
+            "aliases": [
+                "Reserve bank"
+            ]
+        },
+        {
+            "slug": "international-organisation",
+            "label": "International organisation",
+            "aliases": [
+                "International organization",
+                "Intergovernmental organisation",
+                "International body"
+            ]
+        },
+        {
+            "slug": "university",
+            "label": "University",
+            "aliases": [
+                "University / school",
+                "Higher education institution",
+                "College"
+            ]
+        },
+        {
+            "slug": "school",
+            "label": "School",
+            "aliases": [
+                "Secondary school",
+                "Primary school"
+            ]
+        },
+        {
+            "slug": "research-institute",
+            "label": "Research institute",
+            "aliases": [
+                "Research institution",
+                "Think tank",
+                "Research centre"
+            ]
+        },
+        {
+            "slug": "hospital",
+            "label": "Hospital",
+            "aliases": [
+                "Clinic",
+                "Teaching hospital"
+            ]
+        },
+        {
+            "slug": "ngo-nonprofit",
+            "label": "NGO / non-profit",
+            "aliases": [
+                "NGO",
+                "Non-profit",
+                "Nonprofit",
+                "NGO / social enterprise",
+                "Charity",
+                "Non-governmental organisation"
+            ]
+        },
+        {
+            "slug": "foundation",
+            "label": "Foundation",
+            "aliases": [
+                "Charitable foundation"
+            ]
+        },
+        {
+            "slug": "cooperative",
+            "label": "Cooperative",
+            "aliases": [
+                "Co-operative"
+            ]
+        },
+        {
+            "slug": "religious-organisation",
+            "label": "Religious organisation",
+            "aliases": [
+                "Church",
+                "Mosque",
+                "Religious organization"
+            ]
+        },
+        {
+            "slug": "sports-club",
+            "label": "Sports club",
+            "aliases": [
+                "Football club",
+                "Sports team"
+            ]
+        },
+        {
+            "slug": "media-outlet",
+            "label": "Media outlet",
+            "aliases": [
+                "Newspaper",
+                "Broadcaster",
+                "Media company"
+            ]
+        },
+        {
+            "slug": "other",
+            "label": "Other",
+            "aliases": []
+        }
+    ]
+}

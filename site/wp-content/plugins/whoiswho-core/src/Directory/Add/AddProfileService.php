@@ -16,7 +16,7 @@ namespace WhoIsWho\Core\Directory\Add;
 
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\Edit\EditRefused;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Directory\ProfileType;
@@ -100,7 +100,7 @@ final class AddProfileService {
 	 * @param array<string, mixed>      $image        Optional image: id, licence, credit, source.
 	 * @param bool                      $override     The staff member confirmed "create anyway" over possible duplicates.
 	 * @param array<string, mixed>|null $classification Main industry, other industries, organisation type, country and city (see
-	 *                                                  ProfileClassifier::normalise()); when given, it decides the country.
+	 *                                                  ClassificationInput::normalise()); when given, it decides the country.
 	 * @return int Profile id.
 	 * @throws \DomainException Without the capability, for a suppressed name, an unknown type, no source or a bad classification.
 	 */
@@ -123,7 +123,7 @@ final class AddProfileService {
 		$checked = null;
 		if ( null !== $classification ) {
 			try {
-				$checked = ( new ProfileClassifier() )->normalise( $classification + array( 'country' => $country ), $type );
+				$checked = ( new ClassificationInput() )->normalise( $classification + array( 'country' => $country ), $type );
 			} catch ( EditRefused $refused ) {
 				throw new \DomainException( esc_html( $refused->getMessage() ) );
 			}
@@ -176,7 +176,7 @@ final class AddProfileService {
 		);
 		$stored = $this->store_fields( $id, $type, $name, $fields, $sources );
 		if ( null !== $classification ) {
-			( new ProfileClassifier() )->apply( $id, $classification );
+			( new ClassificationInput() )->assign( $id, $type, $classification );
 		} elseif ( $country > 0 ) {
 			wp_set_object_terms( $id, array( $country ), Taxonomies::PLACE, true );
 		}

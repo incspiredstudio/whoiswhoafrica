@@ -11,8 +11,9 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration\Directory;
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Directory\Admin\TermFields;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Directory\Url\OldTermSlugRedirect;
@@ -111,8 +112,8 @@ final class TermFieldsTest extends TestCase {
 	}
 
 	private function unclassified(): int {
-		$term = get_term_by( 'slug', ProfileClassifier::UNCLASSIFIED, Taxonomies::INDUSTRY );
-		return $term instanceof \WP_Term ? (int) $term->term_id : $this->term( 'Unclassified', Taxonomies::INDUSTRY, 0, '', '', ProfileClassifier::UNCLASSIFIED );
+		$term = get_term_by( 'slug', Classification::unclassified_slug(), Taxonomies::INDUSTRY );
+		return $term instanceof \WP_Term ? (int) $term->term_id : $this->term( 'Unclassified', Taxonomies::INDUSTRY, 0, '', '', Classification::unclassified_slug() );
 	}
 
 	/**
@@ -250,7 +251,7 @@ final class TermFieldsTest extends TestCase {
 				'slug' => 'renamed',
 			)
 		);
-		$this->assertSame( ProfileClassifier::UNCLASSIFIED, get_term( $unc )->slug, 'a quick edit cannot rename it either' );
+		$this->assertSame( Classification::unclassified_slug(), get_term( $unc )->slug, 'a quick edit cannot rename it either' );
 		$this->assertArrayNotHasKey(
 			'delete',
 			( new TermFields() )->row_actions(

@@ -44,12 +44,16 @@ final class Module implements ModuleInterface {
 			'wiw_public_profile_choices',
 			static fn ( $choices ): array => ( is_array( $choices ) ? $choices : array() ) + PublicProfile::public_choices()
 		);
+		foreach ( array( 'created_term', 'edited_term', 'delete_term' ) as $hook ) {
+			add_action( $hook, array( Classification::class, 'flush' ) );
+		}
 		add_action(
 			'init',
 			static function (): void {
 				( new ProfileType() )->register();
 				( new Taxonomies() )->register();
 				( new PlaceSeeder() )->maybe_seed();
+				( new ClassificationSeeder() )->maybe_seed();
 				( new Fields\ProfileFields() )->register();
 			},
 			5

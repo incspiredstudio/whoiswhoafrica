@@ -2,7 +2,8 @@
 /**
  * Validates one record of a bundle (contract sections 3 to 8 and 10, REQ-140, REQ-142, REQ-143, REQ-212, REQ-214, REQ-221):
  * schema, allowlisted fields per entity type, provenance on every field, confidence not low, a passing verification report, the
- * recomputed content hash and the images (none in contract 1.0; open-licence only from 1.1, each refused on its own). A failing record gets exactly one contract code and the rest of the bundle carries
+ * recomputed content hash and the images (none in contract 1.0; open-licence only from 1.1, each refused on its own). From
+ * contract 1.2 a record may carry a `classification` object; its shape is checked here, never its slugs. A failing record gets exactly one contract code and the rest of the bundle carries
  * on; nothing is written here, so a refused record can leave no partial write. Plain PHP, no WordPress calls.
  *
  * Order of checks (the first failure is the one code returned): SCHEMA (including any state, publish, visibility or status key),
@@ -29,6 +30,18 @@ final class RecordValidator {
 	 * Every key a record may have.
 	 */
 	public const KEYS = array( 'contract_version', 'record_id', 'record_version', 'run_id', 'batch_id', 'entity_type', 'tier', 'country', 'external_ids', 'inclusion', 'fields', 'claims', 'passages', 'images', 'ai', 'flags', 'verification', 'content_hash' );
+
+	/**
+	 * Keys a record may have from a contract version on, and need not have: key => first version.
+	 */
+	public const OPTIONAL_KEYS = array( 'classification' => '1.2' );
+
+	/**
+	 * Classification provenance methods and confidences (contract 1.2).
+	 */
+	public const CLASSIFICATION_METHODS = array( 'rule', 'ai' );
+
+	public const CLASSIFICATION_CONFIDENCES = array( 'high', 'medium' );
 
 	public const ENTITY_TYPES = array( 'organisation', 'individual', 'entrepreneur' );
 
@@ -139,7 +152,7 @@ final class RecordValidator {
 	 */
 	private function shape( array $record ): ?array {
 		foreach ( array_keys( $record ) as $key ) {
-			if ( ! in_array( $key, self::KEYS, true ) ) {
+			if ( ! in_array( $key, self::KEYS, true ) && ! $this->optional_allowed( (string) $key, $record['contract_version'] ?? null ) ) {
 				return array( 'SCHEMA', (string) $key );
 			}
 		}
@@ -195,7 +208,58 @@ final class RecordValidator {
 		if ( 1 !== preg_match( '/^sha256:[0-9a-f]{64}$/', $record['content_hash'] ) ) {
 			return array( 'SCHEMA', 'content_hash' );
 		}
+		if ( array_key_exists( 'classification', $record ) && ! $this->classification_ok( $record['classification'] ) ) {
+			return array( 'SCHEMA', 'classification' );
+		}
 		return null;
+	}
+
+	/**
+	 * Whether an optional key is allowed in a record of this contract version.
+	 *
+	 * @param string $key     Key.
+	 * @param mixed  $version The record's contract version.
+	 */
+	private function optional_allowed( string $key, $version ): bool {
+		$since = self::OPTIONAL_KEYS[ $key ] ?? null;
+		return null !== $since && is_string( $version ) && version_compare( $version, $since, '>=' );
+	}
+
+	/**
+	 * The shape of a contract 1.2 classification object. Only the shape is checked: a slug the site does not know is not a
+	 * refusal, it falls back to the alias mapping or Unclassified when the record is applied.
+	 *
+	 * @param mixed $value Decoded classification.
+	 */
+	private function classification_ok( $value ): bool {
+		if ( ! is_array( $value ) || array() !== array_diff( array_keys( $value ), array( 'primary_country', 'primary_industry', 'industries', 'provenance' ) ) ) {
+			return false;
+		}
+		if ( ! is_string( $value['primary_country'] ?? null ) || 1 !== preg_match( '/^([A-Z]{2}|PAN)$/', $value['primary_country'] ) ) {
+			return false;
+		}
+		if ( ! is_string( $value['primary_industry'] ?? null ) || 1 !== preg_match( '/^[a-z0-9-]{1,100}$/', $value['primary_industry'] ) ) {
+			return false;
+		}
+		$industries = $value['industries'] ?? array();
+		if ( ! is_array( $industries ) || ( array() !== $industries && array_values( $industries ) !== $industries ) ) {
+			return false;
+		}
+		foreach ( $industries as $slug ) {
+			if ( ! is_string( $slug ) || 1 !== preg_match( '/^[a-z0-9-]{1,100}$/', $slug ) ) {
+				return false;
+			}
+		}
+		$prov = $value['provenance'] ?? null;
+		if ( ! is_array( $prov ) || ! in_array( $prov['method'] ?? null, self::CLASSIFICATION_METHODS, true ) || ! in_array( $prov['confidence'] ?? null, self::CLASSIFICATION_CONFIDENCES, true ) ) {
+			return false;
+		}
+		foreach ( array( 'model', 'prompt_version' ) as $key ) {
+			if ( array_key_exists( $key, $prov ) && null !== $prov[ $key ] && ! is_string( $prov[ $key ] ) ) {
+				return false;
+			}
+		}
+		return array() === array_diff( array_keys( $prov ), array( 'method', 'model', 'prompt_version', 'confidence' ) );
 	}
 
 	/**

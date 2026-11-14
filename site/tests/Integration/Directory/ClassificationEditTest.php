@@ -12,11 +12,12 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration\Directory;
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Directory\Admin\ClassificationPicker;
 use WhoIsWho\Core\Directory\Admin\ProfileEditScreen;
 use WhoIsWho\Core\Directory\Admin\ProfilePanels;
 use WhoIsWho\Core\Directory\Edit\EditRefused;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Edit\ProfileEditor;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
@@ -87,8 +88,8 @@ final class ClassificationEditTest extends TestCase {
 		global $wpdb;
 		$this->audit_floor = (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$wpdb->prefix}wiw_audit_log" ); // phpcs:ignore WordPress.DB
 		$suffix            = strtolower( wp_generate_password( 6, false, false ) );
-		$existing          = get_term_by( 'slug', ProfileClassifier::UNCLASSIFIED, Taxonomies::INDUSTRY );
-		$this->t['unc']    = $existing instanceof \WP_Term ? (int) $existing->term_id : $this->term( 'Unclassified', Taxonomies::INDUSTRY, 0, '', ProfileClassifier::UNCLASSIFIED );
+		$existing          = get_term_by( 'slug', Classification::unclassified_slug(), Taxonomies::INDUSTRY );
+		$this->t['unc']    = $existing instanceof \WP_Term ? (int) $existing->term_id : $this->term( 'Unclassified', Taxonomies::INDUSTRY, 0, '', Classification::unclassified_slug() );
 		$this->t['energy'] = $this->term( 'Energy ' . $suffix, Taxonomies::INDUSTRY );
 		$this->t['oil']    = $this->term( 'Oil ' . $suffix, Taxonomies::INDUSTRY, $this->t['energy'] );
 		$this->t['power']  = $this->term( 'Power ' . $suffix, Taxonomies::INDUSTRY, $this->t['energy'] );
@@ -208,8 +209,8 @@ final class ClassificationEditTest extends TestCase {
 		$result = ( new ProfileEditor() )->edit( $id, array(), 'Classified from the annual report', $staff, 0, array(), $this->wanted() );
 		$this->assertTrue( $result['applied'] );
 		$this->assertSame( array( ProfileEditor::CLASSIFICATION_KEY ), $result['changed'] );
-		$this->assertSame( (string) $this->t['oil'], get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
-		$this->assertSame( (string) $this->t['ng'], get_post_meta( $id, ProfileClassifier::META_PRIMARY_COUNTRY, true ) );
+		$this->assertSame( (string) $this->t['oil'], get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
+		$this->assertSame( (string) $this->t['ng'], get_post_meta( $id, Classification::PRIMARY_COUNTRY_META, true ) );
 		$industries = array( $this->t['oil'], $this->t['power'] );
 		sort( $industries );
 		$this->assertSame( $industries, $this->ids( $id, Taxonomies::INDUSTRY ) );
@@ -217,7 +218,7 @@ final class ClassificationEditTest extends TestCase {
 		sort( $places );
 		$this->assertSame( $places, $this->ids( $id, Taxonomies::PLACE ) );
 		$this->assertSame( array( $this->t['bank'] ), $this->ids( $id, Taxonomies::ORG_TYPE ) );
-		$this->assertSame( $this->wanted( array( 'industries' => array( $this->t['power'] ) ) ), ( new ProfileClassifier() )->current( $id ) );
+		$this->assertSame( $this->wanted( array( 'industries' => array( $this->t['power'] ) ) ), ( new ClassificationInput() )->current( $id ) );
 
 		$version = ( new VersionRepository() )->for_profile( $id );
 		$last    = end( $version );
@@ -250,14 +251,14 @@ final class ClassificationEditTest extends TestCase {
 				$this->assertNotSame( '', $refused->getMessage(), $case );
 			}
 		}
-		$this->assertSame( '', get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
+		$this->assertSame( '', get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
 	}
 
 	public function test_REQ_009_unclassified_is_an_allowed_main_industry_and_a_person_has_no_org_type(): void {
 		$id    = $this->profile( 'individual' );
 		$staff = $this->user( 'wiw_editor' );
 		( new ProfileEditor() )->edit( $id, array(), 'Not sure yet', $staff, 0, array(), $this->wanted( array( 'primary_industry' => $this->t['unc'] ) ) );
-		$this->assertSame( (string) $this->t['unc'], get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
+		$this->assertSame( (string) $this->t['unc'], get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
 		$this->assertSame( array(), $this->ids( $id, Taxonomies::ORG_TYPE ), 'people carry no organisation type' );
 	}
 
@@ -343,11 +344,11 @@ final class ClassificationEditTest extends TestCase {
 	public function test_REQ_009_an_approved_revision_applies_its_classification(): void {
 		$id      = $this->profile();
 		$author  = $this->user( 'wiw_editor' );
-		$version = ( new VersionRepository() )->append( $id, $author, 'revision', 'Manager change', array( ProfileEditor::CLASSIFICATION_KEY => ProfileClassifier::blank() ), array( ProfileEditor::CLASSIFICATION_KEY => $this->wanted() ), 'pending' );
+		$version = ( new VersionRepository() )->append( $id, $author, 'revision', 'Manager change', array( ProfileEditor::CLASSIFICATION_KEY => ClassificationInput::blank() ), array( ProfileEditor::CLASSIFICATION_KEY => $this->wanted() ), 'pending' );
 		$admin   = $this->user( 'administrator' );
 		wp_set_current_user( $admin );
 		( new RevisionService( null, static function (): void {} ) )->approve( $version, $admin );
-		$this->assertSame( (string) $this->t['oil'], get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
+		$this->assertSame( (string) $this->t['oil'], get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
 		$this->assertSame( array( $this->t['bank'] ), $this->ids( $id, Taxonomies::ORG_TYPE ) );
 	}
 }

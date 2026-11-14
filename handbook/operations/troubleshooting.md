@@ -89,9 +89,9 @@ Sign in as an Administrator and upload the `.zip` file from the bundle (not an u
 
 Press **I have set up backups** on the Dashboard or the Setup screen once the host's backups are on. See [The backup reminder](/operations/backups#the-backup-reminder).
 
-## The import dry run says "New list values needed"
+## The import dry run lists cities that are not in the place list
 
-This is not an error. The records name industries, sectors, places or types the site does not have yet. Press **Add all as new list entries**, or map each value. See [Import data](/staff/importing#import-one-bundle).
+This is not an error, and the records still import (without the city). Press **Add all as new places** to add each city under its record's country, or map each value. Industries and organisation types never need this step: a value the site does not know goes to Unclassified (or Other). See [Import data](/staff/importing#import-one-bundle).
 
 ## An undone batch has to come back
 

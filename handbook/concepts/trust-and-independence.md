@@ -4,7 +4,7 @@ Commercial relationships and editorial judgement are kept apart on purpose. This
 
 ## The rule
 
-Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label. The only thing money can buy is a labelled placement slot for a story, for set dates, always marked "Sponsored by (name)". A sponsored slot never reorders the unsponsored stories or search results.
+Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label. The only thing money can buy is a labelled placement slot for a story, for set dates, always marked "Sponsored". A sponsored slot never reorders the unsponsored stories or search results.
 
 | Money cannot | Why it matters |
 |---|---|
@@ -18,7 +18,7 @@ Payment never affects nominations, judging, winners, profile ranking, Featured, 
 
 | Label | Applies to | Public? | Can it be bought? |
 |---|---|---|---|
-| Sponsored | Stories only | Yes, always visible with the sponsor's name | The placement is paid for. It changes nothing else. |
+| Sponsored | Stories only | Yes, always visible as Sponsored (the sponsor's name is not shown publicly) | The placement is paid for. It changes nothing else. |
 | Featured | Stories only | Yes, as editorial placement | No |
 | Claimed | Profiles | No. Staff only, shown as a checkmark | No |
 | Compiled automatically, human review pending | Imported organisation profiles | Yes, until reviewed | No |
@@ -27,7 +27,7 @@ Profiles are never Sponsored and never Featured. There are no Verified profiles.
 
 ### Sponsored
 
-A sponsored story shows the label and the sponsor's name on its card, page and share preview. The sponsor does not write the story and has no influence over any label, profile or award. The label can be set by hand or applied automatically between the start and end dates of a deal. It is styled so it cannot be mistaken for any other status.
+A sponsored story shows the label Sponsored on its card, page and share preview. The sponsor's name is not shown on public pages; staff see it in admin. The sponsor does not write the story and has no influence over any label, profile or award. The label can be set by hand or applied automatically between the start and end dates of a deal. It is styled so it cannot be mistaken for any other status.
 
 ### Featured
 

@@ -20,7 +20,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Admin;
 
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -32,7 +33,7 @@ final class TermFields {
 
 	public const NONCE          = 'wiw_term_fields';
 	public const NONCE_FIELD    = 'wiw_term_nonce';
-	public const META_ALIAS     = 'wiw_alias';
+	public const META_ALIAS     = Taxonomies::META_ALIAS;
 	public const META_OLD_SLUGS = 'wiw_old_slugs';
 	public const ERROR_ARG      = 'wiw_term_error';
 
@@ -104,11 +105,11 @@ final class TermFields {
 				return $parent > 0 ? 'country_parent' : null;
 			}
 			$country = $parent > 0 ? get_term( $parent, Taxonomies::PLACE ) : null;
-			return $country instanceof \WP_Term && Taxonomies::KIND_COUNTRY === ProfileClassifier::place_kind( $parent ) ? null : 'city_parent';
+			return $country instanceof \WP_Term && Taxonomies::KIND_COUNTRY === ClassificationInput::place_kind( $parent ) ? null : 'city_parent';
 		}//end if
 		if ( Taxonomies::INDUSTRY === $taxonomy ) {
 			$term = $term_id > 0 ? get_term( $term_id, Taxonomies::INDUSTRY ) : null;
-			if ( $term instanceof \WP_Term && ProfileClassifier::UNCLASSIFIED === $term->slug ) {
+			if ( $term instanceof \WP_Term && Classification::unclassified_slug() === $term->slug ) {
 				$slug = (string) ( $data['slug'] ?? $term->slug );
 				$name = (string) ( $data['name'] ?? $term->name );
 				return ( $parent > 0 || ( '' !== $slug && $slug !== $term->slug ) || $name !== $term->name ) ? 'unclassified' : null;
@@ -117,7 +118,7 @@ final class TermFields {
 				return null;
 			}
 			$sector = get_term( $parent, Taxonomies::INDUSTRY );
-			if ( ! $sector instanceof \WP_Term || 0 !== (int) $sector->parent || ProfileClassifier::UNCLASSIFIED === $sector->slug ) {
+			if ( ! $sector instanceof \WP_Term || 0 !== (int) $sector->parent || Classification::unclassified_slug() === $sector->slug ) {
 				return 'sector_parent';
 			}
 			if ( $term_id > 0 ) {
@@ -160,9 +161,9 @@ final class TermFields {
 	/**
 	 * Refuse a new term from the term screen that breaks a rule. Programmatic inserts (seeding, the import) are not affected.
 	 *
-	 * @param string|\WP_Error     $term     Term name, or an earlier error.
-	 * @param string               $taxonomy Taxonomy.
-	 * @param mixed                $args     Insert arguments (an array).
+	 * @param string|\WP_Error $term     Term name, or an earlier error.
+	 * @param string           $taxonomy Taxonomy.
+	 * @param mixed            $args     Insert arguments (an array).
 	 * @return string|\WP_Error
 	 */
 	public function check_insert( $term, $taxonomy, $args = array() ) {
@@ -256,7 +257,7 @@ final class TermFields {
 			echo '<tr class="form-field"><th scope="row"><label for="wiw_iso_code">' . esc_html__( 'Country code', 'whoiswho' ) . '</label></th><td><input type="text" id="wiw_iso_code" name="wiw_iso_code" maxlength="3" size="4" value="' . esc_attr( (string) get_term_meta( $term->term_id, Taxonomies::META_ISO, true ) ) . '" /><p class="description">' . esc_html__( 'Two letters, for example NG for Nigeria. Required for a country; leave empty for a city.', 'whoiswho' ) . '</p></td></tr>';
 			return;
 		}
-		if ( Taxonomies::INDUSTRY === $taxonomy && ProfileClassifier::UNCLASSIFIED === $term->slug ) {
+		if ( Taxonomies::INDUSTRY === $taxonomy && Classification::unclassified_slug() === $term->slug ) {
 			echo '<tr class="form-field"><td colspan="2"><p class="description">' . esc_html( self::message( 'unclassified' ) ) . '</p></td></tr>';
 			return;
 		}
@@ -377,7 +378,7 @@ final class TermFields {
 			return $data;
 		}
 		$term = get_term( (int) $term_id, Taxonomies::INDUSTRY );
-		if ( $term instanceof \WP_Term && ProfileClassifier::UNCLASSIFIED === $term->slug ) {
+		if ( $term instanceof \WP_Term && Classification::unclassified_slug() === $term->slug ) {
 			$data['name'] = $term->name;
 			$data['slug'] = $term->slug;
 		}
@@ -400,7 +401,7 @@ final class TermFields {
 			return $caps;
 		}
 		$term = get_term( (int) $args[0] );
-		if ( $term instanceof \WP_Term && Taxonomies::INDUSTRY === $term->taxonomy && ProfileClassifier::UNCLASSIFIED === $term->slug ) {
+		if ( $term instanceof \WP_Term && Taxonomies::INDUSTRY === $term->taxonomy && Classification::unclassified_slug() === $term->slug ) {
 			return array( 'do_not_allow' );
 		}
 		return $caps;
@@ -415,7 +416,7 @@ final class TermFields {
 	 */
 	public function row_actions( $actions, $term ): array {
 		$actions = (array) $actions;
-		if ( $term instanceof \WP_Term && ProfileClassifier::UNCLASSIFIED === $term->slug ) {
+		if ( $term instanceof \WP_Term && Classification::unclassified_slug() === $term->slug ) {
 			unset( $actions['inline hide-if-no-js'], $actions['delete'] );
 		}
 		return $actions;
@@ -466,7 +467,7 @@ final class TermFields {
 		switch ( $column ) {
 			case 'wiw_kind':
 				$labels = self::kinds();
-				return esc_html( $labels[ ProfileClassifier::place_kind( $term_id ) ] ?? '' );
+				return esc_html( $labels[ ClassificationInput::place_kind( $term_id ) ] ?? '' );
 			case 'wiw_code':
 				return esc_html( (string) get_term_meta( $term_id, Taxonomies::META_ISO, true ) );
 			case 'wiw_country':
@@ -476,7 +477,7 @@ final class TermFields {
 				if ( $parent instanceof \WP_Term ) {
 					return esc_html( $parent->name );
 				}
-				return 'wiw_sector' === $column && $term instanceof \WP_Term && ProfileClassifier::UNCLASSIFIED !== $term->slug ? esc_html__( '(a sector)', 'whoiswho' ) : '';
+				return 'wiw_sector' === $column && $term instanceof \WP_Term && Classification::unclassified_slug() !== $term->slug ? esc_html__( '(a sector)', 'whoiswho' ) : '';
 			case 'wiw_alias':
 				return esc_html( implode( ', ', self::aliases( $term_id ) ) );
 		}
@@ -490,8 +491,7 @@ final class TermFields {
 	 * @return string[]
 	 */
 	public static function aliases( int $term_id ): array {
-		$value = get_term_meta( $term_id, self::META_ALIAS, true );
-		return is_array( $value ) ? array_values( array_filter( array_map( 'strval', $value ), static fn ( string $alias ): bool => '' !== $alias ) ) : array();
+		return Classification::aliases_of( $term_id );
 	}
 
 	/**
@@ -597,7 +597,7 @@ final class TermFields {
 			)
 		);
 		foreach ( is_array( $ids ) ? $ids : array() as $id ) {
-			if ( (int) $id !== $term_id && Taxonomies::KIND_COUNTRY === ProfileClassifier::place_kind( (int) $id ) ) {
+			if ( (int) $id !== $term_id && Taxonomies::KIND_COUNTRY === ClassificationInput::place_kind( (int) $id ) ) {
 				return true;
 			}
 		}

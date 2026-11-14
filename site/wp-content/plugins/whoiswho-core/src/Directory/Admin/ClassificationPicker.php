@@ -4,7 +4,7 @@
  * as a select grouped by sector with a filter box, plus the profile's other industries as removable chips and a select to add
  * one), an Organisation type dropdown (organisations and institutions only), a Country dropdown and a City select narrowed to the
  * chosen country. Everything works without JavaScript; classification.js adds the filter box behaviour, the chips and the city
- * narrowing. Markup only: values are read back by from_request() and checked by ProfileClassifier.
+ * narrowing. Markup only: values are read back by from_request() and checked by ClassificationInput.
  *
  * @package WhoIsWho
  */
@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Admin;
 
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Platform\Admin\Request;
 
 /**
@@ -98,8 +98,8 @@ final class ClassificationPicker {
 	 * @return array<int, array{name: string, label: string, html: string}>
 	 */
 	public function rows( array $current, string $entity_type, bool $required = false ): array {
-		$tree   = ProfileClassifier::industry_tree();
-		$places = ProfileClassifier::places();
+		$tree   = ClassificationInput::industry_tree();
+		$places = ClassificationInput::places();
 		$rows   = array();
 		$rows[] = array(
 			'name'  => $this->names['primary_industry'],
@@ -111,11 +111,11 @@ final class ClassificationPicker {
 			'label' => __( 'Other industries', 'whoiswho' ),
 			'html'  => $this->extras( $tree, $current['industries'] ),
 		);
-		if ( in_array( $entity_type, ProfileClassifier::ORG_ENTITY_TYPES, true ) ) {
+		if ( in_array( $entity_type, ClassificationInput::ORG_ENTITY_TYPES, true ) ) {
 			$rows[] = array(
 				'name'  => $this->names['org_type'],
 				'label' => __( 'Organisation type', 'whoiswho' ) . ( $required ? ' *' : '' ),
-				'html'  => $this->select( $this->names['org_type'], ProfileClassifier::org_types(), $current['org_type'], $required, __( 'Choose a type', 'whoiswho' ) ) . $this->help( __( 'The kind of body, for example Company, University or NGO / non-profit. Add a type on Directory > Organisation types.', 'whoiswho' ) ),
+				'html'  => $this->select( $this->names['org_type'], ClassificationInput::org_types(), $current['org_type'], $required, __( 'Choose a type', 'whoiswho' ) ) . $this->help( __( 'The kind of body, for example Company, University or NGO / non-profit. Add a type on Directory > Organisation types.', 'whoiswho' ) ),
 			);
 		}
 		$rows[] = array(
@@ -143,7 +143,7 @@ final class ClassificationPicker {
 		$out    = '<label class="screen-reader-text" for="' . esc_attr( $filter ) . '">' . esc_html__( 'Filter the industries', 'whoiswho' ) . '</label>';
 		$out   .= '<input type="search" id="' . esc_attr( $filter ) . '" class="wiw-filter regular-text" data-wiw-filter-for="wiw-f-' . esc_attr( $name ) . '" placeholder="' . esc_attr__( 'Type to filter the list', 'whoiswho' ) . '" hidden="hidden" />';
 		$out   .= '<select id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '"><option value="0">' . esc_html__( 'Not chosen', 'whoiswho' ) . '</option>';
-		$unc    = ProfileClassifier::unclassified_id();
+		$unc    = ClassificationInput::unclassified_id();
 		if ( $unc > 0 ) {
 			$out .= '<option value="' . esc_attr( (string) $unc ) . '"' . selected( $current['primary_industry'], $unc, false ) . '>' . esc_html__( 'Unclassified (needs classification)', 'whoiswho' ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}

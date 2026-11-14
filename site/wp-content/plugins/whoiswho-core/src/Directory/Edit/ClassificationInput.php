@@ -1,10 +1,10 @@
 <?php
 /**
- * A profile's classification as staff set it on Edit profile and Add profile (REQ-009, REQ-125): one primary industry (an industry
- * under a sector, or the "unclassified" term), extra industries, one organisation type (organisations and institutions only), one
- * primary country (a country or the Pan-African body) and an optional city in that country. The primary industry and country are
- * kept in post meta _wiw_primary_industry and _wiw_primary_country; the profile is also given the matching terms. Only this class,
- * the importer and the demo write those keys; templates read them through the PublicProfile read model.
+ * The classification controls of Edit profile and Add profile, as term ids (REQ-009, REQ-125): read a profile's current choice,
+ * check a wanted one (one primary industry under a sector or Unclassified, extra industries, one organisation type for
+ * organisations and institutions, a country or the Pan-African body, and an optional city in that country), list the choices for
+ * the pickers, and hand a checked choice to Directory\ProfileClassifier::assign(), the only writer of _wiw_primary_industry and
+ * _wiw_primary_country. ProfileEditor and AddProfileService call it, so every save keeps a version and an audit row.
  *
  * @package WhoIsWho
  */
@@ -13,25 +13,19 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Edit;
 
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\ProfileClassifier;
 use WhoIsWho\Core\Directory\Taxonomies;
 
 /**
- * Profile classification: read, check and apply.
+ * Classification input: read, check and hand over.
  */
-final class ProfileClassifier {
-
-	public const META_PRIMARY_INDUSTRY = '_wiw_primary_industry';
-	public const META_PRIMARY_COUNTRY  = '_wiw_primary_country';
-
-	/**
-	 * Slug of the industry term for a profile that is not classified yet; hidden from public navigation.
-	 */
-	public const UNCLASSIFIED = 'unclassified';
+final class ClassificationInput {
 
 	/**
 	 * Entity types that carry an organisation type.
 	 */
-	public const ORG_ENTITY_TYPES = array( 'organisation', 'institution' );
+	public const ORG_ENTITY_TYPES = ProfileClassifier::ORG_ENTITY_TYPES;
 
 	/**
 	 * The empty classification.
@@ -52,8 +46,7 @@ final class ProfileClassifier {
 	 * The term id of the "unclassified" industry, or 0 when it does not exist.
 	 */
 	public static function unclassified_id(): int {
-		$term = get_term_by( 'slug', self::UNCLASSIFIED, Taxonomies::INDUSTRY );
-		return $term instanceof \WP_Term ? (int) $term->term_id : 0;
+		return (int) Classification::unclassified_id();
 	}
 
 	/**
@@ -64,8 +57,8 @@ final class ProfileClassifier {
 	 */
 	public function current( int $profile_id ): array {
 		$out                     = self::blank();
-		$out['primary_industry'] = (int) get_post_meta( $profile_id, self::META_PRIMARY_INDUSTRY, true );
-		$out['country']          = (int) get_post_meta( $profile_id, self::META_PRIMARY_COUNTRY, true );
+		$out['primary_industry'] = (int) get_post_meta( $profile_id, Classification::PRIMARY_INDUSTRY_META, true );
+		$out['country']          = (int) get_post_meta( $profile_id, Classification::PRIMARY_COUNTRY_META, true );
 		foreach ( $this->terms_of( $profile_id, Taxonomies::INDUSTRY ) as $term ) {
 			if ( (int) $term->term_id !== $out['primary_industry'] && $term->parent > 0 ) {
 				$out['industries'][] = (int) $term->term_id;
@@ -143,39 +136,34 @@ final class ProfileClassifier {
 	}
 
 	/**
-	 * Write a checked classification: the two meta keys and the industry, organisation type and place terms.
+	 * Write a checked classification through Directory\ProfileClassifier::assign() (the meta keys and the industry, place and
+	 * organisation type terms), recording that staff chose it.
 	 *
 	 * @param int                                                                                     $profile_id     Profile.
+	 * @param string                                                                                  $entity_type    Entity type.
 	 * @param array{primary_industry: int, industries: int[], org_type: int, country: int, city: int} $classification Output of normalise().
 	 */
-	public function apply( int $profile_id, array $classification ): void {
-		foreach ( array(
-			self::META_PRIMARY_INDUSTRY => $classification['primary_industry'],
-			self::META_PRIMARY_COUNTRY  => $classification['country'],
-		) as $key => $value ) {
-			if ( $value > 0 ) {
-				update_post_meta( $profile_id, $key, (string) $value );
-			} else {
-				delete_post_meta( $profile_id, $key );
-			}
-		}
-		foreach ( self::terms_for( $classification ) as $taxonomy => $ids ) {
-			wp_set_object_terms( $profile_id, $ids, $taxonomy );
-		}
-	}
-
-	/**
-	 * The term sets a classification gives: taxonomy => term ids.
-	 *
-	 * @param array{primary_industry: int, industries: int[], org_type: int, country: int, city: int} $classification Classification.
-	 * @return array<string, int[]>
-	 */
-	public static function terms_for( array $classification ): array {
-		$industry = $classification['primary_industry'] > 0 ? array( $classification['primary_industry'] ) : array();
-		return array(
-			Taxonomies::INDUSTRY => array_values( array_unique( array_merge( $industry, $classification['industries'] ) ) ),
-			Taxonomies::ORG_TYPE => $classification['org_type'] > 0 ? array( $classification['org_type'] ) : array(),
-			Taxonomies::PLACE    => array_values( array_filter( array( $classification['country'], $classification['city'] ) ) ),
+	public function assign( int $profile_id, string $entity_type, array $classification ): void {
+		$slug = static function ( int $term_id, string $taxonomy ): string {
+			$term = $term_id > 0 ? get_term( $term_id, $taxonomy ) : null;
+			return $term instanceof \WP_Term ? $term->slug : '';
+		};
+		( new ProfileClassifier() )->assign(
+			$profile_id,
+			$entity_type,
+			array(
+				'primary_industry' => $slug( $classification['primary_industry'], Taxonomies::INDUSTRY ),
+				'industries'       => array_values( array_filter( array_map( static fn ( int $id ): string => $slug( $id, Taxonomies::INDUSTRY ), $classification['industries'] ) ) ),
+				'country_id'       => $classification['country'],
+				'city_id'          => $classification['city'],
+				'org_type'         => $slug( $classification['org_type'], Taxonomies::ORG_TYPE ),
+				'provenance'       => array(
+					'method'         => 'manual',
+					'model'          => null,
+					'prompt_version' => null,
+					'confidence'     => 'medium',
+				),
+			)
 		);
 	}
 
@@ -196,7 +184,7 @@ final class ProfileClassifier {
 		$tree  = array();
 		$kids  = array();
 		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
-			if ( ! $term instanceof \WP_Term || self::UNCLASSIFIED === $term->slug ) {
+			if ( ! $term instanceof \WP_Term || Classification::unclassified_slug() === $term->slug ) {
 				continue;
 			}
 			if ( 0 === (int) $term->parent ) {
@@ -293,7 +281,7 @@ final class ProfileClassifier {
 			return false;
 		}
 		$sector = get_term( (int) $term->parent, Taxonomies::INDUSTRY );
-		return $sector instanceof \WP_Term && 0 === (int) $sector->parent && self::UNCLASSIFIED !== $sector->slug;
+		return $sector instanceof \WP_Term && 0 === (int) $sector->parent && Classification::unclassified_slug() !== $sector->slug;
 	}
 
 	/**

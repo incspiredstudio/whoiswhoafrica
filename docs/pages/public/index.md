@@ -12,7 +12,7 @@ The pages in this section describe how the site is meant to behave and how the p
 
 **Money never buys recognition.** Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label (REQ-183, REQ-199, D-062). Listings have the same format for everyone.
 
-**Only stories can be Sponsored.** A sponsor can pay for a story to sit in a labelled slot for set dates. The label always shows the sponsor's name and the slot never reorders other stories or search. Profiles are never Sponsored or Featured (REQ-155, REQ-263, D-062).
+**Only stories can be Sponsored.** A sponsor can pay for a story to sit in a labelled slot for set dates. The label always reads Sponsored, never with the sponsor's name (owner 2026-11-14), and the slot never reorders other stories or search. Profiles are never Sponsored or Featured (REQ-155, REQ-263, D-062).
 
 **Profiles show no trust badge.** A visitor sees facts and the source beside each one. The only status label a profile can show is the pending-review label described in [Directory and profiles](/pages/public/directory-and-profiles). Claimed is a staff-only mark and is never shown publicly (REQ-150, D-054, D-059).
 

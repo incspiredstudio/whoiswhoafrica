@@ -19,7 +19,7 @@ use WhoIsWho\Core\Compliance\Support\ItemStatus;
 use WhoIsWho\Core\Compliance\Support\ItemType;
 use WhoIsWho\Core\Compliance\Support\SupportItems;
 use WhoIsWho\Core\Directory\Edit\EditRefused;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\Edit\ProfileEditor;
 use WhoIsWho\Core\Directory\Edit\ProfileImageEditor;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
@@ -379,10 +379,10 @@ final class ProfileEditScreen {
 		}
 		$out  = '<h3 id="wiw-classification">' . esc_html__( 'Classification', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Where the profile sits in the directory: its breadcrumb is Country, Sector, Industry. Other industries shows only this profile\'s own.', 'whoiswho' ) . '</p>';
 		$out .= '<table class="form-table" role="presentation"><tbody>';
-		foreach ( ( new ClassificationPicker() )->rows( ( new ProfileClassifier() )->current( $id ), $type ) as $row ) {
+		foreach ( ( new ClassificationPicker() )->rows( ( new ClassificationInput() )->current( $id ), $type ) as $row ) {
 			$out .= $this->row( $row['name'], $row['label'], $row['html'] );
 		}
-		if ( ! in_array( $type, ProfileClassifier::ORG_ENTITY_TYPES, true ) ) {
+		if ( ! in_array( $type, ClassificationInput::ORG_ENTITY_TYPES, true ) ) {
 			$out .= $this->professions( $id );
 		}
 		return $out . '</tbody></table>';

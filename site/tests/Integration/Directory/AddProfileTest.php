@@ -10,11 +10,12 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration\Directory;
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
 use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+
 use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Directory\ProfileType;
@@ -324,8 +325,8 @@ final class AddProfileTest extends TestCase {
 		}
 		$this->assertSame( array( $this->country ), array_map( 'intval', wp_get_object_terms( $id, Taxonomies::PLACE, array( 'fields' => 'ids' ) ) ) );
 		$this->assertSame( array( $this->industry ), array_map( 'intval', wp_get_object_terms( $id, Taxonomies::INDUSTRY, array( 'fields' => 'ids' ) ) ) );
-		$this->assertSame( (string) $this->industry, get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
-		$this->assertSame( (string) $this->country, get_post_meta( $id, ProfileClassifier::META_PRIMARY_COUNTRY, true ) );
+		$this->assertSame( (string) $this->industry, get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
+		$this->assertSame( (string) $this->country, get_post_meta( $id, Classification::PRIMARY_COUNTRY_META, true ) );
 
 		$prov = new ProvenanceRepository();
 		$name = $prov->for_profile( $id, 'name' );
@@ -502,7 +503,7 @@ final class AddProfileTest extends TestCase {
 		$this->assertEqualsCanonicalizing( array( $this->industry, $this->other_industry ), $this->term_ids( $id, Taxonomies::INDUSTRY ) );
 		$this->assertEqualsCanonicalizing( array( $this->country, $this->city ), $this->term_ids( $id, Taxonomies::PLACE ) );
 		$this->assertSame( array( $this->org_type ), $this->term_ids( $id, Taxonomies::ORG_TYPE ) );
-		$this->assertSame( (string) $this->industry, get_post_meta( $id, ProfileClassifier::META_PRIMARY_INDUSTRY, true ) );
+		$this->assertSame( (string) $this->industry, get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
 		$this->assertSame( '', get_post_meta( $id, 'wiw_org_type', true ), 'no duplicate text field is written' );
 	}
 

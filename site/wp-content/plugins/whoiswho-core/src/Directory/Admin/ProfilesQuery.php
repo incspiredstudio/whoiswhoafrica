@@ -12,7 +12,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Admin;
 
-use WhoIsWho\Core\Directory\Edit\ProfileClassifier;
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
@@ -210,10 +211,10 @@ final class ProfilesQuery {
 		if ( self::NEEDS === ( $filters[ self::CLASSIFICATION ] ?? '' ) ) {
 			$meta   = 'SELECT pm.meta_value FROM ' . $wpdb->postmeta . " pm WHERE pm.post_id = p.ID AND pm.meta_key = %s AND pm.meta_value NOT IN ('', '0') LIMIT 1";
 			$where .= " AND ( COALESCE(($meta), '') = '' OR ($meta) = %s OR COALESCE(($meta), '') = '' )";
-			$args[] = ProfileClassifier::META_PRIMARY_INDUSTRY;
-			$args[] = ProfileClassifier::META_PRIMARY_INDUSTRY;
-			$args[] = (string) ProfileClassifier::unclassified_id();
-			$args[] = ProfileClassifier::META_PRIMARY_COUNTRY;
+			$args[] = Classification::PRIMARY_INDUSTRY_META;
+			$args[] = Classification::PRIMARY_INDUSTRY_META;
+			$args[] = (string) ClassificationInput::unclassified_id();
+			$args[] = Classification::PRIMARY_COUNTRY_META;
 		}
 		return array( $where, $args );
 	}

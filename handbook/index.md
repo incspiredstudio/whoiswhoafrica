@@ -33,7 +33,7 @@ WHOISWHO is an African discovery, recognition and media platform. It records the
 ## Rules that do not change
 
 1. **Public only after review.** An individual's profile is public only after a person approves it. An organisation can be live earlier, but it carries the label "Compiled automatically from public sources. Human review pending."
-2. **Money never buys recognition.** Payment never affects nominations, winners, ranking, Featured, Claimed or any label. The only thing money buys is a story placed in a labelled "Sponsored by" slot for set dates.
+2. **Money never buys recognition.** Payment never affects nominations, winners, ranking, Featured, Claimed or any label. The only thing money buys is a story placed in a slot labelled "Sponsored" for set dates.
 3. **There are no public accounts.** Visitors use forms and single-use email links. Only staff sign in.
 4. **Privacy by default.** The site stores as little personal data as possible, answers requests within published time limits, and hides a profile within two business days of a valid removal request.
 5. **Claimed is a staff mark.** Staff see a checkmark on a claimed profile. The public sees nothing, and the Claim button disappears.
