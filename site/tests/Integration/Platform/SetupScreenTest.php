@@ -163,6 +163,21 @@ final class SetupScreenTest extends WpTestCase {
 		}
 	}
 
+	/**
+	 * The import confirmation has one line per part, tagged with its part, so the screen shows only the parts that were ticked
+	 * (#810): ticking only Stories no longer shows the Profiles paragraph.
+	 */
+	public function test_REQ_056_the_import_confirmation_has_one_line_per_part(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$html = SetupScreen::html( new Request( array() ) );
+		$this->assertSame( 1, preg_match( '#<div class="wiw-confirm" data-wiw="confirm-import".*?</div>#s', $html, $m ) );
+		foreach ( \WhoIsWho\Core\Platform\Setup\DemoParts::PARTS as $part ) {
+			$this->assertSame( 1, preg_match( '#<li data-wiw-for="' . $part . '">#', $m[0] ), "{$part} has its own line" );
+		}
+		$this->assertSame( 1, preg_match( '#<li data-wiw-for="profiles">[^<]*Profiles:#', $m[0] ), 'the Profiles paragraph belongs to the Profiles part' );
+		$this->assertSame( 0, preg_match( '#<li>[^<]*Profiles:#', $m[0] ), 'no untagged Profiles line' );
+	}
+
 	public function test_REQ_240_the_screen_refuses_a_user_without_the_capability(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'wiw_editor' ) ) );
 		$this->expectException( \DomainException::class );

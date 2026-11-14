@@ -181,7 +181,38 @@
 		show( els.kept, els.keptList.children.length > 0 );
 	}
 
+	// Show only the confirmation lines of the ticked parts. A line tagged with several parts shows when any of them is ticked.
+	function filterLines( list ) {
+		Array.prototype.slice.call( els.confirmImport.querySelectorAll( '[data-wiw-for]' ) ).forEach( function ( line ) {
+			var forParts = line.getAttribute( 'data-wiw-for' ).split( ',' );
+			show( line, forParts.some( function ( part ) {
+				return -1 !== list.indexOf( part );
+			} ) );
+		} );
+	}
+
+	// After a removal, take the "Imported N" line and the Remove button off the removed parts at once (no reload needed).
+	function clearPartStatus( list ) {
+		list.forEach( function ( part ) {
+			var item = root.querySelector( '.wiw-part[data-part="' + part + '"]' );
+			if ( ! item ) {
+				return;
+			}
+			Array.prototype.slice.call( item.querySelectorAll( '[data-wiw="part-status"], [data-wiw="remove-part"]' ) ).forEach( function ( el ) {
+				el.parentNode.removeChild( el );
+			} );
+		} );
+		if ( ! root.querySelector( '[data-wiw="remove-part"]' ) ) {
+			show( els.openRemove, false );
+		}
+	}
+
 	function finished( text ) {
+		if ( 'remove' === mode ) {
+			clearPartStatus( removing ? [ removing ].concat( parts.dependents[ removing ] || [] ) : boxes.map( function ( input ) {
+				return input.value;
+			} ) );
+		}
 		progress( 100, text );
 		show( els.retry, false );
 		show( els.reload, true );
@@ -311,6 +342,7 @@
 			if ( els.chosen ) {
 				els.chosen.textContent = list.map( label ).join( ', ' );
 			}
+			filterLines( list );
 			show( els.confirmImport, true );
 			var first = els.confirmImport.querySelector( 'input, button' );
 			if ( first ) {
