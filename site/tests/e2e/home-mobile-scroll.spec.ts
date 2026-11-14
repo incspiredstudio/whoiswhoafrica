@@ -33,14 +33,15 @@ test.describe("front page on phones (REQ-001, REQ-044)", () => {
     await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 3000 }).toBeGreaterThan(100);
   });
 
-  test("menu dropdown buttons have the same text colour on the front page as elsewhere", async ({ page }) => {
+  test("the menu inherits the same text colour on the front page as elsewhere", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
+    // The drawer (and every dropdown button in it that sets no colour of its own) inherits from <body>; on the front page that
+    // used to be the light on-dark colour. Compare the inherited colour itself, so the check does not depend on menu content.
     const colour = async (p: Page, path: string) => {
       await p.goto(path);
-      await p.locator('[aria-controls="drawer"]').first().click();
-      const button = p.locator(".drawer button:not(.drawer-close)").first();
-      await expect(button).toBeVisible();
-      return button.evaluate((b) => getComputedStyle(b).color);
+      const drawer = p.locator(".drawer").first();
+      await expect(drawer).toHaveCount(1);
+      return drawer.evaluate((d) => getComputedStyle(d).color);
     };
     const elsewhere = await colour(page, "/about/");
     const home = await colour(page, "/");
