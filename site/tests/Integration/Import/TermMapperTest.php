@@ -114,7 +114,7 @@ final class TermMapperTest extends WpTestCase {
 
 	public function test_REQ_009_an_unknown_city_is_created_under_the_primary_country_with_a_clean_name(): void {
 		$mapper = new TermMapper();
-		$ghana  = \WhoIsWho\Core\Directory\Classification::country_id( 'GH' );
+		$ghana  = \WhoIsWho\Core\Directory\Classification::ensure_country( 'GH' );
 		$made   = $mapper->city_for( $this->record( array( 'hq_city' => "  QWV   NEW\tHARBOUR " ) ) + array( 'country' => 'GH' ) );
 		$this->assertIsInt( $made );
 		$term = get_term( $made, Taxonomies::PLACE );
@@ -138,7 +138,7 @@ final class TermMapperTest extends WpTestCase {
 			'country'        => 'NG',
 			'classification' => array( 'primary_country' => 'KE' ),
 		);
-		$this->assertSame( \WhoIsWho\Core\Directory\Classification::country_id( 'KE' ), (int) get_term( $mapper->city_for( $classified ), Taxonomies::PLACE )->parent, 'The primary country of a 1.2 record wins.' );
+		$this->assertSame( \WhoIsWho\Core\Directory\Classification::ensure_country( 'KE' ), (int) get_term( $mapper->city_for( $classified ), Taxonomies::PLACE )->parent, 'The primary country of a 1.2 record wins.' );
 	}
 
 	public function test_REQ_009_a_skipped_value_passes_apply_but_writes_no_term(): void {
