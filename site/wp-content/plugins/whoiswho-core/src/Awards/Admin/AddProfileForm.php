@@ -4,8 +4,9 @@
  * name, pick it and a current category, and may add a short note and a staff-only Contact email. There is no free-text nominee
  * name. The one action is guarded by the wiw_manage_awards capability and a nonce, runs the one validator, and calls
  * NominationService::add_profile, which checks the capability again, links the profile and starts the nomination Nominated and
- * Not live (a pending-review profile can be added but never set Live). The Contact email is stored on the nomination and never
- * shown again here: not in the list, not in the result message.
+ * Not live (a pending-review profile, or one still in the review queue, can be added but never set Live). The Contact email is
+ * stored on the nomination and never shown again here: not in the list, not in the result message. A staff member with
+ * wiw_add_profile also gets a "Create profile" shortcut to the Add profile screen for a nominee who is not in the directory yet.
  *
  * @package WhoIsWho
  */
@@ -17,6 +18,8 @@ namespace WhoIsWho\Core\Awards\Admin;
 use WhoIsWho\Core\Awards\CategoryService;
 use WhoIsWho\Core\Awards\NominationsSwitch;
 use WhoIsWho\Core\Awards\NominationService;
+use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
+use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Forms\FormInput;
@@ -121,23 +124,25 @@ final class AddProfileForm {
 	 * @param string $query Search text from the address.
 	 */
 	public function html( string $query = '' ): string {
-		$out   = '<h2>' . esc_html__( 'Add profile to nominations', 'whoiswho' ) . '</h2>';
-		$out  .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />';
-		$out  .= '<label>' . esc_html__( 'Search profiles by name', 'whoiswho' ) . ' <input type="search" name="profile_q" value="' . esc_attr( $query ) . '" maxlength="100" /></label> ';
-		$out  .= '<button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
-		$found = $this->picker->search( $query );
+		$out    = '<h2>' . esc_html__( 'Add profile to nominations', 'whoiswho' ) . '</h2>';
+		$out   .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />';
+		$out   .= '<label>' . esc_html__( 'Search profiles by name', 'whoiswho' ) . ' <input type="search" name="profile_q" value="' . esc_attr( $query ) . '" maxlength="100" /></label> ';
+		$out   .= '<button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
+		$found  = $this->picker->search( $query );
+		$create = $this->create_link( $query );
 		if ( '' !== trim( $query ) && array() === $found ) {
-			return $out . '<p>' . esc_html__( 'No existing profile matches. Only existing profiles can be nominated.', 'whoiswho' ) . '</p>';
+			return $out . '<p>' . esc_html__( 'No existing profile matches. Only existing profiles can be nominated.', 'whoiswho' ) . '</p>' . $create;
 		}
 		if ( array() === $found ) {
 			return $out;
 		}
+		$out .= $create;
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
 		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
 		$out .= '<p><label>' . esc_html__( 'Profile', 'whoiswho' ) . ' <select name="profile_id">';
 		foreach ( $found as $profile ) {
-			$label = $profile['name'] . ' (' . $profile['type'] . ', ' . ( 'published_pending' === $profile['state'] ? __( 'pending review', 'whoiswho' ) : __( 'reviewed', 'whoiswho' ) ) . ')';
+			$label = $profile['name'] . ' (' . $profile['type'] . ', ' . self::state_label( $profile['state'] ) . ')';
 			$out  .= '<option value="' . esc_attr( (string) $profile['id'] ) . '">' . esc_html( $label ) . '</option>';
 		}
 		$out .= '</select></label></p>';
@@ -151,5 +156,33 @@ final class AddProfileForm {
 		$out .= '<p><label>' . esc_html__( 'Note (optional, staff only)', 'whoiswho' ) . '<br /><textarea name="note" rows="3" cols="50" maxlength="1000"></textarea></label></p>';
 		$out .= '<p><label>' . esc_html__( 'Contact email (optional, staff only, never shown publicly)', 'whoiswho' ) . ' <input type="email" name="contact_email" maxlength="254" class="regular-text" /></label></p>';
 		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Add to nominations', 'whoiswho' ) . '</button></p></form>';
+	}
+
+	/**
+	 * The "Create profile" shortcut for a nominee who is not in the directory yet: it opens Add profile with the name filled in
+	 * and comes back here after saving. Shown only to a user who may add profiles.
+	 *
+	 * @param string $query Search text.
+	 */
+	private function create_link( string $query ): string {
+		if ( '' === trim( $query ) || ! current_user_can( AddProfileScreen::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return '';
+		}
+		return '<p>' . esc_html__( 'Not in the directory yet?', 'whoiswho' ) . ' <a class="button wiw-create-profile" href="' . esc_url( AddProfileScreen::url( trim( $query ), AddProfileScreen::RETURN_NOMINATIONS ) ) . '">' . esc_html__( 'Create profile', 'whoiswho' ) . '</a></p>';
+	}
+
+	/**
+	 * A picker state in words.
+	 *
+	 * @param string $state Publication state.
+	 */
+	private static function state_label( string $state ): string {
+		if ( PubState::PUBLISHED_PENDING === $state ) {
+			return __( 'pending review', 'whoiswho' );
+		}
+		if ( PubState::IMPORTED_NOT_PUBLIC === $state ) {
+			return __( 'in the review queue, not public', 'whoiswho' );
+		}
+		return __( 'reviewed', 'whoiswho' );
 	}
 }
