@@ -59,12 +59,18 @@ final class FileSink implements LogSink {
 		if ( ! is_dir( $this->dir ) && ! @mkdir( $this->dir, 0750, true ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions
 			return;
 		}
+		// The guards go in first, so no line is ever written into a folder the web server would serve (issue 810).
+		$guards = array(
+			'.htaccess' => "Require all denied\n",
+			'index.php' => "<?php\n// Silence is golden.\n",
+		);
+		foreach ( $guards as $guard => $body ) {
+			if ( ! file_exists( $this->dir . '/' . $guard ) ) {
+				@file_put_contents( $this->dir . '/' . $guard, $body ); // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions
+			}
+		}
 		$name = 'wiw-' . gmdate( 'Y-m-d', (int) ( $this->clock )() ) . '.log';
 		@file_put_contents( $this->dir . '/' . $name, $line . "\n", FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions
-		$guard = $this->dir . '/.htaccess';
-		if ( ! file_exists( $guard ) ) {
-			@file_put_contents( $guard, "Require all denied\n" ); // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions
-		}
 	}
 
 	/**

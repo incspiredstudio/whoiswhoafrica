@@ -132,4 +132,37 @@ final class ExposureTest extends WpTestCase {
 		$this->assertContains( 'post', $types );
 		$this->assertNotContains( 'wiw_probe', $types );
 	}
+
+	public function test_REQ_229_anonymous_admin_ajax_queries_never_get_a_guarded_type_issue_810(): void {
+		\WhoIsWho\Guard\Guard::guard_post_type( 'wiw_probe' );
+		$posts = array(
+			new \WP_Post(
+				(object) array(
+					'ID'        => 1,
+					'post_type' => 'wiw_probe',
+				)
+			),
+			new \WP_Post(
+				(object) array(
+					'ID'        => 2,
+					'post_type' => 'post',
+				)
+			),
+		);
+		set_current_screen( 'edit' );
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		try {
+			wp_set_current_user( 0 );
+			$kept = \WhoIsWho\Guard\Exposure\Exposure::strip_guarded_from_public_queries( $posts, new \WP_Query() );
+			$this->assertSame( array( 'post' ), wp_list_pluck( $kept, 'post_type' ), 'admin-ajax.php counts as admin, but a visitor\'s request is public' );
+
+			wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+			$kept = \WhoIsWho\Guard\Exposure\Exposure::strip_guarded_from_public_queries( $posts, new \WP_Query() );
+			$this->assertCount( 2, $kept, 'staff AJAX screens still see everything' );
+		} finally {
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			set_current_screen( 'front' );
+			unset( $GLOBALS['current_screen'] );
+		}
+	}
 }

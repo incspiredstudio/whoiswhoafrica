@@ -114,4 +114,19 @@ final class LoggerTest extends TestCase {
 		$this->assertFileExists( $this->dir . '/wiw-2026-11-11.log' );
 		$this->assertFileExists( $this->dir . '/.htaccess' );
 	}
+
+	public function test_REQ_050_the_guard_files_exist_before_the_first_line_is_written_issue_810(): void {
+		$seen = array();
+		$sink = new FileSink(
+			$this->dir,
+			function () use ( &$seen ): int {
+				// The clock is read just before the log file is named and written: the guards must already be there.
+				$seen[] = file_exists( $this->dir . '/.htaccess' ) && file_exists( $this->dir . '/index.php' );
+				return strtotime( '2026-11-11 12:00:00 UTC' );
+			}
+		);
+		$sink->write( '{"a":1}' );
+		$this->assertSame( array( true ), $seen, 'a log line is never written into an unguarded folder' );
+		$this->assertStringContainsString( 'Require all denied', (string) file_get_contents( $this->dir . '/.htaccess' ) );
+	}
 }

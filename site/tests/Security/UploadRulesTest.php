@@ -233,4 +233,31 @@ final class UploadRulesTest extends WpTestCase {
 		$result = $this->prefilter( $jpeg, 'x.jpg', (int) filesize( $jpeg ) );
 		$this->assertStringContainsString( 'safety check', (string) $result['error'] );
 	}
+
+	public function test_REQ_127_sideloaded_files_get_the_same_checks_and_scan_issue_810(): void {
+		add_filter(
+			'wiw_guard_file_scanner',
+			static fn () => new class() implements FileScanner {
+				/**
+				 * Refuse everything.
+				 *
+				 * @param string $path Path.
+				 */
+				public function is_clean( string $path ): bool {
+					return false;
+				}
+			}
+		);
+		$jpeg   = $this->temp( $this->jpeg( false ), 'jpg' );
+		$result = apply_filters(
+			'wp_handle_sideload_prefilter',
+			array(
+				'name'     => 'x.jpg',
+				'type'     => 'image/jpeg',
+				'tmp_name' => $jpeg,
+				'error'    => 0,
+				'size'     => (int) filesize( $jpeg ),
+			)
+		);
+		$this->assertStringContainsString( 'safety check', (string) ( $result['error'] ?? '' ), 'a sideload (invitation photo, profile manager photo, import image) is scanned too' );  }
 }
