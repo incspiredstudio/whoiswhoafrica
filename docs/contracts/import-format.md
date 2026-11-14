@@ -96,7 +96,7 @@ No other key is allowed. WordPress checks only the shape; a slug it does not kno
 
 - **With `classification`:** it wins. The primary industry and the extras are assigned when the tree has them (an unknown slug or a sector slug is ignored, and the raw `industry` then maps as below). The primary country is found by its code on the place terms; a real ISO alpha-2 country the site does not have yet is created, and any other code gives no country. The organisation type comes from `fields.org_type`.
 - **Without it (v1.0, v1.1):** the raw `industry`, then the person's `field`, map to an industry through the tree's slugs, names and aliases, else to Unclassified. `org_type` maps the same way, else to `other`. The primary country is the record's `country`.
-- **A record is never refused for an unknown list value** (industry, sector, organisation type or city). An unknown head-office city is skipped and listed in the dry run, where staff can add it under the record's country or map it.
+- **A record is never refused for an unknown list value** (industry, sector, organisation type or city). An unknown head-office city is added as a city under the record's primary country (never under Pan-African; a value that is a country name or code is skipped). A city with no country to go under is skipped and listed in the dry run for mapping.
 
 ## 4. Fields by entity type
 
@@ -113,7 +113,7 @@ These are allowlists. The pipeline MUST NOT export any other field, and WordPres
 | `licence_category` | string | No | T1 |
 | `regulator` | string | No | T1 |
 | `mandate` | string | No | Institutions (REQ-005) |
-| `hq_city` | string | No | Place list. An unknown city is skipped (not refused) and listed in the dry run (3.1). |
+| `hq_city` | string | No | Place list. An unknown city is added under the record's country (3.1); never a refusal. |
 | `website` | URL | No | |
 | `year_founded` | integer | No | |
 | `summary` | string | T2 | AI-drafted; each sentence backed by a claim. Whether it shows before review is Q46. |

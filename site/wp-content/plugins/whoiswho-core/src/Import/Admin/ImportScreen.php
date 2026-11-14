@@ -39,7 +39,6 @@ final class ImportScreen {
 	public const SWITCH     = 'wiw_import_switch';
 	public const STEP       = 'wiw_import_step';
 	public const PIECE      = 'wiw_import_piece';
-	public const MAP_ALL    = 'wiw_import_map_all';
 	public const SERVER     = 'wiw_import_server';
 
 	public const MAX_ROWS = 200;
@@ -82,7 +81,6 @@ final class ImportScreen {
 					self::UNDO    => 'handle_undo',
 					self::MAP     => 'handle_map',
 					self::SWITCH  => 'handle_switch',
-					self::MAP_ALL => 'handle_map_all',
 					self::SERVER  => 'handle_server',
 				) as $action => $method ) {
 					ActionGuard::register( $action, self::CAPABILITY, array( self::class, $method ) );
@@ -466,8 +464,7 @@ final class ImportScreen {
 		}
 		/* translators: %d: number of values not in the lists. */
 		$out  .= '<h3>' . esc_html( sprintf( __( '%d values are not in the site\'s lists yet', 'whoiswho' ), count( $mapping ) ) ) . '</h3>';
-		$out  .= '<p>' . esc_html__( 'These head office cities are not in the place list yet. The records still import, without the city. Add them all as new places with one click, or match them one by one below. Industries and organisation types never need this step: a value the site does not know goes to Unclassified (or Other) for staff to sort out.', 'whoiswho' ) . '</p>';
-		$out  .= $this->form( self::MAP_ALL ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button button-primary">' . esc_html__( 'Add all as new places', 'whoiswho' ) . '</button></p></form>';
+		$out  .= '<p>' . esc_html__( 'New head office cities are added by the import under each record\'s country. These cities have no country to go under (the record has none, or is Pan-African), so the records import without them unless you match each one to a place below.', 'whoiswho' ) . '</p>';
 		$shown = 0;
 		foreach ( $mapping as $term ) {
 			if ( ++$shown > self::MAX_MAPPING_FORMS ) {
@@ -513,34 +510,6 @@ final class ImportScreen {
 			$out .= '<option value="' . esc_attr( $zip['name'] ) . '">' . esc_html( $zip['name'] . ' (' . size_format( $zip['size'] ) . ')' ) . '</option>';
 		}
 		return $out . '</select></label> <button class="button button-primary">' . esc_html__( 'Import this file', 'whoiswho' ) . '</button></p></form>';
-	}
-
-	/**
-	 * Add every unknown value of a batch as a new list entry (capability and nonce already checked), then run the dry run again.
-	 *
-	 * @param Request $request Request.
-	 */
-	public static function handle_map_all( Request $request ): void {
-		$batch = $request->string( 'batch' );
-		$terms = array_values( DryRun::stored( $batch )['mapping'] );
-		if ( array() === $terms ) {
-			try {
-				foreach ( ( new ImportService() )->preview( $batch, get_current_user_id() )['records'] as $entry ) {
-					$terms = array_merge( $terms, (array) ( $entry['unmapped'] ?? array() ) );
-				}
-			} catch ( StateException $e ) {
-				self::back( 'refused', $batch, $e->getMessage() );
-				return;
-			}
-		}
-		( new TermMapper() )->create_missing( $terms );
-		try {
-			( new ImportService() )->restart_dry_run( $batch, get_current_user_id() );
-		} catch ( StateException $e ) {
-			self::back( 'refused', $batch, $e->getMessage() );
-			return;
-		}
-		self::back( 'mapped', $batch );
 	}
 
 	/**
