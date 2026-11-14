@@ -1337,6 +1337,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .ind-count { display: inline-flex; flex: none; align-items: center; gap: var(--s-2); font: 400 var(--t-sm)/1 var(--font-body); color: var(--c-muted); white-space: nowrap; }
 .index-list a:hover .ind-count { color: inherit; }
 .ind-back { margin-bottom: var(--s-4); font-size: var(--t-sm); }
+.ind-sectors { display: grid; gap: var(--s-7) var(--s-8); grid-template-columns: minmax(0, 1fr); margin-block: var(--s-4) var(--s-6); }
+
+@media (width >= 64rem) { .ind-sectors { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ind-sector { min-width: 0; }
+.ind-sector-h { border-top: 3px solid var(--c-text); }
+.ind-sector-h a { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); padding-block: var(--s-3); color: inherit; font: 400 var(--t-xl)/1.1 var(--font-display); text-decoration: none; }
+.ind-sector-h a:hover .ind-name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .16em; }
+.ind-sector .ind-list { margin: 0; }
+.ind-sector .index-list a { font-size: var(--t-md); }
 
 /* ---------- profile rail (REQ-142, REQ-156) ---------- */
 .rail-card { padding: var(--s-4); border: 1px solid var(--c-line); background: var(--c-surface); }
@@ -1531,10 +1540,10 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .crumbs-list a { display: inline-flex; align-items: center; min-height: 1.5rem; color: var(--c-muted); text-decoration: none; background: linear-gradient(currentcolor, currentcolor) left calc(100% - .25rem) / 0 1px no-repeat; transition: background-size var(--m-base) var(--ease-out), color var(--m-fast) var(--ease-out); }
 .crumbs-list a:hover, .crumbs-list a:focus-visible { color: var(--c-text); background-size: 100% 1px; }
 .crumbs-list [aria-current="page"] { overflow: hidden; color: var(--c-text); text-overflow: ellipsis; }
-.crumbs-fold { display: none; color: var(--c-muted); }
+.crumbs-list .crumbs-fold { display: none; color: var(--c-muted); }
 
 @media (width < 40rem) {
-  .crumbs--foldable .crumbs-fold { display: inline-flex; }
+  .crumbs--foldable .crumbs-list .crumbs-fold { display: inline-flex; }
   .crumbs--foldable .crumbs-mid:not(:focus-within) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .profile-photo { position: relative; flex: none; align-self: flex-start; }

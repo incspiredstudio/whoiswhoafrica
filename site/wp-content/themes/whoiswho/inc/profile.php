@@ -293,20 +293,6 @@ if ( ! function_exists( 'wiw_profile_lifespan' ) ) {
 	}
 }
 
-if ( ! function_exists( 'wiw_read_model' ) ) {
-	/**
-	 * Call a classification method of the read model, or null while the plugin does not have it yet (REQ-009). The
-	 * classification, org_type and place methods arrive with the classification data work; this guard goes once they have.
-	 *
-	 * @param PublicProfile $profile Profile.
-	 * @param string        $method  Method name.
-	 * @return mixed
-	 */
-	function wiw_read_model( PublicProfile $profile, string $method ) {
-		return method_exists( $profile, $method ) ? $profile->{$method}() : null;
-	}
-}
-
 if ( ! function_exists( 'wiw_profile_classification' ) ) {
 	/**
 	 * The profile's place in the classification tree (REQ-009), read only through PublicProfile::classification(): country,
@@ -314,17 +300,10 @@ if ( ! function_exists( 'wiw_profile_classification' ) ) {
 	 * null when the profile is unclassified; country is null when no country is known.
 	 *
 	 * @param PublicProfile $profile Profile.
-	 * @return array{country: ?array<string, string>, sector: ?array<string, string>, industry: ?array<string, string>, extra: array<int, array<string, string>>}
+	 * @return array{country: array{name: string, slug: string, code: string, url: string}|null, sector: array{name: string, slug: string, url: string}|null, industry: array{name: string, slug: string, url: string}|null, extra: list<array{name: string, slug: string, url: string}>}
 	 */
 	function wiw_profile_classification( PublicProfile $profile ): array {
-		$empty = array(
-			'country'  => null,
-			'sector'   => null,
-			'industry' => null,
-			'extra'    => array(),
-		);
-		$found = wiw_read_model( $profile, 'classification' );
-		return is_array( $found ) ? array_merge( $empty, $found ) : $empty;
+		return $profile->classification();
 	}
 }//end if
 
@@ -335,8 +314,8 @@ if ( ! function_exists( 'wiw_profile_org_type' ) ) {
 	 * @param PublicProfile $profile Profile.
 	 */
 	function wiw_profile_org_type( PublicProfile $profile ): string {
-		$type = wiw_read_model( $profile, 'org_type' );
-		return is_array( $type ) && isset( $type['name'] ) ? (string) $type['name'] : '';
+		$type = $profile->org_type();
+		return null === $type ? '' : $type['name'];
 	}
 }
 
@@ -348,16 +327,11 @@ if ( ! function_exists( 'wiw_profile_place' ) ) {
 	 * @return array{city: string, country: string}
 	 */
 	function wiw_profile_place( PublicProfile $profile ): array {
-		$out   = array(
-			'city'    => '',
-			'country' => '',
+		$place = $profile->place();
+		return array(
+			'city'    => (string) ( $place['city'] ?? '' ),
+			'country' => (string) ( $place['country'] ?? '' ),
 		);
-		$place = wiw_read_model( $profile, 'place' );
-		if ( is_array( $place ) ) {
-			$out['city']    = isset( $place['city'] ) ? (string) $place['city'] : '';
-			$out['country'] = isset( $place['country'] ) ? (string) $place['country'] : '';
-		}
-		return $out;
 	}
 }//end if
 
@@ -607,8 +581,8 @@ if ( ! function_exists( 'wiw_profile_where' ) ) {
 	function wiw_profile_where( PublicProfile $profile, string $skip = '' ): array {
 		$place    = wiw_profile_place( $profile );
 		$class    = wiw_profile_classification( $profile );
-		$industry = is_array( $class['industry'] ) ? (string) ( $class['industry']['name'] ?? '' ) : '';
-		$country  = '' !== $place['country'] ? $place['country'] : ( is_array( $class['country'] ) ? (string) ( $class['country']['name'] ?? '' ) : '' );
+		$industry = is_array( $class['industry'] ) ? $class['industry']['name'] : '';
+		$country  = '' !== $place['country'] ? $place['country'] : ( is_array( $class['country'] ) ? $class['country']['name'] : '' );
 		$kind     = wiw_profile_kind( $profile->entity_type );
 		return array_values(
 			array_filter(

@@ -23,7 +23,7 @@ if ( ! $wiw_profile instanceof PublicProfile ) {
 
 $wiw_class = wiw_profile_classification( $wiw_profile );
 $wiw_style = wiw_poster_style( $wiw_profile->slug );
-$wiw_ind   = is_array( $wiw_class['industry'] ) ? (string) ( $wiw_class['industry']['name'] ?? '' ) : '';
+$wiw_ind   = is_array( $wiw_class['industry'] ) ? $wiw_class['industry']['name'] : '';
 $wiw_title = wiw_profile_fact( $wiw_profile, 'current_title' );
 $wiw_role  = '' !== $wiw_title ? $wiw_title : wiw_profile_org_type( $wiw_profile );
 $wiw_org   = wiw_profile_fact( $wiw_profile, 'current_organisation' );

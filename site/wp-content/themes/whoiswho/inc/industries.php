@@ -100,3 +100,36 @@ add_filter(
 	},
 	11
 );
+
+if ( ! function_exists( 'wiw_industry_sectors' ) ) {
+	/**
+	 * The industries index rows grouped by sector (REQ-009): sectors in name order, each with its count and its industries in
+	 * name order. Industries whose sector is not in the rows are left out (unclassified is never in them).
+	 *
+	 * @param array<int, array{term_id: int, slug: string, name: string, count: int, parent: int}> $rows From ProfileList::industry_counts().
+	 * @return array<int, array{slug: string, name: string, count: int, industries: array<int, array{term_id: int, slug: string, name: string, count: int, parent: int}>}>
+	 */
+	function wiw_industry_sectors( array $rows ): array {
+		$sectors = array();
+		foreach ( $rows as $row ) {
+			if ( 0 === $row['parent'] ) {
+				$sectors[ $row['term_id'] ] = array(
+					'slug'       => $row['slug'],
+					'name'       => $row['name'],
+					'count'      => $row['count'],
+					'industries' => array(),
+				);
+			}
+		}
+		foreach ( $rows as $row ) {
+			if ( 0 !== $row['parent'] && isset( $sectors[ $row['parent'] ] ) ) {
+				$sectors[ $row['parent'] ]['industries'][] = $row;
+			}
+		}
+		foreach ( $sectors as $id => $sector ) {
+			usort( $sectors[ $id ]['industries'], static fn ( array $a, array $b ): int => strcasecmp( $a['name'], $b['name'] ) );
+		}
+		usort( $sectors, static fn ( array $a, array $b ): int => strcasecmp( $a['name'], $b['name'] ) );
+		return $sectors;
+	}
+}//end if

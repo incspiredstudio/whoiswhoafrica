@@ -1,8 +1,8 @@
 <?php
 /**
  * Seeds fictional profiles for the profile display spec (REQ-009, REQ-203, REQ-144): a reviewed person with a CC BY portrait whose
- * credit repeats the licence (issue 829), and one with a CC0 portrait. Both carry sourced key facts, and a country, sector and
- * industry from the classification tree. Also switches the two profile display settings for the spec.
+ * credit repeats the licence (issue 829), and one with a CC0 portrait. Both carry sourced key facts and are classified through
+ * ProfileClassifier as Nigeria › Financial Services › Banking. Also switches the two profile display settings for the spec.
  * TEST ENVIRONMENT ONLY: it refuses unless the site is a local environment. Idempotent. Fictional names only, no personal data.
  * Prints one line of JSON.
  *
@@ -24,14 +24,15 @@ if ( 'local' !== wp_get_environment_type() ) {
 	exit( 1 );
 }
 
+use WhoIsWho\Core\Directory\ClassificationSeeder;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ImageMeta;
+use WhoIsWho\Core\Directory\ProfileClassifier;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
-use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
 use WhoIsWho\Core\Review\StateMachine;
 
@@ -93,30 +94,6 @@ $wiw_lock = fopen( sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wiw-seed-profile-
 flock( $wiw_lock, LOCK_EX );
 
 /**
- * A term by slug, created when missing.
- *
- * @param string $name      Name.
- * @param string $slug      Slug.
- * @param string $taxonomy  Taxonomy.
- * @param int    $parent_id Parent term id.
- */
-function wiw_seed_display_term( string $name, string $slug, string $taxonomy, int $parent_id = 0 ): int {
-	$found = get_term_by( 'slug', $slug, $taxonomy );
-	if ( $found instanceof WP_Term ) {
-		return (int) $found->term_id;
-	}
-	$made = wp_insert_term(
-		$name,
-		$taxonomy,
-		array(
-			'slug'   => $slug,
-			'parent' => $parent_id,
-		)
-	);
-	return is_array( $made ) ? (int) $made['term_id'] : 0;
-}
-
-/**
  * A fictional portrait: a warm gradient JPEG, 600 by 800 pixels, with its image sizes.
  *
  * @param array<string, string> $meta Credit meta.
@@ -147,11 +124,7 @@ function wiw_seed_display_image( array $meta ): int {
 	return $id;
 }
 
-$wiw_sector   = wiw_seed_display_term( 'E2E Financial services', 'e2e-financial-services', Taxonomies::INDUSTRY );
-$wiw_industry = wiw_seed_display_term( 'E2E Banking', 'e2e-banking', Taxonomies::INDUSTRY, $wiw_sector );
-$wiw_country  = wiw_seed_display_term( 'E2E Testland', 'e2e-testland', Taxonomies::PLACE );
-update_term_meta( $wiw_country, 'wiw_iso_code', 'ZZ' );
-update_term_meta( $wiw_country, 'wiw_place_kind', 'country' );
+( new ClassificationSeeder() )->maybe_seed();
 
 $wiw_machine = new StateMachine();
 $wiw_out     = array();
@@ -190,10 +163,14 @@ foreach ( $wiw_profiles as $wiw_key => $wiw_def ) {
 			)
 		);
 	}
-	wp_set_object_terms( $wiw_id, array( $wiw_industry ), Taxonomies::INDUSTRY );
-	wp_set_object_terms( $wiw_id, array( $wiw_country ), Taxonomies::PLACE );
-	update_post_meta( $wiw_id, '_wiw_primary_industry', $wiw_industry );
-	update_post_meta( $wiw_id, '_wiw_primary_country', $wiw_country );
+	( new ProfileClassifier() )->assign(
+		$wiw_id,
+		'individual',
+		array(
+			'primary_industry' => 'banking',
+			'country'          => 'NG',
+		)
+	);
 	update_post_meta( $wiw_id, PublicProfile::IMAGE_META, wiw_seed_display_image( $wiw_def['image'] ) );
 	$wiw_machine->transition( $wiw_id, PubState::PUBLISHED_REVIEWED, '', 1 );
 }//end foreach

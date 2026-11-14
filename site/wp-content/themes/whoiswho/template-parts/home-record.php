@@ -43,7 +43,7 @@ $wiw_fact = static function ( PublicProfile $profile, string $key ): string {
 				$wiw_org  = $wiw_fact( $wiw_p, 'current_organisation' );
 				$wiw_sub  = $wiw_role . ( '' !== $wiw_org && $wiw_org !== $wiw_p->name ? ( '' !== $wiw_role ? ', ' : '' ) . $wiw_org : '' );
 				$wiw_ind  = wiw_profile_classification( $wiw_p )['industry'];
-				$wiw_ind  = is_array( $wiw_ind ) ? (string) ( $wiw_ind['name'] ?? '' ) : '';
+				$wiw_ind  = is_array( $wiw_ind ) ? $wiw_ind['name'] : '';
 				$wiw_pic  = null !== $wiw_p->image_id ? (string) wp_get_attachment_image_url( $wiw_p->image_id, 'wiw-poster' ) : '';
 				?>
 				<li data-reveal style="--d:<?php echo (int) min( $wiw_i, 5 ); ?>">

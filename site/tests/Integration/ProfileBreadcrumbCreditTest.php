@@ -10,14 +10,15 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration;
 
+use WhoIsWho\Core\Directory\ClassificationSeeder;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ImageMeta;
+use WhoIsWho\Core\Directory\ProfileClassifier;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
-use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Audit\WpdbConnection;
@@ -38,13 +39,6 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 	 */
 	private array $posts = array();
 
-	/**
-	 * Terms to remove, as [term_id, taxonomy].
-	 *
-	 * @var array<int, array{0: int, 1: string}>
-	 */
-	private array $terms = array();
-
 	protected function setUp(): void {
 		parent::setUp();
 		$this->requireWordPress();
@@ -60,11 +54,7 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 			$wpdb->delete( StateRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->delete( ProvenanceRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
-		foreach ( array_reverse( $this->terms ) as $term ) {
-			wp_delete_term( $term[0], $term[1] );
-		}
 		$this->posts = array();
-		$this->terms = array();
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::PROBE ); // phpcs:ignore WordPress.DB
 		delete_option( SettingsService::OPTION_PREFIX . SettingsService::PROFILE_IMAGE_CREDIT );
 		delete_option( SettingsService::OPTION_PREFIX . SettingsService::PROFILE_KEY_FACTS );
@@ -245,41 +235,144 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 		$this->assertStringContainsString( 'Governor', $out );
 	}
 
-	public function test_REQ_009_classified_profile_header_and_card_use_the_tree_when_the_read_model_has_it(): void {
-		if ( ! method_exists( PublicProfile::class, 'classification' ) ) {
-			$this->markTestSkipped( 'PublicProfile::classification() arrives with the classification data lane.' );
-		}
-		$sector   = $this->term( 'Crumbtest Sector', Taxonomies::INDUSTRY, 0 );
-		$industry = $this->term( 'Crumbtest Industry', Taxonomies::INDUSTRY, $sector );
-		$country  = $this->term( 'Crumbtestland', Taxonomies::PLACE, 0 );
-		update_term_meta( $country, 'wiw_iso_code', 'ZZ' );
-		update_term_meta( $country, 'wiw_place_kind', 'country' );
+	public function test_REQ_009_classified_profile_header_and_card_use_the_tree(): void {
+		( new ClassificationSeeder() )->seed();
 		$profile = $this->profile( 'Crumbtest Classified', array( 'current_title' => 'Founder' ) );
-		wp_set_object_terms( $profile->id, array( $industry ), Taxonomies::INDUSTRY );
-		wp_set_object_terms( $profile->id, array( $country ), Taxonomies::PLACE );
-		update_post_meta( $profile->id, '_wiw_primary_industry', $industry );
-		update_post_meta( $profile->id, '_wiw_primary_country', $country );
+		( new ProfileClassifier() )->assign(
+			$profile->id,
+			'individual',
+			array(
+				'primary_industry' => 'banking',
+				'country'          => 'NG',
+			)
+		);
 		$fresh = PublicProfile::find_by_id( $profile->id );
 		$this->assertNotNull( $fresh );
 		$head = $this->render( 'template-parts/profile-head', $fresh );
-		$this->assertMatchesRegularExpression( '/Crumbtestland.*Crumbtest Sector.*Crumbtest Industry.*Crumbtest Classified/s', $head );
-		$this->assertStringContainsString( 'industry=crumbtest-industry', $head );
+		$this->assertMatchesRegularExpression( '/>Nigeria<.*>Financial Services<.*>Banking<.*aria-current="page">Crumbtest Classified</s', $head );
+		$this->assertStringContainsString( 'crumbs--foldable', $head );
+		$this->assertStringContainsString( 'directory/?country=nigeria&amp;industry=banking"', $head );
+		$this->assertStringContainsString( 'Nigeria', $head, 'the place line names the country' );
 		$card = $this->render( 'template-parts/profile-card', $fresh );
-		$this->assertStringContainsString( '<p class="pcard-kick">Crumbtest Industry</p>', $card );
+		$this->assertStringContainsString( '<p class="pcard-kick">Banking</p>', $card );
 	}
 
-	/**
-	 * Create a term.
-	 *
-	 * @param string $name     Name.
-	 * @param string $taxonomy Taxonomy.
-	 * @param int    $parent_id Parent term id.
-	 */
-	private function term( string $name, string $taxonomy, int $parent_id ): int {
-		$made = wp_insert_term( $name, $taxonomy, array( 'parent' => $parent_id ) );
-		$this->assertIsArray( $made );
-		$this->terms[] = array( (int) $made['term_id'], $taxonomy );
-		return (int) $made['term_id'];
+	public function test_REQ_009_unclassified_profile_shows_country_then_name_and_an_organisation_type_role(): void {
+		( new ClassificationSeeder() )->seed();
+		$id            = (int) wp_insert_post(
+			array(
+				'post_type'  => ProfileType::POST_TYPE,
+				'post_title' => 'Crumbtest Unclassified Org',
+			)
+		);
+		$this->posts[] = $id;
+		$machine       = new StateMachine();
+		$machine->enter( $id, PubState::PUBLISHED_PENDING, array( 'entity_type' => 'organisation' ) );
+		( new ProfileClassifier() )->assign(
+			$id,
+			'organisation',
+			array(
+				'primary_industry' => '',
+				'country'          => 'GH',
+				'org_type'         => 'ngo',
+			)
+		);
+		$machine->transition( $id, PubState::PUBLISHED_REVIEWED, '', 1 );
+		$profile = PublicProfile::find_by_id( $id );
+		$this->assertNotNull( $profile );
+		$head = $this->render( 'template-parts/profile-head', $profile );
+		$this->assertMatchesRegularExpression( '/>Ghana<\/a><\/li><li><span class="crumbs-sep" aria-hidden="true">›<\/span><span aria-current="page">Crumbtest Unclassified Org</s', $head );
+		$this->assertStringNotContainsString( 'crumbs-fold', $head );
+		$this->assertStringNotContainsString( 'Unclassified<', $head, 'unclassified is never shown as an industry' );
+		$type = $profile->org_type();
+		$this->assertNotNull( $type );
+		$this->assertStringContainsString( '<p class="profile-role">' . esc_html( $type['name'] ), $head );
+		$card = $this->render( 'template-parts/profile-card', $profile );
+		$this->assertStringNotContainsString( 'pcard-kick', $card );
+		$this->assertStringContainsString( esc_html( $type['name'] ), $card );
+	}
+
+	public function test_REQ_009_the_directory_industry_filter_groups_industries_under_selectable_sectors_without_unclassified(): void {
+		( new ClassificationSeeder() )->seed();
+		$groups = wiw_directory_filter_options( 'industry' );
+		$this->assertArrayHasKey( 'group:financial-services', $groups );
+		$this->assertArrayNotHasKey( 'unclassified', $groups );
+		$fin = $groups['group:financial-services'];
+		$this->assertIsArray( $fin );
+		$this->assertSame( 'Financial Services', $fin['label'] );
+		$this->assertSame( 'financial-services', array_key_first( $fin['options'] ), 'the sector itself is the first choice' );
+		$this->assertArrayHasKey( 'banking', $fin['options'] );
+		foreach ( $groups as $group ) {
+			$this->assertIsArray( $group );
+			$this->assertArrayNotHasKey( 'unclassified', $group['options'] );
+		}
+		ob_start();
+		get_template_part(
+			'template-parts/filter-bar',
+			null,
+			array(
+				'action'   => home_url( '/directory/' ),
+				'controls' => array(
+					array(
+						'name'    => 'industry',
+						'label'   => 'Industry',
+						'blank'   => 'All industries',
+						'options' => $groups,
+						'value'   => 'banking',
+					),
+				),
+			)
+		);
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( '<optgroup label="Financial Services">', $html );
+		$this->assertMatchesRegularExpression( '/<option value="banking"\s+selected=.selected.>Banking<\/option>/', $html );
+		$this->assertStringContainsString( '<option value="financial-services"', $html );
+		$this->assertStringNotContainsString( 'value="unclassified"', $html );
+	}
+
+	public function test_REQ_009_the_industries_index_groups_industries_under_their_sector(): void {
+		$rows    = array(
+			array(
+				'term_id' => 2,
+				'slug'    => 'energy',
+				'name'    => 'Energy',
+				'count'   => 3,
+				'parent'  => 0,
+			),
+			array(
+				'term_id' => 3,
+				'slug'    => 'mining',
+				'name'    => 'Mining',
+				'count'   => 1,
+				'parent'  => 2,
+			),
+			array(
+				'term_id' => 1,
+				'slug'    => 'banks',
+				'name'    => 'Banks',
+				'count'   => 0,
+				'parent'  => 5,
+			),
+			array(
+				'term_id' => 4,
+				'slug'    => 'gas',
+				'name'    => 'Gas',
+				'count'   => 2,
+				'parent'  => 2,
+			),
+			array(
+				'term_id' => 5,
+				'slug'    => 'finance',
+				'name'    => 'Finance',
+				'count'   => 0,
+				'parent'  => 0,
+			),
+		);
+		$sectors = wiw_industry_sectors( $rows );
+		$this->assertSame( array( 'Energy', 'Finance' ), array_column( $sectors, 'name' ) );
+		$this->assertSame( array( 'Gas', 'Mining' ), array_column( $sectors[0]['industries'], 'name' ) );
+		$this->assertSame( 3, $sectors[0]['count'] );
+		$this->assertSame( array( 'Banks' ), array_column( $sectors[1]['industries'], 'name' ) );
 	}
 
 	// ---------- key facts rows ----------
