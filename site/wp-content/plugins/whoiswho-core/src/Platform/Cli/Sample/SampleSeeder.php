@@ -887,6 +887,10 @@ final class SampleSeeder {
 	 */
 	private function legal_pages(): void {
 		$before = $this->existing_slugs();
+		if ( ! array_key_exists( 'option:' . LegalPages::PRIVACY_OPTION, (array) ( $this->registry['prev'] ?? array() ) ) ) {
+			// LegalPages sets WordPress's privacy policy page when it creates the privacy page; removal puts this value back.
+			$this->registry['prev'][ 'option:' . LegalPages::PRIVACY_OPTION ] = get_option( LegalPages::PRIVACY_OPTION, null );
+		}
 		( new LegalPages() )->ensure();
 		foreach ( array_diff( $this->existing_slugs(), $before ) as $slug ) {
 			$page = get_page_by_path( $slug, OBJECT, 'page' );

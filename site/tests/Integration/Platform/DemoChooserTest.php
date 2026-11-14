@@ -360,10 +360,15 @@ final class DemoChooserTest extends WpTestCase {
 
 	public function test_REQ_208_removing_all_takes_every_part_and_puts_settings_back(): void {
 		update_option( 'show_on_front', 'posts' );
+		update_option( 'wp_page_for_privacy_policy', 0 );
 		$demo = $this->demo();
 		$this->import( $demo, DemoParts::PARTS );
 		$this->assertSame( DemoParts::PARTS, array_keys( $demo->parts_status() ) );
 		$this->assertSame( 'page', get_option( 'show_on_front' ) );
+		$privacy = SampleMarker::find_post( 'page:privacy', 'page' );
+		if ( null !== $privacy ) {
+			$this->assertSame( $privacy, (int) get_option( 'wp_page_for_privacy_policy' ), 'the demo privacy page is the privacy policy page' );
+		}
 		$result = array();
 		for ( $i = 0; $i < 300; $i++ ) {
 			$result = $demo->remove( $this->admin, 0.0 );
@@ -375,6 +380,9 @@ final class DemoChooserTest extends WpTestCase {
 		$this->assertSame( array(), SampleMarker::all_post_ids() );
 		$this->assertSame( array(), DemoParts::comment_keys() );
 		$this->assertSame( 'posts', get_option( 'show_on_front' ) );
+		if ( null !== $privacy ) {
+			$this->assertSame( 0, (int) get_option( 'wp_page_for_privacy_policy' ), 'the privacy policy setting is put back' );
+		}
 		$this->assertFalse( $demo->installed() );
 	}
 

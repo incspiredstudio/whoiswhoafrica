@@ -24,6 +24,11 @@ final class LegalPages {
 	public const SLUGS = array( 'privacy', 'terms', 'cookies', 'data-rights', 'complaints' );
 
 	/**
+	 * WordPress's own setting for the privacy policy page.
+	 */
+	public const PRIVACY_OPTION = 'wp_page_for_privacy_policy';
+
+	/**
 	 * Whether the listener is attached (one listener, however many times the module registers).
 	 *
 	 * @var bool
@@ -73,9 +78,27 @@ final class LegalPages {
 			);
 			if ( $id > 0 ) {
 				++$created;
+				if ( 'privacy' === $slug ) {
+					self::use_as_privacy_policy( (int) $id );
+				}
 			}
 		}//end foreach
 		return $created;
+	}
+
+	/**
+	 * Make a new privacy page WordPress's privacy policy page (Settings > Privacy), unless that setting already names a published
+	 * page. A published page a person chose is never changed; WordPress's own unpublished "Privacy Policy" draft, which every
+	 * new install points the setting at, is replaced.
+	 *
+	 * @param int $page_id The privacy page.
+	 */
+	private static function use_as_privacy_policy( int $page_id ): void {
+		$current = (int) get_option( self::PRIVACY_OPTION, 0 );
+		if ( $current > 0 && 'publish' === get_post_status( $current ) ) {
+			return;
+		}
+		update_option( self::PRIVACY_OPTION, $page_id );
 	}
 
 	/**

@@ -166,7 +166,12 @@ final class DemoPartRemover {
 				}
 			}
 		}
-		unset( $registry['prev']['option:show_on_front'], $registry['prev']['option:page_on_front'] );
+		$privacy = (int) get_option( 'wp_page_for_privacy_policy', 0 );
+		if ( array_key_exists( 'option:wp_page_for_privacy_policy', $prev ) && ( 0 === $privacy || ! get_post( $privacy ) instanceof \WP_Post ) ) {
+			// The demo privacy page is gone, so WordPress's privacy policy page setting goes back to what it was.
+			null === $prev['option:wp_page_for_privacy_policy'] ? delete_option( 'wp_page_for_privacy_policy' ) : update_option( 'wp_page_for_privacy_policy', $prev['option:wp_page_for_privacy_policy'] );
+		}
+		unset( $registry['prev']['option:show_on_front'], $registry['prev']['option:page_on_front'], $registry['prev']['option:wp_page_for_privacy_policy'] );
 		SampleMarker::save_registry( $registry );
 	}
 
