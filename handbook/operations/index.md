@@ -1,27 +1,32 @@
 # Operations
 
-This section is for whoever keeps the site running: launching, backing up, updating, securing and recovering it. WordPress is built and tested locally and then moved to the live cPanel host. Everything that ships goes through a release, and file editing is switched off on the live site.
+This section is for whoever keeps the site running: updating, backing up, securing and fixing it. Everything here is done in wp-admin and cPanel, without code. Installing the site for the first time is in [Getting started](/start/).
 
 ## Pages in this section
 
 | Page | Covers |
 |---|---|
-| [Launch checklist](/operations/launch-checklist) | The items that must be true before and at go-live, and how to move the site |
-| [Backups](/operations/backups) | What is backed up, how often, and how to test a restore |
-| [Updates](/operations/updates) | How core, plugin and theme updates are applied |
-| [Security basics](/operations/security) | Sign-in, hardening, secrets, validation and logging |
+| [Launch checklist](/operations/launch-checklist) | The items that must be true before and at go-live |
+| [Backups](/operations/backups) | Taking cPanel backups, restoring, and testing a restore |
+| [Updates](/operations/updates) | Updating WordPress, plugins and the WHOISWHO bundle |
+| [Security basics](/operations/security) | Sign-in, passwords, hardening and everyday security |
+| [Troubleshooting](/operations/troubleshooting) | Email not sending, upload too large, white screen, Setup red items, "needs MySQL or MariaDB" |
+| [Who to contact](/operations/contacts) | Who handles what, and what to send when you ask for help |
 | [Runbook outline](/operations/runbook) | The procedures the runbook holds |
 
 ## The stack in brief
 
 | Layer | Choice |
 |---|---|
-| CMS | WordPress, current stable, with PHP 8.3 recommended |
+| CMS | WordPress, current stable, on PHP 8.3 or newer |
+| Host | A cPanel account |
 | Front end | Parent theme `whoiswho` and active child theme `whoiswho-child`, server-rendered PHP templates |
 | Admin | wp-admin with custom roles and capabilities |
-| Database | MariaDB 10.11 or newer, or MySQL 8.0 or newer |
-| Staff sign-in | Closed registration and enforced two-factor authentication |
-| Email | cPanel SMTP through WordPress, with SPF, DKIM and DMARC on the domain |
+| Database | MariaDB 10.11 or newer, or MySQL 8.0 or newer. SQLite (WordPress Studio) is not supported. |
+| Staff sign-in | Closed registration. Two-factor sign-in available and recommended, not enforced. |
+| Email | A cPanel mail account through the FluentSMTP plugin, with SPF, DKIM and DMARC on the domain |
+| Comments | wpDiscuz, on stories only, every comment held for moderation |
+| Spam protection | Cloudflare Turnstile on every public form |
 | Media | The WordPress media library. Private files live outside the web root. |
 | Search | A flattened full-text table built from public states only |
 | Jobs | WP-Cron with Action Scheduler |
@@ -34,10 +39,10 @@ There is no SEO plugin. The guard plugin writes all search markup, so nothing ca
 
 | Environment | Purpose |
 |---|---|
-| Local | WordPress via `wp-env` or an equivalent. The main build and test place. |
 | Live | The production site on the cPanel account |
-| Staging | Optional. A public staging copy follows the same rules as live. |
+| Staging | Optional. A copy on a subdomain for trying updates and restores. It follows the same rules as live and is hidden from search engines. |
+| Development | The development team's own machines, where new bundles are built and tested |
 
 ## Scheduled jobs
 
-WP-Cron with Action Scheduler runs these jobs: cache purge, email, import chunks, bulk unpublish chunks, sponsored slot start and end, claim reminders, data retention and backups. If the host allows it, a cPanel cron every minute can drive WordPress's scheduler instead, which makes timing independent of site traffic.
+WP-Cron with Action Scheduler runs these jobs: cache purge, email, import chunks, bulk unpublish chunks, sponsored slot start and end, claim reminders and data retention. WP-Cron runs when someone visits the site. If jobs seem slow on a quiet site, ask the development team or the host to set up a cPanel cron job that runs WordPress's scheduler every few minutes.

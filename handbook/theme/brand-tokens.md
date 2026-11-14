@@ -1,3 +1,5 @@
+<!-- verify-after-round-9 -->
+
 # Brand tokens
 
 Brand tokens are the named values for colour, type, spacing, shape and motion that every page uses. They are defined once, in the child theme's tokens file, and no page writes a brand value directly. This page lists them and says how to use them.
@@ -46,8 +48,26 @@ Labels have their own colour tokens and also differ in shape, so colour is never
 ## Logo and brand marks
 
 - The header wordmark and the icon are drawn through CSS masks, so one file serves light and dark backgrounds. Replace the logo by replacing the asset in the child theme, not by editing templates.
-- Four African-style symbols appear on the Home colour blocks, the directory doors and posters. Each has a variable that lets a poster tint and place one.
+- Four Adinkra symbols appear on the Home colour blocks, the directory doors, posters and the background pattern. They are the only approved symbols; see [Approved symbols](#approved-symbols).
 - The public name is WHOISWHO. The logo wordmark is its shortened form.
+
+## Approved symbols
+
+WHOISWHO uses exactly four Adinkra symbols, and no others:
+
+| Symbol | Meaning in brief |
+|---|---|
+| **Adinkrahene** | "Chief of the Adinkra symbols": greatness, leadership |
+| **Dwennimmen** | "Ram's horns": strength with humility |
+| **Nkonsonkonson** | "Chain links": unity, community, working together |
+| **Sankofa** | "Go back and get it": learning from the past, legacy |
+
+Rules:
+
+1. Use only these four, from the files in the child theme (`assets/brand/mark-*.webp`). Do not draw, download or generate other symbols, brush marks or "African-style" glyphs, and do not use the old brush-glyph pattern tile.
+2. Background patterns are built only from these four marks, and kept subtle.
+3. Do not stretch, recolour outside the brand tokens, rotate or combine a symbol with other artwork.
+4. In stories, posters, social images and slides made by the team, the same rule applies. If a design seems to need another symbol, ask the brand lead.
 
 ## How to use tokens
 

@@ -14,7 +14,7 @@ The runbook is the written set of procedures for running the site. This page lis
 | Bulk unpublish | When to use it, the filter, the reason, and how to restore a batch |
 | Updates | The weekly update routine and the 48-hour security routine |
 | Key rotation | Steps for SMTP credentials, signing keys, the backup passphrase and the WordPress salts |
-| Staff joiners and leavers | Create an account with two-factor, grant capabilities, deactivate the same day on leaving |
+| Staff joiners and leavers | Create an account, ask them to switch on two-factor, grant capabilities, deactivate the same day on leaving ([Users, roles and two-factor](/staff/users-and-two-factor)) |
 | Moving to a VPS | The fallback host: Nginx or Caddy, PHP-FPM, MariaDB and a supervised worker |
 
 ## Incident procedure
