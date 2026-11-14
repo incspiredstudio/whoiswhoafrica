@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { staffLogin } from "./helpers/staff-login";
 
-// Settings > Required plugins (REQ-056, REQ-240): an Administrator sees each plugin, its status and the right button, and the
+// Site settings > Required plugins (REQ-056, REQ-240): an Administrator sees each plugin, its status and the right button, and the
 // reminder notice links to the screen while a required plugin is missing. Nothing is installed here: CI has no network.
 test.describe("Required plugins screen", () => {
   test.skip(!process.env.WIW_E2E_TEST_MODE || !process.env.E2E_USER, "needs a seeded staff user (WIW_E2E_TEST_MODE, E2E_USER)");

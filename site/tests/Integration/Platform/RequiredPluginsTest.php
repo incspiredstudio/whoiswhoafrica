@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings > Required plugins (REQ-056, REQ-240, REQ-075, REQ-258): who may open it, the install and activate actions behind a
+ * Site settings > Required plugins (REQ-056, REQ-240, REQ-075, REQ-258): who may open it, the install and activate actions behind a
  * capability and a nonce, the installer driving core's upgrader (a fake here, never the network), the reminder notice and the
  * setup checklist lines. Needs the WordPress test suite.
  *

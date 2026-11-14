@@ -1,6 +1,6 @@
 <?php
 /**
- * A reminder on every admin page while a required plugin is not active (REQ-056): Administrators only, with a link to Settings >
+ * A reminder on every admin page while a required plugin is not active (REQ-056): Administrators only, with a link to Site settings >
  * Required plugins. Each Administrator can hide it for seven days; it comes back after that while a plugin is still missing.
  *
  * @package WhoIsWho

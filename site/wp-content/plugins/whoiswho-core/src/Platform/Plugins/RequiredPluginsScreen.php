@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings > Required plugins (REQ-056, REQ-240): the outside plugins the site needs, whether each is installed and active, and an
+ * Site settings > Required plugins (REQ-056, REQ-240): the outside plugins the site needs, whether each is installed and active, and an
  * Install and an Activate button, so nobody has to search the plugin directory. Administrators only (wiw_run_setup), and WordPress's
  * own install_plugins or activate_plugins as well. Every button is a plain form through ActionGuard (capability and nonce), and every
  * install or activation is audited. A host that needs FTP details gets a link to WordPress's own install screen, which asks for them.

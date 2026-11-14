@@ -304,7 +304,7 @@ final class Checklist {
 	}
 
 	/**
-	 * 8 and 9. A required plugin (FluentSMTP, wpDiscuz), installed and switched on from Settings > Required plugins.
+	 * 8 and 9. A required plugin (FluentSMTP, wpDiscuz), installed and switched on from Site settings > Required plugins.
 	 *
 	 * @param string $slug Plugin slug.
 	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
@@ -327,7 +327,7 @@ final class Checklist {
 				? sprintf( __( '%s is installed but not switched on.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why']
 				/* translators: %s: plugin name. */
 				: sprintf( __( '%s is not installed yet.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why'],
-			__( 'Open Settings > Required plugins in the admin menu and press Install, then Activate. It takes under a minute and needs no file or command.', 'whoiswho' ),
+			__( 'Open Site settings > Required plugins in the admin menu and press Install, then Activate. It takes under a minute and needs no file or command.', 'whoiswho' ),
 			'',
 			'',
 			RequiredPluginsScreen::url(),
