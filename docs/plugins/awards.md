@@ -76,7 +76,7 @@ Public pages say "nominees" and "winners". There are no shortlist or finalist st
 - **No money path.** Payment never creates a nomination or affects a stage or status. The module has no reference to Commerce.
 - **Contact email.** Optional, staff-only. It is never public, never in an export and never in a log or error message, and it is listed in the PII catalogue (`whoiswho-core/config/pii.php`). Retention and erasure remove it.
 - **Two settings.** Stage is Nominated or Winner; status is Live or Not live. A new nomination starts Nominated and Not live. Each change stores the staff member who made it and is written to the audit log. No setting depends on a score.
-- **Add by profile only.** "Add profile to nominations" offers existing profiles. There is no free-text name, so a person or organisation must have a profile first.
+- **Add by profile only.** "Add profile to nominations" offers existing profiles that are reviewed, pending review or in the review queue (Imported not public). There is no free-text name, so a person or organisation must have a profile first. A staff member with `wiw_add_profile` gets a "Create profile" shortcut that opens Directory > Add profile with the searched name filled in and returns to the Nominations screen after saving. A nomination of a profile that is not reviewed stays Not live (REQ-226).
 - **Categories are data, criteria are copy.** Categories live on the Award categories screen. Eligibility and judging-criteria text are page copy.
 - **The programme details are still being settled.** Judging detail is handled offline and may change; the current rules are the defaults.
 
