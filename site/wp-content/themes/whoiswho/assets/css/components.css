@@ -1448,7 +1448,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 
 /* ---------- profile narrative sections, lifespan, image credit and share panel (REQ-003, REQ-162; contract 1.1) ---------- */
 .profile-section { scroll-margin-top: calc(var(--head-h) + var(--s-4)); }
-.profile-prose { max-width: 68ch; }
+.profile-prose { max-width: 44rem; }
 .profile-prose p { font-size: var(--t-md); line-height: var(--lh-body); }
 .profile-prose p + p { margin-top: var(--s-4); }
 .profile-section--bio .profile-prose p:first-child { font-size: var(--t-lg); line-height: var(--lh-snug); }
