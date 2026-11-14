@@ -102,7 +102,9 @@ final class Exposure {
 	 * @return array<int, \WP_Post>
 	 */
 	public static function strip_guarded_from_public_queries( array $posts, \WP_Query $query ): array {
-		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) || $query->get( 'wiw_allow_guarded' ) ) {
+		// admin-ajax.php counts as admin even for a visitor (wp_ajax_nopriv_* handlers of any plugin), so that is still public.
+		$staff_side = is_admin() && ! ( wp_doing_ajax() && ! is_user_logged_in() );
+		if ( $staff_side || ( defined( 'WP_CLI' ) && WP_CLI ) || $query->get( 'wiw_allow_guarded' ) ) {
 			return $posts;
 		}
 		$guarded = \WhoIsWho\Guard\Guard::guarded_post_types();
@@ -139,7 +141,8 @@ final class Exposure {
 	}
 
 	/**
-	 * The users routes are never available to anyone who cannot list users.
+	 * The users routes are never available to anyone who cannot list users. One exception: a signed-in user who can edit posts
+	 * keeps exactly /wp/v2/users/me (their own record), which the block editor and dashboard need.
 	 *
 	 * @param array<string, mixed> $endpoints Routes.
 	 * @return array<string, mixed>
@@ -148,7 +151,11 @@ final class Exposure {
 		if ( current_user_can( 'list_users' ) ) {
 			return $endpoints;
 		}
+		$keep_me = is_user_logged_in() && current_user_can( 'edit_posts' );
 		foreach ( array_keys( $endpoints ) as $route ) {
+			if ( $keep_me && '/wp/v2/users/me' === (string) $route ) {
+				continue;
+			}
 			if ( 0 === strpos( (string) $route, '/wp/v2/users' ) ) {
 				unset( $endpoints[ $route ] );
 			}

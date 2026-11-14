@@ -63,12 +63,23 @@ final class SampleBundle {
 	private string $root;
 
 	/**
+	 * The private folder the shipped zip moves to once imported ('' for none).
+	 *
+	 * @var string
+	 */
+	private string $stash;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param string|null $root The sample folder; the plugin's own by default (tests pass a temporary one).
+	 * @param string|null $root  The sample folder; the plugin's own by default (tests pass a temporary one).
+	 * @param string|null $stash The private folder for the imported zip: beside the private import folder by default, none when
+	 *                           a test passes its own sample folder without one.
 	 */
-	public function __construct( ?string $root = null ) {
-		$this->root = rtrim( str_replace( '\\', '/', $root ?? self::default_root() ), '/' );
+	public function __construct( ?string $root = null, ?string $stash = null ) {
+		$this->root  = rtrim( str_replace( '\\', '/', $root ?? self::default_root() ), '/' );
+		$stash       = $stash ?? ( null === $root ? ( new BundleStore() )->root() . '/demo-sample' : '' );
+		$this->stash = rtrim( str_replace( '\\', '/', $stash ), '/' );
 	}
 
 	/**
@@ -91,7 +102,37 @@ final class SampleBundle {
 			return array( 'zip', $this->root . '/' . self::ZIP );
 		}
 		$zips = glob( $this->root . '/*.zip' );
-		return is_array( $zips ) && array() !== $zips ? array( 'zip', (string) $zips[0] ) : null;
+		if ( is_array( $zips ) && array() !== $zips ) {
+			return array( 'zip', (string) $zips[0] );
+		}
+		// Imported before: the zip was moved out of the public plugin folder into the private store.
+		if ( '' !== $this->stash && is_readable( $this->stash . '/' . self::ZIP ) ) {
+			return array( 'zip', $this->stash . '/' . self::ZIP );
+		}
+		return null;
+	}
+
+	/**
+	 * Once the profiles are imported, move the shipped zip out of the plugin folder (which the web server may serve, for example
+	 * on nginx, where .htaccess does nothing) into the private store, behind its own deny files, so the demo can still be
+	 * imported again. When it cannot be moved it is left where it is; the plugin's own deny files still apply on Apache.
+	 */
+	public function stash_zip(): void {
+		$source = $this->source();
+		if ( '' === $this->stash || null === $source || 'zip' !== $source[0] || dirname( $source[1] ) !== $this->root ) {
+			return;
+		}
+		if ( ! is_dir( $this->stash ) && ! wp_mkdir_p( $this->stash ) ) {
+			return;
+		}
+		// phpcs:disable WordPress.WP.AlternativeFunctions -- local files in the plugin's own private folder.
+		file_put_contents( $this->stash . '/index.php', "<?php\n// Silence is golden.\n" );
+		file_put_contents( $this->stash . '/.htaccess', "# The demo bundle is read by the plugin, never served.\n<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n\tDeny from all\n</IfModule>\n" );
+		$target = $this->stash . '/' . self::ZIP;
+		if ( ! @rename( $source[1], $target ) && copy( $source[1], $target ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a failed move falls back to copy and delete.
+			wp_delete_file( $source[1] );
+		}
+		// phpcs:enable WordPress.WP.AlternativeFunctions
 	}
 
 	/**
@@ -189,6 +230,9 @@ final class SampleBundle {
 		}
 		$this->approve( $batch_id, $actor );
 		$batch = (array) $batches->get( $batch_id );
+		if ( 'applied' === (string) ( $batch['status'] ?? '' ) ) {
+			$this->stash_zip();
+		}
 		return 'applied' === (string) ( $batch['status'] ?? '' ) ? (int) $batch['record_count'] : (int) ( $batch['progress_cursor'] ?? 0 );
 	}
 

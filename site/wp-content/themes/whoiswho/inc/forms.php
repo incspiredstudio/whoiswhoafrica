@@ -13,7 +13,7 @@ declare(strict_types=1);
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
 const WIW_FORM_PAGE_VAR  = 'wiw_form_page';
-const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_6';
+const WIW_FORM_RULES_OP  = 'wiw_theme_form_rules_7';
 const WIW_CLAIM_SLUG_VAR = 'wiw_claim_slug';
 
 if ( ! function_exists( 'wiw_form_pages' ) ) {
@@ -215,7 +215,7 @@ add_action(
 	static function (): void {
 		// The claim page carries a profile slug, so it has its own rule.
 		add_rewrite_rule( '^(' . implode( '|', array_keys( array_diff_key( wiw_form_pages(), array( 'claim' => 1 ) ) ) ) . ')/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=$matches[1]', 'top' );
-		add_rewrite_rule( '^claim/([A-Za-z0-9_-]+)/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=claim&' . WIW_CLAIM_SLUG_VAR . '=$matches[1]', 'top' );
+		add_rewrite_rule( '^claim/([^/]+)/?$', 'index.php?' . WIW_FORM_PAGE_VAR . '=claim&' . WIW_CLAIM_SLUG_VAR . '=$matches[1]', 'top' );
 		if ( '1' !== get_option( WIW_FORM_RULES_OP ) ) {
 			flush_rewrite_rules( false );
 			update_option( WIW_FORM_RULES_OP, '1', false );

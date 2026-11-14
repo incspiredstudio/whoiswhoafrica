@@ -156,7 +156,7 @@ final class ReviewQueueScreen {
 			);
 			$who   = $item['assignee'] > 0 ? get_userdata( $item['assignee'] ) : false;
 			echo '<tr><td>' . ( $edit ? '<a href="' . esc_url( $edit ) . '">' . esc_html( $item['name'] ) . '</a>' : esc_html( $item['name'] ) ) . '</td>';
-			echo '<td>' . esc_html( $kinds[ $item['kind'] ] ?? $item['kind'] ) . '</td><td>' . esc_html( $item['type'] ) . '</td><td>' . esc_html( $item['state'] ) . '</td>';
+			echo '<td>' . esc_html( $kinds[ $item['kind'] ] ?? $item['kind'] ) . '</td><td>' . esc_html( Labels::entity_type( (string) $item['type'] ) ) . '</td><td>' . esc_html( Labels::state( (string) $item['state'] ) ) . '</td>';
 			echo '<td>' . esc_html( $item['since'] ) . '</td><td>' . esc_html( implode( ', ', $marks ) ) . '</td>';
 			echo '<td>' . esc_html( $who ? $who->display_name : '' ) . '</td><td>';
 			$url = add_query_arg(

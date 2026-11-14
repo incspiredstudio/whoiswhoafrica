@@ -314,6 +314,9 @@ html.stage-on .h-act-in { z-index: 2; }
 .h-nom-filter .chip:hover, .h-nom-filter .chip[aria-pressed="true"] { background: var(--offwhite); border-color: var(--offwhite); color: var(--charcoal-900); }
 .hn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-3); }
 .hn-item[hidden] { display: none; }
+
+/* Inset ring: the chip row scrolls sideways, which would clip a ring drawn outside the chip. */
+.h-nom-filter .chip:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: -4px; }
 .hn-card { display: grid; gap: var(--s-3); color: var(--c-on-dark); text-decoration: none; }
 .hn-card .poster { aspect-ratio: 4 / 5; }
 .hn-body { display: grid; gap: 2px; }

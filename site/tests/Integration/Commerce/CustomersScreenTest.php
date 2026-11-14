@@ -53,7 +53,7 @@ final class CustomersScreenTest extends TestCase {
 	 *
 	 * @param string $role Role.
 	 */
-	private function screen( string $role = 'wiw_editor' ): CustomersScreen {
+	private function screen( string $role = 'administrator' ): CustomersScreen {
 		$user = wp_insert_user(
 			array(
 				'user_login' => $role . wp_generate_password( 6, false ),

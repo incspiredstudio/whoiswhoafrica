@@ -41,14 +41,21 @@ add_action(
 		if ( function_exists( 'wiw_core_ready' ) && ! wiw_core_ready() ) {
 			return;
 		}
-		foreach ( array( 'repline.woff2', 'montreal-400.woff2' ) as $file ) {
+		$fonts = array( 'repline.woff2', 'montreal-400.woff2' );
+		// A story's head sets its meta line in the 500 weight and its lede in the 300 weight. Fetched late, they swap in after first
+		// paint and push the whole article down (the story page's layout shift); fetched with the CSS, they are there for first paint.
+		if ( is_singular( 'post' ) ) {
+			$fonts[] = 'montreal-300.woff2';
+			$fonts[] = 'montreal-500.woff2';
+		}
+		foreach ( $fonts as $file ) {
 			printf(
 				'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
 				esc_url( get_stylesheet_directory_uri() . '/assets/fonts/' . $file )
 			);
 		}
-		// The header wordmark is a CSS mask: fetch it with the fonts so the logo is there on first paint (8.6 KB, cached on every page).
-		printf( '<link rel="preload" href="%s" as="image" type="image/webp">' . "\n", esc_url( get_stylesheet_directory_uri() . '/assets/logo/wiw-logo-mask.webp' ) );
+		// The header wordmark is a CSS mask, which browsers fetch in CORS mode, so the preload says crossorigin to be reused (8.6 KB).
+		printf( '<link rel="preload" href="%s" as="image" type="image/webp" crossorigin>' . "\n", esc_url( get_stylesheet_directory_uri() . '/assets/logo/wiw-logo-mask.webp' ) );
 	},
 	1
 );

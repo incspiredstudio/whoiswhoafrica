@@ -26,7 +26,7 @@ if ( ! function_exists( 'wiw_directory_lists' ) ) {
 			'all'           => array(
 				'path'  => 'directory',
 				'tab'   => __( 'All', 'whoiswho' ),
-				'title' => __( 'Directory', 'whoiswho' ),
+				'title' => __( 'The directory', 'whoiswho' ),
 				'lede'  => __( 'Reviewed people, entrepreneurs, businesses and institutions across Africa, each fact shown with its source.', 'whoiswho' ),
 			),
 			'people'        => array(

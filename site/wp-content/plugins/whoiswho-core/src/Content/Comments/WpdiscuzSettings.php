@@ -123,6 +123,38 @@ final class WpdiscuzSettings {
 		add_action( 'activated_plugin', array( $this, 'on_activated' ), 10, 1 );
 		add_action( 'admin_init', array( $this, 'maybe_apply' ), 99 );
 		add_action( 'comment_form', array( $this, 'consent_field' ), 20, 2 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_feedback' ), 20 );
+	}
+
+	/**
+	 * On a story whose comments are open and shown by wpDiscuz: the small script that tells the visitor their comment is on its
+	 * way, then waiting for moderation, and stops the same comment being sent twice.
+	 */
+	public function enqueue_feedback(): void {
+		if ( ! class_exists( 'WpdiscuzCore' ) || ! is_singular( CommentPolicy::STORY_TYPE ) || ! comments_open() ) {
+			return;
+		}
+		wp_enqueue_script( 'wiw-comment-feedback', plugins_url( 'assets/public/comment-feedback.js', WIW_CORE_FILE ), array( 'jquery' ), WIW_CORE_VERSION, true );
+		wp_add_inline_script( 'wiw-comment-feedback', 'window.wiwCommentFeedback=' . wp_json_encode( self::feedback_config() ) . ';', 'before' );
+	}
+
+	/**
+	 * The words and settings of the feedback script.
+	 *
+	 * @return array{repeatSeconds: int, strings: array<string, string>}
+	 */
+	public static function feedback_config(): array {
+		return array(
+			'repeatSeconds' => 120,
+			'strings'       => array(
+				'sending'   => __( 'Sending your comment…', 'whoiswho' ),
+				'held'      => __( 'Thanks, your comment is waiting for moderation. It will appear here once an editor approves it.', 'whoiswho' ),
+				'published' => __( 'Thanks, your comment is published.', 'whoiswho' ),
+				'duplicate' => __( 'You have already sent this comment. It is waiting for moderation, so there is no need to send it again.', 'whoiswho' ),
+				'error'     => __( 'Your comment was not sent. Check your name, email and the agreement box, then try again.', 'whoiswho' ),
+				'failed'    => __( 'Your comment could not be sent because the connection failed. Please try again in a moment.', 'whoiswho' ),
+			),
+		);
 	}
 
 	/**

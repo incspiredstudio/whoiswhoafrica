@@ -78,13 +78,13 @@ Defaults: **R** = Reviewer, **E** = Editor, **A** = Administrator. The Visitor h
 | `wiw_manage_events` | Plugin | Create, edit, schedule and unpublish events (REQ-262, 264). Editor and Administrator by default; the Administrator can grant it to any role, including Reviewer | no | yes | yes |
 | `wiw_set_sponsored` | Plugin | Set the Sponsored label and a story's paid placement (REQ-182, 263) | no | yes | yes |
 | `wiw_manage_awards` | Plugin | Award categories, nominations, setting stages, adding a profile to nominations, publishing nominees and winners (REQ-031, 200, 202, 266, 267) | no | yes | yes |
-| `wiw_support_inbox` | Plugin | Work the Enquiries and Corrections screens (REQ-089, 232, 271) | no | yes | yes |
+| `wiw_support_inbox` | Plugin | Work the Enquiries and Corrections screens only (REQ-089, 232, 271); it does not open Customers | no | yes | yes |
 | `wiw_handle_disputes` | Plugin | Decide disputes and removal requests (REQ-174; Q71) | no | yes | yes |
 | `wiw_handle_requests` | Plugin | Work the Requests and reports screen: data requests, removals and profile reports (REQ-059, 270; D-069) | no | yes | yes |
 | `wiw_manage_leads` | Plugin | **Removed 2026-11-10 (D-061).** There is no Leads screen. | no | no | no |
 | `wiw_receive_enquiries` | Plugin | Receive enquiries sent to profiles; Administrators by default, grantable to others (REQ-018; Q62) | no | no | yes |
 | `wiw_view_dashboard_commercial` | Plugin | Sprint, revenue and arrangement tiles (REQ-181) | no | no | yes |
-| `wiw_manage_register` | Plugin | Commercial register; confirming payments; **fixed** (REQ-179, 086; D-045) | no | no | yes |
+| `wiw_manage_register` | Plugin | Commercial register; confirming payments; the Customers screen (Administrator only); **fixed** (REQ-179, 086; D-045) | no | no | yes |
 | `wiw_run_imports` | Plugin | Run an import by file upload or CLI (REQ-237, 092) | no | no | yes |
 | `wiw_export_data` | Plugin | CSV exports of the register, leads, nominations and personal data; logged (REQ-087, 069) | no | no | yes |
 | `wiw_view_audit` | Plugin | Read the audit log (REQ-051) | no | no | yes |

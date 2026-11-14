@@ -103,9 +103,8 @@ final class ApplyJob {
 		}
 		$dir     = self::bundle_dir( $batch );
 		$bundle  = BundleReader::reopen( $dir, (string) $batch['file_hash'] );
-		$started = time();
 		$applier = new ChunkApplier( new ProfileApplier( new Suppression( AuditLogger::for_site() ) ), $batches );
-		$out     = $applier->run( $bundle, $batch_id, ChunkApplier::DEFAULT_CHUNK, static fn (): bool => time() - $started >= $budget );
+		$out     = $applier->run( $bundle, $batch_id, ChunkApplier::DEFAULT_CHUNK, ChunkApplier::budget( $budget ) );
 		if ( ! empty( $out['finished'] ) ) {
 			( new ImportAudit() )->record( $batch );
 			self::discard( $dir );

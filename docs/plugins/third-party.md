@@ -65,6 +65,16 @@ The owner installs the outside plugins from the admin, without a file manager or
 
 Underneath any form, `CommentPolicy` still holds the rules: comments open on stories only and close after 90 days, a guest needs a name, a valid email and the consent tick (also when wpDiscuz posts through `admin-ajax.php`), every visitor comment is held for a moderator, Gravatar is off and the email never reaches public HTML. The consent tick is added to wpDiscuz's form through the `comment_form` action. While wpDiscuz is active the theme's story template shows wpDiscuz's form and thread (`comments_template()`); without it, the theme's own form.
 
+More rules that apply while wpDiscuz is active:
+
+- **Moderator email:** WordPress's `moderation_notify` option is **forced to 0** (`CommentPolicy`). Core's own moderator email goes out while the visitor waits and names the commenter; `CommentModeratorNotice` sends a queued notice with no commenter details instead.
+- **Comment feedback script:** `whoiswho-core/assets/public/comment-feedback.js`, enqueued on single stories by `WpdiscuzSettings::enqueue_feedback()`, listens to wpDiscuz's own events. While a comment is on its way the button is off and a line says so; when it arrives the line says it is waiting for moderation; when it is refused or the network fails the line says what to do. The same text cannot be sent twice in a row. The words come from the plugin (`window.wiwCommentFeedback`). No wpDiscuz file is changed (REQ-258).
+- **Styling by CSS only:** the theme restyles wpDiscuz's form and thread with `themes/whoiswho/assets/css/wpdiscuz.css` (tokens only, loaded after the plugin's sheet on single stories). The plugin's colour options are not written. The same sheet **hides wpDiscuz's article rating** (`#wpd-post-rating`), which is not part of this site's design.
+
+### FluentSMTP settings
+
+- **Email log forced off:** `Platform/Mail/FluentSmtpLogging` filters FluentSMTP's settings (the `fluentmail-settings` option) on every read, so `misc.log_emails` is always `no`, whatever its settings screen saved. Our emails carry signed links, so a stored body would be a working key in the database and personal data outside the PII catalogue (REQ-233, REQ-046). No FluentSMTP file is edited.
+
 Personal data in wpDiscuz 7.7.0's tables: `wc_comments_subscription` (email) and `wc_follow_users` (names, emails) are exported and erased by email (`CommentPrivacy`); `wc_users_voted` (IP hash) and `wc_users_rated` (IP) stay empty because votes and ratings are off; `wc_phrases` and `wc_feedback_forms` hold none. Recheck these tables when the wpDiscuz version changes.
 
 ## Not allowed

@@ -84,7 +84,7 @@ final class SetupScreenTest extends WpTestCase {
 	public function test_REQ_056_the_checklist_has_the_ten_checks_in_order(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$items = Checklist::items();
-		$this->assertSame( array( 'database', 'permalinks', 'theme', 'guard', 'two_factor', 'email', 'turnstile', 'plugin_fluent_smtp', 'plugin_wpdiscuz', 'demo' ), array_column( $items, 'id' ) );
+		$this->assertSame( array( 'database', 'permalinks', 'theme', 'guard', 'two_factor', 'email', 'turnstile', 'plugin_fluent_smtp', 'plugin_wpdiscuz', 'staff_names', 'demo' ), array_column( $items, 'id' ) );
 		foreach ( $items as $item ) {
 			$this->assertContains( $item['status'], array( Checklist::OK, Checklist::WARN, Checklist::ERROR ) );
 			$this->assertNotSame( '', $item['detail'] );
@@ -92,6 +92,42 @@ final class SetupScreenTest extends WpTestCase {
 				$this->assertNotSame( '', $item['fix'] . $item['action_label'], "{$item['id']} says what to do" );
 			}
 		}
+	}
+
+	public function test_REQ_056_the_checklist_advises_a_public_display_name_for_staff_who_write_stories(): void {
+		foreach ( get_users( array( 'fields' => 'ID' ) ) as $leftover ) {
+			wp_update_user(
+				array(
+					'ID'           => (int) $leftover,
+					'display_name' => 'Named ' . (int) $leftover,
+				)
+			);
+		}
+		$writer = self::factory()->user->create(
+			array(
+				'role'       => 'administrator',
+				'user_login' => 'writerqwv',
+			)
+		);
+		wp_update_user(
+			array(
+				'ID'           => $writer,
+				'display_name' => 'writerqwv',
+			)
+		);
+		$item = Checklist::staff_names();
+		$this->assertSame( 'staff_names', $item['id'] );
+		$this->assertSame( Checklist::WARN, $item['status'], 'advice, never an error' );
+		$this->assertStringContainsString( 'writerqwv', $item['detail'] );
+		$this->assertStringContainsString( 'Display name publicly as', $item['fix'] );
+
+		wp_update_user(
+			array(
+				'ID'           => $writer,
+				'display_name' => 'Wanjiru Writer',
+			)
+		);
+		$this->assertSame( Checklist::OK, Checklist::staff_names()['status'] );
 	}
 
 	public function test_REQ_056_plain_permalinks_show_a_fix_button_and_pretty_ones_are_ready(): void {
@@ -127,6 +163,21 @@ final class SetupScreenTest extends WpTestCase {
 		}
 	}
 
+	/**
+	 * The import confirmation has one line per part, tagged with its part, so the screen shows only the parts that were ticked
+	 * (#810): ticking only Stories no longer shows the Profiles paragraph.
+	 */
+	public function test_REQ_056_the_import_confirmation_has_one_line_per_part(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$html = SetupScreen::html( new Request( array() ) );
+		$this->assertSame( 1, preg_match( '#<div class="wiw-confirm" data-wiw="confirm-import".*?</div>#s', $html, $m ) );
+		foreach ( \WhoIsWho\Core\Platform\Setup\DemoParts::PARTS as $part ) {
+			$this->assertSame( 1, preg_match( '#<li data-wiw-for="' . $part . '">#', $m[0] ), "{$part} has its own line" );
+		}
+		$this->assertSame( 1, preg_match( '#<li data-wiw-for="profiles">[^<]*Profiles:#', $m[0] ), 'the Profiles paragraph belongs to the Profiles part' );
+		$this->assertSame( 0, preg_match( '#<li>[^<]*Profiles:#', $m[0] ), 'no untagged Profiles line' );
+	}
+
 	public function test_REQ_240_the_screen_refuses_a_user_without_the_capability(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'wiw_editor' ) ) );
 		$this->expectException( \DomainException::class );
@@ -136,7 +187,7 @@ final class SetupScreenTest extends WpTestCase {
 	public function test_REQ_056_the_dashboard_widget_shows_progress_and_a_way_to_hide_it(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$html = SetupScreen::widget_html();
-		$this->assertMatchesRegularExpression( '/\d of 10 setup steps are ready/', $html );
+		$this->assertMatchesRegularExpression( '/\d of 11 setup steps are ready/', $html );
 		$this->assertStringContainsString( 'page=wiw-setup', $html );
 		$this->assertStringContainsString( 'Hide this reminder', $html );
 	}

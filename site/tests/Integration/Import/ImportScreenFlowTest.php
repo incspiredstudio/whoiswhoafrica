@@ -84,7 +84,12 @@ final class ImportScreenFlowTest extends TestCase {
 		}
 		$this->dirs = array();
 		foreach ( $this->roots as $root ) {
-			foreach ( glob( $root . '/*' ) ?: array() as $folder ) {
+			foreach ( glob( $root . '/{,.}[!.]*', GLOB_BRACE ) ?: array() as $folder ) {
+				if ( is_file( $folder ) ) {
+					// The guard files of the private folder.
+					unlink( $folder );
+					continue;
+				}
 				foreach ( glob( $folder . '/*' ) ?: array() as $file ) {
 					unlink( $file );
 				}

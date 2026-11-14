@@ -107,7 +107,13 @@ final class ImportV11FlowTest extends TestCase {
 		foreach ( (array) $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s", ImageMeta::BATCH ) ) as $id ) { // phpcs:ignore WordPress.DB
 			wp_delete_attachment( (int) $id, true );
 		}
-		foreach ( (array) $wpdb->get_col( 'SELECT profile_id FROM ' . RecordMap::table() ) as $id ) { // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		// Profiles an undo let go of are no longer in the record map: find them through the results and the state table too.
+		$ids = array_merge(
+			(array) $wpdb->get_col( 'SELECT profile_id FROM ' . RecordMap::table() ), // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+			(array) $wpdb->get_col( 'SELECT profile_id FROM ' . ResultRepository::table() . ' WHERE profile_id IS NOT NULL' ), // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+			(array) $wpdb->get_col( $wpdb->prepare( 'SELECT profile_id FROM ' . StateRepository::table() . ' WHERE import_batch = %s', V11BundleFixture::BATCH ) ) // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		);
+		foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
 			wp_delete_post( (int) $id, true );
 			$wpdb->delete( StateRepository::table(), array( 'profile_id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->delete( ProvenanceRepository::table(), array( 'profile_id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -117,6 +123,7 @@ final class ImportV11FlowTest extends TestCase {
 		}
 		DryRun::reset( V11BundleFixture::BATCH );
 		ImageLog::clear( V11BundleFixture::BATCH );
+		delete_option( \WhoIsWho\Core\Import\Undo\UndoneBatchReset::OPTION_PREFIX . substr( md5( V11BundleFixture::BATCH ), 0, 20 ) );
 		delete_option( SettingsService::OPTION_PREFIX . 'import_all_not_public' );
 	}
 
@@ -270,6 +277,47 @@ final class ImportV11FlowTest extends TestCase {
 		$this->assertNull( get_post( $photo ) );
 		$this->assertSame( '', (string) get_post_meta( $org, PublicProfile::IMAGE_META, true ) );
 		$this->assertSame( 'undone', ( new BatchRepository() )->get( $batch )['status'] );
+	}
+
+	/**
+	 * An undone batch can be imported again (#810): no "already registered" refusal, and the profiles the first import made are
+	 * used again, so there are no duplicates.
+	 */
+	public function test_REQ_237_an_undone_batch_can_be_imported_again_without_duplicates(): void {
+		$service = $this->service();
+		$admin   = $this->admin();
+		update_option( SettingsService::OPTION_PREFIX . 'import_all_not_public', '0', false );
+		$batch = $service->stage( $this->upload(), $admin );
+		$service->confirm( $batch, $admin );
+		$this->run_steps( $service, $batch, $admin );
+		$org    = $this->profile_of( 'rec_org_v11_1' );
+		$person = $this->profile_of( 'rec_ind_v11_1' );
+		$count  = static fn (): int => count(
+			get_posts(
+				array(
+					'post_type'      => ProfileType::POST_TYPE,
+					'post_status'    => 'any',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+				)
+			)
+		);
+		$before = $count();
+		$this->assertTrue( $service->undo( $batch, $admin )['done'] );
+		$this->assertSame( PubState::UNPUBLISHED, ( new StateRepository() )->get( $org )['pub_state'] );
+
+		$again = $service->stage( $this->upload(), $admin );
+		$this->assertSame( $batch, $again, 'the same batch id is accepted again' );
+		$this->assertSame( 'dry_run', ( new BatchRepository() )->get( $batch )['status'] );
+		$service->confirm( $batch, $admin );
+		$this->run_steps( $service, $batch, $admin );
+		$this->assertSame( 'applied', ( new BatchRepository() )->get( $batch )['status'] );
+		$this->assertSame( $before, $count(), 'no duplicate profiles' );
+		$this->assertSame( $org, $this->profile_of( 'rec_org_v11_1' ), 'the same organisation profile is used again' );
+		$this->assertSame( $person, $this->profile_of( 'rec_ind_v11_1' ) );
+		$this->assertSame( PubState::PUBLISHED_PENDING, ( new StateRepository() )->get( $org )['pub_state'], 'it is back as the import decides' );
+		$this->assertSame( PubState::IMPORTED_NOT_PUBLIC, ( new StateRepository() )->get( $person )['pub_state'] );
+		$this->assertGreaterThan( 0, (int) get_post_meta( $person, PublicProfile::IMAGE_META, true ), 'its photo is imported again' );
 	}
 
 	public function test_REQ_092_a_zip_sent_in_pieces_is_joined_and_staged(): void {

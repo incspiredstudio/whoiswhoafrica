@@ -25,7 +25,7 @@ The sample profiles go through the normal import, so they arrive with their sour
 
 1. Open **WHOISWHO > Setup** and scroll to **Demo content (optional)**.
 2. Under **Choose the parts to import**, tick the parts you want.
-3. Press **Import demo content**. A box asks **Import the chosen parts?** and says what will be added.
+3. Press **Import demo content**. A box asks **Import the chosen parts?** and lists only the parts you ticked (plus any part they need).
 4. On a live site that already has real profiles or stories, the box asks you to type `IMPORT DEMO` first, so nobody adds demo content to a live site by accident.
 5. Press **Yes, import the demo content**.
 6. A progress bar shows it working. **Keep the page open** until the bar is full.
@@ -40,9 +40,13 @@ You can remove one part or all of it.
 
 1. Open **WHOISWHO > Setup** and scroll to **Demo content (optional)**.
 2. Press the **Remove** button next to a part (for example **Remove Stories**), or **Remove demo content** for everything.
-3. Confirm with **Yes, remove it** (one part) or **Yes, remove the demo content** (everything).
+3. Confirm with **Yes, remove it** (one part) or **Yes, remove the demo content** (everything). The part's line on the Setup screen updates as soon as it is removed; you do not need to reload.
 
 Only items marked as sample content are deleted. Your own profiles, stories and pages are not touched, and the settings the demo changed are put back. A demo item that someone changed after the import is kept and listed, and from then on counts as your own content. If you remove a part that another part needs (for example Profiles while Awards is still there), the dependent part is removed too.
+
+## WordPress's own sample post and page
+
+A new WordPress site comes with a "Hello world!" post (with a sample comment) and a "Sample Page". When the WHOISWHO plugin is first activated it moves them to the trash, but only if nobody has changed them. If you had edited them, they stay. You can put them back from **Posts > Trash** or **Pages > Trash**.
 
 ## Before going live
 

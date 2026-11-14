@@ -24,6 +24,7 @@ use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
 use WhoIsWho\Core\Directory\Add\AddProfileValidator;
 use WhoIsWho\Core\Directory\Add\DuplicateFinder;
+use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
@@ -76,13 +77,48 @@ final class AddProfileScreen {
 				$registry->hook();
 				ActionGuard::register( self::ACTION, self::CAPABILITY, array( self::class, 'handle' ) );
 				add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );
+				add_action( 'admin_menu', array( self::class, 'hide_core_add_new' ), 999 );
+				add_action( 'load-post-new.php', array( self::class, 'redirect_core_add_new' ) );
 			},
 			1
 		);
 	}
 
 	/**
-	 * The media library picker, on this screen only.
+	 * Only one way to add a profile: drop WordPress's own "Add profile" item under its Profiles menu, so Directory > Add
+	 * profile is the one a person sees.
+	 */
+	public static function hide_core_add_new(): void {
+		remove_submenu_page( 'edit.php?post_type=' . ProfileType::POST_TYPE, 'post-new.php?post_type=' . ProfileType::POST_TYPE );
+	}
+
+	/**
+	 * Where WordPress's own new-profile screen sends a person instead: Directory > Add profile, for someone who may use it. Anyone
+	 * else gets null and WordPress's own capability check answers as before.
+	 *
+	 * @param string $post_type Post type of the new-post screen.
+	 */
+	public static function core_add_new_target( string $post_type ): ?string {
+		if ( ProfileType::POST_TYPE !== $post_type || ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return null;
+		}
+		return self::url();
+	}
+
+	/**
+	 * Send post-new.php?post_type=wiw_profile to Directory > Add profile.
+	 */
+	public static function redirect_core_add_new(): void {
+		global $typenow;
+		$target = self::core_add_new_target( is_string( $typenow ) ? $typenow : '' );
+		if ( null !== $target ) {
+			wp_safe_redirect( $target );
+			exit;
+		}
+	}
+
+	/**
+	 * The media library picker and the character counter (the Edit profile screen's counter), on this screen only.
 	 *
 	 * @param string $hook Admin page hook suffix.
 	 */
@@ -92,6 +128,7 @@ final class AddProfileScreen {
 		}
 		wp_enqueue_media();
 		wp_enqueue_script( 'wiw-add-profile', plugins_url( 'assets/admin/directory/add-profile.js', WIW_CORE_FILE ), array( 'media-views' ), WIW_CORE_VERSION, true );
+		wp_enqueue_script( 'wiw-char-count', plugins_url( 'assets/admin/directory/char-count.js', WIW_CORE_FILE ), array(), WIW_CORE_VERSION, true );
 	}
 
 	/**
@@ -376,7 +413,7 @@ final class AddProfileScreen {
 			if ( in_array( $key, AddProfileFields::SECTIONS, true ) ) {
 				continue;
 			}
-			$out .= $this->row( 'f_' . $key, self::field_label( $key ) . ( $rule['required'] ? ' *' : '' ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
+			$out .= $this->row( 'f_' . $key, $form->label( $type, $key ) . ( $rule['required'] ? ' *' : '' ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
 		}
 		$out .= $this->row( 'wikidata_qid', __( 'Wikidata id (optional, for example Q42)', 'whoiswho' ), '<input type="text" id="wiw-f-wikidata_qid" name="wikidata_qid" maxlength="20" value="' . esc_attr( $value( 'wikidata_qid' ) ) . '" />', $errors );
 		if ( in_array( $type, AddProfileValidator::ORG_TYPES, true ) ) {
@@ -386,7 +423,7 @@ final class AddProfileScreen {
 		$out .= '<h2>' . esc_html__( 'Profile sections', 'whoiswho' ) . '</h2><p class="description">' . esc_html__( 'Plain text. Leave a blank line between paragraphs. Each section is optional.', 'whoiswho' ) . '</p><table class="form-table" role="presentation"><tbody>';
 		foreach ( $form->for_type( $type ) as $key => $rule ) {
 			if ( in_array( $key, AddProfileFields::SECTIONS, true ) ) {
-				$out .= $this->row( 'f_' . $key, self::field_label( $key ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
+				$out .= $this->row( 'f_' . $key, $form->label( $type, $key ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
 			}
 		}
 		$out .= '</tbody></table>';
@@ -456,9 +493,12 @@ final class AddProfileScreen {
 			return $this->term_select( $name, $this->terms( $taxonomy, Taxonomies::PLACE === $taxonomy ? Taxonomies::KIND_CITY : '' ), $value, $rule['required'] );
 		}
 		if ( $rule['long'] ) {
-			$rows = in_array( $key, AddProfileFields::SECTIONS, true ) ? 8 : 4;
-			$hint = 'list' === $rule['type'] ? '<p class="description">' . esc_html__( 'One per line.', 'whoiswho' ) . '</p>' : '';
-			return '<textarea id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" rows="' . esc_attr( (string) $rows ) . '" class="large-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '"' . $required . '>' . esc_textarea( $value ) . '</textarea>' . $hint;
+			$rows  = in_array( $key, AddProfileFields::SECTIONS, true ) ? 8 : 4;
+			$hint  = 'list' === $rule['type'] ? ' ' . esc_html__( 'One per line.', 'whoiswho' ) : '';
+			$count = 'wiw-count-' . $name;
+			$used  = function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
+			$box   = '<textarea id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" rows="' . esc_attr( (string) $rows ) . '" class="large-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '" data-wiw-count="' . esc_attr( $count ) . '" aria-describedby="' . esc_attr( $count ) . '"' . $required . '>' . esc_textarea( $value ) . '</textarea>';
+			return $box . '<p class="description"><span id="' . esc_attr( $count ) . '" class="wiw-char-count" aria-live="polite">' . esc_html( sprintf( /* translators: 1: characters used, 2: the limit. */ __( '%1$d / %2$d characters', 'whoiswho' ), $used, $rule['max'] ) ) . '</span>' . $hint . '</p>';
 		}
 		$html_type = 'url' === $rule['type'] ? 'url' : ( 'int' === $rule['type'] ? 'number' : 'text' );
 		return '<input type="' . esc_attr( $html_type ) . '" id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" class="regular-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '" value="' . esc_attr( $value ) . '"' . $required . ' />';
@@ -528,32 +568,6 @@ final class AddProfileScreen {
 			}
 		}
 		return $out;
-	}
-
-	/**
-	 * A field's label.
-	 *
-	 * @param string $key Field key.
-	 */
-	public static function field_label( string $key ): string {
-		$labels = array(
-			'current_title'        => __( 'Current title', 'whoiswho' ),
-			'current_organisation' => __( 'Current organisation', 'whoiswho' ),
-			'org_type'             => __( 'Organisation type', 'whoiswho' ),
-			'hq_city'              => __( 'Head office city', 'whoiswho' ),
-			'year_founded'         => __( 'Year founded', 'whoiswho' ),
-			'licence_category'     => __( 'Licence category', 'whoiswho' ),
-			'official_website'     => __( 'Official website', 'whoiswho' ),
-			'public_record_roles'  => __( 'Public roles on record', 'whoiswho' ),
-			'published_awards'     => __( 'Published awards', 'whoiswho' ),
-			'lifespan'             => __( 'Lifespan (only for people who have died, for example 1924–2013)', 'whoiswho' ),
-			'field'                => __( 'Field or profession (for example Music)', 'whoiswho' ),
-			'bio'                  => __( 'Bio', 'whoiswho' ),
-			'achievement'          => __( 'Achievement', 'whoiswho' ),
-			'influence'            => __( 'Influence', 'whoiswho' ),
-			'legacy'               => __( 'Legacy', 'whoiswho' ),
-		);
-		return $labels[ $key ] ?? ucfirst( str_replace( '_', ' ', $key ) );
 	}
 
 	/**

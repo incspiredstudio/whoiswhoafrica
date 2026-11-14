@@ -447,6 +447,24 @@ final class AddProfileTest extends TestCase {
 		$this->assertStringNotContainsString( 'name="f_lifespan"', $html );
 	}
 
+	public function test_REQ_209_labels_come_from_the_config_and_long_boxes_have_a_counter(): void {
+		$this->as_editor();
+		$html = ( new AddProfileScreen() )->html( new Request( array( 'entity_type' => 'organisation' ) ) );
+		$this->assertStringContainsString( '>Head office city<', $html, 'the label is the config label' );
+		$this->assertStringContainsString( '>Organisation type *<', $html );
+		foreach ( array(
+			'f_mandate' => 2000,
+			'f_summary' => 2000,
+			'f_bio'     => 6000,
+		) as $name => $max ) {
+			$this->assertMatchesRegularExpression( '#<textarea[^>]*name="' . $name . '"[^>]*maxlength="' . $max . '"[^>]*data-wiw-count="wiw-count-' . $name . '"#', $html, $name );
+			$this->assertStringContainsString( 'id="wiw-count-' . $name . '"', $html, $name . ' counter' );
+		}
+		$this->assertStringContainsString( '0 / 6000 characters', $html );
+		$this->assertSame( 'Head office city', \WhoIsWho\Core\Review\Admin\Labels::field( 'hq_city' ) );
+		$this->assertSame( 'Official website', \WhoIsWho\Core\Review\Admin\Labels::field( 'official_website', 'individual' ) );
+	}
+
 	/**
 	 * A small image attachment in the media library.
 	 */

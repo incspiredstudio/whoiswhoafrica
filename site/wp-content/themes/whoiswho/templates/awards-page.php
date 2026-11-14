@@ -28,6 +28,7 @@ while ( have_posts() ) {
 			array(
 				'eyebrow' => wiw_brand( 'edition' ),
 				'title'   => get_the_title(),
+				'tone'    => 'purple',
 			)
 		);
 		?>

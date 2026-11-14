@@ -38,7 +38,7 @@ You never open or change the zip. If anything in it has been altered, the import
 4. Read the dry run:
    - The counts at the top show how many records would be created, updated, left unchanged, flagged or refused. Click a count to see only those records.
    - The table shows each record's result, any flags, and the changes field by field.
-5. **Map new terms.** If records name a type, industry, sector or place the site does not know, a heading says how many values are not in the site's lists yet. Press **Add all as new list entries** to add them all at once, or use each "Map ... to" box: choose the existing entry it means and press **Save mapping** (choose **Skip this value** in the list to skip it). The dry run then runs again; read it again.
+5. **Map new terms.** If records name a type, industry, sector or place the site does not know, the counts show **New list values needed (N)** instead of a code, each such record reads "New list value needed", and a heading says how many values are not in the site's lists yet. This is not an error in the bundle. Press **Add all as new list entries** to add them all at once, or use each "Map ... to" box: choose the existing entry it means and press **Save mapping** (choose **Skip this value** in the list to skip it). The dry run then runs again; read it again.
 6. If the result looks right, press **Confirm and import**.
 7. The message "Import started. It runs in the background and resumes where it stopped." appears, with "Importing records: N of M". It runs in small steps. You can leave the page, but keeping it open makes it faster. If the connection drops, the screen says so: press **Continue** and it carries on where it stopped, never importing a record twice.
 8. When the status says it is applied, the records are in the Review queue.
@@ -58,6 +58,7 @@ For very large bundles, or if the upload fails, put the zip on the server instea
 | `SUPPRESSED` | The person or organisation asked to be removed. No profile is made. |
 | `IMAGE_NOT_ALLOWED` | A photo's licence is not an open one. The photo is skipped and the rest of the record imports. |
 | `UNSOURCED_FIELD`, `LOW_CONFIDENCE` | A fact without a source, or with low confidence, is refused |
+| New list values needed | The records name a list value (type, industry, sector, place) the site does not have yet. Add the values or map them (step 5), and the dry run runs again |
 | `SCHEMA`, `HASH_MISMATCH`, `VERIFICATION_FAILED`, `FORBIDDEN_FIELD` | The record is malformed, altered or carries a field the site does not accept. It is refused; the rest continue. |
 | `CONTRACT_VERSION`, `MANIFEST_MISMATCH` | The whole bundle is refused. Ask the acquisition team for a new one. |
 
@@ -69,7 +70,11 @@ Send the acquisition team the batch number and the counts if anything was refuse
 2. Press **Undo this batch**.
 3. The message "Batch undone. Reviewed profiles were kept." appears. For a large batch the message is "Undo started. It carries on in steps below." and a bar shows "Undoing the batch..." until it is done.
 
-Undo removes the profiles and the images that batch created, except profiles someone has already reviewed. The undo is written to the audit log.
+Undo takes down the profiles that batch created and nobody has reviewed: they move to **Rejected** and are no longer public anywhere. Profiles the batch only updated go back to their earlier text. Profiles someone has already reviewed are kept, and listed. The images the batch added are removed, unless a later batch uses them too. The undo is written to the audit log.
+
+### Import an undone batch again
+
+If you undid a batch by mistake, or the acquisition team fixed it and sent the same batch again, just import it again as above. The site recognises the batch, takes back the profiles the undo set aside (they return to Imported, not public) and fills them in again, so no duplicates are made. The dry run counts them as `CREATED`. This is written to the audit log as well.
 
 ## The full import (about 13,000 records)
 

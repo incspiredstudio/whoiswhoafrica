@@ -33,7 +33,11 @@ Have at least one public source address (a web page) for the facts you will ente
 | Photo or logo | Optional. Press **Choose from media library**. If you set one, the **Licence**, the **Credit** and the **Image source URL** are required. See [Photos and credits](/staff/photos-and-credits). |
 | Source URLs | Required: one web address per line, at least one and at most 10 |
 
+Every paragraph box (the four sections, the summary and the mandate) shows a counter under it, for example "0 / 6000 characters", and stops at its limit. The field names are the same ones the Edit profile screen and the Review queue show.
+
 4. Press **Save profile**.
+
+WordPress's own **Profiles > Add New** is not used: it is not in the menu, and its address brings you to **Directory > Add profile**.
 
 ## The duplicate check
 

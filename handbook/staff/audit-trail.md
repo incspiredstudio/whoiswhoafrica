@@ -21,6 +21,16 @@ An append-only record of staff and system actions.
 | What | Actions on profiles, customers and reviews, imports, changes to sponsored story deals, bulk unpublish, suppression changes, capability grants and revocations, the Nominations switch, category changes, nomination stage and status changes, nominee and winner publishing, and exports |
 | Each row | The actor, the time, the action, the target, and the old and new values or a reason |
 
+Some action names you will see in the log:
+
+| Action | When |
+|---|---|
+| `profile.create` | A profile was added by hand (Directory > Add profile) |
+| `profile.image_change` | A profile's photo or logo was changed or removed on Edit profile |
+| `import.undo` | An import batch was undone |
+| `import.reopen` | An undone batch was imported again, taking its profiles back |
+| `backup.host_confirmed` | An Administrator pressed "I have set up backups" |
+
 Rules:
 
 1. Only the audit service writes to the log. Screens never write to it directly.

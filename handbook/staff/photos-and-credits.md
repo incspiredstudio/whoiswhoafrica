@@ -35,13 +35,23 @@ The public profile shows the credit under the photo, for example "Photo: A. Mens
 
 ## Add or change a photo by hand
 
+**On a new profile:**
+
 1. Upload the file in **Media > Add New Media File**, or choose an existing one.
 2. Open **Directory > Add profile** for a new profile.
 3. Under **Photo (optional)** or **Logo (optional)**, press **Choose from media library** and pick the image.
 4. Fill in **Licence**, **Credit** and **Image source URL**. They are required when an image is set.
 5. Press **Save profile**.
 
-The **Edit profile** screen has no photo field, so a photo cannot be added to or changed on an existing profile there. A profile's assigned user can propose a new photo from **My profiles**, which a reviewer approves (see [Claims](/staff/claims)).
+**On an existing profile (Edit profile, photo panel):** Editors and Administrators (anyone who may edit profiles).
+
+1. Open **Directory > Profiles**, find the profile and press **Edit fields**.
+2. In the **Photo** panel (**Logo** for an organisation), press **Choose from media library** and pick a JPEG, PNG or WebP.
+3. Choose the **Licence**, and fill in **Creator or credit (as the licence asks)** and **Image source URL**. All three are required.
+4. Fill in **Reason or request reference (required)**.
+5. Press **Save photo** (or **Save logo**). The message "Saved. A version and an audit row were written." confirms it. To take the picture off the profile, give a reason and press **Remove photo** (or **Remove logo**); the file stays in the media library.
+
+The change is written to the audit log as `profile.image_change`, and the previous picture is kept in the profile's history. A profile's assigned user can propose a new photo from **My profiles**, which a reviewer approves (see [Claims](/staff/claims)).
 
 ## Imported photos
 

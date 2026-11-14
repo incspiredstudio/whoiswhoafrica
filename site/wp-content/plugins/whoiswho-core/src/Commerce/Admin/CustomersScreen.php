@@ -2,8 +2,8 @@
 /**
  * The Customers screen (REQ-205, REQ-177, REQ-187): the staff list of customers with their external id, name and segment, a search,
  * an add and edit form, internal notes and the enquiry each customer came from. A customer can be created from an Enquiry item,
- * which copies the name, organisation and contact and links the two. Held by the customer service's capability (wiw_support_inbox);
- * a user without it gets a 403 and no menu entry. Every write goes through CustomerService, which audits field names only.
+ * which copies the name, organisation and contact and links the two. Held by the customer service's capability (wiw_manage_register,
+ * Administrator only: customers belong to the commercial register); a user without it gets a 403 and no menu entry. Every write goes through CustomerService, which audits field names only.
  *
  * @package WhoIsWho
  */

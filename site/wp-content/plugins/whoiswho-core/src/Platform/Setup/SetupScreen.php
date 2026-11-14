@@ -614,33 +614,12 @@ final class SetupScreen {
 		$out  .= '<button type="button" class="button" data-wiw="open-remove"' . ( $installed ? '' : ' hidden' ) . '>' . esc_html__( 'Remove demo content', 'whoiswho' ) . '</button></p>';
 		$out  .= '<div class="wiw-confirm" data-wiw="confirm-import" hidden role="group" aria-labelledby="wiw-confirm-import-title"><h3 id="wiw-confirm-import-title">' . esc_html__( 'Import the chosen parts?', 'whoiswho' ) . '</h3>';
 		$out  .= '<p data-wiw="chosen"></p><ul>';
-		if ( $demo->ships_profiles() ) {
-			$out .= '<li>' . esc_html(
-				sprintf(
-					/* translators: %d: number of profiles. */
-					__( 'Profiles: %d sample profiles that come with the plugin, about real public figures and organisations, with their sources. They are imported like any import and published as reviewed by you.', 'whoiswho' ),
-					$plan['profiles']
-				)
-			) . '</li>';
-			$out .= '<li>' . esc_html__( 'Everything else is invented content: stories, comments, events and awards are fictional and clearly marked as sample content.', 'whoiswho' ) . '</li>';
-		} else {
-			$out .= '<li>' . esc_html(
-				sprintf(
-					/* translators: 1: profiles, 2: stories, 3: comments, 4: events, 5: award categories, 6: pins, 7: pages. */
-					__( 'It adds invented content: up to %1$d profiles, %2$d stories, %3$d comments, %4$d events, %5$d award categories, %6$d home page pins and %7$d pages.', 'whoiswho' ),
-					$plan['profiles'],
-					$plan['stories'],
-					$plan['comments'],
-					$plan['events'],
-					$plan['awards'],
-					$plan['pins'],
-					$plan['pages']
-				)
-			) . '</li>';
-			$out .= '<li>' . esc_html__( 'Everything is fictional and clearly marked as sample content.', 'whoiswho' ) . '</li>';
-		}//end if
+		// One line per part, tagged with the part: the script shows only the lines of the parts that are ticked.
+		foreach ( self::confirm_lines( $demo->ships_profiles(), $plan ) as $for => $line ) {
+			$out .= '<li data-wiw-for="' . esc_attr( $for ) . '">' . esc_html( $line ) . '</li>';
+		}
 		$out .= '<li>' . esc_html__( 'The site\'s launch checks will remind you to remove the demo before going live. Each part has its own Remove button, and anything you change after the import is never deleted.', 'whoiswho' ) . '</li>';
-		$out .= '<li>' . esc_html__( 'It does not change or delete anything you already have. The Pages part sets the demo Home page as your front page, and puts your old setting back when you remove it.', 'whoiswho' ) . '</li>';
+		$out .= '<li>' . esc_html__( 'It does not change or delete anything you already have.', 'whoiswho' ) . '</li>';
 		$out .= '<li>' . esc_html__( 'It takes about a minute. Keep this page open until the bar is full. If it stops, press Try again: it carries on where it left off.', 'whoiswho' ) . '</li></ul>';
 		if ( $real ) {
 			$out .= '<p class="wiw-fix"><strong>' . esc_html__( 'This site already has real profiles or stories.', 'whoiswho' ) . '</strong> <label for="wiw-typed">' . esc_html(
@@ -660,6 +639,41 @@ final class SetupScreen {
 		$out .= '<p class="wiw-error" data-wiw="error" role="alert" hidden></p><p><button type="button" class="button button-primary" data-wiw="retry" hidden>' . esc_html__( 'Try again', 'whoiswho' ) . '</button> <a class="button" data-wiw="visit" href="' . esc_url( home_url( '/' ) ) . '" hidden>' . esc_html__( 'Visit the site', 'whoiswho' ) . '</a> <button type="button" class="button" data-wiw="reload" hidden>' . esc_html__( 'Update this checklist', 'whoiswho' ) . '</button></p>';
 		$out .= '<div class="wiw-kept" data-wiw="kept" hidden><p>' . esc_html__( 'Kept because a person changed them after the import (they now count as your own content):', 'whoiswho' ) . '</p><ul data-wiw="kept-list"></ul></div></div></div>';
 		return $out;
+	}
+
+	/**
+	 * The confirmation lines, keyed by the part (or comma-separated parts) they describe.
+	 *
+	 * @param bool               $ships Whether the plugin ships sample profiles.
+	 * @param array<string, int> $plan  Counts from DemoImport::plan().
+	 * @return array<string, string>
+	 */
+	public static function confirm_lines( bool $ships, array $plan ): array {
+		$invented = array( 'stories', 'comments', 'events', 'awards', 'curation', 'pages', 'settings' );
+		if ( ! $ships ) {
+			array_unshift( $invented, 'profiles' );
+		}
+		return array(
+			'profiles'                => $ships
+				/* translators: %d: number of profiles. */
+				? sprintf( __( 'Profiles: %d sample profiles that come with the plugin, about real public figures and organisations, with their sources. They are imported like any import and published as reviewed by you.', 'whoiswho' ), $plan['profiles'] ?? 0 )
+				/* translators: %d: number of profiles. */
+				: sprintf( __( 'Profiles: up to %d invented profiles.', 'whoiswho' ), $plan['profiles'] ?? 0 ),
+			/* translators: %d: number of stories. */
+			'stories'                 => sprintf( __( 'Stories: %d invented stories with cover pictures.', 'whoiswho' ), $plan['stories'] ?? 0 ),
+			/* translators: %d: number of comments. */
+			'comments'                => sprintf( __( 'Comments: %d invented reader comments on the stories.', 'whoiswho' ), $plan['comments'] ?? 0 ),
+			/* translators: %d: number of events. */
+			'events'                  => sprintf( __( 'Events: %d invented events.', 'whoiswho' ), $plan['events'] ?? 0 ),
+			/* translators: %d: number of award categories. */
+			'awards'                  => sprintf( __( 'Awards: %d invented award categories, with nominees and winners.', 'whoiswho' ), $plan['awards'] ?? 0 ),
+			/* translators: %d: number of home page picks. */
+			'curation'                => sprintf( __( 'Home page curation: %d home page picks.', 'whoiswho' ), $plan['pins'] ?? 0 ),
+			/* translators: %d: number of pages. */
+			'pages'                   => sprintf( __( 'Pages: %d pages. The demo Home page becomes your front page, and your old setting comes back when you remove it.', 'whoiswho' ), $plan['pages'] ?? 0 ),
+			'settings'                => __( 'Settings: switches on Nominations so the Nominate links show, and puts it back when you remove it.', 'whoiswho' ),
+			implode( ',', $invented ) => __( 'These parts are invented content: fictional and clearly marked as sample content.', 'whoiswho' ),
+		);
 	}
 
 	/**

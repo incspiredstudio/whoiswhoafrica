@@ -1,8 +1,9 @@
 <?php
 /**
- * The customer service (REQ-205, REQ-112, REQ-187, REQ-188). Creating and editing a customer needs the support inbox capability
- * (Editors, REQ-178) and writes an audit row that names the fields that changed and never holds a value, so no personal data
- * reaches the audit log. It has no payment, price or arrangement logic.
+ * The customer service (REQ-205, REQ-112, REQ-187, REQ-188, REQ-179). Customers are part of the commercial register, so creating
+ * and editing a customer needs wiw_manage_register (Administrator only in the capability matrix; issue 806). Every write adds an
+ * audit row that names the fields that changed and never holds a value, so no personal data reaches the audit log. It has no
+ * payment, price or arrangement logic.
  *
  * @package WhoIsWho
  */
@@ -20,7 +21,7 @@ use WhoIsWho\Core\Platform\Audit\AuditLogger;
  */
 final class CustomerService {
 
-	public const CAP = 'wiw_support_inbox';
+	public const CAP = 'wiw_manage_register';
 
 	/**
 	 * Repository.

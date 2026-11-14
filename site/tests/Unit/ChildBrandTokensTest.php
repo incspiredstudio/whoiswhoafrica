@@ -161,4 +161,13 @@ final class ChildBrandTokensTest extends TestCase {
 		$this->assertStringContainsString( '--img-logo: url("../logo/wiw-logo-mask.webp")', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		$this->assertStringContainsString( 'var(--img-logo)', (string) file_get_contents( $this->parent_dir() . '/assets/css/components.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
+
+	/**
+	 * A CSS mask image is fetched in CORS mode, so its preload must say crossorigin or the browser fetches it twice and warns (#810).
+	 */
+	public function test_REQ_273_the_logo_mask_preload_matches_the_css_fetch_mode(): void {
+		$code = (string) file_get_contents( $this->child() . '/inc/assets.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertSame( 1, preg_match( '/<link rel="preload"[^>]*as="image"[^>]*>/', $code, $m ), 'the logo is preloaded' );
+		$this->assertStringContainsString( 'crossorigin', $m[0] );
+	}
 }

@@ -60,6 +60,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => $wiw_profile->name,
 		'title'   => (string) $wiw_c['title'],
+		'tone'    => 'dark',
 		'lede'    => (string) $wiw_c['lede'],
 	)
 );

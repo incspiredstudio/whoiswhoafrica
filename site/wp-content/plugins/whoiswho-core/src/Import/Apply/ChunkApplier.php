@@ -72,6 +72,18 @@ final class ChunkApplier {
 	}
 
 	/**
+	 * A time budget for run(): true once the seconds are spent, or when the next record, if it is as slow as the slowest one so
+	 * far, would run past them.
+	 *
+	 * @param int $seconds Budget.
+	 * @return callable(float=): bool
+	 */
+	public static function budget( int $seconds ): callable {
+		$started = microtime( true );
+		return static fn ( float $next = 0.0 ): bool => microtime( true ) - $started + $next >= $seconds;
+	}
+
+	/**
 	 * Apply the next chunk of a batch.
 	 *
 	 * @param BundleReader  $bundle   The opened bundle.
@@ -135,15 +147,20 @@ final class ChunkApplier {
 
 		$handled = 0;
 		$total   = (int) $batch['record_count'];
+		$slowest = 0.0;
 		foreach ( $bundle->lines() as $n => $line ) {
 			if ( $n <= $cursor ) {
 				continue;
 			}
-			if ( $handled >= $size || ( null !== $stop && $stop() ) ) {
+			// The budget check is told how long the slowest record of this call took (records with images are slow), so a
+			// budget made by self::budget() stops before a record that would run past it.
+			if ( $handled >= $size || ( null !== $stop && $stop( $slowest ) ) ) {
 				break;
 			}
+			$began = microtime( true );
 			$this->handle_line( $n, $line, $batch_id, $importer, $import_all );
-			$cursor = $n;
+			$slowest = max( $slowest, microtime( true ) - $began );
+			$cursor  = $n;
 			$this->batches->advance( $batch_id, $cursor );
 			++$handled;
 		}

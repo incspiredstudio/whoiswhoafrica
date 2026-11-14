@@ -165,15 +165,31 @@ final class ProfileListTemplateTest extends TestCase {
 		$this->assertStringNotContainsString( 'name="profession"', $orgs );
 	}
 
-	public function test_REQ_254_every_list_has_its_own_narrowing_box_first_in_the_filter_bar(): void {
+	public function test_REQ_254_every_list_has_its_own_search_field_in_the_dark_band_with_chip_tabs(): void {
 		foreach ( array( 'all', 'people', 'entrepreneurs', 'businesses', 'institutions' ) as $list ) {
-			$out = $this->render( $list );
+			$out   = $this->render( $list );
+			$start = (int) strpos( $out, 'page-band' );
+			$band  = substr( $out, $start, (int) strpos( $out, '<form class="fbar"' ) - $start );
+			$this->assertStringContainsString( 'page-band--dark', $band, $list );
+			$this->assertStringContainsString( 'role="search"', $band, $list );
+			$this->assertStringContainsString( 'type="search" name="q"', $band, $list );
+			$this->assertStringContainsString( 'Narrow this list', $band, $list . ': the field has its own label' );
+			$this->assertStringContainsString( '<nav class="tabs" aria-label="Directory lists">', $band, $list );
 			$bar = substr( $out, (int) strpos( $out, '<form class="fbar"' ) );
-			$this->assertStringContainsString( 'name="q"', $bar, $list );
-			$this->assertLessThan( (int) strpos( $bar, '<select' ), (int) strpos( $bar, 'name="q"' ), $list . ': search field comes first' );
-			$this->assertStringContainsString( 'Narrow this list', $bar, $list );
+			$this->assertStringNotContainsString( 'type="search"', $bar, $list . ': one search field only' );
 			$this->assertStringContainsString( 'Apply filters', $bar, $list );
 		}
+	}
+
+	public function test_REQ_254_the_band_search_keeps_the_filters_and_the_filter_bar_keeps_the_search_text(): void {
+		set_query_var( 'q', 'alpha' );
+		set_query_var( 'sort', 'updated' );
+		$out  = $this->render( 'all' );
+		$band = substr( $out, (int) strpos( $out, 'role="search"' ), 1200 );
+		$this->assertStringContainsString( 'name="sort" value="updated"', $band );
+		$this->assertStringNotContainsString( 'name="page"', $band );
+		$bar = substr( $out, (int) strpos( $out, '<form class="fbar"' ) );
+		$this->assertStringContainsString( 'type="hidden" name="q" value="alpha"', $bar );
 	}
 
 	public function test_REQ_008_the_narrowing_text_is_kept_in_the_field_and_the_address_and_is_not_the_site_search(): void {

@@ -13,7 +13,7 @@ declare(strict_types=1);
 use WhoIsWho\Core\Directory\PublicProfile;
 
 const WIW_ENQUIRY_SLUG_VAR = 'wiw_enquiry_slug';
-const WIW_ENQUIRY_RULES_OP = 'wiw_theme_enquiry_rules';
+const WIW_ENQUIRY_RULES_OP = 'wiw_theme_enquiry_rules_2';
 
 if ( ! function_exists( 'wiw_enquiry_profile' ) ) {
 	/**
@@ -56,7 +56,7 @@ add_filter(
 add_action(
 	'init',
 	static function (): void {
-		add_rewrite_rule( '^enquire/([A-Za-z0-9_-]+)/?$', 'index.php?' . WIW_ENQUIRY_SLUG_VAR . '=$matches[1]', 'top' );
+		add_rewrite_rule( '^enquire/([^/]+)/?$', 'index.php?' . WIW_ENQUIRY_SLUG_VAR . '=$matches[1]', 'top' );
 		if ( '1' !== get_option( WIW_ENQUIRY_RULES_OP ) ) {
 			flush_rewrite_rules( false );
 			update_option( WIW_ENQUIRY_RULES_OP, '1', false );

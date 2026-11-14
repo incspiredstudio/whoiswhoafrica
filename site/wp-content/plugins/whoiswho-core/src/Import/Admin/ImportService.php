@@ -14,6 +14,7 @@ namespace WhoIsWho\Core\Import\Admin;
 
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Import\Apply\ApplyJob;
+use WhoIsWho\Core\Import\Apply\ChunkApplier;
 use WhoIsWho\Core\Import\Apply\ResultRepository;
 use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleReader;
@@ -243,8 +244,7 @@ final class ImportService {
 	 * @param int $seconds Budget.
 	 */
 	private static function stop( int $seconds ): callable {
-		$started = time();
-		return static fn (): bool => time() - $started >= $seconds;
+		return ChunkApplier::budget( $seconds );
 	}
 
 	/**

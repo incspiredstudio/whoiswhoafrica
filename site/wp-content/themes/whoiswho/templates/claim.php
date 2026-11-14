@@ -44,6 +44,7 @@ if ( 'form' !== $wiw_state ) {
 		array(
 			'eyebrow' => $wiw_back['label'],
 			'title'   => $wiw_claimed ? __( 'Already claimed', 'whoiswho' ) : __( 'Not yet open for claims', 'whoiswho' ),
+			'tone'    => 'dark',
 			'lede'    => $wiw_claimed
 				? __( 'A claim for this profile has already been approved. To change something, ask for a correction.', 'whoiswho' )
 				: __( 'This profile has not been reviewed yet. Once it has, it can be claimed. To fix something now, ask for a correction.', 'whoiswho' ),
@@ -68,6 +69,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => $wiw_back['label'],
 		'title'   => __( 'Claim this profile', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'Tell us who you are and how we can check it. A member of staff reviews every claim before anything changes. No account is needed to ask.', 'whoiswho' ),
 	)
 );

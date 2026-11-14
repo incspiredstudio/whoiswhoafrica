@@ -93,6 +93,16 @@ final class BundleStore {
 		if ( self::inside_web_root( $this->root ) ) {
 			throw new \RuntimeException( 'The private import folder is inside the web root, so nothing was stored.' );
 		}
+		// Defence in depth: when WordPress sits in a sub-folder of the web root, the folder beside it may still be served.
+		$guards = array(
+			'.htaccess' => "# Import bundles are never served.\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n",
+			'index.php' => "<?php\n// Silence is golden.\n",
+		);
+		foreach ( $guards as $name => $body ) {
+			if ( ! is_file( $this->root . '/' . $name ) ) {
+				file_put_contents( $this->root . '/' . $name, $body ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- guard files of our own private folder.
+			}
+		}
 	}
 
 	/**
@@ -249,14 +259,27 @@ final class BundleStore {
 			fclose( $in ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
 			throw new \RuntimeException( 'The private import folder cannot be written.' );
 		}
-		$limit   = self::MAX_UNPACKED;
-		$written = stream_copy_to_stream( $in, $out, $limit );
-		fclose( $in ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
-		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
 		$stat = $zip->statIndex( $index );
+		try {
+			// Never write more than the entry declares (plus one byte, to notice an entry that holds more): a zip bomb that lies in
+			// its header stops here instead of filling the disk (issue 810).
+			$written = false === $stat ? false : stream_copy_to_stream( $in, $out, self::copy_limit( (int) $stat['size'] ) );
+		} finally {
+			fclose( $in ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
+			fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
+		}
 		if ( false === $written || false === $stat || $written !== (int) $stat['size'] ) {
 			throw new \RuntimeException( 'The zip cannot be read.' );
 		}
+	}
+
+	/**
+	 * The most bytes copied out of one entry: its declared size plus one, and never past the unpacked cap.
+	 *
+	 * @param int $declared Size the entry's header declares.
+	 */
+	public static function copy_limit( int $declared ): int {
+		return min( max( 0, $declared ) + 1, self::MAX_UNPACKED );
 	}
 
 	/**

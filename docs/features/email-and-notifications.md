@@ -51,6 +51,7 @@ None decided. A transactional mail provider may replace cPanel SMTP later; if us
 - Notifications fire for: enquiry received (to staff), profile received, approved, rejected with reason, nomination email and winner email (staff-sent, to the nomination's Contact email), correction, removal or report received, and request resolved. Renewal and expiry reminders go to admins only (REQ-094).
 - Public events in the prototype: email verification for corrections, removals and nominations; acknowledgements for corrections, removals, enquiries, claims, data requests, comments and profile submissions; claim decisions; nomination received; nomination email and winner congratulation (staff-sent to the nomination's Contact email, no link); customer invitation and consent request; newsletter confirmation.
 - Claim reminder emails: day 3 and day 4 to every holder of `wiw_review_claims`, then daily while overdue (REQ-256).
+- New claim email: event `claim_received`, subject "New claim to review", audience `wiw_review_claims` (every holder). Sent when a claim is received (`Trust\ClaimIntake`), with no claimant details in the body (REQ-251).
 - Links in email are single-use, expire (default 14 days), are stored hashed, and carry no personal data (REQ-233).
 - Logs and error messages hold IDs, not personal data (REQ-050).
 

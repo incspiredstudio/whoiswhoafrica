@@ -68,6 +68,9 @@ final class FirstRun {
 			delete_option( SchemaState::OPTION_ERROR );
 			Permalinks::ensure_pretty();
 			( new LegalPages() )->ensure();
+			if ( 'fresh' === $mode ) {
+				DefaultContent::retire();
+			}
 		} else {
 			update_option( SchemaState::OPTION_ERROR, (string) $result['error'], false );
 			Permalinks::ensure_pretty();
@@ -115,7 +118,8 @@ final class FirstRun {
 			);
 		}
 		$runner = new Runner( $dir ?? WIW_CORE_DIR . 'migrations', false, false );
-		if ( SchemaState::may_self_initialise() ) {
+		$fresh  = SchemaState::may_self_initialise();
+		if ( $fresh ) {
 			update_option( SchemaState::OPTION_STARTED, '1', false );
 		}
 		$result = ActivationMigrator::run( $runner );
@@ -125,6 +129,9 @@ final class FirstRun {
 				delete_option( SchemaState::OPTION_STARTED );
 			}
 			( new LegalPages() )->ensure();
+			if ( $fresh ) {
+				DefaultContent::retire();
+			}
 			return array(
 				'ok'      => true,
 				'applied' => $result['applied'],

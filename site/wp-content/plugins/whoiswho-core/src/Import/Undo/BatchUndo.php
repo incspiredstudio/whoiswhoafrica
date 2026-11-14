@@ -86,7 +86,21 @@ final class BatchUndo {
 				false
 			);
 		}//end foreach
-		$counts['media_removed'] = ( new MediaUndo() )->remove( $batch_id );
+		// The images are slow to delete, so they are stepped under the same budget (resumable with Continue).
+		$media                    = ( new MediaUndo() )->step( $batch_id, $stop );
+		$counts['media_removed'] += $media['removed'];
+		if ( ! $media['done'] ) {
+			update_option(
+				self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ),
+				array(
+					'last_id' => PHP_INT_MAX,
+					'counts'  => $counts,
+				),
+				false
+			);
+			$counts['done'] = false;
+			return $counts;
+		}
 		delete_option( self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ) );
 		$batches->advance( $batch_id, (int) $batch['progress_cursor'], 'undone' );
 		AuditLogger::for_site()->log(
@@ -134,7 +148,7 @@ final class BatchUndo {
 				'reverted'        => (int) ( $counts['reverted'] ?? 0 ),
 				'kept'            => (int) ( $counts['kept'] ?? 0 ),
 				'kept_record_ids' => array_map( 'strval', (array) ( $counts['kept_record_ids'] ?? array() ) ),
-				'media_removed'   => 0,
+				'media_removed'   => (int) ( $counts['media_removed'] ?? 0 ),
 				'done'            => true,
 			),
 		);

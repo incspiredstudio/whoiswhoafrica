@@ -11,6 +11,7 @@
     "home-js": "wp-content/themes/whoiswho/assets/js/home.js",
     "home-stage": "wp-content/themes/whoiswho/assets/js/home-stage.js",
     "story": "wp-content/themes/whoiswho/assets/css/story.css",
+    "wpdiscuz": "wp-content/themes/whoiswho/assets/css/wpdiscuz.css",
     "winners-js": "wp-content/themes/whoiswho/assets/js/winners.js",
     "nominate-js": "wp-content/themes/whoiswho/assets/js/nominate.js"
   }

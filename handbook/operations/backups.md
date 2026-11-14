@@ -12,6 +12,15 @@ Backups let the site recover from a bad change, a hacked account or a host failu
 
 Most cPanel hosts take automatic backups (look for **JetBackup** or **Backup** in cPanel). Check with your host how many days they keep, and do not rely on them alone: keep your own downloaded copy as well.
 
+## The backup reminder
+
+Until a backup is recorded, Administrators see a reminder on the **Dashboard** and on **WHOISWHO > Setup** (not on other screens): "No backup has been recorded for this site yet. Turn on backups in cPanel (Backup or JetBackup), then click "I have set up backups"."
+
+1. Turn on the host's automatic backups in cPanel (**Backup** or **JetBackup**), and check how many days they keep.
+2. Press **I have set up backups**. The reminder goes away for everyone, and the confirmation is written to the audit log (`backup.host_confirmed`).
+
+**Remind me in 30 days** hides it for you only. The site cannot see cPanel's backups itself, so the button is your confirmation that they are on.
+
 ## Take a backup before risky work
 
 The quickest backup is the database, which holds every profile, story and setting.

@@ -6,6 +6,7 @@ import { initHeader } from "./header.js";
 import { initMotion, motionAllowed, scrollToY } from "./motion.js";
 import { initCookieNotice } from "./cookie.js";
 import { initReportDialog } from "./report-dialog.js";
+import { initNomineeTabs } from "./nominee-tabs.js";
 
 window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed, scrollToY });
 initFilterBars();
@@ -13,3 +14,4 @@ initHeader();
 initMotion();
 initCookieNotice();
 initReportDialog();
+initNomineeTabs();

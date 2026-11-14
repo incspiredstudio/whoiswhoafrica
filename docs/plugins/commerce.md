@@ -28,7 +28,7 @@ There is one deal type, the sponsored post. There is no sponsored profile type, 
 
 | Screen | What it does |
 |---|---|
-| Customers | Customer records and the link issue for profile invitations |
+| Customers | Customer records and the link issue for profile invitations. **Administrator only**: it needs `wiw_manage_register` (fixed), so Editors and support staff do not see it |
 | Sponsored stories | The deal list with progress dots, status, next step and a status filter; the deal page with the four steps; New sponsored story; the Supported by records |
 | Dashboard (commercial tiles) | Counted deals against the threshold, revenue against the target, slots ending in 30 days |
 | Sprint thresholds | The two sprint targets. The only settings screen |
@@ -38,7 +38,7 @@ There is one deal type, the sponsored post. There is no sponsored profile type, 
 | Capability | Reviewer | Editor | Administrator |
 |---|---|---|---|
 | `wiw_set_sponsored` (steps 3 and 4) | no | yes | yes |
-| `wiw_manage_register` (fixed; steps 1 and 2, money fields) | no | no | yes |
+| `wiw_manage_register` (fixed; steps 1 and 2, money fields, the Customers screen) | no | no | yes |
 | `wiw_view_dashboard_commercial` | no | no | yes |
 | `wiw_export_data` | no | no | yes |
 

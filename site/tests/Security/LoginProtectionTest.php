@@ -55,6 +55,48 @@ final class LoginProtectionTest extends WpTestCase {
 		$this->assertSame( array( $id ), $logged );
 	}
 
+	public function test_REQ_047_username_and_email_share_one_failure_count_issue_810(): void {
+		$id = $this->staff_user( 'sharedcount' );
+		wp_update_user(
+			array(
+				'ID'         => $id,
+				'user_email' => 'sharedcount@example.org',
+			)
+		);
+		for ( $i = 0; $i < 3; $i++ ) {
+			wp_authenticate( 'sharedcount', 'wrong-password' );
+		}
+		for ( $i = 0; $i < Login::MAX_FAILURES - 3; $i++ ) {
+			wp_authenticate( 'SharedCount@Example.org', 'wrong-password' );
+		}
+		$this->assertTrue( Login::is_locked( 'sharedcount' ), 'tries by username and by email add up to one count' );
+		$this->assertTrue( Login::is_locked( 'sharedcount@example.org' ) );
+		$this->assertInstanceOf( \WP_Error::class, wp_authenticate( 'sharedcount@example.org', self::PASSWORD ) );
+		Login::unlock( 'sharedcount@example.org' );
+		$this->assertInstanceOf( \WP_User::class, wp_authenticate( 'sharedcount', self::PASSWORD ), 'unlocking by either name clears the one count' );
+	}
+
+	public function test_REQ_047_one_address_is_limited_across_many_usernames_issue_810(): void {
+		$this->staff_user( 'iplimit' );
+		$before                 = $_SERVER['REMOTE_ADDR'] ?? null;
+		$_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+		try {
+			for ( $i = 0; $i < Login::MAX_ADDRESS_FAILURES; $i++ ) {
+				wp_authenticate( 'nobody-' . $i, 'wrong-password' );
+			}
+			$this->assertTrue( Login::address_locked( '203.0.113.7' ) );
+			$this->assertInstanceOf( \WP_Error::class, wp_authenticate( 'iplimit', self::PASSWORD ), 'a spraying address is refused even with good details' );
+			$_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+			$this->assertInstanceOf( \WP_User::class, wp_authenticate( 'iplimit', self::PASSWORD ), 'other addresses are not affected' );
+		} finally {
+			if ( null === $before ) {
+				unset( $_SERVER['REMOTE_ADDR'] );
+			} else {
+				$_SERVER['REMOTE_ADDR'] = $before;
+			}
+		}
+	}
+
 	public function test_REQ_047_weak_password_is_refused(): void {
 		$this->assertNotEmpty( Login::password_problems( 'short1A!' ), 'too short' );
 		$this->assertNotEmpty( Login::password_problems( 'alllowercaseletters' ), 'one character class' );

@@ -38,13 +38,15 @@ final class CustomersScreenAccessTest extends WpTestCase {
 			$users,
 			array(
 				'reviewer'      => 403,
-				'editor'        => 200,
+				'editor'        => 403,
 				'administrator' => 200,
-				'granted'       => 200,
+				'granted'       => 403, // wiw_manage_register is fixed: it cannot be granted to a non-Administrator.
 				'revoked'       => 403,
 			)
 		);
 		$this->assertNotContains( CustomersScreen::SCREEN, AuthorisationMatrix::menu( $users['reviewer'] ) );
-		$this->assertContains( CustomersScreen::SCREEN, AuthorisationMatrix::menu( $users['editor'] ) );
+		// Customers are part of the commercial register (wiw_manage_register, Administrator only; issue 806).
+		$this->assertNotContains( CustomersScreen::SCREEN, AuthorisationMatrix::menu( $users['editor'] ) );
+		$this->assertContains( CustomersScreen::SCREEN, AuthorisationMatrix::menu( $users['administrator'] ) );
 	}
 }
