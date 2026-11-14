@@ -91,6 +91,8 @@ Defaults: **R** = Reviewer, **E** = Editor, **A** = Administrator. The Visitor h
 | `wiw_edit_suppression` | Plugin | Change the suppression list (REQ-207) | no | no | yes |
 | `wiw_toggle_nominations` | Plugin | Turn the Nominations flag on or off from the toggle on the Nominations screen; **fixed**, Administrator only; Editors see the state read-only (REQ-194) | no | no | yes |
 | `wiw_manage_capabilities` | Plugin | Edit role bundles and per-user grants; **fixed** (REQ-244) | no | no | yes |
+| `wiw_run_setup` | Plugin | Setup screen: system checks, required plugins, demo content import and removal; **fixed**, Administrator only (REQ-056) | no | no | yes |
+| `wiw_add_profile` | Plugin | Directory > Add profile: create a profile by hand; it starts in the review queue, not public (REQ-208, REQ-267) | no | yes | yes |
 
 ---
 
