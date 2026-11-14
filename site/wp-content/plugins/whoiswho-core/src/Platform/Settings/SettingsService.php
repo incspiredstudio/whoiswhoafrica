@@ -26,6 +26,8 @@ final class SettingsService {
 	public const POLICY_VERSION       = 'policy_version';
 	public const SPRINT_TRACKING      = 'sprint_tracking';
 	public const PENDING_REVIEW_LABEL = 'pending_review_label';
+	public const PROFILE_IMAGE_CREDIT = 'profile_image_credit';
+	public const PROFILE_KEY_FACTS    = 'profile_key_facts';
 
 	/**
 	 * Key names that look like brand values are never accepted as settings.
@@ -33,9 +35,10 @@ final class SettingsService {
 	private const BRAND_KEY_PATTERN = '/colou?r|font|typeface|logo|brand|palette|theme_mod|hex/i';
 
 	/**
-	 * Registered keys: type (bool, int, string), default, capability, audited, optional max length for strings.
+	 * Registered keys: type (bool, int, string), default, capability, audited, optional max length for strings, and optional
+	 * choices (the only values a string may take).
 	 *
-	 * @var array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int}>
+	 * @var array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int, choices?: array<int, string>}>
 	 */
 	private array $registry;
 
@@ -56,9 +59,9 @@ final class SettingsService {
 	/**
 	 * Constructor.
 	 *
-	 * @param array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int}> $registry Registered keys.
-	 * @param AuditLogger|null                                                                                 $audit    Audit logger.
-	 * @param callable|null                                                                                    $can      fn( string $capability ): bool.
+	 * @param array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int, choices?: array<int, string>}> $registry Registered keys.
+	 * @param AuditLogger|null                                                                                                               $audit    Audit logger.
+	 * @param callable|null                                                                                                                  $can      fn( string $capability ): bool.
 	 * @throws \InvalidArgumentException When a key looks like a brand value or a definition is incomplete.
 	 */
 	public function __construct( array $registry, ?AuditLogger $audit = null, ?callable $can = null ) {
@@ -78,7 +81,7 @@ final class SettingsService {
 	/**
 	 * The keys the plugin knows.
 	 *
-	 * @return array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int}>
+	 * @return array<string, array{type: string, default: mixed, capability: string, audited: bool, max?: int, choices?: array<int, string>}>
 	 */
 	public static function default_registry(): array {
 		return array(
@@ -114,6 +117,20 @@ final class SettingsService {
 				'default'    => true,
 				'capability' => 'manage_options',
 				'audited'    => true,
+			),
+			self::PROFILE_IMAGE_CREDIT       => array(
+				'type'       => 'string',
+				'default'    => 'compact',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'choices'    => array( 'full', 'compact', 'hidden_when_not_required' ),
+			),
+			self::PROFILE_KEY_FACTS          => array(
+				'type'       => 'string',
+				'default'    => 'hidden',
+				'capability' => 'manage_options',
+				'audited'    => true,
+				'choices'    => array( 'show', 'collapsed', 'hidden' ),
 			),
 			'sprint_count_threshold'         => array(
 				'type'       => 'int',
@@ -244,7 +261,7 @@ final class SettingsService {
 	 * A key's definition.
 	 *
 	 * @param string $key Key.
-	 * @return array{type: string, default: mixed, capability: string, audited: bool, max?: int}
+	 * @return array{type: string, default: mixed, capability: string, audited: bool, max?: int, choices?: array<int, string>}
 	 * @throws \InvalidArgumentException For an unregistered key.
 	 */
 	private function definition( string $key ): array {
@@ -257,8 +274,8 @@ final class SettingsService {
 	/**
 	 * Validate and normalise a value for a definition.
 	 *
-	 * @param array{type: string, default: mixed, capability: string, audited: bool, max?: int} $definition Definition.
-	 * @param mixed                                                                             $value      Value.
+	 * @param array{type: string, default: mixed, capability: string, audited: bool, max?: int, choices?: array<int, string>} $definition Definition.
+	 * @param mixed                                                                                                           $value      Value.
 	 * @return bool|int|string
 	 * @throws \InvalidArgumentException When the value does not fit.
 	 */
@@ -281,6 +298,9 @@ final class SettingsService {
 		$value = trim( $value );
 		if ( mb_strlen( $value, 'UTF-8' ) > ( $definition['max'] ?? 200 ) ) {
 			throw new \InvalidArgumentException( 'Text is too long.' );
+		}
+		if ( isset( $definition['choices'] ) && ! in_array( $value, $definition['choices'], true ) ) {
+			throw new \InvalidArgumentException( 'Not one of the allowed values.' );
 		}
 		if ( 1 === preg_match( '/#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(|font-family/i', $value ) ) {
 			throw new \InvalidArgumentException( 'Brand values live in the theme tokens file, not in settings.' );

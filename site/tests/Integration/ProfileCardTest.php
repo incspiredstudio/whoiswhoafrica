@@ -118,7 +118,7 @@ final class ProfileCardTest extends TestCase {
 		foreach ( array( 'Verified', 'Featured', 'Sponsored', 'Claimed', 'cover', 'banner' ) as $word ) {
 			$this->assertStringNotContainsStringIgnoringCase( $word, $out, $word );
 		}
-		$this->assertStringContainsString( 'Energy', $out );
+		$this->assertStringNotContainsString( 'Energy', $out, 'the kicker is the classified industry, never the old free text (REQ-009)' );
 		$this->assertStringContainsString( 'class="stretched" href="' . esc_url( $profile->url ) . '"', $out );
 		$this->assertStringContainsString( 'poster-ini', $out, 'No image: the monogram shows.' );
 	}

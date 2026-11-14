@@ -1,7 +1,9 @@
 <?php
 /**
- * Profile header (REQ-003, REQ-247): one portrait or logo (or the monogram), name as the page's h1, title and organisation, the
- * pending-review label, and the place line. There is no cover or banner image. Args: profile (PublicProfile).
+ * Profile header (REQ-003, REQ-247, REQ-009, REQ-203): the breadcrumb Country › Sector › Industry › Name, one portrait or logo
+ * (or the monogram) with its credit as the image credit setting asks, name as the page's h1, title and organisation, the
+ * pending-review label, and the place line. Classification, organisation type and place come from the read model's methods.
+ * There is no cover or banner image. Args: profile (PublicProfile).
  *
  * @package WhoIsWho
  */
@@ -18,20 +20,14 @@ $wiw_profile = isset( $args['profile'] ) ? $args['profile'] : null;
 if ( ! $wiw_profile instanceof PublicProfile ) {
 	return;
 }
-$wiw_kind  = wiw_profile_kind( $wiw_profile->entity_type );
-$wiw_role  = wiw_profile_fact( $wiw_profile, 'current_title' );
-$wiw_role  = '' !== $wiw_role ? $wiw_role : wiw_profile_fact( $wiw_profile, 'org_type' );
+$wiw_role  = wiw_profile_role( $wiw_profile );
 $wiw_org   = wiw_profile_fact( $wiw_profile, 'current_organisation' );
-$wiw_role  = '' !== $wiw_role ? $wiw_role : wiw_profile_fact( $wiw_profile, 'field' );
 $wiw_life  = wiw_profile_lifespan( $wiw_profile );
-$wiw_where = array_filter(
-	array(
-		wiw_profile_fact( $wiw_profile, 'hq_city' ),
-		wiw_profile_fact( $wiw_profile, 'industry' ),
-		$wiw_kind['label'],
-	)
-);
+$wiw_where = wiw_profile_where( $wiw_profile, $wiw_role );
+$wiw_crumb = wiw_profile_crumbs( $wiw_profile->name, wiw_profile_classification( $wiw_profile ) );
 $wiw_image = $wiw_profile->image();
+$wiw_mode  = wiw_profile_credit_mode( $wiw_image );
+$wiw_cred  = null !== $wiw_image && 'hidden' !== $wiw_mode ? wiw_profile_credit_html( $wiw_image ) : '';
 $wiw_tone  = (int) sprintf( '%u', crc32( $wiw_profile->name ) ) % 6 + 1;
 $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
@@ -49,16 +45,21 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 ?>
 <header class="profile-head">
 	<div class="wrap" style="padding-block:.75rem">
-		<nav class="crumbs" aria-label="<?php esc_attr_e( 'Breadcrumb', 'whoiswho' ); ?>">
-			<a href="<?php echo esc_url( $wiw_kind['list'] ); ?>"><?php echo esc_html( $wiw_kind['list_title'] ); ?></a>
-			<span aria-hidden="true"> / </span>
-			<span aria-current="page"><?php echo esc_html( $wiw_profile->name ); ?></span>
-		</nav>
+		<?php echo wp_kses( wiw_profile_crumbs_html( $wiw_crumb ), wiw_crumbs_kses() ); ?>
 	</div>
 	<div class="wrap">
 		<div class="profile-id">
 			<?php if ( '' !== $wiw_photo ) : ?>
-				<div class="monogram monogram--<?php echo 'organisation' === $wiw_profile->entity_type || 'institution' === $wiw_profile->entity_type ? 'org' : 'person'; ?> monogram--photo"><?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?></div>
+				<div class="profile-photo">
+					<div class="monogram monogram--<?php echo 'organisation' === $wiw_profile->entity_type || 'institution' === $wiw_profile->entity_type ? 'org' : 'person'; ?> monogram--photo"><?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?></div>
+					<?php if ( 'compact' === $wiw_mode && '' !== $wiw_cred ) : ?>
+						<button type="button" class="credit-toggle" aria-expanded="false" aria-controls="profile-credit-pop" data-credit-toggle hidden>
+							<?php echo wiw_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
+							<span class="sr"><?php echo esc_html( 'logo' === $wiw_image['kind'] ? __( 'Logo credit', 'whoiswho' ) : __( 'Photo credit', 'whoiswho' ) ); ?></span>
+						</button>
+						<p class="credit-pop" id="profile-credit-pop" hidden><?php echo wp_kses( $wiw_cred, wiw_credit_kses() ); ?></p>
+					<?php endif; ?>
+				</div>
 			<?php else : ?>
 				<div class="monogram monogram--person mono-<?php echo (int) $wiw_tone; ?>" aria-hidden="true"><span><?php echo esc_html( wiw_initials( $wiw_profile->name ) ); ?></span></div>
 			<?php endif; ?>
@@ -85,24 +86,11 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 						</p>
 					<?php endif; ?>
 				<?php endif; ?>
-				<p class="profile-loc meta"><?php echo wiw_icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?> <?php echo esc_html( implode( ' · ', $wiw_where ) ); ?></p>
-				<?php if ( null !== $wiw_image && '' !== $wiw_photo && ( '' !== $wiw_image['credit'] || '' !== $wiw_image['licence'] ) ) : ?>
-					<p class="profile-credit small">
-						<?php echo esc_html( 'logo' === $wiw_image['kind'] ? __( 'Logo:', 'whoiswho' ) : __( 'Photo:', 'whoiswho' ) ); ?>
-						<?php if ( '' !== $wiw_image['source_url'] && '' !== $wiw_image['credit'] ) : ?>
-							<a href="<?php echo esc_url( $wiw_image['source_url'] ); ?>" rel="nofollow noopener"><?php echo esc_html( $wiw_image['credit'] ); ?></a>
-						<?php else : ?>
-							<?php echo esc_html( $wiw_image['credit'] ); ?>
-						<?php endif; ?>
-						<?php if ( '' !== $wiw_image['licence'] ) : ?>
-							<span aria-hidden="true">·</span>
-							<?php if ( '' !== $wiw_image['licence_url'] ) : ?>
-								<a href="<?php echo esc_url( $wiw_image['licence_url'] ); ?>" rel="license nofollow noopener"><?php echo esc_html( wiw_licence_label( $wiw_image['licence'] ) ); ?></a>
-							<?php else : ?>
-								<?php echo esc_html( wiw_licence_label( $wiw_image['licence'] ) ); ?>
-							<?php endif; ?>
-						<?php endif; ?>
-					</p>
+				<?php if ( array() !== $wiw_where ) : ?>
+					<p class="profile-loc meta"><?php echo wiw_icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?> <?php echo esc_html( implode( ' · ', $wiw_where ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( 'full' === $wiw_mode && '' !== $wiw_photo && '' !== $wiw_cred ) : ?>
+					<p class="profile-credit small"><?php echo wp_kses( $wiw_cred, wiw_credit_kses() ); ?></p>
 				<?php endif; ?>
 			</div>
 		</div>

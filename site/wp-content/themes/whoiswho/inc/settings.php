@@ -1,7 +1,8 @@
 <?php
 /**
- * Theme settings screen (REQ-272, REQ-188): the Sprint tracking switch, which shows or hides the dashboard sprint card and the
- * Sprint thresholds screen. The value lives in the plugin's settings service (key sprint_tracking, default on), so the plugin reads it
+ * Theme settings screen (REQ-272, REQ-188, REQ-144, REQ-203): the Sprint tracking switch, which shows or hides the dashboard sprint
+ * card and the Sprint thresholds screen, and the two profile page settings: how an image credit shows (profile_image_credit) and
+ * whether key facts and sources show (profile_key_facts). The value lives in the plugin's settings service (key sprint_tracking, default on), so the plugin reads it
  * without depending on the theme; only an Administrator changes it and every change is written to the audit log by the service.
  * Nothing is deleted when it is off. Brand values are not settings and never appear here.
  *
@@ -15,9 +16,10 @@ use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
 
-const WIW_THEME_SETTINGS_SCREEN = 'wiw-theme-settings';
-const WIW_THEME_SETTINGS_ACTION = 'wiw_save_theme_settings';
-const WIW_THEME_SETTINGS_CAP    = 'manage_options';
+const WIW_THEME_SETTINGS_SCREEN  = 'wiw-theme-settings';
+const WIW_THEME_SETTINGS_ACTION  = 'wiw_save_theme_settings';
+const WIW_THEME_SETTINGS_CAP     = 'manage_options';
+const WIW_PROFILE_DISPLAY_ACTION = 'wiw_save_profile_display';
 
 if ( ! function_exists( 'wiw_sprint_tracking_enabled' ) ) {
 	/**
@@ -53,6 +55,127 @@ if ( ! function_exists( 'wiw_theme_settings_html' ) ) {
 	}
 }//end if
 
+if ( ! function_exists( 'wiw_profile_display_choices' ) ) {
+	/**
+	 * The profile page settings and their choices, in plain words (REQ-144, REQ-203).
+	 *
+	 * @return array<string, array{title: string, help: string, choices: array<string, string>}>
+	 */
+	function wiw_profile_display_choices(): array {
+		return array(
+			'profile_image_credit' => array(
+				'title'   => __( 'Image credit on profile pages', 'whoiswho' ),
+				'help'    => __( 'How the photographer or source and the licence of a profile photo or logo are shown.', 'whoiswho' ),
+				'choices' => array(
+					'compact'                  => __( 'Compact: a small "i" button on the photo opens the credit, and the credit is listed under "Image credits" at the foot of the page (recommended).', 'whoiswho' ),
+					'full'                     => __( 'Full: the credit line is shown under the profile header.', 'whoiswho' ),
+					'hidden_when_not_required' => __( 'Hidden when not required: no credit for images that need no attribution (CC0, public domain, or supplied by the owner). CC BY and CC BY-SA images keep the compact credit.', 'whoiswho' ),
+				),
+			),
+			'profile_key_facts'    => array(
+				'title'   => __( 'Key facts and sources on profile pages', 'whoiswho' ),
+				'help'    => __( 'The table of facts with their source link and retrieval date.', 'whoiswho' ),
+				'choices' => array(
+					'hidden'    => __( 'Hidden: not shown on the public page (default).', 'whoiswho' ),
+					'collapsed' => __( 'Collapsed: a closed "Key facts and sources" section at the foot of the page that visitors can open.', 'whoiswho' ),
+					'show'      => __( 'Shown: the table is shown in the page body.', 'whoiswho' ),
+				),
+			),
+		);
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_theme_profile_settings_html' ) ) {
+	/**
+	 * The profile page settings form (REQ-144, REQ-203). Read-only text for a user who may not change them.
+	 *
+	 * @param array<string, string> $current  Current value per key.
+	 * @param bool                  $can_edit Whether the user may change them.
+	 * @param string                $nonce    Nonce for the save action.
+	 * @param bool                  $saved    Whether to show the saved notice.
+	 */
+	function wiw_theme_profile_settings_html( array $current, bool $can_edit, string $nonce, bool $saved = false ): string {
+		$out = '<div class="wrap"><h2>' . esc_html__( 'Profile pages', 'whoiswho' ) . '</h2>';
+		if ( $saved ) {
+			$out .= '<div class="notice notice-success"><p>' . esc_html__( 'Profile page settings saved.', 'whoiswho' ) . '</p></div>';
+		}
+		if ( ! $can_edit ) {
+			foreach ( wiw_profile_display_choices() as $key => $def ) {
+				$value = $current[ $key ] ?? '';
+				$out  .= '<p><strong>' . esc_html( $def['title'] ) . ':</strong> ' . esc_html( $def['choices'][ $value ] ?? $value ) . '</p>';
+			}
+			return $out . '<p>' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p></div>';
+		}
+		$out .= '<form method="post" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out .= '<input type="hidden" name="action" value="' . esc_attr( WIW_PROFILE_DISPLAY_ACTION ) . '" />';
+		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
+		foreach ( wiw_profile_display_choices() as $key => $def ) {
+			$out .= '<fieldset><legend><strong>' . esc_html( $def['title'] ) . '</strong></legend><p class="description">' . esc_html( $def['help'] ) . '</p>';
+			foreach ( $def['choices'] as $value => $label ) {
+				$id   = 'wiw-' . $key . '-' . $value;
+				$out .= '<p><label for="' . esc_attr( $id ) . '"><input type="radio" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '"' . ( ( $current[ $key ] ?? '' ) === $value ? ' checked="checked"' : '' ) . ' /> ' . esc_html( $label ) . '</label></p>';
+			}
+			$out .= '</fieldset>';
+		}
+		$out .= '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save profile page settings', 'whoiswho' ) . '</button></p>';
+		return $out . '</form></div>';
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_save_profile_display' ) ) {
+	/**
+	 * Save the profile page settings from a request (REQ-144, REQ-203). A value that is not one of the choices is ignored; the
+	 * settings service checks the capability and writes the audit row for each change.
+	 *
+	 * @param Request         $request  Request.
+	 * @param SettingsService $settings Settings service.
+	 */
+	function wiw_save_profile_display( Request $request, SettingsService $settings ): void {
+		foreach ( wiw_profile_display_choices() as $key => $def ) {
+			$value = $request->string( $key );
+			if ( isset( $def['choices'][ $value ] ) ) {
+				$settings->set( $key, $value );
+			}
+		}
+	}
+}
+
+if ( ! function_exists( 'wiw_theme_settings_kses' ) ) {
+	/**
+	 * The tags the settings screen may print, for wp_kses.
+	 *
+	 * @return array<string, array<string, bool>>
+	 */
+	function wiw_theme_settings_kses(): array {
+		return array(
+			'div'      => array( 'class' => true ),
+			'h1'       => array(),
+			'h2'       => array(),
+			'p'        => array( 'class' => true ),
+			'strong'   => array(),
+			'fieldset' => array(),
+			'legend'   => array(),
+			'label'    => array( 'for' => true ),
+			'form'     => array(
+				'method'             => true,
+				'action'             => true,
+				'data-personal-data' => true,
+			),
+			'input'    => array(
+				'type'    => true,
+				'name'    => true,
+				'value'   => true,
+				'id'      => true,
+				'checked' => true,
+			),
+			'button'   => array(
+				'type'  => true,
+				'class' => true,
+			),
+		);
+	}
+}//end if
+
 add_action(
 	'init',
 	static function (): void {
@@ -65,28 +188,13 @@ add_action(
 			__( 'Theme settings', 'whoiswho' ),
 			WIW_THEME_SETTINGS_CAP,
 			static function (): void {
-				echo wp_kses(
-					wiw_theme_settings_html( wiw_sprint_tracking_enabled(), current_user_can( WIW_THEME_SETTINGS_CAP ), ActionGuard::nonce_for( WIW_THEME_SETTINGS_ACTION ) ),
-					array(
-						'div'    => array( 'class' => true ),
-						'h1'     => array(),
-						'h2'     => array(),
-						'p'      => array(),
-						'form'   => array(
-							'method' => true,
-							'action' => true,
-						),
-						'input'  => array(
-							'type'  => true,
-							'name'  => true,
-							'value' => true,
-						),
-						'button' => array(
-							'type'  => true,
-							'class' => true,
-						),
-					)
-				);
+				$current = array();
+				foreach ( array_keys( wiw_profile_display_choices() ) as $key ) {
+					$current[ $key ] = (string) SettingsService::for_site()->get( $key );
+				}
+				$can = current_user_can( WIW_THEME_SETTINGS_CAP );
+				echo wp_kses( wiw_theme_settings_html( wiw_sprint_tracking_enabled(), $can, ActionGuard::nonce_for( WIW_THEME_SETTINGS_ACTION ) ), wiw_theme_settings_kses() );
+				echo wp_kses( wiw_theme_profile_settings_html( $current, $can, ActionGuard::nonce_for( WIW_PROFILE_DISPLAY_ACTION ), '1' === Request::from_globals()->string( 'saved' ) ), wiw_theme_settings_kses() );
 			},
 			false,
 			'settings'
@@ -98,6 +206,15 @@ add_action(
 			static function ( Request $request ): void {
 				SettingsService::for_site()->set( SettingsService::SPRINT_TRACKING, '1' === $request->string( 'sprint_tracking' ) );
 				wp_safe_redirect( admin_url( 'admin.php?page=' . WIW_THEME_SETTINGS_SCREEN ) );
+				exit;
+			}
+		);
+		ActionGuard::register(
+			WIW_PROFILE_DISPLAY_ACTION,
+			WIW_THEME_SETTINGS_CAP,
+			static function ( Request $request ): void {
+				wiw_save_profile_display( $request, SettingsService::for_site() );
+				wp_safe_redirect( admin_url( 'admin.php?page=' . WIW_THEME_SETTINGS_SCREEN . '&saved=1' ) );
 				exit;
 			}
 		);

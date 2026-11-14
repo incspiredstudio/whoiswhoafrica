@@ -72,6 +72,15 @@ Proposal: menus are WordPress menus for ordering and wording, and the conditiona
 
 Turning it off hides the sprint tiles and the Sprint thresholds screen from the Administrator menu. Nothing is deleted: the two thresholds are kept and the setting can be turned back on. It does not affect sponsored story deals, the Sponsored stories screen or revenue records. The prototype shows the switch at the top of the Sprint thresholds screen, with a note that in WordPress it is a theme setting (Theme settings > Sprint tracking).
 
+## Profile page settings (REQ-144, REQ-203)
+
+| Setting | Name | Choices | Default | Who changes it |
+|---|---|---|---|---|
+| Image credit on profile pages | `profile_image_credit` | `compact`: an "i" button over the photo (with `aria-expanded`) reveals "Photo: credit · licence link", and the credit is also listed in an "Image credits" line at the foot of the profile; `full`: the credit line under the header; `hidden_when_not_required`: hidden only for CC0, the public domain mark, or an image with no licence (owner-supplied), while CC BY and CC BY-SA keep compact | `compact` | Administrator, audited |
+| Key facts and sources on profile pages | `profile_key_facts` | `show`: the table in the body; `collapsed`: a closed `<details>` "Key facts and sources" at the foot; `hidden`: not rendered, with no heading, anchor or link | `hidden` | Administrator, audited |
+
+Both live in the plugin's settings service (string settings limited to their choices) and are set on Theme settings > Profile pages. The credit text drops a trailing licence label when it is rendered, so the licence shows once (issue 829).
+
 ## Settings the theme reads but does not own
 
 | Setting | Owner | Used for |

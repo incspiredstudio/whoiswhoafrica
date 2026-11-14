@@ -8,7 +8,7 @@ This page lists what the theme is configured with and which kind of value lives 
 |---|---|---|
 | Tokens file (`theme.json` plus a tokens file in the child theme) | Colours, fonts, spacing, radii, motion timings, logo files | A developer |
 | Theme configuration | Brand name, long-form name, edition name, legal trading name, tagline, domain | A developer |
-| Settings and plugin options | Wording and behaviour changed at runtime: the pending-review label, the Nominations switch, Home and Stories curation, Sprint tracking | An Administrator, or an Editor for curation |
+| Settings and plugin options | Wording and behaviour changed at runtime: the pending-review label, the Nominations switch, Home and Stories curation, Sprint tracking, the image credit and key facts settings for profile pages | An Administrator, or an Editor for curation |
 | Page editor content | Copy on editor pages | Editors |
 
 ## Brand configuration
@@ -57,6 +57,23 @@ To change it:
 3. When it is off, the sprint tiles and the Sprint thresholds screen disappear from the Administrator menu. Nothing is deleted: the two thresholds are kept, and the setting can be turned back on.
 
 It does not affect sponsored story deals, the Sponsored stories screen or revenue records.
+
+## Profile pages
+
+Two settings on the Theme settings screen decide what a public profile page shows. Only an Administrator changes them, and every change is written to the audit trail.
+
+| Setting | Choices | Default |
+|---|---|---|
+| Image credit on profile pages | **Compact**: a small "i" button on the photo opens the credit ("Photo: A. Mensah · CC BY-SA 4.0"), and the same credit is listed under "Image credits" at the foot of the page. **Full**: the credit line sits under the profile header. **Hidden when not required**: no credit for images that need none (CC0, public domain, or a photo supplied by the person or organisation); CC BY and CC BY-SA images keep the compact credit. | Compact |
+| Key facts and sources on profile pages | **Hidden**: the table of facts with their sources is not shown. **Collapsed**: a closed "Key facts and sources" section at the foot of the page that visitors can open. **Shown**: the table in the page body. | Hidden |
+
+To change them:
+
+1. Open Theme settings and scroll to Profile pages.
+2. Pick a choice for each setting and press Save profile page settings.
+3. Open a profile to check. The change shows at once on every profile.
+
+The licence is never lost: in compact mode the credit is still on the page as text, so the attribution that CC BY and CC BY-SA ask for stays visible. If a credit was typed with the licence at the end ("A. Mensah, CC BY 4.0"), the page shows the licence once.
 
 ## Settings the theme reads but does not own
 

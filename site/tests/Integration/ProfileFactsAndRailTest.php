@@ -16,6 +16,7 @@ use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Migrations\Runner;
+use WhoIsWho\Core\Platform\Settings\SettingsService;
 use WhoIsWho\Core\Review\StateMachine;
 use WhoIsWho\Tests\TestCase;
 
@@ -34,6 +35,8 @@ final class ProfileFactsAndRailTest extends TestCase {
 		( new Runner( dirname( __DIR__ ) . '/../wp-content/plugins/whoiswho-core/migrations', false, false ) )->run();
 		wp_set_current_user( 0 );
 		switch_theme( 'whoiswho-child' );
+		// Key facts are hidden by default (REQ-144, owner 2026-11-14); these tests check the table itself.
+		update_option( SettingsService::OPTION_PREFIX . SettingsService::PROFILE_KEY_FACTS, 'show', false );
 	}
 
 	protected function tearDown(): void {
@@ -45,6 +48,7 @@ final class ProfileFactsAndRailTest extends TestCase {
 		}
 		$this->posts = array();
 		remove_all_filters( 'wiw_profile_award_panel' );
+		delete_option( SettingsService::OPTION_PREFIX . SettingsService::PROFILE_KEY_FACTS );
 		parent::tearDown();
 	}
 
@@ -109,9 +113,9 @@ final class ProfileFactsAndRailTest extends TestCase {
 			'Factstest Org',
 			true,
 			array(
-				'org_type' => 'Company',
-				'industry' => 'Energy',
-				'hq_city'  => 'Lagos',
+				'licence_category' => 'Commercial bank',
+				'regulator'        => 'Central Bank',
+				'website'          => 'https://www.example.org/',
 			)
 		);
 		$out     = $this->render( 'template-parts/profile-facts', $profile );
@@ -119,15 +123,15 @@ final class ProfileFactsAndRailTest extends TestCase {
 		$this->assertSame( 3, substr_count( $out, 'href="https://www.example.org/registry/entry"' ) );
 		$this->assertSame( 3, substr_count( $out, '<time datetime="2026-11-10">' ) );
 		$this->assertStringContainsString( 'example.org', $out );
-		$this->assertStringContainsString( 'Energy', $out );
+		$this->assertStringContainsString( 'Central Bank', $out );
 	}
 
 	public function test_REQ_133_a_fact_without_a_source_is_not_rendered_and_no_facts_means_no_section(): void {
-		$profile = $this->profile( 'Factstest Mixed Org', true, array( 'industry' => 'Energy' ), array( 'hq_city' => 'Secretville' ) );
+		$profile = $this->profile( 'Factstest Mixed Org', true, array( 'regulator' => 'Central Bank' ), array( 'licence_category' => 'Secretville' ) );
 		$out     = $this->render( 'template-parts/profile-facts', $profile );
-		$this->assertStringContainsString( 'Energy', $out );
+		$this->assertStringContainsString( 'Central Bank', $out );
 		$this->assertStringNotContainsString( 'Secretville', $out );
-		$bare = $this->profile( 'Factstest Bare Org', true, array(), array( 'hq_city' => 'Secretville' ) );
+		$bare = $this->profile( 'Factstest Bare Org', true, array(), array( 'licence_category' => 'Secretville' ) );
 		$this->assertSame( '', trim( $this->render( 'template-parts/profile-facts', $bare ) ) );
 	}
 

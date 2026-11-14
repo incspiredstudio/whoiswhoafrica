@@ -25,7 +25,7 @@ Where to find openly licensed photos: Wikimedia Commons is the main source. Each
 
 Imported images carry the same details, plus the creator and the licence address, from the acquisition team.
 
-The public profile shows the credit under the photo, for example "Photo: A. Mensah · CC BY-SA 4.0" ("Logo:" for a logo), with the credit linked to the source page and the licence linked to its page.
+The public profile shows the credit, for example "Photo: A. Mensah · CC BY-SA 4.0" ("Logo:" for a logo), with the credit linked to the source page and the licence linked to its page. By default it is compact: a small "i" button on the photo opens it, and it is also listed under "Image credits" at the foot of the page. An Administrator can switch to the full line under the header, or hide the credit for images that need none, in [Theme settings](/theme/theme-settings#profile-pages). Type only the credit in the credit field; if the licence is typed at the end as well, the page drops the repeat.
 
 ## Files
 
