@@ -83,6 +83,79 @@ final class UploadRulesTest extends WpTestCase {
 		);
 	}
 
+	/**
+	 * A real zip with the given name.
+	 *
+	 * @param string $name File name.
+	 */
+	private function zip( string $name ): string {
+		$path          = sys_get_temp_dir() . '/wiw-pkg-' . uniqid() . '-' . $name;
+		$this->files[] = $path;
+		$zip           = new \ZipArchive();
+		$zip->open( $path, \ZipArchive::CREATE );
+		$zip->addFromString( 'probe-theme/style.css', "/*\nTheme Name: Probe\n*/\n" );
+		$zip->close();
+		return $path;
+	}
+
+	/**
+	 * Run the prefilter as core's theme or plugin upload screen (update.php?action=upload-theme or upload-plugin) would.
+	 *
+	 * @param string $action upload-theme, upload-plugin, or '' for a plain media upload.
+	 * @param string $path   File.
+	 * @param string $name   Name.
+	 * @return array<string, mixed>
+	 */
+	private function package_prefilter( string $action, string $path, string $name ): array {
+		global $pagenow;
+		$before_page   = $pagenow;
+		$before_action = $GLOBALS['action'] ?? null;
+		$pagenow       = '' === $action ? 'async-upload.php' : 'update.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
+		$GLOBALS['action'] = $action; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
+		$result            = apply_filters(
+			'wp_handle_upload_prefilter',
+			array(
+				'name'     => $name,
+				'type'     => 'application/zip',
+				'tmp_name' => $path,
+				'error'    => 0,
+				'size'     => (int) filesize( $path ),
+			)
+		);
+		$pagenow           = $before_page; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+		$GLOBALS['action'] = $before_action; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+		return $result;
+	}
+
+	/**
+	 * Updating the bundle by uploading new theme and plugin zips works with the guard on (#810), for someone who may install.
+	 */
+	public function test_REQ_127_an_administrator_can_upload_a_theme_or_plugin_zip(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		grant_super_admin( $admin );
+		wp_set_current_user( $admin );
+		$this->assertTrue( current_user_can( 'install_themes' ) );
+		$this->assertSame( 0, $this->package_prefilter( 'upload-theme', $this->zip( 'whoiswho.zip' ), 'whoiswho.zip' )['error'] );
+		$this->assertSame( 0, $this->package_prefilter( 'upload-plugin', $this->zip( 'whoiswho-core.zip' ), 'whoiswho-core.zip' )['error'] );
+		wp_set_current_user( 0 );
+	}
+
+	public function test_REQ_127_a_zip_is_still_refused_everywhere_else(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		grant_super_admin( $admin );
+		wp_set_current_user( $admin );
+		$this->assertNotSame( 0, $this->package_prefilter( '', $this->zip( 'photo.zip' ), 'photo.zip' )['error'], 'not in the media library' );
+		$fake = $this->temp( '<?php echo 1;', 'zip' );
+		$this->assertNotSame( 0, $this->package_prefilter( 'upload-theme', $fake, 'theme.zip' )['error'], 'a file that is not really a zip' );
+		$this->assertNotSame( 0, $this->package_prefilter( 'upload-theme', $this->zip( 'theme.php' ), 'theme.php' )['error'], 'a zip not named .zip' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+		$this->assertNotSame( 0, $this->package_prefilter( 'upload-theme', $this->zip( 'whoiswho.zip' ), 'whoiswho.zip' )['error'], 'an editor cannot install themes' );
+		$this->assertNotSame( 0, $this->package_prefilter( 'upload-plugin', $this->zip( 'p.zip' ), 'p.zip' )['error'], 'or plugins' );
+		wp_set_current_user( 0 );
+	}
+
 	public function test_REQ_127_disallowed_type_is_refused(): void {
 		$pdf    = $this->temp( "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF", 'pdf' );
 		$result = $this->prefilter( $pdf, 'doc.pdf', (int) filesize( $pdf ) );

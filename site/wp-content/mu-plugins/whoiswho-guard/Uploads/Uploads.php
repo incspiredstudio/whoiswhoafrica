@@ -137,6 +137,11 @@ final class Uploads {
 		$path = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
 		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
 
+		$package = self::package_upload_kind();
+		if ( '' !== $package ) {
+			return self::check_package( $file, $package, $path );
+		}
+
 		$real = '' === $path ? '' : self::real_mime( $path );
 		if ( in_array( $real, self::VIDEO_TYPES, true ) && self::may_upload_video() ) {
 			if ( $size > self::VIDEO_MAX_BYTES ) {
@@ -160,6 +165,65 @@ final class Uploads {
 			$file['error'] = __( 'That file did not pass the safety check.', 'whoiswho' );
 		}
 		return $file;
+	}
+
+	/**
+	 * Which core package upload this request is: "theme" on update.php?action=upload-theme, "plugin" on
+	 * update.php?action=upload-plugin (core's own upload screens, which reach wp_handle_upload through File_Upload_Upgrader after
+	 * checking their nonce), else ''. Read from the globals update.php sets, never from the request directly.
+	 */
+	public static function package_upload_kind(): string {
+		$page   = isset( $GLOBALS['pagenow'] ) ? (string) $GLOBALS['pagenow'] : '';
+		$action = isset( $GLOBALS['action'] ) && is_string( $GLOBALS['action'] ) ? $GLOBALS['action'] : '';
+		if ( 'update.php' !== $page ) {
+			return '';
+		}
+		return 'upload-theme' === $action ? 'theme' : ( 'upload-plugin' === $action ? 'plugin' : '' );
+	}
+
+	/**
+	 * A theme or plugin zip on core's upload screen: allowed only for someone who may install that kind of package, only when the
+	 * name ends in .zip and the bytes really are a zip (PK\x03\x04), and only when the scanner passes it. PHP's own upload limit
+	 * applies; the media size limit does not, because the bundle's zips are larger than any image.
+	 *
+	 * @param array<string, mixed> $file    One $_FILES entry.
+	 * @param string               $package theme or plugin.
+	 * @param string               $path    Temporary path.
+	 * @return array<string, mixed>
+	 */
+	private static function check_package( array $file, string $package, string $path ): array {
+		$capability = 'theme' === $package ? 'install_themes' : 'install_plugins';
+		if ( ! current_user_can( $capability ) ) {
+			$file['error'] = __( 'You are not allowed to install themes or plugins on this site.', 'whoiswho' );
+			return $file;
+		}
+		$name = isset( $file['name'] ) ? strtolower( (string) $file['name'] ) : '';
+		if ( '.zip' !== substr( $name, -4 ) || ! self::is_zip( $path ) ) {
+			$file['error'] = __( 'That is not a zip file. Upload the theme or plugin .zip from the install bundle.', 'whoiswho' );
+			return $file;
+		}
+		if ( ! self::scanner()->is_clean( $path ) ) {
+			$file['error'] = __( 'That file did not pass the safety check.', 'whoiswho' );
+		}
+		return $file;
+	}
+
+	/**
+	 * Whether a file starts with the zip local-file signature.
+	 *
+	 * @param string $path Path.
+	 */
+	public static function is_zip( string $path ): bool {
+		if ( '' === $path || ! is_readable( $path ) ) {
+			return false;
+		}
+		$handle = fopen( $path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		if ( false === $handle ) {
+			return false;
+		}
+		$head = (string) fread( $handle, 4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		return "PK\x03\x04" === $head;
 	}
 
 	/**
