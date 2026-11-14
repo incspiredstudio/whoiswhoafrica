@@ -220,6 +220,8 @@ test.describe("classification admin", () => {
       adminUrl("edit-tags.php?taxonomy=wiw_industry&post_type=wiw_profile"),
     );
     await expect(page.locator("thead th#wiw_sector")).toBeVisible();
+    // The real tree has many terms, so search for Unclassified to bring its row onto the page.
+    await page.goto(adminUrl("edit-tags.php?taxonomy=wiw_industry&post_type=wiw_profile&s=Unclassified"));
     const unclassified = page.locator(`#tag-${tree.unclassified}`);
     await expect(unclassified).toBeVisible();
     await expect(unclassified.locator(".row-actions .delete")).toHaveCount(0);
