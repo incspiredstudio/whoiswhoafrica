@@ -73,7 +73,7 @@ final class CommentSpamGuard {
 	 */
 	public function screen( $commentdata ) {
 		$this->flagged = false;
-		if ( is_admin() || current_user_can( 'moderate_comments' ) ) {
+		if ( CommentPolicy::is_staff_request() ) {
 			return $commentdata;
 		}
 		$ip    = (string) ( $commentdata['comment_author_IP'] ?? '' );

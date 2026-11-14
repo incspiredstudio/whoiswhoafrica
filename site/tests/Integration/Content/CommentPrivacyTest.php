@@ -75,27 +75,29 @@ final class CommentPrivacyTest extends WpTestCase {
 	public function test_REQ_258_wpdiscuz_subscriptions_are_exported_and_erased(): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wc_comments_subscription';
-		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} ( id int unsigned NOT NULL AUTO_INCREMENT, post_id int NOT NULL, email varchar(254) NOT NULL, add_date datetime NULL, PRIMARY KEY (id) )" ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-		$wpdb->insert(
-			$table,
-			array(
-				'post_id'  => 5,
-				'email'    => 'sub.zq@example.test',
-				'add_date' => '2026-11-12 10:00:00',
-			)
-		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->insert(
-			$table,
-			array(
-				'post_id'  => 6,
-				'email'    => 'other.zq@example.test',
-				'add_date' => '2026-11-12 10:00:00',
-			)
-		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// The table exactly as wpDiscuz 7.7.0 creates it (includes/class.WpdiscuzDBManager.php).
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$table}`(`id` INT(11) NOT NULL AUTO_INCREMENT, `email` VARCHAR(100) NOT NULL, `subscribtion_id` INT(11) NOT NULL, `post_id` INT(11) NOT NULL, `subscribtion_type` VARCHAR(20) NOT NULL, `activation_key` VARCHAR(32) NOT NULL, `confirm` TINYINT DEFAULT 0, `subscription_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, `imported_from` VARCHAR(25) NOT NULL DEFAULT '', PRIMARY KEY (`id`), KEY `subscribtion_id` (`subscribtion_id`), KEY `post_id` (`post_id`), KEY `confirm`(`confirm`), UNIQUE KEY `subscribe_unique_index` (`subscribtion_id`,`email`,`post_id`))" ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		foreach ( array(
+			'sub.zq@example.test'   => 5,
+			'other.zq@example.test' => 6,
+		) as $email => $post ) {
+			$wpdb->insert(
+				$table,
+				array(
+					'email'             => $email,
+					'subscribtion_id'   => $post,
+					'post_id'           => $post,
+					'subscribtion_type' => 'post',
+					'activation_key'    => md5( $email ),
+					'subscription_date' => '2026-11-12 10:00:00',
+				)
+			); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
 
 		$export = ( new CommentPrivacy() )->export( 'sub.zq@example.test' );
 		$this->assertCount( 1, $export['data'] );
 		$this->assertStringContainsString( 'sub.zq@example.test', (string) wp_json_encode( $export ) );
+		$this->assertStringContainsString( '2026-11-12 10:00:00', (string) wp_json_encode( $export ), 'the subscription date column is the one wpDiscuz uses' );
 		$this->assertSame( array(), ( new CommentPrivacy() )->export( 'nobody@example.test' )['data'] );
 
 		$this->assertTrue( ( new CommentPrivacy() )->erase( 'sub.zq@example.test' )['items_removed'] );
@@ -103,6 +105,34 @@ final class CommentPrivacyTest extends WpTestCase {
 		$this->assertFalse( ( new CommentPrivacy() )->erase( 'sub.zq@example.test' )['items_removed'], 'a second erase finds nothing' );
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		$this->assertSame( array(), ( new CommentPrivacy() )->export( 'sub.zq@example.test' )['data'], 'no wpDiscuz tables, no error' );
+	}
+
+	public function test_REQ_059_wpdiscuz_follows_are_exported_with_names_and_erased(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wc_follow_users';
+		// The table exactly as wpDiscuz 7.7.0 creates it.
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$table}` (`id` int(11) NOT NULL AUTO_INCREMENT, `post_id` int(11) NOT NULL DEFAULT '0', `user_id` int(11) NOT NULL DEFAULT '0', `user_email` varchar(100) NOT NULL, `user_name` varchar(255) NOT NULL, `follower_id` int(11) NOT NULL DEFAULT '0', `follower_email` varchar(100) NOT NULL, `follower_name` varchar(255) NOT NULL, `activation_key` varchar(32) NOT NULL, `confirm` tinyint(1) NOT NULL DEFAULT '0', `follow_timestamp` int(11) NOT NULL, `follow_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), UNIQUE KEY `follow_unique_key` (`user_email`, `follower_email`))" ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->insert(
+			$table,
+			array(
+				'post_id'          => 5,
+				'user_email'       => 'followed.zq@example.test',
+				'user_name'        => 'Followed Zq',
+				'follower_email'   => 'follower.zq@example.test',
+				'follower_name'    => 'Follower Zq',
+				'activation_key'   => 'k',
+				'follow_timestamp' => 1,
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		try {
+			$export = (string) wp_json_encode( ( new CommentPrivacy() )->export( 'follower.zq@example.test' ) );
+			$this->assertStringContainsString( 'Follower Zq', $export );
+			$this->assertStringContainsString( 'Followed Zq', $export );
+			$this->assertTrue( ( new CommentPrivacy() )->erase( 'follower.zq@example.test' )['items_removed'] );
+			$this->assertSame( 0, (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		} finally {
+			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		}
 	}
 
 	public function test_REQ_258_wpdiscuz_tables_are_in_the_pii_catalogue(): void {
