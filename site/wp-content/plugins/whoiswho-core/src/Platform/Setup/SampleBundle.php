@@ -25,6 +25,7 @@ use WhoIsWho\Core\Import\Apply\ProfileApplier;
 use WhoIsWho\Core\Import\Apply\RecordMap;
 use WhoIsWho\Core\Import\Apply\ResultRepository;
 use WhoIsWho\Core\Import\BatchRepository;
+use WhoIsWho\Core\Import\BundleRefused;
 use WhoIsWho\Core\Import\BundleReader;
 use WhoIsWho\Core\Import\DryRun\DryRun;
 use WhoIsWho\Core\Import\Result\ImportAudit;
@@ -43,6 +44,7 @@ final class SampleBundle {
 	public const ZIP        = 'sample-50.zip';
 	public const OPTION     = 'wiw_demo_bundle';
 	public const KEY_PREFIX = 'profile:import:';
+	public const REFUSED    = 4091;
 
 	/**
 	 * Seconds one call may spend applying records.
@@ -196,8 +198,9 @@ final class SampleBundle {
 			} else {
 				$batch_id = $this->stage_folder( $source[1], $actor );
 			}
-		} catch ( StateException $e ) {
-			throw new \RuntimeException( esc_html( $e->getMessage() ) );
+		} catch ( StateException | BundleRefused $e ) {
+			// The import's own fixed wording (never record values), so the Setup screen can say why.
+			throw new \RuntimeException( esc_html( $e->getMessage() ), self::REFUSED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- escaped here.
 		}
 		update_option( self::OPTION, array( 'batch_id' => $batch_id ), false );
 		return $batch_id;

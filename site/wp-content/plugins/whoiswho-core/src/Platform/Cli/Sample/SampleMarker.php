@@ -100,7 +100,7 @@ final class SampleMarker {
 				'meta_value' => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			)
 		);
-		return is_array( $found ) && array() !== $found ? (int) $found[0] : null;
+		return array() !== $found ? (int) $found[0] : null;
 	}
 
 	/**
@@ -174,7 +174,7 @@ final class SampleMarker {
 				'meta_value' => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			)
 		);
-		return is_array( $found ) && array() !== $found ? (int) $found[0] : null;
+		return array() !== $found ? (int) $found[0] : null;
 	}
 
 	/**

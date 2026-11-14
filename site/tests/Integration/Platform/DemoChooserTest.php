@@ -378,6 +378,21 @@ final class DemoChooserTest extends WpTestCase {
 		$this->assertFalse( $demo->installed() );
 	}
 
+	public function test_REQ_237_a_sample_bundle_the_import_refuses_stops_with_the_reason(): void {
+		$sample   = $this->sample_folder( array( 'Demo Fixture Bank One' ) );
+		$manifest = (array) json_decode( (string) file_get_contents( $sample . '/manifest.json' ), true );
+		file_put_contents( $sample . '/manifest.json', (string) wp_json_encode( array_merge( $manifest, array( 'contract_version' => '9.9' ) ) ) );
+		$demo     = $this->demo( $sample );
+		$progress = $demo->start( $this->admin, '', array( 'profiles' ) );
+		for ( $i = 0; $i < 20 && 'running' === $progress['status']; $i++ ) {
+			$progress = $demo->advance( $this->admin );
+		}
+		$this->assertSame( 'failed', $progress['status'] );
+		$this->assertStringContainsString( 'refused by the import', (string) $progress['error'] );
+		$this->assertStringContainsString( 'contract version', (string) $progress['error'] );
+		$this->assertSame( array(), $this->posts( ProfileType::POST_TYPE ) );
+	}
+
 	public function test_REQ_208_without_a_sample_folder_the_profiles_are_the_invented_ones(): void {
 		$demo = $this->demo();
 		$this->assertFalse( $demo->ships_profiles() );

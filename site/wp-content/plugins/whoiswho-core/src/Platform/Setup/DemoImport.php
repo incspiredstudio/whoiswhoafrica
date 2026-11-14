@@ -338,6 +338,13 @@ final class DemoImport {
 				$steps[ $state['step'] ] ?? '',
 				get_class( $e )
 			);
+			if ( SampleBundle::REFUSED === $e->getCode() ) {
+				$state['error'] = sprintf(
+					/* translators: %s: why the import refused the bundle. */
+					__( 'The sample profiles that came with the plugin were refused by the import: %s Untick Profiles to import the other parts, or use a plugin zip with a sample bundle this version can read.', 'whoiswho' ),
+					$e->getMessage()
+				);
+			}
 			$this->save( $state );
 		} finally {
 			delete_transient( self::LOCK );

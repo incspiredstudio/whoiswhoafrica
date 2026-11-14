@@ -54,6 +54,17 @@ if [ -z "$(find "$A" \( -name '.env' -o -name '.env.*' -o -name '*.env' \))" ]; 
 check_not "no tests folder in the artifact" test -d "$A/wp-content/plugins/whoiswho-core/tests"
 check_not "no composer files left in the artifact" test -f "$A/composer.json"
 
+# 1b. The demo profiles (REQ-208): a local sample/ folder never ships; SAMPLE_BUNDLE adds the named zip under sample/.
+SITES="$WORK/sample"; make_site "$SITES"; mkdir -p "$SITES/wp-content/plugins/whoiswho-core/sample"; echo 'local' > "$SITES/wp-content/plugins/whoiswho-core/sample/records.jsonl"
+build "$SITES" "$WORK/outs1" 1.0.0 >/dev/null 2>&1 || true
+check_not "a local sample folder is not in the artifact" test -e "$WORK/outs1/whoiswho-1.0.0/wp-content/plugins/whoiswho-core/sample"
+echo 'zip' > "$WORK/sample-50.zip"
+SAMPLE_BUNDLE="$WORK/sample-50.zip" build "$SITES" "$WORK/outs2" 1.0.0 >/dev/null 2>&1 || true
+check "SAMPLE_BUNDLE adds sample/sample-50.zip" test -f "$WORK/outs2/whoiswho-1.0.0/wp-content/plugins/whoiswho-core/sample/sample-50.zip"
+check "the sample folder is closed to the web" grep -q 'Require all denied' "$WORK/outs2/whoiswho-1.0.0/wp-content/plugins/whoiswho-core/sample/.htaccess"
+check_not "the local sample copy is not added" test -e "$WORK/outs2/whoiswho-1.0.0/wp-content/plugins/whoiswho-core/sample/records.jsonl"
+check_not "a SAMPLE_BUNDLE that does not exist fails the build" env SAMPLE_BUNDLE="$WORK/missing.zip" bash "$SCRIPT" --source "$SITES" --out "$WORK/outs3" --version 1.0.0 --skip-composer --skip-assets --no-archive
+
 # 2. A missing child theme fails.
 SITE2="$WORK/nochild"; make_site "$SITE2"; rm -rf "$SITE2/wp-content/themes/whoiswho-child"
 check_not "a missing child theme fails the build" build "$SITE2" "$WORK/out2" 1.0.0
