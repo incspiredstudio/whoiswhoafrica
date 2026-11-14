@@ -76,6 +76,17 @@ final class FormRoutesTest extends TestCase {
 		$this->assertSame( 303, $result['http'] );
 	}
 
+	/**
+	 * A non-Latin slug arrives percent-encoded; the claim and enquiry forms still reach their handler with it (#810).
+	 */
+	public function test_REQ_003_a_percent_encoded_slug_reaches_the_form(): void {
+		$routes = $this->routes();
+		$routes->dispatch( 'POST', 'claim/%d9%85%d8%a4-qwv/', new FormInput( array() ), '203.0.113.9' );
+		$routes->dispatch( 'POST', 'enquire/%d9%85%d8%a4-qwv', new FormInput( array() ), '203.0.113.9' );
+		$this->assertSame( array( 'claim', 'profile_enquiry' ), array_column( $this->calls, 'form' ) );
+		$this->assertSame( array( '%d9%85%d8%a4-qwv', '%d9%85%d8%a4-qwv' ), array_column( $this->calls, 'slug' ) );
+	}
+
 	public function test_REQ_177_post_subscribe_is_the_get_listed_form(): void {
 		$this->routes()->dispatch( 'POST', '/subscribe', new FormInput( array() ), '' );
 		$this->assertSame( 'get_listed', $this->calls[0]['form'] );

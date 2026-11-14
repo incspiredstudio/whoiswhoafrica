@@ -14,7 +14,7 @@ use WhoIsWho\Core\Directory\PublicProfile;
 
 const WIW_REQUEST_KIND_VAR = 'wiw_request_kind';
 const WIW_REQUEST_SLUG_VAR = 'wiw_request_slug';
-const WIW_REQUEST_RULES_OP = 'wiw_theme_request_rules';
+const WIW_REQUEST_RULES_OP = 'wiw_theme_request_rules_2';
 
 if ( ! function_exists( 'wiw_request_kinds' ) ) {
 	/**
@@ -93,7 +93,7 @@ add_filter(
 add_action(
 	'init',
 	static function (): void {
-		add_rewrite_rule( '^(correct|remove|report)/([A-Za-z0-9_-]+)/?$', 'index.php?' . WIW_REQUEST_KIND_VAR . '=$matches[1]&' . WIW_REQUEST_SLUG_VAR . '=$matches[2]', 'top' );
+		add_rewrite_rule( '^(correct|remove|report)/([^/]+)/?$', 'index.php?' . WIW_REQUEST_KIND_VAR . '=$matches[1]&' . WIW_REQUEST_SLUG_VAR . '=$matches[2]', 'top' );
 		if ( '1' !== get_option( WIW_REQUEST_RULES_OP ) ) {
 			flush_rewrite_rules( false );
 			update_option( WIW_REQUEST_RULES_OP, '1', false );

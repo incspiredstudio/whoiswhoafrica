@@ -43,19 +43,21 @@ use WhoIsWho\Core\Trust\ClaimRepository;
 final class FormRoutes {
 
 	/**
-	 * Path patterns (relative to the site root) mapped to form names. The first capture, if any, is the slug.
+	 * Path patterns (relative to the site root) mapped to form names. The first capture, if any, is the slug: any one path
+	 * segment, because a non-Latin slug is percent-encoded; the services find the profile through PublicProfile::find(), which
+	 * sanitises it.
 	 */
 	private const ROUTES = array(
-		'#^claim/([A-Za-z0-9_-]+)/?$#'   => 'claim',
+		'#^claim/([^/]+)/?$#'   => 'claim',
 		'#^subscribe/?$#'                => 'get_listed',
 		'#^contact/?$#'                  => 'contact',
-		'#^enquire/([A-Za-z0-9_-]+)/?$#' => 'profile_enquiry',
+		'#^enquire/([^/]+)/?$#' => 'profile_enquiry',
 		'#^newsletter/?$#'               => 'newsletter',
-		'#^correct/([A-Za-z0-9_-]+)/?$#' => 'correction',
-		'#^remove/([A-Za-z0-9_-]+)/?$#'  => 'removal',
+		'#^correct/([^/]+)/?$#' => 'correction',
+		'#^remove/([^/]+)/?$#'  => 'removal',
 		'#^nominate/start/?$#'           => 'nomination_start',
 		'#^nominate/?$#'                 => 'nomination',
-		'#^report/([A-Za-z0-9_-]+)/?$#'  => 'report',
+		'#^report/([^/]+)/?$#'  => 'report',
 		'#^data-rights/?$#'              => 'data_rights',
 	);
 
