@@ -1,6 +1,6 @@
 <?php
 /**
- * The setup checklist (REQ-056): seven live checks, each with a plain-language status, what to do when it is not ready and, where it
+ * The setup checklist (REQ-056): nine live checks, each with a plain-language status, what to do when it is not ready and, where it
  * is safe, a one-click fix. Nothing here shows a secret: the email line says only whether the settings are present.
  *
  * @package WhoIsWho
@@ -12,6 +12,7 @@ namespace WhoIsWho\Core\Platform\Setup;
 
 use WhoIsWho\Core\Platform\Mail\Transport;
 use WhoIsWho\Core\Platform\Migrations\Runner;
+use WhoIsWho\Core\Platform\Plugins\RequiredPlugins;
 use WhoIsWho\Core\Platform\TwoFactor\PluginStatus;
 
 /**
@@ -36,6 +37,8 @@ final class Checklist {
 			self::guard(),
 			self::two_factor(),
 			self::email(),
+			self::plugin( 'fluent-smtp' ),
+			self::plugin( 'wpdiscuz' ),
 			self::demo(),
 		);
 	}
@@ -234,7 +237,35 @@ final class Checklist {
 	}
 
 	/**
-	 * 7. Demo content.
+	 * 7 and 8. A required plugin (FluentSMTP, wpDiscuz), installed and switched on from Settings > Required plugins.
+	 *
+	 * @param string $slug Plugin slug.
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 */
+	private static function plugin( string $slug ): array {
+		$plugin = RequiredPlugins::catalogue()[ $slug ];
+		$id     = 'plugin_' . str_replace( '-', '_', $slug );
+		/* translators: %s: plugin name. */
+		$title  = sprintf( __( '%s plugin active', 'whoiswho' ), $plugin['name'] );
+		$status = ( new RequiredPlugins() )->status( $slug );
+		if ( RequiredPlugins::ACTIVE === $status ) {
+			return self::item( $id, $title, self::OK, $plugin['why'] );
+		}
+		return self::item(
+			$id,
+			$title,
+			self::ERROR,
+			RequiredPlugins::INSTALLED === $status
+				/* translators: %s: plugin name. */
+				? sprintf( __( '%s is installed but not switched on.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why']
+				/* translators: %s: plugin name. */
+				: sprintf( __( '%s is not installed yet.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why'],
+			__( 'Open Settings > Required plugins in the admin menu and press Install, then Activate. It takes under a minute and needs no file or command.', 'whoiswho' )
+		);
+	}
+
+	/**
+	 * 9. Demo content.
 	 *
 	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
 	 */
