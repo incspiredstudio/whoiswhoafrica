@@ -1347,6 +1347,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 
 /* Editor and legal pages: a reading column that lines up with the band's title, as in the prototype. */
 .page-body > :not(.alignwide, .alignfull) { max-width: 48rem; }
+.wrap.page-body { max-width: var(--w-page); }
 .page-body.section { padding-block: var(--s-6) var(--s-8); }
 
 /* As the prototype's FAQ: large display group headings, display-face questions between hairlines, a chevron that turns. */
@@ -1428,6 +1429,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .link-rows a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
 .link-rows a:hover::after { translate: 4px -50%; }
 .link-rows .meta { color: var(--c-muted); font-size: var(--t-sm); }
+.link-rows li > span { display: grid; gap: var(--s-1); padding-block: var(--s-4); }
 .ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
 .ticks li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
 .ticks .ico { margin-top: .2rem; color: var(--c-accent); }

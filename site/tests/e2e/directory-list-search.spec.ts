@@ -15,7 +15,7 @@ test.describe("directory list search field", () => {
       const band = page.locator(".page-band--dark");
       const field = band.locator("form[role=search] input[type=search][name=q]");
       await expect(field).toHaveCount(1);
-      await expect(band.getByLabel("Narrow this list")).toHaveCount(1);
+      await expect(band.getByRole("searchbox", { name: "Narrow this list" })).toHaveCount(1);
       await expect(band.locator("nav.tabs[aria-label='Directory lists'] a")).toHaveCount(5);
       await expect(page.locator("form.fbar input[type=search]")).toHaveCount(0);
       await expect(page.locator("form.fbar .fbar-n")).toHaveAttribute("role", "status");
