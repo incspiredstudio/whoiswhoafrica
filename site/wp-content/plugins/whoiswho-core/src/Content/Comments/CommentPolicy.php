@@ -50,7 +50,6 @@ final class CommentPolicy {
 		add_filter( 'pre_comment_approved', array( $this, 'hold' ), 20 );
 		add_filter( 'get_avatar_url', '__return_false', 20 );
 		add_filter( 'get_comment_author_email', array( $this, 'hide_email' ), 20 );
-		add_action( 'admin_notices', array( $this, 'dependency_notice' ) );
 	}
 
 	/**
@@ -72,14 +71,27 @@ final class CommentPolicy {
 	}
 
 	/**
-	 * A guest comment needs the consent tick. Staff comments made in the admin are exempt.
+	 * A guest comment needs a name, a valid email and the consent tick, whichever form sent it (the core form or wpDiscuz's,
+	 * which posts through admin-ajax.php). Staff comments made in the admin are exempt.
 	 *
 	 * @param array<string, mixed> $commentdata Comment data.
 	 * @return array<string, mixed>
 	 */
 	public function require_consent( $commentdata ) {
-		if ( is_admin() || current_user_can( 'moderate_comments' ) ) {
+		if ( self::is_staff_request() ) {
 			return $commentdata;
+		}
+		$name  = trim( (string) ( $commentdata['comment_author'] ?? '' ) );
+		$email = (string) ( $commentdata['comment_author_email'] ?? '' );
+		if ( 0 === (int) ( $commentdata['user_id'] ?? 0 ) && ( '' === $name || ! is_email( $email ) ) ) {
+			wp_die(
+				new \WP_Error( 'wiw_comment_identity', esc_html__( 'Please give your name and a valid email address. Your email is never shown.', 'whoiswho' ), array( 'response' => 409 ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the message inside the error is escaped.
+				'',
+				array(
+					'response'  => 409,
+					'back_link' => true,
+				)
+			);
 		}
 		if ( '' === FormInput::from_globals()->raw( self::CONSENT_FIELD ) ) {
 			wp_die(
@@ -117,17 +129,10 @@ final class CommentPolicy {
 	}
 
 	/**
-	 * Tell Administrators when the comment form plugin is not active (the rules above still hold).
+	 * Whether the comment comes from staff: a moderator, or a signed-in user on an admin screen. An AJAX request is not an admin
+	 * screen even though WordPress counts it as admin: wpDiscuz posts every visitor's comment through admin-ajax.php.
 	 */
-	public function dependency_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-		if ( ! is_plugin_active( self::WPDISCUZ_FILE ) ) {
-			echo '<div class="notice notice-warning"><p>' . esc_html__( 'The comment form plugin (wpDiscuz) is not active. Comments follow the site rules but use the plain WordPress form.', 'whoiswho' ) . '</p></div>';
-		}
+	public static function is_staff_request(): bool {
+		return current_user_can( 'moderate_comments' ) || ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() );
 	}
 }

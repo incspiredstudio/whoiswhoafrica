@@ -41,6 +41,16 @@ final class PublicProfile {
 	public const IMAGE_META = '_wiw_image_id';
 
 	/**
+	 * The narrative sections in page order: field key => heading (contract 1.1 section 4.3).
+	 */
+	public const SECTIONS = array(
+		'bio'         => 'Bio',
+		'achievement' => 'Achievement',
+		'influence'   => 'Influence',
+		'legacy'      => 'Legacy',
+	);
+
+	/**
 	 * Profile post id.
 	 *
 	 * @var int
@@ -250,6 +260,70 @@ final class PublicProfile {
 		$profile->image_id            = $image > 0 ? $image : null;
 		$profile->share               = self::share( $profile );
 		return $profile;
+	}
+
+	/**
+	 * The narrative sections (contract 1.1 section 4.3) in their fixed order, only those with text: key, title and the plain
+	 * text (paragraphs separated by blank lines; the template escapes it). Each comes from a sourced fact, so an unsourced or
+	 * low-confidence section never shows. A profile pending review shows them under its pending label like any other fact.
+	 *
+	 * @return array<int, array{key: string, title: string, text: string}>
+	 */
+	public function sections(): array {
+		$out = array();
+		foreach ( self::SECTIONS as $key => $title ) {
+			$text = $this->facts[ $key ]['value'] ?? '';
+			if ( ! is_string( $text ) || '' === trim( $text ) ) {
+				continue;
+			}
+			$out[] = array(
+				'key'   => $key,
+				'title' => $title,
+				'text'  => trim( str_replace( "\r\n", "\n", $text ) ),
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * The portrait or logo with its credit (REQ-162, REQ-203, D-024): attachment id, address, alternative text, kind (photo or
+	 * logo), the credit line text (the attribution text, else the creator), licence id, licence link and source page. Null when
+	 * the profile has no image or the attachment is gone.
+	 *
+	 * @param string $size Image size for the address.
+	 * @return array{id: int, url: string, alt: string, kind: string, credit: string, licence: string, licence_url: string, source_url: string}|null
+	 */
+	public function image( string $size = 'large' ): ?array {
+		if ( null === $this->image_id ) {
+			return null;
+		}
+		$url = wp_get_attachment_image_url( $this->image_id, $size );
+		if ( false === $url ) {
+			return null;
+		}
+		$image = (int) $this->image_id;
+		$meta  = static fn ( string $key ): string => (string) get_post_meta( $image, $key, true );
+		$kind  = $meta( ImageMeta::KIND );
+		$kind  = in_array( $kind, array( 'photo', 'logo' ), true ) ? $kind : ( in_array( $this->entity_type, array( 'organisation', 'institution' ), true ) ? 'logo' : 'photo' );
+		$alt   = $meta( '_wp_attachment_image_alt' );
+		$cred  = '' !== $meta( ImageMeta::ATTRIBUTION ) ? $meta( ImageMeta::ATTRIBUTION ) : $meta( ImageMeta::CREATOR );
+		$links = array(
+			'licence_url' => $meta( ImageMeta::LICENCE_URL ),
+			'source_url'  => $meta( ImageMeta::SOURCE_URL ),
+		);
+		foreach ( $links as $k => $link ) {
+			$links[ $k ] = 1 === preg_match( '#^https?://#i', $link ) ? $link : '';
+		}
+		return array(
+			'id'          => $this->image_id,
+			'url'         => $url,
+			'alt'         => '' !== $alt ? $alt : $this->name,
+			'kind'        => $kind,
+			'credit'      => $cred,
+			'licence'     => $meta( ImageMeta::LICENCE ),
+			'licence_url' => $links['licence_url'],
+			'source_url'  => $links['source_url'],
+		);
 	}
 
 	/**

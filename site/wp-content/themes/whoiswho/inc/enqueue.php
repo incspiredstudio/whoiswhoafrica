@@ -99,21 +99,11 @@ add_action(
 			$js = wiw_asset_url( $key . '-js.js' ) ?? wiw_asset_url( $key . '.js' );
 			if ( null !== $js ) {
 				wp_enqueue_script( 'wiw-' . $key, $js, array(), WIW_THEME_VERSION, array( 'strategy' => 'defer' ) );
-				// The particle stage (home only): Three.js and the stage script are fetched on demand by home-js, never with the page.
+				// The particle stage (home only): the stage script, with its own small WebGL renderer, is fetched on demand by home-js, never with the page.
 				if ( 'home' === $key ) {
-					$three = wiw_asset_url( 'three.js' );
 					$stage = wiw_asset_url( 'home-stage.js' );
-					if ( null !== $three && null !== $stage ) {
-						wp_add_inline_script(
-							'wiw-home',
-							'window.wiwHome=' . wp_json_encode(
-								array(
-									'three' => $three,
-									'stage' => $stage,
-								)
-							) . ';',
-							'before'
-						);
+					if ( null !== $stage ) {
+						wp_add_inline_script( 'wiw-home', 'window.wiwHome=' . wp_json_encode( array( 'stage' => $stage ) ) . ';', 'before' );
 					}
 				}
 			}
@@ -131,11 +121,12 @@ add_action(
 	30
 );
 
-// No jQuery on the public site: the theme adds JavaScript only where a page needs it.
+// No jQuery on the public site: the theme adds JavaScript only where a page needs it. The one exception is a story while the
+// wpDiscuz comment plugin is active: its form posts comments with jQuery, so without it nobody could comment (REQ-258).
 add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
-		if ( is_admin() || is_customize_preview() ) {
+		if ( is_admin() || is_customize_preview() || ( is_singular( 'post' ) && class_exists( 'WpdiscuzCore' ) ) ) {
 			return;
 		}
 		wp_dequeue_script( 'jquery' );

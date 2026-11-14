@@ -35,7 +35,7 @@ add_filter( 'document_title_parts', 'wiw_document_title_parts' );
 /**
  * Print the page band (eyebrow, title, lede, optional tone). The only h1 on inner pages.
  *
- * @param array{eyebrow?: string, title?: string, lede?: string, tone?: string} $band Band content.
+ * @param array{eyebrow?: string, title?: string, lede?: string, tone?: string, wide?: bool} $band Band content.
  */
 function wiw_page_band( array $band ): void {
 	get_template_part( 'template-parts/page-band', null, $band );

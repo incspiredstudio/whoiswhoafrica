@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Import\Undo;
 
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
+use WhoIsWho\Core\Directory\ImageMeta;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\VersionRepository;
@@ -33,15 +35,19 @@ final class BatchUndo {
 
 	public const CAPABILITY = 'wiw_run_imports';
 
+	public const STATE_PREFIX = 'wiw_import_undo_';
+
 	/**
 	 * Undo a batch.
 	 *
-	 * @param string $batch_id Batch id.
-	 * @param int    $actor_id The person undoing it.
-	 * @return array{removed: int, reverted: int, kept: int, kept_record_ids: string[]}
+	 * @param string        $batch_id Batch id.
+	 * @param int           $actor_id The person undoing it.
+	 * @param callable|null $stop Returns true when the time budget is spent; checked before each record. A large batch is then
+	 *                            undone over several calls: progress is kept, and the batch becomes undone after the last.
+	 * @return array{removed: int, reverted: int, kept: int, kept_record_ids: string[], media_removed: int, done: bool}
 	 * @throws StateException When refused.
 	 */
-	public function undo( string $batch_id, int $actor_id ): array {
+	public function undo( string $batch_id, int $actor_id, ?callable $stop = null ): array {
 		if ( ! user_can( $actor_id, self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			throw StateException::refuse( 'Not allowed.' );
 		}
@@ -50,33 +56,38 @@ final class BatchUndo {
 		if ( null === $batch || 'applied' !== $batch['status'] ) {
 			throw StateException::refuse( 'Only an applied batch can be undone.' );
 		}
-		$counts = array(
-			'removed'         => 0,
-			'reverted'        => 0,
-			'kept'            => 0,
-			'kept_record_ids' => array(),
-		);
+		$state  = self::progress( $batch_id );
+		$counts = $state['counts'];
 		$states = new StateRepository();
 		$map    = new RecordMap();
-		foreach ( $this->entries( $batch_id ) as $entry ) {
+		foreach ( $this->entries( $batch_id, $state['last_id'] ) as $entry ) {
+			if ( null !== $stop && $stop() ) {
+				$counts['done'] = false;
+				return $counts;
+			}
 			$profile_id = $entry['profile_id'];
 			$row        = $states->get( $profile_id );
-			if ( null === $row ) {
-				continue;
-			}
-			if ( ProfileApplier::is_reviewed( $row ) ) {
+			if ( null !== $row && ProfileApplier::is_reviewed( $row ) ) {
 				++$counts['kept'];
 				$counts['kept_record_ids'][] = $entry['record_id'];
-				continue;
-			}
-			if ( ProfileApplier::CREATED === $entry['code'] ) {
+			} elseif ( null !== $row && ProfileApplier::CREATED === $entry['code'] ) {
 				$this->remove( $profile_id, (string) $row['pub_state'], $batch_id, $actor_id );
 				$map->unlink_profile( $profile_id );
 				++$counts['removed'];
-			} elseif ( ProfileApplier::UPDATED === $entry['code'] && $this->revert( $profile_id, $batch_id, $actor_id ) ) {
+			} elseif ( null !== $row && ProfileApplier::UPDATED === $entry['code'] && $this->revert( $profile_id, $batch_id, $actor_id ) ) {
 				++$counts['reverted'];
 			}
-		}
+			update_option(
+				self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ),
+				array(
+					'last_id' => $entry['id'],
+					'counts'  => $counts,
+				),
+				false
+			);
+		}//end foreach
+		$counts['media_removed'] = ( new MediaUndo() )->remove( $batch_id );
+		delete_option( self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ) );
 		$batches->advance( $batch_id, (int) $batch['progress_cursor'], 'undone' );
 		AuditLogger::for_site()->log(
 			'import.undo',
@@ -86,9 +97,10 @@ final class BatchUndo {
 			),
 			null,
 			array(
-				'removed'  => $counts['removed'],
-				'reverted' => $counts['reverted'],
-				'kept'     => $counts['kept'],
+				'removed'       => $counts['removed'],
+				'reverted'      => $counts['reverted'],
+				'kept'          => $counts['kept'],
+				'media_removed' => $counts['media_removed'],
 			),
 			'',
 			$batch_id
@@ -97,20 +109,54 @@ final class BatchUndo {
 	}
 
 	/**
-	 * The batch's profile results: record id, code and profile.
+	 * Whether an undo of the batch has started and not finished.
 	 *
 	 * @param string $batch_id Batch id.
-	 * @return array<int, array{record_id: string, code: string, profile_id: int}>
 	 */
-	private function entries( string $batch_id ): array {
+	public static function in_progress( string $batch_id ): bool {
+		return false !== get_option( self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ), false );
+	}
+
+	/**
+	 * The kept progress of an undo: the last result row handled and the counts so far.
+	 *
+	 * @param string $batch_id Batch id.
+	 * @return array{last_id: int, counts: array{removed: int, reverted: int, kept: int, kept_record_ids: string[], media_removed: int, done: bool}}
+	 */
+	private static function progress( string $batch_id ): array {
+		$saved  = get_option( self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ), array() );
+		$saved  = is_array( $saved ) ? $saved : array();
+		$counts = is_array( $saved['counts'] ?? null ) ? $saved['counts'] : array();
+		return array(
+			'last_id' => (int) ( $saved['last_id'] ?? 0 ),
+			'counts'  => array(
+				'removed'         => (int) ( $counts['removed'] ?? 0 ),
+				'reverted'        => (int) ( $counts['reverted'] ?? 0 ),
+				'kept'            => (int) ( $counts['kept'] ?? 0 ),
+				'kept_record_ids' => array_map( 'strval', (array) ( $counts['kept_record_ids'] ?? array() ) ),
+				'media_removed'   => 0,
+				'done'            => true,
+			),
+		);
+	}
+
+	/**
+	 * The batch's profile results after a result row: row id, record id, code and profile.
+	 *
+	 * @param string $batch_id Batch id.
+	 * @param int    $after    Result row id already handled.
+	 * @return array<int, array{id: int, record_id: string, code: string, profile_id: int}>
+	 */
+	private function entries( string $batch_id, int $after = 0 ): array {
 		global $wpdb;
 		$rows = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; values prepared.
-			$wpdb->prepare( 'SELECT record_id, code, profile_id FROM ' . ResultRepository::table() . ' WHERE batch_id = %s AND profile_id IS NOT NULL ORDER BY id ASC', $batch_id ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; values prepared.
+			$wpdb->prepare( 'SELECT id, record_id, code, profile_id FROM ' . ResultRepository::table() . ' WHERE batch_id = %s AND profile_id IS NOT NULL AND id > %d ORDER BY id ASC', $batch_id, $after ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; values prepared.
 			ARRAY_A
 		);
 		$out  = array();
 		foreach ( $rows as $row ) {
 			$out[] = array(
+				'id'         => (int) $row['id'],
 				'record_id'  => (string) $row['record_id'],
 				'code'       => (string) $row['code'],
 				'profile_id' => (int) $row['profile_id'],

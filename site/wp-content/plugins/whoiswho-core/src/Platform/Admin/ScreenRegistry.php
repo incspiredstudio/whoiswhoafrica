@@ -78,7 +78,7 @@ final class ScreenRegistry {
 			'commercial'        => __( 'Commercial', 'whoiswho' ),
 			'awards'            => __( 'Awards', 'whoiswho' ),
 			'compliance'        => __( 'Compliance', 'whoiswho' ),
-			'settings'          => __( 'Settings', 'whoiswho' ),
+			'settings'          => __( 'Site settings', 'whoiswho' ),
 		);
 		$out    = array();
 		foreach ( self::GROUPS as $id => $meta ) {

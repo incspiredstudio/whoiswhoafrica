@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 	 */
 	public function register(): void {
 		( Mail\Transport::for_site() )->register();
+		( new Mail\FluentSmtpLogging() )->register();
 		Jobs\JobRunner::for_site()->register();
 		Links\LinkRoute::for_site()->register();
 		Mail\Notifier::for_site();
@@ -63,6 +64,7 @@ final class Module implements ModuleInterface {
 		Settings\SprintScreen::hooks();
 		Migrations\PendingNotice::register();
 		Setup\SetupScreen::hooks();
+		Plugins\RequiredPluginsScreen::hooks();
 		Cli\WpCliBridge::register();
 		TwoFactor\TwoFactor::register();
 		RoleEditor\RoleEditor::register();

@@ -2,7 +2,9 @@
 /**
  * How sample content is recognised: post meta and term meta `_wiw_sample` = 1 (the same marker the content:find-sample command
  * looks for), a stable key per item so a second run finds what the first one made, and a small registry for the pieces that live
- * outside posts and terms (award categories and nominations, and the settings the seeder changed). REQ-208, REQ-052.
+ * outside posts and terms (award categories and nominations, and the settings the seeder changed). Demo comments carry the same
+ * markers as comment meta. A finished demo post or comment also keeps a fingerprint, so removal can tell an item a person edited
+ * and keep it. REQ-208, REQ-052.
  *
  * @package WhoIsWho
  */
@@ -20,6 +22,9 @@ final class SampleMarker {
 	public const KEY_META = '_wiw_sample_key';
 	public const REGISTRY = 'wiw_sample_registry';
 
+	public const HASH_META  = '_wiw_demo_hash';
+	public const STAMP_META = '_wiw_demo_stamp';
+
 	/**
 	 * Mark a post as sample content under a key.
 	 *
@@ -29,6 +34,95 @@ final class SampleMarker {
 	public static function mark_post( int $post_id, string $key ): void {
 		update_post_meta( $post_id, self::META, '1' );
 		update_post_meta( $post_id, self::KEY_META, $key );
+	}
+
+	/**
+	 * Remember how a finished demo post looks, so a later edit by a person can be told apart (REQ-208): a fingerprint of its text
+	 * and the time it was last changed.
+	 *
+	 * @param int $post_id Post.
+	 */
+	public static function seal_post( int $post_id ): void {
+		clean_post_cache( $post_id );
+		$post = get_post( $post_id );
+		if ( ! $post instanceof \WP_Post ) {
+			return;
+		}
+		update_post_meta( $post_id, self::HASH_META, self::fingerprint( $post ) );
+		update_post_meta( $post_id, self::STAMP_META, $post->post_modified_gmt );
+	}
+
+	/**
+	 * A fingerprint of a post's text.
+	 *
+	 * @param \WP_Post $post Post.
+	 */
+	public static function fingerprint( \WP_Post $post ): string {
+		return md5( $post->post_title . "\n" . $post->post_content . "\n" . $post->post_excerpt . "\n" . $post->post_name );
+	}
+
+	/**
+	 * Mark a comment as sample content under a key, with a fingerprint of its text.
+	 *
+	 * @param int    $comment_id Comment.
+	 * @param string $key        Stable key.
+	 */
+	public static function mark_comment( int $comment_id, string $key ): void {
+		update_comment_meta( $comment_id, self::META, '1' );
+		update_comment_meta( $comment_id, self::KEY_META, $key );
+		$comment = get_comment( $comment_id );
+		if ( $comment instanceof \WP_Comment ) {
+			update_comment_meta( $comment_id, self::HASH_META, self::comment_fingerprint( $comment ) );
+		}
+	}
+
+	/**
+	 * A fingerprint of a comment's text and author name.
+	 *
+	 * @param \WP_Comment $comment Comment.
+	 */
+	public static function comment_fingerprint( \WP_Comment $comment ): string {
+		return md5( $comment->comment_content . "\n" . $comment->comment_author );
+	}
+
+	/**
+	 * The sample comment a key made, or null.
+	 *
+	 * @param string $key Stable key.
+	 */
+	public static function find_comment( string $key ): ?int {
+		$found = get_comments(
+			array(
+				'status'     => 'all',
+				'number'     => 1,
+				'fields'     => 'ids',
+				'meta_key'   => self::KEY_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- a one-off setup lookup.
+				'meta_value' => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
+			)
+		);
+		return array() !== $found ? (int) $found[0] : null;
+	}
+
+	/**
+	 * Take the marker off a post a person has made their own, so it is no longer treated as demo content.
+	 *
+	 * @param int $post_id Post.
+	 */
+	public static function unmark_post( int $post_id ): void {
+		foreach ( array( self::META, self::KEY_META, self::HASH_META, self::STAMP_META ) as $key ) {
+			delete_post_meta( $post_id, $key );
+		}
+	}
+
+	/**
+	 * Take the marker off a comment a person has changed.
+	 *
+	 * @param int $comment_id Comment.
+	 */
+	public static function unmark_comment( int $comment_id ): void {
+		foreach ( array( self::META, self::KEY_META, self::HASH_META ) as $key ) {
+			delete_comment_meta( $comment_id, $key );
+		}
 	}
 
 	/**
@@ -80,7 +174,7 @@ final class SampleMarker {
 				'meta_value' => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			)
 		);
-		return is_array( $found ) && array() !== $found ? (int) $found[0] : null;
+		return array() !== $found ? (int) $found[0] : null;
 	}
 
 	/**

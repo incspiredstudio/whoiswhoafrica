@@ -229,16 +229,16 @@ html.home-live .h-act[data-reveal] { opacity: 1; transform: none; }
 .h-story h3 a::after { content: ""; position: absolute; inset: 0; }
 
 /* Awards marquee: text only. Still and wrapped by default; scrolls only when motion is welcome. */
-.h-marquee { padding-block: var(--s-6); background: var(--c-dark); color: var(--c-on-dark); overflow: hidden; }
-.h-marquee-list { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2) var(--s-6); margin: 0; padding: 0 var(--gutter); list-style: none; font: 400 clamp(1.5rem, 1.1rem + 1.6vw, 2.75rem)/1.15 var(--font-display); }
-.h-marquee-list li::after { content: "/"; margin-inline-start: var(--s-6); color: var(--c-accent); }
+.h-marquee { padding-block: var(--s-3); background: var(--red); color: var(--c-white); overflow: hidden; }
+.h-marquee-list { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2) var(--s-6); margin: 0; padding: 0 var(--gutter); list-style: none; font: 400 var(--t-xl)/1.1 var(--font-display); }
+.h-marquee-list li::after { content: "*"; margin-inline-start: var(--s-6); color: var(--orange); }
 .h-marquee-copy { display: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   .h-marquee-track { display: flex; width: max-content; animation: h-marquee 90s linear infinite; }
   .h-marquee-track:hover { animation-play-state: paused; }
   .h-marquee-list { flex-wrap: nowrap; justify-content: flex-start; gap: 0 var(--s-6); white-space: nowrap; }
-  .h-marquee-list li:last-child::after { content: "/"; }
+  .h-marquee-list li:last-child::after { content: "*"; }
   .h-marquee-copy { display: flex; }
 }
 

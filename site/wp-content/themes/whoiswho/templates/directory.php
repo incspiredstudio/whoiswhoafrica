@@ -59,6 +59,7 @@ wiw_page_band(
 		'eyebrow' => __( 'Directory', 'whoiswho' ),
 		'title'   => $wiw_info['title'],
 		'lede'    => $wiw_info['lede'],
+		'wide'    => true,
 	)
 );
 ?>

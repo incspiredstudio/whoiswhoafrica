@@ -26,6 +26,8 @@ use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\VersionRepository;
 use WhoIsWho\Core\Import\EvidenceRepository;
+use WhoIsWho\Core\Import\Images\ImageImporter;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Import\Scan\FreeTextScanner;
 use WhoIsWho\Core\Import\Scan\ScanBlock;
@@ -86,6 +88,13 @@ final class ProfileApplier {
 	private ScanBlock $block;
 
 	/**
+	 * The bundle folder images are read from, or null.
+	 *
+	 * @var string|null
+	 */
+	private ?string $bundle_dir = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Suppression        $suppression The live suppression list.
@@ -109,7 +118,9 @@ final class ProfileApplier {
 	 * @param string               $batch_id    Batch id.
 	 * @param int                  $importer_id The staff member who confirmed the import.
 	 * @param bool                 $import_all  The import-everything-as-not-public setting in force for the batch.
-	 * @return array{code: string, profile_id: int|null} A result code (never a field value) and the profile id when one is involved.
+	 * @return array{code: string, profile_id: int|null, images?: array{imported: int, refused: array<int, array{image_id: string, reason: string}>}}
+	 *         A result code (never a field value), the profile id when one is involved and, for a record with images, what
+	 *         happened to them.
 	 */
 	public function apply( array $record, string $batch_id, int $importer_id, bool $import_all ): array {
 		$fields = (array) $record['fields'];
@@ -132,7 +143,7 @@ final class ProfileApplier {
 		$record_id  = (string) $record['record_id'];
 		$profile_id = $this->map->profile_for( $record_id );
 		if ( null === $profile_id || null === get_post( $profile_id ) ) {
-			return Transaction::run(
+			$result = Transaction::run(
 				function () use ( $record, $batch_id, $importer_id, $import_all, $record_id, $profile_id ): array {
 					if ( null !== $profile_id ) {
 						$this->map->unlink_profile( $profile_id );
@@ -140,6 +151,7 @@ final class ProfileApplier {
 					return $this->create( $record, $record_id, $batch_id, $importer_id, $import_all );
 				}
 			);
+			return $this->with_images( $result, $record, $batch_id );
 		}
 
 		$state = new StateRepository();
@@ -151,7 +163,54 @@ final class ProfileApplier {
 		if ( null === $row || self::is_reviewed( $row ) ) {
 			return Transaction::run( fn (): array => $this->flag( $profile_id, $record ) );
 		}
-		return Transaction::run( fn (): array => $this->update( $profile_id, $record, $row, $batch_id, $importer_id, $import_all ) );
+		$result = Transaction::run( fn (): array => $this->update( $profile_id, $record, $row, $batch_id, $importer_id, $import_all ) );
+		return $this->with_images( $result, $record, $batch_id );
+	}
+
+	/**
+	 * Read images from this bundle folder (contract 1.1). Without one, records apply without their images.
+	 *
+	 * @param string|null $dir The bundle folder.
+	 */
+	public function set_bundle_dir( ?string $dir ): void {
+		$this->bundle_dir = $dir;
+	}
+
+	/**
+	 * Import the record's images after its profile was created or updated (outside the record's transaction, so a slow or
+	 * failing image never undoes the profile). Each image is accepted or refused on its own.
+	 *
+	 * @param array{code: string, profile_id: int|null} $result   The record's result.
+	 * @param array<string, mixed>                      $record   Record.
+	 * @param string                                    $batch_id Batch.
+	 * @return array{code: string, profile_id: int|null, images?: array{imported: int, refused: array<int, array{image_id: string, reason: string}>}}
+	 */
+	private function with_images( array $result, array $record, string $batch_id ): array {
+		$images = (array) ( $record['images'] ?? array() );
+		if ( array() === $images || null === $result['profile_id'] ) {
+			return $result;
+		}
+		$split = ImagePolicy::split( (string) $record['contract_version'], $images );
+		$out   = array(
+			'imported' => 0,
+			'refused'  => $split['refused'],
+		);
+		if ( array() !== $split['accepted'] ) {
+			if ( null === $this->bundle_dir ) {
+				foreach ( $split['accepted'] as $image ) {
+					$out['refused'][] = array(
+						'image_id' => (string) $image['image_id'],
+						'reason'   => 'missing',
+					);
+				}
+			} else {
+				$done            = ( new ImageImporter() )->import( (int) $result['profile_id'], (string) $record['entity_type'], (string) ( $record['fields']['name']['value'] ?? '' ), $split['accepted'], $this->bundle_dir, $batch_id );
+				$out['imported'] = $done['imported'];
+				$out['refused']  = array_merge( $out['refused'], $done['refused'] );
+			}
+		}
+		$result['images'] = $out;
+		return $result;
 	}
 
 	/**

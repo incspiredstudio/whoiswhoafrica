@@ -40,6 +40,14 @@ final class CapabilityCatalogueTest extends TestCase {
 		$this->assertEqualsCanonicalizing( $c->all(), $admin );
 	}
 
+	public function test_REQ_244_add_profile_capability_is_editor_and_administrator(): void {
+		$c = new CapabilityCatalogue();
+		$this->assertContains( 'wiw_add_profile', $c->for_bundle( 'editor' ) );
+		$this->assertContains( 'wiw_add_profile', $c->for_bundle( 'administrator' ) );
+		$this->assertNotContains( 'wiw_add_profile', $c->for_bundle( 'reviewer' ) );
+		$this->assertNotContains( 'wiw_add_profile', $c->fixed() );
+	}
+
 	public function test_REQ_235_withdrawn_capabilities_are_not_listed(): void {
 		$all = ( new CapabilityCatalogue() )->all();
 		$this->assertNotContains( 'wiw_set_trust_labels', $all );

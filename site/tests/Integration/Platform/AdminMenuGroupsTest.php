@@ -88,4 +88,10 @@ final class AdminMenuGroupsTest extends WpTestCase {
 		$this->assertCount( count( $groups ), array_unique( array_column( $groups, 'title' ) ) );
 		$this->assertCount( count( $groups ), array_unique( array_column( $groups, 'position' ) ) );
 	}
+
+	public function test_REQ_244_our_settings_group_is_called_site_settings_so_it_never_looks_like_the_wordpress_settings_menu(): void {
+		$groups = ScreenRegistry::groups();
+		$this->assertSame( 'Site settings', $groups['settings']['title'] );
+		$this->assertNotContains( 'Settings', array_column( $groups, 'title' ), 'WordPress already has a Settings menu (wpDiscuz and FluentSMTP add to it)' );
+	}
 }

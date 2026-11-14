@@ -1,6 +1,6 @@
 <?php
 /**
- * The setup checklist (REQ-056): seven live checks, each with a plain-language status, what to do when it is not ready and, where it
+ * The setup checklist (REQ-056): ten live checks, each with a plain-language status, what to do when it is not ready and, where it
  * is safe, a one-click fix. Nothing here shows a secret: the email line says only whether the settings are present.
  *
  * @package WhoIsWho
@@ -10,9 +10,12 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Platform\Setup;
 
+use WhoIsWho\Core\Compliance\Forms\TurnstileSettings;
 use WhoIsWho\Core\Platform\Mail\Transport;
 use WhoIsWho\Core\Platform\Migrations\Runner;
-use WhoIsWho\Core\Platform\TwoFactor\PluginStatus;
+use WhoIsWho\Core\Platform\Plugins\RequiredPlugins;
+use WhoIsWho\Core\Platform\Plugins\RequiredPluginsScreen;
+use WhoIsWho\Core\Platform\TwoFactor\StaffStatus;
 
 /**
  * Checklist.
@@ -26,7 +29,7 @@ final class Checklist {
 	/**
 	 * The checks, in the order the owner works through them.
 	 *
-	 * @return array<int, array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}>
+	 * @return array<int, array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}>
 	 */
 	public static function items(): array {
 		return array(
@@ -36,6 +39,9 @@ final class Checklist {
 			self::guard(),
 			self::two_factor(),
 			self::email(),
+			self::turnstile(),
+			self::plugin( 'fluent-smtp' ),
+			self::plugin( 'wpdiscuz' ),
 			self::demo(),
 		);
 	}
@@ -59,9 +65,11 @@ final class Checklist {
 	 * @param string $fix          What to do when it is not ready.
 	 * @param string $action       One-click action name, or empty.
 	 * @param string $action_label Button text.
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @param string $link         A screen to open (for example another plugin's settings), or empty.
+	 * @param string $link_label   Link text.
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
-	private static function item( string $id, string $title, string $status, string $detail, string $fix = '', string $action = '', string $action_label = '' ): array {
+	private static function item( string $id, string $title, string $status, string $detail, string $fix = '', string $action = '', string $action_label = '', string $link = '', string $link_label = '' ): array {
 		return array(
 			'id'           => $id,
 			'title'        => $title,
@@ -70,13 +78,15 @@ final class Checklist {
 			'fix'          => $fix,
 			'action'       => $action,
 			'action_label' => $action_label,
+			'link'         => $link,
+			'link_label'   => $link_label,
 		);
 	}
 
 	/**
 	 * 1. The database.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
 	private static function database(): array {
 		$title    = __( 'Database ready', 'whoiswho' );
@@ -99,8 +109,7 @@ final class Checklist {
 		if ( array() === $pending ) {
 			return self::item( 'database', $title, self::OK, __( 'The plugin\'s tables are in place and up to date.', 'whoiswho' ) );
 		}
-		$can_run = 'production' !== wp_get_environment_type() || SchemaState::may_self_initialise();
-		if ( $can_run ) {
+		if ( SchemaState::may_self_initialise() ) {
 			return self::item(
 				'database',
 				$title,
@@ -115,15 +124,17 @@ final class Checklist {
 			'database',
 			$title,
 			self::ERROR,
-			__( 'This is a live site and its database has changes waiting.', 'whoiswho' ),
-			__( 'Live sites change their database only through the deploy script, so an upgrade cannot go wrong halfway. Run the deploy, or ask whoever manages the server.', 'whoiswho' )
+			'' !== $stored ? $stored : __( 'A plugin update brought database changes that are not applied yet. Until they are, some screens may not work.', 'whoiswho' ),
+			__( 'Make a backup of the site first (most hosts have a Backup button in their control panel), then press the button. It applies the changes once and is safe to press again.', 'whoiswho' ),
+			'database',
+			__( 'Update the database', 'whoiswho' )
 		);
 	}
 
 	/**
 	 * 2. Pretty permalinks.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
 	private static function permalinks(): array {
 		$title = __( 'Pretty web addresses (permalinks)', 'whoiswho' );
@@ -144,7 +155,7 @@ final class Checklist {
 	/**
 	 * 3. The child theme.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
 	private static function theme(): array {
 		$title = __( 'Site theme active', 'whoiswho' );
@@ -175,7 +186,7 @@ final class Checklist {
 	/**
 	 * 4. The guard must-use plugin.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
 	private static function guard(): array {
 		$title = __( 'Guard plugin installed (recommended)', 'whoiswho' );
@@ -192,57 +203,148 @@ final class Checklist {
 	}
 
 	/**
-	 * 5. Two-factor sign-in for the signed-in staff member.
+	 * 5. Two-factor sign-in for staff: advice only (D-070). Lists who has it on.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @param StaffStatus|null $staff Staff status (tests pass one).
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
-	private static function two_factor(): array {
-		$title  = __( 'Two-factor sign-in set up for you', 'whoiswho' );
-		$status = new PluginStatus();
-		if ( ! $status->available() ) {
-			return self::item( 'two_factor', $title, self::WARN, __( 'The two-factor software did not load.', 'whoiswho' ), __( 'Reinstall the whoiswho-core plugin from the install bundle: it carries the two-factor plugin inside it.', 'whoiswho' ) );
+	public static function two_factor( ?StaffStatus $staff = null ): array {
+		$title = __( 'Two-factor sign-in for staff (recommended)', 'whoiswho' );
+		$staff = $staff ?? StaffStatus::for_site();
+		$how   = __( 'Two-factor sign-in is optional, but it stops someone who guesses or steals a password from getting in. Each person opens Users > Profile (the link is under their name in the top-right menu), finds the Two-Factor Options section and switches on an authenticator app or the email code.', 'whoiswho' );
+		if ( ! $staff->available() ) {
+			return self::item( 'two_factor', $title, self::WARN, __( 'The two-factor software did not load.', 'whoiswho' ), __( 'Upload the whoiswho-core plugin again from the install bundle (Plugins > Add New > Upload Plugin): it carries the two-factor software inside it.', 'whoiswho' ) );
 		}
-		if ( $status->is_enrolled( get_current_user_id() ) ) {
-			return self::item( 'two_factor', $title, self::OK, __( 'Your account has an authenticator app or email code.', 'whoiswho' ) );
+		$summary = $staff->summary();
+		$parts   = array();
+		if ( array() !== $summary['on'] ) {
+			/* translators: %s: list of names. */
+			$parts[] = sprintf( __( 'On for: %s.', 'whoiswho' ), implode( ', ', $summary['on'] ) );
 		}
-		return self::item(
-			'two_factor',
-			$title,
-			self::WARN,
-			__( 'Your account does not have a second sign-in step yet. Staff are asked to set one up.', 'whoiswho' ),
-			__( 'Open Users > Profile (the link is in the top-right menu, under your name), find the Two-Factor Options section and switch on an authenticator app or the email code.', 'whoiswho' )
-		);
+		if ( array() !== $summary['off'] ) {
+			/* translators: %s: list of names. */
+			$parts[] = sprintf( __( 'Not yet on for: %s.', 'whoiswho' ), implode( ', ', $summary['off'] ) );
+		}
+		if ( $summary['total'] >= StaffStatus::LIMIT ) {
+			/* translators: %d: how many accounts are listed. */
+			$parts[] = sprintf( __( '(The first %d staff accounts are listed.)', 'whoiswho' ), StaffStatus::LIMIT );
+		}
+		if ( array() === $summary['off'] ) {
+			return self::item( 'two_factor', $title, self::OK, implode( ' ', array_merge( array( __( 'Every staff account has a second sign-in step.', 'whoiswho' ) ), $parts ) ) );
+		}
+		return self::item( 'two_factor', $title, self::WARN, implode( ' ', $parts ), $how );
 	}
 
 	/**
-	 * 6. Email settings (read only).
+	 * 6. Email: green when FluentSMTP is active and connected, or when the host set an email server for the site.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @param Transport|null $transport Transport (tests pass one).
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
-	private static function email(): array {
-		$title = __( 'Email settings', 'whoiswho' );
-		if ( Transport::for_site()->has_credentials() ) {
-			return self::item( 'email', $title, self::OK, __( 'Email account settings were found. (Their details are never shown here.)', 'whoiswho' ) );
+	public static function email( ?Transport $transport = null ): array {
+		$title     = __( 'Email', 'whoiswho' );
+		$transport = $transport ?? Transport::for_site();
+		$link      = Transport::fluent_smtp_url();
+		if ( Transport::fluent_smtp_configured() ) {
+			return self::item( 'email', $title, self::OK, __( 'FluentSMTP is active and connected to an email account, so the site\'s emails go out through it.', 'whoiswho' ), '', '', '', $link, __( 'Open FluentSMTP settings', 'whoiswho' ) );
+		}
+		if ( $transport->has_server() ) {
+			return self::item( 'email', $title, self::OK, __( 'Your host has set an email account for this site. (Its details are never shown here.)', 'whoiswho' ) );
+		}
+		if ( Transport::fluent_smtp_active() ) {
+			return self::item(
+				'email',
+				$title,
+				self::WARN,
+				__( 'FluentSMTP is installed but not connected to an email account yet, so emails may not arrive.', 'whoiswho' ),
+				__( 'Open FluentSMTP settings, add a connection (your host\'s email account works: use its outgoing server, port, user name and password), then send a test email.', 'whoiswho' ),
+				'',
+				'',
+				$link,
+				__( 'Open FluentSMTP settings', 'whoiswho' )
+			);
 		}
 		return self::item(
 			'email',
 			$title,
 			self::WARN,
-			__( 'No email account settings were found. Confirmation and invitation emails will not be sent from this site yet. A demo does not need email.', 'whoiswho' ),
-			__( 'Email settings are kept out of the admin on purpose, so a stolen login cannot read them. They live in the site\'s secrets file or as WIW_SMTP_* constants in wp-config.php: ask your developer or host, or see the runbook.', 'whoiswho' )
+			__( 'The site sends email with WordPress\'s built-in method. It works on many hosts, but messages often land in spam or are not sent at all.', 'whoiswho' ),
+			__( 'Install the free FluentSMTP plugin on the Required plugins screen (press Install, then Activate), then open its settings and connect your email account. A demo does not need email.', 'whoiswho' ),
+			'',
+			'',
+			RequiredPluginsScreen::url(),
+			__( 'Open Required plugins', 'whoiswho' )
 		);
 	}
 
 	/**
-	 * 7. Demo content.
+	 * 7. Spam protection for public forms (optional): Cloudflare Turnstile. The form to enter the keys is on the Setup screen.
 	 *
-	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string}
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
+	 */
+	public static function turnstile(): array {
+		$title = __( 'Spam protection for forms (optional)', 'whoiswho' );
+		if ( TurnstileSettings::active() ) {
+			return self::item(
+				'turnstile',
+				$title,
+				self::OK,
+				TurnstileSettings::from_constants()
+					? __( 'Cloudflare Turnstile is on. Your host set its keys for this site.', 'whoiswho' )
+					: __( 'Cloudflare Turnstile is on for the public forms.', 'whoiswho' )
+			);
+		}
+		return self::item(
+			'turnstile',
+			$title,
+			self::WARN,
+			__( 'The public forms use the built-in spam check (a hidden field and a timer). That is enough for most sites.', 'whoiswho' ),
+			__( 'For stronger protection, create a free Turnstile widget in your Cloudflare dashboard (Turnstile > Add widget, with your site\'s address), then paste its site key and secret key below.', 'whoiswho' )
+		);
+	}
+
+	/**
+	 * 8 and 9. A required plugin (FluentSMTP, wpDiscuz), installed and switched on from Site settings > Required plugins.
+	 *
+	 * @param string $slug Plugin slug.
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
+	 */
+	private static function plugin( string $slug ): array {
+		$plugin = RequiredPlugins::catalogue()[ $slug ];
+		$id     = 'plugin_' . str_replace( '-', '_', $slug );
+		/* translators: %s: plugin name. */
+		$title  = sprintf( __( '%s plugin active', 'whoiswho' ), $plugin['name'] );
+		$status = ( new RequiredPlugins() )->status( $slug );
+		if ( RequiredPlugins::ACTIVE === $status ) {
+			return self::item( $id, $title, self::OK, $plugin['why'], '', '', '', RequiredPluginsScreen::url(), __( 'Open Required plugins', 'whoiswho' ) );
+		}
+		return self::item(
+			$id,
+			$title,
+			self::ERROR,
+			RequiredPlugins::INSTALLED === $status
+				/* translators: %s: plugin name. */
+				? sprintf( __( '%s is installed but not switched on.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why']
+				/* translators: %s: plugin name. */
+				: sprintf( __( '%s is not installed yet.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why'],
+			__( 'Open Site settings > Required plugins in the admin menu and press Install, then Activate. It takes under a minute and needs no file or command.', 'whoiswho' ),
+			'',
+			'',
+			RequiredPluginsScreen::url(),
+			__( 'Open Required plugins', 'whoiswho' )
+		);
+	}
+
+	/**
+	 * 10. Demo content.
+	 *
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */
 	private static function demo(): array {
 		$title = __( 'Demo content (optional)', 'whoiswho' );
 		if ( DemoImport::for_site()->installed() ) {
-			return self::item( 'demo', $title, self::OK, __( 'The demo content is on the site. Everything in it is invented and marked, and one click removes it.', 'whoiswho' ) );
+			return self::item( 'demo', $title, self::OK, __( 'Demo content is on the site. It is marked as sample content, and each part has its own Remove button below. You can import more parts at any time.', 'whoiswho' ) );
 		}
-		return self::item( 'demo', $title, self::WARN, __( 'The site is empty. Import the demo content to see every page filled in, then remove it when you are ready to add real records.', 'whoiswho' ), __( 'Optional: press Import demo content below.', 'whoiswho' ) );
+		return self::item( 'demo', $title, self::WARN, __( 'The site is empty. Import the demo content to see every page filled in, then remove it when you are ready to add real records.', 'whoiswho' ), __( 'Optional: tick the parts you want below and press Import demo content.', 'whoiswho' ) );
 	}
 }

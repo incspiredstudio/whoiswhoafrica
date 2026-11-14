@@ -26,7 +26,7 @@ if ( ! \WhoIsWho\Core\Platform\Requirements::met( PHP_VERSION, get_bloginfo( 've
 	add_action(
 		'admin_notices',
 		static function (): void {
-			echo '<div class="notice notice-error"><p>' . esc_html__( 'WHOISWHO Core needs PHP 8.3 and WordPress 6.5 or newer, so it has not started.', 'whoiswho' ) . '</p></div>';
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'WHOISWHO Core needs PHP 8.3 and WordPress 6.5 or newer, so it has not started. In cPanel, open "Select PHP Version" and choose 8.3 (or ask your host to do it), and update WordPress under Dashboard > Updates.', 'whoiswho' ) . '</p></div>';
 		}
 	);
 	return;

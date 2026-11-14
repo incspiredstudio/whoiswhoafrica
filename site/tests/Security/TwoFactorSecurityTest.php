@@ -1,6 +1,6 @@
 <?php
 /**
- * Two-factor enforcement, recovery codes, lockout and password reset, per staff role (REQ-047). Uses the real Two Factor plugin
+ * Two-factor per staff role (REQ-047): optional and available, never blocking (D-070); recovery codes, lockout and password reset. Uses the real Two Factor plugin
  * and the guard's sign-in protection. Needs the WordPress test suite.
  *
  * @package WhoIsWho
@@ -10,11 +10,11 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Security;
 
-use WhoIsWho\Core\Platform\TwoFactor\Enforcement;
+use WhoIsWho\Core\Platform\TwoFactor\PluginStatus;
 use WhoIsWho\Guard\Login\Login;
 use WhoIsWho\Tests\WpTestCase;
 
-final class TwoFactorEnforcementTest extends WpTestCase {
+final class TwoFactorSecurityTest extends WpTestCase {
 
 	private const PASSWORD = 'Correct-Horse-9-Battery';
 	private const ROLES    = array( 'wiw_reviewer', 'wiw_editor', 'administrator' );
@@ -50,16 +50,15 @@ final class TwoFactorEnforcementTest extends WpTestCase {
 		update_user_meta( $user_id, '_two_factor_totp_key', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567' );
 	}
 
-	public function test_REQ_047_staff_cannot_reach_admin_without_2fa(): void {
-		$enforcement = Enforcement::for_site();
+	public function test_REQ_047_staff_without_2fa_sign_in_and_are_not_blocked(): void {
 		foreach ( self::ROLES as $role ) {
-			$id = $this->staff( $role );
-			foreach ( array( 'index.php', 'edit.php', 'users.php', 'admin.php', 'options-general.php' ) as $page ) {
-				$this->assertSame( Enforcement::ENROL, $enforcement->decide( $id, $page ), "$role on $page" );
-			}
-			$this->assertSame( Enforcement::ALLOW, $enforcement->decide( $id, 'profile.php' ), "$role can still reach the screen where they enrol" );
-			$this->enrol( $id );
-			$this->assertSame( Enforcement::ALLOW, $enforcement->decide( $id, 'index.php' ), "$role after enrolling" );
+			$login = 'tfopt' . substr( md5( $role ), 0, 6 );
+			$id    = $this->staff( $role, $login );
+			$this->assertFalse( ( new PluginStatus() )->is_enrolled( $id ), "$role has no second factor" );
+			$this->assertFalse( \Two_Factor_Core::is_user_using_two_factor( $id ), "$role is not asked for one" );
+			$user = wp_authenticate( $login, self::PASSWORD );
+			$this->assertInstanceOf( \WP_User::class, $user, "$role signs in with the password alone" );
+			$this->assertSame( $id, $user->ID );
 		}
 	}
 
@@ -85,10 +84,6 @@ final class TwoFactorEnforcementTest extends WpTestCase {
 		$this->assertSame( 0, get_current_user_id() );
 		// The next sign-in still goes through the plugin's second step, because the filter is still attached.
 		$this->assertSame( 31, has_filter( 'authenticate', array( \Two_Factor_Core::class, 'filter_authenticate' ) ) );
-		// And a user who has not enrolled is still held at the enrolment screen after a reset.
-		$other = $this->staff( 'wiw_editor', 'tfreset2' );
-		reset_password( get_user_by( 'id', $other ), 'Another-Strong-Pass-8-Word' );
-		$this->assertSame( Enforcement::ENROL, Enforcement::for_site()->decide( $other, 'index.php' ) );
 	}
 
 	public function test_REQ_047_recovery_code_single_use(): void {

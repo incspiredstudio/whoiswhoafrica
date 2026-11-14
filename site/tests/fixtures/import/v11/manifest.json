@@ -1,0 +1,22 @@
+{
+    "contract_version": "1.1",
+    "run_id": "run_v11",
+    "batch_id": "B-v11-fixture",
+    "generated_at": "2026-11-14T09:00:00Z",
+    "pipeline_version": "fixture-1.1",
+    "source_list_version": "fixture-1",
+    "sources": [
+        {
+            "source_id": "src_sample_archive",
+            "name": "Sample Archive"
+        }
+    ],
+    "suppression_snapshot_id": "snap_fixture_1",
+    "record_count": 3,
+    "counts": {
+        "organisation": 1,
+        "individual": 1,
+        "entrepreneur": 1
+    },
+    "records_sha256": "sha256:2f88883960cffcfb90548f976e294487ec788287a9d9fa8f3104956318b4bdcb"
+}

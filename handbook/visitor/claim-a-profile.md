@@ -23,7 +23,7 @@ Claimed is not a fact-check, a trust score or a paid status.
 ## Keeping a claimed profile up to date
 
 1. Staff may create a staff sign-in for the claimant with a limited role, and assign the profile to them.
-2. The claimant signs in with two-factor authentication and sees only their assigned profiles.
+2. The claimant signs in (two-factor sign-in is recommended) and sees only their assigned profiles.
 3. They edit descriptive text, links, contact details and the photograph. They cannot change status, address, the Claimed mark or any label.
 4. Saving sends the change for review. The live profile does not change.
 5. A Reviewer or Administrator, never the author, approves it or returns it with a note. The claimant is emailed either way.

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Platform\Health;
 
 use WhoIsWho\Core\Platform\Jobs\JobRunner;
+use WhoIsWho\Core\Platform\Secrets\SiteKeys;
 
 /**
  * Health endpoint.
@@ -59,7 +60,7 @@ final class HealthEndpoint {
 	 * Endpoint for this site.
 	 */
 	public static function for_site(): self {
-		$token = defined( 'WIW_HEALTHZ_TOKEN' ) ? (string) constant( 'WIW_HEALTHZ_TOKEN' ) : '';
+		$token = SiteKeys::healthz_token();
 		return new self(
 			new HealthCheck(
 				array(

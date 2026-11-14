@@ -1,6 +1,6 @@
 # Requests and reports
 
-Removal requests, profile reports and data-rights requests share one list called Requests and reports. This page explains how to work each kind, and how the permanent suppression list fits in.
+Removal requests, profile reports and data-rights requests share one list, **Review > Requests and reports**. This page explains how to work each kind, and how the permanent suppression list fits in.
 
 ## Who does what
 
@@ -8,8 +8,8 @@ Removal requests, profile reports and data-rights requests share one list called
 |---|---|---|---|
 | Work data requests, removals and reports | Requests and reports | `wiw_handle_requests` | Editor, Administrator |
 | Decide removals | Requests and reports | `wiw_handle_disputes` | Editor, Administrator |
-| View the suppression list | Suppression list | `wiw_view_suppression` | Reviewer, Editor, Administrator |
-| Change the suppression list | Suppression list | `wiw_edit_suppression` | Administrator |
+| View the suppression list | Compliance > Suppression list | `wiw_view_suppression` | Reviewer, Editor, Administrator |
+| Change the suppression list | Compliance > Suppression list | `wiw_edit_suppression` | Administrator |
 
 ## The list
 
@@ -39,9 +39,19 @@ The two-day target applies to a valid request from the subject or their represen
 
 ## Handle a data request
 
-1. Open the request. It has a due date.
-2. Fulfil it using the WordPress Privacy tools for access and erasure, or by hand for the other rights.
-3. Close it once fulfilled.
+1. Open the request. It has a due date. Check that the requester's email is confirmed: until they open the single-use link, the item shows "email not confirmed".
+2. Fulfil it:
+
+| Right | What to do |
+|---|---|
+| Access or portability (a copy of their data) | Open **Tools > Export Personal Data**, enter the requester's email, press **Send Request**. When it is confirmed, choose **Download personal data** and send the file to the requester. The export covers WHOISWHO's own records (enquiries, nominations, newsletter, requests) and comments. |
+| Erasure | Open **Tools > Erase Personal Data**, enter the email, press **Send Request**. When it is confirmed, choose **Erase personal data**. If the person also has a profile, handle that as a removal (above). |
+| Correction of their own data | Edit the record they name, with the request reference as the reason |
+| Objection | Stop the processing they object to (for example, unsubscribe them from the newsletter), and note what you did |
+
+The WordPress privacy tools under **Tools** open to Administrators only, so an Editor hands access and erasure requests to an Administrator.
+
+3. Close the request once fulfilled. Note what you did without copying personal data into the note.
 
 When a subject asks for their profile status, view count, sources or enquiries, staff send it from data they already see, and each such request is logged.
 

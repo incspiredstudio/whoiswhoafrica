@@ -50,6 +50,41 @@ final class LegalPagesSeedTest extends TestCase {
 		}
 		wp_set_current_user( 0 );
 		delete_option( SettingsService::OPTION_PREFIX . SettingsService::POLICY_VERSION );
+		delete_option( LegalPages::PRIVACY_OPTION );
+	}
+
+	public function test_REQ_100_a_new_privacy_page_becomes_the_wordpress_privacy_policy_page(): void {
+		( new LegalPages() )->ensure();
+		$this->assertSame( get_page_by_path( 'privacy' )->ID, (int) get_option( LegalPages::PRIVACY_OPTION ) );
+	}
+
+	public function test_REQ_100_wordpress_own_unpublished_privacy_draft_is_replaced(): void {
+		$draft = (int) wp_insert_post(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'draft',
+				'post_title'  => 'Privacy Policy',
+				'post_name'   => 'about-us',
+			)
+		);
+		update_option( LegalPages::PRIVACY_OPTION, $draft );
+		( new LegalPages() )->ensure();
+		$this->assertSame( get_page_by_path( 'privacy' )->ID, (int) get_option( LegalPages::PRIVACY_OPTION ) );
+		wp_delete_post( $draft, true );
+	}
+
+	public function test_REQ_100_a_privacy_policy_page_a_person_chose_is_kept(): void {
+		$chosen = (int) wp_insert_post(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'About us',
+				'post_name'   => 'about-us',
+			)
+		);
+		update_option( LegalPages::PRIVACY_OPTION, $chosen );
+		( new LegalPages() )->ensure();
+		$this->assertSame( $chosen, (int) get_option( LegalPages::PRIVACY_OPTION ) );
 	}
 
 	public function test_REQ_100_terms_and_privacy_pages_exist_and_are_published(): void {

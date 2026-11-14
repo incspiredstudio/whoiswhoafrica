@@ -140,8 +140,18 @@ final class FieldValidator {
 				}
 				return true;
 			default:
-				return is_string( $value ) && '' !== trim( $value ) && strlen( $value ) <= $max;
+				// The max counts characters, not bytes, so a text in any script gets the same room (contract 1.1).
+				return is_string( $value ) && '' !== trim( $value ) && 1 === preg_match( '//u', $value ) && self::length( $value ) <= $max;
 		}
+	}
+
+	/**
+	 * Length of a UTF-8 string in characters.
+	 *
+	 * @param string $value Valid UTF-8 text.
+	 */
+	private static function length( string $value ): int {
+		return function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : (int) preg_match_all( '/./us', $value );
 	}
 
 	/**

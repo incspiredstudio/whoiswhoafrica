@@ -1,0 +1,22 @@
+# Normalise text to LF in the repository and in every checkout, so Windows
+# checkouts do not fail phpcs on CRLF line endings.
+* text=auto eol=lf
+
+# Binary files: never touch line endings, never diff as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.zip   binary
+*.gz    binary
+*.mp4   binary
+*.webm  binary
+*.pdf   binary

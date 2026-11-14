@@ -77,7 +77,7 @@ final class NominationService {
 	/**
 	 * Add an existing profile to the nominations. It starts Nominated and Not live, source staff.
 	 *
-	 * @param int    $profile_id    Existing profile (reviewed or pending review).
+	 * @param int    $profile_id    Existing profile (reviewed, pending review, or in the review queue; only a reviewed one can later go Live).
 	 * @param int    $category_id   Category.
 	 * @param string $note          Optional note.
 	 * @param string $contact_email Optional staff-only Contact email.
@@ -88,8 +88,8 @@ final class NominationService {
 	public function add_profile( int $profile_id, int $category_id, string $note = '', string $contact_email = '' ): int {
 		$this->require_cap();
 		$state = ( $this->profile_state )( $profile_id );
-		if ( ! in_array( $state, array( PubState::PUBLISHED_REVIEWED, PubState::PUBLISHED_PENDING ), true ) ) {
-			throw new \DomainException( 'Choose an existing reviewed or pending-review profile.' );
+		if ( ! in_array( $state, array( PubState::PUBLISHED_REVIEWED, PubState::PUBLISHED_PENDING, PubState::IMPORTED_NOT_PUBLIC ), true ) ) {
+			throw new \DomainException( 'Choose an existing profile that is reviewed, pending review or in the review queue.' );
 		}
 		global $wpdb;
 		$archived = $wpdb->get_var( $wpdb->prepare( 'SELECT archived FROM ' . AwardsTables::table( AwardsTables::CATEGORIES ) . ' WHERE id = %d', $category_id ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.

@@ -17,7 +17,7 @@ The module that owns profiles: what a profile is, which fields it may hold, how 
 | `wiw_profile` | Custom post type | No archive, no feed, no REST, excluded from core search. URLs are served by the plugin's own rewrite and handler. The post holds name and slug. Fields are post meta registered from an allowlist per entity type |
 | `wiw_industry`, `wiw_sector`, `wiw_profession`, `wiw_org_type` | Taxonomies | Controlled lists. Editors and Administrators add terms in WordPress's native term screens. Reviewers only assign existing terms |
 | `wiw_place` | Hierarchical taxonomy | Countries at the top (Nigeria first, then other African countries and pan-African bodies), cities beneath, ISO code as term meta |
-| `wiw_profile_state` | Table | One row per profile: publication state, entity type, origin (import, customer, complimentary, nominee), source, import batch, content hash, reviewer and review date, claimed flag and date, assigned user. Indexed for the source, batch, type and state filters |
+| `wiw_profile_state` | Table | One row per profile: publication state, entity type, origin (import, customer, complimentary, nominee, manual), source, import batch, content hash, reviewer and review date, claimed flag and date, assigned user. Indexed for the source, batch, type and state filters |
 | `wiw_profile_versions` | Table | Append-only snapshots with author (empty for import), how it was created, reason and time |
 | `wiw_field_provenance` | Table | For every field: source URL, retrieval date, confidence, method, source hash |
 | `wiw_profile_search` | Table | Flattened FULLTEXT index built from public states only |
@@ -32,6 +32,7 @@ The state table in the earlier design also held trust and sponsored columns. The
 | Profiles list | Filter and group by source, import batch, type, state, origin and name; shows what visitors currently see for each row (page, gone, not public). Hosts the bulk unpublish action owned by Review |
 | Profile screen | Status and marks, direct edit with a required reason, assign terms, fields with their sources, claim and assigned user (Trust), arrangements (read-only), contact and enquiry switches, public URL, source sync, history, internal notes |
 | Sources | Read-only list of sources with profile count, last import, errors and removals, linking to the Profiles list filtered by that source. No add, edit, approve or reject exists |
+| Add profile | Directory > Add profile (`wiw_add_profile`). Staff add a profile by hand: entity type first, then that type's fields from the allowlist, country, the four sections (Bio, Achievement, Influence, Legacy), an optional photo or logo from the media library with an open licence, credit and source, and at least one source URL. Possible duplicates (same type and a close normalised name, or the same Wikidata id or registration number) are listed before saving, with a "create anyway" confirmation; a suppressed name is refused. The profile starts Imported not public (origin `manual`, the creator recorded as importer so they cannot approve it), each field gets a provenance row with method `manual`, and the creation is audited (`profile.create`). Opened from the Nominations "Create profile" shortcut, it returns there after saving |
 | Create profile for a customer | Starts a profile for a customer or complimentary listing. It enters review and is not public until approved |
 | Taxonomy term screens | Native WordPress. Not custom |
 
@@ -44,6 +45,7 @@ The state table in the earlier design also held trust and sponsored columns. The
 | `assign_terms` | Core | yes | yes | yes |
 | `manage_terms`, `edit_terms`, `delete_terms` | Core | no | yes | yes |
 | `wiw_view_sources` | Plugin | yes | yes | yes |
+| `wiw_add_profile` | Plugin | no | yes | yes (grantable) |
 | `wiw_receive_enquiries` | Plugin | no | no | yes (grantable) |
 
 ## Public read models and endpoints

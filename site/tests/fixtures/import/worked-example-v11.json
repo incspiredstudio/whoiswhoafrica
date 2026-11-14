@@ -1,0 +1,128 @@
+{
+  "contract_version": "1.1",
+  "record_id": "rec_ind_0002",
+  "record_version": 1,
+  "run_id": "run_20261114_a",
+  "batch_id": "B2",
+  "entity_type": "individual",
+  "tier": "T3",
+  "country": "GH",
+  "external_ids": {},
+  "inclusion": {
+    "criterion_code": "HIST",
+    "evidence_url": "https://archive.example/people/ama-sample"
+  },
+  "fields": {
+    "name": {
+      "value": "Ama Sample",
+      "provenance": [
+        {
+          "source_id": "src_sample_archive",
+          "source_url": "https://archive.example/people/ama-sample",
+          "retrieved_at": "2026-11-12T09:00:00Z",
+          "confidence": "high",
+          "method": "api",
+          "source_hash": "sha256:5d41402abc4b2a76b9719d911017c592ae2b9c27a1e3a0f2c1b0c7b1f1e5a6b7"
+        }
+      ]
+    },
+    "lifespan": {
+      "value": "1924–2013",
+      "provenance": [
+        {
+          "source_id": "src_sample_archive",
+          "source_url": "https://archive.example/people/ama-sample",
+          "retrieved_at": "2026-11-12T09:00:00Z",
+          "confidence": "medium",
+          "method": "api",
+          "source_hash": "sha256:5d41402abc4b2a76b9719d911017c592ae2b9c27a1e3a0f2c1b0c7b1f1e5a6b7"
+        }
+      ]
+    },
+    "field": {
+      "value": "Music",
+      "provenance": [
+        {
+          "source_id": "src_sample_archive",
+          "source_url": "https://archive.example/people/ama-sample",
+          "retrieved_at": "2026-11-12T09:00:00Z",
+          "confidence": "medium",
+          "method": "api",
+          "source_hash": "sha256:5d41402abc4b2a76b9719d911017c592ae2b9c27a1e3a0f2c1b0c7b1f1e5a6b7"
+        }
+      ]
+    },
+    "bio": {
+      "value": "Ama Sample was a fictional singer and bandleader.\n\nShe led a sample orchestra for thirty years.",
+      "provenance": [
+        {
+          "source_id": "src_sample_archive",
+          "source_url": "https://archive.example/people/ama-sample",
+          "retrieved_at": "2026-11-12T10:00:00Z",
+          "confidence": "medium",
+          "method": "ai",
+          "source_hash": "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+        }
+      ]
+    },
+    "legacy": {
+      "value": "Her recordings remain in the sample archive.",
+      "provenance": [
+        {
+          "source_id": "src_sample_archive",
+          "source_url": "https://archive.example/people/ama-sample",
+          "retrieved_at": "2026-11-12T10:00:00Z",
+          "confidence": "medium",
+          "method": "ai",
+          "source_hash": "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+        }
+      ]
+    }
+  },
+  "claims": [],
+  "passages": [],
+  "images": [
+    {
+      "image_id": "photo-1",
+      "file": "images/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg",
+      "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "mime_type": "image/jpeg",
+      "width": 800,
+      "height": 1000,
+      "kind": "photo",
+      "source_url": "https://images.example/file/ama-sample.jpg",
+      "retrieved_at": "2026-11-12T09:05:00Z",
+      "creator": "Sample Photographer",
+      "licence": "CC-BY-SA-4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution_text": "Sample Photographer, CC BY-SA 4.0"
+    }
+  ],
+  "ai": {
+    "ai_assisted": true,
+    "model": "sample-model",
+    "prompt_version": "reword-v1"
+  },
+  "flags": {
+    "probable_duplicate": false,
+    "duplicate_of": [],
+    "flag_reasons": []
+  },
+  "verification": {
+    "run_id": "run_20261114_a",
+    "verified_at": "2026-11-12T11:00:00Z",
+    "checks": {
+      "approved_source": "pass",
+      "source_url_ok": "pass",
+      "exact_quotes": "pass",
+      "allowlisted_fields": "pass",
+      "sensitive_scan": "pass",
+      "suppression": "pass",
+      "duplicates": "clear"
+    },
+    "claims_kept": 0,
+    "claims_dropped": 0,
+    "fields_dropped": []
+  },
+  "content_hash": "sha256:54971f5bc3a2905ffbd898f0ff86dd9847e6015a7d6d820096a8e063ee75fe49"
+}

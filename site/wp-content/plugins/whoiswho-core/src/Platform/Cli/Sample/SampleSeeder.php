@@ -34,6 +34,7 @@ use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Cli\Output;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
+use WhoIsWho\Core\Platform\Setup\SampleBundle;
 use WhoIsWho\Core\Review\StateMachine;
 
 /**
@@ -103,14 +104,30 @@ final class SampleSeeder {
 	private array $created = array();
 
 	/**
+	 * The sample profiles shipped with the plugin, used instead of the invented ones when present.
+	 *
+	 * @var SampleBundle|null
+	 */
+	private ?SampleBundle $bundle;
+
+	/**
+	 * Where the bundle import stopped in this batch, when it ran.
+	 *
+	 * @var int|null
+	 */
+	private ?int $bundle_cursor = null;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param array<string, mixed> $data  The dataset.
-	 * @param int                  $actor Staff user id (an Administrator).
+	 * @param array<string, mixed> $data   The dataset.
+	 * @param int                  $actor  Staff user id (an Administrator).
+	 * @param SampleBundle|null    $bundle The shipped sample profiles; when it holds a bundle, the Profiles step imports it instead of the invented profiles.
 	 */
-	public function __construct( array $data, int $actor ) {
+	public function __construct( array $data, int $actor, ?SampleBundle $bundle = null ) {
 		$this->data     = $data;
 		$this->actor    = $actor;
+		$this->bundle   = null !== $bundle && $bundle->available() ? $bundle : null;
 		$this->audit    = AuditLogger::for_site();
 		$this->registry = SampleMarker::registry();
 	}
@@ -154,7 +171,7 @@ final class SampleSeeder {
 	/**
 	 * The steps, in order. Each is safe to repeat; the setup screen runs them a batch at a time (see Setup\DemoImport).
 	 */
-	public const STEPS = array( 'terms', 'profiles', 'stories', 'events', 'images', 'awards', 'curation', 'pages', 'settings' );
+	public const STEPS = array( 'terms', 'profiles', 'stories', 'comments', 'events', 'images', 'awards', 'curation', 'pages', 'settings' );
 
 	/**
 	 * How many units of work a step has, so a caller can run it in batches and show progress.
@@ -167,8 +184,9 @@ final class SampleSeeder {
 		$events   = count( (array) $this->data['events'] );
 		switch ( $step ) {
 			case 'profiles':
-				return $profiles;
+				return null === $this->bundle ? $profiles : max( 1, $this->bundle->total() );
 			case 'stories':
+			case 'comments':
 				return $stories;
 			case 'events':
 				return $events;
@@ -216,6 +234,9 @@ final class SampleSeeder {
 			case 'stories':
 				$this->stories( $offset, $limit );
 				break;
+			case 'comments':
+				SampleComments::make( $this->data, $offset, $limit, $this->created );
+				break;
 			case 'events':
 				$this->events( $offset, $limit );
 				break;
@@ -239,6 +260,9 @@ final class SampleSeeder {
 		if ( 'settings' === $step ) {
 			flush_rewrite_rules( false );
 		}
+		if ( 'profiles' === $step && null !== $this->bundle_cursor ) {
+			return max( $this->bundle_cursor, $offset + 1 );
+		}
 		return $offset + $limit;
 	}
 
@@ -252,6 +276,45 @@ final class SampleSeeder {
 			$this->profile_ids[ $key ] = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE ) ?? 0;
 		}
 		return $this->profile_ids[ $key ];
+	}
+
+	/**
+	 * The profile an award nomination or a home page pin uses for a sample key. It is always an invented profile, never one of
+	 * the shipped sample profiles: those are real people and organisations, and the demo's awards, citations and home page picks
+	 * are invented, so they must not name anyone real. When the shipped profiles replaced the invented ones, a few invented
+	 * stand-ins (STAND_INS of them) are created here for the awards and the home page; other keys are skipped.
+	 *
+	 * @param string $key Sample key.
+	 */
+	private function linked_profile_id( string $key ): int {
+		$id = $this->profile_id( $key );
+		if ( $id > 0 || null === $this->bundle || ! in_array( $key, $this->stand_in_keys(), true ) ) {
+			return $id;
+		}
+		foreach ( (array) $this->data['profiles'] as $row ) {
+			if ( (string) $row['key'] === $key ) {
+				return $this->invent_profile( (array) $row, new StateMachine(), new ProfileFields(), new ProvenanceRepository() );
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * How many invented stand-in profiles the awards and the home page use when the shipped sample profiles are imported.
+	 */
+	public const STAND_INS = 8;
+
+	/**
+	 * The invented profile keys used as stand-ins: the home page pins first, then the nominees, at most STAND_INS.
+	 *
+	 * @return string[]
+	 */
+	private function stand_in_keys(): array {
+		$keys = array_map( 'strval', (array) $this->data['pin_profiles'] );
+		foreach ( (array) $this->data['nominations'] as $row ) {
+			$keys[] = (string) $row['profile'];
+		}
+		return array_slice( array_values( array_unique( $keys ) ), 0, self::STAND_INS );
 	}
 
 	/**
@@ -357,66 +420,91 @@ final class SampleSeeder {
 	 * @throws \RuntimeException When a sample item cannot be created.
 	 */
 	private function profiles( int $offset, int $limit ): void {
+		if ( null !== $this->bundle ) {
+			$before              = count( SampleBundle::public_profile_ids() );
+			$this->bundle_cursor = $this->bundle->run( $this->actor, $limit );
+			$made                = count( SampleBundle::public_profile_ids() ) - $before;
+			if ( $made > 0 ) {
+				$this->created['profiles'] = ( $this->created['profiles'] ?? 0 ) + $made;
+			}
+			return;
+		}
 		$machine    = new StateMachine();
 		$fields     = new ProfileFields();
 		$provenance = new ProvenanceRepository();
 		foreach ( array_slice( (array) $this->data['profiles'], $offset, $limit ) as $row ) {
-			$key = (string) $row['key'];
-			$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
-			if ( null !== $id ) {
-				$this->profile_ids[ $key ] = $id;
-				continue;
-			}
-			$id = wp_insert_post(
-				array(
-					'post_type'   => ProfileType::POST_TYPE,
-					'post_status' => ProfileType::STATUS_HIDDEN,
-					'post_title'  => (string) $row['name'],
-					'post_name'   => (string) $row['slug'],
-				),
-				true
-			);
-			if ( is_wp_error( $id ) || (int) $id < 1 ) {
-				throw new \RuntimeException( 'A sample profile could not be created.' );
-			}
-			$id = (int) $id;
-			SampleMarker::mark_post( $id, 'profile:' . $key );
+			$this->invent_profile( (array) $row, $machine, $fields, $provenance );
+		}
+	}
+
+	/**
+	 * Create one invented profile through the state machine, once: an existing one is reused.
+	 *
+	 * @param array<string, mixed> $row        Sample row.
+	 * @param StateMachine         $machine    State machine.
+	 * @param ProfileFields        $fields     Field store.
+	 * @param ProvenanceRepository $provenance Provenance.
+	 * @return int The profile id.
+	 * @throws \RuntimeException When the profile cannot be created.
+	 */
+	private function invent_profile( array $row, StateMachine $machine, ProfileFields $fields, ProvenanceRepository $provenance ): int {
+		$key = (string) $row['key'];
+		$id  = SampleMarker::find_post( 'profile:' . $key, ProfileType::POST_TYPE );
+		if ( null !== $id ) {
 			$this->profile_ids[ $key ] = $id;
-			$state                     = (string) $row['state'];
-			$start                     = in_array( $state, array( 'rejected', 'imported', 'removed' ), true ) ? PubState::IMPORTED_NOT_PUBLIC : PubState::PUBLISHED_PENDING;
-			$machine->enter(
-				$id,
-				$start,
-				array(
-					'entity_type' => (string) $row['type'],
-					'origin'      => 'import',
-					'source'      => 'sample',
-				)
-			);
-			$values = (array) $row['fields'];
-			if ( isset( $row['industry'] ) ) {
-				$values['industry'] = (string) $row['industry'];
+			return $id;
+		}
+		$id = wp_insert_post(
+			array(
+				'post_type'   => ProfileType::POST_TYPE,
+				'post_status' => ProfileType::STATUS_HIDDEN,
+				'post_title'  => (string) $row['name'],
+				'post_name'   => (string) $row['slug'],
+			),
+			true
+		);
+		if ( is_wp_error( $id ) || (int) $id < 1 ) {
+			throw new \RuntimeException( 'A sample profile could not be created.' );
+		}
+		$id = (int) $id;
+		SampleMarker::mark_post( $id, 'profile:' . $key );
+		$this->profile_ids[ $key ] = $id;
+		$state                     = (string) $row['state'];
+		$start                     = in_array( $state, array( 'rejected', 'imported', 'removed' ), true ) ? PubState::IMPORTED_NOT_PUBLIC : PubState::PUBLISHED_PENDING;
+		$machine->enter(
+			$id,
+			$start,
+			array(
+				'entity_type' => (string) $row['type'],
+				'origin'      => 'import',
+				'source'      => 'sample',
+			)
+		);
+		$values = (array) $row['fields'];
+		if ( isset( $row['industry'] ) ) {
+			$values['industry'] = (string) $row['industry'];
+		}
+		foreach ( $values as $name => $value ) {
+			$fields->set( $id, (string) $name, $value );
+			if ( 'name' !== $name ) {
+				// A fact shows publicly only with a source; this one is an invented address.
+				$provenance->record(
+					$id,
+					array(
+						'field'        => (string) $name,
+						'source_url'   => 'https://example.net/sample-sources/' . (string) $row['slug'],
+						'retrieved_at' => gmdate( 'Y-m-d H:i:s' ),
+						'confidence'   => 'high',
+						'method'       => 'manual',
+					)
+				);
 			}
-			foreach ( $values as $name => $value ) {
-				$fields->set( $id, (string) $name, $value );
-				if ( 'name' !== $name ) {
-					// A fact shows publicly only with a source; this one is an invented address.
-					$provenance->record(
-						$id,
-						array(
-							'field'        => (string) $name,
-							'source_url'   => 'https://example.net/sample-sources/' . (string) $row['slug'],
-							'retrieved_at' => gmdate( 'Y-m-d H:i:s' ),
-							'confidence'   => 'high',
-							'method'       => 'manual',
-						)
-					);
-				}
-			}
-			$this->attach_terms( $id, $row );
-			$this->settle( $machine, $id, $state );
-			$this->count( 'profiles' );
-		}//end foreach
+		}
+		$this->attach_terms( $id, $row );
+		$this->settle( $machine, $id, $state );
+		SampleMarker::seal_post( $id );
+		$this->count( 'profiles' );
+		return $id;
 	}
 
 	/**
@@ -536,6 +624,7 @@ final class SampleSeeder {
 					gmdate( 'Y-m-d', time() + ( (int) $row['sponsor']['end'] ) * DAY_IN_SECONDS )
 				);
 			}
+			SampleMarker::seal_post( $id );
 			$this->count( 'stories' );
 		}//end foreach
 	}
@@ -600,6 +689,7 @@ final class SampleSeeder {
 			if ( is_array( $industry ) && taxonomy_exists( Taxonomies::INDUSTRY ) ) {
 				wp_set_object_terms( $id, array( (int) $industry['term_id'] ), Taxonomies::INDUSTRY );
 			}
+			SampleMarker::seal_post( $id );
 			$this->count( 'events' );
 		}//end foreach
 		if ( $offset + $limit < count( (array) $this->data['events'] ) ) {
@@ -684,7 +774,7 @@ final class SampleSeeder {
 				if ( isset( $noms[ $key ] ) && null !== $service->find( (int) $noms[ $key ] ) ) {
 					continue;
 				}
-				$profile  = $this->profile_id( (string) $row['profile'] );
+				$profile  = $this->linked_profile_id( (string) $row['profile'] );
 				$category = (int) ( $ids[ (string) $row['category'] ] ?? 0 );
 				if ( $profile < 1 || $category < 1 ) {
 					continue;
@@ -707,7 +797,7 @@ final class SampleSeeder {
 	private function curation(): void {
 		$settings = new CurationSettings( $this->audit );
 		$pins     = array(
-			CurationSettings::ON_THE_RECORD => array_values( array_filter( array_map( fn ( $key ) => $this->profile_id( (string) $key ), (array) $this->data['pin_profiles'] ) ) ),
+			CurationSettings::ON_THE_RECORD => array_values( array_unique( array_filter( array_map( fn ( $key ) => $this->linked_profile_id( (string) $key ), (array) $this->data['pin_profiles'] ) ) ) ),
 			CurationSettings::STORIES_HOME  => array_values( array_filter( array_map( fn ( $key ) => $this->story_id( (string) $key ), (array) $this->data['pin_stories'] ) ) ),
 		);
 		foreach ( $pins as $block => $pinned ) {
@@ -724,6 +814,8 @@ final class SampleSeeder {
 				),
 				'Sample data'
 			);
+			// What the demo set, so removal can tell whether a person changed it since.
+			$this->registry['set'][ 'curation:' . $block ] = get_option( $option, null );
 		}
 	}
 
@@ -785,6 +877,7 @@ final class SampleSeeder {
 			throw new \RuntimeException( 'A sample page could not be created.' );
 		}
 		SampleMarker::mark_post( (int) $id, 'page:' . $slug );
+		SampleMarker::seal_post( (int) $id );
 		$this->count( 'pages' );
 		return (int) $id;
 	}
@@ -794,12 +887,17 @@ final class SampleSeeder {
 	 */
 	private function legal_pages(): void {
 		$before = $this->existing_slugs();
+		if ( ! array_key_exists( 'option:' . LegalPages::PRIVACY_OPTION, (array) ( $this->registry['prev'] ?? array() ) ) ) {
+			// LegalPages sets WordPress's privacy policy page when it creates the privacy page; removal puts this value back.
+			$this->registry['prev'][ 'option:' . LegalPages::PRIVACY_OPTION ] = get_option( LegalPages::PRIVACY_OPTION, null );
+		}
 		( new LegalPages() )->ensure();
 		foreach ( array_diff( $this->existing_slugs(), $before ) as $slug ) {
 			$page = get_page_by_path( $slug, OBJECT, 'page' );
 			if ( $page instanceof \WP_Post ) {
 				SampleMarker::mark_post( $page->ID, 'page:' . $slug );
 				update_post_meta( $page->ID, '_wiw_draft_legal', '1' );
+				SampleMarker::seal_post( $page->ID );
 				$this->count( 'pages' );
 			}
 		}

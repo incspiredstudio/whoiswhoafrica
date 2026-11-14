@@ -42,6 +42,16 @@ test.describe("home motion (REQ-043, REQ-041)", () => {
     await page.goto("/");
     const stories = page.locator(".h-stories");
     test.skip((await stories.count()) === 0, "no stories on this site");
+    // The section pins only when its track is wider than the screen; a short track would pin a screen of empty space.
+    const overflows = await stories.evaluate((n) => {
+      const wrap = n.querySelector(".h-track")?.parentElement;
+      return !!wrap && wrap.scrollWidth > wrap.clientWidth + 1;
+    });
+    if (!overflows) {
+      await expect(stories).not.toHaveClass(/is-pinned/);
+      await assertNoHorizontalScroll(page);
+      return;
+    }
     await expect(stories).toHaveClass(/is-pinned/);
     const height = await stories.evaluate((n) => n.getBoundingClientRect().height);
     expect(height).toBeGreaterThanOrEqual(800);

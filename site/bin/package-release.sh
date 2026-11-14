@@ -13,7 +13,8 @@
 # No tests, dev tools, .env files, wp-config or secrets go in. The page cache plugin (WP Super Cache) is optional and is not bundled
 # (it must live in wp-content/plugins/wp-super-cache; see INSTALL.md).
 # Needs: tar, php with the zip extension, and (unless --skip-assets) node. Run "composer install" and "npm ci" first.
-# Environment: WIW_PHP names the php command (default "php").
+# Environment: WIW_PHP names the php command (default "php"). SAMPLE_BUNDLE=<path to sample-50.zip> (optional) puts the demo
+# profiles into the plugin zip under sample/; without it the plugin has no sample folder and the demo uses invented profiles.
 # Exit codes: 0 built, 1 a rule failed, 2 bad usage.
 
 set -euo pipefail
@@ -75,6 +76,8 @@ copy_tree() {
 # The core plugin and the third-party plugin code it loads from bundled/ (Platform\ThirdParty).
 copy_tree "$PLUGINS/whoiswho-core" "$STAGE/whoiswho-core"
 rm -rf "$STAGE/whoiswho-core/bundled"
+# The demo profiles (REQ-208): only the bundle named by SAMPLE_BUNDLE goes in, never a local sample/ folder.
+bash "$SOURCE/deploy/add-sample-bundle.sh" "$STAGE/whoiswho-core" || fail "SAMPLE_BUNDLE could not be added"
 for slug in action-scheduler two-factor user-role-editor; do
 	copy_tree "$PLUGINS/$slug" "$STAGE/whoiswho-core/bundled/$slug"
 done

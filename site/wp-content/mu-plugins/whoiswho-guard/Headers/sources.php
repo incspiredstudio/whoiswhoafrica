@@ -9,11 +9,12 @@
 declare(strict_types=1);
 
 return array(
-	'script-src'  => array(),
+	// Cloudflare Turnstile (REQ-081): its script and its challenge frame, used only once the Administrator saves both keys.
+	'script-src'  => array( 'https://challenges.cloudflare.com' ),
 	'style-src'   => array(),
 	'img-src'     => array(),
 	'font-src'    => array(),
 	'connect-src' => array(),
-	'frame-src'   => array(),
+	'frame-src'   => array( 'https://challenges.cloudflare.com' ),
 	'media-src'   => array(),
 );

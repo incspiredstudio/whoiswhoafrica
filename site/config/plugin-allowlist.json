@@ -14,6 +14,18 @@
       "docs": "docs/plugins/third-party.md"
     },
     {
+      "package": "wpackagist-plugin/fluent-smtp",
+      "version": "2.4.5",
+      "reason": "Required. Sends the site's email through the owner's mail account (docs/plugins/third-party.md: Mail delivery; REQ-075). Installed by the Administrator from wordpress.org on the Required plugins screen (whoiswho-core), not through the lockfile; the version is the one tested. Holds the SMTP account details in its own option and, unless switched off, keeps a log of sent mail in its own table.",
+      "docs": "docs/plugins/third-party.md"
+    },
+    {
+      "package": "wpackagist-plugin/wpdiscuz",
+      "version": "7.7.0",
+      "reason": "Required. The comment form on stories (docs/plugins/third-party.md: Story comments; REQ-258, D-059). Installed by the Administrator from wordpress.org on the Required plugins screen, not through the lockfile; the version is the one tested. whoiswho-core forces its settings to the comment rules (Content/Comments/WpdiscuzSettings) and exports and erases its subscription and follow tables (CommentPrivacy).",
+      "docs": "docs/plugins/third-party.md"
+    },
+    {
       "package": "wpackagist-plugin/user-role-editor",
       "version": "4.67",
       "reason": "Per-user capability and role screen (docs/plugins/third-party.md: Per-user capability screen, Decided Q86; owner approved on issue #2). Limited to wiw_manage_capabilities (Administrator only), loaded by whoiswho-core; the guard still refuses fixed capabilities. Touches no visitor data.",

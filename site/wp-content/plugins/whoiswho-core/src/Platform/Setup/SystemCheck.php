@@ -52,22 +52,22 @@ final class SystemCheck {
 			);
 		}
 		foreach ( array(
-			'mbstring' => __( 'The PHP "mbstring" extension is missing.', 'whoiswho' ),
-			'json'     => __( 'The PHP "json" extension is missing.', 'whoiswho' ),
+			'mbstring' => __( 'A standard part of the server software, the PHP "mbstring" extension, is switched off.', 'whoiswho' ),
+			'json'     => __( 'A standard part of the server software, the PHP "json" extension, is switched off.', 'whoiswho' ),
 		) as $extension => $message ) {
 			if ( ! in_array( $extension, $extensions, true ) ) {
 				$out[] = array(
 					'id'      => 'ext-' . $extension,
 					'message' => $message,
-					'fix'     => __( 'Ask your host to switch it on (it is a standard PHP extension), then reload this page.', 'whoiswho' ),
+					'fix'     => __( 'In cPanel, open "Select PHP Version" (or "PHP Extensions") and tick it. Or ask your host to switch it on. Then reload this page.', 'whoiswho' ),
 				);
 			}
 		}
 		if ( $sqlite ) {
 			$out[] = array(
 				'id'      => 'sqlite',
-				'message' => __( 'This site uses a SQLite database. The plugin needs MySQL or MariaDB, because it relies on database triggers.', 'whoiswho' ),
-				'fix'     => __( 'Create the site on a host or local tool that gives you a MySQL or MariaDB database, then install again.', 'whoiswho' ),
+				'message' => __( 'This site stores its data in a kind of database (SQLite) that the plugin cannot work with. It needs a MySQL or MariaDB database, which almost every web host provides.', 'whoiswho' ),
+				'fix'     => __( 'Set the site up on a web host that gives you a MySQL or MariaDB database: cPanel hosts do, and their one-click WordPress installer uses one. Tools that run WordPress on SQLite, such as WordPress Studio and WordPress Playground, are not supported. Then install WordPress there and upload the plugin again.', 'whoiswho' ),
 			);
 		}
 		return $out;
@@ -112,8 +112,8 @@ final class SystemCheck {
 		}
 		return array(
 			'id'      => 'triggers',
-			'message' => __( 'The database would not let the plugin create tables with triggers.', 'whoiswho' ),
-			'fix'     => __( 'The database user needs the CREATE and TRIGGER permissions (ask your host, or tick them in the database section of your control panel), and the database must be MySQL or MariaDB.', 'whoiswho' ),
+			'message' => __( 'The database did not allow the plugin to create the tables it needs.', 'whoiswho' ),
+			'fix'     => __( 'In your host\'s control panel, open the database section (in cPanel: MySQL Databases), find the user this site uses and give it ALL PRIVILEGES on the site\'s database. Or ask your host to do it: say the database user needs permission to create tables and triggers. The database must be MySQL or MariaDB.', 'whoiswho' ),
 		);
 	}
 }

@@ -17,6 +17,13 @@ function wiw_story_comments_region(): void {
 	if ( $post_id < 1 || ! is_singular( 'post' ) ) {
 		return;
 	}
+	// With the wpDiscuz plugin active, its form and thread take the region (REQ-258); the plugin sets wpDiscuz to the site's rules.
+	if ( class_exists( 'WpdiscuzCore' ) ) {
+		echo '<section class="section comments" aria-label="' . esc_attr__( 'Comments', 'whoiswho' ) . '"><div class="wrap wrap--text">';
+		comments_template();
+		echo '</div></section>';
+		return;
+	}
 	get_template_part( 'template-parts/comments', null, array( 'post_id' => $post_id ) );
 }
 add_action( 'wiw_story_comments', 'wiw_story_comments_region' );

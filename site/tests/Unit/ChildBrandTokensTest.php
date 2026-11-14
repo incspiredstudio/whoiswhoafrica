@@ -112,23 +112,53 @@ final class ChildBrandTokensTest extends TestCase {
 	}
 
 	public function test_REQ_042_the_brand_pattern_tile_is_webp_and_small_and_the_tokens_point_at_it(): void {
-		$tile = $this->child() . '/assets/brand/pattern-tile.webp';
+		$tile = $this->child() . '/assets/brand/pattern-marks.webp';
 		$this->assertFileExists( $tile );
-		$this->assertFileDoesNotExist( $this->child() . '/assets/brand/pattern-tile.png', 'the PNG original of the tile is replaced by the WebP' );
 		$head = (string) file_get_contents( $tile, false, null, 0, 12 ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		$this->assertSame( 'RIFF', substr( $head, 0, 4 ), 'a real RIFF/WebP file' );
 		$this->assertSame( 'WEBP', substr( $head, 8, 4 ), 'a real RIFF/WebP file' );
 		$this->assertLessThan( 30 * 1024, (int) filesize( $tile ), 'the tile is repeated on many pages, so it stays under 30 KB' );
-		$this->assertStringContainsString( 'pattern-tile.webp', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-		$this->assertStringContainsString( 'pattern-tile.webp', (string) file_get_contents( $this->child() . '/inc/assets.php' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'pattern-marks.webp', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'pattern-marks.webp', (string) file_get_contents( $this->child() . '/inc/assets.php' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
+
+	public function test_REQ_273_only_the_four_approved_adinkra_marks_and_the_pattern_built_from_them_are_brand_symbols(): void {
+		$approved = array( 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'mark-star.webp', 'pattern-marks.webp' );
+		$found    = array_map( 'basename', (array) glob( $this->child() . '/assets/brand/*' ) );
+		sort( $found );
+		$this->assertSame( $approved, $found, 'the brand folder holds the four approved marks (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa) and the tile made from them, nothing else' );
+		$this->assertFileDoesNotExist( $this->child() . '/assets/brand/pattern-tile.webp', 'the brush-glyph tile is not an approved symbol' );
+		$this->assertFileExists( dirname( __DIR__, 2 ) . '/build/pattern-tile.py', 'the tile is rebuilt from the four marks by a script' );
+		// No theme stylesheet, template or script points at a brand image outside the approved list.
+		$themes = dirname( $this->child() );
+		$files  = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $themes, \FilesystemIterator::SKIP_DOTS ) );
+		foreach ( $files as $file ) {
+			if ( ! preg_match( '/\.(css|php|js|json|html)$/', (string) $file ) ) {
+				continue;
+			}
+			$text = (string) file_get_contents( (string) $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			preg_match_all( '#brand/([a-z0-9-]+\.(?:webp|png|svg|jpe?g|avif))#i', $text, $hits );
+			foreach ( $hits[1] as $hit ) {
+				$this->assertContains( $hit, $approved, (string) $file . ' uses an unapproved symbol image: ' . $hit );
+			}
+		}
 	}
 
 	public function test_REQ_190_logos_are_assets_not_template_markup(): void {
-		foreach ( array( 'wiw-logo.png', 'wiw-icon.png', 'wiw-icon-black.png', 'logo-mark-dark.png', 'logo-mark-light.png' ) as $file ) {
+		foreach ( array( 'wiw-logo.png', 'wiw-icon.png', 'wiw-icon-black.png' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/logo/' . $file );
 		}
-		foreach ( array( 'mark-star.webp', 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'pattern-tile.webp' ) as $file ) {
+		foreach ( array( 'mark-star.webp', 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'pattern-marks.webp' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/brand/' . $file );
 		}
+	}
+
+	public function test_REQ_273_the_header_logo_comes_from_the_child_tokens_not_an_image_inlined_in_the_parent_css(): void {
+		foreach ( (array) glob( $this->parent_dir() . '/assets/css/*.css' ) as $file ) {
+			$this->assertStringNotContainsString( 'data:image/png', (string) file_get_contents( (string) $file ), basename( (string) $file ) . ' inlines a brand image' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+		$this->assertFileExists( $this->child() . '/assets/logo/wiw-logo-mask.webp' );
+		$this->assertStringContainsString( '--img-logo: url("../logo/wiw-logo-mask.webp")', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'var(--img-logo)', (string) file_get_contents( $this->parent_dir() . '/assets/css/components.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
 }

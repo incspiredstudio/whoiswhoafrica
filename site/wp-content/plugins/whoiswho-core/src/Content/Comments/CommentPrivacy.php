@@ -6,6 +6,11 @@
  * wpDiscuz subscription and follow tables, when that plugin has created them. Each is exported and deleted by email address.
  * Nothing is logged but a count.
  *
+ * Checked against wpDiscuz 7.7.0, which creates six tables: wc_comments_subscription (email) and wc_follow_users (names and
+ * emails) are covered here; wc_users_voted (a hash of a visitor's IP address) and wc_users_rated (a visitor's IP address) hold
+ * nothing that can be found by email, so WpdiscuzSettings switches off the votes and star ratings that would fill them;
+ * wc_phrases and wc_feedback_forms hold no personal data. Its own exporter covers only custom form fields, and it has no eraser.
+ *
  * @package WhoIsWho
  */
 
@@ -29,16 +34,19 @@ final class CommentPrivacy {
 		'wc_comments_subscription' => array(
 			'emails' => array( 'email' ),
 			'show'   => array(
-				'email'    => 'Email address',
-				'post_id'  => 'Story',
-				'add_date' => 'Subscribed',
+				'email'             => 'Email address',
+				'post_id'           => 'Story',
+				'subscribtion_type' => 'Subscription',
+				'subscription_date' => 'Subscribed',
 			),
 		),
 		'wc_follow_users'          => array(
 			'emails' => array( 'user_email', 'follower_email' ),
 			'show'   => array(
 				'user_email'     => 'Email address',
+				'user_name'      => 'Name',
 				'follower_email' => 'Follower email address',
+				'follower_name'  => 'Follower name',
 				'follow_date'    => 'Followed',
 			),
 		),

@@ -144,6 +144,38 @@ final class AddProfileFormTest extends WpTestCase {
 		$this->assertSame( array(), $this->nominations() );
 	}
 
+	public function test_REQ_267_a_profile_in_the_review_queue_can_be_nominated_but_not_set_live(): void {
+		$id            = (int) wp_insert_post(
+			array(
+				'post_type'  => ProfileType::POST_TYPE,
+				'post_title' => 'Pickme Queued Zq',
+			)
+		);
+		$this->posts[] = $id;
+		( new StateMachine() )->enter( $id, PubState::IMPORTED_NOT_PUBLIC, array( 'entity_type' => 'individual' ) );
+		$found = ( new ProfilePicker() )->search( 'Pickme Queued' );
+		$this->assertSame( array( $id ), array_column( $found, 'id' ) );
+		$category = $this->category();
+		$this->assertStringContainsString( 'in the review queue, not public', $this->form()->html( 'Pickme Queued' ) );
+
+		$service    = NominationService::for_site();
+		$nomination = $service->add_profile( $id, $category );
+		$this->assertSame( 'not_live', $service->find( $nomination )['status'] );
+		$this->expectException( \DomainException::class );
+		$service->set_status( $nomination, 'live' );
+	}
+
+	public function test_REQ_267_create_profile_shortcut_opens_add_profile_with_the_name(): void {
+		$html = $this->form()->html( 'Nobody Anywhere' );
+		$this->assertStringContainsString( 'wiw-create-profile', $html );
+		$this->assertStringContainsString( 'page=wiw-profile-add', $html );
+		$this->assertStringContainsString( 'return=nominations', $html );
+		$this->assertStringContainsString( 'Nobody', $html );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'wiw_reviewer' ) ) );
+		$this->assertStringNotContainsString( 'wiw-create-profile', $this->form()->html( 'Nobody Anywhere' ), 'only for a user who may add profiles' );
+	}
+
 	public function test_REQ_268_add_profile_stores_the_contact_email_for_staff_only(): void {
 		$profile  = $this->profile( 'Staffadd Pending Zq', PubState::PUBLISHED_PENDING );
 		$category = $this->category();

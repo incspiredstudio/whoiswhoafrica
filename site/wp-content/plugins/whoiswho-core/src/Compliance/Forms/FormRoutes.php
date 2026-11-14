@@ -79,13 +79,14 @@ final class FormRoutes {
 	 * Routes wired to the real services.
 	 */
 	public static function for_site(): self {
-		$secret    = defined( 'WIW_TURNSTILE_SECRET' ) ? (string) constant( 'WIW_TURNSTILE_SECRET' ) : '';
 		$token     = FormToken::for_site();
-		$challenge = '' !== $secret ? new TurnstileChallenge( TurnstileChallenge::remote_verifier( $secret ) ) : new NullChallenge( $token );
+		$challenge = TurnstileSettings::challenge( $token );
 		$gate      = new FormGate( $token, new RateLimiter( new TransientStore(), wp_salt( 'auth' ), self::limits() ) );
 		$protect   = new PublicSubmission( $challenge, $gate );
-		$consent   = new ConsentRecorder( null, new SettingsService( SettingsService::default_registry() ) );
-		$notifier  = Notifier::for_site();
+		// The two-step nomination form posts from a script and cannot carry a Turnstile answer, so it keeps the built-in check.
+		$protect_nm = new PublicSubmission( new NullChallenge( $token ), $gate );
+		$consent    = new ConsentRecorder( null, new SettingsService( SettingsService::default_registry() ) );
+		$notifier   = Notifier::for_site();
 		return new self(
 			array(
 				'claim'            => static fn ( FormInput $input, string $ip, string $slug ): array => ( new ClaimIntake( new ClaimRepository(), $notifier, $protect, $consent ) )->submit( $slug, $input, $ip ),
@@ -97,8 +98,8 @@ final class FormRoutes {
 				'removal'          => static fn ( FormInput $input, string $ip, string $slug ): array => ( new RequestSubmission( new RequestIntake( new SupportItems(), $notifier, new RequesterConfirmation( new SupportItems(), SignedLinks::for_site() ) ), $protect ) )->removal( $slug, $input, $ip ),
 				'data_rights'      => static fn ( FormInput $input, string $ip ): array => ( new DataRightsIntake( new SupportItems(), $notifier, $protect, SignedLinks::for_site() ) )->submit( $input, $ip ),
 				'newsletter'       => static fn ( FormInput $input, string $ip ): array => ( new NewsletterSignup( new SubscriberRepository(), $notifier, $protect ) )->submit( $input, $ip ),
-				'nomination_start' => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->begin( $input, $ip ),
-				'nomination'       => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect, SignedLinks::for_site(), CategoryService::for_site() ) )->submit( $input, $ip ),
+				'nomination_start' => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect_nm, SignedLinks::for_site(), CategoryService::for_site() ) )->begin( $input, $ip ),
+				'nomination'       => static fn ( FormInput $input, string $ip ): array => ( new NominationIntake( $notifier, $protect_nm, SignedLinks::for_site(), CategoryService::for_site() ) )->submit( $input, $ip ),
 			)
 		);
 	}

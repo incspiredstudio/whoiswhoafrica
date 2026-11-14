@@ -16,6 +16,21 @@ Sign-ups are rate-limited and protected by a bot check. An invalid or empty emai
 
 Editors and Administrators can see sign-ups and who has unsubscribed, with consent dates. Subscribers are kept in their own list, apart from enquiries and customers.
 
+1. Open **Audience > Subscribers**.
+2. Choose a list at the top: **Confirmed**, **Pending** (signed up but has not opened the confirmation link) or **Unsubscribed**. Each shows its count.
+3. The table shows the email, when consent was given, when it was confirmed, when they unsubscribed and where they signed up.
+
+## Send a newsletter
+
+The site collects and keeps the list, and it has the one-click unsubscribe built in. It has no screen for writing or sending a newsletter. Agree how the first newsletter is sent with the development team before you send it, so that unsubscribes are kept in step.
+
+What an Administrator can do today:
+
+1. Open **Audience > Subscribers**, choose **Confirmed** and press **Export this list as CSV**. The export is written to the audit log.
+2. Use only the confirmed list, and export it again right before each send, so anyone who unsubscribed since is left out.
+3. Any mail service used for sending must be on the processor register and must put an unsubscribe link in every message.
+4. Delete old exports from your computer.
+
 ## Staff checks
 
 | Check | Why |

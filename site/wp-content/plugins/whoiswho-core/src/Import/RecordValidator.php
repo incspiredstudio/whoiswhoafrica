@@ -2,7 +2,7 @@
 /**
  * Validates one record of a bundle (contract sections 3 to 8 and 10, REQ-140, REQ-142, REQ-143, REQ-212, REQ-214, REQ-221):
  * schema, allowlisted fields per entity type, provenance on every field, confidence not low, a passing verification report, the
- * recomputed content hash and empty images. A failing record gets exactly one contract code and the rest of the bundle carries
+ * recomputed content hash and the images (none in contract 1.0; open-licence only from 1.1, each refused on its own). A failing record gets exactly one contract code and the rest of the bundle carries
  * on; nothing is written here, so a refused record can leave no partial write. Plain PHP, no WordPress calls.
  *
  * Order of checks (the first failure is the one code returned): SCHEMA (including any state, publish, visibility or status key),
@@ -18,6 +18,7 @@ namespace WhoIsWho\Core\Import;
 
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\Fields\FieldValidator;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 
 /**
  * Record validator.
@@ -60,9 +61,10 @@ final class RecordValidator {
 	 * Validate one line of records.jsonl.
 	 *
 	 * @param string $line The record as JSON text.
-	 * @return array{ok: bool, code: string|null, record_id: string, field: string, record: array<string, mixed>|null}
+	 * @return array{ok: bool, code: string|null, record_id: string, field: string, record: array<string, mixed>|null, images?: array<int, array<string, mixed>>, images_refused?: array<int, array{image_id: string, reason: string}>}
 	 *         code is one contract refusal code or null; field names the offending field when there is one (never a value);
-	 *         record is the decoded record (arrays) when it is accepted.
+	 *         record is the decoded record (arrays) when it is accepted; images are the entries that may be imported and
+	 *         images_refused the ones refused on their own with IMAGE_NOT_ALLOWED (contract 1.1).
 	 */
 	public function validate( string $line ): array {
 		$object = json_decode( $line, false, 512, JSON_BIGINT_AS_STRING ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- objects and empty arrays must stay distinct for the hash.
@@ -82,7 +84,8 @@ final class RecordValidator {
 		if ( ! in_array( $record['contract_version'], BundleReader::ACCEPTED_VERSIONS, true ) ) {
 			return $this->refuse( 'CONTRACT_VERSION', $id, 'contract_version' );
 		}
-		if ( array() !== $record['images'] ) {
+		// Contract 1.0 allows no images: the whole record is refused. From 1.1 each image is judged on its own (below).
+		if ( '1.0' === $record['contract_version'] && array() !== $record['images'] ) {
 			return $this->refuse( 'IMAGE_NOT_ALLOWED', $id, 'images' );
 		}
 		$refusals = $this->fields->validate( (string) $record['entity_type'], $record['fields'] );
@@ -99,12 +102,15 @@ final class RecordValidator {
 		if ( ! ContentHasher::matches( $object ) ) {
 			return $this->refuse( 'HASH_MISMATCH', $id, 'content_hash' );
 		}
+		$images = ImagePolicy::split( (string) $record['contract_version'], (array) $record['images'] );
 		return array(
-			'ok'        => true,
-			'code'      => null,
-			'record_id' => $id,
-			'field'     => '',
-			'record'    => $record,
+			'ok'             => true,
+			'code'           => null,
+			'record_id'      => $id,
+			'field'          => '',
+			'record'         => $record,
+			'images'         => $images['accepted'],
+			'images_refused' => $images['refused'],
 		);
 	}
 

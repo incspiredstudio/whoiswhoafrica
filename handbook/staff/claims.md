@@ -13,7 +13,7 @@ The Administrator can grant `wiw_review_claims` to any role, including a Reviewe
 
 ## Decide a claim
 
-1. Open Claims. Each claim shows every field the claimant entered, the received date and the decide-by date, five days after receipt.
+1. Open **Review > Claims**. Each claim shows every field the claimant entered, the received date and the decide-by date, five days after receipt.
 2. Check the evidence offline. The site only records what the claimant entered and your decision.
 3. Choose Approve or Reject. A rejection needs a reason and the claimant is emailed.
 4. On approval the profile is set to Claimed, a checkmark badge appears in staff lists and on the profile screen, and the claimant is emailed.
