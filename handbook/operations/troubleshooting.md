@@ -48,9 +48,15 @@ Visitors who see a short "getting this site ready" page instead of the site are 
 | FluentSMTP plugin active, wpDiscuz plugin active | A required plugin is missing or inactive | **Open Required plugins**, then **Install** and **Activate** |
 | Email (marked Recommended, not red) | No working email connection | Set up FluentSMTP ([Email](/start/email)) |
 
-## "Security configuration problem: DISALLOW_FILE_MODS is not true"
+## "Good to know: you can install and update plugins and themes from wp-admin"
 
-The guard shows this red notice to Administrators when wp-admin is still allowed to install and change plugin and theme files. A no-code install needs that, to upload the zips and install FluentSMTP and wpDiscuz, so on a site set up from this handbook the notice is expected. It does not stop the site working. Ask the development team whether to lock file changes after launch; if they do, updates are then installed by them.
+The guard shows this blue note on the Dashboard to Administrators of a live site. It is advice, not a problem:
+- wp-admin can install and update plugins and themes. You need that to upload the bundle and to install FluentSMTP and wpDiscuz.
+- The built-in code editor (Appearance > Theme File Editor, Plugins > Plugin File Editor) is switched off by the guard for safety. You do not need to change wp-config.
+
+Keep the number of Administrator accounts small and make sure each one has two-factor sign-in on. Press **Got it, hide this** to dismiss the note for yourself.
+
+Sites on older bundles showed a red "Security configuration problem: DISALLOW_FILE_MODS is not true" notice instead. Updating the guard replaces it with this note.
 
 ## "Needs MySQL or MariaDB"
 

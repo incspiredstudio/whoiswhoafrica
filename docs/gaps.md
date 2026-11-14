@@ -12,7 +12,6 @@ Sources:
 
 | # | Gap | Recommended option |
 |---|---|---|
-| G1 | The guard shows "Security configuration problem: DISALLOW_FILE_MODS is not true. DISALLOW_FILE_EDIT is not true." on every admin page of a no-code install. Fixing it means editing wp-config, and turning on DISALLOW_FILE_MODS would break the one-click Required plugins install and zip updates (SEC-12). | The guard removes the built-in code editors itself (`map_meta_cap` on `edit_plugins`, `edit_themes`, `edit_files`), keeps uploads open for Administrators, and rewords the notice in plain language as advice. Alternative: the host sets DISALLOW_FILE_EDIT through cPanel after the required plugins are installed. |
 | G2 | Two-factor is optional (owner decision). OWASP ASVS L2 expects it for staff (SEC-13). | Every Administrator and Editor turns it on before go-live (handbook: Users and two-factor). |
 | G3 | "Add all as new list entries" created 2,437 raw list values in the full import (590 organisation types, 457 industries, 1,390 places), some in French or German, plus noise such as "Autonomous administrative territorial entity". They show in public filters once profiles are published. | The acquisition side exports a curated term map, then clean the lists before turning off "import everything as not public". |
 | G4 | The CLAUDE.md rule "production runs migrations only through the deploy script" now has an exception: the Administrator's guarded "Update the database" button (after a backup). | Confirm. The docs (CLAUDE.md, runbook) already describe it. |
@@ -85,6 +84,8 @@ Sources:
 | G49 | Inboxes for the production SMTP test were not checked; only the site's "sent" status and FluentSMTP's "delivered" are confirmed. | The owner checks the +prodtest and +prodform inbox messages. |
 
 ## Fixed during this build (for the record)
+
+- G1 (owner approved 2026-11-14, #813): the guard switches off the built-in code editors itself (the effect of DISALLOW_FILE_EDIT without wp-config). Uploads stay open for Administrators, and the red DISALLOW_FILE_MODS notice is replaced by a dismissible Dashboard note.
 
 - The HTTPS redirect locked out a new site that had no certificate yet. It now waits for an https site address.
 - Live updates were stuck on "run the deploy". A guarded "Update the database" button was added.
