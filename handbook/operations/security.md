@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Security basics
 
 The site starts from a small attack surface: no public accounts, no public API and no payment data. This page lists the main threats, the controls that answer them, and the rules for sign-in, secrets, validation and logging.
@@ -41,10 +39,10 @@ The site starts from a small attack surface: no public accounts, no public API a
 ## Secrets
 
 1. The keys that sign single-use links and form tokens are created by the site itself on first use and stored in the database. Nobody needs to type or see them.
-2. The mail password is entered once in FluentSMTP and the Turnstile secret once in the WHOISWHO Settings menu. Neither is shown again in the admin.
+2. The mail password is entered once in FluentSMTP and the Turnstile secret once on the **WHOISWHO > Setup** screen. Neither is shown again in the admin.
 3. Keep every password (cPanel, wp-admin, mail account, Cloudflare) in the team's password manager, never in this handbook, email or chat.
 4. Change the mail password and the Turnstile secret when someone who knew them leaves, and after any suspected break-in.
-5. A developer may instead keep these values in a secrets file outside the web root. If one is set there, it wins over the admin setting.
+5. A developer may instead keep these values in a secrets file outside the web root. If one is set there, it wins over the admin setting, and the Turnstile keys can then not be changed on the Setup screen.
 
 ## Validation and rate limits
 

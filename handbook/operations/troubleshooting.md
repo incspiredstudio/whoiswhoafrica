@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Troubleshooting
 
 Find the problem you see, then follow the steps. If nothing here helps, collect what you saw (a screenshot, the time, the page address) and contact the development team ([Who to contact](/operations/contacts)).
@@ -13,15 +11,15 @@ Symptoms: no confirmation emails arrive, the FluentSMTP test fails, or **Audienc
 3. "Authentication failed" or "Could not authenticate": the password is wrong or was changed. In cPanel **Email Accounts**, press **Manage** next to the account, set a new password, save it in the password manager, and paste it into FluentSMTP.
 4. "Could not connect" or a timeout: try port `465` with encryption **SSL**. If neither works, ask your host whether outgoing SMTP is allowed and which server name to use.
 5. The test arrives but in spam: run cPanel **Email Deliverability** and press **Repair** for SPF and DKIM; check DMARC exists ([Email](/start/email#_2-check-the-domain-s-email-records)).
-6. FluentSMTP is not active: open **Required plugins** in the WHOISWHO Settings menu and press **Activate**.
+6. FluentSMTP is not active: open **Site settings > Required plugins** and press **Activate FluentSMTP** (or **Install FluentSMTP** first if it is not installed).
 
 ## Upload too large
 
-Symptoms: "The uploaded file exceeds the upload_max_filesize directive", "The link you followed has expired" when uploading a theme, plugin or import bundle, or an import bundle that is refused as too big.
+Symptoms: "The uploaded file exceeds the upload_max_filesize directive" or "The link you followed has expired" when uploading a theme or plugin, or an import bundle that is refused as too big.
 
 1. Raise the limit in cPanel **MultiPHP INI Editor**: `upload_max_filesize` and `post_max_size` to `64M`. See [Raise the upload limit](/start/install#raise-the-upload-limit).
 2. Check in **Media > Add New Media File**: it shows the maximum upload size.
-3. An import bundle cannot be bigger than 50 MB even with a higher limit. Ask the acquisition team to split it into smaller bundles.
+3. Import bundles are not affected by this limit: the Import screen sends them in small pieces. A bundle cannot be bigger than 512 MB; ask the acquisition team to split a bigger one. If a bundle upload still fails, use **Or import from the server** on the Import screen ([Import data](/staff/importing)).
 4. For a theme or plugin, you can also unzip it on your computer and upload the folder with cPanel **File Manager** into `wp-content/themes` or `wp-content/plugins`.
 
 ## White screen or "critical error"
@@ -41,14 +39,14 @@ Visitors who see a short "getting this site ready" page instead of the site are 
 | Line in WHOISWHO > Setup | What it means | What to do |
 |---|---|---|
 | Database ready: "The plugin's tables have not been created yet." | The first setup did not finish | Press **Run database setup** |
-| Database ready: "The database would not let the plugin create tables with triggers." | The database user lacks a permission | In cPanel **MySQL Databases**, under "Add User to Database", choose the site's user and database, press **Add**, tick **ALL PRIVILEGES** and press **Make Changes**. Then press **Run database setup**. If that is not possible on your plan, ask the host to grant the TRIGGER privilege. |
-| Database ready: "This is a live site and its database has changes waiting." | A new bundle needs a database change that the development team runs | Contact the development team. See [Updates](/operations/updates#if-setup-says-the-database-has-changes-waiting). |
-| Database ready: a message about PHP | PHP is too old or missing an extension | cPanel **MultiPHP Manager**: choose PHP 8.3. For a missing extension (for example "mbstring"), cPanel **Select PHP Version** > Extensions, or ask the host. |
+| Database ready: "The database did not allow the plugin to create the tables it needs." | The database user lacks a permission | In cPanel **MySQL Databases**, under "Add User to Database", choose the site's user and database, press **Add**, tick **ALL PRIVILEGES** and press **Make Changes**. Then press **Run database setup**. If that is not possible on your plan, ask the host: the database user needs permission to create tables and triggers. |
+| Database ready: "A plugin update brought database changes that are not applied yet." | A new bundle needs a database change | Take a backup, tick **I have a backup** and press **Update the database**. See [Updates](/operations/updates#if-setup-says-the-database-has-changes-waiting). |
+| Database ready: a message about PHP | PHP is too old or missing an extension | cPanel **MultiPHP Manager**: choose PHP 8.3 or newer. For a missing extension (for example "mbstring"), cPanel **Select PHP Version** > Extensions, or ask the host. |
 | Pretty web addresses | Addresses look like `?p=123` and directory pages do not open | Press **Fix permalinks**, or open **Settings > Permalinks**, choose **Post name** and save |
 | Site theme active | The child theme is not active | Press **Activate child theme**. If the themes are missing, upload them ([Install](/start/install)). |
 | Guard plugin installed | The guard is not in `mu-plugins` | Copy it with File Manager ([Install](/start/install#_3-copy-the-guard-into-mu-plugins)). Check the file is directly in `mu-plugins`, not in an extra folder. |
-| FluentSMTP or wpDiscuz | A required plugin is missing or inactive | **Required plugins** > **Install** > **Activate** |
-| Email settings | No working email connection | Set up FluentSMTP ([Email](/start/email)) |
+| FluentSMTP plugin active, wpDiscuz plugin active | A required plugin is missing or inactive | **Open Required plugins**, then **Install** and **Activate** |
+| Email (marked Recommended, not red) | No working email connection | Set up FluentSMTP ([Email](/start/email)) |
 
 ## "Security configuration problem: DISALLOW_FILE_MODS is not true"
 
@@ -71,7 +69,7 @@ Open **Settings > Permalinks** and press **Save Changes** without changing anyth
 
 ## An import stops part way
 
-Open **Imports > Import**, find the batch and press **Resume import**. It continues where it stopped and never imports a record twice. Keep the tab open while it runs. See [Import data](/staff/importing).
+Open **Imports > Import**, open the batch from **History** and press **Continue**. It continues where it stopped and never imports a record twice. It also carries on in the background; keeping the tab open makes it faster. See [Import data](/staff/importing).
 
 ## The demo import stops
 

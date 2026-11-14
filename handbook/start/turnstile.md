@@ -1,8 +1,6 @@
-<!-- verify-after-round-9 -->
-
 # Turnstile spam check
 
-Every public form on WHOISWHO (Get listed, Contact, corrections, removal requests, claims, nominations, newsletter) is protected by Cloudflare Turnstile, a free check that stops robots without making people solve puzzles. The site needs two keys from Cloudflare: a **site key** (public) and a **secret key** (private).
+Every public form on WHOISWHO (Get listed, Contact, corrections, removal requests, claims, nominations, newsletter) has a built-in spam check (a hidden field and a timer), which is enough for most sites. For stronger protection you can switch on Cloudflare Turnstile, a free check that stops robots without making people solve puzzles. It is optional. The site needs two keys from Cloudflare: a **site key** (public) and a **secret key** (private).
 
 ## 1. Get the keys from Cloudflare
 
@@ -15,11 +13,13 @@ Every public form on WHOISWHO (Get listed, Contact, corrections, removal request
 
 ## 2. Enter them in WordPress
 
-1. In wp-admin, open the WHOISWHO **Settings** menu (near the top of the left menu) and find the **Turnstile** section.
-2. Paste the site key and the secret key.
-3. Save. The secret is never shown again: the field only says that it is saved. To change it, paste a new one.
+1. In wp-admin, open **WHOISWHO > Setup** and find the line **Spam protection for forms (optional)**.
+2. Paste the keys into **Site key** and **Secret key**.
+3. Press **Save Turnstile keys**. The secret is never shown again: the field only says that it is saved. To keep it, leave the field empty; to change it, paste a new one.
 
-Only an Administrator can see this section.
+To switch Turnstile off again, tick **Remove both keys and go back to the built-in spam check** and press **Save Turnstile keys**.
+
+Only an Administrator can open the Setup screen.
 
 ## 3. Check it
 

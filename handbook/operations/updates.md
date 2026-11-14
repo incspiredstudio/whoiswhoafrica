@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Updates
 
 WordPress, the plugins and the WHOISWHO theme and plugin all receive updates. Updates fix security holes, so apply them promptly, but always with a backup first. This page says how to update each part from wp-admin, without any code.
@@ -43,7 +41,13 @@ Upload the zips in this order: parent theme, child theme, plugin, guard. Replace
 
 ### If Setup says the database has changes waiting
 
-On a live site, the Database ready line can say "This is a live site and its database has changes waiting." The new bundle needs a database change that, on a live site, is run by the development team rather than from a button, so an upgrade cannot stop halfway. The public site keeps working meanwhile. Contact the development team ([Who to contact](/operations/contacts)) and tell them the bundle version you installed.
+After a new bundle, the Database ready line can say "A plugin update brought database changes that are not applied yet. Until they are, some screens may not work."
+
+1. Take a backup in cPanel first (at least the database). See [Backups](/operations/backups).
+2. On **WHOISWHO > Setup**, tick **I have a backup** under the Database ready line.
+3. Press **Update the database**. The screen says how many changes were applied.
+
+The update only adds to the database. If it stops part way, the site stays as it was before the step that stopped, the line says why, and you can press the button again: it carries on from where it stopped. If it keeps failing, contact the development team ([Who to contact](/operations/contacts)) and tell them the bundle version you installed.
 
 ## If an update breaks something
 

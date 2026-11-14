@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Brand tokens
 
 Brand tokens are the named values for colour, type, spacing, shape and motion that every page uses. They are defined once, in the child theme's tokens file, and no page writes a brand value directly. This page lists them and says how to use them.

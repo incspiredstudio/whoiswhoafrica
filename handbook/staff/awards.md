@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Award categories and nominations
 
 Staff run the awards from two screens: Award categories and Nominations. Judging and scoring happen offline, and the site records only the outcome. Every nomination has a stage (Nominated or Winner) and a status (Live or Not live), and nothing else.
@@ -8,34 +6,34 @@ Staff run the awards from two screens: Award categories and Nominations. Judging
 
 | Work | Screen | Capability | Default roles |
 |---|---|---|---|
-| Add, rename, reorder and remove categories | Awards > Award categories | `wiw_manage_awards` | Editor, Administrator |
+| Add, rename, reorder, archive and remove categories | Awards > Award categories | `wiw_manage_awards` | Editor, Administrator |
 | Open or close nominations | Awards > Nominations (the switch at the top) | `wiw_toggle_nominations` (fixed) | Administrator. Editors see the state read-only. |
 | Add a profile, set stage and status, remove, send emails | Awards > Nominations | `wiw_manage_awards` | Editor, Administrator |
-| Export nominations | List export | `wiw_export_data` | Administrator |
+| Export nominations | **Export nominations (CSV)** on Awards > Nominations | `wiw_export_data` | Administrator |
 
 ## Award categories
 
 1. Open **Awards > Award categories**. Categories sit under five groups: Leadership and Public Impact, Entrepreneurship and Business, Technology and Innovation, Professional Excellence, and Industry and Institutional Recognition.
-2. Add a category, rename it or change its order.
-3. To remove one, it must have no nominations. If it has any, rename it or move its nominations first.
+2. Add a category with **New category** and **Add category**, change a name with **Rename**, or change the order with **Move up** and **Move down**.
+3. **Remove** works only for a category with no nominations. If it has any, press **Archive** instead; **Restore** brings an archived category back.
 
 Every change is audited. The Awards pages, the Nominate guidance and the Home marquee read categories from this screen, so a change needs no page edit. The eligibility and judging-criteria text is page copy, edited in the page editor.
 
 ## Open or close nominations
 
-1. Open **Awards > Nominations**. The switch is at the top and defaults to Closed.
-2. An Administrator turns it on or off. The change records who, when and an optional reason.
-3. **Open:** the Nominate page and menus show the form.
-4. **Closed:** they show "Nominations are closed", with links to nominees or winners once published.
+1. Open **Awards > Nominations**. The switch is at the top and says "Nominations are off." by default.
+2. An Administrator presses **Turn Nominations on** or **Turn Nominations off**, with an optional **Reason**. The change records who and when. Other staff see "Only an Administrator can change this."
+3. **On:** the Nominate page and menus show the form.
+4. **Off:** they show "Nominations are closed", with links to nominees or winners once published.
 
 This is the only feature switch in the system.
 
 ## Add a nomination yourself
 
 1. On **Awards > Nominations**, go to **Add profile to nominations**.
-2. Search for the profile by name and pick it, then choose a category. Add an optional note.
-3. Optionally enter a Contact email. It is staff-only and never appears publicly, in exports or in logs.
-4. Save.
+2. Under **Search profiles by name**, search for the profile and pick it, then choose a **Category**. Add an optional **Note (optional, staff only)**.
+3. Optionally enter a **Contact email (optional, staff only, never shown publicly)**. It never appears publicly, in exports or in logs.
+4. Press **Add to nominations**.
 
 There is no free-text name field. If the person or organisation has no profile yet, use the **Create profile** shortcut in the profile picker: it opens [Add profile](/staff/add-profile) with the name filled in and brings you back to the nomination after saving. A profile pending review can be added but cannot be set Live until it is reviewed.
 
@@ -58,7 +56,7 @@ A Live nominee shows on the Nominees page. A Live winner shows on the Winners pa
 
 - Send nomination email is offered when a Contact email exists. The email carries no link and asks nothing of the nominee. Who sent it and when is recorded, and the audit entry holds no address.
 - On a winner, Send winner email goes to the same address and is recorded the same way.
-- Remove deletes a nomination after a confirmation and is audited.
+- **Remove** deletes a nomination after **Confirm removal** and is audited.
 
 ## Where nominations come from
 

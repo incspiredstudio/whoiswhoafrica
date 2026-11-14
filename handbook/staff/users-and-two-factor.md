@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Users, roles and two-factor sign-in
 
 Only staff have accounts on WHOISWHO. This page shows an Administrator how to add and remove staff, change what they can do, and how every staff member switches on two-factor sign-in. The ideas behind roles are in [Roles and what each can do](/concepts/roles).
@@ -53,7 +51,7 @@ Deactivate rather than delete, so the audit log and the history of their edits s
 
 ## Two-factor sign-in
 
-Two-factor sign-in asks for a code from your phone (or your email) after your password, so a stolen password alone cannot open the admin. It is **recommended for every staff member and not enforced**: the site works without it, but the Setup checklist lists who has it on, and the team should aim for everyone.
+Two-factor sign-in asks for a code from your phone (or your email) after your password, so a stolen password alone cannot open the admin. It is **recommended for every staff member and not enforced**: the site works without it, but the Setup checklist line **Two-factor sign-in for staff (recommended)** lists who has it on, and the team should aim for everyone.
 
 ### Switch it on (each staff member)
 
@@ -62,7 +60,7 @@ Two-factor sign-in asks for a code from your phone (or your email) after your pa
 3. Scroll to **Two-Factor Options**. If it asks you to revalidate, press **Revalidate now** and sign in again.
 4. Tick **Authenticator App**. A QR code appears.
 5. Scan the QR code with the app. The app shows a six-digit code that changes every 30 seconds.
-6. Type the current code into **Authentication Code** and confirm.
+6. Type the current code into **Authentication Code** and press **Verify**.
 7. Tick **Recovery Codes** and press **Generate new recovery codes**. Ten single-use codes appear.
 8. Press **Download Codes** (or **Copy Codes**) and keep them somewhere safe away from your phone, for example in the team's password manager.
 9. Set **Primary Method** to the Authenticator App.
@@ -75,7 +73,7 @@ The **Email** method also works: the code is sent to your account email. It is e
 ### Recovery codes
 
 - Each recovery code works once. On the sign-in page choose **Use a recovery code** and type one.
-- When you are low on codes, the admin warns you. Generate a new set on your profile; the old ones stop working.
+- When you have used all your codes, the admin warns you. Generate a new set on your profile (**Generate new recovery codes**); the old ones stop working.
 - Never share your codes.
 
 ### Lost phone and no recovery codes

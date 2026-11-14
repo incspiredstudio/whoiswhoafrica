@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Profile sections: Bio, Achievement, Influence and Legacy
 
 Every profile page tells its story in up to four sections, named after the brand words. This page explains what belongs in each, the writing rules, and how to edit them.
@@ -13,7 +11,7 @@ Every profile page tells its story in up to four sections, named after the brand
 | **Influence** | How their work changed others: people trained, policies shaped, industries moved | "Her training programme has been adopted by three national utilities." |
 | **Legacy** | What lasts: institutions built, work that continues, for people who have died how they are remembered | "The foundation he set up still funds 200 scholarships a year." |
 
-All types of profile (individual, entrepreneur, organisation, institution) can have all four. A section left empty does not appear on the page. Organisations also keep their short summary.
+All types of profile (person, entrepreneur, organisation, institution) can have all four. A section left empty does not appear on the page. Organisations also keep their short summary.
 
 ## Writing rules
 
@@ -36,8 +34,8 @@ Some imported sections were drafted with AI by the acquisition team and are mark
 
 ## Edit the sections
 
-1. Open **Directory > Profiles**, find the profile and open it.
-2. Choose **Edit profile**. The four sections are text boxes under **Edit fields**.
+1. Open **Directory > Profiles** and find the profile.
+2. Press **Edit fields** in its row. The **Edit profile** screen opens; the four sections are the **Bio**, **Achievement**, **Influence** and **Legacy** boxes in the list of fields.
 3. Change the text.
 4. Fill in **Reason or request reference (required)**, for example "Added 2025 award to Achievement" or the reference of a correction request.
 5. Press **Save changes**. The message "Saved. A version and an audit row were written." confirms it.

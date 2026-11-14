@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Add a profile by hand
 
 Most profiles arrive through an [import](/staff/importing). When someone is missing, an Editor or Administrator adds them on the **Add profile** screen. A profile added by hand is never public straight away: it goes to the Review queue like any imported record, and a second person approves it.
@@ -18,7 +16,7 @@ Have at least one public source address (a web page) for the facts you will ente
 ## Add the profile
 
 1. Open **Directory > Add profile**.
-2. Choose the **type**: individual, entrepreneur, organisation or institution. The form changes to show the fields for that type.
+2. Choose the **Type**: Person, Entrepreneur, Organisation or Institution, and press **Continue**. The form then shows the fields for that type. To pick another type, press **Change type**.
 3. Fill in the fields:
 
 | Field | Notes |
@@ -26,23 +24,24 @@ Have at least one public source address (a web page) for the facts you will ente
 | Name | Required. The person's public name, or the organisation's registered or trading name. |
 | Country | Required |
 | Industry | Choose an existing industry |
-| Current title and organisation | People only. Optional. |
+| Current title, Current organisation | People only. Optional. |
 | Lifespan | People who have died only, for example `1924–2013` |
 | Field | People only: their field or profession, for example Music |
-| Organisation type and website | Organisations and institutions only |
-| Bio, Achievement, Influence, Legacy | The four sections of the profile page. Plain text; leave a blank line between paragraphs. See [Profile sections](/staff/profile-sections). |
-| Photo or logo | Optional. Choose it from the media library. If you set one, the licence, the credit and the source address are required. See [Photos and credits](/staff/photos-and-credits). |
-| Source address | Required, at least one |
+| Organisation type, Official website and the other organisation details | Organisations and institutions only. Organisation type is required. |
+| Wikidata id, Registration number | Optional. Registration number is for organisations and institutions only. They help the duplicate check. |
+| Bio, Achievement, Influence, Legacy | Under **Profile sections**: the four sections of the profile page. Each is optional. Plain text; leave a blank line between paragraphs. See [Profile sections](/staff/profile-sections). |
+| Photo or logo | Optional. Press **Choose from media library**. If you set one, the **Licence**, the **Credit** and the **Image source URL** are required. See [Photos and credits](/staff/photos-and-credits). |
+| Source URLs | Required: one web address per line, at least one and at most 10 |
 
-4. Press save.
+4. Press **Save profile**.
 
 ## The duplicate check
 
-Before saving, the site looks for a profile with the same name and type (and the same Wikidata or registration number, if you gave one).
+Before saving, the site looks for a profile with a similar name and the same type (and the same Wikidata or registration number, if you gave one).
 
 - If it finds possible matches, it lists them with links. Open them and check.
 - If one of them is the same person or organisation, do not save. Edit the existing profile instead.
-- If none is the same, choose **create anyway**.
+- If none is the same, tick **None of the matches above is the same. Create anyway.** and press **Save profile** again.
 
 ## What happens next
 

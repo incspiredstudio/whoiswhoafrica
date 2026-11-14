@@ -1,17 +1,15 @@
-<!-- verify-after-round-9 -->
-
 # Photos and image credits
 
 WHOISWHO only shows a photo or logo when we have the right to use it and can say who made it. In practice that means an **open licence**, a **credit line** and the **source address**, every time. When in doubt, leave the profile without a picture: a profile without a photo is fine, a photo we may not use is not.
 
 ## Allowed licences
 
-| Licence | Short name in the site | Credit needed? |
+| Licence | In the Licence list on Add profile (code in import bundles) | Credit needed? |
 |---|---|---|
-| Creative Commons Zero | `CC0-1.0` | Not required, but we still show the creator when known |
-| Public domain | `PDM-1.0` | Not required, but we still show the source |
-| Creative Commons Attribution 2.0, 2.5, 3.0, 4.0 | `CC-BY-2.0` to `CC-BY-4.0` | Yes |
-| Creative Commons Attribution-ShareAlike 2.0, 2.5, 3.0, 4.0 | `CC-BY-SA-2.0` to `CC-BY-SA-4.0` | Yes |
+| Creative Commons Zero | CC0 1.0 (public domain dedication) (`CC0-1.0`) | Not required, but we still show the creator when known |
+| Public domain | Public domain (Public Domain Mark 1.0) (`PDM-1.0`) | Not required, but we still show the source |
+| Creative Commons Attribution 2.0, 2.5, 3.0, 4.0 | CC BY 2.0 to CC BY 4.0 (`CC-BY-2.0` to `CC-BY-4.0`) | Yes |
+| Creative Commons Attribution-ShareAlike 2.0, 2.5, 3.0, 4.0 | CC BY-SA 2.0 to CC BY-SA 4.0 (`CC-BY-SA-2.0` to `CC-BY-SA-4.0`) | Yes |
 
 **Anything else is refused**: "all rights reserved", NonCommercial (NC), NoDerivatives (ND), "free to use" without a named licence, photos copied from news sites or social media, and photos sent by email without a written licence.
 
@@ -19,15 +17,15 @@ Where to find openly licensed photos: Wikimedia Commons is the main source. Each
 
 ## What to record for every image
 
-| Field | Example |
+| Field on Add profile | Example |
 |---|---|
-| Licence | `CC-BY-SA-4.0` |
-| Licence address | The licence's page on creativecommons.org |
-| Creator | The photographer or the organisation that owns the logo |
-| Credit (attribution text) | "Photo by A. Mensah, CC BY-SA 4.0, via Wikimedia Commons" |
-| Source address | The page you took the image from |
+| Licence | CC BY-SA 4.0 (the site links it to the licence's page on creativecommons.org) |
+| Credit (who made it, as the licence asks) | "A. Mensah", or the organisation that owns the logo |
+| Image source URL | The page you took the image from |
 
-The public profile shows the credit under the photo, for example "Photo: A. Mensah · CC BY-SA 4.0", with the licence linked.
+Imported images carry the same details, plus the creator and the licence address, from the acquisition team.
+
+The public profile shows the credit under the photo, for example "Photo: A. Mensah · CC BY-SA 4.0" ("Logo:" for a logo), with the credit linked to the source page and the licence linked to its page.
 
 ## Files
 
@@ -38,10 +36,12 @@ The public profile shows the credit under the photo, for example "Photo: A. Mens
 ## Add or change a photo by hand
 
 1. Upload the file in **Media > Add New Media File**, or choose an existing one.
-2. Open the profile in **Directory > Add profile** (new profile) or **Edit profile** (existing).
-3. Choose the image from the media library.
-4. Fill in the licence, the credit and the source address. They are required when an image is set.
-5. Save, with a reason.
+2. Open **Directory > Add profile** for a new profile.
+3. Under **Photo (optional)** or **Logo (optional)**, press **Choose from media library** and pick the image.
+4. Fill in **Licence**, **Credit** and **Image source URL**. They are required when an image is set.
+5. Press **Save profile**.
+
+The **Edit profile** screen has no photo field, so a photo cannot be added to or changed on an existing profile there. A profile's assigned user can propose a new photo from **My profiles**, which a reviewer approves (see [Claims](/staff/claims)).
 
 ## Imported photos
 
@@ -49,4 +49,4 @@ Photos and logos that come with an [import](/staff/importing) are checked on the
 
 ## If someone asks us to remove a photo
 
-Remove it from the profile straight away (Edit profile, clear the image, reason "Photo removal request" and the reference), then handle the request as in [Requests and reports](/staff/requests-and-reports).
+Remove it straight away: an Administrator opens **Media > Library**, finds the image and deletes it permanently. The profile then shows without a picture. Then handle the request as in [Requests and reports](/staff/requests-and-reports).

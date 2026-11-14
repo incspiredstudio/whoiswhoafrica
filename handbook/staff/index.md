@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Staff guide
 
 This guide explains how the team runs WHOISWHO from the WordPress admin: who does what, in which screen, and what the public sees as a result. Staff are the only people with accounts.
@@ -21,25 +19,26 @@ The WHOISWHO screens sit in their own menu groups near the top of the left menu.
 | Menu group and screens | Reviewer | Editor | Administrator |
 |---|---|---|---|
 | Dashboard (the WordPress one) | Review tiles | Review and claims tiles | Everything, including sponsored story figures |
-| WHOISWHO: Setup | No | No | Yes |
+| WHOISWHO: Setup (including the Turnstile keys and demo content) | No | No | Yes |
 | Directory: Profiles, Duplicates | Yes | Yes | Yes |
 | Directory: Add profile, Edit profile, Home page settings | No | Yes | Yes |
+| Directory: My profiles (profiles assigned to a user after a claim) | No | No | Yes |
 | Review: Review queue | Yes | Yes | Yes |
 | Review: Claims, Corrections, Requests and reports | No | Yes | Yes |
 | Imports: Sources | Yes | Yes | Yes |
 | Imports: Import | No | No | Yes |
-| Audience: Enquiries, Subscribers | No | Yes | Yes |
-| Audience: Customers, Email log | No | No | Yes |
+| Audience: Enquiries, Subscribers, Customers | No | Yes | Yes |
+| Audience: Email log | No | No | Yes |
 | Commercial: Sponsored stories (story and placement steps, no amounts) | No | Yes | Yes |
 | Commercial: the money steps on Sponsored stories | No | No | Yes |
 | Awards: Nominations, Award categories | No | Yes | Yes |
 | Compliance: Suppression list | Yes (read-only) | Yes (read-only) | Yes |
 | Compliance: Audit log, Purge log | No | No | Yes |
-| Settings (WHOISWHO): Required plugins, Turnstile keys, Sprint thresholds | No | No | Yes |
+| Site settings: Required plugins, Sprint thresholds | No | No | Yes |
 | Posts (stories), Events, Comments, Media, Pages | No | Yes | Yes |
 | Users, Tools, Plugins, Appearance, Settings (WordPress) | No | No | Yes |
 
-There are two Settings menus: the WHOISWHO one near the top of the menu, and the WordPress one lower down.
+Do not confuse **Site settings** (the WHOISWHO menu near the top of the left menu) with WordPress's own **Settings** menu lower down, which holds General, Reading, Permalinks, Discussion and FluentSMTP.
 
 ## What WordPress already provides
 

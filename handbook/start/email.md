@@ -1,5 +1,3 @@
-<!-- verify-after-round-9 -->
-
 # Set up email
 
 The site sends email for confirmations, single-use links, claim decisions, reminders and nominations. It sends them through a mail account on your own domain, using the FluentSMTP plugin. This page creates the mail account in cPanel, connects it in FluentSMTP and sends a test.
@@ -27,7 +25,7 @@ These records stop your mail being marked as spam.
 
 ## 3. Connect the account in FluentSMTP
 
-1. In wp-admin, open **Settings > FluentSMTP** (this one is in the WordPress Settings menu).
+1. In wp-admin, open **Settings > FluentSMTP** (this one is in the WordPress Settings menu, not in Site settings). The Setup screen's **Open FluentSMTP settings** button opens the same page.
 2. Under connection settings, choose **Other SMTP**.
 3. Fill in the form:
 
@@ -53,7 +51,7 @@ These records stop your mail being marked as spam.
 2. Send To: your own work address.
 3. Press **Send Test Email**. FluentSMTP says whether it was sent.
 4. Check your inbox and your spam folder. The message should come from `noreply@yourdomain.africa`.
-5. Open **WHOISWHO > Setup**. The Email settings line is now Ready.
+5. Open **WHOISWHO > Setup**. The **Email** line is now Ready, and its **Open FluentSMTP settings** button takes you back to FluentSMTP at any time.
 
 ## Email logs
 
