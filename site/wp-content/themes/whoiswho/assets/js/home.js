@@ -71,19 +71,28 @@ function init() {
 
 init();
 
-/* Nominees block: the group filter. The chips are hidden until this runs, so without scripts everyone is shown. */
+/* Nominees block: the group chips (REQ-198). They are hidden until this runs, so without scripts the grid shows its first eight.
+   "All" shows the first eight; a group shows that group's nominees, including the ones the page holds back for it. No reload; the
+   number shown is announced in the block's status line. */
 function initNomineeFilter() {
   document.querySelectorAll("[data-nom-scope]").forEach((scope) => {
     const bar = scope.querySelector(".h-nom-filter");
     if (!bar) return;
     bar.hidden = false;
-    const items = scope.querySelectorAll(".hn-item");
+    const items = Array.from(scope.querySelectorAll(".hn-item"));
+    const status = scope.querySelector("[data-nom-status]");
     bar.addEventListener("click", (event) => {
       const chip = event.target instanceof Element ? event.target.closest("[data-nom-filter]") : null;
       if (!chip) return;
       const group = chip.getAttribute("data-nom-filter");
       bar.querySelectorAll("[data-nom-filter]").forEach((c) => c.setAttribute("aria-pressed", c === chip ? "true" : "false"));
-      items.forEach((item) => { item.hidden = group !== "all" && item.getAttribute("data-group") !== group; });
+      let shown = 0;
+      items.forEach((item) => {
+        const show = group === "all" ? !item.hasAttribute("data-nom-extra") : item.getAttribute("data-group") === group;
+        item.hidden = !show;
+        if (show) shown += 1;
+      });
+      if (status) status.textContent = shown === 1 ? "1 nominee shown" : shown + " nominees shown";
     });
   });
 }
