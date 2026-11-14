@@ -63,6 +63,8 @@ final class Uploads {
 		add_filter( 'upload_mimes', array( self::class, 'allowed_types' ), 99 );
 		add_filter( 'wp_check_filetype_and_ext', array( self::class, 'check_real_type' ), 99, 3 );
 		add_filter( 'wp_handle_upload_prefilter', array( self::class, 'prefilter' ) );
+		// Sideloads (media_handle_sideload: invitation photos, profile manager photos, import images) get the same checks (issue 810).
+		add_filter( 'wp_handle_sideload_prefilter', array( self::class, 'prefilter' ) );
 		add_filter( 'wp_handle_upload', array( self::class, 'after_upload' ), 10, 2 );
 	}
 
