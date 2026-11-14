@@ -28,7 +28,7 @@ You need WordPress 6.5 or newer, PHP 8.3 or newer, and a MySQL or MariaDB databa
    4. **Guard plugin installed:** see step 4 below.
    5. **Two-factor sign-in set up for you:** open your profile (top-right menu, then Profile) and switch on an authenticator app or the email code.
    6. **Email settings:** read-only. Passwords are never shown in the admin. A demo does not need mail.
-   7. **Demo content:** press *Import demo content* to fill every page with invented profiles, stories, events and awards. A progress bar shows it working (about a minute); keep the page open, and if it stops press *Try again*. *Remove demo content* deletes only what the demo added and puts back the settings it changed.
+   7. **Demo content (optional):** the demo content comes with the plugin; choose the parts on the Setup screen. Tick what you want (Profiles, Stories, Comments, Events, Awards, Home page curation, Pages and Settings) and press *Import demo content*. A part that needs another ticks it for you and says why (Awards need Profiles; Comments need Stories). A progress bar shows it working (about a minute); keep the page open, and if it stops press *Try again*. When the plugin zip includes the sample profiles, the Profiles part imports them like any import and publishes them as reviewed by you; otherwise it adds invented profiles. Everything else is invented. Each part then shows how many items it added and when, and has its own *Remove* button; *Remove demo content* removes every part. Removing deletes only what the demo added and puts back the settings it changed. Anything a person changed after the import is kept and listed, and counts as your own content from then on.
 4. **Install the guard (recommended).** WordPress cannot upload must-use plugins. Unzip `whoiswho-guard-mu-plugin.zip` so that you have `wp-content/mu-plugins/whoiswho-guard.php` and the folder `wp-content/mu-plugins/whoiswho-guard/` (use your host's File Manager or an FTP program; create `mu-plugins` if it does not exist; in WordPress Studio, "Open site folder" shows `wp-content`). Until it is there the Setup checklist shows a "Recommended" line and the theme's own notice appears in wp-admin; the site still works.
 5. **Settings.** Settings > General: site title, time zone `Lagos` (WAT), date format. Staff with the awards capability open or close nominations on the Nominations screen. Email goes through the host's SMTP settings in the site's secrets file (see `docs/runbook.md` in the repository).
 6. **Optional: page cache.** The core plugin loads WP Super Cache only when `WP_CACHE` is true in `wp-config.php`. If you want it, install WP Super Cache from wordpress.org (folder `wp-content/plugins/wp-super-cache`) first. It is not in the bundle because it does not work from inside another plugin's folder.
@@ -37,7 +37,7 @@ Until the plugin is active and the child theme is switched on, wp-admin shows a 
 
 ## Before you go live
 
-Remove the demo content on the Setup screen (*Remove demo content*): the site's launch checks flag anything still marked as sample content.
+Remove the demo content on the Setup screen (*Remove demo content*, or each part's *Remove* button): the site's launch checks flag anything still marked as sample content.
 
 ## Optional: the command line
 

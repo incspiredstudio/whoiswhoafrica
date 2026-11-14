@@ -27,3 +27,6 @@ acquisition/exports/*
 docs/node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+# Demo profiles bundle copied in for local testing; a release adds it with SAMPLE_BUNDLE. Real data is never committed.
+site/wp-content/plugins/whoiswho-core/sample/

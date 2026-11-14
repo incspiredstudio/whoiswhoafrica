@@ -241,8 +241,8 @@ final class Checklist {
 	private static function demo(): array {
 		$title = __( 'Demo content (optional)', 'whoiswho' );
 		if ( DemoImport::for_site()->installed() ) {
-			return self::item( 'demo', $title, self::OK, __( 'The demo content is on the site. Everything in it is invented and marked, and one click removes it.', 'whoiswho' ) );
+			return self::item( 'demo', $title, self::OK, __( 'Demo content is on the site. It is marked as sample content, and each part has its own Remove button below. You can import more parts at any time.', 'whoiswho' ) );
 		}
-		return self::item( 'demo', $title, self::WARN, __( 'The site is empty. Import the demo content to see every page filled in, then remove it when you are ready to add real records.', 'whoiswho' ), __( 'Optional: press Import demo content below.', 'whoiswho' ) );
+		return self::item( 'demo', $title, self::WARN, __( 'The site is empty. Import the demo content to see every page filled in, then remove it when you are ready to add real records.', 'whoiswho' ), __( 'Optional: tick the parts you want below and press Import demo content.', 'whoiswho' ) );
 	}
 }

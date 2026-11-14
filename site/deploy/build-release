@@ -12,6 +12,10 @@
 #   --no-archive       leave the folder, skip the .tar.gz
 # Environment: WIW_COMPOSER names the composer command (default "composer", for example "php /path/composer.phar").
 # (Not COMPOSER: Composer itself reads that variable as the name of its json file.)
+# SAMPLE_BUNDLE=<path to sample-50.zip> (optional, for example
+# SAMPLE_BUNDLE=D:/github/whoiswhoafrica/acquisition/data/exports/sample-50.zip deploy/build-release) copies the demo profiles
+# into the plugin under sample/. Without it the plugin has no sample folder and the Setup screen's demo uses invented profiles.
+# The file is never committed.
 # Exit codes: 0 built, 1 a rule failed (missing theme, forbidden file in the artifact), 2 bad usage.
 
 set -euo pipefail
@@ -85,6 +89,8 @@ copy_tree() {
 	(cd "$from" && tar --exclude='./node_modules' --exclude='./tests' --exclude='.env' --exclude='.env.*' --exclude='*.env' --exclude='*.log' --exclude='.git' --exclude='.DS_Store' -cf - .) | (cd "$to" && tar -xf -)
 }
 copy_tree "$SOURCE/wp-content/plugins/whoiswho-core" "$STAGE/wp-content/plugins/whoiswho-core"
+# The demo profiles (REQ-208): only the bundle named by SAMPLE_BUNDLE goes in, never a local sample/ folder.
+bash "$HERE/add-sample-bundle.sh" "$STAGE/wp-content/plugins/whoiswho-core" || fail "SAMPLE_BUNDLE could not be added"
 copy_tree "$PARENT" "$STAGE/wp-content/themes/whoiswho"
 copy_tree "$CHILD" "$STAGE/wp-content/themes/whoiswho-child"
 mkdir -p "$STAGE/wp-content/mu-plugins"
