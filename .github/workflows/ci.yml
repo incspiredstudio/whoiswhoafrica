@@ -194,8 +194,8 @@ jobs:
       - run: npx playwright test --shard=${{ matrix.shard }}/4
       # Throttled LCP, CLS and weight check (M0-QAX-05). Non-blocking until the owner agrees the budgets in tests/e2e/perf/budgets.json. Runs once, in shard 1.
       - name: Performance budget (non-blocking)
-        if: matrix.shard == 1
         continue-on-error: true
+        if: matrix.shard == 1
         run: WIW_PERF=1 npx playwright test
       - uses: actions/upload-artifact@v4
         if: always()
