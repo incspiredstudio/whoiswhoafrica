@@ -60,6 +60,41 @@ final class ExposureTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'admin', apply_filters( 'login_errors', 'Unknown username admin' ) );
 	}
 
+	/**
+	 * The block editor and dashboard call /wp/v2/users/me for the signed-in user; an Editor (edit_posts, no list_users) gets that
+	 * one route and nothing else under /wp/v2/users (#810).
+	 */
+	public function test_REQ_229_editor_gets_only_users_me_route(): void {
+		$all = array(
+			'/wp/v2/users'                                => array(),
+			'/wp/v2/users/(?P<id>[\d]+)'                  => array(),
+			'/wp/v2/users/me'                             => array(),
+			'/wp/v2/users/me/application-passwords'       => array(),
+			'/wp/v2/users/(?P<user_id>(?:[\d]+|me))/application-passwords' => array(),
+			'/wp/v2/posts'                                => array(),
+		);
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+		$this->assertFalse( current_user_can( 'list_users' ) );
+		$routes = apply_filters( 'rest_endpoints', $all );
+		$this->assertArrayHasKey( '/wp/v2/users/me', $routes, 'an Editor can read their own user' );
+		$this->assertArrayNotHasKey( '/wp/v2/users', $routes, 'the users list stays closed' );
+		$this->assertArrayNotHasKey( '/wp/v2/users/(?P<id>[\d]+)', $routes, 'other users stay closed' );
+		$this->assertArrayNotHasKey( '/wp/v2/users/me/application-passwords', $routes );
+		$this->assertArrayNotHasKey( '/wp/v2/users/(?P<user_id>(?:[\d]+|me))/application-passwords', $routes );
+		$this->assertArrayHasKey( '/wp/v2/posts', $routes );
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+		$this->assertArrayNotHasKey( '/wp/v2/users/me', apply_filters( 'rest_endpoints', $all ), 'a user who cannot edit posts gets no users route' );
+
+		wp_set_current_user( 0 );
+		$routes = apply_filters( 'rest_endpoints', $all );
+		$this->assertArrayNotHasKey( '/wp/v2/users/me', $routes, 'a visitor gets no users route' );
+		$this->assertArrayNotHasKey( '/wp/v2/users', $routes );
+	}
+
 	public function test_REQ_208_hidden_content_absent_from_feeds_oembed_and_core_sitemaps(): void {
 		wp_set_current_user( 0 );
 		$id = self::factory()->post->create( array( 'post_status' => 'wiw_hidden' ) );

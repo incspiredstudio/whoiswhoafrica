@@ -139,7 +139,8 @@ final class Exposure {
 	}
 
 	/**
-	 * The users routes are never available to anyone who cannot list users.
+	 * The users routes are never available to anyone who cannot list users. One exception: a signed-in user who can edit posts
+	 * keeps exactly /wp/v2/users/me (their own record), which the block editor and dashboard need.
 	 *
 	 * @param array<string, mixed> $endpoints Routes.
 	 * @return array<string, mixed>
@@ -148,7 +149,11 @@ final class Exposure {
 		if ( current_user_can( 'list_users' ) ) {
 			return $endpoints;
 		}
+		$keep_me = is_user_logged_in() && current_user_can( 'edit_posts' );
 		foreach ( array_keys( $endpoints ) as $route ) {
+			if ( $keep_me && '/wp/v2/users/me' === (string) $route ) {
+				continue;
+			}
 			if ( 0 === strpos( (string) $route, '/wp/v2/users' ) ) {
 				unset( $endpoints[ $route ] );
 			}
