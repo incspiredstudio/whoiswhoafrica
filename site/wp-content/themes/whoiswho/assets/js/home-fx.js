@@ -76,7 +76,12 @@ function pinStories() {
     if (on) track.style.transform = "translate3d(" + (-progress() * dist).toFixed(1) + "px,0,0)";
   };
   const measure = () => {
-    on = wide.matches;
+    // Pin only when the stories are wider than the screen: with a short track a pinned section is a screen of empty space.
+    sec.classList.remove("is-pinned");
+    sec.style.height = "";
+    track.style.transform = "";
+    const wrap = track.parentElement;
+    on = wide.matches && !!wrap && wrap.scrollWidth > wrap.clientWidth + 1;
     sec.classList.toggle("is-pinned", on);
     if (!on) {
       sec.style.height = "";
@@ -275,13 +280,13 @@ function cue() {
   });
 }
 
-/* ---------- particle stage: Three.js and the stage script are fetched once the visitor starts scrolling, and only on capable devices ---------- */
+/* ---------- particle stage: the stage script (its own small WebGL renderer) is fetched once the visitor starts scrolling, only on capable devices ---------- */
 function stage() {
   const urls = window.wiwHome;
   const hero = document.querySelector(".h-hero");
   const acts = document.querySelector(".h-acts");
   const home = document.querySelector(".home");
-  if (!urls || !urls.three || !urls.stage || !hero || !acts || !home) return;
+  if (!urls || !urls.stage || !hero || !acts || !home) return;
   if ((navigator.deviceMemory && navigator.deviceMemory < 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4)) return;
   try {
     if (!document.createElement("canvas").getContext("webgl")) return;
@@ -303,8 +308,7 @@ function stage() {
     asked = true;
     window.removeEventListener("scroll", onScroll);
     const go = () =>
-      load(urls.three)
-        .then(() => load(urls.stage))
+      load(urls.stage)
         .then(() => {
           const host = document.createElement("div");
           host.className = "h-stage";

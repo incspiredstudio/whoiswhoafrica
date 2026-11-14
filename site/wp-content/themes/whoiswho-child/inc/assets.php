@@ -21,7 +21,8 @@ add_action(
 		foreach ( array( 'star', 'comb', 'link', 'spiral' ) as $mark ) {
 			$css .= '--img-mark-' . $mark . ':url("' . esc_url_raw( $brand . 'mark-' . $mark . '.webp' ) . '");';
 		}
-		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-tile.webp' ) . '");}';
+		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-marks.webp' ) . '");';
+		$css .= '--img-logo:url("' . esc_url_raw( trailingslashit( get_stylesheet_directory_uri() ) . 'assets/logo/wiw-logo-mask.webp' ) . '");}';
 		wp_add_inline_style( 'wiw-tokens-brand', $css );
 	},
 	20
@@ -46,6 +47,8 @@ add_action(
 				esc_url( get_stylesheet_directory_uri() . '/assets/fonts/' . $file )
 			);
 		}
+		// The header wordmark is a CSS mask: fetch it with the fonts so the logo is there on first paint (8.6 KB, cached on every page).
+		printf( '<link rel="preload" href="%s" as="image" type="image/webp">' . "\n", esc_url( get_stylesheet_directory_uri() . '/assets/logo/wiw-logo-mask.webp' ) );
 	},
 	1
 );
