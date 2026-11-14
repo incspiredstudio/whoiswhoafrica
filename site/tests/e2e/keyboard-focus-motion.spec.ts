@@ -24,12 +24,22 @@ for (const path of paths) {
         const info = await page.evaluate(() => {
           const el = document.activeElement as HTMLElement | null;
           if (!el || el === document.body) return null;
+          const ringed = (node: Element): boolean => {
+            const s = getComputedStyle(node);
+            return (s.outlineStyle !== "none" && parseFloat(s.outlineWidth) > 0 && s.outlineColor !== "rgba(0, 0, 0, 0)") || s.boxShadow !== "none";
+          };
           const cs = getComputedStyle(el);
-          const outline = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0 && cs.outlineColor !== "rgba(0, 0, 0, 0)";
-          const shadow = cs.boxShadow !== "none";
           const bg = cs.textDecorationLine.includes("underline");
+          // A card may draw the ring around itself while its link has focus (:focus-within), as the profile cards do. That counts,
+          // but only on a close ancestor (up to four levels), so a page-wide outline cannot pass for a focus indicator.
+          let around = false;
+          let ancestor: Element | null = el.parentElement;
+          for (let up = 0; up < 4 && ancestor && !around; up++) {
+            around = ancestor.matches(":focus-within") && ringed(ancestor);
+            ancestor = ancestor.parentElement;
+          }
           const id = el.tagName + "|" + (el.getAttribute("href") ?? el.id ?? el.getAttribute("name") ?? "") + "|" + (el.textContent ?? "").trim().slice(0, 30);
-          return { id, visible: outline || shadow || bg };
+          return { id, visible: ringed(el) || bg || around };
         });
         if (info) {
           seen.add(info.id);

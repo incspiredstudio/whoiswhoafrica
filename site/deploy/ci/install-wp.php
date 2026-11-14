@@ -53,4 +53,27 @@ if ( is_plugin_active( $wiw_plugin ) ) {
 		exit( 1 );
 	}
 }
+
+// The plugin's first run trashes WordPress's untouched "Hello world!" post (DefaultContent), so the browser tests that need the
+// home page's stories block get one fictional published story instead. Test environments only, and only when there is none.
+$wiw_stories = get_posts(
+	array(
+		'post_type'   => 'post',
+		'post_status' => 'publish',
+		'numberposts' => 1,
+		'fields'      => 'ids',
+	)
+);
+if ( array() === $wiw_stories ) {
+	wp_insert_post(
+		array(
+			'post_type'    => 'post',
+			'post_status'  => 'publish',
+			'post_title'   => 'A fictional story for the browser tests',
+			'post_name'    => 'browser-test-story',
+			'post_content' => '<!-- wp:paragraph --><p>A fictional story used only by the browser tests. It names no real person.</p><!-- /wp:paragraph -->',
+			'post_author'  => 1,
+		)
+	);
+}
 echo 'installed, theme ' . $wiw_theme . "\n";
