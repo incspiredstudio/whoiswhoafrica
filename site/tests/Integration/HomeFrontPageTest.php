@@ -162,12 +162,11 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertMatchesRegularExpression( '/id="home-stories".*?<div class="h-stories-pin">.*?class="h-track-wrap".*?</section>/s', $out );
 	}
 
-	public function test_REQ_041_the_home_page_hands_the_stage_urls_to_home_js_and_never_enqueues_three_with_the_page(): void {
+	public function test_REQ_041_the_home_page_hands_the_stage_url_to_home_js_and_never_enqueues_the_stage_with_the_page(): void {
 		add_filter(
 			'wiw_manifest',
 			static fn () => array(
 				'home-js.js'    => 'home-js.1.js',
-				'three.js'      => 'three.1.js',
 				'home-stage.js' => 'home-stage.1.js',
 			)
 		);
@@ -177,10 +176,24 @@ final class HomeFrontPageTest extends WpTestCase {
 		do_action( 'wp_enqueue_scripts' );
 		$before = implode( '', (array) wp_scripts()->get_data( 'wiw-home', 'before' ) );
 		$this->assertStringContainsString( 'window.wiwHome=', $before );
-		$this->assertStringContainsString( 'three.1.js', $before );
 		$this->assertStringContainsString( 'home-stage.1.js', $before );
-		$this->assertFalse( wp_script_is( 'wiw-three', 'registered' ), 'Three.js is fetched on demand, not enqueued' );
+		$this->assertStringNotContainsString( 'three', $before, 'no Three.js any more: the stage draws with its own WebGL helper' );
+		$this->assertFalse( wp_script_is( 'wiw-home-stage', 'registered' ), 'the stage is fetched on demand, not enqueued' );
 		remove_all_filters( 'wiw_manifest' );
+	}
+
+	public function test_REQ_041_the_theme_ships_no_three_js_bundle_and_the_stage_caps_pixel_ratio_and_pauses(): void {
+		$theme = dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho/assets';
+		$this->assertFileDoesNotExist( $theme . '/vendor/three.js', 'the 651 KB Three.js bundle is gone' );
+		$this->assertFileDoesNotExist( $theme . '/js/three-global.js' );
+		$entries = (string) file_get_contents( dirname( __DIR__, 2 ) . '/build/entries.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringNotContainsString( 'three', $entries );
+		$stage = (string) file_get_contents( $theme . '/js/home-stage.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringNotContainsString( 'window.THREE', $stage );
+		$this->assertStringContainsString( 'visibilitychange', $stage, 'the loop stops while the tab is hidden' );
+		$this->assertStringContainsString( 'IntersectionObserver', $stage, 'the loop stops while the scenes are off screen' );
+		$this->assertStringContainsString( 'prefers-reduced-motion', $stage, 'reduced motion stops the stage' );
+		$this->assertMatchesRegularExpression( '/Math\.min\(window\.devicePixelRatio[^;]*,\s*2\)/', $stage, 'pixel ratio capped at 2' );
 	}
 	public function test_REQ_002_the_closing_call_has_one_button_that_follows_the_nominations_switch(): void {
 		add_filter( 'wiw_nominations_are_open', '__return_false' );
