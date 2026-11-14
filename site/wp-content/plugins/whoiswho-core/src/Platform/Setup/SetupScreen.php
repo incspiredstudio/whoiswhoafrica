@@ -17,7 +17,7 @@ use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Permalinks;
-use WhoIsWho\Core\Platform\TwoFactor\Enforcement;
+use WhoIsWho\Core\Compliance\Forms\TurnstileSettings;
 
 /**
  * Setup screen.
@@ -33,6 +33,11 @@ final class SetupScreen {
 	public const ACTION_START  = 'wiw_demo_start';
 	public const ACTION_STEP   = 'wiw_demo_step';
 	public const ACTION_REMOVE = 'wiw_demo_remove';
+
+	public const ACTION_TURNSTILE = 'wiw_setup_turnstile';
+	public const TURNSTILE_ERROR  = 'wiw_setup_turnstile_error';
+	public const DB_RESULT        = 'wiw_setup_db_result';
+	public const BACKUP_FIELD     = 'backup_confirmed';
 
 	/**
 	 * Attach hooks.
@@ -66,11 +71,75 @@ final class SetupScreen {
 		ActionGuard::register( self::ACTION_START, self::CAP, array( self::class, 'handle_start' ), true );
 		ActionGuard::register( self::ACTION_STEP, self::CAP, array( self::class, 'handle_step' ), true );
 		ActionGuard::register( self::ACTION_REMOVE, self::CAP, array( self::class, 'handle_remove' ), true );
+		ActionGuard::register( self::ACTION_TURNSTILE, self::CAP, array( self::class, 'handle_turnstile' ) );
 	}
 
 	/**
-	 * Send the administrator to the Setup screen once, right after activation. A staff member who has not set up two-factor sign-in
-	 * yet is sent to their profile first (Platform\TwoFactor\Enforcement), so the flag waits until they can open the screen.
+	 * Save the Turnstile keys (admin-post). The secret is never sent back to the browser; the screen says only that it is saved.
+	 * The change is audited without either key.
+	 *
+	 * @param Request $request Request.
+	 */
+	public static function handle_turnstile( Request $request ): void {
+		$result = self::save_turnstile( $request );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'wiw_what' => 'turnstile',
+					'wiw_ok'   => '' === $result ? '1' : '0',
+				),
+				self::url()
+			) . '#wiw-item-turnstile'
+		);
+		exit;
+	}
+
+	/**
+	 * Check and save the Turnstile keys (no output, so it can be tested).
+	 *
+	 * @param Request $request Request.
+	 * @return string An error message, or an empty string when saved.
+	 */
+	public static function save_turnstile( Request $request ): string {
+		if ( TurnstileSettings::from_constants() ) {
+			return __( 'Your host set these keys for the site, so they cannot be changed here.', 'whoiswho' );
+		}
+		$values = TurnstileSettings::validate( $request->string( 'turnstile_site_key' ), $request->string( 'turnstile_secret' ), '1' === $request->string( 'turnstile_remove' ) );
+		if ( ! $values['ok'] ) {
+			update_option( self::TURNSTILE_ERROR, $values['error'], false );
+			return $values['error'];
+		}
+		delete_option( self::TURNSTILE_ERROR );
+		TurnstileSettings::save( $values );
+		self::audit( $values['remove'] ? 'setup.turnstile_removed' : 'setup.turnstile_saved' );
+		return '';
+	}
+
+	/**
+	 * The Turnstile key form.
+	 */
+	private static function turnstile_form(): string {
+		if ( TurnstileSettings::from_constants() ) {
+			return '';
+		}
+		$site_key = TurnstileSettings::site_key();
+		$saved    = TurnstileSettings::has_secret();
+		$out      = '<form method="post" class="wiw-turnstile-form" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out     .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_TURNSTILE ) . '" />';
+		$out     .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_TURNSTILE ) ) . '" />';
+		$out     .= '<p><label for="wiw-turnstile-site-key">' . esc_html__( 'Site key', 'whoiswho' ) . '</label><br />';
+		$out     .= '<input type="text" id="wiw-turnstile-site-key" name="turnstile_site_key" class="regular-text" autocomplete="off" spellcheck="false" value="' . esc_attr( $site_key ) . '" /></p>';
+		$out     .= '<p><label for="wiw-turnstile-secret">' . esc_html__( 'Secret key', 'whoiswho' ) . '</label><br />';
+		$out     .= '<input type="password" id="wiw-turnstile-secret" name="turnstile_secret" class="regular-text" autocomplete="new-password" spellcheck="false" value="" aria-describedby="wiw-turnstile-secret-note" />';
+		$out     .= '<br /><span class="description" id="wiw-turnstile-secret-note">' . esc_html( $saved ? __( 'Saved. It is not shown again. Leave this empty to keep it, or paste a new one to replace it.', 'whoiswho' ) : __( 'Not saved yet.', 'whoiswho' ) ) . '</span></p>';
+		if ( '' !== $site_key || $saved ) {
+			$out .= '<p><label><input type="checkbox" name="turnstile_remove" value="1" /> ' . esc_html__( 'Remove both keys and go back to the built-in spam check', 'whoiswho' ) . '</label></p>';
+		}
+		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save Turnstile keys', 'whoiswho' ) . '</button></p></form>';
+	}
+
+	/**
+	 * Send the administrator to the Setup screen once, right after activation.
 	 */
 	public static function maybe_redirect(): void {
 		global $pagenow;
@@ -90,19 +159,18 @@ final class SetupScreen {
 
 	/**
 	 * Where to send this request, or null for no redirect. Only a plain visit to the Dashboard or the Plugins screen is redirected, never a form post,
-	 * an AJAX call or a user who may not open the screen or is being sent to enrol.
+	 * an AJAX call or a user who may not open the screen.
 	 *
-	 * @param int              $user_id User.
-	 * @param string           $page    Admin page file, for example index.php.
-	 * @param bool             $multi   Whether several plugins were activated at once.
-	 * @param bool             $ajax        Whether this is an AJAX request.
-	 * @param Enforcement|null $enforcement Two-factor rules (tests pass one).
+	 * @param int    $user_id User.
+	 * @param string $page    Admin page file, for example index.php.
+	 * @param bool   $multi   Whether several plugins were activated at once.
+	 * @param bool   $ajax    Whether this is an AJAX request.
 	 */
-	public static function redirect_target( int $user_id, string $page, bool $multi, bool $ajax, ?Enforcement $enforcement = null ): ?string {
+	public static function redirect_target( int $user_id, string $page, bool $multi, bool $ajax ): ?string {
 		if ( false === get_option( FirstRun::REDIRECT ) || $ajax || $multi || ! in_array( $page, array( 'index.php', 'plugins.php' ), true ) ) {
 			return null;
 		}
-		if ( $user_id < 1 || ! user_can( $user_id, self::CAP ) || Enforcement::ALLOW !== ( $enforcement ?? Enforcement::for_site() )->decide( $user_id, 'admin.php' ) ) {
+		if ( $user_id < 1 || ! user_can( $user_id, self::CAP ) ) {
 			return null;
 		}
 		return self::url();
@@ -171,6 +239,76 @@ final class SetupScreen {
 	}
 
 	/**
+	 * The "Update the database" form for a site that already has its database: a plain backup warning and an "I have a backup"
+	 * box that must be ticked. A first install needs no backup and keeps the plain button.
+	 *
+	 * @param string $label Button text.
+	 */
+	private static function database_form( string $label ): string {
+		if ( SchemaState::may_self_initialise() ) {
+			return self::fix_form( 'database', $label );
+		}
+		return '<form method="post" class="wiw-db-form" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_FIX ) . '" />'
+			. '<input type="hidden" name="what" value="database" />'
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_FIX ) ) . '" />'
+			. '<p class="wiw-fix"><strong>' . esc_html__( 'Take a backup in cPanel first.', 'whoiswho' ) . '</strong> ' . esc_html__( 'In cPanel, open Backup (or your host\'s backup tool) and download a full backup, or at least the database. The update only adds to the database and cannot be undone from here.', 'whoiswho' ) . '</p>'
+			. '<p><label><input type="checkbox" name="' . esc_attr( self::BACKUP_FIELD ) . '" value="1" required /> ' . esc_html__( 'I have a backup', 'whoiswho' ) . '</label></p>'
+			. '<p><button type="submit" class="button button-primary">' . esc_html( $label ) . '</button></p></form>';
+	}
+
+	/**
+	 * Apply the waiting database changes (the Setup screen's button; the caller has checked wiw_run_setup and the nonce through
+	 * ActionGuard). On a site that already has its database the "I have a backup" box must be ticked. The changes run through the
+	 * locked migration runner, and the result is audited and kept in plain words for the screen.
+	 *
+	 * @param Request     $request Request.
+	 * @param string|null $dir     Migrations folder (tests pass one).
+	 * @return array{ok: bool, applied: string[], error: string}
+	 */
+	public static function update_database( Request $request, ?string $dir = null ): array {
+		$fresh = SchemaState::may_self_initialise();
+		if ( ! $fresh && '1' !== $request->string( self::BACKUP_FIELD ) ) {
+			$message = __( 'Nothing was changed. Take a backup first, then tick "I have a backup" and press the button again.', 'whoiswho' );
+			update_option( self::DB_RESULT, $message, false );
+			return array(
+				'ok'      => false,
+				'applied' => array(),
+				'error'   => $message,
+			);
+		}
+		$result = FirstRun::run_database_setup( $dir );
+		if ( $result['ok'] ) {
+			$count   = count( $result['applied'] );
+			$message = 0 === $count
+				? __( 'The database was already up to date. Nothing needed changing.', 'whoiswho' )
+				/* translators: %d: number of database changes applied. */
+				: sprintf( _n( 'The database is up to date: %d change was applied.', 'The database is up to date: %d changes were applied.', $count, 'whoiswho' ), $count );
+		} else {
+			$message = __( 'The database update did not finish, and the site is as it was before the step that stopped. The checklist below says why. You can press the button again; it carries on from where it stopped.', 'whoiswho' );
+		}
+		update_option( self::DB_RESULT, $message, false );
+		try {
+			AuditLogger::for_site()->log(
+				$result['ok'] ? 'setup.database_updated' : 'setup.database_update_failed',
+				array(
+					'type' => 'site',
+					'id'   => 'setup',
+				),
+				null,
+				array(
+					'applied' => $result['applied'],
+					'fresh'   => $fresh,
+				)
+			); // phpcs:ignore Universal.Arrays.MixedKeyedUnkeyedArray -- plain subject array.
+		} catch ( \Throwable $e ) {
+			unset( $e );
+			// The audit log being busy must not stop the update.
+		}
+		return $result;
+	}
+
+	/**
 	 * Load the screen's script and style on the Setup screen only.
 	 *
 	 * @param string $hook Admin page hook (unused: the page query argument decides).
@@ -223,9 +361,16 @@ final class SetupScreen {
 	private static function result_text( string $what, bool $ok ): string {
 		$text = array(
 			'permalinks' => array( __( 'Pretty web addresses are on.', 'whoiswho' ), __( 'Pretty web addresses could not be switched on. Open Settings > Permalinks and choose Post name.', 'whoiswho' ) ),
-			'database'   => array( __( 'The database is ready.', 'whoiswho' ), __( 'The database setup did not finish. The checklist below says why.', 'whoiswho' ) ),
+			'database'   => array(
+				(string) get_option( self::DB_RESULT, __( 'The database is ready.', 'whoiswho' ) ),
+				(string) get_option( self::DB_RESULT, __( 'The database setup did not finish. The checklist below says why.', 'whoiswho' ) ),
+			),
 			'theme'      => array( __( 'The child theme is now the active theme.', 'whoiswho' ), __( 'The theme could not be switched. Open Appearance > Themes and activate the child theme.', 'whoiswho' ) ),
 			'dismiss'    => array( __( 'The Dashboard reminder is hidden. This screen stays in the admin menu.', 'whoiswho' ), '' ),
+			'turnstile'  => array(
+				__( 'The Turnstile settings are saved.', 'whoiswho' ),
+				(string) get_option( self::TURNSTILE_ERROR, __( 'The Turnstile keys were not saved.', 'whoiswho' ) ),
+			),
 		);
 		return isset( $text[ $what ] ) ? $text[ $what ][ $ok ? 0 : 1 ] : '';
 	}
@@ -248,7 +393,7 @@ final class SetupScreen {
 				$ok = '' !== (string) get_option( 'permalink_structure' );
 				break;
 			case 'database':
-				$ok = FirstRun::run_database_setup()['ok'];
+				$ok = self::update_database( $request )['ok'];
 				break;
 			case 'theme':
 				if ( current_user_can( 'switch_themes' ) && wp_get_theme( 'whoiswho-child' )->exists() && wp_get_theme( 'whoiswho' )->exists() ) {
@@ -261,7 +406,7 @@ final class SetupScreen {
 				$ok = true;
 				break;
 		}//end switch
-		if ( $ok && 'dismiss' !== $what ) {
+		if ( $ok && ! in_array( $what, array( 'dismiss', 'database' ), true ) ) {
 			self::audit( 'setup.' . $what );
 		}
 		wp_safe_redirect(
@@ -363,8 +508,8 @@ final class SetupScreen {
 	/**
 	 * One checklist line.
 	 *
-	 * @param int                                                                                                                 $number Position.
-	 * @param array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string} $item   Item.
+	 * @param int                                                                                                                                                   $number Position.
+	 * @param array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string} $item   Item.
 	 */
 	private static function item_html( int $number, array $item ): string {
 		$words = array(
@@ -380,8 +525,16 @@ final class SetupScreen {
 		if ( Checklist::OK !== $item['status'] && '' !== $item['fix'] ) {
 			$out .= '<p class="wiw-fix"><strong>' . esc_html__( 'What to do:', 'whoiswho' ) . '</strong> ' . esc_html( $item['fix'] ) . '</p>';
 		}
-		if ( '' !== $item['action'] ) {
+		if ( 'database' === $item['action'] ) {
+			$out .= self::database_form( $item['action_label'] );
+		} elseif ( '' !== $item['action'] ) {
 			$out .= self::fix_form( $item['action'], $item['action_label'] );
+		}
+		if ( '' !== $item['link'] ) {
+			$out .= '<p><a class="button" href="' . esc_url( $item['link'] ) . '">' . esc_html( $item['link_label'] ) . '</a></p>';
+		}
+		if ( 'turnstile' === $item['id'] ) {
+			$out .= self::turnstile_form();
 		}
 		if ( 'demo' === $item['id'] ) {
 			$out .= self::demo_html( Checklist::OK === $item['status'] );

@@ -4,6 +4,10 @@
  * plugin (as Action Scheduler is), so it cannot be deactivated from wp-admin and its settings are applied by code, not by hand:
  * authenticator app, email code and recovery codes are on; the debug-only Dummy method is always off.
  *
+ * Two-factor is available and recommended for staff, not enforced (owner decision 2026-11-14, D-070): nobody is redirected or
+ * blocked for not having it. A staff member who switches it on is asked for the second step at every sign-in, by the plugin.
+ * The Setup screen lists which staff have it on (StaffStatus).
+ *
  * @package WhoIsWho
  */
 
@@ -42,7 +46,6 @@ final class TwoFactor {
 	public static function register(): void {
 		add_filter( 'two_factor_providers', array( self::class, 'filter_providers' ) );
 		add_action( 'init', array( self::class, 'apply_settings' ) );
-		Enforcement::for_site()->register();
 		TestMode::register();
 	}
 

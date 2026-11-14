@@ -13,12 +13,11 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Commerce\Invitations;
 
-use WhoIsWho\Core\Compliance\Forms\TurnstileChallenge;
+use WhoIsWho\Core\Compliance\Forms\TurnstileSettings;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Forms\BotChallenge;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Forms\FormToken;
-use WhoIsWho\Core\Platform\Forms\NullChallenge;
 use WhoIsWho\Core\Platform\Forms\RateLimiter;
 use WhoIsWho\Core\Platform\Forms\TransientStore;
 use WhoIsWho\Core\Platform\Links\SignedLinks;
@@ -78,8 +77,7 @@ final class InvitationRoute {
 	 * The challenge the other public forms use: Turnstile when its secret is set, otherwise the honeypot and signed token.
 	 */
 	private static function site_challenge(): BotChallenge {
-		$secret = defined( 'WIW_TURNSTILE_SECRET' ) ? (string) constant( 'WIW_TURNSTILE_SECRET' ) : '';
-		return '' !== $secret ? new TurnstileChallenge( TurnstileChallenge::remote_verifier( $secret ) ) : new NullChallenge( FormToken::for_site() );
+		return TurnstileSettings::challenge( FormToken::for_site() );
 	}
 
 	/**

@@ -1,8 +1,8 @@
 import { createServer, type Server, type Socket } from "node:net";
 
 /**
- * A tiny local SMTP sink for browser tests. TEST ENVIRONMENT ONLY. The site sends mail to 127.0.0.1:1025 when it has no SMTP
- * account and is not in production (the local mail catcher's address, Transport::configure), so a test can listen there, read what the
+ * A tiny local SMTP sink for browser tests. TEST ENVIRONMENT ONLY. The site sends mail to 127.0.0.1:1025 when the test
+ * secrets file sets SMTP_HOST=127.0.0.1 and SMTP_PORT=1025 (Transport::configure), so a test can listen there, read what the
  * site would have sent and never send anything to a real person. It accepts any message and keeps it in memory.
  */
 export type CapturedMail = {

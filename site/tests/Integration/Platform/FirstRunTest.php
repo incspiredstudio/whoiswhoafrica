@@ -80,6 +80,16 @@ PHP;
 		$this->assertSame( '', $result['error'], 'refusing in production is the normal answer, not a fault' );
 	}
 
+	public function test_REQ_056_the_setup_button_applies_an_update_on_a_live_site_with_no_command_line(): void {
+		update_option( Runner::OPTION_VERSION, '2026999910', false );
+		$this->assertFalse( SchemaState::may_self_initialise(), 'the schema exists' );
+		$this->writeMigration( '2026999911' );
+		$result = FirstRun::run_database_setup( $this->dir );
+		$this->assertTrue( $result['ok'], $result['error'] );
+		$this->assertSame( array( '2026999911' ), $result['applied'] );
+		$this->assertSame( '2026999911', get_option( 'wiw_test_first_trace' ) );
+	}
+
 	public function test_REQ_056_an_upgrade_on_a_non_production_site_still_runs_on_activation(): void {
 		$this->writeMigration( '2026999911' );
 		$result = FirstRun::activate( $this->dir, false, false, array() );

@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Platform\Forms;
 
+use WhoIsWho\Core\Platform\Secrets\SiteKeys;
+
 /**
  * Form token.
  */
@@ -46,11 +48,10 @@ final class FormToken {
 	}
 
 	/**
-	 * Token for the site: the key is FORM_TOKEN_KEY from the secrets file, falling back to a WordPress salt.
+	 * Token for the site: the key is FORM_TOKEN_KEY from the secrets file when set, else one the site made for itself (SiteKeys).
 	 */
 	public static function for_site(): self {
-		$key = defined( 'WIW_FORM_TOKEN_KEY' ) ? (string) constant( 'WIW_FORM_TOKEN_KEY' ) : '';
-		return new self( '' !== $key ? $key : wp_salt( 'auth' ) );
+		return new self( SiteKeys::form_token_key() );
 	}
 
 	/**
