@@ -21,7 +21,7 @@ add_action(
 		foreach ( array( 'star', 'comb', 'link', 'spiral' ) as $mark ) {
 			$css .= '--img-mark-' . $mark . ':url("' . esc_url_raw( $brand . 'mark-' . $mark . '.webp' ) . '");';
 		}
-		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-tile.webp' ) . '");}';
+		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-marks.webp' ) . '");}';
 		wp_add_inline_style( 'wiw-tokens-brand', $css );
 	},
 	20

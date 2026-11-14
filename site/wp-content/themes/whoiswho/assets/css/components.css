@@ -258,7 +258,8 @@ ul.sponsors { list-style: none; }
 
 /* ---------- home hero ---------- */
 .hero { position: relative; overflow: hidden; background: var(--c-dark-deep); color: var(--c-on-dark); isolation: isolate; }
-.hero::before, .pattern::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--img-pattern-tile) 0 0/340px 340px; opacity: .055; pointer-events: none; }
+/* The brand pattern: the four approved Adinkra marks in shades of the text colour (docs/theme/brand-and-tokens.md, "Approved symbols"). */
+.hero::before, .pattern::before { content: ""; position: absolute; inset: 0; z-index: -1; background: currentcolor; opacity: .05; pointer-events: none; mask: var(--img-pattern-tile) 0 0 / 320px 320px repeat; }
 .pattern { position: relative; isolation: isolate; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding-block: var(--s-6) 0; }
 .hero-copy { display: flex; flex-direction: column; gap: var(--s-4); }
@@ -603,11 +604,6 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .nom-photo--purple { --nom-tone: var(--purple); --nom-ink: var(--c-white); }
 .nom-photo--green { --nom-tone: var(--green); --nom-ink: var(--c-white); }
 .nom-photo--red { --nom-tone: var(--red); --nom-ink: var(--c-white); }
-.nom-photo--tile { display: grid; place-items: center; color: var(--nom-ink, var(--c-white)); }
-.nom-photo--tile::after { display: none; }
-.nom-photo--tile span { position: relative; font: 400 clamp(3rem, 2rem + 3vw, 4.5rem)/1 var(--font-display); }
-.nom-photo--tile .nom-mark { position: absolute; right: -18%; bottom: -14%; width: 88%; height: auto; object-fit: contain; filter: brightness(0); opacity: .18; transition: transform 1100ms var(--ease-out); }
-.nom-card:hover .nom-photo--tile .nom-mark { transform: rotate(14deg) scale(1.08); }
 .nom-body { display: grid; gap: var(--s-1); }
 .nom-card .tag { color: var(--c-muted); font-size: .6875rem; }
 .nom-card--won .tag { color: var(--c-accent); }
@@ -658,8 +654,6 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .nom-hero-text { padding-bottom: var(--s-7); }
 .nom-hero .crumbs, .nom-hero .crumbs a { color: inherit; }
 .nom-hero .crumbs span { margin-inline: .375rem; }
-.nom-hero .nom-photo--tile { --nom-tone: var(--charcoal-900); --nom-ink: var(--offwhite); }
-.nom-hero .nom-photo--tile .nom-mark { filter: brightness(0) invert(1); opacity: .1; }
 .nom-hero-tag { margin-top: var(--s-5); font-size: var(--t-xs); font-weight: 600; letter-spacing: var(--track-label); text-transform: uppercase; }
 .nom-hero h1 { margin-top: var(--s-2); font-size: var(--t-4xl); line-height: .96; color: inherit; }
 .nom-hero-cat { margin-top: var(--s-3); font-size: var(--t-md); }
@@ -731,9 +725,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .np-num { font: 400 clamp(4rem, 2.5rem + 6vw, 9rem)/.8 var(--font-display); color: var(--np-tone); font-variant-numeric: tabular-nums; }
 .np-group-head h2 { font-size: var(--t-3xl); line-height: 1; }
 .np-group-head p { max-width: 34rem; margin-top: var(--s-2); color: var(--c-muted); }
-.np-mark { display: none; }
 
-@media (width >= 64rem) { .np-group-head { grid-template-columns: auto minmax(0, 1fr) 7rem; } .np-mark { display: block; width: 7rem; height: auto; filter: brightness(0); opacity: .14; justify-self: end; } }
 .np-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: var(--s-7) var(--s-5); }
 
 @media (width >= 64rem) {
@@ -742,7 +734,6 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
   .np-grid > :nth-child(3n) { margin-top: var(--s-5); }
 }
 .nom-page .nom-cats { margin-top: var(--s-6); }
-.np-mark, .nom-mark { background: transparent; }
 .np-reel-item, .np-reel-item:hover { text-decoration: none; }
 
 @media (width <= 47.99rem) { .np-group-head { grid-template-columns: minmax(0, 1fr); } .np-group-head h2 { font-size: var(--t-2xl); overflow-wrap: break-word; } }
@@ -754,7 +745,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .poster--purple { --pt: var(--purple); --pa: var(--orange); --pi: var(--c-white); }
 .poster--green { --pt: var(--green); --pa: var(--orange); --pi: var(--c-white); }
 .poster--red { --pt: var(--red); --pa: var(--orange); --pi: var(--c-white); }
-.poster-pat { position: absolute; inset: 0; z-index: 0; background: rgb(0, 0, 0, .16); mask: var(--img-pattern-tile) 0 0 / 150px 150px repeat; mask: var(--img-pattern-tile) 0 0 / 150px 150px repeat; transition: -webkit-mask-position 1200ms var(--ease-out), mask-position 1200ms var(--ease-out); }
+.poster-pat { position: absolute; inset: 0; z-index: 0; background: rgb(0, 0, 0, .2); mask: var(--img-pattern-tile) 0 0 / 200px 200px repeat; transition: -webkit-mask-position 1200ms var(--ease-out), mask-position 1200ms var(--ease-out); }
 .poster-mark { position: absolute; z-index: 1; top: 3%; right: -6%; width: 62%; aspect-ratio: 1; background: var(--pa); mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; transition: transform 1100ms var(--ease-out); }
 .poster-mark--star { --m: var(--img-mark-star); } .poster-mark--comb { --m: var(--img-mark-comb); } .poster-mark--link { --m: var(--img-mark-link); } .poster-mark--spiral { --m: var(--img-mark-spiral); }
 .poster-photo { position: absolute; z-index: 2; left: 12%; right: 12%; bottom: 0; width: 76%; height: 80%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 -2px 0 0 rgb(0, 0, 0, .06); transition: transform 900ms var(--ease-out); }
@@ -1356,7 +1347,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .stories-signup h2 { font: 400 var(--t-2xl)/var(--lh-tight) var(--font-display); max-width: 20ch; }
 .scard { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); align-content: start; min-width: 0; }
 .scard-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--r-1); background: var(--c-bg-alt); }
-.scard-media.is-empty { background: var(--c-bg-alt) var(--img-pattern-tile); }
+.scard-media.is-empty::before { content: ""; position: absolute; inset: 0; background: var(--c-text); opacity: .08; mask: var(--img-pattern-tile) 0 0 / 240px 240px repeat; }
 .scard-img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform var(--m-slow) var(--ease-out); }
 .scard-body { display: grid; gap: var(--s-2); min-width: 0; }
 .scard-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); font: 500 var(--t-xs)/1.4 var(--font-body); color: var(--c-muted); }
