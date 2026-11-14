@@ -13,7 +13,7 @@ An unresolved dispute goes to the Administrator. The Administrator can grant the
 
 ## Work a correction
 
-1. Open Corrections. The list shows reference, profile, the suggestion, received date, due date and status, and filters by status.
+1. Open **Review > Corrections**. The list shows reference, profile, the suggestion, received date, due date and status, and filters by status.
 2. Open an item. You see everything the requester sent: who they say they are, their evidence and their contact details. These are staff-only.
 3. Check that the requester's email is confirmed. Until the requester opens the single-use link, the item shows "email not confirmed".
 4. Choose one:

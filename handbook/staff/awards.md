@@ -1,3 +1,5 @@
+<!-- verify-after-round-9 -->
+
 # Award categories and nominations
 
 Staff run the awards from two screens: Award categories and Nominations. Judging and scoring happen offline, and the site records only the outcome. Every nomination has a stage (Nominated or Winner) and a status (Live or Not live), and nothing else.
@@ -6,14 +8,14 @@ Staff run the awards from two screens: Award categories and Nominations. Judging
 
 | Work | Screen | Capability | Default roles |
 |---|---|---|---|
-| Add, rename, reorder and remove categories | Award categories | `wiw_manage_awards` | Editor, Administrator |
-| Open or close nominations | Nominations (the switch at the top) | `wiw_toggle_nominations` (fixed) | Administrator. Editors see the state read-only. |
-| Add a profile, set stage and status, remove, send emails | Nominations | `wiw_manage_awards` | Editor, Administrator |
+| Add, rename, reorder and remove categories | Awards > Award categories | `wiw_manage_awards` | Editor, Administrator |
+| Open or close nominations | Awards > Nominations (the switch at the top) | `wiw_toggle_nominations` (fixed) | Administrator. Editors see the state read-only. |
+| Add a profile, set stage and status, remove, send emails | Awards > Nominations | `wiw_manage_awards` | Editor, Administrator |
 | Export nominations | List export | `wiw_export_data` | Administrator |
 
 ## Award categories
 
-1. Open Award categories. Categories sit under five groups: Leadership and Public Impact, Entrepreneurship and Business, Technology and Innovation, Professional Excellence, and Industry and Institutional Recognition.
+1. Open **Awards > Award categories**. Categories sit under five groups: Leadership and Public Impact, Entrepreneurship and Business, Technology and Innovation, Professional Excellence, and Industry and Institutional Recognition.
 2. Add a category, rename it or change its order.
 3. To remove one, it must have no nominations. If it has any, rename it or move its nominations first.
 
@@ -21,7 +23,7 @@ Every change is audited. The Awards pages, the Nominate guidance and the Home ma
 
 ## Open or close nominations
 
-1. Open Nominations. The switch is at the top and defaults to Closed.
+1. Open **Awards > Nominations**. The switch is at the top and defaults to Closed.
 2. An Administrator turns it on or off. The change records who, when and an optional reason.
 3. **Open:** the Nominate page and menus show the form.
 4. **Closed:** they show "Nominations are closed", with links to nominees or winners once published.
@@ -30,11 +32,12 @@ This is the only feature switch in the system.
 
 ## Add a nomination yourself
 
-1. Choose Add profile to nominations.
-2. Pick an existing profile and a category. Add an optional note.
+1. On **Awards > Nominations**, go to **Add profile to nominations**.
+2. Search for the profile by name and pick it, then choose a category. Add an optional note.
 3. Optionally enter a Contact email. It is staff-only and never appears publicly, in exports or in logs.
+4. Save.
 
-There is no free-text name field. If the person or organisation has no profile yet, create the profile first. A profile pending review can be added but cannot be set Live until it is reviewed.
+There is no free-text name field. If the person or organisation has no profile yet, use the **Create profile** shortcut in the profile picker: it opens [Add profile](/staff/add-profile) with the name filled in and brings you back to the nomination after saving. A profile pending review can be added but cannot be set Live until it is reviewed.
 
 ## Stage and status
 

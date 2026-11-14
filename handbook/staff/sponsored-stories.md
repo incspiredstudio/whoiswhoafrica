@@ -1,6 +1,6 @@
 # Sponsored stories
 
-A sponsored story is the only thing money can buy on WHOISWHO. A sponsor pays offline for a story to sit in a labelled slot on Home, Stories or both, for set dates. The Sponsored stories screen is the deal tracker: it holds the whole deal from agreement to a live slot. The site records the deal and the payment. It does not process payments.
+A sponsored story is the only thing money can buy on WHOISWHO. A sponsor pays offline for a story to sit in a labelled slot on Home, Stories or both, for set dates. The **Commercial > Sponsored stories** screen is the deal tracker: it holds the whole deal from agreement to a live slot. The site records the deal and the payment. It does not process payments.
 
 ## Who does what
 
@@ -67,7 +67,7 @@ Sprint tracking can be switched off in the theme settings. Turning it off hides 
 
 ## Customers
 
-A customer record holds a name, segment and contact, with a stable external ID. When a deal is agreed, an Administrator creates the sponsor as a customer, either on the Customers screen or from New sponsored story.
+A customer record holds a name, segment and contact, with a stable external ID. When a deal is agreed, an Administrator creates the sponsor as a customer, either on **Audience > Customers** or from New sponsored story.
 
 ## Changes and cancellations
 

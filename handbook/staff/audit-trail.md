@@ -6,9 +6,9 @@ The audit trail is the set of logs and exports that show what staff did, what th
 
 | Screen | What it holds | Capability | Default roles |
 |---|---|---|---|
-| Audit log | Every staff action that matters | `wiw_view_audit` | Administrator |
-| Purge log | Each unpublish, removal and decline and its cache purge | `wiw_view_audit` | Administrator |
-| Email log | Every notification the system sends | `wiw_view_audit` | Administrator |
+| Compliance > Audit log | Every staff action that matters | `wiw_view_audit` | Administrator |
+| Compliance > Purge log | Each unpublish, removal and decline and its cache purge | `wiw_view_audit` | Administrator |
+| Audience > Email log | Every notification the system sends | `wiw_view_audit` | Administrator |
 | Exports | CSV downloads from the list screens | `wiw_export_data` | Administrator |
 | Requests and reports | Data requests, removals and reports in one list | `wiw_handle_requests` | Editor, Administrator |
 

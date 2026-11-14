@@ -9,7 +9,14 @@ This page defines the product terms used in the handbook, with a link to the pag
 | Profile | A public record of a person, business or institution, with a source beside each fact |
 | Review pending | The state of a published organisation profile that no person has reviewed. It shows the label "Compiled automatically from public sources. Human review pending." Lists show reviewed profiles only. See [Profile review](/staff/profile-review). |
 | Review queue | Where staff check imported records before publishing |
-| Import batch | One delivery of records, which can be filtered on the Profiles screen |
+| Bundle | A zip file from the acquisition team with `manifest.json`, `records.jsonl` and an `images/` folder. See [Import data](/staff/importing). |
+| Dry run | The check the Import screen runs on a bundle before anything is written. It shows what would change. |
+| Profile sections | Bio, Achievement, Influence and Legacy: the four parts of a profile page. See [Profile sections](/staff/profile-sections). |
+| Open licence | A licence that lets anyone reuse an image with credit: CC0, public domain, CC BY or CC BY-SA. See [Photos and credits](/staff/photos-and-credits). |
+| Demo content | Sample profiles, stories, comments, events, awards and pages added from the Setup screen and removable per part. See [Demo content](/start/demo-content). |
+| Setup checklist | The WHOISWHO > Setup screen that shows whether each install step is ready. See [Setup checklist](/start/setup-checklist). |
+| Adinkra symbols | The four approved brand symbols: Adinkrahene, Dwennimmen, Nkonsonkonson and Sankofa. See [Brand tokens](/theme/brand-tokens#approved-symbols). |
+| Import batch | One imported bundle, which can be filtered on the Profiles screen and undone as a whole |
 | Claim | A request from a person or representative to take care of a profile. Decided within five days. See [Claims](/staff/claims). |
 | Claimed | A profile whose claim a staff member approved. Staff see a checkmark. The public sees nothing, and the Claim button disappears. |
 | Assigned user | The staff user kept on a claimed profile to update it. Their edits are held for approval. |
@@ -49,7 +56,14 @@ This page defines the product terms used in the handbook, with a link to the pag
 | Block pattern | A ready-made arrangement of blocks that an editor inserts and edits |
 | `whoiswho-core` | The plugin that holds the product logic |
 | `whoiswho-guard` | The always-on plugin that enforces the rules |
-| wpDiscuz | The comments plugin used on stories |
+| wpDiscuz | The comments plugin used on stories, installed from Required plugins |
+| FluentSMTP | The plugin that sends the site's email through a cPanel mail account. See [Email](/start/email). |
+| Required plugins | The WHOISWHO screen that installs FluentSMTP and wpDiscuz with one click. See [Required plugins](/start/required-plugins). |
+| Turnstile | Cloudflare's free spam check on every public form. See [Turnstile](/start/turnstile). |
+| Two-factor sign-in | A code from a phone app or email after the password. Recommended for staff, not enforced. |
+| Recovery codes | Single-use codes that replace the two-factor code when the phone is lost |
+| Must-use plugin | A plugin in `wp-content/mu-plugins` that is always on. The guard is one. |
+| cPanel | The hosting control panel for files, databases, email, PHP settings and backups |
 | Action Scheduler | The library that runs queued background jobs |
 | Read model | A fixed way for public pages to read profiles and stories so hidden items cannot appear |
 | Migration | A forward-only change to the database structure that adds before it removes |

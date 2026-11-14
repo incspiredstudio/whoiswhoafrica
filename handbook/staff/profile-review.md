@@ -1,41 +1,42 @@
 # Profile review and publication states
 
-A profile moves from an imported record to a public page through review. Nothing about an individual is public until a person has approved it. This page covers the import, the review queue, duplicates, the six publication states, editing, and how to take profiles down.
+A profile moves from an imported or hand-added record to a public page through review. Nothing about an individual is public until a person has approved it. This page covers the review queue, duplicates, the six publication states, editing, and how to take profiles down.
 
 ## Who does what
 
 | Step | Screen | Capability | Default roles |
 |---|---|---|---|
-| Run an import | Import | `wiw_run_imports` | Administrator |
-| Review and approve | Review queue | `wiw_review_records` | Reviewer, Editor, Administrator |
-| Resolve duplicates | Duplicates | `wiw_resolve_duplicates` | Reviewer, Editor, Administrator |
-| See where records came from | Sources (read-only) | `wiw_view_sources` | Reviewer, Editor, Administrator |
-| Edit a profile | Profile screen | `edit_wiw_profiles` | Editor, Administrator |
-| Unpublish one profile | Profile screen | `wiw_unpublish_profiles` | Editor, Administrator |
-| Bulk unpublish and restore | Profiles | `wiw_bulk_unpublish` | Reviewer, Administrator |
+| Run an import | Imports > Import | `wiw_run_imports` | Administrator |
+| Add a profile by hand | Directory > Add profile | `wiw_add_profile` | Editor, Administrator |
+| Review and approve | Review > Review queue | `wiw_review_records` | Reviewer, Editor, Administrator |
+| Resolve duplicates | Directory > Duplicates | `wiw_resolve_duplicates` | Reviewer, Editor, Administrator |
+| See where records came from | Imports > Sources (read-only) | `wiw_view_sources` | Reviewer, Editor, Administrator |
+| Edit a profile | Directory > Edit profile | `edit_wiw_profiles` | Editor, Administrator |
+| Unpublish one profile | Directory > Profiles | `wiw_unpublish_profiles` | Editor, Administrator |
+| Bulk unpublish and restore | Directory > Profiles | `wiw_bulk_unpublish` | Reviewer, Administrator |
 
-## Import a file
+## Where profiles come from
 
-1. A named Administrator uploads the file in the admin, or runs it from the command line.
-2. Run the dry run first. It checks required fields, country codes, terms, the suppression list, duplicates and free-text patterns, and shows a difference before anything is written.
-3. Import. Records are created or updated by stable ID, so importing the same file twice changes nothing.
-4. The site recomputes each record's content hash and refuses a record whose hash does not match.
-5. Each record is tagged with its file, batch and importer, and the import is written to the audit log.
+| Route | Page |
+|---|---|
+| An import bundle from the acquisition team | [Import data](/staff/importing) |
+| Added by hand by an Editor or Administrator | [Add a profile by hand](/staff/add-profile) |
+| A listing agreed through Get listed, by invitation or consent link | [Enquiries](/staff/enquiries) |
 
-A re-import never overwrites a field a person has already reviewed. A changed source is flagged for review instead.
+Whatever the route, an individual's profile is not public until a reviewer approves it, and the reviewer cannot be the person who imported or added it. A re-import never overwrites a field a person has already reviewed; a changed source is flagged for review instead.
 
 ## The six publication states
 
-Every profile has exactly one state.
+Every profile has exactly one state. The state is shown in the State column of **Directory > Profiles**.
 
-| State | Public? | Who sees it |
-|---|---|---|
-| Imported, not public | No | Staff only |
-| Published, review pending | Yes, with a label | Everyone, but not indexed |
-| Published, reviewed | Yes | Everyone, indexed |
-| Unpublished | No ("gone", 410) | Staff only |
-| Rejected | No ("not found", 404) | Staff only |
-| Removed and suppressed | No ("gone", 410) | Staff only |
+| State | Public? | Who sees it | In plain words |
+|---|---|---|---|
+| Imported, not public | No | Staff only | Waiting for review. Every new individual starts here. |
+| Published, review pending | Yes, with a label | Everyone, but not indexed | An organisation that is visible with the "Human review pending" label while it waits for review |
+| Published, reviewed | Yes | Everyone, indexed | Approved by a person. This is the normal live state. |
+| Unpublished | No ("gone", 410) | Staff only | Taken down for now. It can be restored. |
+| Rejected | No ("not found", 404) | Staff only | A reviewer decided it should not be published |
+| Removed and suppressed | No ("gone", 410) | Staff only | Removed at the person's request and on the suppression list, so no import can bring it back |
 
 After an import, the first matching rule sets the state.
 
@@ -50,12 +51,14 @@ A Published, review pending profile shows the label "Compiled automatically from
 
 ## Review a record
 
-1. Open the Review queue. Claims and corrections rise to the top. Otherwise organisations come before individuals.
-2. Open an item. You see the difference field by field, each fact with its source address, retrieval date, confidence and method, and any flags from the free-text scan.
-3. Fix or remove any flagged fact. A fact with low confidence or no source cannot be published. A record that fails the free-text scan stays blocked until it is cleared.
-4. If it may be a duplicate, resolve that first in Duplicates.
-5. Check the five points: no allegations, litigation or rumours; no opinion or praise; no personal life, family, health or finances; every fact dated and sourced; professional facts only.
-6. Approve or reject, with a reason.
+1. Open **Review > Review queue**. Claims and corrections rise to the top. Otherwise organisations come before individuals.
+2. Open an item. You see the difference field by field, each fact with its source address, retrieval date, confidence and method, and any flags from the free-text scan. Read the Bio, Achievement, Influence and Legacy sections against the sources, especially text marked with the method "ai". Check that any photo has an open licence and a credit ([Photos and credits](/staff/photos-and-credits)).
+3. Fix or remove any flagged fact. A fact with low confidence or no source cannot be published. A record that fails the **Free-text scan** stays blocked until someone fills in **Why the flags do not apply** and presses **Clear the block**.
+4. If it may be a duplicate, resolve that first in **Directory > Duplicates**.
+5. Tick the **Checklist**: no allegations, litigation or rumours; no opinion or praise; no personal life, family, health or finances; every fact is dated and sourced; professional facts only.
+6. Press **Approve**, or **Reject** with a reason.
+
+If you imported or added the record yourself, the screen says "You imported this record, so another reviewer must approve it."
 
 The approver cannot be the person who imported or drafted the record. Every approval and rejection is audited.
 
@@ -74,10 +77,12 @@ The Sources screen is read-only. It lists each source with its profile count, la
 
 ## Edit a profile
 
-1. Open the profile and choose Edit this profile.
-2. Change the fields. If you are resolving an open correction, pick it in "This resolves the open item".
-3. Enter the reason or request reference. It is required.
-4. Save. If the profile is published, the public page changes at once.
+1. Open **Directory > Profiles**, find the profile and open **Edit profile**.
+2. Change the fields under **Edit fields**. If you are resolving an open correction, pick it in "This resolves the open item".
+3. Fill in **Reason or request reference (required)**.
+4. Press **Save changes**. If the profile is published, the public page changes at once.
+
+The four narrative sections and the photo have their own pages: [Profile sections](/staff/profile-sections) and [Photos and credits](/staff/photos-and-credits).
 
 Each edit is stored as a revision with author, time, reason and old and new values, and written to the audit log. Contact details are private by default, and staff switch what is public on request. Changing the address keeps a redirect from the old one. Internal notes are never public.
 
