@@ -102,7 +102,9 @@ final class Exposure {
 	 * @return array<int, \WP_Post>
 	 */
 	public static function strip_guarded_from_public_queries( array $posts, \WP_Query $query ): array {
-		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) || $query->get( 'wiw_allow_guarded' ) ) {
+		// admin-ajax.php counts as admin even for a visitor (wp_ajax_nopriv_* handlers of any plugin), so that is still public.
+		$staff_side = is_admin() && ! ( wp_doing_ajax() && ! is_user_logged_in() );
+		if ( $staff_side || ( defined( 'WP_CLI' ) && WP_CLI ) || $query->get( 'wiw_allow_guarded' ) ) {
 			return $posts;
 		}
 		$guarded = \WhoIsWho\Guard\Guard::guarded_post_types();
