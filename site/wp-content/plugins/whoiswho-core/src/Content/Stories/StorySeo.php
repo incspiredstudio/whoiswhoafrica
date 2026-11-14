@@ -109,7 +109,7 @@ final class StorySeo {
 		);
 		if ( '' !== (string) $story['author'] ) {
 			$data['author'] = array(
-				'@type' => 'Person',
+				'@type' => empty( $story['author_editorial'] ) ? 'Person' : 'Organization',
 				'name'  => (string) $story['author'],
 			);
 		}

@@ -1,6 +1,6 @@
 <?php
 /**
- * The setup checklist (REQ-056): ten live checks, each with a plain-language status, what to do when it is not ready and, where it
+ * The setup checklist (REQ-056): live checks, each with a plain-language status, what to do when it is not ready and, where it
  * is safe, a one-click fix. Nothing here shows a secret: the email line says only whether the settings are present.
  *
  * @package WhoIsWho
@@ -42,6 +42,7 @@ final class Checklist {
 			self::turnstile(),
 			self::plugin( 'fluent-smtp' ),
 			self::plugin( 'wpdiscuz' ),
+			self::staff_names(),
 			self::demo(),
 		);
 	}
@@ -332,6 +333,46 @@ final class Checklist {
 			'',
 			RequiredPluginsScreen::url(),
 			__( 'Open Required plugins', 'whoiswho' )
+		);
+	}
+
+	/**
+	 * Public display names for staff who write stories: advice only. A story by someone whose display name is still their sign-in
+	 * name shows the site's editorial name instead (PublicStory::byline), so the login is never public.
+	 *
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
+	 */
+	public static function staff_names(): array {
+		$title   = __( 'Set a public display name for staff who write stories', 'whoiswho' );
+		$writers = get_users(
+			array(
+				'capability' => 'edit_posts',
+				'number'     => 50,
+				'orderby'    => 'ID',
+				'fields'     => array( 'ID' ),
+			)
+		);
+		$unnamed = array();
+		foreach ( $writers as $writer ) {
+			$id = (int) $writer->ID;
+			if ( \WhoIsWho\Core\Content\PublicStory::byline_needs_name( $id ) ) {
+				$unnamed[] = (string) get_the_author_meta( 'display_name', $id );
+			}
+		}
+		if ( array() === $unnamed ) {
+			return self::item( 'staff_names', $title, self::OK, __( 'Every staff account that can write stories has a public display name.', 'whoiswho' ) );
+		}
+		return self::item(
+			'staff_names',
+			$title,
+			self::WARN,
+			/* translators: %s: list of account names. */
+			sprintf( __( 'These accounts show their sign-in name as their public name: %s. Their stories are signed with the site\'s editorial name until they set one, so the sign-in name never appears in public.', 'whoiswho' ), implode( ', ', $unnamed ) ),
+			__( 'Each person opens Users > Profile, fills in First name and Last name (or a Nickname), picks it under "Display name publicly as" and presses Update Profile.', 'whoiswho' ),
+			'',
+			'',
+			admin_url( 'users.php' ),
+			__( 'Open Users', 'whoiswho' )
 		);
 	}
 
