@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Platform\Setup;
 
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
+use WhoIsWho\Core\Directory\ImageMeta;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Import\Admin\BundleStore;
@@ -29,6 +31,7 @@ use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleRefused;
 use WhoIsWho\Core\Import\BundleReader;
 use WhoIsWho\Core\Import\DryRun\DryRun;
+use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Import\Result\ImportAudit;
 use WhoIsWho\Core\Import\StateAssigner;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -164,6 +167,10 @@ final class SampleBundle {
 			( new DryRun( new Suppression( AuditLogger::for_site() ), $batches ) )->step( ( new ImportService() )->bundle( $batch_id ), $batch_id, $stop );
 			$batch = (array) $batches->get( $batch_id );
 		}
+		if ( 'dry_run' === (string) $batch['status'] && $this->add_missing_terms( $batch_id, $batches ) ) {
+			// New list entries were added, so the dry run starts again on the next call and the records that needed them pass.
+			return 0;
+		}
 		if ( in_array( (string) $batch['status'], array( 'dry_run', 'applying' ), true ) && ! $stop() ) {
 			if ( 'dry_run' === (string) $batch['status'] ) {
 				$this->confirm( $batch_id );
@@ -183,6 +190,41 @@ final class SampleBundle {
 		$this->approve( $batch_id, $actor );
 		$batch = (array) $batches->get( $batch_id );
 		return 'applied' === (string) ( $batch['status'] ?? '' ) ? (int) $batch['record_count'] : (int) ( $batch['progress_cursor'] ?? 0 );
+	}
+
+	/**
+	 * Once per demo batch, add the bundle's unknown list values (industry, organisation type, sector, city) as new list entries,
+	 * as the Import screen's "Add all as new list entries" button does, so no sample record is refused for an unmapped value.
+	 * When anything was added the dry run is reset, so it runs again with the new entries.
+	 *
+	 * @param string          $batch_id Batch id.
+	 * @param BatchRepository $batches  Batches.
+	 * @return bool True when entries were added and the dry run was reset.
+	 */
+	private function add_missing_terms( string $batch_id, BatchRepository $batches ): bool {
+		$stored = get_option( self::OPTION, array() );
+		$stored = is_array( $stored ) ? $stored : array();
+		if ( ! empty( $stored['terms_added'] ) ) {
+			return false;
+		}
+		$stored['terms_added'] = true;
+		update_option( self::OPTION, $stored, false );
+		$mapper  = new TermMapper();
+		$missing = array();
+		foreach ( ( new ImportService() )->bundle( $batch_id )->lines() as $line ) {
+			$record = json_decode( (string) $line, true );
+			if ( is_array( $record ) ) {
+				foreach ( $mapper->unmapped( $record ) as $term ) {
+					$missing[ $term['field'] . '|' . TermMapper::normalise( $term['value'] ) ] = $term;
+				}
+			}
+		}
+		if ( array() === $missing || 0 === $mapper->create_missing( array_values( $missing ) ) ) {
+			return false;
+		}
+		DryRun::reset( $batch_id );
+		$batches->advance( $batch_id, 0, 'checked' );
+		return true;
 	}
 
 	/**
@@ -312,6 +354,33 @@ final class SampleBundle {
 	}
 
 	/**
+	 * Delete the photos and logos the demo batch added to the media library (they belong to the sample profiles, which are real
+	 * people and organisations). An image another profile now uses is kept.
+	 *
+	 * @param string $batch_id Batch id.
+	 */
+	private function remove_media( string $batch_id ): void {
+		$ids = get_posts(
+			array(
+				'post_type'        => 'attachment',
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'meta_key'         => ImageMeta::BATCH, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- demo removal only.
+				'meta_value'       => $batch_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- demo removal only.
+				'suppress_filters' => true,
+			)
+		);
+		global $wpdb;
+		foreach ( $ids as $id ) {
+			$used = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s", PublicProfile::IMAGE_META, (string) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one check per demo image.
+			if ( 0 === $used ) {
+				wp_delete_attachment( (int) $id, true );
+			}
+		}
+	}
+
+	/**
 	 * Forget the demo batch once none of its profiles is left: its results, its row and its stored copy, so a later demo import
 	 * starts afresh. A batch with a profile a person kept is left alone.
 	 */
@@ -326,6 +395,7 @@ final class SampleBundle {
 				return;
 			}
 		}
+		$this->remove_media( $batch_id );
 		$batch    = ( new BatchRepository() )->get( $batch_id );
 		$snapshot = null === $batch ? null : json_decode( (string) $batch['settings_snapshot'], true );
 		if ( is_array( $snapshot ) && '' !== (string) ( $snapshot['bundle_dir'] ?? '' ) ) {

@@ -14,6 +14,7 @@ namespace WhoIsWho\Tests\Integration\Platform;
 
 use WhoIsWho\Core\Awards\AwardsTables;
 use WhoIsWho\Core\Content\Events\EventPostType;
+use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
@@ -23,6 +24,7 @@ use WhoIsWho\Core\Import\Apply\RecordMap;
 use WhoIsWho\Core\Import\Apply\ResultRepository;
 use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\ContentHasher;
+use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Capabilities\CapabilityCatalogue;
@@ -35,6 +37,7 @@ use WhoIsWho\Core\Platform\Setup\DemoImport;
 use WhoIsWho\Core\Platform\Setup\DemoParts;
 use WhoIsWho\Core\Platform\Setup\SampleBundle;
 use WhoIsWho\Core\Platform\Setup\SetupScreen;
+use WhoIsWho\Tests\Support\V11BundleFixture;
 use WhoIsWho\Tests\WpTestCase;
 
 final class DemoChooserTest extends WpTestCase {
@@ -399,6 +402,43 @@ final class DemoChooserTest extends WpTestCase {
 		$this->assertStringContainsString( 'refused by the import', (string) $progress['error'] );
 		$this->assertStringContainsString( 'contract version', (string) $progress['error'] );
 		$this->assertSame( array(), $this->posts( ProfileType::POST_TYPE ) );
+	}
+
+	public function test_REQ_237_a_shipped_zip_imports_with_its_photos_and_removing_the_profiles_removes_the_photos(): void {
+		$sample = $this->folder();
+		V11BundleFixture::zip( $sample . '/' . SampleBundle::ZIP );
+		$demo = $this->demo( $sample );
+		$this->import( $demo, array( 'profiles' ) );
+		$batch   = ( new SampleBundle( $sample ) )->batch_id();
+		$created = ( new ResultRepository() )->created_profile_ids( $batch );
+		$this->assertCount( 3, $created );
+		$media = static fn (): array => get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => ImageMeta::BATCH, // phpcs:ignore WordPress.DB.SlowDBQuery
+				'meta_value'     => $batch, // phpcs:ignore WordPress.DB.SlowDBQuery
+			)
+		);
+		$this->assertNotSame( array(), $media(), 'the bundle photos are in the media library' );
+		$this->remove_part( $demo, 'profiles' );
+		$this->assertSame( array(), $media(), 'the demo photos are removed with the profiles' );
+		$this->assertFileExists( $sample . '/' . SampleBundle::ZIP, 'the shipped zip stays' );
+	}
+
+	public function test_REQ_237_unknown_list_values_in_the_shipped_bundle_are_added_so_no_sample_record_is_refused(): void {
+		$term = get_term_by( 'slug', 'commercial-bank', Taxonomies::ORG_TYPE );
+		if ( $term instanceof \WP_Term ) {
+			wp_delete_term( $term->term_id, Taxonomies::ORG_TYPE );
+		}
+		delete_option( TermMapper::OPTION );
+		$sample = $this->sample_folder( array( 'Demo Fixture Bank One', 'Demo Fixture Bank Two' ) );
+		$demo   = $this->demo( $sample );
+		$this->import( $demo, array( 'profiles' ) );
+		$this->assertCount( 2, ( new ResultRepository() )->created_profile_ids( 'B-demo' ), 'both records imported' );
+		$this->assertSame( array( 'CREATED' => 2 ), ( new ResultRepository() )->counts( 'B-demo' ) );
 	}
 
 	public function test_REQ_208_without_a_sample_folder_the_profiles_are_the_invented_ones(): void {
