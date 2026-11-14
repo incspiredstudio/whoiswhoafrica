@@ -19,7 +19,7 @@ Everything a visitor sends through the Get listed form, the Contact form or a pr
 
 ## Work an enquiry
 
-1. Open Enquiries. Each item has a status and an age.
+1. Open **Audience > Enquiries**. Each item has a status and an age.
 2. Open an item and mark it read.
 3. Set an owner so one person is responsible.
 4. Reply by email. Staff relay profile enquiries and never reveal the owner's email or phone.
@@ -30,7 +30,7 @@ Enquiries carry no due date.
 
 ## Customers
 
-A customer record holds an external ID, name, segment and contact. Administrators create customers directly, on the Customers screen or from New sponsored story. The record keeps a stable ID and change timestamps.
+A customer record holds an external ID, name, segment and contact. Administrators create customers directly, on **Audience > Customers** or from New sponsored story. The record keeps a stable ID and change timestamps.
 
 ## Invitation and consent links
 

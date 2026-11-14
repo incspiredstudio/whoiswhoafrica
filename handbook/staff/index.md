@@ -1,3 +1,5 @@
+<!-- verify-after-round-9 -->
+
 # Staff guide
 
 This guide explains how the team runs WHOISWHO from the WordPress admin: who does what, in which screen, and what the public sees as a result. Staff are the only people with accounts.
@@ -14,29 +16,38 @@ A role is only a starting bundle of named permissions called capabilities. The A
 
 ## The menu each role sees
 
-The left menu follows each user's capabilities. A screen the user may not open answers "forbidden". These are the defaults.
+The WHOISWHO screens sit in their own menu groups near the top of the left menu. Each group shows only the screens the user may open, and a group with nothing to open is hidden. A screen the user may not open answers "forbidden". These are the defaults.
 
-| Menu group | Reviewer | Editor | Administrator |
+| Menu group and screens | Reviewer | Editor | Administrator |
 |---|---|---|---|
-| Dashboard | Review and directory tiles | Adds support and nominations counts | Everything, including sponsored story figures |
-| Review: Review queue, Duplicates | Yes | Yes | Yes |
-| Directory: Profiles, Sources, Suppression list (read-only) | Yes | Yes | Yes |
-| Directory: Claims | No | Yes | Yes |
-| Directory: Import | No | No | Yes |
-| Inbox: Enquiries, Corrections, Requests and reports | No | Yes | Yes |
-| Content: Events | No | Yes | Yes |
+| Dashboard (the WordPress one) | Review tiles | Review and claims tiles | Everything, including sponsored story figures |
+| WHOISWHO: Setup | No | No | Yes |
+| Directory: Profiles, Duplicates | Yes | Yes | Yes |
+| Directory: Add profile, Edit profile, Home page settings | No | Yes | Yes |
+| Review: Review queue | Yes | Yes | Yes |
+| Review: Claims, Corrections, Requests and reports | No | Yes | Yes |
+| Imports: Sources | Yes | Yes | Yes |
+| Imports: Import | No | No | Yes |
+| Audience: Enquiries, Subscribers | No | Yes | Yes |
+| Audience: Customers, Email log | No | No | Yes |
 | Commercial: Sponsored stories (story and placement steps, no amounts) | No | Yes | Yes |
-| Commercial: Customers, and the money steps on Sponsored stories | No | No | Yes |
+| Commercial: the money steps on Sponsored stories | No | No | Yes |
 | Awards: Nominations, Award categories | No | Yes | Yes |
-| Platform: Audit log, Email log, Purge log, Sprint thresholds | No | No | Yes |
+| Compliance: Suppression list | Yes (read-only) | Yes (read-only) | Yes |
+| Compliance: Audit log, Purge log | No | No | Yes |
+| Settings (WHOISWHO): Required plugins, Turnstile keys, Sprint thresholds | No | No | Yes |
+| Posts (stories), Events, Comments, Media, Pages | No | Yes | Yes |
+| Users, Tools, Plugins, Appearance, Settings (WordPress) | No | No | Yes |
+
+There are two Settings menus: the WHOISWHO one near the top of the menu, and the WordPress one lower down.
 
 ## What WordPress already provides
 
 | Need | Where |
 |---|---|
-| Sign-in, two-factor step, password reset | WordPress login and the two-factor plugin |
+| Sign-in, the optional two-factor step, password reset | WordPress login and the Two Factor plugin. See [Users, roles and two-factor](/staff/users-and-two-factor). |
 | Adding users and changing a role | Users |
-| Per-role and per-user capability grants | The role editor plugin (Users > Role editor) |
+| Per-role and per-user capability grants | The User Role Editor plugin (Users > User Role Editor) |
 | Stories with scheduling, revisions and trash | Posts |
 | Terms for industries, cities, countries, organisation types and professions | Term screens under each taxonomy |
 | Revisions of every profile edit | Built in |
@@ -47,17 +58,22 @@ The left menu follows each user's capabilities. A screen the user may not open a
 
 | Page | Covers |
 |---|---|
-| [Profile review and publication states](/staff/profile-review) | Import, the review queue, the six states, bulk unpublish |
+| [Add a profile by hand](/staff/add-profile) | The Add profile screen and the duplicate check |
+| [Profile review and publication states](/staff/profile-review) | The review queue, the six states, editing, bulk unpublish |
+| [Profile sections](/staff/profile-sections) | Writing and editing Bio, Achievement, Influence and Legacy |
+| [Photos and credits](/staff/photos-and-credits) | Open licences, credit lines and adding a photo |
+| [Import data](/staff/importing) | Bundles from the acquisition team: dry run, confirm, undo, the full import |
 | [Claims](/staff/claims) | Deciding claims, the Claimed mark, assigned users |
 | [Corrections](/staff/corrections) | Applying or declining suggested corrections |
 | [Requests and reports](/staff/requests-and-reports) | Removals, reports, data requests, the suppression list |
 | [Sponsored stories](/staff/sponsored-stories) | The deal tracker and the labelled slot |
 | [Events](/staff/events) | Creating and publishing events |
-| [Stories](/staff/stories) | Stories, Featured, curation, comments |
+| [Stories](/staff/stories) | Stories, Featured, curation, comment moderation |
 | [Award categories and nominations](/staff/awards) | Categories, the Nominations switch, stage and status |
 | [Enquiries](/staff/enquiries) | The Get listed, contact and profile enquiry inbox |
 | [Newsletter](/staff/newsletter) | Sign-ups and unsubscribes |
 | [Audit trail](/staff/audit-trail) | Audit, purge and email logs and exports |
+| [Users, roles and two-factor](/staff/users-and-two-factor) | Adding and removing staff, capabilities, two-factor and recovery codes |
 
 ## Rules for every screen
 

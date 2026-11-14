@@ -44,7 +44,7 @@ Where staff must be sure the right person is acting, the site emails a link. Lin
 
 ## Who does have an account
 
-Staff only: Reviewer, Editor and Administrator, plus any role the Administrator creates. Staff sign in through the normal WordPress login with two-factor authentication required before first use. There is no role selector on the sign-in page. A person who edits a claimed profile is an ordinary staff user. See [Roles and what each can do](/concepts/roles).
+Staff only: Reviewer, Editor and Administrator, plus any role the Administrator creates. Staff sign in through the normal WordPress login. Two-factor sign-in is available and recommended for every staff member, but not enforced. There is no role selector on the sign-in page. A person who edits a claimed profile is an ordinary staff user. See [Roles and what each can do](/concepts/roles).
 
 ## Bot and abuse protection
 
