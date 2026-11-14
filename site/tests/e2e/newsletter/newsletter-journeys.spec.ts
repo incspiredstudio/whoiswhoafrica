@@ -8,7 +8,7 @@ import { runHelper } from "../helpers/staff-users";
 // M2-NWS-09: the newsletter journeys in a browser, with the mail the site sends read from a local sink and never delivered to anyone
 // (REQ-058, REQ-061, REQ-081, REQ-122, REQ-249). tests/e2e/helpers/newsletter-probe.php reads the stored records (hashes, versions and
 // times) and tidies up; it accepts only fictional @example.invalid addresses and refuses outside a local environment. The mail sink
-// listens on 127.0.0.1:1025, where the site sends mail when it has no SMTP account and is not in production; the specs skip with a
+// listens on 127.0.0.1:1025, where the site sends mail when the secrets file sets SMTP_HOST=127.0.0.1 and SMTP_PORT=1025; the specs skip with a
 // note if something else holds that port. The rules themselves are in tests/Integration (NewsletterSignup, SubscriberRepository, Marketing).
 // The journeys share one database and the form rate limit, so they run once (the 1280 px project), in order. Needs WIW_THEME_READY=1,
 // WIW_SECRETS_FILE and WIW_E2E_TEST_MODE=1; skips without them.

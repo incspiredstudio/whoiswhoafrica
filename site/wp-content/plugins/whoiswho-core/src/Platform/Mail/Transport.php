@@ -1,8 +1,12 @@
 <?php
 /**
- * Mail transport: sends every message through the cPanel SMTP account named in the secrets file. In production it fails closed:
- * with no credentials nothing is sent through PHP mail, and a staff-visible error says why. Locally, mail goes to a mail catcher
- * on 127.0.0.1:1025 when no SMTP account is set. No credential is ever written to a log or an error message.
+ * Mail transport (REQ-075, REQ-204), in this order:
+ * 1. An active mail plugin that already sends through SMTP (FluentSMTP, the recommended one, or another listed below) owns the
+ *    connection: this class leaves PHPMailer and the From address alone.
+ * 2. Else, when the WIW_SMTP_* constants (from the secrets file) name a server, mail goes through it.
+ * 3. Else WordPress sends with its own wp_mail, as any plain WordPress does.
+ * A local mail catcher is used only when WIW_SMTP_HOST points at it. The hourly cap is recorded for bulk mail, and no credential
+ * or address is ever written to a log or an error message.
  *
  * @package WhoIsWho
  */
@@ -19,6 +23,21 @@ final class Transport {
 	public const OPTION_ERROR = 'wiw_mail_error';
 
 	/**
+	 * Mail plugins that replace the SMTP connection themselves, by plugin file. FluentSMTP is the recommended one.
+	 */
+	public const SMTP_PLUGINS = array(
+		'fluent-smtp/fluent-smtp.php',
+		'wp-mail-smtp/wp_mail_smtp.php',
+		'wp-mail-smtp-pro/wp_mail_smtp.php',
+		'post-smtp/postman-smtp.php',
+		'easy-wp-smtp/easy-wp-smtp.php',
+		'smtp-mailer/main.php',
+	);
+
+	public const FLUENT_SMTP        = 'fluent-smtp/fluent-smtp.php';
+	public const FLUENT_SMTP_OPTION = 'fluentmail-settings';
+
+	/**
 	 * Messages per hour that bulk mail must stay under (hosts cap messages per hour). Recorded here for the newsletter issues.
 	 */
 	public const DEFAULT_HOURLY_CAP = 100;
@@ -26,24 +45,33 @@ final class Transport {
 	/**
 	 * Settings.
 	 *
-	 * @var array{host: string, port: int, user: string, password: string, from: string, production: bool, hourly_cap: int}
+	 * @var array{host: string, port: int, user: string, password: string, from: string, hourly_cap: int}
 	 */
 	private array $config;
 
 	/**
+	 * Says whether a mail plugin owns the SMTP connection (checked when mail is sent, so plugin load order does not matter).
+	 *
+	 * @var callable(): bool
+	 */
+	private $external;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param array{host: string, port: int, user: string, password: string, from: string, production: bool, hourly_cap: int} $config Settings.
+	 * @param array{host: string, port: int, user: string, password: string, from: string, hourly_cap: int} $config   Settings.
+	 * @param (callable(): bool)|null                                                                   $external Whether a mail plugin owns SMTP; the active plugins by default.
 	 */
-	public function __construct( array $config ) {
-		$this->config = $config;
+	public function __construct( array $config, ?callable $external = null ) {
+		$this->config   = $config;
+		$this->external = $external ?? array( self::class, 'smtp_plugin_active' );
 	}
 
 	/**
-	 * Transport for this site, from the constants wp-config.php defines from the secrets file.
+	 * Transport for this site, from the WIW_SMTP_* constants when they exist (wp-config.php defines them from the secrets file).
 	 */
 	public static function for_site(): self {
-		$get = static fn ( string $name, string $fallback = '' ): string => defined( $name ) ? (string) constant( $name ) : $fallback;
+		$get = static fn ( string $name, string $fallback = '' ): string => defined( $name ) && '' !== trim( (string) constant( $name ) ) ? trim( (string) constant( $name ) ) : $fallback;
 		$cap = (int) $get( 'WIW_MAIL_HOURLY_CAP', (string) self::DEFAULT_HOURLY_CAP );
 
 		return new self(
@@ -53,10 +81,69 @@ final class Transport {
 				'user'       => $get( 'WIW_SMTP_USER' ),
 				'password'   => $get( 'WIW_SMTP_PASSWORD' ),
 				'from'       => $get( 'WIW_SMTP_FROM' ),
-				'production' => 'production' === wp_get_environment_type(),
 				'hourly_cap' => $cap > 0 ? $cap : self::DEFAULT_HOURLY_CAP,
 			)
 		);
+	}
+
+	/**
+	 * The plugin files that are active on this site, single-site and network-wide.
+	 *
+	 * @return string[]
+	 */
+	private static function active_plugins(): array {
+		$active = (array) get_option( 'active_plugins', array() );
+		if ( is_multisite() ) {
+			$active = array_merge( $active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+		}
+		return array_map( 'strval', $active );
+	}
+
+	/**
+	 * Whether a mail plugin that replaces the SMTP connection is active. Sites can add their own through the wiw_mail_smtp_plugins filter.
+	 */
+	public static function smtp_plugin_active(): bool {
+		$known = (array) apply_filters( 'wiw_mail_smtp_plugins', self::SMTP_PLUGINS );
+		return array() !== array_intersect( array_map( 'strval', $known ), self::active_plugins() );
+	}
+
+	/**
+	 * Whether FluentSMTP is active.
+	 */
+	public static function fluent_smtp_active(): bool {
+		return in_array( self::FLUENT_SMTP, self::active_plugins(), true );
+	}
+
+	/**
+	 * Whether FluentSMTP is active and has at least one sending connection set up.
+	 */
+	public static function fluent_smtp_configured(): bool {
+		if ( ! self::fluent_smtp_active() ) {
+			return false;
+		}
+		$settings = get_option( self::FLUENT_SMTP_OPTION, array() );
+		return is_array( $settings ) && ! empty( $settings['connections'] ) && is_array( $settings['connections'] );
+	}
+
+	/**
+	 * The FluentSMTP settings screen.
+	 */
+	public static function fluent_smtp_url(): string {
+		return admin_url( 'options-general.php?page=fluent-mail#/' );
+	}
+
+	/**
+	 * Whether a mail plugin owns the SMTP connection right now.
+	 */
+	public function uses_mail_plugin(): bool {
+		return (bool) call_user_func( $this->external );
+	}
+
+	/**
+	 * Whether the WIW_SMTP_* constants name a mail server.
+	 */
+	public function has_server(): bool {
+		return '' !== $this->config['host'];
 	}
 
 	/**
@@ -64,8 +151,7 @@ final class Transport {
 	 */
 	public function register(): void {
 		add_action( 'phpmailer_init', array( $this, 'configure' ) );
-		add_filter( 'pre_wp_mail', array( $this, 'pre_send' ), 10, 2 );
-		add_filter( 'wp_mail_from', array( $this, 'from_address' ) );
+		add_filter( 'wp_mail_from', array( $this, 'mail_from' ) );
 		add_filter( 'wp_mail_from_name', array( $this, 'from_name' ) );
 		add_action( 'wp_mail_failed', array( $this, 'log_failure' ) );
 		add_action( 'admin_notices', array( $this, 'notice' ) );
@@ -86,11 +172,15 @@ final class Transport {
 	}
 
 	/**
-	 * Point PHPMailer at the SMTP account, or at the local mail catcher.
+	 * Point PHPMailer at the server the constants name. With a mail plugin in charge, or with no server named, PHPMailer is left as
+	 * WordPress set it up.
 	 *
 	 * @param \PHPMailer\PHPMailer\PHPMailer $mailer Mailer.
 	 */
 	public function configure( $mailer ): void { // phpcs:disable WordPress.NamingConventions.ValidVariableName -- PHPMailer property names.
+		if ( $this->uses_mail_plugin() ) {
+			return;
+		}
 		// Name ourselves with the sending domain (EHLO and Message-ID), also when a job runs from the command line with no host.
 		$at     = strrchr( $this->from_address( '' ), '@' );
 		$domain = false === $at ? '' : substr( $at, 1 );
@@ -99,22 +189,22 @@ final class Transport {
 		}
 		// A mail server can be slow to answer after the message (spam scanning); give it time, but not forever.
 		$mailer->Timeout = 45;
+		if ( ! $this->has_server() ) {
+			return;
+		}
+		$mailer->isSMTP();
+		$mailer->Host = $this->config['host'];
+		$mailer->Port = $this->config['port'];
 		if ( $this->has_credentials() ) {
-			$mailer->isSMTP();
-			$mailer->Host       = $this->config['host'];
-			$mailer->Port       = $this->config['port'];
 			$mailer->SMTPAuth   = true;
 			$mailer->Username   = $this->config['user'];
 			$mailer->Password   = $this->config['password'];
 			$mailer->SMTPSecure = 465 === $this->config['port'] ? 'ssl' : 'tls';
 			return;
 		}
-		if ( ! $this->config['production'] ) {
-			// Local development: the mail catcher (Mailpit) listens on 1025.
-			$mailer->isSMTP();
-			$mailer->Host        = '127.0.0.1';
-			$mailer->Port        = 1025;
-			$mailer->SMTPAuth    = false;
+		// A server with no account: a relay, or a local mail catcher such as Mailpit on 127.0.0.1:1025.
+		$mailer->SMTPAuth = false;
+		if ( in_array( strtolower( $this->config['host'] ), array( '127.0.0.1', 'localhost', '::1' ), true ) ) {
 			$mailer->SMTPSecure  = '';
 			$mailer->SMTPAutoTLS = false;
 		}
@@ -123,18 +213,12 @@ final class Transport {
 	// phpcs:enable WordPress.NamingConventions.ValidVariableName
 
 	/**
-	 * In production with no credentials, refuse to send: no silent fallback to PHP mail. Returning false stops wp_mail.
+	 * The wp_mail_from filter: our From address, unless a mail plugin is in charge of it.
 	 *
-	 * @param mixed                $pre  Earlier short-circuit value.
-	 * @param array<string, mixed> $atts Message attributes (not logged).
-	 * @return mixed
+	 * @param string $from Address WordPress would use.
 	 */
-	public function pre_send( $pre, $atts = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- hook signature.
-		if ( $this->config['production'] && ! $this->has_credentials() ) {
-			update_option( self::OPTION_ERROR, 'smtp_credentials_missing', false );
-			return false;
-		}
-		return $pre;
+	public function mail_from( $from ): string {
+		return $this->uses_mail_plugin() ? (string) $from : $this->from_address( $from );
 	}
 
 	/**
@@ -191,12 +275,17 @@ final class Transport {
 	 */
 	public function notice(): void {
 		$code = get_option( self::OPTION_ERROR );
+		if ( 'smtp_credentials_missing' === $code ) {
+			// Left by an older version, which refused to send without an SMTP account. Mail now goes out through WordPress.
+			delete_option( self::OPTION_ERROR );
+			return;
+		}
 		if ( ! $code || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$text = 'smtp_credentials_missing' === $code
-			? __( 'Email is not being sent: the SMTP account is not set in the secrets file.', 'whoiswho' )
-			: __( 'The last email could not be sent. Check the SMTP account and the server log.', 'whoiswho' );
+		$text = $this->uses_mail_plugin()
+			? __( 'The last email could not be sent. Open your mail plugin\'s settings (for example Settings > FluentSMTP) and send a test email.', 'whoiswho' )
+			: __( 'The last email could not be sent. For reliable email, install the free FluentSMTP plugin and connect it to your email account; the Setup screen shows how.', 'whoiswho' );
 		echo '<div class="notice notice-error"><p>' . esc_html( $text ) . '</p></div>';
 	}
 }
