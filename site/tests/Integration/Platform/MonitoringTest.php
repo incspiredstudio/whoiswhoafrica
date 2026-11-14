@@ -33,6 +33,7 @@ final class MonitoringTest extends TestCase {
 		$this->sent = array();
 		delete_option( Alerts::OPTION_RECIPIENT );
 		delete_option( BackupCheck::OPTION );
+		delete_option( BackupCheck::OPTION_CONFIRMED );
 		delete_transient( Alerts::THROTTLE_PREFIX . 'job_' . md5( 'import.chunk' ) );
 		delete_transient( Alerts::THROTTLE_PREFIX . 'form' );
 		delete_transient( Alerts::THROTTLE_PREFIX . 'formcount' );
@@ -124,9 +125,7 @@ final class MonitoringTest extends TestCase {
 	public function test_REQ_045_backup_notice_shows_to_administrators_only(): void {
 		$check = new BackupCheck( static fn (): int => 1800000000 );
 		wp_set_current_user( 0 );
-		ob_start();
-		$check->notice();
-		$this->assertSame( '', (string) ob_get_clean() );
+		$this->assertSame( '', $check->notice_html( 'dashboard' ) );
 		$admin = wp_insert_user(
 			array(
 				'user_login' => 'monitor_admin_' . wp_generate_password( 6, false ),
@@ -135,13 +134,76 @@ final class MonitoringTest extends TestCase {
 			)
 		);
 		wp_set_current_user( $admin );
-		ob_start();
-		$check->notice();
-		$out = (string) ob_get_clean();
+		$out = $check->notice_html( 'dashboard' );
 		wp_set_current_user( 0 );
 		wp_delete_user( (int) $admin );
 		$this->assertStringContainsString( 'notice-warning', $out );
 		$this->assertStringContainsString( 'backup', strtolower( $out ) );
+	}
+
+	private function admin(): int {
+		$admin = wp_insert_user(
+			array(
+				'user_login' => 'backup_admin_' . strtolower( wp_generate_password( 6, false ) ),
+				'user_pass'  => wp_generate_password( 20 ),
+				'role'       => 'administrator',
+			)
+		);
+		$this->assertIsInt( $admin );
+		return $admin;
+	}
+
+	/**
+	 * The backup reminder shows only on the Dashboard and the Setup screen, in plain words, with a button that records the host
+	 * backups are set up and a way to hide it (#810).
+	 */
+	public function test_REQ_045_backup_notice_is_only_on_dashboard_and_setup_with_plain_words_and_buttons(): void {
+		delete_option( BackupCheck::OPTION_CONFIRMED );
+		$admin = $this->admin();
+		wp_set_current_user( $admin );
+		$check = new BackupCheck( static fn (): int => 1800000000 );
+
+		$this->assertSame( '', $check->notice_html( 'edit-post' ), 'not on other admin screens' );
+		$this->assertSame( '', $check->notice_html( 'plugins' ) );
+		$html = $check->notice_html( 'dashboard' );
+		$this->assertStringContainsString( 'Turn on backups in cPanel (Backup or JetBackup)', $html );
+		$this->assertStringContainsString( 'I have set up backups', $html );
+		$this->assertStringContainsString( 'name="_wpnonce"', $html );
+		$this->assertStringContainsString( 'value="' . BackupCheck::ACTION . '"', $html );
+		$this->assertStringContainsString( 'value="hide"', $html );
+		$this->assertNotSame( '', $check->notice_html( 'toplevel_page_wiw-setup' ) );
+
+		$check->handle( new \WhoIsWho\Core\Platform\Admin\Request( array( 'what' => 'confirm' ) ), false );
+		$this->assertSame( BackupCheck::CONFIRMED, $check->status() );
+		$this->assertSame( '', $check->notice_html( 'dashboard' ), 'gone once the host backups are confirmed' );
+
+		delete_option( BackupCheck::OPTION_CONFIRMED );
+		$check->handle( new \WhoIsWho\Core\Platform\Admin\Request( array( 'what' => 'hide' ) ), false );
+		$this->assertSame( '', $check->notice_html( 'dashboard' ), 'hidden for this person' );
+		$this->assertSame( BackupCheck::NEVER, $check->status(), 'hiding records nothing' );
+		wp_set_current_user( 0 );
+		wp_delete_user( $admin );
+	}
+
+	public function test_REQ_045_backup_actions_need_the_setup_capability_and_a_nonce(): void {
+		$editor = wp_insert_user(
+			array(
+				'user_login' => 'backup_editor_' . strtolower( wp_generate_password( 6, false ) ),
+				'user_pass'  => wp_generate_password( 20 ),
+				'role'       => 'editor',
+			)
+		);
+		wp_set_current_user( $editor );
+		$this->assertSame( '', ( new BackupCheck() )->notice_html( 'dashboard' ), 'only for people who can act on it' );
+		$guard = \WhoIsWho\Core\Platform\Admin\ActionGuard::class;
+		$this->assertSame( $guard::REFUSED_CAPABILITY, $guard::check( BackupCheck::ACTION, BackupCheck::CAP, new \WhoIsWho\Core\Platform\Admin\Request( array( '_wpnonce' => $guard::nonce_for( BackupCheck::ACTION ) ) ) ) );
+		$admin = $this->admin();
+		wp_set_current_user( $admin );
+		$this->assertSame( $guard::REFUSED_NONCE, $guard::check( BackupCheck::ACTION, BackupCheck::CAP, new \WhoIsWho\Core\Platform\Admin\Request( array() ) ) );
+		$this->assertNull( $guard::check( BackupCheck::ACTION, BackupCheck::CAP, new \WhoIsWho\Core\Platform\Admin\Request( array( '_wpnonce' => $guard::nonce_for( BackupCheck::ACTION ) ) ) ) );
+		wp_set_current_user( 0 );
+		wp_delete_user( $admin );
+		wp_delete_user( (int) $editor );
 	}
 
 	public function test_REQ_078_view_counts_not_public(): void {

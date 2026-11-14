@@ -171,7 +171,7 @@ final class ClaimIntake {
 			'profile_id' => $profile->id,
 		);
 		$this->notifier->send_to_record( Events::CLAIM_ACKNOWLEDGED, self::RECIPIENT_SOURCE, $claim->id, $context );
-		$this->notifier->send( Events::CLAIM_REMINDER, '', $context );
+		$this->notifier->send( Events::CLAIM_RECEIVED, '', $context );
 		return array(
 			'status'    => PublicSubmission::RECEIVED,
 			'message'   => 'Thank you. We have received your claim and will reply within five days.',

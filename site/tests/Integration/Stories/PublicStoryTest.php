@@ -107,6 +107,45 @@ final class PublicStoryTest extends TestCase {
 		$this->assertFalse( PublicStory::find( $this->story() )['preview'] ?? true );
 	}
 
+	/**
+	 * A staff login name never shows on a public story: when the display name is the login, the byline is the editorial name (#810).
+	 */
+	public function test_REQ_026_byline_never_shows_the_login_name(): void {
+		$login = 'owner' . strtolower( wp_generate_password( 6, false ) );
+		$admin = wp_insert_user(
+			array(
+				'user_login' => $login,
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'administrator',
+			)
+		);
+		$this->assertIsInt( $admin );
+		$this->assertSame( $login, get_the_author_meta( 'display_name', $admin ), 'WordPress defaults the display name to the login.' );
+		$brand = static fn (): string => 'Brandname Qwv';
+		add_filter( 'wiw_brand_name', $brand );
+
+		$story = PublicStory::find( $this->story( array( 'post_author' => $admin ) ) );
+		$this->assertNotNull( $story );
+		$this->assertSame( 'Brandname Qwv Editorial', $story['author'] );
+		$this->assertStringNotContainsString( $login, (string) wp_json_encode( $story ) );
+		$this->assertTrue( PublicStory::byline_needs_name( $admin ) );
+		$article = \WhoIsWho\Core\Content\Stories\StorySeo::article( $story );
+		$this->assertSame( 'Organization', $article['author']['@type'] );
+		$this->assertSame( 'Brandname Qwv Editorial', $article['author']['name'], 'The JSON-LD author matches the byline.' );
+
+		wp_update_user(
+			array(
+				'ID'           => $admin,
+				'display_name' => 'Ada Writer',
+			)
+		);
+		$story = PublicStory::find( $this->story( array( 'post_author' => $admin ) ) );
+		$this->assertSame( 'Ada Writer', $story['author'] ?? null, 'A real public name is kept.' );
+		$this->assertFalse( PublicStory::byline_needs_name( $admin ) );
+		remove_filter( 'wiw_brand_name', $brand );
+		wp_delete_user( $admin );
+	}
+
 	public function test_REQ_029_list_filters_by_type_and_industry(): void {
 		wp_insert_term( 'Finance', 'wiw_industry', array( 'slug' => 'finance' ) );
 		wp_insert_term( 'Tech', 'wiw_industry', array( 'slug' => 'tech' ) );

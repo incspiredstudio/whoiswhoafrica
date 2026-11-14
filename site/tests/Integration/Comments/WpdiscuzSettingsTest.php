@@ -256,4 +256,21 @@ final class WpdiscuzSettingsTest extends WpTestCase {
 		$this->assertTrue( CommentPolicy::is_staff_request(), 'a moderator is staff anywhere' );
 		$this->assertTrue( class_exists( CommentSpamGuard::class ), 'the spam guard uses the same staff test' );
 	}
+	/**
+	 * The visitor is told their comment is on its way and then waiting for moderation, and a second send of the same text is
+	 * stopped (#810). The script loads on a story with wpDiscuz only.
+	 */
+	public function test_REQ_258_wpdiscuz_comment_feedback_says_it_is_waiting_for_moderation(): void {
+		$words = WpdiscuzSettings::feedback_config()['strings'];
+		$this->assertStringContainsString( 'Thanks, your comment is waiting for moderation', $words['held'] );
+		$this->assertNotSame( '', $words['duplicate'] );
+		$this->assertNotSame( '', $words['sending'] );
+		$this->assertFileExists( dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/assets/public/comment-feedback.js' );
+		$settings = new WpdiscuzSettings();
+		$settings->register();
+		$this->assertSame( 20, has_action( 'wp_enqueue_scripts', array( $settings, 'enqueue_feedback' ) ) );
+		$this->go_to( '/' );
+		$settings->enqueue_feedback();
+		$this->assertFalse( wp_script_is( 'wiw-comment-feedback', 'enqueued' ), 'not on pages that are not stories' );
+	}
 }

@@ -219,6 +219,31 @@ final class ReviewItemScreenTest extends TestCase {
 		$this->assertStringContainsString( 'No allegations, litigation or rumours.', $html );
 	}
 
+	/**
+	 * The review screens speak plain words, not codes (#810): the entity type and state names, field labels and reason labels.
+	 */
+	public function test_REQ_084_review_item_shows_plain_labels_not_codes(): void {
+		$id = $this->imported( $this->user() );
+		wp_set_current_user( $this->reviewer() );
+		$html = ( new ReviewItemScreen() )->html( new Request( array( 'profile_id' => (string) $id ) ) );
+		$this->assertStringNotContainsString( 'organisation / ', $html );
+		$this->assertStringNotContainsString( 'imported_not_public', $html );
+		$this->assertStringNotContainsString( 'published_pending', $html );
+		$this->assertStringContainsString( 'Organisation', $html );
+		$this->assertStringNotContainsString( '<th scope="row">org_type</th>', $html, 'field keys are shown as their labels' );
+		$this->assertStringContainsString( '<th scope="row">Organisation type</th>', $html );
+		$this->assertStringContainsString( '<option value="out_of_scope">Out of scope', $html, 'the reason code stays the value, the label is words' );
+		$this->assertStringNotContainsString( '>out_of_scope<', $html );
+
+		$this->assertSame( 'Imported, not public', \WhoIsWho\Core\Review\Admin\Labels::state( PubState::IMPORTED_NOT_PUBLIC ) );
+		$this->assertSame( 'Person', \WhoIsWho\Core\Review\Admin\Labels::entity_type( 'individual' ) );
+		$this->assertSame( 'Current title', \WhoIsWho\Core\Review\Admin\Labels::field( 'current_title' ) );
+		$this->assertSame( 'Some new key', \WhoIsWho\Core\Review\Admin\Labels::field( 'some_new_key' ) );
+		foreach ( DecisionLog::REASON_CODES as $code ) {
+			$this->assertNotSame( $code, \WhoIsWho\Core\Review\Admin\Labels::reason( $code ) );
+		}
+	}
+
 	public function test_REQ_148_approve_blocked_for_importer_with_message(): void {
 		$importer = $this->reviewer();
 		$id       = $this->imported( $importer );

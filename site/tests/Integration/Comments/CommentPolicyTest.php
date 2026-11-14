@@ -47,7 +47,7 @@ final class CommentPolicyTest extends TestCase {
 		}
 		$this->posts = array();
 		remove_filter( 'wp_is_comment_flood', '__return_false', 99 );
-		foreach ( array( 'comment_moderation', 'comment_previously_approved', 'comment_registration', 'require_name_email', 'show_avatars', 'comments_notify', 'default_ping_status' ) as $option ) {
+		foreach ( array( 'comment_moderation', 'comment_previously_approved', 'comment_registration', 'require_name_email', 'show_avatars', 'comments_notify', 'moderation_notify', 'default_ping_status' ) as $option ) {
 			remove_all_filters( 'pre_option_' . $option );
 		}
 		remove_all_filters( 'wp_die_handler' );
@@ -208,6 +208,55 @@ final class CommentPolicyTest extends TestCase {
 			unset( $refusal );
 		}
 		$this->assertSame( 409, $seen['response'] ?? null );
+	}
+
+	/**
+	 * WordPress's own moderator email is sent while the visitor waits and carries the commenter's name, email and IP address; the
+	 * plugin's queued notice (no commenter details) replaces it, so the visitor gets an answer at once (#810).
+	 */
+	public function test_REQ_258_wordpress_moderator_email_is_off_so_the_visitor_is_not_kept_waiting(): void {
+		update_option( 'moderation_notify', '1' );
+		$this->assertSame( '0', (string) get_option( 'moderation_notify' ) );
+		$sent = 0;
+		$hook = static function ( $value ) use ( &$sent ) {
+			++$sent;
+			return $value;
+		};
+		add_filter( 'pre_wp_mail', $hook, 1 );
+		$this->assertInstanceOf( \WP_Comment::class, $this->submit( $this->story() ) );
+		remove_filter( 'pre_wp_mail', $hook, 1 );
+		$this->assertSame( 0, $sent, 'no email is sent while the visitor waits' );
+	}
+
+	/**
+	 * wpDiscuz posts through admin-ajax and shows only a JSON error; a refusal there is a JSON error with the reason in words,
+	 * never a bare 409 page the form cannot show (#810).
+	 */
+	public function test_REQ_258_a_wpdiscuz_refusal_is_a_json_error_the_form_can_show(): void {
+		$post  = $this->story();
+		$_POST = array( 'action' => 'wpdAddComment' );
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter(
+			'wp_die_ajax_handler',
+			static fn () => static function (): void {
+				throw new \RuntimeException( 'ajax die' );
+			}
+		);
+		ob_start();
+		try {
+			$this->submit( $post );
+			$this->fail( 'A comment without the consent tick must be refused.' );
+		} catch ( \RuntimeException $refusal ) {
+			unset( $refusal );
+		}
+		$out = (string) ob_get_clean();
+		remove_all_filters( 'wp_doing_ajax' );
+		remove_all_filters( 'wp_die_ajax_handler' );
+		$json = json_decode( $out, true );
+		$this->assertIsArray( $json, 'a JSON answer: ' . $out );
+		$this->assertFalse( $json['success'] );
+		$this->assertSame( 'wiw_comment_consent', $json['data']['errorCode'] );
+		$this->assertStringContainsString( 'tick the box', $json['data']['error'] );
 	}
 
 	public function test_REQ_258_no_gravatar_request(): void {

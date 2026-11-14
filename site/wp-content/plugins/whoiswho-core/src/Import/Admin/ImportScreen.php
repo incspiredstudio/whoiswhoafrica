@@ -434,7 +434,14 @@ final class ImportScreen {
 				return '<p>' . esc_html( $e->getMessage() ) . '</p>';
 			}
 		}//end if
-		$out     = $this->counts_html( $preview['counts'], $id, $code );
+		$new_values = false;
+		foreach ( $preview['records'] as $entry ) {
+			if ( array() !== (array) ( $entry['unmapped'] ?? array() ) ) {
+				$new_values = true;
+				break;
+			}
+		}
+		$out     = $this->counts_html( $preview['counts'], $id, $code, $new_values );
 		$rows    = '';
 		$shown   = 0;
 		$mapping = array();
@@ -449,7 +456,7 @@ final class ImportScreen {
 				continue;
 			}
 			++$shown;
-			$rows .= '<tr><td>' . esc_html( (string) $entry['record_id'] ) . '</td><td><code>' . esc_html( (string) $entry['code'] ) . '</code></td><td>' . esc_html( implode( ', ', (array) $entry['flags'] ) ) . '</td><td>' . $this->diff_html( (array) $entry['diff'], (string) $entry['field'] ) . '</td></tr>';
+			$rows .= '<tr><td>' . esc_html( (string) $entry['record_id'] ) . '</td><td>' . ( $new_values && 'SCHEMA' === (string) $entry['code'] ? esc_html__( 'New list value needed', 'whoiswho' ) : '<code>' . esc_html( (string) $entry['code'] ) . '</code>' ) . '</td><td>' . esc_html( implode( ', ', (array) $entry['flags'] ) ) . '</td><td>' . $this->diff_html( (array) $entry['diff'], (string) $entry['field'] ) . '</td></tr>';
 		}
 		$out .= '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Result', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Flags', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Changes', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>';
 		/* translators: %d: rows shown. */
@@ -607,13 +614,31 @@ final class ImportScreen {
 	}
 
 	/**
+	 * One count as staff read it. In a dry run with values not yet in the lists, SCHEMA means those records need new list
+	 * entries, so it says so and what to do; every other code is shown as the contract names it (the codes sent back to the
+	 * acquisition side do not change).
+	 *
+	 * @param string $code       Result code.
+	 * @param int    $n          Count.
+	 * @param bool   $new_values Whether the dry run found values not in the lists.
+	 */
+	public static function count_label( string $code, int $n, bool $new_values = false ): string {
+		if ( $new_values && 'SCHEMA' === $code ) {
+			/* translators: %d: number of records. */
+			return sprintf( __( 'New list values needed (%d): use "Add all as new list entries" or map them', 'whoiswho' ), $n );
+		}
+		return $code . ' (' . $n . ')';
+	}
+
+	/**
 	 * Counts by code as filter links.
 	 *
 	 * @param array<string, int> $counts Counts.
 	 * @param string             $id     Batch id.
 	 * @param string             $active Active filter.
+	 * @param bool               $new_values Dry run with values not yet in the lists: SCHEMA is shown in words.
 	 */
-	private function counts_html( array $counts, string $id, string $active ): string {
+	private function counts_html( array $counts, string $id, string $active, bool $new_values = false ): string {
 		$out  = '<p>';
 		$all  = add_query_arg(
 			array(
@@ -625,7 +650,7 @@ final class ImportScreen {
 		$out .= '<a href="' . esc_url( $all ) . '">' . esc_html__( 'All', 'whoiswho' ) . '</a>';
 		foreach ( $counts as $code => $n ) {
 			$link = add_query_arg( 'code', (string) $code, $all );
-			$out .= ' | <a href="' . esc_url( $link ) . '"' . ( $active === (string) $code ? ' aria-current="true"' : '' ) . '>' . esc_html( $code . ' (' . $n . ')' ) . '</a>';
+			$out .= ' | <a href="' . esc_url( $link ) . '"' . ( $active === (string) $code ? ' aria-current="true"' : '' ) . '>' . esc_html( self::count_label( (string) $code, (int) $n, $new_values ) ) . '</a>';
 		}
 		return $out . '</p>';
 	}

@@ -78,8 +78,8 @@ final class DemoChooserTest extends WpTestCase {
 	protected function tearDown(): void {
 		$this->clean();
 		foreach ( $this->dirs as $dir ) {
-			foreach ( glob( $dir . '/*' ) ?: array() as $file ) {
-				unlink( $file );
+			foreach ( array_diff( (array) scandir( $dir ), array( '.', '..' ) ) as $file ) {
+				unlink( $dir . '/' . $file );
 			}
 			rmdir( $dir );
 		}
@@ -426,6 +426,31 @@ final class DemoChooserTest extends WpTestCase {
 		$this->remove_part( $demo, 'profiles' );
 		$this->assertSame( array(), $media(), 'the demo photos are removed with the profiles' );
 		$this->assertFileExists( $sample . '/' . SampleBundle::ZIP, 'the shipped zip stays' );
+	}
+
+	/**
+	 * After a successful Profiles import the shipped zip leaves the public plugin folder for the private store, behind deny files,
+	 * and the demo can still be imported again from there (#810).
+	 */
+	public function test_REQ_237_the_imported_sample_zip_moves_out_of_the_plugin_folder_and_can_be_imported_again(): void {
+		$sample = $this->folder();
+		$stash  = $this->folder();
+		V11BundleFixture::zip( $sample . '/' . SampleBundle::ZIP );
+		$bundle = new SampleBundle( $sample, $stash );
+		$demo   = new DemoImport( SampleSeedCommandTest::small(), false, $bundle );
+		$this->import( $demo, array( 'profiles' ) );
+
+		$this->assertFileDoesNotExist( $sample . '/' . SampleBundle::ZIP, 'no longer in the public plugin folder' );
+		$this->assertFileExists( $stash . '/' . SampleBundle::ZIP, 'kept in the private store' );
+		$this->assertFileExists( $stash . '/.htaccess' );
+		$this->assertFileExists( $stash . '/index.php' );
+		$this->assertStringContainsString( 'deny', strtolower( (string) file_get_contents( $stash . '/.htaccess' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertSame( array( 'zip', $stash . '/' . SampleBundle::ZIP ), $bundle->source() );
+
+		$this->remove_part( $demo, 'profiles' );
+		$this->assertTrue( $bundle->available(), 'the demo can be imported again' );
+		$this->import( $demo, array( 'profiles' ) );
+		$this->assertCount( 3, ( new ResultRepository() )->created_profile_ids( $bundle->batch_id() ) );
 	}
 
 	public function test_REQ_237_unknown_list_values_in_the_shipped_bundle_are_added_so_no_sample_record_is_refused(): void {

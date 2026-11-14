@@ -105,7 +105,7 @@ final class ClaimPageTest extends TestCase {
 		$wp_rewrite->set_permalink_structure( '/%postname%/' );
 		$wp_rewrite->flush_rules( false );
 		$rules = (array) $wp_rewrite->wp_rewrite_rules();
-		$this->assertArrayHasKey( '^claim/([A-Za-z0-9_-]+)/?$', $rules );
+		$this->assertArrayHasKey( '^claim/([^/]+)/?$', $rules );
 		$this->assertArrayNotHasKey( '^(contact|subscribe|done|claim)/?$', $rules );
 		$wp_rewrite->set_permalink_structure( '' );
 		$wp_rewrite->flush_rules( false );

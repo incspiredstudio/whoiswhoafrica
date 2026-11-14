@@ -24,6 +24,7 @@ use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
 use WhoIsWho\Core\Directory\Add\AddProfileValidator;
 use WhoIsWho\Core\Directory\Add\DuplicateFinder;
+use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
@@ -76,9 +77,44 @@ final class AddProfileScreen {
 				$registry->hook();
 				ActionGuard::register( self::ACTION, self::CAPABILITY, array( self::class, 'handle' ) );
 				add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );
+				add_action( 'admin_menu', array( self::class, 'hide_core_add_new' ), 999 );
+				add_action( 'load-post-new.php', array( self::class, 'redirect_core_add_new' ) );
 			},
 			1
 		);
+	}
+
+	/**
+	 * Only one way to add a profile: drop WordPress's own "Add profile" item under its Profiles menu, so Directory > Add
+	 * profile is the one a person sees.
+	 */
+	public static function hide_core_add_new(): void {
+		remove_submenu_page( 'edit.php?post_type=' . ProfileType::POST_TYPE, 'post-new.php?post_type=' . ProfileType::POST_TYPE );
+	}
+
+	/**
+	 * Where WordPress's own new-profile screen sends a person instead: Directory > Add profile, for someone who may use it. Anyone
+	 * else gets null and WordPress's own capability check answers as before.
+	 *
+	 * @param string $post_type Post type of the new-post screen.
+	 */
+	public static function core_add_new_target( string $post_type ): ?string {
+		if ( ProfileType::POST_TYPE !== $post_type || ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return null;
+		}
+		return self::url();
+	}
+
+	/**
+	 * Send post-new.php?post_type=wiw_profile to Directory > Add profile.
+	 */
+	public static function redirect_core_add_new(): void {
+		global $typenow;
+		$target = self::core_add_new_target( is_string( $typenow ) ? $typenow : '' );
+		if ( null !== $target ) {
+			wp_safe_redirect( $target );
+			exit;
+		}
 	}
 
 	/**

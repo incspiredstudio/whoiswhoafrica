@@ -74,5 +74,6 @@ final class Module implements ModuleInterface {
 		Capabilities\CapabilityAudit::for_site()->register();
 		( new Monitoring\Alerts() )->register();
 		( new Monitoring\BackupCheck() )->register();
+		Media\ImageEditors::register();
 	}
 }

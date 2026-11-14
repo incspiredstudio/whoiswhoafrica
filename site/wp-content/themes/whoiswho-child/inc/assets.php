@@ -54,8 +54,8 @@ add_action(
 				esc_url( get_stylesheet_directory_uri() . '/assets/fonts/' . $file )
 			);
 		}
-		// The header wordmark is a CSS mask: fetch it with the fonts so the logo is there on first paint (8.6 KB, cached on every page).
-		printf( '<link rel="preload" href="%s" as="image" type="image/webp">' . "\n", esc_url( get_stylesheet_directory_uri() . '/assets/logo/wiw-logo-mask.webp' ) );
+		// The header wordmark is a CSS mask, which browsers fetch in CORS mode, so the preload says crossorigin to be reused (8.6 KB).
+		printf( '<link rel="preload" href="%s" as="image" type="image/webp" crossorigin>' . "\n", esc_url( get_stylesheet_directory_uri() . '/assets/logo/wiw-logo-mask.webp' ) );
 	},
 	1
 );

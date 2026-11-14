@@ -106,7 +106,8 @@ find "$STAGE/whoiswho-core/bundled" -maxdepth 2 -name tests | grep -q . && fail 
 
 cp "$SOURCE/bin/wiw.php" "$BUNDLE/wiw.php"
 sed "s/@VERSION@/$VERSION/g; s/@COMMIT@/$COMMIT/g" "$SOURCE/deploy/install-bundle/INSTALL.md" > "$BUNDLE/INSTALL.md"
-(cd "$BUNDLE" && { sha256sum ./*.zip 2>/dev/null || shasum -a 256 ./*.zip; } | sed 's# \./# #' > SHA256SUMS.txt)
+# Lines are "<hash>  <file>" (what sha256sum -c reads): strip the binary-mode "*" Git Bash adds and any "./".
+(cd "$BUNDLE" && { sha256sum -- *.zip 2>/dev/null || shasum -a 256 -- *.zip; } | sed -E 's#^([0-9a-fA-F]+)[ ]+[*]?(\./)?#\1  #' > SHA256SUMS.txt)
 
 rm -rf "$STAGE"
 echo "package-release: built version $VERSION ($COMMIT) into $BUNDLE"

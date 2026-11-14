@@ -30,6 +30,7 @@ final class EmailCopy {
 		Events::REPORT_RECEIVED         => array( 'wiw-requests', true ),
 		Events::DEADLINE_REQUESTS       => array( 'wiw-requests', true ),
 		Events::CLAIM_REMINDER          => array( 'wiw-claims', false ),
+		Events::CLAIM_RECEIVED          => array( 'wiw-claims', false ),
 		Events::STAFF_ITEM_NEEDS_ATTEND => array( 'wiw-review', false ),
 		Events::RENEWAL_REMINDER        => array( 'wiw-dashboard', false ),
 		Events::EXPIRY_REMINDER         => array( 'wiw-dashboard', false ),
@@ -124,6 +125,11 @@ final class EmailCopy {
 			Events::CLAIM_REMINDER          => array(
 				'heading' => 'A claim is waiting for review',
 				'body'    => array( 'A profile claim has been waiting for review.' ),
+				'act'     => 'Open the claims list, check the evidence and approve or decline.',
+			),
+			Events::CLAIM_RECEIVED          => array(
+				'heading' => 'New claim to review',
+				'body'    => array( 'Someone has asked to manage a profile. Their claim is in the claims list.' ),
 				'act'     => 'Open the claims list, check the evidence and approve or decline.',
 			),
 			Events::REVISION_DECISION       => array(

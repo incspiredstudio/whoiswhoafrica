@@ -34,6 +34,9 @@ final class CommentPolicy {
 		'require_name_email'          => '1',
 		'show_avatars'                => '0',
 		'comments_notify'             => '0',
+		// WordPress's own moderator email goes out while the visitor waits and names the commenter; CommentModeratorNotice sends
+		// a queued notice with no commenter details instead.
+		'moderation_notify'           => '0',
 		'default_ping_status'         => 'closed',
 	);
 
@@ -84,6 +87,7 @@ final class CommentPolicy {
 		$name  = trim( (string) ( $commentdata['comment_author'] ?? '' ) );
 		$email = (string) ( $commentdata['comment_author_email'] ?? '' );
 		if ( 0 === (int) ( $commentdata['user_id'] ?? 0 ) && ( '' === $name || ! is_email( $email ) ) ) {
+			self::refuse_for_wpdiscuz( 'wiw_comment_identity', __( 'Please give your name and a valid email address. Your email is never shown.', 'whoiswho' ) );
 			wp_die(
 				new \WP_Error( 'wiw_comment_identity', esc_html__( 'Please give your name and a valid email address. Your email is never shown.', 'whoiswho' ), array( 'response' => 409 ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the message inside the error is escaped.
 				'',
@@ -94,6 +98,7 @@ final class CommentPolicy {
 			);
 		}
 		if ( '' === FormInput::from_globals()->raw( self::CONSENT_FIELD ) ) {
+			self::refuse_for_wpdiscuz( 'wiw_comment_consent', __( 'Please tick the box to agree before you comment.', 'whoiswho' ) );
 			wp_die(
 				new \WP_Error( 'wiw_comment_consent', esc_html__( 'Please tick the box to agree before you comment.', 'whoiswho' ), array( 'response' => 409 ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the message inside the error is escaped.
 				'',
@@ -104,6 +109,25 @@ final class CommentPolicy {
 			);
 		}
 		return $commentdata;
+	}
+
+	/**
+	 * The wpDiscuz form posts comments through admin-ajax.php and can show only a JSON error ({errorCode, error}); a plain error page
+	 * would leave the visitor with no message at all. Elsewhere this does nothing and the caller's wp_die() answers.
+	 *
+	 * @param string $code    Error code.
+	 * @param string $message Message for the visitor.
+	 */
+	private static function refuse_for_wpdiscuz( string $code, string $message ): void {
+		if ( ! wp_doing_ajax() || 'wpdAddComment' !== FormInput::from_globals()->raw( 'action' ) ) {
+			return;
+		}
+		wp_send_json_error(
+			array(
+				'errorCode' => $code,
+				'error'     => $message,
+			)
+		);
 	}
 
 	/**

@@ -289,6 +289,35 @@ final class PublicStory {
 	}
 
 	/**
+	 * The public byline for a story author. A staff login name is never shown: when the display name is empty or equals the login
+	 * (the WordPress default), the site's editorial name is used instead, for example "<brand> Editorial".
+	 *
+	 * @param int $user_id Author.
+	 */
+	public static function byline( int $user_id ): string {
+		if ( $user_id > 0 && ! self::byline_needs_name( $user_id ) ) {
+			return (string) get_the_author_meta( 'display_name', $user_id );
+		}
+		$brand = trim( (string) apply_filters( 'wiw_brand_name', (string) get_bloginfo( 'name' ) ) );
+		/* translators: %s: the site's brand name. */
+		return '' === $brand ? __( 'Editorial team', 'whoiswho' ) : sprintf( __( '%s Editorial', 'whoiswho' ), $brand );
+	}
+
+	/**
+	 * Whether a user has no public display name of their own (empty, or the same as the login name).
+	 *
+	 * @param int $user_id User.
+	 */
+	public static function byline_needs_name( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+		if ( ! $user instanceof \WP_User ) {
+			return true;
+		}
+		$display = strtolower( trim( (string) $user->display_name ) );
+		return '' === $display || strtolower( trim( (string) $user->user_login ) ) === $display;
+	}
+
+	/**
 	 * The fields a list card and the story share.
 	 *
 	 * @param \WP_Post $post Post.
@@ -296,23 +325,24 @@ final class PublicStory {
 	 */
 	private static function card( \WP_Post $post ): array {
 		$industries = wp_get_object_terms( $post->ID, self::INDUSTRY_TAXONOMY, array( 'fields' => 'names' ) );
-		$author     = get_the_author_meta( 'display_name', (int) $post->post_author );
+		$author     = self::byline( (int) $post->post_author );
 		$cover      = get_the_post_thumbnail_url( $post->ID, 'large' );
 		return array(
-			'id'              => $post->ID,
-			'slug'            => $post->post_name,
-			'url'             => (string) get_permalink( $post ),
-			'title'           => get_the_title( $post ),
-			'lede'            => wp_strip_all_tags( $post->post_excerpt ),
-			'date'            => get_post_time( 'c', true, $post ),
-			'author'          => (string) $author,
-			'type'            => StoryTypes::of( $post->ID ),
-			'industries'      => is_array( $industries ) ? array_values( $industries ) : array(),
-			'cover'           => is_string( $cover ) ? $cover : '',
-			'reading_minutes' => ReadingTime::minutes( $post->post_content ),
-			'featured'        => is_sticky( $post->ID ),
-			'sponsor'         => self::sponsor( $post->ID ),
-			'preview'         => false,
+			'id'               => $post->ID,
+			'slug'             => $post->post_name,
+			'url'              => (string) get_permalink( $post ),
+			'title'            => get_the_title( $post ),
+			'lede'             => wp_strip_all_tags( $post->post_excerpt ),
+			'date'             => get_post_time( 'c', true, $post ),
+			'author'           => (string) $author,
+			'author_editorial' => self::byline_needs_name( (int) $post->post_author ),
+			'type'             => StoryTypes::of( $post->ID ),
+			'industries'       => is_array( $industries ) ? array_values( $industries ) : array(),
+			'cover'            => is_string( $cover ) ? $cover : '',
+			'reading_minutes'  => ReadingTime::minutes( $post->post_content ),
+			'featured'         => is_sticky( $post->ID ),
+			'sponsor'          => self::sponsor( $post->ID ),
+			'preview'          => false,
 		);
 	}
 
