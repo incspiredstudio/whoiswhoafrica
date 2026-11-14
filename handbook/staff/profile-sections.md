@@ -35,10 +35,12 @@ Some imported sections were drafted with AI by the acquisition team and are mark
 ## Edit the sections
 
 1. Open **Directory > Profiles** and find the profile.
-2. Press **Edit fields** in its row. The **Edit profile** screen opens; the four sections are the **Bio**, **Achievement**, **Influence** and **Legacy** boxes in the list of fields.
+2. Press **Edit fields** in its row. The **Edit profile** screen opens; the four sections are the **Bio**, **Achievement**, **Influence** and **Legacy** boxes in the list of fields. Each long text (the four sections, the summary and the mandate) is a paragraph box with a counter under it, for example "120 / 6000 characters". The box stops at the limit.
 3. Change the text.
 4. Fill in **Reason or request reference (required)**, for example "Added 2025 award to Achievement" or the reference of a correction request.
 5. Press **Save changes**. The message "Saved. A version and an audit row were written." confirms it.
+
+To change the photo or logo, use the **Photo** (or **Logo**) panel on the same screen: see [Photos and credits](/staff/photos-and-credits#add-or-change-a-photo-by-hand).
 
 If the profile is published, the public page changes at once. Every save keeps the previous version, so a change can be traced and undone.
 

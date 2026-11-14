@@ -179,6 +179,19 @@ No incident has been recorded yet.
 
 Who: holders of `wiw_bulk_unpublish` (Reviewer and Administrator by default). Where: Directory, then Profiles; set the filters (name, state, type, origin, source, batch) and the panel shows how many published profiles match and the first five names. Give a reason (no personal data) and choose Unpublish these profiles; the count shown must still match when you submit or it is refused. The work runs as a background job through the state machine, so each profile is audited with the batch reference and the reason, then answers 410 and leaves search and the sitemap. To reverse, choose Restore this batch in the Recent bulk actions list: each profile returns to its earlier published state (reviewed if it was reviewed). On a host without a scheduler run `php bin/wiw.php jobs:run` to make the job run now. Every bulk action and restore is in the Audit log screen.
 
+## Import batch undo and re-import (REQ-237, #810)
+
+- **Undo** (Imports > Import, a batch's Undo button) takes down the profiles the batch created that nobody has reviewed: through the state machine, so they move to **Rejected** (or Unpublished if they were public) and leave every public surface. Profiles the batch updated go back to their earlier values. Reviewed profiles are kept and listed. Images the batch added are removed unless a later batch reuses them. One audit row (`import.undo`) carries the counts.
+- **Re-importing an undone batch** (the same bundle again) takes those profiles back instead of making duplicates: each Rejected profile goes back to Imported - not public, then the import sets its fields and state again. The old batch row and its results are cleared first, and the step is audited (`import.reopen`). A record a later batch already imported is left alone.
+
+## Re-insert the About pattern on an existing install (REQ-260)
+
+A new install fills the About page from the theme's About pattern once. A theme update that changes the pattern does not touch an About page that already has content. To take the new design: back up, open Pages > About in the editor, select all blocks and delete them, then add the pattern again (the block inserter, Patterns, the site's category, **About page**) and update the page. Any wording you changed must be copied back by hand. An About page with no content at all shows the current pattern automatically.
+
+## Real cron for WP-Cron (recommended on cPanel; speeds up imports)
+
+WP-Cron runs only when someone visits the site, so on a quiet site imports, emails and purges wait. On cPanel: (1) cPanel > Cron Jobs, add a job **every minute** (or every 5 minutes on hosts that limit it): `wget -q -O - "https://yourdomain.africa/wp-cron.php?doing_wp_cron" >/dev/null 2>&1` (or `php /home/<account>/public_html/wp-cron.php` where the host allows PHP CLI); (2) then add `define( 'DISABLE_WP_CRON', true );` so visits no longer trigger it. The second step is a wp-config edit, so it is for the maintainer or the host's support, not the owner; the site works without it, only slower in the background. Check afterwards on Tools > Site Health that no scheduled event is late.
+
 ## Key rotation
 
 Keys to rotate (values live only in the secrets file, mode 600, outside the web root):

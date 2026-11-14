@@ -75,6 +75,26 @@ Open **Imports > Import**, open the batch from **History** and press **Continue*
 
 Press **Try again** on the Setup screen. It continues from the step that failed and never adds anything twice.
 
+## "Sorry, you are not allowed to upload this file type" when updating a theme or plugin
+
+Sign in as an Administrator and upload the `.zip` file from the bundle (not an unzipped folder, and not through **Media**). The guard allows theme and plugin zips only on **Appearance > Themes > Add New Theme > Upload Theme** and **Plugins > Add New Plugin > Upload Plugin**. See [Updates](/operations/updates#install-a-new-whoiswho-bundle).
+
+## The backup reminder keeps showing
+
+Press **I have set up backups** on the Dashboard or the Setup screen once the host's backups are on. See [The backup reminder](/operations/backups#the-backup-reminder).
+
+## The import dry run says "New list values needed"
+
+This is not an error. The records name industries, sectors, places or types the site does not have yet. Press **Add all as new list entries**, or map each value. See [Import data](/staff/importing#import-one-bundle).
+
+## An undone batch has to come back
+
+Import the same bundle again. The site takes back the profiles the undo set aside instead of making duplicates. See [Import data](/staff/importing#import-an-undone-batch-again).
+
+## Imports and emails are slow on a quiet site
+
+WordPress runs background work only when someone visits. Ask the development team or the host to add a real cron job in cPanel (every minute), as described in the maintainer's runbook. Until then, keeping the Import screen open makes an import run faster.
+
 ## Someone is locked out by two-factor
 
 An Administrator turns off two-factor for that person on their user profile. See [Lost phone and no recovery codes](/staff/users-and-two-factor#lost-phone-and-no-recovery-codes).

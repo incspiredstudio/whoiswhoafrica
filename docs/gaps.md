@@ -49,8 +49,6 @@ Sources:
 | G25 | Sites built from the repo's wp-config template have DISALLOW_FILE_MODS on, so Required plugins cannot install there. | Add FluentSMTP and wpDiscuz through wpackagist to composer for template-built deploys. |
 | G26 | The privacy link in the comment consent tick depends on the Privacy Policy page being set. Demo Pages set it; a site without demo pages must set it in Settings > Privacy. | Add a Setup checklist line. |
 | G27 | "Import everything as not public" defaults to on, so no organisation is public until an Administrator switches it off. | Say so on the Setup checklist and in the handbook. |
-| G28 | Add profile keeps its own label map and has no character counter (Edit profile now has both). | Use `FieldAllowlist::label()` and the counter script. |
-| G29 | `mandate` has no `max` in the config (the validator defaults to 300). | Set 2000. |
 | G30 | A pending image change shows `image_credit` as raw JSON in the review queue. | A friendly display. |
 | G31 | No alias-name duplicate check. | An alias field later. |
 | G32 | On a fresh site, empty organisation-type and industry lists block adding an organisation by hand until terms exist. | Seed default organisation types and industries at first run. |
@@ -96,3 +94,5 @@ Sources:
 - Security: the login lockout per account and per address (SEC-01), the zip entry size cap (SEC-02), the sideload prefilter (SEC-03), admin-ajax exposure (SEC-04), log folder deny files (SEC-05) and import folder deny files (SEC-06).
 - Edit profile: paragraph boxes and counters, photo changes, and plain labels. The Customers screen is now Administrator only.
 - From the production tests: profile slug double-encoding, wpDiscuz comment feedback, Editor block-editor errors, the username shown in bylines, duplicate and raw admin menus, WordPress default content, demo screen text, the backup notice, the claim email wording, the logo preload warning, SHA256SUMS format, palette PNG warnings, INSTALL.md wording, the sample zip in the public folder, the guard blocking theme/plugin zip updates, undo deleting re-used images, re-importing an undone batch, step time budgets, and the SCHEMA wording (lane F, round 10).
+- G28 (round 10 integration): Add profile and the review labels now read field labels through `FieldAllowlist::label()` (the `label` key in `config/profile-fields.php`); `AddProfileScreen::field_label` is gone. Add profile's paragraph boxes have the Edit profile character counter.
+- G29 (round 10 integration): `mandate` has `max` 2000 in `config/profile-fields.php`.
