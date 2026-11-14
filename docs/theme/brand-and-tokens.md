@@ -72,7 +72,7 @@ Only four symbols may appear anywhere on the site, alone or in a pattern:
 
 - **Not approved:** the brush-glyph pattern tile (`pattern-tile.webp`) and the brush strokes on the brand guide's Pattern System page. They were removed from the theme. Do not add other symbols, icons drawn as symbols, or new mark files. The interface icons (search, arrow, chevron and so on in `inc/components.php`) and the logo are not symbols in this sense.
 - **The pattern** is `pattern-marks.webp`, built only from the four marks by `site/build/pattern-tile.py` (run `python site/build/pattern-tile.py` from the repository root; it needs Pillow). It follows the guide's pattern rule: the marks in varying shades of one colour, in a clean, balanced brick grid where every mark and every shade appears once per row and column.
-- The tile is alpha only. Use it as a CSS mask and paint the colour through a token (`background: currentcolor` or a colour token), never as a coloured background image. The token is `--img-pattern-tile`. Keep it subtle: about 5% on the dark footer and 8% on the empty story picture and a darker 20% wash inside posters.
+- The tile is alpha only. Use it as a CSS mask and paint the colour through a token (`background: currentcolor` or a colour token), never as a coloured background image. The token is `--img-pattern-tile`. Keep it subtle: about 5% on the dark footer and 8% on the empty story picture and a 16% dark wash inside posters (more fails text contrast on the orange poster).
 - A test (`ChildBrandTokensTest`) fails if the brand folder holds any other file or a theme file points at an unapproved brand image.
 
 ## Where the tokens file lives (REQ-273)

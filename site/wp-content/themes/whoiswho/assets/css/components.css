@@ -744,7 +744,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .poster--purple { --pt: var(--purple); --pa: var(--orange); --pi: var(--c-white); }
 .poster--green { --pt: var(--green); --pa: var(--orange); --pi: var(--c-white); }
 .poster--red { --pt: var(--red); --pa: var(--orange); --pi: var(--c-white); }
-.poster-pat { position: absolute; inset: 0; z-index: 0; background: rgb(0, 0, 0, .2); mask: var(--img-pattern-tile) 0 0 / 200px 200px repeat; transition: -webkit-mask-position 1200ms var(--ease-out), mask-position 1200ms var(--ease-out); }
+.poster-pat { position: absolute; inset: 0; z-index: 0; background: rgb(0, 0, 0, .16); mask: var(--img-pattern-tile) 0 0 / 200px 200px repeat; transition: -webkit-mask-position 1200ms var(--ease-out), mask-position 1200ms var(--ease-out); }
 .poster-mark { position: absolute; z-index: 1; top: 3%; right: -6%; width: 62%; aspect-ratio: 1; background: var(--pa); mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; transition: transform 1100ms var(--ease-out); }
 .poster-mark--star { --m: var(--img-mark-star); } .poster-mark--comb { --m: var(--img-mark-comb); } .poster-mark--link { --m: var(--img-mark-link); } .poster-mark--spiral { --m: var(--img-mark-spiral); }
 .poster-photo { position: absolute; z-index: 2; left: 12%; right: 12%; bottom: 0; width: 76%; height: 80%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 -2px 0 0 rgb(0, 0, 0, .06); transition: transform 900ms var(--ease-out); }
