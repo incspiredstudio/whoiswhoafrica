@@ -26,6 +26,53 @@ final class ImagePolicy {
 	public const LICENCES = array( 'CC0-1.0', 'PDM-1.0', 'CC-BY-2.0', 'CC-BY-2.5', 'CC-BY-3.0', 'CC-BY-4.0', 'CC-BY-SA-2.0', 'CC-BY-SA-2.5', 'CC-BY-SA-3.0', 'CC-BY-SA-4.0' );
 
 	/**
+	 * The label and deed URL of each allowed licence (same ids as LICENCES), for the Add profile screen's select and credit link.
+	 */
+	private const DEEDS = array(
+		'CC0-1.0'      => array( 'CC0 1.0 (public domain dedication)', 'https://creativecommons.org/publicdomain/zero/1.0/' ),
+		'PDM-1.0'      => array( 'Public domain (Public Domain Mark 1.0)', 'https://creativecommons.org/publicdomain/mark/1.0/' ),
+		'CC-BY-2.0'    => array( 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/' ),
+		'CC-BY-2.5'    => array( 'CC BY 2.5', 'https://creativecommons.org/licenses/by/2.5/' ),
+		'CC-BY-3.0'    => array( 'CC BY 3.0', 'https://creativecommons.org/licenses/by/3.0/' ),
+		'CC-BY-4.0'    => array( 'CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/' ),
+		'CC-BY-SA-2.0' => array( 'CC BY-SA 2.0', 'https://creativecommons.org/licenses/by-sa/2.0/' ),
+		'CC-BY-SA-2.5' => array( 'CC BY-SA 2.5', 'https://creativecommons.org/licenses/by-sa/2.5/' ),
+		'CC-BY-SA-3.0' => array( 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/' ),
+		'CC-BY-SA-4.0' => array( 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/' ),
+	);
+
+	/**
+	 * Whether a licence id is on the allowlist.
+	 *
+	 * @param string $id Licence id.
+	 */
+	public static function licence_allowed( string $id ): bool {
+		return in_array( $id, self::LICENCES, true );
+	}
+
+	/**
+	 * Allowed licence ids => labels, for a select.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function licence_choices(): array {
+		$choices = array();
+		foreach ( self::LICENCES as $id ) {
+			$choices[ $id ] = self::DEEDS[ $id ][0] ?? $id;
+		}
+		return $choices;
+	}
+
+	/**
+	 * The deed URL of an allowed licence, or an empty string.
+	 *
+	 * @param string $id Licence id.
+	 */
+	public static function licence_url( string $id ): string {
+		return self::licence_allowed( $id ) ? ( self::DEEDS[ $id ][1] ?? '' ) : '';
+	}
+
+	/**
 	 * Allowed types: mime type => file extensions.
 	 */
 	public const TYPES = array(

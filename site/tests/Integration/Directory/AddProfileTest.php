@@ -13,8 +13,9 @@ namespace WhoIsWho\Tests\Integration\Directory;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
-use WhoIsWho\Core\Directory\Add\ImageLicences;
 use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
+use WhoIsWho\Core\Directory\ImageMeta;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
@@ -414,11 +415,11 @@ final class AddProfileTest extends TestCase {
 		$this->assertSame( 'created', $result['status'], (string) wp_json_encode( $result ) );
 		$id = (int) $result['profile_id'];
 		$this->assertSame( (string) $image, (string) get_post_meta( $id, PublicProfile::IMAGE_META, true ) );
-		$this->assertSame( 'CC-BY-SA-4.0', get_post_meta( $image, ImageLicences::META_LICENCE, true ) );
-		$this->assertSame( ImageLicences::url( 'CC-BY-SA-4.0' ), get_post_meta( $image, ImageLicences::META_LICENCE_URL, true ) );
-		$this->assertSame( 'A. Photographer', get_post_meta( $image, ImageLicences::META_ATTRIBUTION, true ) );
-		$this->assertSame( 'https://example.org/photo', get_post_meta( $image, ImageLicences::META_SOURCE_URL, true ) );
-		$this->assertSame( 'photo', get_post_meta( $image, ImageLicences::META_KIND, true ) );
+		$this->assertSame( 'CC-BY-SA-4.0', get_post_meta( $image, ImageMeta::LICENCE, true ) );
+		$this->assertSame( ImagePolicy::licence_url( 'CC-BY-SA-4.0' ), get_post_meta( $image, ImageMeta::LICENCE_URL, true ) );
+		$this->assertSame( 'A. Photographer', get_post_meta( $image, ImageMeta::ATTRIBUTION, true ) );
+		$this->assertSame( 'https://example.org/photo', get_post_meta( $image, ImageMeta::SOURCE_URL, true ) );
+		$this->assertSame( 'photo', get_post_meta( $image, ImageMeta::KIND, true ) );
 	}
 
 	public function test_REQ_267_return_to_nominations_carries_the_name(): void {

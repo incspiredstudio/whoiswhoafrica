@@ -2,8 +2,8 @@
 /**
  * The fields of the Add profile form for one entity type (REQ-209, REQ-139). They come from the type's allowlist in
  * config/profile-fields.php, so a field added there appears on the form. The four narrative sections (Bio, Achievement,
- * Influence, Legacy) and, for people, lifespan and field are contract v1.1 keys: when the allowlist does not list them yet they
- * are still offered, as plain text under the same keys. Plain PHP, no WordPress calls.
+ * Influence, Legacy) and, for people, lifespan and field are contract v1.1 keys listed there too; the sections come last, in
+ * page order. Plain PHP, no WordPress calls.
  *
  * @package WhoIsWho
  */
@@ -25,19 +25,9 @@ final class AddProfileFields {
 	public const SECTIONS = array( 'bio', 'achievement', 'influence', 'legacy' );
 
 	/**
-	 * Person-only contract v1.1 keys.
-	 */
-	public const PERSON_EXTRAS = array( 'lifespan', 'field' );
-
-	/**
 	 * Person entity types.
 	 */
 	public const PERSON_TYPES = array( 'individual', 'entrepreneur' );
-
-	/**
-	 * Maximum length of a narrative section (contract v1.1).
-	 */
-	public const SECTION_MAX = 6000;
 
 	/**
 	 * Allowlisted keys the form does not offer: the name has its own input, and the organisation reference is set by the import.
@@ -94,14 +84,6 @@ final class AddProfileFields {
 		if ( array() === $rules ) {
 			return array();
 		}
-		$extra = in_array( $type, self::PERSON_TYPES, true ) ? self::PERSON_EXTRAS : array();
-		foreach ( $extra as $key ) {
-			$rules[ $key ] = $rules[ $key ] ?? array(
-				'type'     => 'string',
-				'required' => false,
-				'max'      => 200,
-			);
-		}
 		$out      = array();
 		$sections = array();
 		foreach ( $rules as $key => $rule ) {
@@ -111,34 +93,21 @@ final class AddProfileFields {
 			$out[ (string) $key ] = $this->rule( (string) $key, $rule );
 		}
 		foreach ( self::SECTIONS as $key ) {
-			$rule             = $rules[ $key ] ?? array(
-				'type'     => 'string',
-				'required' => false,
-			);
-			$rule['max']      = max( (int) ( $rule['max'] ?? 0 ), self::SECTION_MAX );
-			$sections[ $key ] = $this->rule( $key, $rule );
+			if ( isset( $rules[ $key ] ) ) {
+				$sections[ $key ] = $this->rule( $key, $rules[ $key ] );
+			}
 		}
 		return $out + $sections;
 	}
 
 	/**
-	 * Whether the allowlist itself lists a key for a type (the fallback keys are offered but stored without the allowlist).
+	 * Whether the allowlist lists a key for a type.
 	 *
 	 * @param string $type Entity type.
 	 * @param string $key  Field key.
 	 */
 	public function is_listed( string $type, string $key ): bool {
 		return $this->allowlist->is_allowed( $type, $key );
-	}
-
-	/**
-	 * Whether a key is one of the contract v1.1 keys this form may store even before the allowlist lists them.
-	 *
-	 * @param string $type Entity type.
-	 * @param string $key  Field key.
-	 */
-	public static function is_fallback( string $type, string $key ): bool {
-		return in_array( $key, self::SECTIONS, true ) || ( in_array( $type, self::PERSON_TYPES, true ) && in_array( $key, self::PERSON_EXTRAS, true ) );
 	}
 
 	/**

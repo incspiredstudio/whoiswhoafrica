@@ -24,9 +24,9 @@ use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
 use WhoIsWho\Core\Directory\Add\AddProfileValidator;
 use WhoIsWho\Core\Directory\Add\DuplicateFinder;
-use WhoIsWho\Core\Directory\Add\ImageLicences;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
@@ -419,7 +419,7 @@ final class AddProfileScreen {
 		$pick  .= '<p class="description">' . esc_html__( 'The number is the media library item id; the button fills it in.', 'whoiswho' ) . '</p>';
 		$out   .= $this->row( 'image_id', __( 'Image', 'whoiswho' ), $pick, $errors );
 		$select = '<select id="wiw-f-image_licence" name="image_licence"><option value="">' . esc_html__( 'Choose a licence', 'whoiswho' ) . '</option>';
-		foreach ( ImageLicences::choices() as $licence => $label ) {
+		foreach ( ImagePolicy::licence_choices() as $licence => $label ) {
 			$select .= '<option value="' . esc_attr( $licence ) . '"' . selected( (string) ( $values['image_licence'] ?? '' ), $licence, false ) . '>' . esc_html( $label ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}
 		$out .= $this->row( 'image_licence', __( 'Licence', 'whoiswho' ), $select . '</select>', $errors );

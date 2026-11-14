@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Directory\Add;
 
 use WhoIsWho\Core\Directory\Taxonomies;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 use WhoIsWho\Core\Platform\Forms\ValidationResult;
@@ -193,12 +194,12 @@ final class AddProfileValidator extends Validator {
 			return;
 		}
 		$id = ctype_digit( $values['image_id'] ) ? (int) $values['image_id'] : 0;
-		if ( $id < 1 || 'attachment' !== get_post_type( $id ) || ! in_array( (string) get_post_mime_type( $id ), ImageLicences::MIME_TYPES, true ) ) {
+		if ( $id < 1 || 'attachment' !== get_post_type( $id ) || ! isset( ImagePolicy::TYPES[ (string) get_post_mime_type( $id ) ] ) ) {
 			$flag( 'image_id', 'invalid' );
 		}
 		if ( '' === $values['image_licence'] ) {
 			$flag( 'image_licence', 'required' );
-		} elseif ( ! ImageLicences::is_allowed( $values['image_licence'] ) ) {
+		} elseif ( ! ImagePolicy::licence_allowed( $values['image_licence'] ) ) {
 			$flag( 'image_licence', 'not_allowed' );
 		}
 		if ( '' === $values['image_credit'] ) {

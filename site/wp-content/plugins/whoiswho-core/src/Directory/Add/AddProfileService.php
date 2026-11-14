@@ -15,13 +15,14 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Directory\Add;
 
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
-use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
+use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\Taxonomies;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Db\Transaction;
@@ -224,14 +225,10 @@ final class AddProfileService {
 			if ( 'list' === $rule['type'] && ! is_array( $value ) ) {
 				$value = array( (string) $value );
 			}
-			if ( $this->form->is_listed( $type, $key ) ) {
-				$store->set( $id, $key, $value );
-			} elseif ( AddProfileFields::is_fallback( $type, $key ) ) {
-				// A contract v1.1 key the allowlist does not list yet: stored under the same meta key the allowlist will use.
-				update_post_meta( $id, (string) FieldAllowlist::meta_key( $key ), (string) $value );
-			} else {
+			if ( ! $this->form->is_listed( $type, $key ) ) {
 				continue;
 			}
+			$store->set( $id, $key, $value );
 			$prov->record( $id, $this->provenance( $key, $sources[0], $now ) );
 			$keys[] = $key;
 		}//end foreach
@@ -267,14 +264,19 @@ final class AddProfileService {
 	private function attach_image( int $id, string $type, array $image ): int {
 		$attachment = (int) ( $image['id'] ?? 0 );
 		$licence    = (string) ( $image['licence'] ?? '' );
-		if ( $attachment < 1 || 'attachment' !== get_post_type( $attachment ) || ! ImageLicences::is_allowed( $licence ) ) {
+		if ( $attachment < 1 || 'attachment' !== get_post_type( $attachment ) || ! ImagePolicy::licence_allowed( $licence ) ) {
 			return 0;
 		}
-		update_post_meta( $attachment, ImageLicences::META_LICENCE, $licence );
-		update_post_meta( $attachment, ImageLicences::META_LICENCE_URL, ImageLicences::url( $licence ) );
-		update_post_meta( $attachment, ImageLicences::META_ATTRIBUTION, (string) ( $image['credit'] ?? '' ) );
-		update_post_meta( $attachment, ImageLicences::META_SOURCE_URL, (string) ( $image['source'] ?? '' ) );
-		update_post_meta( $attachment, ImageLicences::META_KIND, in_array( $type, AddProfileFields::PERSON_TYPES, true ) ? 'photo' : 'logo' );
+		ImageMeta::save(
+			$attachment,
+			array(
+				'licence'          => $licence,
+				'licence_url'      => ImagePolicy::licence_url( $licence ),
+				'attribution_text' => (string) ( $image['credit'] ?? '' ),
+				'source_url'       => (string) ( $image['source'] ?? '' ),
+				'kind'             => in_array( $type, AddProfileFields::PERSON_TYPES, true ) ? 'photo' : 'logo',
+			)
+		);
 		update_post_meta( $id, PublicProfile::IMAGE_META, (string) $attachment );
 		return $attachment;
 	}
