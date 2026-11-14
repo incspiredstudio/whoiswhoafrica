@@ -152,4 +152,13 @@ final class ChildBrandTokensTest extends TestCase {
 			$this->assertFileExists( $this->child() . '/assets/brand/' . $file );
 		}
 	}
+
+	public function test_REQ_273_the_header_logo_comes_from_the_child_tokens_not_an_image_inlined_in_the_parent_css(): void {
+		foreach ( (array) glob( $this->parent_dir() . '/assets/css/*.css' ) as $file ) {
+			$this->assertStringNotContainsString( 'data:image/png', (string) file_get_contents( (string) $file ), basename( (string) $file ) . ' inlines a brand image' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+		$this->assertFileExists( $this->child() . '/assets/logo/wiw-logo-mask.webp' );
+		$this->assertStringContainsString( '--img-logo: url("../logo/wiw-logo-mask.webp")', (string) file_get_contents( $this->child() . '/assets/css/tokens.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( 'var(--img-logo)', (string) file_get_contents( $this->parent_dir() . '/assets/css/components.css' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
 }

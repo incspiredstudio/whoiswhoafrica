@@ -17,6 +17,7 @@
 :root {
   /* Brand images; the url() resolves from this file, so these work wherever the component CSS is served from */
   --c-white: #fff;
+  --img-logo: url("../logo/wiw-logo-mask.webp"); /* the wordmark as an alpha mask, painted in the text colour */
   --img-pattern-tile: url("../brand/pattern-marks.webp"); /* the four approved Adinkra marks only; built by site/build/pattern-tile.py */
   --img-mark-star: url("../brand/mark-star.webp");
   --img-mark-comb: url("../brand/mark-comb.webp");
