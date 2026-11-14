@@ -1,7 +1,7 @@
 <?php
 /**
- * The Sponsored disclosure on share previews (REQ-026, REQ-155, REQ-182). A story's preview says "Sponsored by [name]" only while
- * its placement is active, and a profile's preview never does. The tags are emitted by the plugin (Content\Stories\StorySeo for
+ * The Sponsored disclosure on share previews (REQ-026, REQ-155, REQ-182). A story's preview says "Sponsored" only while its
+ * placement is active, never with the sponsor's name (owner 2026-11-14), and a profile's preview never does. The tags are emitted by the plugin (Content\Stories\StorySeo for
  * stories and Directory\Seo\Tags for profiles), not by the theme. Needs the WordPress test suite and the real tables.
  *
  * @package WhoIsWho
@@ -104,9 +104,10 @@ final class SponsoredSharePreviewTest extends TestCase {
 			'end'       => '2026-12-31',
 		);
 
-		$this->assertStringContainsString( 'Sponsored by Acme', $this->description( $id ), 'Inside the slot dates the preview carries the label and the sponsor name.' );
+		$this->assertStringStartsWith( 'Sponsored. ', $this->description( $id ), 'Inside the slot dates the preview carries the label.' );
 		$html = StorySeo::markup_for( $id );
-		$this->assertStringContainsString( 'Sponsored by Acme', $html );
+		$this->assertStringContainsString( 'Sponsored. How the company began.', $html );
+		$this->assertStringNotContainsString( 'Acme', $html, 'The share preview and JSON-LD never carry the sponsor name.' );
 
 		$this->today = '2027-01-01';
 		$this->assertStringNotContainsString( 'Sponsored', $this->description( $id ), 'After the end date the label is gone.' );

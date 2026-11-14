@@ -316,11 +316,6 @@ final class DryRun {
 			$entry['code'] = Suppression::REFUSAL_CODE;
 			return $entry;
 		}
-		if ( array() !== $unmapped ) {
-			$entry['code']  = 'SCHEMA';
-			$entry['field'] = (string) $unmapped[0]['field'];
-			return $entry;
-		}
 		return $this->classify( $entry, $record );
 	}
 

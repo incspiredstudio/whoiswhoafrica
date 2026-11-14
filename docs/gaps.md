@@ -13,7 +13,6 @@ Sources:
 | # | Gap | Recommended option |
 |---|---|---|
 | G2 | Two-factor is optional (owner decision). OWASP ASVS L2 expects it for staff (SEC-13). A reminder now exists (issue 814): every staff member without it sees a notice on every admin screen and a Dashboard box, and gets one email at their first sign-in, until they turn it on. | Every Administrator and Editor turns it on before go-live (handbook: Users and two-factor). The Setup checklist shows who still has not. |
-| G3 | "Add all as new list entries" created 2,437 raw list values in the full import (590 organisation types, 457 industries, 1,390 places), some in French or German, plus noise such as "Autonomous administrative territorial entity". They show in public filters once profiles are published. | The acquisition side exports a curated term map, then clean the lists before turning off "import everything as not public". |
 | G4 | The CLAUDE.md rule "production runs migrations only through the deploy script" now has an exception: the Administrator's guarded "Update the database" button (after a backup). | Confirm. The docs (CLAUDE.md, runbook) already describe it. |
 | G5 | The directory "When shared" panel is now shown on profiles (REQ-006 amended). Earlier wording said it never renders live. | Confirm. |
 | G6 | The wpDiscuz subscription bar (opt-in, double opt-in) is still shown. | Keep it (it is covered by data export and erasure), or turn it off in `WpdiscuzSettings`. |
@@ -50,7 +49,6 @@ Sources:
 | G27 | "Import everything as not public" defaults to on, so no organisation is public until an Administrator switches it off. | Say so on the Setup checklist and in the handbook. |
 | G30 | A pending image change shows `image_credit` as raw JSON in the review queue. | A friendly display. |
 | G31 | No alias-name duplicate check. | An alias field later. |
-| G32 | On a fresh site, empty organisation-type and industry lists block adding an organisation by hand until terms exist. | Seed default organisation types and industries at first run. |
 | G33 | List values the demo adds remain after demo removal. With a bundle shipped, 8 invented stand-in profiles (used by demo awards) appear in the directory next to the 50 real ones. | Remove demo-added terms that nothing uses. Label the stand-ins "(sample)". |
 | G34 | Existing installs keep their old About content, because starter pages never overwrite. | Runbook note: re-insert the About pattern. |
 | G35 | wpDiscuz article rating is hidden by CSS. | Remove the rule if ratings are wanted. |
@@ -84,6 +82,8 @@ Sources:
 | G49 | Inboxes for the production SMTP test were not checked; only the site's "sent" status and FluentSMTP's "delivered" are confirmed. | The owner checks the +prodtest and +prodform inbox messages. |
 
 ## Fixed during this build (for the record)
+
+- G3 and G32 (classification tree, contract v1.2, 2026-11-14): industries are a fixed tree (sectors, their industries and Unclassified) and organisation types a curated list, both seeded at first run and by migration 2026112103 from `config/classification.php`. The importer never adds industries, sectors or organisation types: a contract 1.2 record carries its classification, and an older record maps through the aliases or to Unclassified (or Other). "Add all as new places" now adds only cities, filed under the record's country. The upgrade folds the old raw terms into the tree and empties the retired sector list. Issue #815 (curated lists on the site) is superseded by this work: its acquisition half shipped as contract v1.2, and its site half is replaced by the tree.
 
 - G1 (owner approved 2026-11-14, #813): the guard switches off the built-in code editors itself (the effect of DISALLOW_FILE_EDIT without wp-config). Uploads stay open for Administrators, and the red DISALLOW_FILE_MODS notice is replaced by a dismissible Dashboard note.
 

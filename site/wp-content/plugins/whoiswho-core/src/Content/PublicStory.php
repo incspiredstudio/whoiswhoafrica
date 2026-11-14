@@ -394,11 +394,13 @@ final class PublicStory {
 
 	/**
 	 * The sponsor label and an active flag, only between the placement's start and end dates (inclusive). After the end date
-	 * the label and slot are gone and the story stays. This read model never uses the label to order anything.
+	 * the label and slot are gone and the story stays. This read model never uses the label to order anything. The label is the
+	 * plain disclosure "Sponsored": public pages never name the sponsor (REQ-026, owner 2026-11-14), so the sponsor's name is not
+	 * part of this public model at all. Staff see it in admin through Commerce.
 	 *
 	 * @param int         $post_id Post ID.
 	 * @param string|null $surface When given, the placement must also cover this surface.
-	 * @return array{name: string, label: string, active: bool}|null
+	 * @return array{label: string, active: bool}|null
 	 */
 	private static function sponsor( int $post_id, ?string $surface = null ): ?array {
 		$placement = self::source()->placement( $post_id );
@@ -413,8 +415,7 @@ final class PublicStory {
 			return null;
 		}
 		return array(
-			'name'   => $placement['sponsor'],
-			'label'  => 'Sponsored by ' . $placement['sponsor'],
+			'label'  => __( 'Sponsored', 'whoiswho' ),
 			'active' => true,
 		);
 	}

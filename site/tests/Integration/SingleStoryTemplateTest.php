@@ -202,7 +202,7 @@ final class SingleStoryTemplateTest extends TestCase {
 		$this->assertStringNotContainsString( 'Related event', $this->render( $id ) );
 	}
 
-	public function test_REQ_182_sponsored_story_shows_the_badge_sponsor_and_notice(): void {
+	public function test_REQ_026_sponsored_story_shows_the_badge_and_notice_without_the_sponsor_name(): void {
 		$id                              = $this->story();
 		$this->source->placements[ $id ] = array(
 			'sponsor'   => 'Acme Corp',
@@ -212,7 +212,10 @@ final class SingleStoryTemplateTest extends TestCase {
 		);
 		$out                             = $this->render( $id );
 		$this->assertStringContainsString( 'badge--sponsored', $out );
-		$this->assertStringContainsString( 'Sponsored by Acme Corp', $out );
+		$this->assertStringContainsString( '>Sponsored</span>', $out, 'The badge says Sponsored.' );
+		$this->assertStringContainsString( '<strong>Sponsored.</strong>', $out, 'The notice starts with Sponsored.' );
+		$this->assertStringNotContainsString( 'Acme Corp', $out, 'The sponsor name never appears on the public page (owner 2026-11-14).' );
+		$this->assertStringNotContainsString( 'Sponsored by', $out );
 		$this->assertStringContainsString( 'did not write it', $out );
 		$this->assertStringContainsString( 'no influence over any label', $out );
 		wp_delete_post( $id, true );

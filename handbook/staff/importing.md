@@ -38,10 +38,11 @@ You never open or change the zip. If anything in it has been altered, the import
 4. Read the dry run:
    - The counts at the top show how many records would be created, updated, left unchanged, flagged or refused. Click a count to see only those records.
    - The table shows each record's result, any flags, and the changes field by field.
-5. **Map new terms.** If records name a type, industry, sector or place the site does not know, the counts show **New list values needed (N)** instead of a code, each such record reads "New list value needed", and a heading says how many values are not in the site's lists yet. This is not an error in the bundle. Press **Add all as new list entries** to add them all at once, or use each "Map ... to" box: choose the existing entry it means and press **Save mapping** (choose **Skip this value** in the list to skip it). The dry run then runs again; read it again.
-6. If the result looks right, press **Confirm and import**.
-7. The message "Import started. It runs in the background and resumes where it stopped." appears, with "Importing records: N of M". It runs in small steps. You can leave the page, but keeping it open makes it faster. If the connection drops, the screen says so: press **Continue** and it carries on where it stopped, never importing a record twice.
-8. When the status says it is applied, the records are in the Review queue.
+5. **Industries, organisation types and countries sort themselves.** Every profile is filed under one country, one sector and one industry, for the breadcrumb *Country › Sector › Industry › Name*. A bundle from the acquisition side (contract 1.2) says where each record belongs, and the site uses that. An older bundle is filed by matching its industry, field and organisation type words against the site's list (including the "Also known as" words on each industry). A record the site cannot place goes to **Unclassified** (or organisation type **Other**); it is never refused for this. Afterwards, find those profiles and set their industry on Edit profile. A country code the site does not have yet (for example `PT`) is added as a new country.
+6. **New places.** If records name a head office city the site does not know, a heading says how many. The records still import, without the city. Press **Add all as new places** to add each city under its record's country, or use each "Map ... to" box: choose the existing place it means and press **Save mapping** (choose **Skip this value** to skip it). The dry run then runs again; read it again.
+7. If the result looks right, press **Confirm and import**.
+8. The message "Import started. It runs in the background and resumes where it stopped." appears, with "Importing records: N of M". It runs in small steps. You can leave the page, but keeping it open makes it faster. If the connection drops, the screen says so: press **Continue** and it carries on where it stopped, never importing a record twice.
+9. When the status says it is applied, the records are in the Review queue.
 
 ### Or import from the server
 
@@ -58,7 +59,6 @@ For very large bundles, or if the upload fails, put the zip on the server instea
 | `SUPPRESSED` | The person or organisation asked to be removed. No profile is made. |
 | `IMAGE_NOT_ALLOWED` | A photo's licence is not an open one. The photo is skipped and the rest of the record imports. |
 | `UNSOURCED_FIELD`, `LOW_CONFIDENCE` | A fact without a source, or with low confidence, is refused |
-| New list values needed | The records name a list value (type, industry, sector, place) the site does not have yet. Add the values or map them (step 5), and the dry run runs again |
 | `SCHEMA`, `HASH_MISMATCH`, `VERIFICATION_FAILED`, `FORBIDDEN_FIELD` | The record is malformed, altered or carries a field the site does not accept. It is refused; the rest continue. |
 | `CONTRACT_VERSION`, `MANIFEST_MISMATCH` | The whole bundle is refused. Ask the acquisition team for a new one. |
 

@@ -7,6 +7,10 @@
  * hash on an unreviewed profile gets UPDATED: a new version, fields replaced, state re-set. A changed hash on a reviewed profile
  * gets FLAGGED_CHANGE: a pending version for the review queue, reviewed fields untouched.
  *
+ * Classification (industry, organisation type, primary country) is written through ProfileClassifier: a contract 1.2
+ * `classification` object wins, otherwise the raw values map through the tree's aliases or to Unclassified. An unknown list value
+ * never refuses a record (REQ-009 as amended 2026-11-14).
+ *
  * Each record is written in one transaction, so a refusal or a failure leaves no partial profile. Results carry only the record
  * id and a code.
  *
@@ -20,6 +24,7 @@ namespace WhoIsWho\Core\Import\Apply;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
+use WhoIsWho\Core\Directory\ProfileClassifier;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
@@ -134,12 +139,6 @@ final class ProfileApplier {
 		) ) {
 			return $this->result( Suppression::REFUSAL_CODE, null );
 		}
-		try {
-			$this->terms->assert_mapped( $record );
-		} catch ( \RuntimeException $e ) {
-			return $this->result( 'SCHEMA', null );
-		}
-
 		$record_id  = (string) $record['record_id'];
 		$profile_id = $this->map->profile_for( $record_id );
 		if ( null === $profile_id ) {
@@ -388,9 +387,12 @@ final class ProfileApplier {
 				);
 			}
 		}
-		foreach ( $this->terms->terms_for( $record ) as $field => $term_id ) {
-			wp_set_object_terms( $profile_id, array( $term_id ), TermMapper::FIELDS[ $field ] );
-		}
+		$places = $this->terms->terms_for( $record );
+		( new ProfileClassifier() )->assign(
+			$profile_id,
+			(string) $record['entity_type'],
+			array_merge( $this->terms->classification_for( $record ), array( 'city_id' => (int) ( $places['hq_city'] ?? 0 ) ) )
+		);
 		$evidence = new EvidenceRepository();
 		$evidence->clear( $profile_id );
 		$evidence->store( $profile_id, $record );

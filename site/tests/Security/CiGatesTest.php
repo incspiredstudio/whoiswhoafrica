@@ -47,7 +47,28 @@ final class CiGatesTest extends TestCase {
 		$this->assertStringContainsString( 'composer test:coverage', $this->job( 'test' ) );
 		$this->assertStringContainsString( '--testsuite Visibility', $this->job( 'visibility' ) );
 		$this->assertStringContainsString( 'npm run build', $this->job( 'build' ) );
-		$this->assertStringContainsString( 'npx playwright test', $this->job( 'e2e' ) );
+		$this->assertStringContainsString( 'npx playwright test', $this->job( 'e2e-shard' ) );
+	}
+
+	public function test_REQ_056_e2e_runs_in_four_shards_and_the_e2e_check_needs_them_all(): void {
+		$shard = $this->job( 'e2e-shard' );
+		$this->assertMatchesRegularExpression( '/shard: \[1, 2, 3, 4\]/', $shard );
+		$this->assertStringContainsString( 'npx playwright test --shard=${{ matrix.shard }}/4', $shard );
+		$this->assertStringContainsString( 'fail-fast: false', $shard );
+		$this->assertStringContainsString( '~/.cache/ms-playwright', $shard );
+		$e2e = $this->job( 'e2e' );
+		$this->assertStringContainsString( 'needs: e2e-shard', $e2e );
+		$this->assertStringContainsString( 'if: always()', $e2e );
+		$this->assertStringContainsString( '[ "$RESULT" = "success" ] ||', $e2e );
+		$this->assertStringNotContainsString( 'continue-on-error', $e2e );
+	}
+
+	public function test_REQ_056_pull_requests_run_every_suite_and_coverage_runs_on_the_default_branch(): void {
+		$test = $this->job( 'test' );
+		$this->assertMatchesRegularExpression( '/if: env.COVERAGE != \'true\'\n\s+run: composer test\n/', $test );
+		$this->assertMatchesRegularExpression( '/if: env.COVERAGE == \'true\'\n\s+run: composer test:coverage\n/', $test );
+		$this->assertStringContainsString( "github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)", $test );
+		$this->assertStringNotContainsString( '--testsuite', $test, 'pull requests must run all suites' );
 	}
 
 	public function test_REQ_056_coverage_threshold_is_enforced_by_the_test_script(): void {
@@ -79,7 +100,7 @@ final class CiGatesTest extends TestCase {
 	public function test_REQ_273_child_theme_check_runs_in_the_browser_job(): void {
 		$spec = (string) file_get_contents( dirname( __DIR__ ) . '/e2e/brand-config.spec.ts' );
 		$this->assertStringContainsString( 'child theme', strtolower( $spec ) );
-		$this->assertStringContainsString( 'WIW_THEME', $this->job( 'e2e' ) . (string) file_get_contents( dirname( __DIR__, 2 ) . '/deploy/ci/install-wp.php' ) );
+		$this->assertStringContainsString( 'WIW_THEME', $this->job( 'e2e-shard' ) . (string) file_get_contents( dirname( __DIR__, 2 ) . '/deploy/ci/install-wp.php' ) );
 	}
 
 	public function test_REQ_056_pr_body_gate_needs_a_req_id_and_closes_line(): void {
@@ -94,6 +115,6 @@ final class CiGatesTest extends TestCase {
 		$this->assertLessThanOrEqual( 2, $count, 'a blocking gate was made optional' );
 		$this->assertMatchesRegularExpression( '/Traceability report[^\n]*\n\s+continue-on-error: true/', $this->workflow() );
 		$this->assertMatchesRegularExpression( '/Performance budget \(non-blocking\)\n\s+continue-on-error: true/', $this->workflow() );
-		$this->assertStringContainsString( 'Performance budget', $this->job( 'e2e' ) );
+		$this->assertStringContainsString( 'Performance budget', $this->job( 'e2e-shard' ) );
 	}
 }

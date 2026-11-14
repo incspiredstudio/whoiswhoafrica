@@ -185,7 +185,7 @@ final class StoriesListTemplateTest extends TestCase {
 		$this->assertStringNotContainsString( 'Stories Hidden Draft', $out );
 	}
 
-	public function test_REQ_263_a_sponsored_story_shows_the_badge_and_sponsor_in_its_slot_once_and_only_between_dates(): void {
+	public function test_REQ_263_a_sponsored_story_shows_the_badge_without_the_sponsor_name_in_its_slot_once_and_only_between_dates(): void {
 		$id = $this->story( 'Stories Sponsored One' );
 		$this->story( 'Stories Other One' );
 		$this->source->placements[ $id ] = array(
@@ -197,7 +197,9 @@ final class StoriesListTemplateTest extends TestCase {
 		$out                             = $this->render();
 		$this->assertStringContainsString( 'stories-slot', $out );
 		$this->assertStringContainsString( 'badge--sponsored', $out );
-		$this->assertStringContainsString( 'Paid for by Acme Sponsor', $out );
+		$this->assertStringContainsString( '>Sponsored</span>', $out );
+		$this->assertStringNotContainsString( 'Acme Sponsor', $out, 'A listing card never names the sponsor (REQ-026, owner 2026-11-14).' );
+		$this->assertStringNotContainsString( 'Paid for by', $out );
 		$this->assertSame( 1, substr_count( $out, '>Stories Sponsored One</a>' ), 'shown once' );
 		$this->source->placements[ $id ]['end'] = '2026-12-05';
 		$after                                  = $this->render();

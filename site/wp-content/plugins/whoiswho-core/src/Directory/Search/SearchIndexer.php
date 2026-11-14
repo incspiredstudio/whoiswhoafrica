@@ -118,10 +118,18 @@ final class SearchIndexer {
 		}
 		$facts = $profile->facts;
 		$org   = $this->text( $facts['current_organisation']['value'] ?? ( null !== $profile->organisation ? $profile->organisation['name'] : '' ) );
-		$title = $this->text( $facts['current_title']['value'] ?? ( $facts['org_type']['value'] ?? '' ) );
-		$bio   = $this->text( $facts['bio']['value'] ?? ( $facts['summary']['value'] ?? '' ) );
-		$sort  = strtolower( remove_accents( $profile->name ) );
-		$ok    = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$type  = $profile->org_type();
+		$title = $this->text( $facts['current_title']['value'] ?? ( null === $type ? '' : $type['name'] ) );
+		$tree  = $profile->classification();
+		$words = array();
+		foreach ( array_merge( array( $tree['sector'], $tree['industry'] ), $tree['extra'] ) as $entry ) {
+			if ( null !== $entry ) {
+				$words[] = $entry['name'];
+			}
+		}
+		$bio  = $this->text( $facts['bio']['value'] ?? ( $facts['summary']['value'] ?? '' ) );
+		$sort = strtolower( remove_accents( $profile->name ) );
+		$ok   = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
 				'REPLACE INTO ' . self::table() . ' (item_type, item_id, entity_type, name, organisation, title, industry, bio, url, pending, name_sort) VALUES (%s, %d, %s, %s, %s, %s, %s, %s, %s, %d, %s)', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
 				self::ITEM_TYPE,
@@ -130,7 +138,7 @@ final class SearchIndexer {
 				$profile->name,
 				$org,
 				$title,
-				$this->text( $facts['industry']['value'] ?? '' ),
+				$this->text( implode( ', ', array_unique( $words ) ) ),
 				$bio,
 				$profile->url,
 				PubState::PUBLISHED_PENDING === $profile->state ? 1 : 0,

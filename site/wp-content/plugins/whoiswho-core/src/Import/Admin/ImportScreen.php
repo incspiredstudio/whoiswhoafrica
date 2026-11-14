@@ -456,7 +456,7 @@ final class ImportScreen {
 				continue;
 			}
 			++$shown;
-			$rows .= '<tr><td>' . esc_html( (string) $entry['record_id'] ) . '</td><td>' . ( $new_values && 'SCHEMA' === (string) $entry['code'] ? esc_html__( 'New list value needed', 'whoiswho' ) : '<code>' . esc_html( (string) $entry['code'] ) . '</code>' ) . '</td><td>' . esc_html( implode( ', ', (array) $entry['flags'] ) ) . '</td><td>' . $this->diff_html( (array) $entry['diff'], (string) $entry['field'] ) . '</td></tr>';
+			$rows .= '<tr><td>' . esc_html( (string) $entry['record_id'] ) . '</td><td><code>' . esc_html( (string) $entry['code'] ) . '</code></td><td>' . esc_html( implode( ', ', (array) $entry['flags'] ) ) . '</td><td>' . $this->diff_html( (array) $entry['diff'], (string) $entry['field'] ) . '</td></tr>';
 		}
 		$out .= '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Result', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Flags', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Changes', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>';
 		/* translators: %d: rows shown. */
@@ -466,8 +466,8 @@ final class ImportScreen {
 		}
 		/* translators: %d: number of values not in the lists. */
 		$out  .= '<h3>' . esc_html( sprintf( __( '%d values are not in the site\'s lists yet', 'whoiswho' ), count( $mapping ) ) ) . '</h3>';
-		$out  .= '<p>' . esc_html__( 'Records with these types, industries, sectors or places are refused until each value is in a list. Add them all as new list entries with one click, or match them one by one below.', 'whoiswho' ) . '</p>';
-		$out  .= $this->form( self::MAP_ALL ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button button-primary">' . esc_html__( 'Add all as new list entries', 'whoiswho' ) . '</button></p></form>';
+		$out  .= '<p>' . esc_html__( 'These head office cities are not in the place list yet. The records still import, without the city. Add them all as new places with one click, or match them one by one below. Industries and organisation types never need this step: a value the site does not know goes to Unclassified (or Other) for staff to sort out.', 'whoiswho' ) . '</p>';
+		$out  .= $this->form( self::MAP_ALL ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button button-primary">' . esc_html__( 'Add all as new places', 'whoiswho' ) . '</button></p></form>';
 		$shown = 0;
 		foreach ( $mapping as $term ) {
 			if ( ++$shown > self::MAX_MAPPING_FORMS ) {
@@ -614,19 +614,15 @@ final class ImportScreen {
 	}
 
 	/**
-	 * One count as staff read it. In a dry run with values not yet in the lists, SCHEMA means those records need new list
-	 * entries, so it says so and what to do; every other code is shown as the contract names it (the codes sent back to the
-	 * acquisition side do not change).
+	 * One count as staff read it: the code as the contract names it and the number. A value missing from the lists no longer
+	 * refuses a record (REQ-009 as amended 2026-11-14), so SCHEMA is always a real error in the record.
 	 *
 	 * @param string $code       Result code.
 	 * @param int    $n          Count.
-	 * @param bool   $new_values Whether the dry run found values not in the lists.
+	 * @param bool   $new_values Whether the dry run found place values not in the list (kept for callers; no effect).
 	 */
 	public static function count_label( string $code, int $n, bool $new_values = false ): string {
-		if ( $new_values && 'SCHEMA' === $code ) {
-			/* translators: %d: number of records. */
-			return sprintf( __( 'New list values needed (%d): use "Add all as new list entries" or map them', 'whoiswho' ), $n );
-		}
+		unset( $new_values );
 		return $code . ' (' . $n . ')';
 	}
 

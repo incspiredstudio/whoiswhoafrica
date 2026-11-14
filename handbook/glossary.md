@@ -21,7 +21,7 @@ This page defines the product terms used in the handbook, with a link to the pag
 | Claimed | A profile whose claim a staff member approved. Staff see a checkmark. The public sees nothing, and the Claim button disappears. |
 | Assigned user | The staff user kept on a claimed profile to update it. Their edits are held for approval. |
 | Featured | A flag on stories only, using the WordPress sticky flag. Profiles are never Featured. |
-| Sponsored | The label on a story whose placement was paid for. Always shows the sponsor's name. Only stories carry it. See [Trust and independence](/concepts/trust-and-independence). |
+| Sponsored | The label on a story whose placement was paid for. It never names the sponsor publicly. Only stories carry it. See [Trust and independence](/concepts/trust-and-independence). |
 | Sponsored story deal | One sponsor, one story and one paid slot, tracked on the Sponsored stories screen in four steps |
 | Slot | The labelled placement of a sponsored story on Home, Stories or both, for set dates |
 | Event | A content type for something happening on a date, with its own list and pages. Never Sponsored. See [Events](/visitor/events). |

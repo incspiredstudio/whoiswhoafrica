@@ -29,7 +29,7 @@ Published stories are searchable and in the sitemap. Drafts, scheduled posts and
 | Flag | How it works |
 |---|---|
 | Featured | An editorial choice using the sticky flag, for stories only. Featured stories come first on the Stories page and Home. Payment never sets it. |
-| Sponsored | A visible label with the sponsor's name, for stories only. It comes from a live slot on the Sponsored stories screen. See [Sponsored stories](/staff/sponsored-stories). |
+| Sponsored | A visible Sponsored label, for stories only. The sponsor's name shows in admin, never on public pages. It comes from a live slot on the Sponsored stories screen. See [Sponsored stories](/staff/sponsored-stories). |
 
 Profiles are never Sponsored or Featured.
 

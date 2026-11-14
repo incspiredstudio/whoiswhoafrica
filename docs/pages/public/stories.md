@@ -41,7 +41,7 @@ A story that is not published returns 404 to visitors. Staff opening it see a ba
 
 A sponsor can pay for a story (never an event) to be placed in a labelled slot on the Home, the Stories page or both, for set dates (REQ-263, D-062). The slot does not reorder the other stories or search results. Payment is recorded offline.
 
-Only stories can be Sponsored (D-055, REQ-155, REQ-182). A sponsored story shows a "Sponsored" badge with the sponsor's name on its card and its page, and a notice in the story: "Sponsored content. Paid for by (sponsor). The sponsor did not write it and has no influence over any label or award."
+Only stories can be Sponsored (D-055, REQ-155, REQ-182). A sponsored story shows a "Sponsored" badge on its card and its page, and a notice in the story: "Sponsored. The sponsor paid for this story's placement. The sponsor did not write it and has no influence over any label, ranking or award." The sponsor's name is never shown on public pages (REQ-026, owner 2026-11-14).
 
 The label comes from a live placement on the Sponsored stories screen: a slot for that story, within its start and end dates. When the dates end the label and slot go with them. It is never styled like a trust status. The staff side is the Sponsored stories screen. A payment never changes a profile, a nomination or an award.
 

@@ -52,7 +52,7 @@ Stories are native WordPress posts. WordPress already provides scheduling, revis
 
 | Item | Behaviour |
 |---|---|
-| `PublicStory` | Returns a story only when published. Exposes type, industry, author, date, linked public profiles, sponsor label |
+| `PublicStory` | Returns a story only when published. Exposes type, industry, author, date, linked public profiles, the plain "Sponsored" label (never the sponsor's name, REQ-026) |
 | `/stories`, `/stories/{slug}` | Grid with filters by type and industry; story page with related profiles and comments |
 | Curation blocks | The home page and stories page ask the module for their items: `Curation::items(block)` |
 | `POST /newsletter` | Sign-up form: email and a consent tick; sends a confirmation link |

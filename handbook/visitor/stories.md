@@ -43,4 +43,4 @@ The email address is never shown. Gravatar is off, and comments are not offered 
 
 ## Sponsored stories
 
-A sponsor can pay for a story to sit in a labelled slot on Home, Stories or both, for set dates. The card and the story page show "Sponsored" with the sponsor's name and this notice: "Sponsored content. Paid for by (sponsor). The sponsor did not write it and has no influence over any label or award." The slot never reorders other stories or search results. When the dates end, the label and slot go. See [Trust and independence](/concepts/trust-and-independence).
+A sponsor can pay for a story to sit in a labelled slot on Home, Stories or both, for set dates. The card and the story page show "Sponsored" and this notice: "Sponsored. The sponsor paid for this story's placement. The sponsor did not write it and has no influence over any label, ranking or award." The slot never reorders other stories or search results. When the dates end, the label and slot go. See [Trust and independence](/concepts/trust-and-independence).
