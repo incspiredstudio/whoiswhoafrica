@@ -18,6 +18,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => __( 'Get listed', 'whoiswho' ),
 		'title'   => __( 'Tell us what you need', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'Send an enquiry and our team will contact you. Every listing has the same format.', 'whoiswho' ),
 	)
 );

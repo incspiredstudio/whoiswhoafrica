@@ -41,7 +41,14 @@ add_action(
 		if ( function_exists( 'wiw_core_ready' ) && ! wiw_core_ready() ) {
 			return;
 		}
-		foreach ( array( 'repline.woff2', 'montreal-400.woff2' ) as $file ) {
+		$fonts = array( 'repline.woff2', 'montreal-400.woff2' );
+		// A story's head sets its meta line in the 500 weight and its lede in the 300 weight. Fetched late, they swap in after first
+		// paint and push the whole article down (the story page's layout shift); fetched with the CSS, they are there for first paint.
+		if ( is_singular( 'post' ) ) {
+			$fonts[] = 'montreal-300.woff2';
+			$fonts[] = 'montreal-500.woff2';
+		}
+		foreach ( $fonts as $file ) {
 			printf(
 				'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
 				esc_url( get_stylesheet_directory_uri() . '/assets/fonts/' . $file )

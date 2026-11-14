@@ -34,6 +34,7 @@ wiw_page_band(
 		'eyebrow' => __( 'Enquiry', 'whoiswho' ),
 		/* translators: %s: profile name */
 		'title'   => sprintf( __( 'Enquire about %s', 'whoiswho' ), $wiw_profile->name ),
+		'tone'    => 'dark',
 		'lede'    => __( 'We pass your message on. The email address and phone number of the person or organisation are never shown.', 'whoiswho' ),
 	)
 );

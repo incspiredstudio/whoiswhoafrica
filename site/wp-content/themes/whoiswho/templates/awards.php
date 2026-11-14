@@ -156,6 +156,7 @@ if ( 'category' === $wiw_view ) {
 		array(
 			'eyebrow' => AwardsTables::GROUPS[ $wiw_group_key ] ?? '',
 			'title'   => (string) $wiw_category['title'],
+			'tone'    => 'purple',
 			'lede'    => wiw_award_group_text( $wiw_group_key ),
 		)
 	);
@@ -239,6 +240,16 @@ foreach ( $wiw_live as $wiw_one ) {
 	$wiw_groups[ $wiw_one->group_key ][] = $wiw_one;
 }
 $wiw_people = count( array_filter( $wiw_live, static fn ( PublicNominee $n ): bool => 'individual' === $n->profile->entity_type ) );
+$wiw_ncats  = count( array_unique( array_map( static fn ( PublicNominee $n ): int => $n->category_id, $wiw_live ) ) );
+// The hero's poster reel, as the prototype: every nominee's poster, run twice so the loop has no seam. Decorative (aria-hidden), the
+// list below carries the names and links; it stops for reduced motion.
+$wiw_reel = '';
+foreach ( $wiw_live as $wiw_one ) {
+	$wiw_rstyle = wiw_award_group_style( $wiw_one->group_key );
+	$wiw_rphoto = null !== $wiw_one->profile->image_id ? wp_get_attachment_image( $wiw_one->profile->image_id, 'wiw-poster', false, array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) ) ) : '';
+	$wiw_reel  .= '<span class="np-reel-item"><span class="poster poster--' . esc_attr( $wiw_rstyle['tone'] ) . ( '' === $wiw_rphoto ? ' poster--org' : '' ) . '"><span class="poster-pat"></span><span class="poster-mark poster-mark--' . esc_attr( $wiw_rstyle['mark'] ) . '"></span>'
+		. ( '' !== $wiw_rphoto ? $wiw_rphoto : '<span class="poster-ini">' . esc_html( wiw_initials( $wiw_one->name ) ) . '</span>' ) . '</span></span>';
+}
 ?>
 <header class="np-hero">
 	<div class="wrap">
@@ -254,17 +265,33 @@ $wiw_people = count( array_filter( $wiw_live, static fn ( PublicNominee $n ): bo
 					<div><dt><?php esc_html_e( 'Nominees', 'whoiswho' ); ?></dt><dd><?php echo esc_html( (string) count( $wiw_live ) ); ?></dd></div>
 					<div><dt><?php esc_html_e( 'People', 'whoiswho' ); ?></dt><dd><?php echo esc_html( (string) $wiw_people ); ?></dd></div>
 					<div><dt><?php esc_html_e( 'Organisations', 'whoiswho' ); ?></dt><dd><?php echo esc_html( (string) ( count( $wiw_live ) - $wiw_people ) ); ?></dd></div>
+					<div><dt><?php esc_html_e( 'Categories', 'whoiswho' ); ?></dt><dd><?php echo esc_html( (string) $wiw_ncats ); ?></dd></div>
 				</dl>
 			<?php endif; ?>
 		</div>
 	</div>
+	<?php if ( '' !== $wiw_reel ) : ?>
+		<div class="np-reel" aria-hidden="true"><div class="np-reel-in"><?php echo $wiw_reel . $wiw_reel; // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts and wp_get_attachment_image. ?></div></div>
+	<?php endif; ?>
 </header>
 <section class="section nom-page">
 	<div class="wrap">
 		<?php if ( array() === $wiw_live ) : ?>
 			<?php $wiw_empty( __( 'Nominees are not published yet', 'whoiswho' ), __( 'They appear here once our team makes nominees live. Nobody is listed without staff approval.', 'whoiswho' ) ); ?>
 		<?php else : ?>
-			<nav class="np-tabs" aria-label="<?php esc_attr_e( 'Jump to a group', 'whoiswho' ); ?>">
+			<?php
+			// Group filter, as the prototype: shown and run by main.js without a reload; without scripts the jump links below stay.
+			?>
+			<div class="np-tabs" role="group" aria-label="<?php esc_attr_e( 'Show nominees by group', 'whoiswho' ); ?>" data-np-filter hidden>
+				<button type="button" class="np-tab" data-np-group="all" aria-pressed="true"><?php esc_html_e( 'All', 'whoiswho' ); ?> <span><?php echo esc_html( (string) count( $wiw_live ) ); ?></span></button>
+				<?php foreach ( AwardsTables::GROUPS as $wiw_key => $wiw_label ) : ?>
+					<?php if ( isset( $wiw_groups[ $wiw_key ] ) ) : ?>
+						<button type="button" class="np-tab" data-np-group="<?php echo esc_attr( $wiw_key ); ?>" aria-pressed="false"><?php echo esc_html( $wiw_label ); ?> <span><?php echo esc_html( (string) count( $wiw_groups[ $wiw_key ] ) ); ?></span></button>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+			<p class="sr" role="status" data-np-status></p>
+			<nav class="np-tabs" aria-label="<?php esc_attr_e( 'Jump to a group', 'whoiswho' ); ?>" data-np-jump>
 				<?php foreach ( AwardsTables::GROUPS as $wiw_key => $wiw_label ) : ?>
 					<?php if ( isset( $wiw_groups[ $wiw_key ] ) ) : ?>
 						<a class="np-tab" href="#group-<?php echo esc_attr( $wiw_key ); ?>"><?php echo esc_html( $wiw_label ); ?> <span><?php echo esc_html( (string) count( $wiw_groups[ $wiw_key ] ) ); ?></span></a>
@@ -280,6 +307,8 @@ $wiw_people = count( array_filter( $wiw_live, static fn ( PublicNominee $n ): bo
 				?>
 				<section class="np-group np-tone--<?php echo esc_attr( $wiw_style['tone'] ); ?> nom-group" id="group-<?php echo esc_attr( $wiw_key ); ?>" data-group="<?php echo esc_attr( $wiw_key ); ?>" aria-labelledby="ng-<?php echo esc_attr( $wiw_key ); ?>">
 					<header class="np-group-head">
+						<span class="np-num" aria-hidden="true"><?php echo esc_html( sprintf( '%02d', (int) array_search( $wiw_key, array_keys( AwardsTables::GROUPS ), true ) + 1 ) ); ?></span>
+						<span class="np-mark poster-mark--<?php echo esc_attr( $wiw_style['mark'] ); ?>" aria-hidden="true"></span>
 						<div>
 							<h2 id="ng-<?php echo esc_attr( $wiw_key ); ?>"><?php echo esc_html( $wiw_label ); ?></h2>
 							<p><?php echo esc_html( wiw_award_group_text( $wiw_key ) ); ?></p>

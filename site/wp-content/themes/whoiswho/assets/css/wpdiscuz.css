@@ -1,0 +1,292 @@
+/* wpDiscuz on brand (REQ-258): the comment plugin's form and thread in the theme's type, colours, buttons and fields. Loaded only on a
+   single story while wpDiscuz is active (inc/enqueue.php), after the plugin's own sheet and its inline colour rules. Reads tokens only;
+   the plugin's colour options are left as they are and overridden here, so nothing is written to its settings.
+   "body #wpdcom" outranks the plugin's "#wpdcom ..." rules without !important. */
+
+body #wpdcom {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--c-text);
+  font: 400 var(--t-base)/1.55 var(--font-body);
+}
+
+/* The theme's type everywhere except the plugin's icon font. */
+body #wpdcom :is(div, p, span, a, label, input, textarea, select, button, h1, h2, h3, h4, li):not([class*="fa-"], .fas, .far, .fab) { font-family: var(--font-body); }
+
+body #wpdcom a { color: var(--c-link); text-underline-offset: 3px; }
+
+body #wpdcom :focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Spacing: the region sits close under the story, as the theme's own comments do. The plugin's wrapper margins and its article
+   rating widget (not part of this site's design, and empty until rated) would otherwise leave a tall blank band above the form and
+   below the thread. */
+body .section.comments { padding-block: var(--s-7) var(--s-6); }
+body .comments #comments.comments-area { margin: 0; }
+body .comments #wpd-post-rating { display: none; }
+body .comments .wpdiscuz_top_clearing { display: none; }
+body #wpdcom .wpd-form-wrap { padding-bottom: 0; }
+body #wpdcom .wpd-thread-wrapper { margin-top: 0; }
+
+/* Form head: the subscribe toggle as a quiet text button. */
+body #wpdcom .wpd-form-head {
+  margin-top: 0;
+  padding: 0 0 var(--s-3);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+
+body #wpdcom .wpd-sbs-toggle {
+  color: var(--c-muted);
+  font-size: var(--t-sm);
+  font-weight: 500;
+}
+
+body #wpdcom .wpd-sbs-toggle:hover { color: var(--c-text); }
+
+/* Fields: the theme's input look. */
+body #wpdcom .ql-container,
+body #wpdcom .ql-toolbar {
+  border-color: var(--stone-500);
+  background: var(--c-surface);
+}
+
+body #wpdcom .ql-container {
+  border-radius: var(--r-1) var(--r-1) 0 0;
+}
+
+body #wpdcom .ql-toolbar {
+  border-radius: 0 0 var(--r-1) var(--r-1);
+}
+
+body #wpdcom .ql-editor {
+  min-height: 7rem;
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--t-base);
+  line-height: 1.55;
+}
+
+body #wpdcom .ql-editor > * { color: var(--c-text); }
+
+body #wpdcom .ql-editor.ql-blank::before {
+  left: var(--s-4);
+  color: var(--c-muted);
+  font-style: normal;
+}
+
+body #wpdcom .ql-toolbar button { color: var(--c-muted); }
+
+body #wpdcom .ql-toolbar button:hover,
+body #wpdcom .ql-toolbar button.ql-active { color: var(--c-text); }
+
+body #wpdcom .wpdiscuz-subscribe-form-email input {
+  min-height: 2.75rem;
+  border: 1px solid var(--stone-500);
+  border-radius: var(--r-1);
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+body #wpdcom .wpd-form-row .wpdiscuz-item input[type="text"],
+body #wpdcom .wpd-form-row .wpdiscuz-item input[type="email"],
+body #wpdcom .wpd-form-row .wpdiscuz-item input[type="url"],
+body #wpdcom textarea,
+body #wpdcom select {
+  min-height: 2.75rem;
+  padding: .5rem .75rem;
+  border: 1px solid var(--stone-500);
+  border-radius: var(--r-1);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+}
+
+body #wpdcom .wpd-form-row .wpdiscuz-item.wpd-has-icon input { padding-left: 2.25rem; }
+
+body #wpdcom .wpd-form-row .wpdiscuz-item input:focus,
+body #wpdcom textarea:focus,
+body #wpdcom select:focus {
+  border-color: var(--c-text);
+  outline: 3px solid var(--c-focus);
+  outline-offset: 1px;
+}
+
+body #wpdcom input::placeholder,
+body #wpdcom textarea::placeholder { color: var(--c-muted); opacity: 1; }
+
+body #wpdcom .wpd-field-icon { color: var(--c-muted); }
+
+body #wpdcom .wpd-form-row { margin-top: var(--s-4); }
+
+body #wpdcom .wpd-form-row .wpdiscuz-item { margin-bottom: var(--s-3); }
+
+/* Consent and other ticks. */
+body #wpdcom .wpd-field-checkbox,
+body #wpdcom .wpd-field-agreement,
+body #wpdcom .wpdiscuz-item label {
+  color: var(--c-text);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+body #wpdcom input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--c-text);
+}
+
+/* Buttons: the theme's filled button; secondary ones are outlined. */
+body #wpdcom .wc_comm_submit,
+body #wpdcom .wpd-prim-button,
+body #wpdcom input[type="submit"].wpd-prim-button,
+body #wpdcom .wpd-load-more-submit,
+body #wpdcom .wpd-filter-view-all {
+  min-height: 2.75rem;
+  padding: .625rem 1.25rem;
+  border: 2px solid var(--c-cta);
+  border-radius: var(--r-1);
+  background: var(--c-cta);
+  box-shadow: none;
+  color: var(--c-on-cta);
+  font: 600 var(--t-base)/1.2 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background var(--m-fast), border-color var(--m-fast);
+}
+
+body #wpdcom .wc_comm_submit:hover,
+body #wpdcom .wpd-prim-button:hover,
+body #wpdcom .wpd-load-more-submit:hover,
+body #wpdcom .wpd-filter-view-all:hover {
+  border-color: var(--c-cta-hover);
+  background: var(--c-cta-hover);
+  color: var(--c-on-cta);
+}
+
+body #wpdcom .wpd-sec-button,
+body #wpdcom .wpd-second-button {
+  border: 2px solid var(--c-text);
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--c-text);
+}
+
+/* Thread head: the count in the label style with a dark rule (the plugin's green becomes the brand). */
+body #wpdcom .wpd-thread-head {
+  margin-top: var(--s-7);
+  border-bottom: 1px solid var(--c-line);
+}
+
+body #wpdcom .wpd-thread-head .wpd-thread-info {
+  border-bottom: 2px solid var(--c-text);
+  color: var(--c-text);
+  font: 600 var(--t-xs)/1.4 var(--font-body);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+body #wpdcom .wpd-thread-head .wpd-thread-info .wpd-thread-info-count,
+body #wpdcom .wpd-thread-head .wpdiscuz-user-settings { color: var(--c-text); }
+
+body #wpdcom .wpd-thread-head .wpdiscuz-user-settings { border-bottom-color: var(--c-text); }
+
+body #wpdcom .wpd-thread-filter .wpd-filter {
+  border-bottom-color: var(--c-line);
+  color: var(--c-muted);
+}
+
+body #wpdcom .wpd-thread-filter .wpdf-active {
+  border-bottom-color: var(--c-text);
+  color: var(--c-text);
+}
+
+/* The sort menu ("Oldest", "Newest", "Most voted"): the plugin's light grey fails contrast on the page background. */
+body #wpdcom .wpdiscuz-sort-buttons,
+body #wpdcom .wpdiscuz-sort-button,
+body #wpdcom [class*="wpdiscuz-date-sort-"],
+body #wpdcom .wpdiscuz-vote-sort-up,
+body #wpdcom .wpd-thread-filter .wpdiscuz-sort-button-active { color: var(--c-text); }
+body #wpdcom .wpdiscuz-sort-buttons { background: var(--c-surface); }
+
+body #wpdcom .wpd-thread-filter .wpd-filter svg,
+body #wpdcom .wpd-thread-filter .wpd-filter i { color: inherit; fill: currentcolor; }
+
+/* Comments: name, time, text and reply, as the theme's own comment list. */
+body #wpdcom .wpd-thread-list { padding: var(--s-3) 0 0; }
+
+body #wpdcom .wpd-comment-wrap {
+  padding-block: var(--s-4);
+  border-bottom: 1px solid var(--c-line);
+}
+
+body #wpdcom .wpd-comment-author,
+body #wpdcom .wpd-comment-author a,
+body #wpdcom [class*="wpd-blog-"] .wpd-comment-author,
+body #wpdcom [class*="wpd-blog-"] .wpd-comment-author a {
+  color: var(--c-text);
+  font-size: var(--t-base);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body #wpdcom [class*="wpd-blog-"] .wpd-comment-label {
+  border: 1px solid var(--c-line);
+  background: var(--c-surface);
+  color: var(--c-muted);
+}
+
+body #wpdcom .wpd-comment-date,
+body #wpdcom .wpd-comment-date .far,
+body #wpdcom .wpd-comment-link { color: var(--c-muted); font-size: var(--t-sm); }
+
+body #wpdcom .wpd-comment-text,
+body #wpdcom .wpd-comment-text p {
+  max-width: 40rem;
+  color: var(--c-text);
+  font-size: var(--t-base);
+  line-height: 1.55;
+}
+
+body #wpdcom .wpd-comment-text p + p { margin-top: var(--s-3); }
+
+body #wpdcom .wpd-comment-footer .wpd-reply-button,
+body #wpdcom .wpd-comment-footer .wpd-reply-button span,
+body #wpdcom .wpd-comment-footer .wpd-reply-button svg {
+  color: var(--c-text);
+  fill: currentcolor;
+  font-size: var(--t-sm);
+  font-weight: 500;
+}
+
+body #wpdcom .wpd-comment-footer .wpd-reply-button:hover span { text-decoration: underline; text-underline-offset: 3px; }
+
+body #wpdcom .wpd-comment.wpd-reply .wpd-comment-wrap { border-left: 2px solid var(--c-line); padding-left: var(--s-4); }
+
+body #wpdcom .wpd-comment-status .wpd-sticky,
+body #wpdcom .wpd-comment .wpd-follow-link:hover,
+body #wpdcom .wpd-thread-head .wpdiscuz-user-settings:hover { color: var(--c-text); }
+
+body #wpdcom .wpd-inline-filter-cta {
+  border: 1px dashed var(--c-line);
+  background: var(--c-surface);
+}
+
+/* Messages the plugin shows after posting. */
+body .comments .wpdiscuz-comment-message {
+  border-radius: var(--r-1);
+  font-size: var(--t-sm);
+}
+
+@media (width <= 39.99rem) {
+  body #wpdcom .wpd-form-row .wpd-form-col-left,
+  body #wpdcom .wpd-form-row .wpd-form-col-right { width: 100%; float: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body #wpdcom * { transition: none; }
+}

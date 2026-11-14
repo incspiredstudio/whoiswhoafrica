@@ -2,8 +2,8 @@
 /**
  * Home nominees block (REQ-198, REQ-033, REQ-257, REQ-001): a dark band with a grid of nominee posters and a group filter, shown only
  * while at least one nominee is Live (so the block follows the published awards, with no choice to make). It reads nominees only
- * through PublicNominee, which has no nominator, evidence or contact. People with a portrait come first. The filter is added by home.js;
- * without scripts the grid simply shows everyone. The block is absent when there is nothing to show.
+ * through PublicNominee, which has no nominator, evidence or contact. People with a portrait come first. The group chips are shown and run by
+ * home.js without a reload; without scripts they stay hidden and the grid shows the first eight. The block is absent when there is nothing to show.
  * Args: home (the home model, unused).
  *
  * @package WhoIsWho
@@ -11,6 +11,7 @@
 
 declare(strict_types=1);
 
+use WhoIsWho\Core\Awards\AwardsTables;
 use WhoIsWho\Core\Awards\PublicNominee;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,11 +38,46 @@ foreach ( $wiw_all as $wiw_n ) {
 		$wiw_none[] = $wiw_n;
 	}
 }
-$wiw_show   = array_slice( array_merge( $wiw_with, $wiw_none ), 0, 8 );
+// The first eight are shown; the group chips cover every group with a live nominee, in the awards' own group order, and each group
+// brings up to eight of its own nominees, rendered hidden so a chip can show them without a reload (REQ-198).
+$wiw_order  = array_merge( $wiw_with, $wiw_none );
+$wiw_show   = array_slice( $wiw_order, 0, 8 );
+$wiw_extra  = array();
 $wiw_groups = array();
-foreach ( $wiw_show as $wiw_n ) {
+$wiw_known  = array_keys( AwardsTables::GROUPS );
+foreach ( $wiw_order as $wiw_n ) {
 	$wiw_groups[ $wiw_n->group_key ] = $wiw_n->group;
 }
+uksort(
+	$wiw_groups,
+	static function ( $a, $b ) use ( $wiw_known ): int {
+		$ia = array_search( (string) $a, $wiw_known, true );
+		$ib = array_search( (string) $b, $wiw_known, true );
+		return ( false === $ia ? 99 : (int) $ia ) <=> ( false === $ib ? 99 : (int) $ib );
+	}
+);
+$wiw_in_show = array();
+foreach ( $wiw_show as $wiw_n ) {
+	$wiw_in_show[ $wiw_n->ref ] = true;
+}
+foreach ( array_keys( $wiw_groups ) as $wiw_gk ) {
+	$wiw_have = 0;
+	foreach ( $wiw_show as $wiw_n ) {
+		$wiw_have += $wiw_n->group_key === $wiw_gk ? 1 : 0;
+	}
+	foreach ( $wiw_order as $wiw_n ) {
+		if ( $wiw_have >= 8 ) {
+			break;
+		}
+		if ( $wiw_n->group_key === $wiw_gk && ! isset( $wiw_in_show[ $wiw_n->ref ] ) ) {
+			$wiw_extra[]                = $wiw_n;
+			$wiw_in_show[ $wiw_n->ref ] = true;
+			++$wiw_have;
+		}
+	}
+}
+$wiw_first = count( $wiw_show );
+$wiw_show  = array_merge( $wiw_show, $wiw_extra );
 $wiw_count = count( $wiw_all );
 $wiw_ncats = count( $wiw_cats );
 /* translators: %d: number of nominees. */
@@ -68,6 +104,7 @@ $wiw_summary .= ' ' . sprintf( _n( 'in %d category.', 'in %d categories.', $wiw_
 					<button type="button" class="chip" data-nom-filter="<?php echo esc_attr( (string) $wiw_key ); ?>" aria-pressed="false"><?php echo esc_html( $wiw_label ); ?></button>
 				<?php endforeach; ?>
 			</div>
+			<p class="sr" role="status" data-nom-status></p>
 		<?php endif; ?>
 		<ul class="hn-grid">
 			<?php
@@ -81,7 +118,7 @@ $wiw_summary .= ' ' . sprintf( _n( 'in %d category.', 'in %d categories.', $wiw_
 				) : '';
 				$wiw_role  = $wiw_n->profile->facts['current_title']['value'] ?? '';
 				?>
-				<li class="hn-item" data-group="<?php echo esc_attr( $wiw_n->group_key ); ?>" style="--d:<?php echo (int) $wiw_i; ?>">
+				<li class="hn-item" data-group="<?php echo esc_attr( $wiw_n->group_key ); ?>" style="--d:<?php echo (int) ( $wiw_i % 8 ); ?>"<?php echo $wiw_i >= $wiw_first ? ' data-nom-extra hidden' : ''; ?>>
 					<a class="hn-card" href="<?php echo esc_url( $wiw_n->url ); ?>">
 						<span class="nom-media">
 							<span class="poster poster--<?php echo esc_attr( $wiw_style['tone'] ); ?><?php echo '' === $wiw_photo ? ' poster--org' : ''; ?>" aria-hidden="true">

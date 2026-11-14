@@ -32,6 +32,7 @@ if ( 'expired' === $wiw_state ) {
 	wiw_page_band(
 		array(
 			'title' => __( 'Link expired or already used', 'whoiswho' ),
+			'tone'  => 'dark',
 			'lede'  => __( 'This invitation link has expired or has already been used. Each link works once.', 'whoiswho' ),
 		)
 	);
@@ -49,6 +50,7 @@ if ( 'limited' === $wiw_state ) {
 	wiw_page_band(
 		array(
 			'title' => __( 'Please try again later', 'whoiswho' ),
+			'tone'  => 'dark',
 			'lede'  => __( 'There have been too many attempts from here. Please wait a while and try again.', 'whoiswho' ),
 		)
 	);
@@ -71,6 +73,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => __( 'Your invitation', 'whoiswho' ),
 		'title'   => __( 'Your profile', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'Tell us about your organisation or yourself. Nothing is published until our team has checked it, and you can save a draft and come back to this link until it expires.', 'whoiswho' ),
 	)
 );

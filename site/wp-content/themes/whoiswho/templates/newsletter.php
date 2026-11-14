@@ -18,6 +18,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => __( 'Newsletter', 'whoiswho' ),
 		'title'   => __( 'New stories by email', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'A short email when we publish new stories. Nothing else, and you can stop at any time.', 'whoiswho' ),
 	)
 );

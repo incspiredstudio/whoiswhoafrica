@@ -1,7 +1,7 @@
 // Editor side of the dynamic blocks (REQ-260): each block previews the server render and has nothing to type.
 ( function ( blocks, element, serverSideRender ) {
 	var el = element.createElement;
-	[ 'wiw/figures', 'wiw/awards-stage-button', 'wiw/awards-categories', 'wiw/edition', 'wiw/supported-by' ].forEach( function ( name ) {
+	[ 'wiw/figures', 'wiw/awards-stage-button', 'wiw/awards-categories', 'wiw/edition', 'wiw/supported-by', 'wiw/portrait-trio' ].forEach( function ( name ) {
 		blocks.registerBlockType( name, {
 			edit: function () {
 				return el( serverSideRender, { block: name } );

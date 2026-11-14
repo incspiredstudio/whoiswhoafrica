@@ -15,7 +15,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $wiw_page = get_page_by_path( 'data-rights' );
 get_header();
-wiw_page_band( array( 'title' => __( 'Your data rights', 'whoiswho' ) ) );
+wiw_page_band(
+	array(
+		'eyebrow' => __( 'Trust', 'whoiswho' ),
+		'title'   => __( 'Your data rights', 'whoiswho' ),
+		'tone'    => 'blue',
+	)
+);
 ?>
 <article class="wrap wrap--text section prose">
 	<?php

@@ -16,9 +16,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 get_header();
 while ( have_posts() ) {
 	the_post();
-	wiw_page_band( array( 'title' => get_the_title() ) );
+	wiw_page_band(
+		array(
+			'eyebrow' => __( 'Legal', 'whoiswho' ),
+			'title'   => get_the_title(),
+			'lede'    => has_excerpt() ? get_the_excerpt() : '',
+			'tone'    => 'light',
+		)
+	);
 	?>
-	<article <?php post_class( 'wrap wrap--text section prose' ); ?>>
+	<article <?php post_class( 'wrap section prose page-body' ); ?>>
 		<?php
 		// The drafts carry their own visible note as the first block; show the template's note only when the body has none.
 		if ( ! wiw_legal_is_final( get_the_ID() ) && ! str_contains( (string) get_the_content(), 'notice--draft' ) ) {

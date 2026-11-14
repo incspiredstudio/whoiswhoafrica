@@ -28,6 +28,7 @@ if ( null === $wiw_term ) :
 		array(
 			'eyebrow' => __( 'Directory', 'whoiswho' ),
 			'title'   => __( 'Industries', 'whoiswho' ),
+			'tone'    => 'dark',
 			'lede'    => __( 'Browse the record by sector. Each count is the number of reviewed profiles.', 'whoiswho' ),
 			'wide'    => true,
 		)
@@ -47,7 +48,10 @@ if ( null === $wiw_term ) :
 			);
 			?>
 		<?php else : ?>
-			<ul class="ind-grid">
+			<?php
+			// One row per industry, as the prototype's index list: the name, the count and an arrow.
+			?>
+			<ul class="index-list ind-list">
 				<?php foreach ( $wiw_rows as $wiw_row ) : ?>
 					<li>
 						<a class="ind-tile" href="<?php echo esc_url( home_url( '/industries/' . $wiw_row['slug'] . '/' ) ); ?>">
@@ -57,6 +61,7 @@ if ( null === $wiw_term ) :
 								/* translators: %d: number of profiles. */
 								echo esc_html( sprintf( _n( '%d profile', '%d profiles', $wiw_row['count'], 'whoiswho' ), $wiw_row['count'] ) );
 								?>
+								<?php echo wiw_icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
 							</span>
 						</a>
 					</li>
@@ -86,6 +91,7 @@ else :
 		array(
 			'eyebrow' => __( 'Industry', 'whoiswho' ),
 			'title'   => $wiw_term->name,
+			'tone'    => 'dark',
 			/* translators: %d: number of profiles. */
 			'lede'    => sprintf( _n( '%d reviewed profile in this industry.', '%d reviewed profiles in this industry.', (int) $wiw_result['total'], 'whoiswho' ), (int) $wiw_result['total'] ),
 			'wide'    => true,
