@@ -33,5 +33,5 @@ docs/.vitepress/dist/
 /.claude/
 /.vscode/
 
-# Real sample bundle shipped in the install zip only (personal data; never commit)
+# Real sample bundle: copied in for local testing; a release adds it with SAMPLE_BUNDLE. Personal data, never committed.
 site/wp-content/plugins/whoiswho-core/sample/

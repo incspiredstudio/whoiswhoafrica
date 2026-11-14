@@ -32,3 +32,13 @@
 	.wiw-progress-fill { transition: none; }
 }
 .wiw-setup [hidden] { display: none !important; }
+.wiw-parts-box { border: 1px solid #c3c4c7; margin: 8px 0; padding: 8px 16px; }
+.wiw-parts-legend { font-weight: 600; padding: 0 4px; }
+.wiw-parts { list-style: none; margin: 8px 0; padding: 0; }
+.wiw-part { align-items: baseline; border-top: 1px solid #f0f0f1; display: flex; flex-wrap: wrap; gap: 4px 8px; padding: 8px 0; }
+.wiw-part:first-child { border-top: 0; }
+.wiw-part-text { color: #50575e; flex-basis: 100%; padding-left: 24px; }
+.wiw-part-status { color: #006b1e; padding-left: 24px; }
+.wiw-auto-note { color: #50575e; font-style: italic; min-height: 1.4em; }
+.wiw-kept { background: #fcf9e8; border-left: 4px solid #996800; padding: 4px 12px; }
+.wiw-kept ul { list-style: disc; margin-left: 20px; }
