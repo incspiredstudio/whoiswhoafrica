@@ -16,6 +16,8 @@ namespace WhoIsWho\Guard\Login;
 final class Login {
 
 	public const MAX_FAILURES = 5;
+	// Failures from one client address, across any names, before that address is refused for the window (issue 810).
+	public const MAX_ADDRESS_FAILURES = 20;
 	public const WINDOW       = 900;
 	// Seconds in which failures are counted, and how long a lock lasts (15 minutes).
 	public const IDLE_LIMIT = 3600;
@@ -46,12 +48,47 @@ final class Login {
 	}
 
 	/**
-	 * Transient key for a username. Hashed, so it holds no name and works for unknown names too.
+	 * Transient key for a username. Hashed, so it holds no name and works for unknown names too. A name that belongs to an
+	 * account (its username or its email) is counted under the account id, so both spellings share one count (issue 810).
 	 *
 	 * @param string $username Username or email as typed.
 	 */
 	private static function key( string $username ): string {
-		return 'wiw_lock_' . substr( hash_hmac( 'sha256', strtolower( trim( $username ) ), wp_salt( 'auth' ) ), 0, 40 );
+		$name    = strtolower( trim( $username ) );
+		$account = get_user_by( 'login', $name );
+		$account = $account ? $account : get_user_by( 'email', $name );
+		$subject = $account ? 'user:' . (int) $account->ID : 'name:' . $name;
+		return 'wiw_lock_' . substr( hash_hmac( 'sha256', $subject, wp_salt( 'auth' ) ), 0, 40 );
+	}
+
+	/**
+	 * Transient key for a client address (hashed, so no address is stored).
+	 *
+	 * @param string $address IP address.
+	 */
+	private static function address_key( string $address ): string {
+		return 'wiw_lockip_' . substr( hash_hmac( 'sha256', $address, wp_salt( 'auth' ) ), 0, 40 );
+	}
+
+	/**
+	 * The client address of this request: REMOTE_ADDR only, never a forwarded header a client can forge.
+	 */
+	private static function client_address(): string {
+		$address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return false === filter_var( $address, FILTER_VALIDATE_IP ) ? '' : $address;
+	}
+
+	/**
+	 * Failure timestamps in the window under a key.
+	 *
+	 * @param string $key Transient key.
+	 * @return int[]
+	 */
+	private static function times( string $key ): array {
+		$times = get_transient( $key );
+		$times = is_array( $times ) ? array_map( 'intval', $times ) : array();
+		$now   = time();
+		return array_values( array_filter( $times, static fn ( int $t ): bool => $t > $now - self::WINDOW ) );
 	}
 
 	/**
@@ -61,10 +98,16 @@ final class Login {
 	 * @return int[]
 	 */
 	private static function failures( string $username ): array {
-		$times = get_transient( self::key( $username ) );
-		$times = is_array( $times ) ? array_map( 'intval', $times ) : array();
-		$now   = time();
-		return array_values( array_filter( $times, static fn ( int $t ): bool => $t > $now - self::WINDOW ) );
+		return self::times( self::key( $username ) );
+	}
+
+	/**
+	 * Whether a client address has failed too often in the window, across any names (password spraying, issue 810).
+	 *
+	 * @param string $address IP address.
+	 */
+	public static function address_locked( string $address ): bool {
+		return '' !== $address && count( self::times( self::address_key( $address ) ) ) >= self::MAX_ADDRESS_FAILURES;
 	}
 
 	/**
@@ -84,7 +127,7 @@ final class Login {
 	 * @return mixed
 	 */
 	public static function block_locked( $user, $username ) {
-		if ( '' !== (string) $username && self::is_locked( (string) $username ) ) {
+		if ( '' !== (string) $username && ( self::is_locked( (string) $username ) || self::address_locked( self::client_address() ) ) ) {
 			return new \WP_Error( 'wiw_login_failed', self::generic_message() );
 		}
 		return $user;
@@ -103,6 +146,13 @@ final class Login {
 		$times   = self::failures( $username );
 		$times[] = time();
 		set_transient( self::key( $username ), $times, self::WINDOW );
+
+		$address = self::client_address();
+		if ( '' !== $address ) {
+			$by_address   = self::times( self::address_key( $address ) );
+			$by_address[] = time();
+			set_transient( self::address_key( $address ), array_slice( $by_address, -self::MAX_ADDRESS_FAILURES ), self::WINDOW );
+		}
 
 		if ( count( $times ) === self::MAX_FAILURES ) {
 			$account = get_user_by( 'login', $username );
