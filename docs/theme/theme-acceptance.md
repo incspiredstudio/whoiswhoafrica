@@ -74,7 +74,8 @@ A page is checked at 360, 768, 1280 and 1600 pixels.
 | Hero poster images | AVIF, in two widths (360 and 540) |
 | Home script bundle `home-js` | 3.1 KB gzipped (reported by the build) |
 | Main script bundle `main` | 3.6 KB gzipped (reported by the build) |
-| Lazy animation stage | about 10 KB gzipped, plus three.js at about 164 KB gzipped, loaded only when the stage runs (the vendor file gzips to 162 KB when checked) |
+| Lazy animation stage | 43 KB (11 KB gzipped) in total, loaded only when the stage runs. Three.js was replaced by a small WebGL helper (`assets/js/stage/gl.js`) in issue 808; before that the stage fetched 684 KB (about 174 KB gzipped) |
+| Shared stylesheet `components` | 104 KB minified, 18.8 KB gzipped (issue 808: the logo and an unused icon were inlined as base64 PNGs and made it 179 KB, about 80 KB gzipped) |
 
 Script budget: pages keep a 20 KB script ceiling (`scriptKb` in `site/tests/e2e/perf/budgets.json`). The home page is raised to 24 KB (`scriptKbByPath`) because the owner-approved animation work measures 21.3 KB and the owner design bar is Awwwards level; the heavy parts stay lazy-loaded.
 
