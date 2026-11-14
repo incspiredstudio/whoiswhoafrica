@@ -27,7 +27,7 @@ final class ZipEntrySizeTest extends WpTestCase {
 			if ( is_file( $path ) ) {
 				unlink( $path );
 			} elseif ( is_dir( $path ) ) {
-				foreach ( (array) glob( $path . '/*' ) as $inner ) {
+				foreach ( (array) glob( $path . '/{,.}[!.]*', GLOB_BRACE ) as $inner ) {
 					if ( is_string( $inner ) && is_dir( $inner ) ) {
 						array_map( 'unlink', (array) glob( $inner . '/*' ) );
 						rmdir( $inner );
@@ -99,5 +99,14 @@ final class ZipEntrySizeTest extends WpTestCase {
 		$left = is_dir( $root ) ? array_filter( (array) glob( $root . '/*' ), 'is_dir' ) : array();
 		$this->assertSame( array(), array_values( $left ), 'nothing is left in the private folder' );
 		$this->assertSame( 11, BundleStore::copy_limit( 10 ), 'at most one byte past the declared size is ever written' );
+	}
+
+	public function test_REQ_127_the_private_import_folder_refuses_web_requests_too_issue_810(): void {
+		$root          = sys_get_temp_dir() . '/wiw-guard-root-' . bin2hex( random_bytes( 4 ) );
+		$this->paths[] = $root;
+		( new BundleStore( $root ) )->ensure_root();
+		// When WordPress sits in a sub-folder of the web root, the folder beside it can still be under the web root.
+		$this->assertStringContainsString( 'Require all denied', (string) file_get_contents( $root . '/.htaccess' ) );
+		$this->assertFileExists( $root . '/index.php' );
 	}
 }

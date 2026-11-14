@@ -93,6 +93,16 @@ final class BundleStore {
 		if ( self::inside_web_root( $this->root ) ) {
 			throw new \RuntimeException( 'The private import folder is inside the web root, so nothing was stored.' );
 		}
+		// Defence in depth: when WordPress sits in a sub-folder of the web root, the folder beside it may still be served.
+		$guards = array(
+			'.htaccess' => "# Import bundles are never served.\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n",
+			'index.php' => "<?php\n// Silence is golden.\n",
+		);
+		foreach ( $guards as $name => $body ) {
+			if ( ! is_file( $this->root . '/' . $name ) ) {
+				file_put_contents( $this->root . '/' . $name, $body ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- guard files of our own private folder.
+			}
+		}
 	}
 
 	/**
