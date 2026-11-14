@@ -91,7 +91,7 @@
 | SEC-09 | Low | Per-IP throttles use `REMOTE_ADDR`, which is shared behind a proxy or CDN | Accepted (go-live action) |
 | SEC-10 | Low | wpDiscuz guest reply subscriptions send confirmation mail without our rate limit | Accepted (recommendation) |
 | SEC-11 | Info | Public CSP allows inline styles; admin CSP is report-only | Accepted |
-| SEC-12 | Info | No-code install: file editor and plugin uploads are not disabled without wp-config constants; the guard shows a technical notice | Owner decision |
+| SEC-12 | Info | No-code install: plugin uploads stay open for Administrators; the code editors are switched off by the guard (owner decision 2026-11-14, #813) | Fixed (editors) and accepted (uploads) |
 | SEC-13 | Info | Two-factor available but not enforced for staff (owner decision 2026-11-14) | Accepted (owner decision) |
 | SEC-14 | Info | Version disclosure through `release.json` and `vendor/composer/installed.json` in the web root (release-tarball install) | Accepted (recommendation) |
 | SEC-15 | Info | Theme settings screen uses `manage_options`, not a `wiw_*` capability | Accepted |
@@ -271,7 +271,7 @@ There are no Critical or High findings. Both new upload paths were reviewed in d
     - edit theme and plugin PHP in the admin;
     - upload plugins (the Required plugins screen needs this).
   - The guard shows a notice that names the constants. That is developer wording for a non-coder.
-- **Status:** not changed, as the brief instructs. It needs an owner decision between two options:
+- **Status (2026-11-14):** the owner chose option (a) (#813). The guard now removes `edit_plugins`, `edit_themes` and `edit_files` through `map_meta_cap`, and the notice is a plain, dismissible Dashboard note. Plugin uploads stay open for Administrators; residual risk: a stolen Administrator account could upload a plugin, limited by the login lockout, two-factor (reminded to every staff member, #814) and few Administrator accounts. The options considered were:
   - (a) Keep plugin installs, but have the guard remove `edit_plugins`, `edit_themes` and `edit_files` through `map_meta_cap`. This closes the code editor without a constant. Then reword the notice in plain language.
   - (b) Set both constants through the host (cPanel's WordPress Toolkit or a one-line `wp-config.php` edit by the host) after the required plugins are installed.
 

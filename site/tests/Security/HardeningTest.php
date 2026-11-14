@@ -69,11 +69,38 @@ final class HardeningTest extends TestCase {
 		$this->assertSame( '', apply_filters( 'register', '<li><a href="/register">Register</a></li>' ) );
 	}
 
-	public function test_REQ_046_file_modification_is_disabled_in_production(): void {
-		$this->assertSame( array(), Hardening::config_problems( true, true, true ) );
-		$this->assertNotEmpty( Hardening::config_problems( true, false, true ), 'production with file mods allowed is flagged' );
-		$this->assertNotEmpty( Hardening::config_problems( true, null, true ), 'production with file mods undefined is flagged' );
-		$this->assertNotEmpty( Hardening::config_problems( false, null, false ), 'file editing allowed is flagged anywhere' );
-		$this->assertSame( array(), Hardening::config_problems( false, null, true ), 'file mods may be on outside production' );
+	public function test_REQ_046_code_editors_are_off_without_wp_config(): void {
+		foreach ( Hardening::CODE_EDITOR_CAPS as $cap ) {
+			$this->assertSame( array( 'do_not_allow' ), Hardening::deny_code_editors( array( 'edit_themes' ), $cap ), $cap );
+		}
+		$this->assertSame( array( 'install_plugins' ), Hardening::deny_code_editors( array( 'install_plugins' ), 'install_plugins' ), 'installing the bundle and required plugins stays possible' );
+	}
+
+	public function test_REQ_046_an_administrator_cannot_open_the_code_editors(): void {
+		$this->requireWordPress();
+		$admin = wp_insert_user(
+			array(
+				'user_login' => 'hardening_admin_' . wp_generate_password( 6, false ),
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'administrator',
+			)
+		);
+		$this->assertIsInt( $admin );
+		wp_set_current_user( $admin );
+		$this->assertFalse( current_user_can( 'edit_plugins' ) );
+		$this->assertFalse( current_user_can( 'edit_themes' ) );
+		$this->assertFalse( current_user_can( 'edit_files' ) );
+		$this->assertTrue( current_user_can( 'activate_plugins' ), 'other admin powers are untouched' );
+		wp_set_current_user( 0 );
+	}
+
+	public function test_REQ_046_uploads_advice_only_on_a_live_site_that_allows_uploads(): void {
+		$this->assertTrue( Hardening::wants_uploads_advice( true, null ) );
+		$this->assertTrue( Hardening::wants_uploads_advice( true, false ) );
+		$this->assertFalse( Hardening::wants_uploads_advice( true, true ), 'DISALLOW_FILE_MODS set: nothing to advise' );
+		$this->assertFalse( Hardening::wants_uploads_advice( false, null ), 'not a live site' );
+		$this->assertTrue( Hardening::is_dismissed( 'wp496_privacy,' . Hardening::DISMISS_ID ), 'dismissed through core dismissed_wp_pointers' );
+		$this->assertFalse( Hardening::is_dismissed( 'wp496_privacy' ) );
+		$this->assertFalse( Hardening::is_dismissed( '' ) );
 	}
 }
