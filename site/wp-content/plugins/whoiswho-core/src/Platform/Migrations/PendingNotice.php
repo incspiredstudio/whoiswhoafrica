@@ -52,11 +52,8 @@ final class PendingNotice {
 		if ( array() === $pending ) {
 			return '';
 		}
-		if ( 'production' === $environment ) {
-			$text = __( 'The core plugin has database changes waiting. In production they are applied only by the deploy script. Run the deploy, or, on a brand-new install, open Setup in the admin menu and press Run database setup.', 'whoiswho' );
-		} else {
-			$text = __( 'The core plugin has database changes waiting. Open Setup in the admin menu and press Run database setup (or deactivate and activate the plugin again, or run wp wiw migrate).', 'whoiswho' );
-		}
+		unset( $environment );
+		$text = __( 'The site has database changes waiting, after a new install or a plugin update. Make a backup first (most hosts have a Backup button in their control panel), then open Setup in the admin menu and press the database button.', 'whoiswho' );
 		return '<div class="notice notice-warning wiw-schema-notice"><p>' . esc_html( $text ) . '</p></div>';
 	}
 }

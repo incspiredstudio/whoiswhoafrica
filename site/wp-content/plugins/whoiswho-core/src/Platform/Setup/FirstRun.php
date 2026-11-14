@@ -3,7 +3,8 @@
  * First-run setup (REQ-056): what happens when the plugin is activated, with no wp-config.php edit and no command line.
  *
  * A fresh install (no schema, no tables) creates its tables through the locked runner in any environment, because there is nothing
- * to protect. Once the schema exists, production keeps its rule: migrations run only from the deploy script. Either way the
+ * to protect. Once the schema exists, activating the plugin on a production site does not change it; the Administrator applies a
+ * plugin update's database changes with the Setup screen's button (run_database_setup), after a backup. Either way the
  * activation sets pretty permalinks, makes the legal pages and sends the administrator to the Setup screen once. It never throws,
  * and when something prevents the setup it stores a plain-language reason for the Setup screen and an admin notice.
  *
@@ -60,7 +61,7 @@ final class FirstRun {
 			$result = ActivationMigrator::run( new Runner( $dir, $production, $deploy ) );
 			if ( $production && null !== $result['error'] ) {
 				$result['error'] = null;
-				// Production upgrades are the deploy script's job; this is the normal answer, not a fault.
+				// Production upgrades run from the Setup screen's button (or the deploy script); this is the normal answer, not a fault.
 			}
 		}
 		if ( null === $result['error'] ) {
@@ -96,20 +97,14 @@ final class FirstRun {
 	}
 
 	/**
-	 * Run the database setup now (the Setup screen's button). Allowed on a fresh or half-finished first install in any environment,
-	 * and on any non-production site; never on a production site that already has its schema.
+	 * Run the database setup now (the Setup screen's button, Administrators only). It creates the tables on a first install and
+	 * applies the changes a plugin update brought, in any environment, so a site owner who updates by uploading a new plugin zip
+	 * needs no command line (D-070). The runner is locked, so two presses cannot run it twice at once.
 	 *
+	 * @param string|null $dir Migrations folder (tests pass one); the plugin's by default.
 	 * @return array{ok: bool, applied: string[], error: string}
 	 */
-	public static function run_database_setup(): array {
-		$production = 'production' === wp_get_environment_type();
-		if ( $production && ! SchemaState::may_self_initialise() ) {
-			return array(
-				'ok'      => false,
-				'applied' => array(),
-				'error'   => __( 'This is a live site that already has its database. Database changes there are applied only by the deploy script.', 'whoiswho' ),
-			);
-		}
+	public static function run_database_setup( ?string $dir = null ): array {
 		$problems = self::blocking_problems();
 		if ( array() !== $problems ) {
 			update_option( SchemaState::OPTION_ERROR, $problems[0]['message'] . ' ' . $problems[0]['fix'], false );
@@ -119,7 +114,7 @@ final class FirstRun {
 				'error'   => $problems[0]['message'] . ' ' . $problems[0]['fix'],
 			);
 		}
-		$runner = new Runner( WIW_CORE_DIR . 'migrations', false, false );
+		$runner = new Runner( $dir ?? WIW_CORE_DIR . 'migrations', false, false );
 		if ( SchemaState::may_self_initialise() ) {
 			update_option( SchemaState::OPTION_STARTED, '1', false );
 		}

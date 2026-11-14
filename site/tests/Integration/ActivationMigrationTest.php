@@ -92,9 +92,12 @@ PHP;
 		$this->writeMigration( '2026999901' );
 		$behind = PendingNotice::html( new Runner( $this->dir, false, false ), 'local' );
 		$this->assertStringContainsString( 'notice-warning', $behind );
-		$this->assertStringContainsString( 'migrate', $behind );
+		$this->assertStringContainsString( 'open Setup', $behind );
 		$prod = PendingNotice::html( new Runner( $this->dir, true, false ), 'production' );
-		$this->assertStringContainsString( 'deploy', $prod );
+		$this->assertStringContainsString( 'backup', $prod, 'a live site is told to back up, then press the button' );
+		foreach ( array( 'deploy', 'wp wiw', 'migrate', 'wp-config', 'command' ) as $jargon ) {
+			$this->assertStringNotContainsString( $jargon, $prod . $behind, 'no developer words for a site owner' );
+		}
 		ActivationMigrator::run( new Runner( $this->dir, false, false ) );
 		$this->assertSame( '', PendingNotice::html( new Runner( $this->dir, false, false ), 'local' ) );
 	}
