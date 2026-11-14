@@ -440,7 +440,7 @@ final class DemoImport {
 					'kept'  => $kept,
 				)
 			);
-		}
+		}//end try
 		delete_transient( self::LOCK );
 		if ( $done ) {
 			$this->log( $all ? 'demo.remove' : 'demo.remove_part', null, array( 'parts' => $order ) );

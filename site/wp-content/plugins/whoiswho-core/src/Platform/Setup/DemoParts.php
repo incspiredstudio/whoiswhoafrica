@@ -161,11 +161,11 @@ final class DemoParts {
 	/**
 	 * Parse a comma-separated list of parts sent by the screen.
 	 *
-	 * @param string $list For example "profiles,awards".
+	 * @param string $value For example "profiles,awards".
 	 * @return string[] Known parts only, in PARTS order.
 	 */
-	public static function parse( string $list ): array {
-		$names = array_filter( array_map( 'trim', explode( ',', strtolower( $list ) ) ) );
+	public static function parse( string $value ): array {
+		$names = array_filter( array_map( 'trim', explode( ',', strtolower( $value ) ) ) );
 		return array_values( array_intersect( self::PARTS, $names ) );
 	}
 

@@ -74,10 +74,10 @@ final class DemoPartRemover {
 	/**
 	 * A result.
 	 *
-	 * @param bool                                             $done    Whether the part is gone.
-	 * @param int                                              $left    Items left.
-	 * @param int                                              $removed Items removed in this call.
-	 * @param array<int, array{title: string, url: string}>    $kept    Items kept in this call.
+	 * @param bool                                          $done    Whether the part is gone.
+	 * @param int                                           $left    Items left.
+	 * @param int                                           $removed Items removed in this call.
+	 * @param array<int, array{title: string, url: string}> $kept    Items kept in this call.
 	 * @return array{done: bool, left: int, removed: int, kept: array<int, array{title: string, url: string}>}
 	 */
 	private static function result( bool $done, int $left, int $removed, array $kept ): array {
@@ -120,7 +120,7 @@ final class DemoPartRemover {
 			if ( null !== $until && microtime( true ) >= $until ) {
 				break;
 			}
-		}
+		}//end foreach
 		$left = count( DemoParts::post_keys( $part ) );
 		if ( 0 === $left ) {
 			$this->finish_posts( $part );
@@ -227,7 +227,7 @@ final class DemoPartRemover {
 				// A reader's own comment is on it: deleting the story would delete their comment too.
 				return true;
 			}
-		}
+		}//end if
 		return false;
 	}
 
