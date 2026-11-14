@@ -142,6 +142,12 @@ final class ProfileApplier {
 
 		$record_id  = (string) $record['record_id'];
 		$profile_id = $this->map->profile_for( $record_id );
+		if ( null === $profile_id ) {
+			$revived = $this->revive( $record, $record_id, $batch_id, $importer_id, $import_all );
+			if ( null !== $revived ) {
+				return $this->with_images( $revived, $record, $batch_id );
+			}
+		}
 		if ( null === $profile_id || null === get_post( $profile_id ) ) {
 			$result = Transaction::run(
 				function () use ( $record, $batch_id, $importer_id, $import_all, $record_id, $profile_id ): array {
@@ -165,6 +171,33 @@ final class ProfileApplier {
 		}
 		$result = Transaction::run( fn (): array => $this->update( $profile_id, $record, $row, $batch_id, $importer_id, $import_all ) );
 		return $this->with_images( $result, $record, $batch_id );
+	}
+
+	/**
+	 * A batch imported again after an undo takes back the profile its first import made for this record (UndoneBatchReset), so
+	 * there is no duplicate: the record is linked to it again, its fields and state are set as for an update, and the result is
+	 * CREATED, so a later undo takes it down again. Null when there is no such profile.
+	 *
+	 * @param array<string, mixed> $record      Record.
+	 * @param string               $record_id   Record id.
+	 * @param string               $batch_id    Batch id.
+	 * @param int                  $importer_id Importer.
+	 * @param bool                 $import_all  Setting.
+	 * @return array{code: string, profile_id: int|null}|null
+	 */
+	private function revive( array $record, string $record_id, string $batch_id, int $importer_id, bool $import_all ): ?array {
+		$profile_id = \WhoIsWho\Core\Import\Undo\UndoneBatchReset::take( $batch_id, $record_id );
+		$row        = null === $profile_id ? null : ( new StateRepository() )->get( $profile_id );
+		if ( null === $profile_id || null === $row || null === get_post( $profile_id ) || null !== $this->map->record_for( $profile_id ) ) {
+			return null;
+		}
+		return Transaction::run(
+			function () use ( $record, $record_id, $profile_id, $row, $batch_id, $importer_id, $import_all ): array {
+				$this->map->link( $record_id, $profile_id );
+				$this->update( $profile_id, $record, $row, $batch_id, $importer_id, $import_all );
+				return $this->result( self::CREATED, $profile_id );
+			}
+		);
 	}
 
 	/**
