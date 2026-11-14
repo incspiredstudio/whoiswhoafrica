@@ -63,6 +63,7 @@ final class Module implements ModuleInterface {
 		Settings\SprintScreen::hooks();
 		Migrations\PendingNotice::register();
 		Setup\SetupScreen::hooks();
+		Plugins\RequiredPluginsScreen::hooks();
 		Cli\WpCliBridge::register();
 		TwoFactor\TwoFactor::register();
 		RoleEditor\RoleEditor::register();

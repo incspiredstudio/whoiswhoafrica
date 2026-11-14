@@ -1,6 +1,6 @@
 <?php
 /**
- * The setup checklist (REQ-056): eight live checks, each with a plain-language status, what to do when it is not ready and, where it
+ * The setup checklist (REQ-056): ten live checks, each with a plain-language status, what to do when it is not ready and, where it
  * is safe, a one-click fix. Nothing here shows a secret: the email line says only whether the settings are present.
  *
  * @package WhoIsWho
@@ -13,6 +13,8 @@ namespace WhoIsWho\Core\Platform\Setup;
 use WhoIsWho\Core\Compliance\Forms\TurnstileSettings;
 use WhoIsWho\Core\Platform\Mail\Transport;
 use WhoIsWho\Core\Platform\Migrations\Runner;
+use WhoIsWho\Core\Platform\Plugins\RequiredPlugins;
+use WhoIsWho\Core\Platform\Plugins\RequiredPluginsScreen;
 use WhoIsWho\Core\Platform\TwoFactor\StaffStatus;
 
 /**
@@ -38,6 +40,8 @@ final class Checklist {
 			self::two_factor(),
 			self::email(),
 			self::turnstile(),
+			self::plugin( 'fluent-smtp' ),
+			self::plugin( 'wpdiscuz' ),
 			self::demo(),
 		);
 	}
@@ -265,11 +269,11 @@ final class Checklist {
 			$title,
 			self::WARN,
 			__( 'The site sends email with WordPress\'s built-in method. It works on many hosts, but messages often land in spam or are not sent at all.', 'whoiswho' ),
-			__( 'Install the free FluentSMTP plugin (Plugins > Add New, search for FluentSMTP), activate it, then open its settings and connect your email account. A demo does not need email.', 'whoiswho' ),
+			__( 'Install the free FluentSMTP plugin on the Required plugins screen (press Install, then Activate), then open its settings and connect your email account. A demo does not need email.', 'whoiswho' ),
 			'',
 			'',
-			admin_url( 'plugin-install.php?s=fluent-smtp&tab=search&type=term' ),
-			__( 'Find FluentSMTP', 'whoiswho' )
+			RequiredPluginsScreen::url(),
+			__( 'Open Required plugins', 'whoiswho' )
 		);
 	}
 
@@ -300,7 +304,39 @@ final class Checklist {
 	}
 
 	/**
-	 * 7. Demo content.
+	 * 8 and 9. A required plugin (FluentSMTP, wpDiscuz), installed and switched on from Settings > Required plugins.
+	 *
+	 * @param string $slug Plugin slug.
+	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
+	 */
+	private static function plugin( string $slug ): array {
+		$plugin = RequiredPlugins::catalogue()[ $slug ];
+		$id     = 'plugin_' . str_replace( '-', '_', $slug );
+		/* translators: %s: plugin name. */
+		$title  = sprintf( __( '%s plugin active', 'whoiswho' ), $plugin['name'] );
+		$status = ( new RequiredPlugins() )->status( $slug );
+		if ( RequiredPlugins::ACTIVE === $status ) {
+			return self::item( $id, $title, self::OK, $plugin['why'], '', '', '', RequiredPluginsScreen::url(), __( 'Open Required plugins', 'whoiswho' ) );
+		}
+		return self::item(
+			$id,
+			$title,
+			self::ERROR,
+			RequiredPlugins::INSTALLED === $status
+				/* translators: %s: plugin name. */
+				? sprintf( __( '%s is installed but not switched on.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why']
+				/* translators: %s: plugin name. */
+				: sprintf( __( '%s is not installed yet.', 'whoiswho' ), $plugin['name'] ) . ' ' . $plugin['why'],
+			__( 'Open Settings > Required plugins in the admin menu and press Install, then Activate. It takes under a minute and needs no file or command.', 'whoiswho' ),
+			'',
+			'',
+			RequiredPluginsScreen::url(),
+			__( 'Open Required plugins', 'whoiswho' )
+		);
+	}
+
+	/**
+	 * 10. Demo content.
 	 *
 	 * @return array{id: string, title: string, status: string, detail: string, fix: string, action: string, action_label: string, link: string, link_label: string}
 	 */

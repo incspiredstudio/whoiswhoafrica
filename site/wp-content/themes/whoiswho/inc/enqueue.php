@@ -131,11 +131,12 @@ add_action(
 	30
 );
 
-// No jQuery on the public site: the theme adds JavaScript only where a page needs it.
+// No jQuery on the public site: the theme adds JavaScript only where a page needs it. The one exception is a story while the
+// wpDiscuz comment plugin is active: its form posts comments with jQuery, so without it nobody could comment (REQ-258).
 add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
-		if ( is_admin() || is_customize_preview() ) {
+		if ( is_admin() || is_customize_preview() || ( is_singular( 'post' ) && class_exists( 'WpdiscuzCore' ) ) ) {
 			return;
 		}
 		wp_dequeue_script( 'jquery' );

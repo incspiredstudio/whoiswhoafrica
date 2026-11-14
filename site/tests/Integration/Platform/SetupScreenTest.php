@@ -81,10 +81,10 @@ final class SetupScreenTest extends WpTestCase {
 		}
 	}
 
-	public function test_REQ_056_the_checklist_has_the_eight_checks_in_order(): void {
+	public function test_REQ_056_the_checklist_has_the_ten_checks_in_order(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$items = Checklist::items();
-		$this->assertSame( array( 'database', 'permalinks', 'theme', 'guard', 'two_factor', 'email', 'turnstile', 'demo' ), array_column( $items, 'id' ) );
+		$this->assertSame( array( 'database', 'permalinks', 'theme', 'guard', 'two_factor', 'email', 'turnstile', 'plugin_fluent_smtp', 'plugin_wpdiscuz', 'demo' ), array_column( $items, 'id' ) );
 		foreach ( $items as $item ) {
 			$this->assertContains( $item['status'], array( Checklist::OK, Checklist::WARN, Checklist::ERROR ) );
 			$this->assertNotSame( '', $item['detail'] );
@@ -136,7 +136,7 @@ final class SetupScreenTest extends WpTestCase {
 	public function test_REQ_056_the_dashboard_widget_shows_progress_and_a_way_to_hide_it(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$html = SetupScreen::widget_html();
-		$this->assertMatchesRegularExpression( '/\d of 8 setup steps are ready/', $html );
+		$this->assertMatchesRegularExpression( '/\d of 10 setup steps are ready/', $html );
 		$this->assertStringContainsString( 'page=wiw-setup', $html );
 		$this->assertStringContainsString( 'Hide this reminder', $html );
 	}
@@ -250,7 +250,7 @@ final class SetupScreenTest extends WpTestCase {
 			$none = Checklist::email( $bare );
 			$this->assertSame( Checklist::WARN, $none['status'] );
 			$this->assertStringContainsString( 'FluentSMTP', $none['fix'] );
-			$this->assertStringContainsString( 'plugin-install.php', $none['link'] );
+			$this->assertStringContainsString( 'page=wiw-required-plugins', $none['link'] );
 
 			$this->assertSame( Checklist::OK, Checklist::email( $set )['status'], 'the host set the constants' );
 
