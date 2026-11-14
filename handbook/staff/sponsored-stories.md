@@ -45,7 +45,7 @@ A scheduled or live deal with no payment record shows "Payment not recorded". Pa
 1. An Administrator adds the deal and, once the money arrives, records the payment.
 2. An Editor or Administrator chooses or creates the story and publishes it.
 3. Choose where the slot appears and for which dates, then save.
-4. On the start date, the story fills one labelled slot and shows "Sponsored by (name)" on its card, page and share preview. Only one slot is allowed on a page for the same dates.
+4. On the start date, the story fills one labelled slot and shows the label "Sponsored" on its card, page and share preview. Public pages never show the sponsor's name; you still see and manage the sponsor here, on the story edit screen, on the dashboards and in exports. Only one slot is allowed on a page for the same dates.
 5. To stop early choose End now. To book another run choose Schedule again.
 6. When the slot ends, the label and slot go automatically. Nothing is deleted.
 

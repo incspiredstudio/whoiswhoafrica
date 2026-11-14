@@ -115,7 +115,7 @@ if ( ! empty( $wiw_story['preview'] ) ) {
 			<div class="notice notice--sponsored" role="note">
 				<?php echo wiw_icon( 'tag' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
 				<div>
-					<strong><?php echo esc_html( (string) ( $wiw_sponsor['label'] ?? '' ) ); ?>.</strong>
+					<strong><?php echo esc_html( (string) ( $wiw_sponsor['label'] ?? __( 'Sponsored', 'whoiswho' ) ) ); ?>.</strong>
 					<?php esc_html_e( 'The sponsor paid for this story\'s placement. The sponsor did not write it and has no influence over any label, ranking or award.', 'whoiswho' ); ?>
 				</div>
 			</div>

@@ -216,7 +216,7 @@ final class SearchServiceTest extends TestCase {
 		}
 	}
 
-	public function test_REQ_182_a_sponsored_story_carries_its_flag_and_sponsor_name(): void {
+	public function test_REQ_026_a_sponsored_story_carries_its_flag_but_never_the_sponsor_name(): void {
 		$paid = $this->story( 'Wharfside sponsored feature', 'Wharfside.' );
 		$this->story( 'Wharfside plain feature', 'Wharfside.' );
 		foreach ( array( 'add_post_metadata', 'update_post_metadata', 'delete_post_metadata' ) as $filter ) {
@@ -227,7 +227,16 @@ final class SearchServiceTest extends TestCase {
 		( new StoryIndexer() )->upsert( $paid );
 		$by = array_column( ( new SearchService() )->search( 'Wharfside' )['stories'], null, 'id' );
 		$this->assertTrue( $by[ $paid ]['sponsored'] );
-		$this->assertSame( 'Acme Freight', $by[ $paid ]['sponsor_name'] );
+		$this->assertArrayNotHasKey( 'sponsor_name', $by[ $paid ], 'Search results never carry the sponsor name (owner 2026-11-14).' );
+		$this->assertStringNotContainsString( 'Acme Freight', (string) wp_json_encode( $by ) );
+		switch_theme( 'whoiswho-child' );
+		set_query_var( 'q', 'Wharfside' );
+		ob_start();
+		include get_template_directory() . '/templates/search.php';
+		$page = (string) ob_get_clean();
+		$this->assertStringContainsString( 'Wharfside sponsored feature', $page );
+		$this->assertStringContainsString( '>Sponsored</span>', $page, 'The search results page keeps the Sponsored label.' );
+		$this->assertStringNotContainsString( 'Acme Freight', $page, 'The search results page never names the sponsor.' );
 		$others = array_filter( $by, static fn ( array $s ): bool => $s['id'] !== $paid );
 		$this->assertCount( 1, $others );
 		$this->assertFalse( array_values( $others )[0]['sponsored'] );

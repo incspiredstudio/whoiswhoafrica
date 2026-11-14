@@ -48,7 +48,7 @@ A **New sponsored story** button opens one page that covers steps 1 and 2 togeth
 
 ### The slot
 
-- While live, the story fills one labelled slot on the chosen surface, and its page, card and share preview show "Sponsored by [name]" (REQ-263).
+- While live, the story fills one labelled slot on the chosen surface, and its page, card and share preview show "Sponsored", without the sponsor's name (REQ-263, REQ-026, owner 2026-11-14).
 - Only a published story can fill a slot. Only one slot is allowed on a page for the same dates.
 - It never changes the order of unsponsored stories, search results, profiles, Featured, nominations or winners.
 - When it ends, the label and slot go automatically. Nothing is deleted (REQ-116).

@@ -100,23 +100,25 @@ test.describe("sponsored story journey", () => {
     );
   });
 
-  test("between the slot dates a visitor sees the badge and sponsor name, and after the end date nothing (REQ-263)", async ({
+  test("between the slot dates a visitor sees the Sponsored badge without the sponsor name, and after the end date nothing (REQ-263, REQ-026)", async ({
     page,
     request,
   }) => {
     runHelper("seed-sponsored.php", "place", SPONSOR);
     await page.goto("/stories/e2e-sponsored-journey-story/");
-    await expect(page.locator(".badge--sponsored")).toHaveText(
-      `Sponsored by ${SPONSOR}`,
-    );
+    await expect(page.locator(".badge--sponsored")).toHaveText("Sponsored");
     await expect(page.locator(".notice--sponsored")).toBeVisible();
+    // Owner 2026-11-14: public pages never name the sponsor; staff still see it in admin.
+    expect(await page.content()).not.toContain(SPONSOR);
+    expect(await (await request.get("/stories/")).text()).not.toContain(SPONSOR);
+    expect(await (await request.get("/")).text()).not.toContain(SPONSOR);
     runHelper("seed-sponsored.php", "travel", iso(3));
     const after = await page.goto("/stories/e2e-sponsored-journey-story/");
     expect(after?.status()).toBe(200); // the story stays published
     await expect(page.locator(".badge--sponsored")).toHaveCount(0);
     await expect(page.locator(".notice--sponsored")).toHaveCount(0);
     expect(await (await request.get("/stories/")).text()).not.toContain(
-      `Sponsored by ${SPONSOR}`,
+      SPONSOR,
     );
   });
 

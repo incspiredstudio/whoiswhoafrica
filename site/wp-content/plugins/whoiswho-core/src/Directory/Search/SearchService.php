@@ -168,14 +168,13 @@ final class SearchService {
 			if ( null === $story ) {
 				continue;
 			}
-			$sponsor = $story['sponsor'];
-			$out[]   = array(
-				'id'           => (int) $row['item_id'],
-				'title'        => (string) $story['title'],
-				'url'          => (string) $story['url'],
-				'type'         => (string) $story['type'],
-				'sponsored'    => null !== $sponsor,
-				'sponsor_name' => null !== $sponsor ? (string) $sponsor['name'] : '',
+			// The flag only: public results never name the sponsor (REQ-026, owner 2026-11-14).
+			$out[] = array(
+				'id'        => (int) $row['item_id'],
+				'title'     => (string) $story['title'],
+				'url'       => (string) $story['url'],
+				'type'      => (string) $story['type'],
+				'sponsored' => null !== $story['sponsor'],
 			);
 		}
 		return $out;

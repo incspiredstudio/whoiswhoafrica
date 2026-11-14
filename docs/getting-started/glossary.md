@@ -30,7 +30,7 @@ This page defines the codes and product terms used across the docs, with a point
 | Verified | Retired. There are no Verified profiles (D-059) |
 | Featured | A flag on stories, using the native WordPress feature. Profiles are never Featured (D-055) |
 | Event | Its own content type for something happening on a date: a conference, launch or ceremony. Has its own list and pages, not part of Stories. A story can link one event (REQ-262, 264, 265) |
-| Sponsored | The paid-placement label. Only stories carry it, it is always visible with the sponsor's name, and the paid slot never reorders other stories or search (REQ-263) |
+| Sponsored | The paid-placement label. Only stories carry it, it is always visible, without the sponsor's name (owner 2026-11-14), and the paid slot never reorders other stories or search (REQ-263) |
 | Arrangement (deal) | A sponsored story deal with one sponsor, one story and one paid slot. The only type for now is the sponsored post |
 | Sponsored stories screen | The one staff screen for a deal's four steps: deal agreed, payment recorded, story ready, placement. Money never changes an award, a rank or a profile label |
 | Suppression list | People who asked to be removed, so they are never republished |

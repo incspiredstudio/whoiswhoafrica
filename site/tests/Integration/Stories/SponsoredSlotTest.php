@@ -119,7 +119,7 @@ final class SponsoredSlotTest extends TestCase {
 		$id = $this->story();
 		$this->place( $id, 'both', '2026-12-01', '2026-12-31' );
 		$this->today = '2026-12-31';
-		$this->assertSame( 'Sponsored by Acme', PublicStory::find( $id )['sponsor']['label'] );
+		$this->assertSame( 'Sponsored', PublicStory::find( $id )['sponsor']['label'] );
 		$this->assertTrue( PublicStory::find( $id )['sponsor']['active'] );
 		$this->today = '2027-01-01';
 		$found       = PublicStory::find( $id );
@@ -158,8 +158,12 @@ final class SponsoredSlotTest extends TestCase {
 		$id = $this->story();
 		$this->place( $id, 'stories', '', '' );
 		$card = PublicStory::list( array( 'surface' => 'stories' ) )['items'][0];
-		$this->assertSame( 'Sponsored by Acme', $card['sponsor']['label'] );
-		$this->assertSame( 'Sponsored by Acme', PublicStory::find( $id )['share']['label'] );
+		$this->assertSame( 'Sponsored', $card['sponsor']['label'] );
+		$this->assertSame( 'Sponsored', PublicStory::find( $id )['share']['label'] );
+		$this->assertArrayNotHasKey( 'name', $card['sponsor'], 'The public read model never exposes the sponsor name (REQ-026, owner 2026-11-14).' );
+		$this->assertArrayNotHasKey( 'name', PublicStory::find( $id )['sponsor'] );
+		$this->assertStringNotContainsString( 'Acme', (string) wp_json_encode( PublicStory::find( $id ) ), 'No public field carries the sponsor name.' );
+		$this->assertStringNotContainsString( 'Acme', (string) wp_json_encode( PublicStory::list( array( 'surface' => 'stories' ) ) ) );
 		unset( $this->source->placements[ $id ] );
 		$this->assertNull( PublicStory::find( $id )['share']['label'] );
 	}

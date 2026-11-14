@@ -21,6 +21,7 @@ final class HomeFrontPageTest extends WpTestCase {
 
 	protected function tearDown(): void {
 		remove_all_filters( 'wiw_nominations_are_open' );
+		remove_all_filters( 'wiw_sponsored_source' );
 		parent::tearDown();
 	}
 
@@ -250,6 +251,27 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertStringContainsString( 'Home Public Story', $out );
 		$this->assertStringNotContainsString( 'Home Draft Story', $out );
 		$this->assertGreaterThan( 0, $public );
+	}
+
+	public function test_REQ_026_the_home_slot_shows_sponsored_without_the_sponsor_name(): void {
+		$id                        = self::factory()->post->create(
+			array(
+				'post_title'  => 'Home Sponsored Story',
+				'post_status' => 'publish',
+			)
+		);
+		$source                    = new \WhoIsWho\Tests\Support\FixtureSponsoredSource();
+		$source->placements[ $id ] = array(
+			'sponsor'   => 'Fictional Home Sponsor Ltd',
+			'placement' => 'home',
+			'start'     => '',
+			'end'       => '',
+		);
+		add_filter( 'wiw_sponsored_source', static fn () => $source );
+		$out = $this->render();
+		$this->assertStringContainsString( 'Home Sponsored Story', $out );
+		$this->assertStringContainsString( '>Sponsored</span>', $out, 'The home slot keeps the Sponsored label.' );
+		$this->assertStringNotContainsString( 'Fictional Home Sponsor Ltd', $out, 'The home page never names the sponsor (owner 2026-11-14).' );
 	}
 
 	public function test_REQ_264_an_upcoming_event_shows_as_a_compact_row_with_an_all_events_link(): void {

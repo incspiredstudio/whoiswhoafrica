@@ -1,8 +1,8 @@
 <?php
 /**
  * Story share preview and structured data (REQ-182, REQ-026, REQ-044). A published story gets its title, description and Open
- * Graph tags from the public read model, with the Sponsored label and sponsor name added to the preview text while the placement
- * is active, plus schema.org Article data that matches the visible headline, date, author and image. A draft, scheduled, private
+ * Graph tags from the public read model, with the plain Sponsored label added to the preview text while the placement is active
+ * (never the sponsor's name: REQ-026, owner 2026-11-14), plus schema.org Article data that matches the visible headline, date, author and image. A draft, scheduled, private
  * or removed story has no public page and gets no markup at all.
  *
  * @package WhoIsWho
