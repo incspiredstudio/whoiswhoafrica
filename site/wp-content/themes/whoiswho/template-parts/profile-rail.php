@@ -19,7 +19,7 @@ $wiw_profile = isset( $args['profile'] ) ? $args['profile'] : null;
 if ( ! $wiw_profile instanceof PublicProfile ) {
 	return;
 }
-// Stored non-Latin slugs are already percent-encoded: encode exactly once (#810).
+// Stored non-Latin slugs are already percent-encoded: encode exactly once.
 $wiw_slug = \WhoIsWho\Core\Directory\Url\ProfileSlugs::path_segment( $wiw_profile->slug );
 
 /*

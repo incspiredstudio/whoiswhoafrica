@@ -18,6 +18,7 @@ final class DefaultContentTest extends WpTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		delete_option( DefaultContent::OPTION );
+		delete_option( \WhoIsWho\Core\Platform\Migrations\Runner::OPTION_LOCK ); // A lock another test left would stop the first run.
 		foreach ( array( 1, 2 ) as $id ) {
 			if ( null !== get_post( $id ) ) {
 				wp_delete_post( $id, true );

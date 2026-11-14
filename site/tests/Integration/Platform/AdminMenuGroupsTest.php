@@ -91,7 +91,7 @@ final class AdminMenuGroupsTest extends WpTestCase {
 	public function test_REQ_244_detail_screens_and_core_add_new_are_not_in_the_menus(): void {
 		foreach ( array( 'Directory/Admin/ProfileEditScreen.php', 'Review/Admin/ReviewItemScreen.php' ) as $file ) {
 			$source = (string) file_get_contents( dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/src/' . $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-			$this->assertStringContainsString( 'true, // A detail screen', $source, "{$file} registers a detail screen" );
+			$this->assertMatchesRegularExpression( '#true,\s*// A detail screen#', $source, "{$file} registers a detail screen" );
 		}
 		$screens = ScreenRegistry::shared()->screens();
 		foreach ( array( \WhoIsWho\Core\Directory\Admin\ProfileEditScreen::SCREEN, \WhoIsWho\Core\Review\Admin\ReviewItemScreen::SCREEN ) as $slug ) {

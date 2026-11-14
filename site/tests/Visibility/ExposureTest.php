@@ -74,7 +74,10 @@ final class ExposureTest extends WpTestCase {
 			'/wp/v2/posts'                          => array(),
 		);
 
-		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		// The site's Editor role (the plugin replaces core's editor role).
+		delete_option( \WhoIsWho\Core\Platform\Capabilities\RoleSync::OPTION_SYNCED );
+		( new \WhoIsWho\Core\Platform\Capabilities\RoleSync( new \WhoIsWho\Core\Platform\Capabilities\CapabilityCatalogue() ) )->sync();
+		$editor = self::factory()->user->create( array( 'role' => 'wiw_editor' ) );
 		wp_set_current_user( $editor );
 		$this->assertFalse( current_user_can( 'list_users' ) );
 		$routes = apply_filters( 'rest_endpoints', $all );
