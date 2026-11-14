@@ -317,4 +317,17 @@ final class ImportV12ClassificationTest extends TestCase {
 		$this->assertSame( array( 'other' ), $this->slugs( $unknown, Taxonomies::ORG_TYPE ) );
 		$this->assertSame( (int) Classification::unclassified_id(), (int) get_post_meta( $unknown, Classification::PRIMARY_INDUSTRY_META, true ) );
 	}
+
+	public function test_REQ_009_an_unknown_head_office_city_is_added_on_import(): void {
+		$id   = $this->apply( $this->record( 'city', '1.2', $this->classification(), array( 'hq_city' => 'QWV IMPORT TOWN' ) ) );
+		$city = get_term_by( 'name', 'Qwv Import Town', Taxonomies::PLACE );
+		$this->assertInstanceOf( \WP_Term::class, $city );
+		$this->countries[] = (int) $city->term_id;
+		$this->assertSame( Classification::country_id( 'NG' ), (int) $city->parent );
+		$this->assertContains( (int) $city->term_id, wp_get_object_terms( $id, Taxonomies::PLACE, array( 'fields' => 'ids' ) ) );
+		wp_set_current_user( 1 );
+		$profile = PublicProfile::find_by_id( $id, true );
+		wp_set_current_user( 0 );
+		$this->assertSame( 'Qwv Import Town', null === $profile ? null : $profile->place()['city'] );
+	}
 }

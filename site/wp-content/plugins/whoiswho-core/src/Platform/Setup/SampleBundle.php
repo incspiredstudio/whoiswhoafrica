@@ -31,7 +31,6 @@ use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleRefused;
 use WhoIsWho\Core\Import\BundleReader;
 use WhoIsWho\Core\Import\DryRun\DryRun;
-use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Import\Result\ImportAudit;
 use WhoIsWho\Core\Import\StateAssigner;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -208,10 +207,6 @@ final class SampleBundle {
 			( new DryRun( new Suppression( AuditLogger::for_site() ), $batches ) )->step( ( new ImportService() )->bundle( $batch_id ), $batch_id, $stop );
 			$batch = (array) $batches->get( $batch_id );
 		}
-		if ( 'dry_run' === (string) $batch['status'] && $this->add_missing_terms( $batch_id, $batches ) ) {
-			// New list entries were added, so the dry run starts again on the next call and the records that needed them pass.
-			return 0;
-		}
 		if ( in_array( (string) $batch['status'], array( 'dry_run', 'applying' ), true ) && ! $stop() ) {
 			if ( 'dry_run' === (string) $batch['status'] ) {
 				$this->confirm( $batch_id );
@@ -234,41 +229,6 @@ final class SampleBundle {
 			$this->stash_zip();
 		}
 		return 'applied' === (string) ( $batch['status'] ?? '' ) ? (int) $batch['record_count'] : (int) ( $batch['progress_cursor'] ?? 0 );
-	}
-
-	/**
-	 * Once per demo batch, add the bundle's unknown list values (industry, organisation type, sector, city) as new list entries,
-	 * as the Import screen's "Add all as new list entries" button does, so no sample record is refused for an unmapped value.
-	 * When anything was added the dry run is reset, so it runs again with the new entries.
-	 *
-	 * @param string          $batch_id Batch id.
-	 * @param BatchRepository $batches  Batches.
-	 * @return bool True when entries were added and the dry run was reset.
-	 */
-	private function add_missing_terms( string $batch_id, BatchRepository $batches ): bool {
-		$stored = get_option( self::OPTION, array() );
-		$stored = is_array( $stored ) ? $stored : array();
-		if ( ! empty( $stored['terms_added'] ) ) {
-			return false;
-		}
-		$stored['terms_added'] = true;
-		update_option( self::OPTION, $stored, false );
-		$mapper  = new TermMapper();
-		$missing = array();
-		foreach ( ( new ImportService() )->bundle( $batch_id )->lines() as $line ) {
-			$record = json_decode( (string) $line, true );
-			if ( is_array( $record ) ) {
-				foreach ( $mapper->unmapped( $record ) as $term ) {
-					$missing[ $term['field'] . '|' . TermMapper::normalise( $term['value'] ) ] = $term;
-				}
-			}
-		}
-		if ( array() === $missing || 0 === $mapper->create_missing( array_values( $missing ) ) ) {
-			return false;
-		}
-		DryRun::reset( $batch_id );
-		$batches->advance( $batch_id, 0, 'checked' );
-		return true;
 	}
 
 	/**

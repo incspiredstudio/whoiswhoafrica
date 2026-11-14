@@ -8,8 +8,8 @@
  * tree's slugs, names and aliases (or a mapping an Administrator saved), else to Unclassified; `org_type` maps the same way, else
  * to "other"; the primary country is the record's `country`.
  *
- * The head office city still uses the mapping list: a value with no place term and no saved mapping is skipped (not refused) and
- * listed in the dry run, where staff can add it as a new place or map it.
+ * An unknown head office city is added on import as a city under the record's primary country (never under Pan-African, never
+ * a value that is a country name or code). Only a city with no country to file it under is listed in the dry run for mapping.
  *
  * @package WhoIsWho
  */
@@ -19,6 +19,8 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Import\Mapping;
 
 use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\IsoCountries;
+use WhoIsWho\Core\Directory\PlaceSeeder;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
@@ -71,29 +73,131 @@ final class TermMapper {
 	}
 
 	/**
-	 * Place values in a record that need a list entry or a mapping, for the dry run. Never a reason to refuse the record.
+	 * Head office cities in a record that the import cannot place, for the dry run's mapping step: a value with no place term
+	 * and no saved mapping whose record has no country to file a new city under (none, or Pan-African). A city the import will
+	 * add under the record's country, and a value that is a country name or code, are not listed. Never a reason to refuse.
 	 *
 	 * @param array<string, mixed> $record A contract record.
-	 * @return array<int, array{field: string, value: string, country?: string}> country is the record's primary country code, so
-	 *         "Add all as new places" can file a new city under it.
+	 * @return array<int, array{field: string, value: string}>
 	 */
 	public function unmapped( array $record ): array {
-		$out     = array();
-		$country = $record['classification']['primary_country'] ?? ( $record['country'] ?? '' );
+		$out = array();
 		foreach ( array_keys( self::LIST_FIELDS ) as $field ) {
 			$value = self::value_of( $record, $field );
-			if ( '' !== $value && null === $this->resolve( $field, $value ) ) {
-				$entry = array(
-					'field' => $field,
-					'value' => $value,
-				);
-				if ( is_string( $country ) && 1 === preg_match( '/^[A-Z]{2}$/', $country ) ) {
-					$entry['country'] = $country;
-				}
-				$out[] = $entry;
+			if ( '' === $value || null !== $this->resolve( $field, $value ) || self::is_country_value( $value ) || null !== $this->country_for( $record ) ) {
+				continue;
 			}
+			$out[] = array(
+				'field' => $field,
+				'value' => $value,
+			);
 		}
 		return $out;
+	}
+
+	/**
+	 * The city term for a record's head office city, created when missing (REQ-009): a saved mapping first, then a city of that
+	 * name under the record's primary country, else a new city term (kind city) under that country, with a clean name. Null when
+	 * there is no city, the value is a country name or code, the mapping says skip, or the record has no country to file it
+	 * under (none, an unknown code, or Pan-African). Only the apply step calls this; the dry run writes nothing.
+	 *
+	 * @param array<string, mixed> $record A validated contract record.
+	 */
+	public function city_for( array $record ): ?int {
+		$value = self::value_of( $record, 'hq_city' );
+		if ( '' === $value || self::is_country_value( $value ) ) {
+			return null;
+		}
+		$saved = $this->saved();
+		$key   = Taxonomies::PLACE . '|' . self::normalise( $value );
+		if ( array_key_exists( $key, $saved ) ) {
+			$id = (int) $saved[ $key ];
+			return $id > 0 && term_exists( $id, Taxonomies::PLACE ) ? $id : null;
+		}
+		$country = $this->country_for( $record );
+		if ( null === $country ) {
+			return null;
+		}
+		$name     = self::city_name( $value );
+		$children = get_terms(
+			array(
+				'taxonomy'   => Taxonomies::PLACE,
+				'hide_empty' => false,
+				'parent'     => $country,
+			)
+		);
+		foreach ( is_array( $children ) ? $children : array() as $term ) {
+			if ( $term instanceof \WP_Term && self::normalise( html_entity_decode( $term->name, ENT_QUOTES, 'UTF-8' ) ) === self::normalise( $name ) ) {
+				return (int) $term->term_id;
+			}
+		}
+		$made = wp_insert_term( mb_substr( $name, 0, 190 ), Taxonomies::PLACE, array( 'parent' => $country ) );
+		if ( is_wp_error( $made ) ) {
+			return null;
+		}
+		update_term_meta( (int) $made['term_id'], Taxonomies::META_KIND, Taxonomies::KIND_CITY );
+		return (int) $made['term_id'];
+	}
+
+	/**
+	 * The country term a new city of this record is filed under: its primary country (contract 1.2), else its country; never the
+	 * Pan-African body. A real ISO code the list lacks creates the country, as the classification does.
+	 *
+	 * @param array<string, mixed> $record Record.
+	 */
+	private function country_for( array $record ): ?int {
+		$code = $record['classification']['primary_country'] ?? ( $record['country'] ?? '' );
+		$code = is_string( $code ) ? strtoupper( trim( $code ) ) : '';
+		if ( 1 !== preg_match( '/^[A-Z]{2}$/', $code ) ) {
+			return null;
+		}
+		return Classification::ensure_country( $code );
+	}
+
+	/**
+	 * Whether a value is a country rather than a city: an ISO alpha-2 code, PAN, a country name from the ISO list, or the name of
+	 * a top-level place.
+	 *
+	 * @param string $value Raw value.
+	 */
+	private static function is_country_value( string $value ): bool {
+		$trimmed = trim( $value );
+		if ( 1 === preg_match( '/^(PAN|[A-Za-z]{2})$/', $trimmed ) && ( 'PAN' === strtoupper( $trimmed ) || null !== IsoCountries::name( $trimmed ) ) ) {
+			return true;
+		}
+		$key = self::normalise( $trimmed );
+		foreach ( IsoCountries::all() + PlaceSeeder::countries() as $name ) {
+			if ( self::normalise( $name ) === $key ) {
+				return true;
+			}
+		}
+		$top = get_terms(
+			array(
+				'taxonomy'   => Taxonomies::PLACE,
+				'hide_empty' => false,
+				'parent'     => 0,
+				'fields'     => 'names',
+			)
+		);
+		foreach ( is_array( $top ) ? $top : array() as $name ) {
+			if ( self::normalise( html_entity_decode( (string) $name, ENT_QUOTES, 'UTF-8' ) ) === $key ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * A city name as stored: trimmed, single spaces, and title case only when the value is all lower or all upper case.
+	 *
+	 * @param string $value Raw value.
+	 */
+	public static function city_name( string $value ): string {
+		$name = trim( (string) preg_replace( '/\s+/u', ' ', $value ) );
+		if ( mb_strtolower( $name ) === $name || mb_strtoupper( $name ) === $name ) {
+			$name = mb_convert_case( mb_strtolower( $name ), MB_CASE_TITLE, 'UTF-8' );
+		}
+		return $name;
 	}
 
 	/**
@@ -259,52 +363,6 @@ final class TermMapper {
 				'key'     => $key,
 			)
 		);
-	}
-
-	/**
-	 * Add unknown place values as new entries of the place list, in one go (a no-code alternative to mapping hundreds of values
-	 * one by one). Industries, sectors and organisation types are never added this way: the tree is fixed and staff add to it on
-	 * the term screens. A value that has meanwhile been mapped or added is left alone. One audit row carries the count.
-	 *
-	 * @param array<int, array{field: string, value: string, country?: string}> $terms Unknown values from the dry run.
-	 * @return int Entries added.
-	 */
-	public function create_missing( array $terms ): int {
-		$added = 0;
-		foreach ( $terms as $term ) {
-			$taxonomy = self::LIST_FIELDS[ $term['field'] ] ?? null;
-			$value    = trim( (string) $term['value'] );
-			if ( null === $taxonomy || '' === $value || ! taxonomy_exists( $taxonomy ) || null !== $this->resolve( $term['field'], $value ) ) {
-				continue;
-			}
-			// A new city is filed under the record's country, as a city. A value that is a country's own name is not a city.
-			$parent = isset( $term['country'] ) ? Classification::ensure_country( (string) $term['country'] ) : null;
-			if ( null !== $parent ) {
-				$country = get_term( $parent, $taxonomy );
-				if ( $country instanceof \WP_Term && self::normalise( html_entity_decode( $country->name, ENT_QUOTES, 'UTF-8' ) ) === self::normalise( $value ) ) {
-					continue;
-				}
-			}
-			$made = wp_insert_term( mb_substr( $value, 0, 190 ), $taxonomy, array( 'parent' => $parent ?? 0 ) );
-			if ( ! is_wp_error( $made ) ) {
-				if ( null !== $parent ) {
-					update_term_meta( (int) $made['term_id'], Taxonomies::META_KIND, Taxonomies::KIND_CITY );
-				}
-				++$added;
-			}
-		}//end foreach
-		if ( $added > 0 ) {
-			AuditLogger::for_site()->log(
-				'import.term_mapping',
-				array(
-					'type' => 'taxonomy',
-					'id'   => 'bulk',
-				),
-				null,
-				array( 'added' => $added )
-			);
-		}
-		return $added;
 	}
 
 	/**

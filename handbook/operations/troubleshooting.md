@@ -91,7 +91,7 @@ Press **I have set up backups** on the Dashboard or the Setup screen once the ho
 
 ## The import dry run lists cities that are not in the place list
 
-This is not an error, and the records still import (without the city). Press **Add all as new places** to add each city under its record's country, or map each value. Industries and organisation types never need this step: a value the site does not know goes to Unclassified (or Other). See [Import data](/staff/importing#import-one-bundle).
+This is not an error, and the records still import (without the city). New cities are normally added by the import under each record's country; the ones listed have no country to go under (the record has none, or is Pan-African). Map each to a place if you want it shown. Industries and organisation types never need this step: a value the site does not know goes to Unclassified (or Other). See [Import data](/staff/importing#import-one-bundle).
 
 ## An undone batch has to come back
 

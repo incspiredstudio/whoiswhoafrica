@@ -387,11 +387,10 @@ final class ProfileApplier {
 				);
 			}
 		}
-		$places = $this->terms->terms_for( $record );
 		( new ProfileClassifier() )->assign(
 			$profile_id,
 			(string) $record['entity_type'],
-			array_merge( $this->terms->classification_for( $record ), array( 'city_id' => (int) ( $places['hq_city'] ?? 0 ) ) )
+			array_merge( $this->terms->classification_for( $record ), array( 'city_id' => (int) $this->terms->city_for( $record ) ) )
 		);
 		$evidence = new EvidenceRepository();
 		$evidence->clear( $profile_id );
