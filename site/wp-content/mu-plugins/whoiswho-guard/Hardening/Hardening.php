@@ -57,7 +57,6 @@ final class Hardening {
 		add_filter( 'map_meta_cap', array( self::class, 'deny_code_editors' ), 10, 2 );
 
 		add_action( 'admin_notices', array( self::class, 'config_notice' ) );
-		add_action( 'admin_post_' . self::DISMISS_ACTION, array( self::class, 'dismiss_advice' ) );
 	}
 
 	/**
@@ -66,14 +65,10 @@ final class Hardening {
 	public const CODE_EDITOR_CAPS = array( 'edit_themes', 'edit_plugins', 'edit_files' );
 
 	/**
-	 * User meta that hides the uploads advice for one person.
+	 * Name of the advice in WordPress's own per-user list of dismissed notices (user meta dismissed_wp_pointers, written by
+	 * core's dismiss-wp-pointer request). The guard registers no action of its own.
 	 */
-	public const DISMISS_META = 'wiw_guard_uploads_advice_dismissed';
-
-	/**
-	 * The admin-post action that hides the advice.
-	 */
-	public const DISMISS_ACTION = 'wiw_guard_dismiss_uploads_advice';
+	public const DISMISS_ID = 'wiw_guard_uploads_advice';
 
 	/**
 	 * Remove the code editors whatever the role or grant says.
@@ -154,7 +149,7 @@ final class Hardening {
 		if ( null === $screen || 'dashboard' !== $screen->id ) {
 			return;
 		}
-		if ( get_user_meta( get_current_user_id(), self::DISMISS_META, true ) ) {
+		if ( self::is_dismissed( (string) get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true ) ) ) {
 			return;
 		}
 		$advise = self::wants_uploads_advice(
@@ -164,22 +159,21 @@ final class Hardening {
 		if ( ! $advise ) {
 			return;
 		}
-		$dismiss = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::DISMISS_ACTION ), self::DISMISS_ACTION );
-		echo '<div class="notice notice-info"><p>'
+		echo '<div class="notice notice-info" id="' . esc_attr( self::DISMISS_ID ) . '"><p>'
 			. esc_html__( 'Good to know: you can install and update plugins and themes from wp-admin, and the built-in code editor is switched off for safety. Keep the number of Administrator accounts small and ask each one to turn on two-factor sign-in.', 'whoiswho' )
-			. ' <a href="' . esc_url( $dismiss ) . '">' . esc_html__( 'Got it, hide this', 'whoiswho' ) . '</a></p></div>';
+			. ' <button type="button" class="button-link" data-wiw-dismiss="' . esc_attr( self::DISMISS_ID ) . '">' . esc_html__( 'Got it, hide this', 'whoiswho' ) . '</button></p></div>';
+		$script = 'document.addEventListener("click",function(e){var b=e.target.closest("[data-wiw-dismiss]");if(!b||!window.jQuery||!window.ajaxurl){return;}'
+			. 'jQuery.post(window.ajaxurl,{action:"dismiss-wp-pointer",pointer:b.getAttribute("data-wiw-dismiss")});'
+			. 'var n=document.getElementById(b.getAttribute("data-wiw-dismiss"));if(n){n.remove();}});';
+		wp_print_inline_script_tag( $script );
 	}
 
 	/**
-	 * Hide the advice for the current person.
+	 * Whether the advice is in a person's dismissed list (core's comma-separated dismissed_wp_pointers).
+	 *
+	 * @param string $dismissed Stored list.
 	 */
-	public static function dismiss_advice(): void {
-		check_admin_referer( self::DISMISS_ACTION );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'whoiswho' ), 403 );
-		}
-		update_user_meta( get_current_user_id(), self::DISMISS_META, 1 );
-		wp_safe_redirect( admin_url() );
-		exit;
+	public static function is_dismissed( string $dismissed ): bool {
+		return in_array( self::DISMISS_ID, array_map( 'trim', explode( ',', $dismissed ) ), true );
 	}
 }

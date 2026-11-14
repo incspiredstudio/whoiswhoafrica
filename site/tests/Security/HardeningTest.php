@@ -99,5 +99,8 @@ final class HardeningTest extends TestCase {
 		$this->assertTrue( Hardening::wants_uploads_advice( true, false ) );
 		$this->assertFalse( Hardening::wants_uploads_advice( true, true ), 'DISALLOW_FILE_MODS set: nothing to advise' );
 		$this->assertFalse( Hardening::wants_uploads_advice( false, null ), 'not a live site' );
+		$this->assertTrue( Hardening::is_dismissed( 'wp496_privacy,' . Hardening::DISMISS_ID ), 'dismissed through core dismissed_wp_pointers' );
+		$this->assertFalse( Hardening::is_dismissed( 'wp496_privacy' ) );
+		$this->assertFalse( Hardening::is_dismissed( '' ) );
 	}
 }
