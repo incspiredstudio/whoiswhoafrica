@@ -1,10 +1,10 @@
 # Countries, industries and organisation types
 
-The directory's lists are kept on WordPress's own list screens under **Directory**: **Places**, **Industries** and **Organisation types**. Editors and Administrators can add and rename entries; Reviewers can only use them. The names you give are what visitors see in breadcrumbs and filters.
+The directory's lists are kept on WordPress's own list screens under **Directory**: **Industries**, **Countries & cities** and **Organisation types**. Stories and events use the same industry list, so it also appears under **Posts** and **Events** as **Industries (shared with profiles)**: it is one list, whichever menu you open it from. Editors and Administrators can add and rename entries; Reviewers can only use them. The names you give are what visitors see in breadcrumbs and filters.
 
 ## Add a country or a city
 
-1. Open **Directory > Places**.
+1. Open **Directory > Countries & cities**.
 2. For a **country**:
    - **Name**: the country's name, for example Nigeria.
    - **Parent**: leave it at "None".
@@ -30,7 +30,7 @@ Industries sit under sectors. Top-level entries are sectors; entries under a sec
 4. **Also known as**: other names for the entry, separated by commas, for example `Petroleum, Oil and gas`. The import uses them to match the values it receives.
 5. Press **Add New Industry**.
 
-An industry cannot sit under another industry, and a sector that already has industries cannot be moved under another sector.
+An industry cannot sit under another industry or under Unclassified, and a sector that already has industries cannot be moved under another sector.
 
 **Unclassified** is a fixed entry: it holds the profiles that still need an industry. It cannot be renamed, moved or deleted, and it is never shown in public navigation.
 
@@ -42,7 +42,7 @@ An industry cannot sit under another industry, and a sector that already has ind
 
 ## Rename an entry or change its address
 
-Open the entry, change its **Name** or **Slug**, and press **Update**. When the slug changes, the old one is kept: directory addresses that use it, such as `/directory/?industry=old-slug`, keep working and send visitors to the new address. Each change is written to the audit log.
+Open the entry, change its **Name** or **Slug**, and press **Update**. When the slug changes, the old one is kept: directory addresses that use it, such as `/directory/?industry=old-slug`, `/industries/old-slug/` or `/directory/?country=old-slug`, keep working and send visitors to the new address with a permanent redirect. Each change is written to the audit log.
 
 ## The columns
 

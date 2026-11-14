@@ -43,7 +43,7 @@ return array(
 			'industries' => array(
 				'banking'                     => array(
 					'label'   => 'Banking',
-					'aliases' => array( 'Banking and financial services', 'Banks', 'Financial services', 'Finance' ),
+					'aliases' => array( 'Banking and financial services', 'Banks', 'Financial services', 'Financial sector', 'Finance' ),
 				),
 				'insurance'                   => array(
 					'label'   => 'Insurance',
@@ -68,7 +68,7 @@ return array(
 			'industries' => array(
 				'telecoms'             => array(
 					'label'   => 'Telecoms',
-					'aliases' => array( 'Telecommunications', 'Telecommunication', 'Mobile telecommunications' ),
+					'aliases' => array( 'Telecommunications', 'Telecommunication', 'Telecommunications industry', 'Mobile telecommunications' ),
 				),
 				'software-internet'    => array(
 					'label'   => 'Software & Internet',
@@ -276,7 +276,7 @@ return array(
 		),
 		'government-body'            => array(
 			'label'   => 'Government body',
-			'aliases' => array( 'Public body', 'Government agency', 'Government', 'Ministry', 'Public institution' ),
+			'aliases' => array( 'Public body', 'Public sector body', 'Government agency', 'Government department', 'Government', 'Ministry', 'Public institution' ),
 		),
 		'regulator'                  => array(
 			'label'   => 'Regulator',
@@ -292,7 +292,7 @@ return array(
 		),
 		'university'                 => array(
 			'label'   => 'University',
-			'aliases' => array( 'University / school', 'Higher education institution', 'College' ),
+			'aliases' => array( 'University / school', 'Public university', 'Private university', 'Polytechnic', 'Higher education institution', 'College' ),
 		),
 		'school'                     => array(
 			'label'   => 'School',
@@ -308,7 +308,7 @@ return array(
 		),
 		'ngo-nonprofit'              => array(
 			'label'   => 'NGO / non-profit',
-			'aliases' => array( 'NGO', 'Non-profit', 'Nonprofit', 'NGO / social enterprise', 'Charity', 'Non-governmental organisation' ),
+			'aliases' => array( 'NGO', 'Non-profit', 'Nonprofit', 'NGO / social enterprise', 'Social enterprise', 'Charity', 'Non-governmental organisation' ),
 		),
 		'foundation'                 => array(
 			'label'   => 'Foundation',
@@ -332,7 +332,7 @@ return array(
 		),
 		'other'                      => array(
 			'label'   => 'Other',
-			'aliases' => array(),
+			'aliases' => array( 'Professional association', 'Professional body', 'Trade association', 'Association' ),
 		),
 	),
 );

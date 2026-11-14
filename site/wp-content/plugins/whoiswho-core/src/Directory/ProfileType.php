@@ -40,13 +40,21 @@ final class ProfileType {
 	}
 
 	/**
-	 * The submenu item to mark current on those screens. Hooked to submenu_file.
+	 * The submenu item to mark current on those screens. Hooked to submenu_file. On the term screens of the classification lists
+	 * (edit-tags.php and term.php with post_type=wiw_profile) it is the list's own item: Directory > Industries, Countries & cities
+	 * or Organisation types.
 	 *
 	 * @param string|null $submenu_file Submenu file.
 	 */
 	public static function menu_current( $submenu_file ): ?string {
-		global $typenow;
-		return self::POST_TYPE === $typenow ? Admin\ProfilesScreen::SCREEN : $submenu_file;
+		global $typenow, $taxnow, $pagenow;
+		if ( self::POST_TYPE !== $typenow ) {
+			return $submenu_file;
+		}
+		if ( in_array( $pagenow, array( 'edit-tags.php', 'term.php' ), true ) && is_string( $taxnow ) && isset( Admin\TermMenus::labels()[ $taxnow ] ) ) {
+			return Admin\TermMenus::url( $taxnow );
+		}
+		return Admin\ProfilesScreen::SCREEN;
 	}
 
 	/**

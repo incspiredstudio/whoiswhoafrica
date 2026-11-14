@@ -1,7 +1,8 @@
 <?php
 /**
- * The filter of a bulk unpublish: source, import batch, entity type, state, origin and a name search. It always restricts to the
- * two published states: a bulk unpublish includes published profiles only (REQ-193).
+ * The filter of a bulk unpublish: exactly the Profiles list's filter set (source, import batch, entity type, state, origin, the name
+ * search and the "Needs classification" view), built by the same query code, so the bulk count is the list's count of published
+ * profiles. It always restricts to the two published states: a bulk unpublish includes published profiles only (REQ-193).
  *
  * @package WhoIsWho
  */
@@ -10,8 +11,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Review\Bulk;
 
+use WhoIsWho\Core\Directory\Admin\ProfilesQuery;
 use WhoIsWho\Core\Directory\State\PubState;
-use WhoIsWho\Core\Directory\State\StateRepository;
 
 /**
  * Bulk filter.
@@ -19,15 +20,9 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 final class BulkFilter {
 
 	/**
-	 * Filter key => state-table column.
+	 * The filter keys: the Profiles list's filters, its name search and its "Needs classification" view.
 	 */
-	private const COLUMNS = array(
-		'source' => 'source',
-		'batch'  => 'import_batch',
-		'type'   => 'entity_type',
-		'state'  => 'pub_state',
-		'origin' => 'origin',
-	);
+	public const KEYS = array( 'source', 'batch', 'type', 'state', 'origin', 'name', ProfilesQuery::CLASSIFICATION );
 
 	/**
 	 * Keep only known keys with non-empty string values.
@@ -37,10 +32,13 @@ final class BulkFilter {
 	 */
 	public static function clean( array $raw ): array {
 		$clean = array();
-		foreach ( array_merge( array_keys( self::COLUMNS ), array( 'name' ) ) as $key ) {
+		foreach ( self::KEYS as $key ) {
 			if ( isset( $raw[ $key ] ) && is_string( $raw[ $key ] ) && '' !== trim( $raw[ $key ] ) ) {
 				$clean[ $key ] = trim( $raw[ $key ] );
 			}
+		}
+		if ( isset( $clean[ ProfilesQuery::CLASSIFICATION ] ) && ProfilesQuery::NEEDS !== $clean[ ProfilesQuery::CLASSIFICATION ] ) {
+			unset( $clean[ ProfilesQuery::CLASSIFICATION ] );
 		}
 		return $clean;
 	}
@@ -90,33 +88,16 @@ final class BulkFilter {
 	}
 
 	/**
-	 * The FROM and WHERE clause with its placeholders.
+	 * The FROM and WHERE clause with its placeholders: the Profiles list's own filter (ProfilesQuery::from_where, so the "Needs
+	 * classification" view, the name search and every other filter mean the same here), narrowed to the two published states.
 	 *
 	 * @param array<string, string> $filter Clean filter.
-	 * @return array{0: string, 1: array<int, string>}
+	 * @return array{0: string, 1: array<int, mixed>}
 	 */
 	private function from_where( array $filter ): array {
-		global $wpdb;
-		$published = array( PubState::PUBLISHED_PENDING, PubState::PUBLISHED_REVIEWED );
-		$parts     = array( 's.pub_state IN (%s,%s)' );
-		$args      = $published;
-		foreach ( self::COLUMNS as $key => $column ) {
-			if ( isset( $filter[ $key ] ) && 'pub_state' !== $column ) {
-				$parts[] = 's.' . $column . ' = %s';
-				$args[]  = $filter[ $key ];
-			}
-		}
-		if ( isset( $filter['state'] ) ) {
-			// A chosen state can only narrow the published pair.
-			$parts[] = 's.pub_state = %s';
-			$args[]  = $filter['state'];
-		}
-		$from = 'FROM ' . StateRepository::table() . ' s';
-		if ( isset( $filter['name'] ) ) {
-			$from   .= ' INNER JOIN ' . $wpdb->posts . ' p ON p.ID = s.profile_id';
-			$parts[] = 'p.post_title LIKE %s';
-			$args[]  = '%' . $wpdb->esc_like( $filter['name'] ) . '%';
-		}
-		return array( $from . ' WHERE ' . implode( ' AND ', $parts ), $args );
+		list( $from_where, $args ) = ( new ProfilesQuery() )->from_where( $filter );
+		$args[]                    = PubState::PUBLISHED_PENDING;
+		$args[]                    = PubState::PUBLISHED_REVIEWED;
+		return array( ltrim( $from_where ) . ' AND s.pub_state IN (%s,%s)', $args );
 	}
 }

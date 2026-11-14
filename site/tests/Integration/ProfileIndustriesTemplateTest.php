@@ -146,4 +146,31 @@ final class ProfileIndustriesTemplateTest extends TestCase {
 		$this->assertNull( wiw_industry_term() );
 		$this->assertSame( '', wiw_industries_view() );
 	}
+
+	public function test_REQ_009_unclassified_is_never_public_navigation_or_a_page(): void {
+
+		$existing = get_term_by( 'slug', 'unclassified', Taxonomies::INDUSTRY );
+		if ( ! $existing instanceof \WP_Term ) {
+			$made          = wp_insert_term( 'Unclassified', Taxonomies::INDUSTRY, array( 'slug' => 'unclassified' ) );
+			$this->terms[] = (int) $made['term_id'];
+		}
+		$this->profile( 'Indtest Unclassified Reviewed', 'unclassified', true );
+		$this->profile( 'Indtest Unclassified Reviewed Two', 'unclassified', true );
+
+		set_query_var( 'wiw_industry_slug', 'unclassified' );
+		$this->assertNull( wiw_industry_term(), '/industries/unclassified/ is not a page.' );
+		$this->assertSame( '', wiw_industries_view() );
+		$this->assertTrue( wiw_is_unclassified_industry( 'unclassified' ) );
+		$this->assertArrayHasKey( 'noindex', wiw_industry_robots( array() ), 'Anything rendered there is noindexed.' );
+		set_query_var( 'wiw_industry_slug', '' );
+
+		foreach ( wiw_nav_industry_links() as $link ) {
+			$this->assertStringNotContainsString( '/industries/unclassified/', (string) $link['url'], 'Not in the header menu.' );
+		}
+		$this->assertStringNotContainsString( '/industries/unclassified/', $this->render( '' ), 'Not on the industries index.' );
+		$this->assertArrayNotHasKey( 'unclassified', wiw_story_industry_options(), 'Not in the stories filter.' );
+		$this->assertArrayNotHasKey( 'unclassified', wiw_events_industry_options( array( array( 'industries' => array( 'Unclassified' ) ) ) ), 'Not in the events filter.' );
+		$list = ( new \WhoIsWho\Core\Directory\ProfileList() )->query( 'all', array( 'industry' => 'unclassified' ) );
+		$this->assertSame( 0, $list['total'], 'No public list filters by Unclassified.' );
+	}
 }

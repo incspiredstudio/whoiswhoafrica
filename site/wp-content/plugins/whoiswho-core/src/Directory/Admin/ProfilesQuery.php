@@ -189,6 +189,19 @@ final class ProfilesQuery {
 	}
 
 	/**
+	 * The FROM and WHERE of a filter set over the posts table (p) joined to the state table (s), with its placeholder values. The
+	 * bulk unpublish filter builds on exactly this, so the list and the bulk action always count the same profiles (REQ-193).
+	 *
+	 * @param array<string, string> $filters Filters.
+	 * @return array{0: string, 1: array<int, mixed>}
+	 */
+	public function from_where( array $filters ): array {
+		global $wpdb;
+		list( $where, $args ) = $this->where( $filters );
+		return array( ' FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID' . $where, $args );
+	}
+
+	/**
 	 * WHERE clause.
 	 *
 	 * @param array<string, string> $filters Filters.

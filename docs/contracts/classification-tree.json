@@ -58,6 +58,7 @@
                         "Banking and financial services",
                         "Banks",
                         "Financial services",
+                        "Financial sector",
                         "Finance"
                     ]
                 },
@@ -109,6 +110,7 @@
                     "aliases": [
                         "Telecommunications",
                         "Telecommunication",
+                        "Telecommunications industry",
                         "Mobile telecommunications"
                     ]
                 },
@@ -540,7 +542,9 @@
             "label": "Government body",
             "aliases": [
                 "Public body",
+                "Public sector body",
                 "Government agency",
+                "Government department",
                 "Government",
                 "Ministry",
                 "Public institution"
@@ -575,6 +579,9 @@
             "label": "University",
             "aliases": [
                 "University / school",
+                "Public university",
+                "Private university",
+                "Polytechnic",
                 "Higher education institution",
                 "College"
             ]
@@ -612,6 +619,7 @@
                 "Non-profit",
                 "Nonprofit",
                 "NGO / social enterprise",
+                "Social enterprise",
                 "Charity",
                 "Non-governmental organisation"
             ]
@@ -659,7 +667,12 @@
         {
             "slug": "other",
             "label": "Other",
-            "aliases": []
+            "aliases": [
+                "Professional association",
+                "Professional body",
+                "Trade association",
+                "Association"
+            ]
         }
     ]
 }

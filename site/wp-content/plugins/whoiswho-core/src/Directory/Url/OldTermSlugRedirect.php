@@ -1,8 +1,9 @@
 <?php
 /**
- * Old list addresses keep working after a term's slug changes (REQ-009, REQ-006): a front-end address whose industry= or country=
- * names a slug that no term has any more, but that a term kept in its wiw_old_slugs meta (see Admin\TermFields), answers with a
- * 301 to the same address with the term's current slug.
+ * Old list addresses keep working after a term's slug changes (REQ-009, REQ-006): a front-end address whose industry=, country=,
+ * city= or org_type= names a slug that no term has any more, but that a term kept in its wiw_old_slugs meta (see
+ * Admin\TermFields), answers with a 301 to the same address with the term's current slug. The industries pages
+ * (/industries/<slug>/, a sector or an industry, and their later pages) redirect the same way.
  *
  * @package WhoIsWho
  */
@@ -26,7 +27,14 @@ final class OldTermSlugRedirect {
 	public const PARAMS = array(
 		'industry' => Taxonomies::INDUSTRY,
 		'country'  => Taxonomies::PLACE,
+		'city'     => Taxonomies::PLACE,
+		'org_type' => Taxonomies::ORG_TYPE,
 	);
+
+	/**
+	 * Public paths that carry an industry slug (a sector or an industry): the industries pages, with their later pages.
+	 */
+	private const INDUSTRY_PATH = '#^/industries/([^/]+)(/page/[0-9]+)?/?$#';
 
 	/**
 	 * Register the hook.
@@ -56,6 +64,8 @@ final class OldTermSlugRedirect {
 	 * @param string  $url     The address asked for.
 	 */
 	public function target( Request $request, string $url ): ?string {
+		$moved   = $this->moved_path( $url );
+		$url     = $moved ?? $url;
 		$changes = array();
 		foreach ( self::PARAMS as $param => $taxonomy ) {
 			$slug = sanitize_title( $request->string( $param ) );
@@ -67,7 +77,36 @@ final class OldTermSlugRedirect {
 				$changes[ $param ] = $current;
 			}
 		}
-		return array() === $changes ? null : add_query_arg( $changes, $url );
+		if ( array() === $changes ) {
+			return $moved;
+		}
+		return add_query_arg( $changes, $url );
+	}
+
+	/**
+	 * The same address with the current slug when its path is an industries page under an old slug (query kept), else null.
+	 *
+	 * @param string $url The address asked for.
+	 */
+	private function moved_path( string $url ): ?string {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$home = untrailingslashit( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ) );
+		if ( '' !== $home && 0 === strpos( $path, $home . '/' ) ) {
+			$path = substr( $path, strlen( $home ) );
+		}
+		if ( 1 !== preg_match( self::INDUSTRY_PATH, $path, $found ) ) {
+			return null;
+		}
+		$slug = sanitize_title( urldecode( $found[1] ) );
+		if ( '' === $slug || get_term_by( 'slug', $slug, Taxonomies::INDUSTRY ) instanceof \WP_Term ) {
+			return null;
+		}
+		$current = self::current_slug( $slug, Taxonomies::INDUSTRY );
+		if ( null === $current ) {
+			return null;
+		}
+		$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
+		return home_url( '/industries/' . $current . ( $found[2] ?? '' ) . '/' ) . ( '' !== $query ? '?' . $query : '' );
 	}
 
 	/**

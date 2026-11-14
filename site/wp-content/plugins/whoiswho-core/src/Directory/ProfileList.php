@@ -224,7 +224,8 @@ final class ProfileList {
 	private function term_taxonomy_ids( string $filter, string $slug ): array {
 		$taxonomy = self::FILTERS[ $filter ][0];
 		$term     = get_term_by( 'slug', $slug, $taxonomy );
-		if ( ! $term instanceof \WP_Term ) {
+		// Unclassified is not public navigation: no public list filters by it (REQ-009).
+		if ( ! $term instanceof \WP_Term || ( Taxonomies::INDUSTRY === $taxonomy && Classification::unclassified_slug() === $term->slug ) ) {
 			return array();
 		}
 		if ( Taxonomies::PLACE === $taxonomy ) {

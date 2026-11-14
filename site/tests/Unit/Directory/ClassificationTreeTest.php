@@ -158,7 +158,8 @@ final class ClassificationTreeTest extends TestCase {
 		$this->assertSame( self::ORG_TYPES, array_keys( $types ) );
 		$this->assertSame( 'State-owned enterprise', $types['state-owned-enterprise']['label'] );
 		$this->assertSame( 'NGO / non-profit', $types['ngo-nonprofit']['label'] );
-		$this->assertSame( array(), $types['other']['aliases'] );
+		// Associations have no type of their own: the 0.2.0 "Professional association" and its kin fold into "other" (release test of 0.3.0).
+		$this->assertSame( array( 'Professional association', 'Professional body', 'Trade association', 'Association' ), $types['other']['aliases'] );
 	}
 
 	public function test_REQ_009_no_alias_or_label_means_two_entries_in_one_list(): void {

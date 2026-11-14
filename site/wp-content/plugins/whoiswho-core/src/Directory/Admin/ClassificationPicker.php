@@ -171,8 +171,10 @@ final class ClassificationPicker {
 		}
 		$out .= '</ul>';
 		$out .= '<select id="wiw-f-' . esc_attr( $name ) . '_add" name="' . esc_attr( $name ) . '[]" data-wiw-chip-add="' . esc_attr( $name ) . '"><option value="0">' . esc_html__( 'Add another industry', 'whoiswho' ) . '</option>' . $this->grouped_options( $tree, array() ) . '</select>';
-		$hint = array() === $extras ? __( 'None yet. Extra industries list the profile on those pages too; they do not change its breadcrumb.', 'whoiswho' ) : __( 'Untick an industry to remove it. Extra industries list the profile on those pages too; they do not change its breadcrumb.', 'whoiswho' );
-		return $out . $this->help( $hint );
+		// The script swaps the hint as chips are added or unticked, so it never says "None yet" beside a chip.
+		$none = __( 'None yet. Extra industries list the profile on those pages too; they do not change its breadcrumb.', 'whoiswho' );
+		$some = __( 'Untick an industry to remove it. Extra industries list the profile on those pages too; they do not change its breadcrumb.', 'whoiswho' );
+		return $out . '<p class="description" data-wiw-chips-hint="' . esc_attr( $name ) . '" data-hint-none="' . esc_attr( $none ) . '" data-hint-some="' . esc_attr( $some ) . '">' . esc_html( array() === $extras ? $none : $some ) . '</p>';
 	}
 
 	/**
@@ -217,7 +219,7 @@ final class ClassificationPicker {
 			$out .= '</optgroup>';
 		}
 		$out .= '</select>';
-		return $out . $this->help( __( 'Only cities in the chosen country are offered. Add a city on Directory > Places, with its country as Parent.', 'whoiswho' ) );
+		return $out . $this->help( __( 'Only cities in the chosen country are offered. Add a city on Directory > Countries & cities, with its country as Parent.', 'whoiswho' ) );
 	}
 
 	/**

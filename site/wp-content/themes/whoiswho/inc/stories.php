@@ -84,7 +84,9 @@ if ( ! function_exists( 'wiw_story_industry_options' ) ) {
 		);
 		$out   = array();
 		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
-			$out[ (string) $term->slug ] = (string) $term->name;
+			if ( ! wiw_is_unclassified_industry( (string) $term->slug ) ) {
+				$out[ (string) $term->slug ] = (string) $term->name;
+			}
 		}
 		return $out;
 	}

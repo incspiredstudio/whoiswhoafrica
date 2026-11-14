@@ -2,7 +2,7 @@
 /**
  * Industries (REQ-007, REQ-009): the routes /industries and /industries/{slug}, the template choice and the page title. The
  * theme only routes and renders: counts and profile lists come from ProfileList (reviewed profiles only), stories from
- * PublicStory. An unknown industry stays a 404.
+ * PublicStory. An unknown industry stays a 404, and so does Unclassified (noindexed too), which is never public navigation.
  *
  * @package WhoIsWho
  */
@@ -13,13 +13,25 @@ const WIW_INDUSTRIES_VAR = 'wiw_industries';
 const WIW_INDUSTRY_VAR   = 'wiw_industry_slug';
 const WIW_INDUSTRY_RULES = 'wiw_theme_industry_rules';
 
+if ( ! function_exists( 'wiw_is_unclassified_industry' ) ) {
+	/**
+	 * Whether an industry slug is Unclassified, which is never public navigation, a public list or a page (REQ-009).
+	 *
+	 * @param string $slug Industry slug.
+	 */
+	function wiw_is_unclassified_industry( string $slug ): bool {
+		$unclassified = class_exists( \WhoIsWho\Core\Directory\Classification::class ) ? \WhoIsWho\Core\Directory\Classification::unclassified_slug() : 'unclassified';
+		return '' !== $slug && $unclassified === $slug;
+	}
+}
+
 if ( ! function_exists( 'wiw_industry_term' ) ) {
 	/**
-	 * The industry term of the current request, or null for the index and for an unknown slug.
+	 * The industry term of the current request, or null for the index, for an unknown slug and for Unclassified (a 404).
 	 */
 	function wiw_industry_term(): ?WP_Term {
 		$slug = sanitize_title( (string) get_query_var( WIW_INDUSTRY_VAR, '' ) );
-		if ( '' === $slug || ! taxonomy_exists( 'wiw_industry' ) ) {
+		if ( '' === $slug || ! taxonomy_exists( 'wiw_industry' ) || wiw_is_unclassified_industry( $slug ) ) {
 			return null;
 		}
 		$term = get_term_by( 'slug', $slug, 'wiw_industry' );
@@ -76,6 +88,23 @@ add_action(
 		}
 	}
 );
+
+if ( ! function_exists( 'wiw_industry_robots' ) ) {
+	/**
+	 * Robots directives: noindex for /industries/unclassified/ if anything renders it (it answers 404). Hooked to wp_robots.
+	 *
+	 * @param array<string, bool|string> $robots Directives.
+	 * @return array<string, bool|string>
+	 */
+	function wiw_industry_robots( array $robots ): array {
+		if ( wiw_is_unclassified_industry( sanitize_title( (string) get_query_var( WIW_INDUSTRY_VAR, '' ) ) ) ) {
+			$robots['noindex'] = true;
+			$robots['follow']  = true;
+		}
+		return $robots;
+	}
+}
+add_filter( 'wp_robots', 'wiw_industry_robots' );
 
 add_filter(
 	'pre_get_document_title',

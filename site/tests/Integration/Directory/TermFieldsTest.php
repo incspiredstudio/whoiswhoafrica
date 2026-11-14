@@ -338,6 +338,42 @@ final class TermFieldsTest extends TestCase {
 		$this->assertSame( 2, $rows );
 	}
 
+	public function test_REQ_009_a_new_sector_with_parent_none_is_accepted_and_the_refusal_reads_clearly(): void {
+		$fields = new TermFields();
+		$this->editor();
+		$this->post( array() );
+		$this->assertSame( 'Qwv New sector', $fields->check_insert( 'Qwv New sector', Taxonomies::INDUSTRY, array( 'parent' => '-1' ) ), 'Parent "None" sends -1: a new sector.' );
+		$this->assertNull( $fields->refusal( Taxonomies::INDUSTRY, array( 'parent' => -1 ) ) );
+		$sector   = $this->term( 'Qwvsector ' . wp_generate_password( 4, false ), Taxonomies::INDUSTRY );
+		$industry = $this->term( 'Qwvindustry ' . wp_generate_password( 4, false ), Taxonomies::INDUSTRY, $sector );
+		$refused  = $fields->check_insert( 'Qwv third level', Taxonomies::INDUSTRY, array( 'parent' => $industry ) );
+		$this->assertInstanceOf( \WP_Error::class, $refused, 'An industry under an industry is still refused.' );
+		$this->assertInstanceOf( \WP_Error::class, $fields->check_insert( 'Qwv under unclassified', Taxonomies::INDUSTRY, array( 'parent' => $this->unclassified() ) ) );
+		$message = TermFields::message( 'sector_parent' );
+		$this->assertStringNotContainsString( 'Leave Parent empty', $message );
+		$this->assertStringContainsString( 'set Parent to None', $message );
+	}
+
+	public function test_REQ_009_an_old_slug_redirects_the_industries_pages_and_other_list_filters(): void {
+		$this->editor();
+		$sector   = $this->term( 'Qwvarts', Taxonomies::INDUSTRY, 0, '', '', 'qwv-arts-old' );
+		$industry = $this->term( 'Qwvmusic', Taxonomies::INDUSTRY, $sector, '', '', 'qwv-music-old' );
+		$type     = $this->term( 'Qwvtype', Taxonomies::ORG_TYPE, 0, '', '', 'qwv-type-old' );
+		wp_update_term( $sector, Taxonomies::INDUSTRY, array( 'slug' => 'qwv-arts-new' ) );
+		wp_update_term( $industry, Taxonomies::INDUSTRY, array( 'slug' => 'qwv-music-new' ) );
+		wp_update_term( $type, Taxonomies::ORG_TYPE, array( 'slug' => 'qwv-type-new' ) );
+		$redirect = new OldTermSlugRedirect();
+		$none     = new Request( array() );
+		$this->assertSame( home_url( '/industries/qwv-arts-new/' ), $redirect->target( $none, '/industries/qwv-arts-old/' ), 'a sector page' );
+		$this->assertSame( home_url( '/industries/qwv-music-new/' ), $redirect->target( $none, '/industries/qwv-music-old/' ), 'an industry page' );
+		$this->assertSame( home_url( '/industries/qwv-music-new/page/2/' ), $redirect->target( $none, '/industries/qwv-music-old/page/2/' ), 'a later page' );
+		$this->assertSame( home_url( '/industries/qwv-music-new/?sort=updated' ), $redirect->target( new Request( array( 'sort' => 'updated' ) ), '/industries/qwv-music-old/?sort=updated' ), 'the query stays' );
+		$this->assertNull( $redirect->target( $none, '/industries/qwv-music-new/' ) );
+		$this->assertNull( $redirect->target( $none, '/industries/' ) );
+		$this->assertSame( '/businesses/?org_type=qwv-type-new', $redirect->target( new Request( array( 'org_type' => 'qwv-type-old' ) ), '/businesses/?org_type=qwv-type-old' ), 'the organisation type filter' );
+		$this->assertSame( '/stories/?industry=qwv-arts-new', $redirect->target( new Request( array( 'industry' => 'qwv-arts-old' ) ), '/stories/?industry=qwv-arts-old' ), 'any list that filters by industry' );
+	}
+
 	public function test_REQ_009_admin_columns_have_clear_labels(): void {
 		$fields  = new TermFields();
 		$columns = $fields->columns(
