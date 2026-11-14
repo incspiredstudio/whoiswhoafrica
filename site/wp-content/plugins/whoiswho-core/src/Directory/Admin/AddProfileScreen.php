@@ -2,7 +2,8 @@
 /**
  * The staff Add profile screen in the Directory menu (REQ-209, REQ-208, REQ-145, REQ-244, REQ-267). A staff member with
  * wiw_add_profile picks the entity type, then fills the fields of that type (taken from the allowlist in
- * config/profile-fields.php), the country, the four narrative sections, an optional photo or logo from the media library with its
+ * config/profile-fields.php), the classification (Industry picker, Organisation type, Country and City, as on Edit profile), the
+ * four narrative sections, an optional photo or logo from the media library with its
  * open licence, credit and source, and at least one source URL. Before saving, possible duplicates are listed with links, and the
  * profile is only created when none is found or the staff member ticks "create anyway". The new profile starts Imported not public,
  * in the review queue. From the Nominations screen, "Create profile" opens this screen with the name filled in and comes back to
@@ -26,9 +27,7 @@ use WhoIsWho\Core\Directory\Add\AddProfileValidator;
 use WhoIsWho\Core\Directory\Add\DuplicateFinder;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
-use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
-use WhoIsWho\Core\Import\Mapping\TermMapper;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
@@ -129,6 +128,7 @@ final class AddProfileScreen {
 		wp_enqueue_media();
 		wp_enqueue_script( 'wiw-add-profile', plugins_url( 'assets/admin/directory/add-profile.js', WIW_CORE_FILE ), array( 'media-views' ), WIW_CORE_VERSION, true );
 		wp_enqueue_script( 'wiw-char-count', plugins_url( 'assets/admin/directory/char-count.js', WIW_CORE_FILE ), array(), WIW_CORE_VERSION, true );
+		ClassificationPicker::enqueue();
 	}
 
 	/**
@@ -213,22 +213,26 @@ final class AddProfileScreen {
 		$form   = new AddProfileFields();
 		$fields = $form->for_type( $type );
 		$raw    = array(
-			'entity_type'   => $type,
-			'name'          => $request->string( 'name' ),
-			'country'       => $request->string( 'country' ),
-			'sources'       => $request->text( 'sources' ),
-			'wikidata_qid'  => strtoupper( $request->string( 'wikidata_qid' ) ),
-			'rc_number'     => $request->string( 'rc_number' ),
-			'image_id'      => $request->string( 'image_id' ),
-			'image_licence' => $request->string( 'image_licence' ),
-			'image_credit'  => $request->string( 'image_credit' ),
-			'image_source'  => $request->string( 'image_source' ),
+			'entity_type'      => $type,
+			'name'             => $request->string( 'name' ),
+			'country'          => $request->string( 'country' ),
+			'city'             => $request->string( 'city' ),
+			'primary_industry' => $request->string( 'primary_industry' ),
+			'org_type'         => $request->string( 'org_type' ),
+			'sources'          => $request->text( 'sources' ),
+			'wikidata_qid'     => strtoupper( $request->string( 'wikidata_qid' ) ),
+			'rc_number'        => $request->string( 'rc_number' ),
+			'image_id'         => $request->string( 'image_id' ),
+			'image_licence'    => $request->string( 'image_licence' ),
+			'image_credit'     => $request->string( 'image_credit' ),
+			'image_source'     => $request->string( 'image_source' ),
 		);
 		foreach ( $fields as $key => $rule ) {
 			$raw[ 'f_' . $key ] = $rule['long'] ? $request->text( 'f_' . $key ) : $request->string( 'f_' . $key );
 		}
-		$result = ( new AddProfileValidator( $type, $form ) )->validate( new FormInput( $raw ) );
-		$values = $result->values();
+		$result               = ( new AddProfileValidator( $type, $form ) )->validate( new FormInput( $raw ) );
+		$values               = $result->values();
+		$values['industries'] = implode( ',', array_filter( $request->ints( 'industries' ), static fn ( int $id ): bool => $id > 0 ) );
 		if ( ! $result->is_valid() ) {
 			return self::result( 'invalid', $values, $result->errors() );
 		}
@@ -249,7 +253,8 @@ final class AddProfileScreen {
 		if ( $service->is_suppressed( $values['name'], $type, $ids ) ) {
 			return self::result( 'refused', $values, array(), array(), 0, __( 'This name is on the suppression list, so it cannot be added. Ask an Administrator.', 'whoiswho' ) );
 		}
-		$override = '1' === $request->string( 'create_anyway' );
+		$classification = ( new ClassificationPicker( ClassificationPicker::ADD_NAMES ) )->from_request( $request );
+		$override       = '1' === $request->string( 'create_anyway' );
 		if ( ! $override ) {
 			$matches = ( new DuplicateFinder() )->find( $values['name'], $type, $ids );
 			if ( array() !== $matches ) {
@@ -269,7 +274,8 @@ final class AddProfileScreen {
 					'credit'  => $values['image_credit'],
 					'source'  => $values['image_source'],
 				),
-				$override
+				$override,
+				$classification
 			);
 		} catch ( \DomainException $refusal ) {
 			return self::result( 'refused', $values, array(), array(), 0, $refusal->getMessage() );
@@ -406,9 +412,18 @@ final class AddProfileScreen {
 		if ( '' !== $back ) {
 			$out .= '<input type="hidden" name="return" value="' . esc_attr( $back ) . '" />';
 		}
-		$out .= '<table class="form-table" role="presentation"><tbody>';
-		$out .= $this->row( 'name', __( 'Name', 'whoiswho' ) . ' *', '<input type="text" id="wiw-f-name" name="name" class="regular-text" maxlength="200" required="required" value="' . esc_attr( $name ) . '" />', $errors );
-		$out .= $this->row( 'country', __( 'Country', 'whoiswho' ) . ' *', $this->term_select( 'country', $this->countries(), $value( 'country' ), true ), $errors );
+		$out    .= '<table class="form-table" role="presentation"><tbody>';
+		$out    .= $this->row( 'name', __( 'Name', 'whoiswho' ) . ' *', '<input type="text" id="wiw-f-name" name="name" class="regular-text" maxlength="200" required="required" value="' . esc_attr( $name ) . '" />', $errors );
+		$current = array(
+			'primary_industry' => (int) $value( 'primary_industry' ),
+			'industries'       => array_values( array_filter( array_map( 'intval', explode( ',', $value( 'industries' ) ) ) ) ),
+			'org_type'         => (int) $value( 'org_type' ),
+			'country'          => (int) $value( 'country' ),
+			'city'             => (int) $value( 'city' ),
+		);
+		foreach ( ( new ClassificationPicker( ClassificationPicker::ADD_NAMES ) )->rows( $current, $type, true ) as $picker_row ) {
+			$out .= $this->row( $picker_row['name'], $picker_row['label'], $picker_row['html'], $errors );
+		}
 		foreach ( $form->for_type( $type ) as $key => $rule ) {
 			if ( in_array( $key, AddProfileFields::SECTIONS, true ) ) {
 				continue;
@@ -488,10 +503,6 @@ final class AddProfileScreen {
 	private function input( string $key, array $rule, string $value ): string {
 		$name     = 'f_' . $key;
 		$required = $rule['required'] ? ' required="required"' : '';
-		$taxonomy = TermMapper::FIELDS[ $key ] ?? '';
-		if ( '' !== $taxonomy ) {
-			return $this->term_select( $name, $this->terms( $taxonomy, Taxonomies::PLACE === $taxonomy ? Taxonomies::KIND_CITY : '' ), $value, $rule['required'] );
-		}
 		if ( $rule['long'] ) {
 			$rows  = in_array( $key, AddProfileFields::SECTIONS, true ) ? 8 : 4;
 			$hint  = 'list' === $rule['type'] ? ' ' . esc_html__( 'One per line.', 'whoiswho' ) : '';
@@ -502,72 +513,6 @@ final class AddProfileScreen {
 		}
 		$html_type = 'url' === $rule['type'] ? 'url' : ( 'int' === $rule['type'] ? 'number' : 'text' );
 		return '<input type="' . esc_attr( $html_type ) . '" id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" class="regular-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '" value="' . esc_attr( $value ) . '"' . $required . ' />';
-	}
-
-	/**
-	 * A select of terms.
-	 *
-	 * @param string             $name     Field name.
-	 * @param array<int, string> $terms    Term id => name.
-	 * @param string             $value    Chosen id.
-	 * @param bool               $required Required.
-	 */
-	private function term_select( string $name, array $terms, string $value, bool $required ): string {
-		$out = '<select id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '"' . ( $required ? ' required="required"' : '' ) . '><option value="">' . esc_html__( 'Choose', 'whoiswho' ) . '</option>';
-		foreach ( $terms as $id => $label ) {
-			$out .= '<option value="' . esc_attr( (string) $id ) . '"' . selected( $value, (string) $id, false ) . '>' . esc_html( $label ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
-		}
-		$out .= '</select>';
-		if ( array() === $terms ) {
-			$out .= '<p class="description">' . esc_html__( 'This list is empty. Add entries on its list screen first.', 'whoiswho' ) . '</p>';
-		}
-		return $out;
-	}
-
-	/**
-	 * Countries and pan-African bodies.
-	 *
-	 * @return array<int, string>
-	 */
-	private function countries(): array {
-		$out = array();
-		foreach ( array( Taxonomies::KIND_COUNTRY, Taxonomies::KIND_BODY ) as $kind ) {
-			$out += $this->terms( Taxonomies::PLACE, $kind );
-		}
-		asort( $out );
-		return $out;
-	}
-
-	/**
-	 * Terms of a list, optionally of one place kind.
-	 *
-	 * @param string $taxonomy Taxonomy.
-	 * @param string $kind     Place kind, or empty.
-	 * @return array<int, string>
-	 */
-	private function terms( string $taxonomy, string $kind = '' ): array {
-		$args = array(
-			'taxonomy'   => $taxonomy,
-			'hide_empty' => false,
-			'number'     => 1000,
-			'orderby'    => 'name',
-		);
-		if ( '' !== $kind ) {
-			$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- small controlled list.
-				array(
-					'key'   => Taxonomies::META_KIND,
-					'value' => $kind,
-				),
-			);
-		}
-		$terms = get_terms( $args );
-		$out   = array();
-		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
-			if ( $term instanceof \WP_Term ) {
-				$out[ $term->term_id ] = $term->name;
-			}
-		}
-		return $out;
 	}
 
 	/**

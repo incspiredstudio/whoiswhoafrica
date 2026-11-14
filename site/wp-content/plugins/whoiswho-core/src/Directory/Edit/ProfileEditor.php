@@ -1,9 +1,12 @@
 <?php
 /**
- * Direct profile edit (REQ-125, REQ-188, REQ-232, REQ-143, REQ-244): changes allowlisted fields and terms with a mandatory
- * reason, appends a version row (author, time, reason, old and new values), writes an audit row through AuditLogger, and can close
+ * Direct profile edit (REQ-125, REQ-188, REQ-232, REQ-143, REQ-244, REQ-009): changes allowlisted fields, terms and the
+ * classification (main industry, other industries, organisation type, main country and city, through ClassificationInput) with a
+ * mandatory reason, appends a version row (author, time, reason, old and new values), writes an audit row through AuditLogger, and can close
  * the open correction the edit answers. An edit by the assigned user of a claimed profile is not applied: it is stored as a
- * pending revision for the review step (M1-REV-11). Any other edit applies at once and a published page is queued for purge.
+ * pending revision for the review step (M1-REV-11). Any other edit applies at once and a published page is queued for purge. An
+ * applied staff edit records a provenance row per changed field (method manual, source "Staff edit", confidence medium), so the
+ * edited fact keeps counting as sourced and is not dropped from the public page.
  * Domain service; the screen and handler stay thin.
  *
  * @package WhoIsWho
@@ -21,6 +24,7 @@ use WhoIsWho\Core\Directory\Fields\FieldValidator;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\Purge\PurgeQueue;
+use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Directory\State\VersionRepository;
@@ -34,6 +38,17 @@ use WhoIsWho\Core\Trust\AssignedProfiles;
 final class ProfileEditor {
 
 	public const EDIT_CAPABILITY = 'edit_wiw_profiles';
+
+	/**
+	 * The source a staff edit's provenance row names, and its confidence.
+	 */
+	public const STAFF_SOURCE     = 'Staff edit';
+	public const STAFF_CONFIDENCE = 'medium';
+
+	/**
+	 * Version and audit key of a classification change.
+	 */
+	public const CLASSIFICATION_KEY = 'classification';
 
 	/**
 	 * Allowlist.
@@ -82,22 +97,24 @@ final class ProfileEditor {
 	/**
 	 * Edit a profile.
 	 *
-	 * @param int                  $profile_id Profile.
-	 * @param array<string, mixed> $changes    Field key => new value; null or empty clears an optional field.
-	 * @param string               $reason     Why, or the request reference. Required.
-	 * @param int                  $actor_id   The user making the edit.
-	 * @param int                  $resolves   Support item (a correction) this edit answers, or 0.
-	 * @param array<string, int[]> $terms      Taxonomy => the full set of term ids to assign.
+	 * @param int                       $profile_id Profile.
+	 * @param array<string, mixed>      $changes    Field key => new value; null or empty clears an optional field.
+	 * @param string                    $reason     Why, or the request reference. Required.
+	 * @param int                       $actor_id   The user making the edit.
+	 * @param int                       $resolves   Support item (a correction) this edit answers, or 0.
+	 * @param array<string, int[]>      $terms      Taxonomy => the full set of term ids to assign.
+	 * @param array<string, mixed>|null $classification The wanted classification (see ClassificationInput::normalise()), or null to
+	 *                                                  leave it alone.
 	 * @return array{version_id: int, applied: bool, changed: string[]}
 	 * @throws EditRefused With a message fit to show.
 	 */
-	public function edit( int $profile_id, array $changes, string $reason, int $actor_id, int $resolves = 0, array $terms = array() ): array {
+	public function edit( int $profile_id, array $changes, string $reason, int $actor_id, int $resolves = 0, array $terms = array(), ?array $classification = null ): array {
 		$assigned = new AssignedProfiles();
 		$limited  = $assigned->is_limited( $actor_id );
 		if ( $limited ? ! $assigned->is_assigned( $actor_id, $profile_id ) : ! user_can( $actor_id, self::EDIT_CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- generated for the profile type, listed in config/capabilities.php.
 			throw EditRefused::because( 'You are not allowed to edit profiles.' );
 		}
-		if ( $limited && ( 0 !== $resolves || array() !== $terms ) ) {
+		if ( $limited && ( 0 !== $resolves || array() !== $terms || null !== $classification ) ) {
 			throw EditRefused::because( 'You can change only the descriptive text and links of your profiles.' );
 		}
 		$reason = trim( $reason );
@@ -168,6 +185,18 @@ final class ProfileEditor {
 			$old[ 'terms:' . $taxonomy ] = $change['old'];
 			$new[ 'terms:' . $taxonomy ] = $change['new'];
 		}
+		$classifier = new ClassificationInput();
+		if ( null !== $classification ) {
+			if ( ! user_can( $actor_id, 'assign_terms' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+				throw EditRefused::because( 'You are not allowed to assign terms.' );
+			}
+			$wanted = $classifier->normalise( $classification, $type );
+			$was    = $classifier->current( $profile_id );
+			if ( $wanted !== $was ) {
+				$old[ self::CLASSIFICATION_KEY ] = $was;
+				$new[ self::CLASSIFICATION_KEY ] = $wanted;
+			}
+		}
 		if ( array() === $new ) {
 			throw EditRefused::because( 'Nothing changed.' );
 		}
@@ -177,16 +206,33 @@ final class ProfileEditor {
 		$version = ( new VersionRepository() )->append( $profile_id, $actor_id, $pending ? 'revision' : 'edit', $reason, $old, $new, $pending ? 'pending' : null );
 		if ( ! $pending ) {
 			$fields = new ProfileFields( $this->allowlist );
+			$prov   = new ProvenanceRepository();
+			$now    = gmdate( 'Y-m-d H:i:s' );
 			foreach ( $new as $key => $value ) {
-				if ( 0 === strpos( $key, 'terms:' ) ) {
+				if ( 0 === strpos( $key, 'terms:' ) || self::CLASSIFICATION_KEY === $key ) {
 					continue;
 				}
 				$fields->set( $profile_id, $key, isset( $clear[ $key ] ) ? '' : $value );
+				if ( ! isset( $clear[ $key ] ) ) {
+					$prov->record(
+						$profile_id,
+						array(
+							'field'        => $key,
+							'source_url'   => self::STAFF_SOURCE,
+							'retrieved_at' => $now,
+							'confidence'   => self::STAFF_CONFIDENCE,
+							'method'       => 'manual',
+						)
+					);
+				}
 			}
 			foreach ( $term_changes as $taxonomy => $change ) {
 				wp_set_object_terms( $profile_id, $change['new'], $taxonomy );
 			}
-		}
+			if ( isset( $new[ self::CLASSIFICATION_KEY ] ) ) {
+				$classifier->assign( $profile_id, $type, $new[ self::CLASSIFICATION_KEY ] );
+			}
+		}//end if
 		// The audit trail names a contact detail that changed but never holds its value; the pending revision does.
 		$audit_old = $old;
 		$audit_new = $new;

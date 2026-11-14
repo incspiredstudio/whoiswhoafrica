@@ -4,7 +4,8 @@
  * showing what visitors see now. Needs read_private_wiw_profiles; the registry denies by default and the screen checks again.
  * The filter state lives in the address. The unpublish row action appears once its handler exists (M1-REV-03) and only for a
  * user who may unpublish; the bulk unpublish interface (M1-REV-10) plugs into the wiw_profiles_bulk_host action, which receives
- * the same sanitised filter set the list shows.
+ * the same sanitised filter set the list shows. View links above the filters switch between all profiles and those that need
+ * classification (REQ-009), each with its count.
  *
  * @package WhoIsWho
  */
@@ -78,6 +79,7 @@ final class ProfilesScreen {
 		$result  = ( new ProfilesQuery() )->run( $filters, $page );
 
 		echo '<div class="wrap"><h1 class="wp-heading-inline">' . esc_html__( 'Profiles', 'whoiswho' ) . '</h1>' . ( current_user_can( AddProfileScreen::CAPABILITY ) ? ' <a class="page-title-action" href="' . esc_url( AddProfileScreen::url() ) . '">' . esc_html__( 'Add profile', 'whoiswho' ) . '</a>' : '' ) . '<hr class="wp-header-end" />'; // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+		$this->views( $filters );
 		$this->filter_form( $filters );
 		/* translators: %d: number of profiles. */
 		echo '<p>' . esc_html( sprintf( _n( '%d profile', '%d profiles', $result['total'], 'whoiswho' ), $result['total'] ) ) . '</p>';
@@ -93,12 +95,38 @@ final class ProfilesScreen {
 	}
 
 	/**
+	 * The view links: All and Needs classification, with counts.
+	 *
+	 * @param array<string, string> $filters Filters.
+	 */
+	private function views( array $filters ): void {
+		$query = new ProfilesQuery();
+		$needs = ProfilesQuery::NEEDS === ( $filters[ ProfilesQuery::CLASSIFICATION ] ?? '' );
+		$all   = add_query_arg( 'page', self::SCREEN, admin_url( 'admin.php' ) );
+		$views = array(
+			array( __( 'All', 'whoiswho' ), $query->count( array() ), $all, ! $needs ),
+			array( __( 'Needs classification', 'whoiswho' ), $query->count( array( ProfilesQuery::CLASSIFICATION => ProfilesQuery::NEEDS ) ), add_query_arg( ProfilesQuery::CLASSIFICATION, ProfilesQuery::NEEDS, $all ), $needs ),
+		);
+		$items = array();
+		foreach ( $views as list( $label, $count, $url, $current ) ) {
+			$items[] = '<li><a href="' . esc_url( $url ) . '"' . ( $current ? ' class="current" aria-current="page"' : '' ) . '>' . esc_html( $label ) . ' <span class="count">(' . esc_html( (string) $count ) . ')</span></a></li>';
+		}
+		echo '<ul class="subsubsub wiw-profile-views">' . implode( ' | ', $items ) . '</ul><br class="clear" />'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each item is escaped above.
+		if ( $needs ) {
+			echo '<p class="description">' . esc_html__( 'Profiles whose main industry is missing or Unclassified, or that have no main country. Open one and set its classification.', 'whoiswho' ) . '</p>';
+		}
+	}
+
+	/**
 	 * Filter form (GET, so the filter state is in the address).
 	 *
 	 * @param array<string, string> $filters Filters.
 	 */
 	private function filter_form( array $filters ): void {
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		if ( isset( $filters[ ProfilesQuery::CLASSIFICATION ] ) ) {
+			echo '<input type="hidden" name="' . esc_attr( ProfilesQuery::CLASSIFICATION ) . '" value="' . esc_attr( $filters[ ProfilesQuery::CLASSIFICATION ] ) . '" />';
+		}
 		echo '<label>' . esc_html__( 'Name', 'whoiswho' ) . ' <input type="search" name="name" value="' . esc_attr( $filters['name'] ?? '' ) . '" /></label> ';
 		$this->select( 'state', __( 'State', 'whoiswho' ), PubState::all(), $filters );
 		$this->select( 'type', __( 'Type', 'whoiswho' ), StateRepository::ENTITY_TYPES, $filters );

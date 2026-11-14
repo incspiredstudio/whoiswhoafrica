@@ -10,10 +10,12 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Tests\Integration\Directory;
 
+use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Compliance\Suppression\Suppression;
 use WhoIsWho\Core\Directory\Add\AddProfileFields;
 use WhoIsWho\Core\Directory\Add\AddProfileService;
 use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
+
 use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Directory\ProfileType;
@@ -62,6 +64,12 @@ final class AddProfileTest extends TestCase {
 
 	private int $org_type = 0;
 
+	private int $sector = 0;
+
+	private int $other_industry = 0;
+
+	private int $city = 0;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->requireWordPress();
@@ -78,10 +86,13 @@ final class AddProfileTest extends TestCase {
 		( new RoleSync( new CapabilityCatalogue() ) )->sync();
 		wp_set_current_user( 0 );
 		global $wpdb;
-		$this->audit_floor = (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$wpdb->prefix}wiw_audit_log" ); // phpcs:ignore WordPress.DB
-		$this->country     = $this->term( 'Testland ' . wp_generate_password( 6, false ), Taxonomies::PLACE, Taxonomies::KIND_COUNTRY );
-		$this->industry    = $this->term( 'Test music ' . wp_generate_password( 6, false ), Taxonomies::INDUSTRY );
-		$this->org_type    = $this->term( 'Test bank ' . wp_generate_password( 6, false ), Taxonomies::ORG_TYPE );
+		$this->audit_floor    = (int) $wpdb->get_var( "SELECT COALESCE(MAX(id),0) FROM {$wpdb->prefix}wiw_audit_log" ); // phpcs:ignore WordPress.DB
+		$this->country        = $this->term( 'Testland ' . wp_generate_password( 6, false ), Taxonomies::PLACE, Taxonomies::KIND_COUNTRY );
+		$this->sector         = $this->term( 'Test arts ' . wp_generate_password( 6, false ), Taxonomies::INDUSTRY );
+		$this->industry       = $this->term( 'Test music ' . wp_generate_password( 6, false ), Taxonomies::INDUSTRY, '', $this->sector );
+		$this->other_industry = $this->term( 'Test film ' . wp_generate_password( 6, false ), Taxonomies::INDUSTRY, '', $this->sector );
+		$this->city           = $this->term( 'Testcity ' . wp_generate_password( 6, false ), Taxonomies::PLACE, Taxonomies::KIND_CITY, $this->country );
+		$this->org_type       = $this->term( 'Test bank ' . wp_generate_password( 6, false ), Taxonomies::ORG_TYPE );
 	}
 
 	protected function tearDown(): void {
@@ -91,7 +102,7 @@ final class AddProfileTest extends TestCase {
 			$wpdb->delete( StateRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->delete( ProvenanceRepository::table(), array( 'profile_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
-		foreach ( $this->terms as list( $term, $taxonomy ) ) {
+		foreach ( array_reverse( $this->terms ) as list( $term, $taxonomy ) ) {
 			wp_delete_term( $term, $taxonomy );
 		}
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Suppression::table() . ' WHERE name LIKE %s', 'Zz Suppressed%' ) ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
@@ -105,8 +116,8 @@ final class AddProfileTest extends TestCase {
 		parent::tearDown();
 	}
 
-	private function term( string $name, string $taxonomy, string $kind = '' ): int {
-		$made = wp_insert_term( $name, $taxonomy );
+	private function term( string $name, string $taxonomy, string $kind = '', int $parent_id = 0 ): int {
+		$made = wp_insert_term( $name, $taxonomy, array( 'parent' => $parent_id ) );
 		$this->assertIsArray( $made );
 		$id = (int) $made['term_id'];
 		if ( '' !== $kind ) {
@@ -148,7 +159,7 @@ final class AddProfileTest extends TestCase {
 				'entity_type'            => 'individual',
 				'name'                   => 'Ifeoma Testperson ' . wp_generate_password( 6, false, false ),
 				'country'                => (string) $this->country,
-				'f_industry'             => (string) $this->industry,
+				'primary_industry'       => (string) $this->industry,
 				'f_current_title'        => 'Composer',
 				'f_current_organisation' => 'Fictional Orchestra',
 				'f_bio'                  => "First paragraph of a fictional bio.\n\nSecond paragraph.",
@@ -234,15 +245,15 @@ final class AddProfileTest extends TestCase {
 		$result = $this->submit(
 			$this->person(
 				array(
-					'sources'    => "https://example.org/ok\njavascript:alert(1)",
-					'f_industry' => '999999999',
-					'country'    => (string) $this->industry,
+					'sources'          => "https://example.org/ok\njavascript:alert(1)",
+					'primary_industry' => '999999999',
+					'country'          => (string) $this->industry,
 				)
 			)
 		);
 		$this->assertSame( 'invalid', $result['status'] );
 		$this->assertArrayHasKey( 'sources', $result['errors'] );
-		$this->assertArrayHasKey( 'f_industry', $result['errors'] );
+		$this->assertArrayHasKey( 'primary_industry', $result['errors'] );
 		$this->assertArrayHasKey( 'country', $result['errors'] );
 	}
 
@@ -258,7 +269,7 @@ final class AddProfileTest extends TestCase {
 			)
 		);
 		$this->assertSame( 'invalid', $result['status'] );
-		$this->assertArrayHasKey( 'f_org_type', $result['errors'] );
+		$this->assertArrayHasKey( 'org_type', $result['errors'] );
 		$this->assertArrayHasKey( 'f_website', $result['errors'] );
 	}
 
@@ -314,6 +325,8 @@ final class AddProfileTest extends TestCase {
 		}
 		$this->assertSame( array( $this->country ), array_map( 'intval', wp_get_object_terms( $id, Taxonomies::PLACE, array( 'fields' => 'ids' ) ) ) );
 		$this->assertSame( array( $this->industry ), array_map( 'intval', wp_get_object_terms( $id, Taxonomies::INDUSTRY, array( 'fields' => 'ids' ) ) ) );
+		$this->assertSame( (string) $this->industry, get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
+		$this->assertSame( (string) $this->country, get_post_meta( $id, Classification::PRIMARY_COUNTRY_META, true ) );
 
 		$prov = new ProvenanceRepository();
 		$name = $prov->for_profile( $id, 'name' );
@@ -350,7 +363,7 @@ final class AddProfileTest extends TestCase {
 				'entity_type' => 'organisation',
 				'name'        => 'Chidinma Duplicate-Testcase',
 				'country'     => (string) $this->country,
-				'f_org_type'  => (string) $this->org_type,
+				'org_type'    => (string) $this->org_type,
 				'sources'     => 'https://example.org/org',
 			)
 		);
@@ -435,13 +448,18 @@ final class AddProfileTest extends TestCase {
 	public function test_REQ_209_the_form_lists_the_fields_of_the_chosen_type_from_the_config(): void {
 		$this->as_editor();
 		$html = ( new AddProfileScreen() )->html( new Request( array( 'entity_type' => 'individual' ) ) );
-		foreach ( array( 'f_current_title', 'f_current_organisation', 'f_bio', 'f_achievement', 'f_influence', 'f_legacy', 'f_lifespan', 'f_field', 'sources', 'country' ) as $name ) {
+		foreach ( array( 'f_current_title', 'f_current_organisation', 'f_bio', 'f_achievement', 'f_influence', 'f_legacy', 'f_lifespan', 'sources', 'country', 'city', 'primary_industry', 'industries[]' ) as $name ) {
 			$this->assertStringContainsString( 'name="' . $name . '"', $html, $name );
 		}
-		$this->assertStringNotContainsString( 'name="f_org_type"', $html );
+		foreach ( array( 'f_org_type', 'org_type', 'f_field', 'f_industry' ) as $name ) {
+			$this->assertStringNotContainsString( 'name="' . $name . '"', $html, $name );
+		}
 		$html = ( new AddProfileScreen() )->html( new Request( array( 'entity_type' => 'organisation' ) ) );
-		foreach ( array( 'f_org_type', 'f_website', 'f_bio', 'f_legacy' ) as $name ) {
+		foreach ( array( 'org_type', 'f_website', 'f_bio', 'f_legacy', 'primary_industry', 'country', 'city' ) as $name ) {
 			$this->assertStringContainsString( 'name="' . $name . '"', $html, $name );
+		}
+		foreach ( array( 'f_org_type', 'f_industry', 'f_sector', 'f_hq_city' ) as $name ) {
+			$this->assertStringNotContainsString( 'name="' . $name . '"', $html, $name );
 		}
 		$this->assertStringNotContainsString( 'name="f_current_title"', $html );
 		$this->assertStringNotContainsString( 'name="f_lifespan"', $html );
@@ -450,8 +468,9 @@ final class AddProfileTest extends TestCase {
 	public function test_REQ_209_labels_come_from_the_config_and_long_boxes_have_a_counter(): void {
 		$this->as_editor();
 		$html = ( new AddProfileScreen() )->html( new Request( array( 'entity_type' => 'organisation' ) ) );
-		$this->assertStringContainsString( '>Head office city<', $html, 'the label is the config label' );
+		$this->assertStringContainsString( '>Licence category<', $html, 'the label is the config label' );
 		$this->assertStringContainsString( '>Organisation type *<', $html );
+		$this->assertStringContainsString( '>City (optional)<', $html );
 		foreach ( array(
 			'f_mandate' => 2000,
 			'f_summary' => 2000,
@@ -463,6 +482,59 @@ final class AddProfileTest extends TestCase {
 		$this->assertStringContainsString( '0 / 6000 characters', $html );
 		$this->assertSame( 'Head office city', \WhoIsWho\Core\Review\Admin\Labels::field( 'hq_city' ) );
 		$this->assertSame( 'Official website', \WhoIsWho\Core\Review\Admin\Labels::field( 'official_website', 'individual' ) );
+	}
+
+	public function test_REQ_009_add_profile_stores_the_classification_from_the_pickers(): void {
+		$this->as_editor();
+		$result = $this->submit(
+			array(
+				'entity_type'      => 'organisation',
+				'name'             => 'Fictional Classified Bank ' . wp_generate_password( 6, false, false ),
+				'country'          => (string) $this->country,
+				'city'             => (string) $this->city,
+				'org_type'         => (string) $this->org_type,
+				'primary_industry' => (string) $this->industry,
+				'industries'       => array( (string) $this->other_industry, '0' ),
+				'sources'          => 'https://example.org/bank',
+			)
+		);
+		$this->assertSame( 'created', $result['status'], (string) wp_json_encode( $result ) );
+		$id = (int) $result['profile_id'];
+		$this->assertEqualsCanonicalizing( array( $this->industry, $this->other_industry ), $this->term_ids( $id, Taxonomies::INDUSTRY ) );
+		$this->assertEqualsCanonicalizing( array( $this->country, $this->city ), $this->term_ids( $id, Taxonomies::PLACE ) );
+		$this->assertSame( array( $this->org_type ), $this->term_ids( $id, Taxonomies::ORG_TYPE ) );
+		$this->assertSame( (string) $this->industry, get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
+		$this->assertSame( '', get_post_meta( $id, 'wiw_org_type', true ), 'no duplicate text field is written' );
+	}
+
+	public function test_REQ_009_a_city_outside_the_country_and_a_sector_as_industry_are_refused(): void {
+		$this->as_editor();
+		$other  = $this->term( 'Otherland ' . wp_generate_password( 6, false ), Taxonomies::PLACE, Taxonomies::KIND_COUNTRY );
+		$result = $this->submit(
+			$this->person(
+				array(
+					'country'          => (string) $other,
+					'city'             => (string) $this->city,
+					'primary_industry' => (string) $this->sector,
+				)
+			)
+		);
+		$this->assertSame( 'invalid', $result['status'] );
+		$this->assertArrayHasKey( 'city', $result['errors'] );
+		$this->assertArrayHasKey( 'primary_industry', $result['errors'] );
+		$result = $this->submit( $this->person( array( 'industries' => array( (string) $this->sector ) ) ) );
+		$this->assertSame( 'refused', $result['status'], 'a sector is not an extra industry' );
+	}
+
+	/**
+	 * A profile's term ids in one taxonomy.
+	 *
+	 * @param int    $id       Profile.
+	 * @param string $taxonomy Taxonomy.
+	 * @return int[]
+	 */
+	private function term_ids( int $id, string $taxonomy ): array {
+		return array_map( 'intval', wp_get_object_terms( $id, $taxonomy, array( 'fields' => 'ids' ) ) );
 	}
 
 	/**
