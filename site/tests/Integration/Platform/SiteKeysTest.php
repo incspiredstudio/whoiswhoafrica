@@ -44,7 +44,7 @@ final class SiteKeysTest extends WpTestCase {
 	 * @param string $name Key name.
 	 */
 	private function assert_generated_once( string $name ): string {
-		$none  = static fn ( string $constant ): string => '';
+		$none  = '__return_empty_string';
 		$first = SiteKeys::get( $name, $none );
 		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', $first, '32 random bytes, hex encoded' );
 		$this->assertSame( $first, SiteKeys::get( $name, $none ), 'made once, then reused' );
@@ -60,7 +60,7 @@ final class SiteKeysTest extends WpTestCase {
 	 * @param string $constant Constant name it is read from.
 	 */
 	private function assert_constant_wins( string $name, string $constant ): void {
-		$stored = SiteKeys::get( $name, static fn ( string $c ): string => '' );
+		$stored = SiteKeys::get( $name, '__return_empty_string' );
 		$lookup = static fn ( string $c ): string => $constant === $c ? 'from-the-host' : '';
 		$this->assertSame( 'from-the-host', SiteKeys::get( $name, $lookup ) );
 		$this->assertSame( $stored, get_option( SiteKeys::option_name( $name ) ), 'the stored key is left alone' );
@@ -94,7 +94,7 @@ final class SiteKeysTest extends WpTestCase {
 
 	public function test_REQ_056_an_empty_stored_value_is_replaced_not_used(): void {
 		update_option( SiteKeys::option_name( SiteKeys::FORM_TOKEN_KEY ), '', false );
-		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', SiteKeys::get( SiteKeys::FORM_TOKEN_KEY, static fn ( string $c ): string => '' ) );
+		$this->assertMatchesRegularExpression( '/^[0-9a-f]{64}$/', SiteKeys::get( SiteKeys::FORM_TOKEN_KEY, '__return_empty_string' ) );
 	}
 
 	public function test_REQ_046_no_constant_means_the_site_reports_a_generated_source(): void {

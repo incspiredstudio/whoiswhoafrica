@@ -102,7 +102,7 @@ final class MailTransportTest extends WpTestCase {
 	}
 
 	public function test_REQ_075_an_active_smtp_plugin_owns_the_connection_and_the_from_address(): void {
-		$mailer = new PHPMailer( true );
+		$mailer       = new PHPMailer( true );
 		$mailer->Host = 'set-by-the-plugin';
 		$this->transport( array(), true )->configure( $mailer );
 		$this->assertSame( 'mail', $mailer->Mailer, 'our constants are ignored while a mail plugin is active' );

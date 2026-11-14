@@ -45,7 +45,10 @@ define( 'WIW_SMTP_PORT', wiw_secret( 'SMTP_PORT', '587' ) );
 define( 'WIW_SMTP_USER', wiw_secret( 'SMTP_USER' ) );
 define( 'WIW_SMTP_PASSWORD', wiw_secret( 'SMTP_PASSWORD' ) );
 define( 'WIW_SMTP_FROM', wiw_secret( 'SMTP_FROM' ) );
-define( 'WIW_TURNSTILE_SECRET', wiw_secret( 'TURNSTILE_SECRET_KEY' ) ); // Empty means the bot challenge uses the built-in fallback.
+define( 'WIW_TURNSTILE_SITE_KEY', wiw_secret( 'TURNSTILE_SITE_KEY' ) );
+// Empty means the keys saved on the Setup screen are used.
+define( 'WIW_TURNSTILE_SECRET', wiw_secret( 'TURNSTILE_SECRET_KEY' ) );
+// Both keys empty everywhere means the built-in fallback.
 define( 'WIW_MAIL_HOURLY_CAP', wiw_secret( 'MAIL_HOURLY_CAP', '100' ) );
 define( 'DB_CHARSET', 'utf8mb4' );
 define( 'DB_COLLATE', '' );

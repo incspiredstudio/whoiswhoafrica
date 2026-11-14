@@ -60,7 +60,7 @@ final class Transport {
 	 * Constructor.
 	 *
 	 * @param array{host: string, port: int, user: string, password: string, from: string, hourly_cap: int} $config   Settings.
-	 * @param (callable(): bool)|null                                                                   $external Whether a mail plugin owns SMTP; the active plugins by default.
+	 * @param (callable(): bool)|null                                                                       $external Whether a mail plugin owns SMTP; the active plugins by default.
 	 */
 	public function __construct( array $config, ?callable $external = null ) {
 		$this->config   = $config;
