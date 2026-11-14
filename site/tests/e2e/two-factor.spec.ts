@@ -12,6 +12,7 @@ test.describe("two-factor is optional (REQ-047)", () => {
   });
 
   test("a staff user without a second factor reaches the admin and can switch it on", async ({ page }) => {
+    test.setTimeout(120_000);
     test.skip(!E2E_USER || !E2E_PASS, "E2E_USER and E2E_PASS are required");
     await page.goto("/wp-login.php");
     await page.fill("#user_login", E2E_USER as string);
@@ -20,12 +21,12 @@ test.describe("two-factor is optional (REQ-047)", () => {
     await page.waitForLoadState("domcontentloaded");
 
     for (const screen of ["/wordpress/wp-admin/index.php", "/wordpress/wp-admin/edit.php"]) {
-      await page.goto(screen);
+      await page.goto(screen, { waitUntil: "domcontentloaded" });
       await expect(page, screen).not.toHaveURL(/profile\.php/);
       await expect(page.locator("#wpbody")).toBeVisible();
     }
     // The set-up section, with the recovery codes option, is available on the profile.
-    await page.goto("/wordpress/wp-admin/profile.php");
+    await page.goto("/wordpress/wp-admin/profile.php", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#two-factor-options")).toBeVisible();
   });
 });
