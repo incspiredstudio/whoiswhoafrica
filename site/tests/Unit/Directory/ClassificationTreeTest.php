@@ -163,7 +163,10 @@ final class ClassificationTreeTest extends TestCase {
 
 	public function test_REQ_009_no_alias_or_label_means_two_entries_in_one_list(): void {
 		$config = Classification::config();
-		$lists  = array( 'industry' => array(), 'org_type' => array() );
+		$lists  = array(
+			'industry' => array(),
+			'org_type' => array(),
+		);
 		foreach ( $config['sectors'] as $sector ) {
 			$lists['industry'] += $sector['industries'];
 		}

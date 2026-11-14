@@ -54,10 +54,10 @@ final class Tags {
 
 		$text = $this->first_sentence( (string) ( $profile->facts['bio']['value'] ?? $profile->facts['summary']['value'] ?? '' ) );
 		if ( '' === $text ) {
-			$org  = (string) ( $profile->facts['current_organisation']['value'] ?? '' );
+			$org   = (string) ( $profile->facts['current_organisation']['value'] ?? '' );
 			$place = $profile->place();
 			$city  = null === $place ? '' : (string) ( $place['city'] ?? '' );
-			$text = trim( $profile->name . ( '' !== $role ? ' is ' . $role : '' ) . ( '' !== $org ? ' at ' . $org : '' ) . ( '' !== $city ? ' in ' . $city : '' ), ' ' ) . '.';
+			$text  = trim( $profile->name . ( '' !== $role ? ' is ' . $role : '' ) . ( '' !== $org ? ' at ' . $org : '' ) . ( '' !== $city ? ' in ' . $city : '' ), ' ' ) . '.';
 		}
 		$description = $text;
 		if ( null !== $profile->label ) {

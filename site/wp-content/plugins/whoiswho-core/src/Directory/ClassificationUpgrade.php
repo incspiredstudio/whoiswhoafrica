@@ -84,7 +84,7 @@ final class ClassificationUpgrade {
 				$type = null === $row ? 'individual' : (string) $row['entity_type'];
 				$done = $classifier->assign( $id, $type, $this->derive( $id, $type, $classifier ) );
 				++$counts['profiles'];
-				if ( $done['primary_industry'] === Classification::unclassified_id() ) {
+				if ( Classification::unclassified_id() === $done['primary_industry'] ) {
 					++$counts['unclassified'];
 				} else {
 					++$counts['classified'];

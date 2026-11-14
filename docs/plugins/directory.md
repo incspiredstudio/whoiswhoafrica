@@ -5,7 +5,7 @@ The module that owns profiles: what a profile is, which fields it may hold, how 
 ## Responsibility
 
 - Define the profile type for individuals, businesses and institutions, and the fields each may store.
-- Own the controlled lists (industry, sector, profession, organisation type, place).
+- Own the controlled lists: the classification tree (sectors, industries, Unclassified), profession, organisation type and place.
 - Keep a version history of every edit and a source for every field.
 - Build and query the search index, for profiles and, through the Content module, stories.
 - Expose `PublicProfile`, the only way a template or form can read a profile.
@@ -15,7 +15,12 @@ The module that owns profiles: what a profile is, which fields it may hold, how 
 | Item | Kind | Notes |
 |---|---|---|
 | `wiw_profile` | Custom post type | No archive, no feed, no REST, excluded from core search. URLs are served by the plugin's own rewrite and handler. The post holds name and slug. Fields are post meta registered from an allowlist per entity type |
-| `wiw_industry`, `wiw_sector`, `wiw_profession`, `wiw_org_type` | Taxonomies | Controlled lists. Editors and Administrators add terms in WordPress's native term screens. Reviewers only assign existing terms |
+| `wiw_industry` | Taxonomy, hierarchical | The classification tree (REQ-009 as amended 2026-11-14): sectors at the top, their industries under them, and a top-level `unclassified` term hidden from public navigation. Seeded from `config/classification.php` (slugs never change; staff may rename labels). Industry terms carry the aliases in term meta `wiw_alias` (array of strings). Shared with acquisition as `docs/contracts/classification-tree.json`, regenerated with `php site/bin/classification-tree.php`; a unit test keeps the two in step |
+| `wiw_org_type` | Taxonomy, flat | The curated organisation types from the same config, with `wiw_alias`. Exactly one per organisation or institution; an unknown value becomes `other` |
+| `wiw_place` | Taxonomy, hierarchical | Country, then city. Term meta `wiw_iso_code` (ISO alpha-2, or `PAN`) and `wiw_place_kind` (`country`, `city`, `body`). Seeded with the African countries and `pan-african` (kind body, code PAN) |
+| `wiw_profession` | Taxonomy | Controlled list. Editors and Administrators add terms in WordPress's native term screens. Reviewers only assign existing terms |
+| `wiw_sector` | Taxonomy, retired | Registered without any screen so the upgrade can read it; migration 2026112103 empties it. Nothing public uses it |
+| Profile classification | Post meta | `_wiw_primary_industry` (term id of a leaf or Unclassified), `_wiw_primary_country` (term id of a country or the Pan-African body), `_wiw_classification_provenance` (JSON: method, model, prompt_version, confidence; internal). Written only by `Directory\ProfileClassifier` (called by the importer, the editor, the upgrade and the demo), never by templates. The profile also carries the matching terms |
 | `wiw_place` | Hierarchical taxonomy | Countries at the top (Nigeria first, then other African countries and pan-African bodies), cities beneath, ISO code as term meta |
 | `wiw_profile_state` | Table | One row per profile: publication state, entity type, origin (import, customer, complimentary, nominee, manual), source, import batch, content hash, reviewer and review date, claimed flag and date, assigned user. Indexed for the source, batch, type and state filters |
 | `wiw_profile_versions` | Table | Append-only snapshots with author (empty for import), how it was created, reason and time |
@@ -55,8 +60,10 @@ The state table in the earlier design also held trust and sponsored columns. The
 | Item | Behaviour |
 |---|---|
 | `PublicProfile::find(slug)` | Returns an object only when the profile is in a public state, and only allowlisted fields. It also produces the pending-review label, the noindex header and meta, and the share-preview data, so a template cannot forget them |
+| `PublicProfile::classification()` | `country` (name, slug, code, url), `sector` and `industry` (name, slug, url; both null when unclassified) and `extra` industries, from the terms. Each url is the directory list filtered: `/directory/?country=<country>`, then `&industry=<sector>` or `&industry=<industry>`. Names are plain text. It drives the breadcrumb `Country › Sector › Industry › Name`. `org_type()` gives the organisation type's name and slug, `place()` the city and country names. Templates, search and SEO read these, never the import text (`wiw_industry`, `wiw_sector`, `wiw_org_type`, `wiw_hq_city` meta) |
+| BreadcrumbList | `Seo\StructuredData::breadcrumb_for()` prints a schema.org BreadcrumbList beside the Person or Organization markup: Country, Sector, Industry, Name; Country, Name when unclassified; Directory, Name with no country. None while a profile has no schema (pending review) |
 | List and search queries | Run on `wiw_profile_search`, built only from public states, ordered by relevance or name and never by payment |
-| `/profile/{slug}`, `/people`, `/businesses`, `/institutions`, `/industries`, `/industries/{term}`, `/directory`, `/search` | Server-rendered pages. Filters by industry, profession, sector, country, city and organisation type |
+| `/profile/{slug}`, `/people`, `/businesses`, `/institutions`, `/industries`, `/industries/{term}`, `/directory`, `/search` | Server-rendered pages. Filters by industry, profession, country, city and organisation type. An `industry` filter on a sector takes in all its industries, as a country takes in its cities. The industries index (`ProfileList::industry_counts()`) gives each term its parent and leaves out Unclassified |
 | `POST /enquire/{slug}` | Relays an enquiry to the owner without exposing their email. Rate-limited and spam-checked |
 | `/sitemap.xml` | Built from the read model on request, cached five minutes, purged on unpublish |
 
@@ -67,7 +74,8 @@ The state table in the earlier design also held trust and sponsored columns. The
 | A profile changes state | Add or remove its search row; queue cache purge (Platform) |
 | A profile is saved | Write a version and an audit row |
 | Daily | Roll up view counts for the staff report (no IPs stored, bots filtered) |
-| An import applies a record | Write fields, provenance and state (Import) |
+| An import applies a record | Write fields, provenance and state (Import), and the classification through `ProfileClassifier`: a contract 1.2 `classification` wins, otherwise the aliases or Unclassified; never a refusal |
+| Migration 2026112103 | Seed the tree, the organisation types and the Pan-African place; classify existing profiles from their old terms and text through the aliases (or Unclassified); fold old flat industry and organisation type terms into the tree (merged with their posts, or removed); empty `wiw_sector`. Counts only in the log; safe to run again |
 
 ## Business rules
 

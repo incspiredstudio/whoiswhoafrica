@@ -38,7 +38,7 @@ final class ProfileClassifier {
 		$terms   = null === $primary ? array() : array( $primary );
 		foreach ( (array) ( $input['industries'] ?? array() ) as $slug ) {
 			$id = $this->industry_id( is_string( $slug ) ? $slug : '' );
-			if ( null !== $id && ! in_array( $id, $terms, true ) && $id !== Classification::unclassified_id() ) {
+			if ( null !== $id && ! in_array( $id, $terms, true ) && Classification::unclassified_id() !== $id ) {
 				$terms[] = $id;
 			}
 		}

@@ -292,7 +292,7 @@ final class TermMapper {
 				}
 				++$added;
 			}
-		}
+		}//end foreach
 		if ( $added > 0 ) {
 			AuditLogger::for_site()->log(
 				'import.term_mapping',

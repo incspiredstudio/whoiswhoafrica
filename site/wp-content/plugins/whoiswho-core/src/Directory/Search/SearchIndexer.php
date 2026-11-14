@@ -127,9 +127,9 @@ final class SearchIndexer {
 				$words[] = $entry['name'];
 			}
 		}
-		$bio   = $this->text( $facts['bio']['value'] ?? ( $facts['summary']['value'] ?? '' ) );
-		$sort  = strtolower( remove_accents( $profile->name ) );
-		$ok    = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$bio  = $this->text( $facts['bio']['value'] ?? ( $facts['summary']['value'] ?? '' ) );
+		$sort = strtolower( remove_accents( $profile->name ) );
+		$ok   = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
 				'REPLACE INTO ' . self::table() . ' (item_type, item_id, entity_type, name, organisation, title, industry, bio, url, pending, name_sort) VALUES (%s, %d, %s, %s, %s, %s, %s, %s, %s, %d, %s)', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
 				self::ITEM_TYPE,

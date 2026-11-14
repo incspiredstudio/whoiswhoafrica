@@ -137,9 +137,22 @@ final class ClassificationTest extends TestCase {
 		$this->assertFalse( get_taxonomy( Taxonomies::SECTOR )->show_ui, 'The sector taxonomy has no screen any more.' );
 		$this->assertNotContains( Taxonomies::SECTOR, Taxonomies::all() );
 
-		$count = (int) wp_count_terms( array( 'taxonomy' => Taxonomies::INDUSTRY, 'hide_empty' => false ) );
+		$count = (int) wp_count_terms(
+			array(
+				'taxonomy'   => Taxonomies::INDUSTRY,
+				'hide_empty' => false,
+			)
+		);
 		$this->assertSame( 0, ( new ClassificationSeeder() )->seed(), 'Seeding again creates nothing.' );
-		$this->assertSame( $count, (int) wp_count_terms( array( 'taxonomy' => Taxonomies::INDUSTRY, 'hide_empty' => false ) ) );
+		$this->assertSame(
+			$count,
+			(int) wp_count_terms(
+				array(
+					'taxonomy'   => Taxonomies::INDUSTRY,
+					'hide_empty' => false,
+				)
+			)
+		);
 	}
 
 	public function test_REQ_009_matching_uses_slugs_names_aliases_and_staff_terms_but_never_a_sector(): void {
@@ -158,9 +171,9 @@ final class ClassificationTest extends TestCase {
 	}
 
 	public function test_REQ_009_the_upgrade_moves_existing_profiles_onto_the_tree(): void {
-		$old_flat  = $this->term( Taxonomies::INDUSTRY, 'Qwv Oil and gas' );
-		$old_noise = $this->term( Taxonomies::INDUSTRY, 'Qwv Hospitality noise' );
-		$old_type  = $this->term( Taxonomies::ORG_TYPE, 'Qwv Public body' );
+		$old_flat   = $this->term( Taxonomies::INDUSTRY, 'Qwv Oil and gas' );
+		$old_noise  = $this->term( Taxonomies::INDUSTRY, 'Qwv Hospitality noise' );
+		$old_type   = $this->term( Taxonomies::ORG_TYPE, 'Qwv Public body' );
 		$old_sector = $this->term( Taxonomies::SECTOR, 'Qwv Private' );
 		$city       = $this->term( Taxonomies::PLACE, 'Qwv Port Town', (int) Classification::country_id( 'NG' ) );
 		update_term_meta( $city, Taxonomies::META_KIND, Taxonomies::KIND_CITY );
@@ -179,7 +192,7 @@ final class ClassificationTest extends TestCase {
 		$by_text = $this->profile( 'Upgrade Text Qwv', 'individual', PubState::PUBLISHED_REVIEWED, array( 'field' => 'Politics and government' ) );
 		$nothing = $this->profile( 'Upgrade Nothing Qwv', 'organisation' );
 		wp_set_object_terms( $nothing, array( $old_noise ), Taxonomies::INDUSTRY );
-		$story = (int) wp_insert_post(
+		$story         = (int) wp_insert_post(
 			array(
 				'post_type'   => 'post',
 				'post_title'  => 'Upgrade story Qwv',
@@ -203,7 +216,16 @@ final class ClassificationTest extends TestCase {
 		$this->assertNull( term_exists( $old_flat, Taxonomies::INDUSTRY ), 'The old flat term is folded into the tree.' );
 		$this->assertNull( term_exists( $old_noise, Taxonomies::INDUSTRY ), 'An old term the tree does not know is removed.' );
 		$this->assertSame( array( $oil ), wp_get_object_terms( $story, Taxonomies::INDUSTRY, array( 'fields' => 'ids' ) ), 'Its story moves with it.' );
-		$this->assertSame( array(), get_terms( array( 'taxonomy' => Taxonomies::SECTOR, 'hide_empty' => false ) ), 'The sector taxonomy is empty.' );
+		$this->assertSame(
+			array(),
+			get_terms(
+				array(
+					'taxonomy'   => Taxonomies::SECTOR,
+					'hide_empty' => false,
+				)
+			),
+			'The sector taxonomy is empty.'
+		);
 
 		$again = ( new ClassificationUpgrade() )->run();
 		$this->assertSame( 0, $again['profiles'], 'Running again changes nothing.' );
@@ -250,7 +272,7 @@ final class ClassificationTest extends TestCase {
 	}
 
 	public function test_REQ_009_an_unclassified_profile_has_no_sector_or_industry_and_a_person_no_org_type(): void {
-		$id = $this->profile( 'Unclassified Person Qwv', 'individual' );
+		$id  = $this->profile( 'Unclassified Person Qwv', 'individual' );
 		$out = ( new ProfileClassifier() )->assign(
 			$id,
 			'individual',
@@ -284,18 +306,50 @@ final class ClassificationTest extends TestCase {
 	}
 
 	public function test_REQ_007_a_sector_filter_takes_in_its_industries(): void {
-		$a = $this->profile( 'Sector Filter Cement Qwv', 'organisation' );
-		$b = $this->profile( 'Sector Filter Chem Qwv', 'organisation' );
-		$c = $this->profile( 'Sector Filter Bank Qwv', 'organisation' );
+		$a          = $this->profile( 'Sector Filter Cement Qwv', 'organisation' );
+		$b          = $this->profile( 'Sector Filter Chem Qwv', 'organisation' );
+		$c          = $this->profile( 'Sector Filter Bank Qwv', 'organisation' );
 		$classifier = new ProfileClassifier();
-		$classifier->assign( $a, 'organisation', array( 'primary_industry' => 'construction-cement', 'country' => 'KE' ) );
-		$classifier->assign( $b, 'organisation', array( 'primary_industry' => 'chemicals', 'country' => 'GH' ) );
-		$classifier->assign( $c, 'organisation', array( 'primary_industry' => 'banking', 'country' => 'KE' ) );
+		$classifier->assign(
+			$a,
+			'organisation',
+			array(
+				'primary_industry' => 'construction-cement',
+				'country'          => 'KE',
+			)
+		);
+		$classifier->assign(
+			$b,
+			'organisation',
+			array(
+				'primary_industry' => 'chemicals',
+				'country'          => 'GH',
+			)
+		);
+		$classifier->assign(
+			$c,
+			'organisation',
+			array(
+				'primary_industry' => 'banking',
+				'country'          => 'KE',
+			)
+		);
 		$list  = new ProfileList();
 		$names = static fn ( array $result ): array => array_values( array_filter( array_map( static fn ( PublicProfile $p ): string => $p->name, $result['profiles'] ), static fn ( string $n ): bool => false !== strpos( $n, 'Sector Filter' ) ) );
 		$this->assertEqualsCanonicalizing( array( 'Sector Filter Cement Qwv', 'Sector Filter Chem Qwv' ), $names( $list->query( 'all', array( 'industry' => 'industry-manufacturing' ) ) ) );
 		$this->assertSame( array( 'Sector Filter Cement Qwv' ), $names( $list->query( 'all', array( 'industry' => 'construction-cement' ) ) ) );
-		$this->assertSame( array( 'Sector Filter Cement Qwv' ), $names( $list->query( 'all', array( 'industry' => 'industry-manufacturing', 'country' => 'kenya' ) ) ) );
+		$this->assertSame(
+			array( 'Sector Filter Cement Qwv' ),
+			$names(
+				$list->query(
+					'all',
+					array(
+						'industry' => 'industry-manufacturing',
+						'country'  => 'kenya',
+					)
+				)
+			)
+		);
 		$slugs = array_column( $list->industry_counts(), 'slug' );
 		$this->assertNotContains( 'unclassified', $slugs, 'Unclassified is not public navigation.' );
 		$rows = array_column( $list->industry_counts(), null, 'slug' );
@@ -305,7 +359,14 @@ final class ClassificationTest extends TestCase {
 
 	public function test_REQ_006_breadcrumb_list_follows_country_sector_industry_name(): void {
 		$id = $this->profile( 'Breadcrumb Org Qwv', 'organisation' );
-		( new ProfileClassifier() )->assign( $id, 'organisation', array( 'primary_industry' => 'oil-gas', 'country' => 'NG' ) );
+		( new ProfileClassifier() )->assign(
+			$id,
+			'organisation',
+			array(
+				'primary_industry' => 'oil-gas',
+				'country'          => 'NG',
+			)
+		);
 		$profile = PublicProfile::find_by_id( $id );
 		$data    = ( new StructuredData() )->breadcrumb_for( $profile );
 		$this->assertSame( 'BreadcrumbList', $data['@type'] );

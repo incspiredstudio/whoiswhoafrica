@@ -82,10 +82,10 @@ final class ImportV12ClassificationTest extends TestCase {
 	 * @param array<string, string>     $raw            Extra raw string fields (industry, hq_city, org_type).
 	 */
 	private function record( string $id, string $version, ?array $classification, array $raw = array() ): \stdClass {
-		$record                   = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/import/worked-example.json' ), false ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.WP.AlternativeFunctions.json_encode_json_encode -- test fixture.
-		$record->contract_version = $version;
-		$record->record_id        = 'v12-qwv-' . $id;
-		$record->external_ids     = new \stdClass();
+		$record                      = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/import/worked-example.json' ), false ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.WP.AlternativeFunctions.json_encode_json_encode -- test fixture.
+		$record->contract_version    = $version;
+		$record->record_id           = 'v12-qwv-' . $id;
+		$record->external_ids        = new \stdClass();
 		$record->fields->name->value = 'V12 Org ' . $id . ' Qwv';
 		foreach ( $raw as $key => $value ) {
 			$record->fields->{$key} = (object) array(
@@ -171,8 +171,18 @@ final class ImportV12ClassificationTest extends TestCase {
 			'country'    => array( 'primary_country' => 'Nigeria' ),
 			'industry'   => array( 'primary_industry' => 'Oil & Gas' ),
 			'extras'     => array( 'industries' => 'oil-gas' ),
-			'method'     => array( 'provenance' => array( 'method' => 'guess', 'confidence' => 'high' ) ),
-			'confidence' => array( 'provenance' => array( 'method' => 'rule', 'confidence' => 'low' ) ),
+			'method'     => array(
+				'provenance' => array(
+					'method'     => 'guess',
+					'confidence' => 'high',
+				),
+			),
+			'confidence' => array(
+				'provenance' => array(
+					'method'     => 'rule',
+					'confidence' => 'low',
+				),
+			),
 			'unknownkey' => array( 'colour' => 'red' ),
 		);
 		foreach ( $bad as $case => $over ) {
@@ -183,32 +193,55 @@ final class ImportV12ClassificationTest extends TestCase {
 	}
 
 	public function test_REQ_221_the_classification_is_part_of_the_content_hash(): void {
-		$record = $this->record( 'hash', '1.2', $this->classification() );
+		$record                                   = $this->record( 'hash', '1.2', $this->classification() );
 		$record->classification->primary_industry = 'banking';
-		$got = $this->validate( $record );
+		$got                                      = $this->validate( $record );
 		$this->assertSame( 'HASH_MISMATCH', $got['code'], 'Changing the classification without re-hashing is caught.' );
 		$plain = $this->record( 'hash-plain', '1.1', null );
 		$this->assertSame( $plain->content_hash, ContentHasher::hash_record( $plain ), 'A 1.1 hash is unchanged by the new key.' );
 	}
 
 	public function test_REQ_009_the_classification_object_wins_when_applied(): void {
-		$id = $this->apply( $this->record( 'win', '1.2', $this->classification(), array( 'industry' => 'Banking and financial services' ) ) );
+		$id = $this->apply(
+			$this->record(
+				'win',
+				'1.2',
+				$this->classification(),
+				array(
+					'industry' => 'Banking and financial services',
+					'org_type' => 'listed-company',
+				)
+			)
+		);
 		$this->assertSame( (int) Classification::term_id( Taxonomies::INDUSTRY, 'construction-cement' ), (int) get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true ) );
 		$this->assertEqualsCanonicalizing( array( 'construction-cement', 'food-beverage', 'oil-gas' ), $this->slugs( $id, Taxonomies::INDUSTRY ), 'Not the raw industry.' );
 		$this->assertSame( Classification::country_id( 'NG' ), (int) get_post_meta( $id, Classification::PRIMARY_COUNTRY_META, true ) );
-		$this->assertSame( array( 'other' ), $this->slugs( $id, Taxonomies::ORG_TYPE ), 'The worked example\'s organisation type is not in the list.' );
+		$this->assertSame( array( 'listed-company' ), $this->slugs( $id, Taxonomies::ORG_TYPE ), 'The organisation type slug from fields.org_type.' );
 		$prov = json_decode( (string) get_post_meta( $id, Classification::PROVENANCE_META, true ), true );
 		$this->assertSame( 'ai', $prov['method'] );
 		$this->assertSame( 'classify-v1', $prov['prompt_version'] );
 	}
 
 	public function test_REQ_009_org_type_slug_pan_african_and_a_new_country(): void {
-		$pan = $this->apply( $this->record( 'pan', '1.2', $this->classification( array( 'primary_country' => 'PAN', 'primary_industry' => 'diplomacy-international-bodies', 'industries' => array() ) ), array( 'org_type' => 'international-organisation' ) ) );
+		$pan = $this->apply(
+			$this->record(
+				'pan',
+				'1.2',
+				$this->classification(
+					array(
+						'primary_country'  => 'PAN',
+						'primary_industry' => 'diplomacy-international-bodies',
+						'industries'       => array(),
+					)
+				),
+				array( 'org_type' => 'international-organisation' )
+			)
+		);
 		$this->assertSame( Classification::country_id( 'PAN' ), (int) get_post_meta( $pan, Classification::PRIMARY_COUNTRY_META, true ) );
 		$this->assertSame( array( 'international-organisation' ), $this->slugs( $pan, Taxonomies::ORG_TYPE ) );
 
 		$this->assertNull( Classification::country_id( 'PT' ) );
-		$pt = $this->apply( $this->record( 'pt', '1.2', $this->classification( array( 'primary_country' => 'PT' ) ) ) );
+		$pt      = $this->apply( $this->record( 'pt', '1.2', $this->classification( array( 'primary_country' => 'PT' ) ) ) );
 		$country = Classification::country_id( 'PT' );
 		$this->assertIsInt( $country, 'A real ISO code the list lacks creates the country.' );
 		$this->countries[] = $country;
@@ -219,23 +252,67 @@ final class ImportV12ClassificationTest extends TestCase {
 	}
 
 	public function test_REQ_009_an_unknown_slug_falls_back_to_the_aliases_or_unclassified(): void {
-		$alias = $this->apply( $this->record( 'alias', '1.2', $this->classification( array( 'primary_industry' => 'qwv-not-a-leaf', 'industries' => array( 'energy-resources' ) ) ), array( 'industry' => 'Oil and gas' ) ) );
+		$alias = $this->apply(
+			$this->record(
+				'alias',
+				'1.2',
+				$this->classification(
+					array(
+						'primary_industry' => 'qwv-not-a-leaf',
+						'industries'       => array( 'energy-resources' ),
+					)
+				),
+				array( 'industry' => 'Oil and gas' )
+			)
+		);
 		$this->assertSame( array( 'oil-gas' ), $this->slugs( $alias, Taxonomies::INDUSTRY ), 'An unknown slug and a sector slug are ignored; the raw value maps.' );
-		$uncl = $this->apply( $this->record( 'uncl', '1.2', $this->classification( array( 'primary_industry' => 'unclassified', 'industries' => array() ) ), array( 'industry' => 'Oil and gas' ) ) );
+		$uncl = $this->apply(
+			$this->record(
+				'uncl',
+				'1.2',
+				$this->classification(
+					array(
+						'primary_industry' => 'unclassified',
+						'industries'       => array(),
+					)
+				),
+				array( 'industry' => 'Oil and gas' )
+			)
+		);
 		$this->assertSame( array( 'unclassified' ), $this->slugs( $uncl, Taxonomies::INDUSTRY ), 'Unclassified from the pipeline is kept.' );
 		$profile = PublicProfile::find_by_id( $uncl, true );
 		$this->assertNull( null === $profile ? null : $profile->classification()['industry'] );
 	}
 
 	public function test_REQ_009_a_1_1_record_maps_through_the_aliases_and_is_never_refused(): void {
-		$mapped = $this->apply( $this->record( 'v11-mapped', '1.1', null, array( 'industry' => 'Aviation and aerospace', 'org_type' => 'Public body' ) ) );
+		$mapped = $this->apply(
+			$this->record(
+				'v11-mapped',
+				'1.1',
+				null,
+				array(
+					'industry' => 'Aviation and aerospace',
+					'org_type' => 'Public body',
+				)
+			)
+		);
 		$this->assertSame( array( 'aviation' ), $this->slugs( $mapped, Taxonomies::INDUSTRY ) );
 		$this->assertSame( array( 'government-body' ), $this->slugs( $mapped, Taxonomies::ORG_TYPE ) );
 		$this->assertSame( Classification::country_id( 'NG' ), (int) get_post_meta( $mapped, Classification::PRIMARY_COUNTRY_META, true ), 'The record country is the primary country.' );
 		$prov = json_decode( (string) get_post_meta( $mapped, Classification::PROVENANCE_META, true ), true );
 		$this->assertSame( 'alias', $prov['method'] );
 
-		$unknown = $this->apply( $this->record( 'v11-unknown', '1.1', null, array( 'industry' => 'Qwv Zeppelin Repair', 'org_type' => 'Qwv Guild' ) ) );
+		$unknown = $this->apply(
+			$this->record(
+				'v11-unknown',
+				'1.1',
+				null,
+				array(
+					'industry' => 'Qwv Zeppelin Repair',
+					'org_type' => 'Qwv Guild',
+				)
+			)
+		);
 		$this->assertSame( array( 'unclassified' ), $this->slugs( $unknown, Taxonomies::INDUSTRY ) );
 		$this->assertSame( array( 'other' ), $this->slugs( $unknown, Taxonomies::ORG_TYPE ) );
 		$this->assertSame( (int) Classification::unclassified_id(), (int) get_post_meta( $unknown, Classification::PRIMARY_INDUSTRY_META, true ) );

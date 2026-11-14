@@ -126,8 +126,7 @@ final class Classification {
 	 * The tree as pretty JSON with a final newline.
 	 */
 	public static function tree_json(): string {
-		return json_encode( self::tree(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "
-"; // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- plain PHP, run from the command line without WordPress.
+		return json_encode( self::tree(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "\n"; // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- plain PHP, run from the command line without WordPress.
 	}
 
 	/**

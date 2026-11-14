@@ -1,8 +1,7 @@
 <?php
 /**
- * The dry run speaks plainly about values not yet in the lists (REQ-237, REQ-244, #810): "SCHEMA (1000)" alarmed staff, so in a
- * dry run with such values it reads "New list values needed (1000)" with what to do. Other codes, and the codes sent back to the
- * acquisition side, stay as the contract names them. Needs the WordPress test suite.
+ * Dry run counts (REQ-237, REQ-009 as amended 2026-11-14): values not yet in the lists no longer refuse a record, so a SCHEMA
+ * count is always a real error and keeps the contract's code, as every other code does. Needs the WordPress test suite.
  *
  * @package WhoIsWho
  */
