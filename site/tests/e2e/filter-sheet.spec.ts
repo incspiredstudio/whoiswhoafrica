@@ -45,7 +45,7 @@ test.describe("filters on phones and desktop", () => {
     await expect(sheet.getByRole("heading", { name: "Filters" })).toBeVisible();
     for (const name of ["industry", "country", "city"]) await expect(sheet.locator(`select[name='${name}']`)).toBeVisible();
     await expect(sheet.locator("select[name='industry'] optgroup").first()).toBeAttached();
-    await expect(sheet.getByRole("list", { name: "Type" }).locator("a[aria-current='page']")).toHaveText("All");
+    await expect(sheet.getByRole("list", { name: "Type" }).locator("a[aria-current='true']")).toHaveText("All");
     await expect(sheet.getByRole("link", { name: "Clear all" })).toBeVisible();
     await expect(sheet.locator("[data-fbar-go]")).toHaveText(/^Show \d+ results?$/);
     // The background does not scroll while the sheet is open.

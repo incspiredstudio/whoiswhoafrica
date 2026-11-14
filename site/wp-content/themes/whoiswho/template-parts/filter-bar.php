@@ -176,13 +176,14 @@ $wiw_fb_select = static function ( array $control ): void {
 		<div class="fbar-sheet-body" data-lenis-prevent>
 			<?php if ( null !== $wiw_fb_tabs ) : ?>
 				<?php
-				// The page's own tabs stay where they are; these are the same links as chips, under their own heading.
+				// The page's own tabs stay where they are (and carry aria-current="page"); these are the same links as chips, under
+				// their own heading, the current one marked aria-current="true".
 				?>
 				<div class="fbar-sheet-group">
 					<p class="fbar-sheet-k" id="<?php echo esc_attr( $wiw_fb_id ); ?>-t"><?php echo esc_html( (string) ( $wiw_fb_tabs['title'] ?? __( 'Type', 'whoiswho' ) ) ); ?></p>
 					<ul class="fbar-sheet-tabs" aria-labelledby="<?php echo esc_attr( $wiw_fb_id ); ?>-t">
 						<?php foreach ( $wiw_fb_tabs['items'] as $wiw_tab ) : ?>
-							<li><a href="<?php echo esc_url( (string) ( $wiw_tab['url'] ?? '' ) ); ?>"<?php echo ! empty( $wiw_tab['current'] ) ? ' aria-current="page"' : ''; ?>><?php echo esc_html( (string) ( $wiw_tab['label'] ?? '' ) ); ?></a></li>
+							<li><a href="<?php echo esc_url( (string) ( $wiw_tab['url'] ?? '' ) ); ?>"<?php echo ! empty( $wiw_tab['current'] ) ? ' aria-current="true"' : ''; ?>><?php echo esc_html( (string) ( $wiw_tab['label'] ?? '' ) ); ?></a></li>
 						<?php endforeach; ?>
 					</ul>
 				</div>

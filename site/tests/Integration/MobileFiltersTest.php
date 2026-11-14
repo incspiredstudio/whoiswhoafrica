@@ -162,7 +162,7 @@ final class MobileFiltersTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/<button type="button" class="btn fbar-sheet-go"[^>]*>Show 7 results<\/button>/', $out );
 		$this->assertStringContainsString( 'data-one="Show %d result"', $out );
 		$this->assertMatchesRegularExpression( '/class="btn alt fbar-sheet-clear" href="\/people\/">Clear all/', $out );
-		$this->assertMatchesRegularExpression( '/<p class="fbar-sheet-k" id="(fbar-\d+-t)">Type<\/p>\s*<ul class="fbar-sheet-tabs" aria-labelledby="\1">.*aria-current="page">People/s', $out );
+		$this->assertMatchesRegularExpression( '/<p class="fbar-sheet-k" id="(fbar-\d+-t)">Type<\/p>\s*<ul class="fbar-sheet-tabs" aria-labelledby="\1">.*aria-current="true">People/s', $out );
 		$this->assertStringContainsString( 'aria-label="Close filters"', $out );
 		$this->assertMatchesRegularExpression( '/<form class="fbar" id="fbar-\d+" method="get"/', $out );
 		// The sheet is inside the form and the form keeps exactly one submit button, the hidden Apply button, for no-script use.

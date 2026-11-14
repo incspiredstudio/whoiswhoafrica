@@ -1268,7 +1268,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar-sheet-k { margin: 0; font-size: var(--t-sm); font-weight: 600; }
 .fbar-sheet-tabs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
 .fbar-sheet-tabs a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 var(--s-4); border: 1px solid var(--c-line-strong); border-radius: var(--r-pill); color: var(--c-text); font-size: var(--t-sm); font-weight: 600; text-decoration: none; }
-.fbar-sheet-tabs a[aria-current="page"] { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.fbar-sheet-tabs a[aria-current="true"] { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
 .fbar-sheet-tabs a:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 2px; }
 .fbar-sheet-foot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); padding: var(--s-3) var(--gutter) calc(var(--s-3) + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--c-line); background: var(--c-surface); }
 .fbar-sheet-foot .btn { min-height: 3rem; }
