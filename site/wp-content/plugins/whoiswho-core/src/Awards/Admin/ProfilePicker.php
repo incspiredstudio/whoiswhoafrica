@@ -1,8 +1,9 @@
 <?php
 /**
  * The profile picker of the "Add profile to nominations" form (REQ-267): a search by name over existing profiles that are
- * reviewed or pending review, nothing else. A draft, an unpublished or a removed profile is never offered, and there is no way
- * to type a new name.
+ * reviewed, pending review or still in the review queue (Imported not public, for example one just created from the "Create
+ * profile" shortcut), nothing else. An unpublished, rejected or removed profile is never offered, and there is no way to type a
+ * new name. A nomination of a profile that is not reviewed stays Not live (REQ-226).
  *
  * @package WhoIsWho
  */
@@ -36,10 +37,11 @@ final class ProfilePicker {
 		}
 		$rows = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
-				'SELECT p.ID, p.post_title, s.pub_state, s.entity_type FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID WHERE p.post_type = %s AND s.pub_state IN ( %s, %s ) AND p.post_title LIKE %s ORDER BY p.post_title ASC LIMIT %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table names.
+				'SELECT p.ID, p.post_title, s.pub_state, s.entity_type FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID WHERE p.post_type = %s AND s.pub_state IN ( %s, %s, %s ) AND p.post_title LIKE %s ORDER BY p.post_title ASC LIMIT %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table names.
 				ProfileType::POST_TYPE,
 				PubState::PUBLISHED_REVIEWED,
 				PubState::PUBLISHED_PENDING,
+				PubState::IMPORTED_NOT_PUBLIC,
 				'%' . $wpdb->esc_like( $query ) . '%',
 				self::LIMIT
 			),

@@ -49,7 +49,7 @@ class StateRepository {
 	/**
 	 * Origins.
 	 */
-	public const ORIGINS = array( 'import', 'customer', 'complimentary', 'nominee' );
+	public const ORIGINS = array( 'import', 'customer', 'complimentary', 'nominee', 'manual' );
 
 	/**
 	 * Full table name.

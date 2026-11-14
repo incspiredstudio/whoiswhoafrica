@@ -32,6 +32,7 @@ final class Module implements ModuleInterface {
 		( new Seo\StructuredData() )->register();
 		Admin\ProfilesScreen::hooks();
 		Admin\ProfileEditScreen::hooks();
+		Admin\AddProfileScreen::hooks();
 		( new Views\ViewCounter() )->register();
 		( new Sitemap\Sitemap() )->register();
 		Purge\PurgeQueue::for_site()->register();
