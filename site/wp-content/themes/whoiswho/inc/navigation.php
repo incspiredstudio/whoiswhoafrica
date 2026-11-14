@@ -154,14 +154,15 @@ if ( ! function_exists( 'wiw_nav_industry_links' ) ) {
 			$terms = get_terms(
 				array(
 					'taxonomy'   => 'wiw_industry',
-					'number'     => 5,
+					'number'     => 6,
 					'orderby'    => 'count',
 					'order'      => 'DESC',
 					'hide_empty' => true,
 				)
 			);
 			foreach ( is_array( $terms ) ? $terms : array() as $term ) {
-				if ( $term instanceof WP_Term ) {
+				// Unclassified holds the profiles that still need an industry: never public navigation (REQ-009).
+				if ( $term instanceof WP_Term && ! wiw_is_unclassified_industry( $term->slug ) && count( $links ) < 5 ) {
 					$links[] = wiw_nav_link( '/industries/' . $term->slug . '/', $term->name );
 				}
 			}

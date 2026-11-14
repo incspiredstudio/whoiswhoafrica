@@ -54,6 +54,13 @@ final class ScreenRegistry {
 	private array $screens = array();
 
 	/**
+	 * Menu links to WordPress screens, by address.
+	 *
+	 * @var array<string, array{title: string, capability: string, group: string}>
+	 */
+	private array $links = array();
+
+	/**
 	 * The shared registry.
 	 */
 	public static function shared(): self {
@@ -144,6 +151,44 @@ final class ScreenRegistry {
 	}
 
 	/**
+	 * Add a menu item that opens a WordPress screen rather than one of ours, such as a term list
+	 * (edit-tags.php?taxonomy=wiw_industry&post_type=wiw_profile), in a group. It needs a capability like a screen; WordPress's own
+	 * screen checks its own capability again when it opens. Highlighting the item while its screen is open is the caller's job
+	 * (parent_file and submenu_file).
+	 *
+	 * @param string $url        The admin address relative to wp-admin, for example edit-tags.php?taxonomy=wiw_place&post_type=wiw_profile.
+	 * @param string $title      Menu title.
+	 * @param string $capability Capability. Required.
+	 * @param string $group      Menu group.
+	 * @throws \InvalidArgumentException When the address is not a wp-admin .php address, the capability is empty or the group is unknown.
+	 */
+	public function register_link( string $url, string $title, string $capability, string $group ): void {
+		if ( 1 !== preg_match( '/^[a-z0-9-]+\.php(\?[A-Za-z0-9_=&%-]*)?$/', $url ) ) {
+			throw new \InvalidArgumentException( 'A menu link is a wp-admin .php address.' );
+		}
+		if ( '' === trim( $capability ) ) {
+			throw new \InvalidArgumentException( 'A menu link cannot be registered without a capability.' );
+		}
+		if ( ! isset( self::GROUPS[ $group ] ) ) {
+			throw new \InvalidArgumentException( 'That menu group does not exist.' );
+		}
+		$this->links[ $url ] = array(
+			'title'      => $title,
+			'capability' => $capability,
+			'group'      => $group,
+		);
+	}
+
+	/**
+	 * Registered links: url => title, capability, group.
+	 *
+	 * @return array<string, array{title: string, capability: string, group: string}>
+	 */
+	public function links(): array {
+		return $this->links;
+	}
+
+	/**
 	 * Registered screens.
 	 *
 	 * @return array<string, array{title: string, capability: string, callback: callable, hidden: bool, group: string, current: string}>
@@ -181,6 +226,11 @@ final class ScreenRegistry {
 				$out[ $screen['group'] ] = true;
 			}
 		}
+		foreach ( $this->links as $link ) {
+			if ( user_can( $user_id, $link['capability'] ) ) {
+				$out[ $link['group'] ] = true;
+			}
+		}
 		return array_keys( $out );
 	}
 
@@ -195,6 +245,9 @@ final class ScreenRegistry {
 				$used[ $screen['group'] ] = true;
 			}
 		}
+		foreach ( $this->links as $link ) {
+			$used[ $link['group'] ] = true;
+		}
 		foreach ( self::groups() as $id => $group ) {
 			if ( isset( $used[ $id ] ) ) {
 				add_menu_page( $group['title'], $group['title'], 'read', self::menu_slug( $id ), '__return_null', $group['icon'], $group['position'] );
@@ -206,6 +259,9 @@ final class ScreenRegistry {
 				// A detail screen has no menu item, so WordPress cannot find its title: set it, and keep its group's menu open.
 				add_action( 'load-' . $hook, self::detail_screen_loader( $screen['title'], self::menu_slug( $screen['group'] ), $slug, $screen['current'] ) );
 			}
+		}
+		foreach ( $this->links as $url => $link ) {
+			add_submenu_page( self::menu_slug( $link['group'] ), $link['title'], $link['title'], $link['capability'], $url );
 		}
 		foreach ( array_keys( $used ) as $id ) {
 			remove_submenu_page( self::menu_slug( $id ), self::menu_slug( $id ) );

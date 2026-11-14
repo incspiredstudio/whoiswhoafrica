@@ -149,6 +149,10 @@ if ( ! function_exists( 'wiw_filter_bar_state' ) ) {
 							$shown = (string) $group_label;
 						}
 					}
+					// The option that stands for a whole group (a sector, "All Arts, Culture & Sport") shows as the group's own name.
+					if ( 'group:' . $value === (string) $option_value && isset( $option_label['label'] ) ) {
+						$shown = (string) $option_label['label'];
+					}
 				} elseif ( (string) $option_value === $value ) {
 					$shown = (string) $option_label;
 				}

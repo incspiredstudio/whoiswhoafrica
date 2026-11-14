@@ -172,7 +172,7 @@ if ( ! function_exists( 'wiw_events_industry_options' ) ) {
 		foreach ( $events as $event ) {
 			foreach ( (array) ( $event['industries'] ?? array() ) as $name ) {
 				$term = taxonomy_exists( 'wiw_industry' ) ? get_term_by( 'name', (string) $name, 'wiw_industry' ) : false;
-				if ( $term instanceof WP_Term ) {
+				if ( $term instanceof WP_Term && ! wiw_is_unclassified_industry( $term->slug ) ) {
 					$out[ $term->slug ] = $term->name;
 				}
 			}

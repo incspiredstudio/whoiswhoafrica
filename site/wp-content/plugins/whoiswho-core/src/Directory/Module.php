@@ -33,6 +33,7 @@ final class Module implements ModuleInterface {
 		( new Seo\Output() )->register();
 		( new Seo\StructuredData() )->register();
 		Admin\ProfilesScreen::hooks();
+		Admin\TermMenus::hooks();
 		Admin\ProfileEditScreen::hooks();
 		Admin\AddProfileScreen::hooks();
 		( new Views\ViewCounter() )->register();

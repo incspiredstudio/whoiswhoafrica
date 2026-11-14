@@ -1,7 +1,9 @@
 <?php
 /**
- * The bulk unpublish interface on the Profiles list (REQ-193, REQ-244): the live match count, a mandatory reason, a confirmation
- * that shows the count and the first five names, and a Recent bulk actions list with Restore this batch. It plugs into the
+ * The bulk unpublish interface on the Profiles list (REQ-193, REQ-244): it acts on exactly the filter set the list shows, the
+ * "Needs classification" view included, and its count is the list's count of published profiles. The live match count, a
+ * mandatory reason, a confirmation that shows the count and the first five names, and a Recent bulk actions list with Restore
+ * this batch. It plugs into the
  * `wiw_profiles_bulk_host` slot of the Profiles screen and is visible only with wiw_bulk_unpublish. The single-profile Unpublish
  * row action of the same screen is handled here too, with wiw_unpublish_profiles.
  *
@@ -12,6 +14,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Review\Admin;
 
+use WhoIsWho\Core\Directory\Admin\ProfilesQuery;
 use WhoIsWho\Core\Directory\Admin\ProfilesScreen;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
@@ -45,7 +48,7 @@ final class BulkUnpublishPanel {
 					self::START_ACT,
 					BulkUnpublish::CAPABILITY,
 					static function ( Request $request ): void {
-						self::finish( self::start( $request, get_current_user_id() ) );
+						self::finish( self::start( $request, get_current_user_id() ), self::filter_from( $request ) );
 					}
 				);
 				ActionGuard::register(
@@ -114,16 +117,20 @@ final class BulkUnpublishPanel {
 	}
 
 	/**
-	 * Go back to the Profiles screen with a notice.
+	 * Go back to the Profiles screen with a notice, on the same list view and filters when there were any.
 	 *
-	 * @param string $notice Notice code.
+	 * @param string                $notice  Notice code.
+	 * @param array<string, string> $filters The clean filter the action used.
 	 */
-	private static function finish( string $notice ): void {
+	private static function finish( string $notice, array $filters = array() ): void {
 		wp_safe_redirect(
 			add_query_arg(
-				array(
-					'page'           => ProfilesScreen::SCREEN,
-					self::NOTICE_VAR => $notice,
+				array_merge(
+					$filters,
+					array(
+						'page'           => ProfilesScreen::SCREEN,
+						self::NOTICE_VAR => $notice,
+					)
 				),
 				admin_url( 'admin.php' )
 			)
@@ -139,7 +146,7 @@ final class BulkUnpublishPanel {
 	 */
 	private static function filter_from( Request $request ): array {
 		$raw = array();
-		foreach ( array( 'source', 'batch', 'type', 'state', 'origin', 'name' ) as $key ) {
+		foreach ( BulkFilter::KEYS as $key ) {
 			$raw[ $key ] = $request->string( 'f_' . $key );
 		}
 		return BulkFilter::clean( $raw );
@@ -163,6 +170,12 @@ final class BulkUnpublishPanel {
 		$this->notice();
 		/* translators: %d: number of published profiles matching the filter. */
 		echo '<p class="wiw-bulk-count">' . esc_html( sprintf( _n( '%d published profile matches the filter.', '%d published profiles match the filter.', $count, 'whoiswho' ), $count ) ) . '</p>';
+		// The list below shows profiles in every state; only the published ones among them can be unpublished.
+		$listed = ( new ProfilesQuery() )->count( $clean );
+		if ( $listed !== $count ) {
+			/* translators: 1: number of profiles in the list, 2: how many of them are published. */
+			echo '<p class="wiw-bulk-listed">' . esc_html( sprintf( _n( 'The list shows %1$d profile; %2$d of them are published, and only those are unpublished.', 'The list shows %1$d profiles; %2$d of them are published, and only those are unpublished.', $listed, 'whoiswho' ), $listed, $count ) ) . '</p>';
+		}
 		if ( $count > 0 ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( self::START_ACT ) . '" />';

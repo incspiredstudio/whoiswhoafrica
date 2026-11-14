@@ -57,6 +57,120 @@ final class ClassificationUpgrade {
 	}
 
 	/**
+	 * Repair a site that already ran the upgrade with the shorter alias lists of 0.3.0 (REQ-009): a profile that is Unclassified (or
+	 * has no primary industry), or an organisation or institution with no organisation type or only "other", is matched again from
+	 * its stored raw text (wiw_industry, wiw_field, wiw_sector, wiw_org_type). Only what was missing changes: a real industry or
+	 * organisation type stays, and so do the country, the city and the extra industries. A classification staff chose (method
+	 * "manual") or the acquisition side decided (method "rule" or "ai") is never touched. Safe to run again. Counts only.
+	 *
+	 * @return array{profiles: int, industries_repaired: int, org_types_repaired: int, kept_as_set: int}
+	 */
+	public function repair(): array {
+		global $wpdb;
+		if ( ! taxonomy_exists( Taxonomies::INDUSTRY ) || ! is_taxonomy_hierarchical( Taxonomies::INDUSTRY ) ) {
+			( new Taxonomies() )->register();
+		}
+		( new ClassificationSeeder() )->seed();
+		Classification::flush();
+		$counts       = array(
+			'profiles'            => 0,
+			'industries_repaired' => 0,
+			'org_types_repaired'  => 0,
+			'kept_as_set'         => 0,
+		);
+		$state        = new StateRepository();
+		$classifier   = new ProfileClassifier();
+		$unclassified = Classification::unclassified_id();
+		$other        = Classification::term_id( Taxonomies::ORG_TYPE, 'other' );
+		$last         = 0;
+		do {
+			$ids = array_map(
+				'intval',
+				(array) $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+					$wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d ORDER BY ID ASC LIMIT 200", ProfileType::POST_TYPE, $last )
+				)
+			);
+			foreach ( $ids as $id ) {
+				$last = $id;
+				++$counts['profiles'];
+				$row     = $state->get( $id );
+				$type    = null === $row ? 'individual' : (string) $row['entity_type'];
+				$primary = (int) get_post_meta( $id, Classification::PRIMARY_INDUSTRY_META, true );
+				$orgs    = $this->terms_of( $id, Taxonomies::ORG_TYPE );
+				$org_id  = isset( $orgs[0] ) ? (int) $orgs[0]->term_id : 0;
+
+				$needs_industry = 0 === $primary || $unclassified === $primary;
+				$needs_org      = in_array( $type, ProfileClassifier::ORG_ENTITY_TYPES, true ) && ( 0 === $org_id || $other === $org_id );
+				if ( ! $needs_industry && ! $needs_org ) {
+					continue;
+				}
+				$provenance = json_decode( (string) get_post_meta( $id, Classification::PROVENANCE_META, true ), true );
+				$method     = is_array( $provenance ) ? (string) ( $provenance['method'] ?? '' ) : '';
+				if ( in_array( $method, array( 'manual', 'rule', 'ai' ), true ) ) {
+					++$counts['kept_as_set'];
+					continue;
+				}
+
+				$derived      = $this->derive( $id, $type, $classifier );
+				$extras       = array();
+				$primary_slug = '';
+				foreach ( $this->terms_of( $id, Taxonomies::INDUSTRY ) as $term ) {
+					if ( (int) $term->term_id === $primary ) {
+						$primary_slug = $term->slug;
+					} elseif ( null !== $classifier->industry_id( $term->slug ) && $unclassified !== (int) $term->term_id ) {
+						$extras[] = $term->slug;
+					}
+				}
+				$raw_primary    = $this->raw_industry( $id );
+				$industry_fixed = $needs_industry && '' !== $raw_primary;
+				$org_slug       = isset( $orgs[0] ) ? $orgs[0]->slug : '';
+				$raw_org        = (string) Classification::match_org_type( (string) get_post_meta( $id, FieldAllowlist::META_PREFIX . 'org_type', true ) );
+				$org_fixed      = $needs_org && '' !== $raw_org && ( 'other' !== $raw_org || '' === $org_slug ) && $raw_org !== $org_slug;
+				if ( ! $industry_fixed && ! $org_fixed ) {
+					continue;
+				}
+				$country = (int) get_post_meta( $id, Classification::PRIMARY_COUNTRY_META, true );
+				$classifier->assign(
+					$id,
+					$type,
+					array(
+						'primary_industry' => $industry_fixed ? $raw_primary : $primary_slug,
+						'industries'       => array_values( array_diff( $extras, array( $raw_primary ) ) ),
+						'country_id'       => $country > 0 ? $country : $derived['country_id'],
+						'city_id'          => $derived['city_id'],
+						'org_type'         => $org_fixed ? $raw_org : $org_slug,
+						'provenance'       => array(
+							'method'         => 'alias',
+							'model'          => null,
+							'prompt_version' => null,
+							'confidence'     => 'medium',
+						),
+					)
+				);
+				$counts['industries_repaired'] += $industry_fixed ? 1 : 0;
+				$counts['org_types_repaired']  += $org_fixed ? 1 : 0;
+			}//end foreach
+		} while ( array() !== $ids );
+		return $counts;
+	}
+
+	/**
+	 * The industry leaf a profile's stored raw text means (industry, then field, then sector), or "".
+	 *
+	 * @param int $id Profile.
+	 */
+	private function raw_industry( int $id ): string {
+		foreach ( array( 'industry', 'field', 'sector' ) as $key ) {
+			$raw  = (string) get_post_meta( $id, FieldAllowlist::META_PREFIX . $key, true );
+			$slug = '' === trim( $raw ) ? null : Classification::match_industry( $raw );
+			if ( null !== $slug ) {
+				return $slug;
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * Classify the profiles without a primary industry, in pages.
 	 *
 	 * @param array<string, int> $counts Counts.

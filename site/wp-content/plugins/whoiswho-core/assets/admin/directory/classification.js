@@ -4,7 +4,8 @@
  * - A search box with data-wiw-filter-for="<select id>" is shown and hides the options of that select that do not contain the
  *   typed text (a group with no match is hidden too).
  * - A select with data-wiw-chip-add="<name>" turns the chosen industry into a removable chip in the list with
- *   data-wiw-chips="<name>", then resets itself.
+ *   data-wiw-chips="<name>", then resets itself. The hint with data-wiw-chips-hint="<name>" follows: data-hint-none while no chip
+ *   is ticked, data-hint-some once one is.
  * - A select with data-wiw-city-for="<country select id>" offers only the cities of the chosen country.
  *
  * Without JavaScript the selects still work: the add select is sent with the form and the server keeps every industry chosen.
@@ -30,6 +31,16 @@
 				return ! option.hidden;
 			} );
 		} );
+	}
+
+	function updateHint( name ) {
+		var hint = document.querySelector( '[data-wiw-chips-hint="' + name + '"]' );
+		var list = document.querySelector( '[data-wiw-chips="' + name + '"]' );
+		if ( ! hint || ! list ) {
+			return;
+		}
+		var some = null !== list.querySelector( 'input[type="checkbox"]:checked' );
+		hint.textContent = hint.getAttribute( some ? 'data-hint-some' : 'data-hint-none' ) || hint.textContent;
 	}
 
 	function addChip( select ) {
@@ -58,6 +69,7 @@
 			list.appendChild( item );
 		}
 		select.value = '0';
+		updateHint( name );
 	}
 
 	function narrowCities( select ) {
@@ -87,6 +99,13 @@
 	document.querySelectorAll( '[data-wiw-chip-add]' ).forEach( function ( select ) {
 		select.addEventListener( 'change', function () {
 			addChip( select );
+		} );
+	} );
+
+	document.querySelectorAll( '[data-wiw-chips]' ).forEach( function ( list ) {
+		var name = list.getAttribute( 'data-wiw-chips' );
+		list.addEventListener( 'change', function () {
+			updateHint( name );
 		} );
 	} );
 

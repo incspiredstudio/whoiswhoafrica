@@ -213,6 +213,31 @@ final class Classification {
 	 * @param string $raw      Raw value.
 	 */
 	private static function match( string $taxonomy, string $raw ): ?string {
+		$found = self::match_one( $taxonomy, $raw );
+		if ( null !== $found ) {
+			return $found;
+		}
+		// A list such as "financial services, financial sector": each part is tried in order and the first match wins.
+		$parts = preg_split( '/\s*[,;|]\s*/u', $raw );
+		if ( ! is_array( $parts ) || count( $parts ) < 2 ) {
+			return null;
+		}
+		foreach ( $parts as $part ) {
+			$found = '' === trim( $part ) ? null : self::match_one( $taxonomy, $part );
+			if ( null !== $found ) {
+				return $found;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Match one value: as given, then without a trailing "industry" or "sector" ("telecommunications industry").
+	 *
+	 * @param string $taxonomy Taxonomy.
+	 * @param string $raw      Raw value.
+	 */
+	private static function match_one( string $taxonomy, string $raw ): ?string {
 		$key = self::normalise( $raw );
 		if ( '' === $key ) {
 			return null;
@@ -222,7 +247,11 @@ final class Classification {
 			return $index[ $key ];
 		}
 		$slug = sanitize_title( $raw );
-		return isset( $index[ 'slug:' . $slug ] ) ? $index[ 'slug:' . $slug ] : null;
+		if ( isset( $index[ 'slug:' . $slug ] ) ) {
+			return $index[ 'slug:' . $slug ];
+		}
+		$bare = trim( (string) preg_replace( '/\s+(industry|industries|sector)$/u', '', $key ) );
+		return '' !== $bare && $bare !== $key && isset( $index[ $bare ] ) ? $index[ $bare ] : null;
 	}
 
 	/**

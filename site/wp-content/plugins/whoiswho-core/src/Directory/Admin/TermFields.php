@@ -82,7 +82,8 @@ final class TermFields {
 	 * @return string|null An error code (see message()).
 	 */
 	public function refusal( string $taxonomy, array $data, int $term_id = 0 ): ?string {
-		$parent = (int) ( $data['parent'] ?? 0 );
+		// Parent "None" on the term screens sends -1: anything below 1 means no parent.
+		$parent = max( 0, (int) ( $data['parent'] ?? 0 ) );
 		if ( Taxonomies::PLACE === $taxonomy ) {
 			$kind = (string) ( $data['kind'] ?? '' );
 			$code = strtoupper( trim( (string) ( $data['code'] ?? '' ) ) );
@@ -151,7 +152,7 @@ final class TermFields {
 			'code_taken'     => __( 'Another country already has this code. Each country code is used once.', 'whoiswho' ),
 			'country_parent' => __( 'A country or Pan-African body is at the top of the list: leave Parent empty.', 'whoiswho' ),
 			'city_parent'    => __( 'A city needs its country as Parent.', 'whoiswho' ),
-			'sector_parent'  => __( 'An industry\'s Parent must be a sector (a top-level industry term). Leave Parent empty to add a sector.', 'whoiswho' ),
+			'sector_parent'  => __( 'An industry can only go under a sector. Choose a sector as Parent, not another industry or Unclassified. To add a new sector, set Parent to None.', 'whoiswho' ),
 			'sector_moved'   => __( 'This sector has industries under it, so it cannot be moved under another sector.', 'whoiswho' ),
 			'unclassified'   => __( 'Unclassified holds the profiles that still need an industry. It cannot be renamed, moved or deleted.', 'whoiswho' ),
 		);
@@ -538,7 +539,7 @@ final class TermFields {
 			return __( 'A country needs its two-letter code, for example NG for Nigeria, and no Parent. A city needs its country as Parent. Pan-African bodies use the place Pan-African.', 'whoiswho' );
 		}
 		if ( Taxonomies::INDUSTRY === $taxonomy ) {
-			return __( 'Top-level entries are sectors. To add an industry, choose its sector as Parent; leave Parent empty to add a sector. Unclassified cannot be changed.', 'whoiswho' );
+			return __( 'Top-level entries are sectors. To add an industry, choose its sector as Parent; to add a sector, set Parent to None. Unclassified cannot be changed.', 'whoiswho' );
 		}
 		return __( 'The kind of body, for example Company, University or NGO / non-profit. Each organisation or institution has one.', 'whoiswho' );
 	}
