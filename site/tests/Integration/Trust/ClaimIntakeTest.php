@@ -277,6 +277,10 @@ final class ClaimIntakeTest extends TestCase {
 		$this->assertContains( 'claims@example.org', $to, 'the claim reviewers are told' );
 		$ack = $this->sent[ array_search( 'ada@example.test', $to, true ) ];
 		$this->assertStringContainsString( $result['reference'], $ack['text'] );
+		// The staff message sent at once is a "new claim" notice, not a reminder (#810); reminders stay for the later job.
+		$staff = $this->sent[ array_search( 'claims@example.org', $to, true ) ];
+		$this->assertStringContainsString( 'New claim to review', $staff['subject'] );
+		$this->assertStringNotContainsString( 'waiting', strtolower( $staff['subject'] . ' ' . $staff['text'] ) );
 	}
 
 	public function test_REQ_122_claim_form_is_rate_limited(): void {
