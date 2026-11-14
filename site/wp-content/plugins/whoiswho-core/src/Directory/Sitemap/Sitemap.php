@@ -166,11 +166,16 @@ final class Sitemap {
 	 * Home page and published pages.
 	 */
 	private function pages(): string {
-		$xml = '<url><loc>' . esc_url( home_url( '/' ) ) . '</loc></url>';
-		// Published pages only, by default.
+		$home = home_url( '/' );
+		$xml  = '<url><loc>' . esc_url( $home ) . '</loc></url>';
+		// Published pages only, by default. The static front page's address is the home page, already listed.
 		$pages = get_pages( array( 'sort_column' => 'ID' ) );
 		foreach ( $pages as $page ) {
-			$xml .= $this->url( (string) get_permalink( $page ), $page->post_modified_gmt );
+			$link = (string) get_permalink( $page );
+			if ( trailingslashit( $link ) === trailingslashit( $home ) ) {
+				continue;
+			}
+			$xml .= $this->url( $link, $page->post_modified_gmt );
 		}
 		return $this->wrap( 'urlset', $xml );
 	}

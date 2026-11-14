@@ -75,6 +75,73 @@ final class ProfileRouteTest extends TestCase {
 		$this->assertSame( 'https://example.org/profile/chinwe-okafor-zxy/', str_replace( home_url(), 'https://example.org', ProfileSlugs::url_for_slug( 'chinwe-okafor-zxy' ) ) );
 	}
 
+	/**
+	 * Non-Latin slugs are stored percent-encoded by WordPress; the public address must encode them exactly once (#810).
+	 */
+	public function test_REQ_003_non_latin_slug_url_is_encoded_once(): void {
+		$arabic = $this->profile( "\u{625}\u{628}\u{631}\u{627}\u{647}\u{64a}\u{645} Qwv" );
+		$slug   = (string) get_post_field( 'post_name', $arabic );
+		$this->assertStringStartsWith( '%d8%a5', $slug, 'WordPress stores the slug percent-encoded.' );
+
+		$url = ProfileSlugs::url_for_slug( $slug );
+		$this->assertStringNotContainsString( '%25', $url, 'Never double-encoded.' );
+		$this->assertSame( home_url( '/profile/' . $slug . '/' ), $url );
+
+		// The browser sends the address as it is; WordPress hands the decoded segment to the route.
+		$segment = rawurldecode( (string) preg_replace( '#^.*/profile/([^/]+)/$#', '$1', $url ) );
+		$this->assertSame( 'serve', ( new ProfileRoute() )->resolve( $segment )['action'] );
+		$this->assertSame( 'serve', ( new ProfileRoute() )->resolve( $slug )['action'], 'The encoded form resolves too.' );
+
+		// A raw (decoded) slug passed in is encoded once as well.
+		$this->assertSame( $url, ProfileSlugs::url_for_slug( rawurldecode( $slug ) ) );
+
+		$accented = $this->profile( "Ad\u{e9}la\u{ef}de \u{c7}a\u{11f}r\u{131} Qwv" );
+		$this->assertSame( 'adelaide-cagri-qwv', get_post_field( 'post_name', $accented ) );
+		$this->assertSame( home_url( '/profile/adelaide-cagri-qwv/' ), ProfileSlugs::url_for_slug( 'adelaide-cagri-qwv' ) );
+		$this->assertSame( home_url( '/profile/plain-name-qwv/' ), ProfileSlugs::url_for_slug( 'plain-name-qwv' ) );
+	}
+
+	public function test_REQ_121_sitemap_and_read_model_link_non_latin_profiles_once_encoded(): void {
+		$id   = $this->profile( "\u{645}\u{62d}\u{645}\u{62f} Qwv" );
+		$slug = (string) get_post_field( 'post_name', $id );
+		wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => 'publish',
+			)
+		);
+		$sitemap = new \WhoIsWho\Core\Directory\Sitemap\Sitemap();
+		$sitemap->purge();
+		$body = (string) ( $sitemap->respond( 'sitemap-profiles-1.xml' )['body'] ?? '' );
+		$this->assertStringContainsString( '/profile/' . $slug . '/', $body );
+		$this->assertStringNotContainsString( '%25', $body );
+
+		$public = \WhoIsWho\Core\Directory\PublicProfile::find_by_id( $id );
+		$this->assertNotNull( $public );
+		$this->assertStringNotContainsString( '%25', $public->url, 'Directory cards, search, related links and the canonical use this address.' );
+		$this->assertSame( ProfileSlugs::url_for_slug( $slug ), $public->url );
+		$this->assertNotNull( \WhoIsWho\Core\Directory\PublicProfile::find( rawurldecode( $slug ) ), 'Found by the decoded address segment.' );
+	}
+
+	public function test_REQ_121_sitemap_lists_the_home_page_once(): void {
+		$front = wp_insert_post(
+			array(
+				'post_type'   => 'page',
+				'post_title'  => 'Home Qwv',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = (int) $front;
+		update_option( 'show_on_front', 'page' );
+		update_option( 'page_on_front', $front );
+		$sitemap = new \WhoIsWho\Core\Directory\Sitemap\Sitemap();
+		$sitemap->purge();
+		$body = (string) ( $sitemap->respond( 'sitemap-pages.xml' )['body'] ?? '' );
+		update_option( 'show_on_front', 'posts' );
+		delete_option( 'page_on_front' );
+		$this->assertSame( 1, substr_count( $body, '<loc>' . esc_url( home_url( '/' ) ) . '</loc>' ), 'The home page appears once.' );
+	}
+
 	public function test_REQ_003_route_is_registered_as_a_rewrite_rule(): void {
 		global $wp_rewrite;
 		$before = get_option( 'permalink_structure' );

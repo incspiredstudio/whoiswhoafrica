@@ -19,7 +19,8 @@ $wiw_profile = isset( $args['profile'] ) ? $args['profile'] : null;
 if ( ! $wiw_profile instanceof PublicProfile ) {
 	return;
 }
-$wiw_slug = rawurlencode( $wiw_profile->slug );
+// Stored non-Latin slugs are already percent-encoded: encode exactly once (#810).
+$wiw_slug = \WhoIsWho\Core\Directory\Url\ProfileSlugs::path_segment( $wiw_profile->slug );
 
 /*
  * The contact block is filled by the enquiry feature (a form trigger, or a notice when enquiries are switched off). Until a

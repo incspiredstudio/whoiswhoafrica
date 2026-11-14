@@ -152,6 +152,18 @@ final class ProfileSlugs {
 	 * @param string $slug Slug.
 	 */
 	public static function url_for_slug( string $slug ): string {
-		return home_url( '/profile/' . rawurlencode( $slug ) . '/' );
+		return home_url( '/profile/' . self::path_segment( $slug ) . '/' );
+	}
+
+	/**
+	 * A slug as one address segment, encoded exactly once. WordPress stores a non-Latin slug already percent-encoded (lower-case
+	 * hex, for example %d8%a5), so the slug is decoded first and encoded again, and the hex is kept lower-case so the address
+	 * matches the stored slug. A plain or transliterated slug comes back unchanged.
+	 *
+	 * @param string $slug Slug, stored (encoded) or raw.
+	 */
+	public static function path_segment( string $slug ): string {
+		$encoded = rawurlencode( rawurldecode( $slug ) );
+		return (string) preg_replace_callback( '/%[0-9A-F]{2}/', static fn ( array $m ): string => strtolower( $m[0] ), $encoded );
 	}
 }
