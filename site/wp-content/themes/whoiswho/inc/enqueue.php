@@ -121,6 +121,29 @@ add_action(
 	30
 );
 
+// wpDiscuz on brand (REQ-258): on a single story while the plugin is active, the theme's overrides load after the plugin's sheet and
+// its inline colour rules. The plugin's colour options are never changed from here.
+add_action(
+	'wp_enqueue_scripts',
+	static function (): void {
+		if ( ! is_singular( 'post' ) || ! class_exists( 'WpdiscuzCore' ) ) {
+			return;
+		}
+		$url = wiw_asset_url( 'wpdiscuz.css' );
+		if ( null === $url ) {
+			return;
+		}
+		$deps = array();
+		foreach ( array( 'wiw-story', 'wpdiscuz-frontend-css', 'wpdiscuz-frontend-rtl-css', 'wpdiscuz-frontend-minimal-css' ) as $handle ) {
+			if ( wp_style_is( $handle, 'enqueued' ) ) {
+				$deps[] = $handle;
+			}
+		}
+		wp_enqueue_style( 'wiw-wpdiscuz', $url, $deps, WIW_THEME_VERSION );
+	},
+	40
+);
+
 // No jQuery on the public site: the theme adds JavaScript only where a page needs it. The one exception is a story while the
 // wpDiscuz comment plugin is active: its form posts comments with jQuery, so without it nobody could comment (REQ-258).
 add_action(
