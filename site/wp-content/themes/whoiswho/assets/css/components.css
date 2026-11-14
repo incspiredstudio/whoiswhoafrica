@@ -327,6 +327,7 @@ ul.sponsors { list-style: none; }
 @media (width <= 47.99rem) { .title-band--compact .band-main p { display: none; } }
 
 /* Page band (template-parts/page-band.php): the title lines up with the wrap; the lede keeps a reading measure. */
+
 /* The theme's search form on light pages (404): the field needs its own edge. */
 .site-search-form { max-width: 32rem; margin-top: var(--s-5); }
 .site-search-form input { border-color: var(--stone-500); }
@@ -1329,6 +1330,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .fbar-q { min-width: min(100%, 12rem); }
 
 /* ---------- industries (REQ-007) ---------- */
+
 /* The index is the prototype's index list (.index-list): full-width rows that fill dark on hover. */
 .ind-list { margin: var(--s-4) 0 var(--s-6); padding: 0; }
 .ind-name { overflow-wrap: anywhere; }
@@ -1342,6 +1344,7 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .rail-actions .btn { justify-content: center; text-align: center; }
 
 /* ---------- FAQ (REQ-260) ---------- */
+
 /* Editor and legal pages: a reading column that lines up with the band's title, as in the prototype. */
 .page-body > :not(.alignwide, .alignfull) { max-width: 48rem; }
 .page-body.section { padding-block: var(--s-6) var(--s-8); }

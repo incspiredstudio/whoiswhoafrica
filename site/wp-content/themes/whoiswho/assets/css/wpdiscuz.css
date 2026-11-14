@@ -29,13 +29,12 @@ body .section.comments { padding-block: var(--s-7) var(--s-6); }
 body .comments #comments.comments-area { margin: 0; }
 body .comments #wpd-post-rating { display: none; }
 body .comments .wpdiscuz_top_clearing { display: none; }
-body #wpdcom .wpd-form-head { margin-top: 0; }
 body #wpdcom .wpd-form-wrap { padding-bottom: 0; }
-body #wpdcom .wpd-thread-list { padding-bottom: 0; }
 body #wpdcom .wpd-thread-wrapper { margin-top: 0; }
 
 /* Form head: the subscribe toggle as a quiet text button. */
 body #wpdcom .wpd-form-head {
+  margin-top: 0;
   padding: 0 0 var(--s-3);
   margin-bottom: var(--s-4);
   border-bottom: 1px solid var(--c-line);
@@ -80,13 +79,21 @@ body #wpdcom .ql-editor.ql-blank::before {
 }
 
 body #wpdcom .ql-toolbar button { color: var(--c-muted); }
+
 body #wpdcom .ql-toolbar button:hover,
 body #wpdcom .ql-toolbar button.ql-active { color: var(--c-text); }
+
+body #wpdcom .wpdiscuz-subscribe-form-email input {
+  min-height: 2.75rem;
+  border: 1px solid var(--stone-500);
+  border-radius: var(--r-1);
+  background: var(--c-surface);
+  color: var(--c-text);
+}
 
 body #wpdcom .wpd-form-row .wpdiscuz-item input[type="text"],
 body #wpdcom .wpd-form-row .wpdiscuz-item input[type="email"],
 body #wpdcom .wpd-form-row .wpdiscuz-item input[type="url"],
-body #wpdcom .wpdiscuz-item input[type="email"],
 body #wpdcom textarea,
 body #wpdcom select {
   min-height: 2.75rem;
@@ -210,7 +217,7 @@ body #wpdcom .wpd-thread-filter .wpd-filter svg,
 body #wpdcom .wpd-thread-filter .wpd-filter i { color: inherit; fill: currentcolor; }
 
 /* Comments: name, time, text and reply, as the theme's own comment list. */
-body #wpdcom .wpd-thread-list { padding-top: var(--s-3); }
+body #wpdcom .wpd-thread-list { padding: var(--s-3) 0 0; }
 
 body #wpdcom .wpd-comment-wrap {
   padding-block: var(--s-4);
@@ -234,7 +241,7 @@ body #wpdcom [class*="wpd-blog-"] .wpd-comment-label {
 }
 
 body #wpdcom .wpd-comment-date,
-body #wpdcom .wpd-comment-date i,
+body #wpdcom .wpd-comment-date .far,
 body #wpdcom .wpd-comment-link { color: var(--c-muted); font-size: var(--t-sm); }
 
 body #wpdcom .wpd-comment-text,
@@ -270,8 +277,7 @@ body #wpdcom .wpd-inline-filter-cta {
 }
 
 /* Messages the plugin shows after posting. */
-body #wpdcom .wpdiscuz-comment-message,
-body .wpdiscuz_top_clearing + .wpdiscuz-comment-message {
+body .comments .wpdiscuz-comment-message {
   border-radius: var(--r-1);
   font-size: var(--t-sm);
 }
