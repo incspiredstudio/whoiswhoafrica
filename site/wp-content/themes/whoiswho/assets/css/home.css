@@ -3,10 +3,13 @@
 /* Front page (M2-HOM-08..12). The default rules are the complete static page: scripts off, reduced motion, data saver.
    html.home-live (set by home.js only when motion is allowed) adds the scroll effects. Colours, type and spacing come from the
    child theme's tokens; nothing here names a brand value. Ported from prototype/theme/home.css. */
-.home { position: relative; isolation: isolate; overflow: clip; background: var(--c-dark-deep); color: var(--c-on-dark); }
-.home h2, .home h3 { letter-spacing: -.01em; }
+
+/* div.home, never bare .home: WordPress also puts the class "home" on <body> of the front page, and overflow: clip on <body>
+   locks touch scrolling on phones while its light text colour leaks into the header menus. */
+div.home { position: relative; isolation: isolate; overflow: clip; background: var(--c-dark-deep); color: var(--c-on-dark); }
+div.home h2, div.home h3 { letter-spacing: -.01em; }
 .home .wrap { max-width: none; }
-.home a:focus-visible, .home button:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 3px; }
+div.home a:focus-visible, div.home button:focus-visible { outline: 3px solid var(--c-focus-on-dark); outline-offset: 3px; }
 .h-line { display: block; overflow: hidden; padding-block: .14em .22em; margin-block: -.14em -.22em; }
 .h-line > span { display: block; white-space: nowrap; }
 .h-kicker { margin: 0; font-size: var(--t-sm); font-weight: 500; letter-spacing: .01em; }
