@@ -76,7 +76,12 @@ function pinStories() {
     if (on) track.style.transform = "translate3d(" + (-progress() * dist).toFixed(1) + "px,0,0)";
   };
   const measure = () => {
-    on = wide.matches;
+    // Pin only when the stories are wider than the screen: with a short track a pinned section is a screen of empty space.
+    sec.classList.remove("is-pinned");
+    sec.style.height = "";
+    track.style.transform = "";
+    const wrap = track.parentElement;
+    on = wide.matches && !!wrap && wrap.scrollWidth > wrap.clientWidth + 1;
     sec.classList.toggle("is-pinned", on);
     if (!on) {
       sec.style.height = "";

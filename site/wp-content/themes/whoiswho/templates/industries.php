@@ -29,6 +29,7 @@ if ( null === $wiw_term ) :
 			'eyebrow' => __( 'Directory', 'whoiswho' ),
 			'title'   => __( 'Industries', 'whoiswho' ),
 			'lede'    => __( 'Browse the record by sector. Each count is the number of reviewed profiles.', 'whoiswho' ),
+			'wide'    => true,
 		)
 	);
 	?>
@@ -87,6 +88,7 @@ else :
 			'title'   => $wiw_term->name,
 			/* translators: %d: number of profiles. */
 			'lede'    => sprintf( _n( '%d reviewed profile in this industry.', '%d reviewed profiles in this industry.', (int) $wiw_result['total'], 'whoiswho' ), (int) $wiw_result['total'] ),
+			'wide'    => true,
 		)
 	);
 	?>

@@ -256,6 +256,7 @@ ul.sponsors { list-style: none; }
 
 /* ---------- home hero ---------- */
 .hero { position: relative; overflow: hidden; background: var(--c-dark-deep); color: var(--c-on-dark); isolation: isolate; }
+
 /* The brand pattern: the four approved Adinkra marks in shades of the text colour (docs/theme/brand-and-tokens.md, "Approved symbols"). */
 .hero::before, .pattern::before { content: ""; position: absolute; inset: 0; z-index: -1; background: currentcolor; opacity: .05; pointer-events: none; mask: var(--img-pattern-tile) 0 0 / 320px 320px repeat; }
 .pattern { position: relative; isolation: isolate; }
@@ -1335,6 +1336,15 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 /* Stories list (REQ-029, REQ-249): magazine masthead, mosaic, three-column grid, dark sign-up, cards with a 16:9 cover. */
 .stories-mast { padding-top: var(--s-8); }
 .stories-title { font: 400 var(--t-4xl)/var(--lh-tight) var(--font-display); margin-bottom: var(--s-5); }
+
+/* Wide screens: as in the prototype, the title and the type tabs share one row above the filter bar, and the title is smaller. */
+@media (width >= 64rem) {
+  .stories-mast { padding-top: var(--s-7); }
+  .stories-mast > .wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: var(--s-6); }
+  .stories-mast .stories-title { margin-bottom: var(--s-3); font-size: var(--t-3xl); }
+  .stories-mast .bl-pills { justify-self: end; margin-bottom: var(--s-3); }
+  .stories-mast > .wrap > :not(.stories-title, .bl-pills) { grid-column: 1 / -1; }
+}
 .stories-body { padding-bottom: var(--s-9); }
 .stories-mosaic, .stories-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-7) var(--s-5); }
 .stories-mosaic { padding-top: var(--s-4); }

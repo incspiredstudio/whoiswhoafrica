@@ -1,6 +1,7 @@
 <?php
 /**
- * Page band: eyebrow, title (the page's h1), lede, optional tone. Args: eyebrow, title, lede, tone.
+ * Page band: eyebrow, title (the page's h1), lede, optional tone. Args: eyebrow, title, lede, tone, wide. A list page (directory,
+ * industries) passes wide so the title lines up with the card grid below it instead of the narrow reading column.
  *
  * @package WhoIsWho
  */
@@ -18,11 +19,12 @@ $wiw_band = wp_parse_args(
 		'title'   => '',
 		'lede'    => '',
 		'tone'    => '',
+		'wide'    => false,
 	)
 );
 ?>
 <section class="section section--tight page-band<?php echo '' !== $wiw_band['tone'] ? ' page-band--' . esc_attr( sanitize_html_class( (string) $wiw_band['tone'] ) ) : ''; ?>">
-	<div class="wrap wrap--text">
+	<div class="wrap<?php echo $wiw_band['wide'] ? '' : ' wrap--text'; ?>">
 		<?php if ( '' !== $wiw_band['eyebrow'] ) : ?>
 			<p class="eyebrow"><?php echo esc_html( (string) $wiw_band['eyebrow'] ); ?></p>
 		<?php endif; ?>
