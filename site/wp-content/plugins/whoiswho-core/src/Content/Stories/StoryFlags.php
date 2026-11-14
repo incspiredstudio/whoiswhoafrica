@@ -165,7 +165,7 @@ final class StoryFlags {
 				if ( '' === $after[ $field ] ) {
 					delete_post_meta( $post_id, $key );
 				} else {
-					update_post_meta( $post_id, $key, $after[ $field ] );
+					update_post_meta( $post_id, $key, wp_slash( $after[ $field ] ) );
 				}
 			}
 		} finally {

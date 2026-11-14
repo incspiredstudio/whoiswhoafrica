@@ -284,7 +284,7 @@ final class ProfileApplier {
 		$post = wp_insert_post(
 			array(
 				'post_type'   => ProfileType::POST_TYPE,
-				'post_title'  => (string) $record['fields']['name']['value'],
+				'post_title'  => wp_slash( (string) $record['fields']['name']['value'] ),
 				'post_status' => ProfileType::STATUS_HIDDEN,
 			),
 			true

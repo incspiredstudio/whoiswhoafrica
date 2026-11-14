@@ -97,16 +97,27 @@ final class ProfileFields {
 		if ( null === $type || ! $this->allowlist->is_allowed( (string) $type, $key ) ) {
 			throw new \InvalidArgumentException( 'That field cannot be stored on this profile.' );
 		}
+		// WordPress unslashes what it stores (wp_update_post and update_post_meta), so the value is slashed first: without that a
+		// list's JSON loses the backslashes of its escapes ("é" became "u00e9" and an inner quote broke the list, issue 806).
 		if ( 'name' === $key ) {
 			wp_update_post(
 				array(
 					'ID'         => $post_id,
-					'post_title' => (string) $value,
+					'post_title' => wp_slash( (string) $value ),
 				)
 			);
 			return;
 		}
 		$meta_key = (string) FieldAllowlist::meta_key( $key );
-		update_post_meta( $post_id, $meta_key, is_array( $value ) ? wp_json_encode( array_values( $value ) ) : (string) $value );
+		update_post_meta( $post_id, $meta_key, wp_slash( self::encode( $value ) ) );
+	}
+
+	/**
+	 * The stored form of a value: a list as a JSON array of strings, anything else as a string.
+	 *
+	 * @param mixed $value Value.
+	 */
+	public static function encode( $value ): string {
+		return is_array( $value ) ? (string) wp_json_encode( array_values( $value ) ) : (string) $value;
 	}
 }

@@ -49,7 +49,7 @@ final class ImageMeta {
 		foreach ( $map as $key => $meta_key ) {
 			if ( isset( $credit[ $key ] ) && is_string( $credit[ $key ] ) ) {
 				$value = str_ends_with( $key, 'url' ) ? esc_url_raw( $credit[ $key ], array( 'http', 'https' ) ) : sanitize_text_field( $credit[ $key ] );
-				update_post_meta( $attachment_id, $meta_key, $value );
+				update_post_meta( $attachment_id, $meta_key, wp_slash( $value ) );
 			}
 		}
 	}

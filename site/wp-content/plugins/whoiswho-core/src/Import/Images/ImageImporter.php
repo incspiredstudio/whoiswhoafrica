@@ -151,7 +151,7 @@ final class ImageImporter {
 		ImageMeta::save( $id, $image );
 		update_post_meta( $id, ImageMeta::SHA256, $hex );
 		update_post_meta( $id, ImageMeta::BATCH, $batch_id );
-		update_post_meta( $id, '_wp_attachment_image_alt', sanitize_text_field( $name ) );
+		update_post_meta( $id, '_wp_attachment_image_alt', wp_slash( sanitize_text_field( $name ) ) );
 		return $id;
 	}
 
