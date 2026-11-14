@@ -290,9 +290,9 @@ final class ImportV11FlowTest extends TestCase {
 		$batch = $service->stage( $this->upload(), $admin );
 		$service->confirm( $batch, $admin );
 		$this->run_steps( $service, $batch, $admin );
-		$org     = $this->profile_of( 'rec_org_v11_1' );
-		$person  = $this->profile_of( 'rec_ind_v11_1' );
-		$count   = static fn (): int => count(
+		$org    = $this->profile_of( 'rec_org_v11_1' );
+		$person = $this->profile_of( 'rec_ind_v11_1' );
+		$count  = static fn (): int => count(
 			get_posts(
 				array(
 					'post_type'      => ProfileType::POST_TYPE,

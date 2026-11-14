@@ -60,7 +60,7 @@ final class MediaUndoTest extends TestCase {
 		return $id;
 	}
 
-	private function image( int $parent, string $batch ): int {
+	private function image( int $owner, string $batch ): int {
 		$id            = (int) wp_insert_attachment(
 			array(
 				'post_title'     => 'img',
@@ -68,7 +68,7 @@ final class MediaUndoTest extends TestCase {
 				'post_status'    => 'inherit',
 			),
 			false,
-			$parent
+			$owner
 		);
 		$this->posts[] = $id;
 		update_post_meta( $id, ImageMeta::BATCH, $batch );

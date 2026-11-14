@@ -47,10 +47,10 @@ final class UndoneBatchReset {
 		$map     = new RecordMap();
 		$states  = new StateRepository();
 		$machine = new StateMachine();
-		$linked    = 0;
-		$reopen    = array();
-		$old       = ( new BatchRepository() )->get( $batch_id );
-		$since     = null === $old ? '' : (string) $old['created_at'];
+		$linked  = 0;
+		$reopen  = array();
+		$old     = ( new BatchRepository() )->get( $batch_id );
+		$since   = null === $old ? '' : (string) $old['created_at'];
 		$rows    = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT record_id, code, profile_id FROM ' . ResultRepository::table() . ' WHERE batch_id = %s AND profile_id IS NOT NULL', $batch_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed table name; value prepared.
 		foreach ( $rows as $row ) {
 			$profile_id = (int) $row['profile_id'];
@@ -73,7 +73,7 @@ final class UndoneBatchReset {
 			}
 			$reopen[ $record_id ] = $profile_id;
 			++$linked;
-		}
+		}//end foreach
 		update_option( self::key( $batch_id ), $reopen, false );
 		$wpdb->delete( ResultRepository::table(), array( 'batch_id' => $batch_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the batch starts afresh.
 		$wpdb->delete( BatchRepository::table(), array( 'batch_id' => $batch_id ), array( '%s' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- as above.

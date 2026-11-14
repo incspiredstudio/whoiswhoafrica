@@ -65,7 +65,7 @@ final class BatchRepository {
 			// An undone batch may be imported again: its profiles are linked back so nothing is duplicated (#810).
 			( new Undo\UndoneBatchReset() )->reset( (string) $m['batch_id'] );
 		}
-		$ok  = $this->exists( (string) $m['batch_id'] ) ? false : $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$ok = $this->exists( (string) $m['batch_id'] ) ? false : $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::table(),
 			array(
 				'batch_id'          => (string) $m['batch_id'],

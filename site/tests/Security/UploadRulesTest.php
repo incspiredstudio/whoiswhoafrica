@@ -108,9 +108,9 @@ final class UploadRulesTest extends WpTestCase {
 	 */
 	private function package_prefilter( string $action, string $path, string $name ): array {
 		global $pagenow;
-		$before_page   = $pagenow;
-		$before_action = $GLOBALS['action'] ?? null;
-		$pagenow       = '' === $action ? 'async-upload.php' : 'update.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
+		$before_page       = $pagenow;
+		$before_action     = $GLOBALS['action'] ?? null;
+		$pagenow           = '' === $action ? 'async-upload.php' : 'update.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
 		$GLOBALS['action'] = $action; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
 		$result            = apply_filters(
 			'wp_handle_upload_prefilter',
