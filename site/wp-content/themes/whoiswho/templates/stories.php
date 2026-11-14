@@ -100,6 +100,11 @@ get_header();
 				),
 				/* translators: %d: number of stories. */
 				'count'    => sprintf( _n( '%d story', '%d stories', $wiw_total, 'whoiswho' ), $wiw_total ),
+				'total'    => $wiw_total,
+				'tabs'     => array(
+					'title' => __( 'Type', 'whoiswho' ),
+					'items' => $wiw_tabs,
+				),
 				'clear'    => $wiw_on,
 			)
 		);

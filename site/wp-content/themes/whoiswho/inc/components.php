@@ -92,3 +92,87 @@ if ( ! function_exists( 'wiw_poster_style' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'wiw_filter_url' ) ) {
+	/**
+	 * A list address with the given filter values, empty values left out (the same rule as filter-bar.js).
+	 *
+	 * @param string                $action The list page address.
+	 * @param array<string, string> $params Name => value.
+	 */
+	function wiw_filter_url( string $action, array $params ): string {
+		$params = array_filter( array_map( 'strval', $params ), static fn ( string $v ): bool => '' !== $v );
+		if ( array() === $params ) {
+			return $action;
+		}
+		return $action . ( str_contains( $action, '?' ) ? '&' : '?' ) . http_build_query( $params, '', '&', PHP_QUERY_RFC3986 );
+	}
+}
+
+if ( ! function_exists( 'wiw_filter_bar_state' ) ) {
+	/**
+	 * The filter bar's current state for the phone layout (REQ-007, REQ-044): the address parameters now in force, and one chip
+	 * per filter that is on, each linking to the same list without that one filter. The search text and the sort order are kept
+	 * but are not filters, so they make no chip and do not count.
+	 *
+	 * @param array<string, mixed> $fb The filter bar args (action, hidden, search, controls, sort, view).
+	 * @return array{params: array<string, string>, chips: list<array{name: string, label: string, value: string, url: string}>}
+	 */
+	function wiw_filter_bar_state( array $fb ): array {
+		$action = (string) ( $fb['action'] ?? '' );
+		$params = array();
+		if ( is_array( $fb['view'] ?? null ) && 'list' === ( $fb['view']['value'] ?? '' ) ) {
+			$params['view'] = 'list';
+		}
+		foreach ( (array) ( $fb['hidden'] ?? array() ) as $name => $value ) {
+			$params[ (string) $name ] = (string) $value;
+		}
+		if ( is_array( $fb['search'] ?? null ) && ! empty( $fb['search']['name'] ) ) {
+			$params[ (string) $fb['search']['name'] ] = (string) ( $fb['search']['value'] ?? '' );
+		}
+		$on = array();
+		foreach ( (array) ( $fb['controls'] ?? array() ) as $control ) {
+			if ( ! is_array( $control ) || empty( $control['name'] ) ) {
+				continue;
+			}
+			$name            = (string) $control['name'];
+			$value           = (string) ( $control['value'] ?? '' );
+			$params[ $name ] = $value;
+			if ( '' === $value ) {
+				continue;
+			}
+			$shown = $value;
+			foreach ( (array) ( $control['options'] ?? array() ) as $option_value => $option_label ) {
+				if ( is_array( $option_label ) ) {
+					foreach ( (array) ( $option_label['options'] ?? array() ) as $group_value => $group_label ) {
+						if ( (string) $group_value === $value ) {
+							$shown = (string) $group_label;
+						}
+					}
+				} elseif ( (string) $option_value === $value ) {
+					$shown = (string) $option_label;
+				}
+			}
+			$on[] = array(
+				'name'  => $name,
+				'label' => (string) ( $control['label'] ?? $name ),
+				'value' => $shown,
+			);
+		}//end foreach
+		if ( is_array( $fb['sort'] ?? null ) && ! empty( $fb['sort']['name'] ) ) {
+			$params[ (string) $fb['sort']['name'] ] = (string) ( $fb['sort']['value'] ?? '' );
+		}
+		$params = array_filter( $params, static fn ( string $v ): bool => '' !== $v );
+		$chips  = array();
+		foreach ( $on as $chip ) {
+			$without = $params;
+			unset( $without[ $chip['name'] ] );
+			$chip['url'] = wiw_filter_url( $action, $without );
+			$chips[]     = $chip;
+		}
+		return array(
+			'params' => $params,
+			'chips'  => $chips,
+		);
+	}
+}//end if

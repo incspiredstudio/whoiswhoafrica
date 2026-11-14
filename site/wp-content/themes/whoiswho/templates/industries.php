@@ -121,6 +121,25 @@ else :
 <section class="section section--tight ind-page">
 	<div class="wrap">
 		<p class="ind-back"><a href="<?php echo esc_url( home_url( '/industries/' ) ); ?>"><?php esc_html_e( 'All industries', 'whoiswho' ); ?></a></p>
+		<?php
+		// A sector page lists its industries as chips, each a link to that industry's page (REQ-009).
+		$wiw_children = 0 === (int) $wiw_term->parent && null !== $wiw_list ? wiw_sector_industries( $wiw_list->industry_counts(), (int) $wiw_term->term_id ) : array();
+		?>
+		<?php if ( array() !== $wiw_children ) : ?>
+			<nav class="ind-chips" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: sector name. */ __( 'Industries in %s', 'whoiswho' ), $wiw_term->name ) ); ?>">
+				<ul>
+					<?php foreach ( $wiw_children as $wiw_child ) : ?>
+						<li>
+							<a class="ind-chip" href="<?php echo esc_url( $wiw_child['url'] ); ?>">
+								<span><?php echo esc_html( $wiw_child['name'] ); ?></span>
+								<span class="ind-chip-n" aria-hidden="true"><?php echo esc_html( number_format_i18n( $wiw_child['count'] ) ); ?></span>
+								<span class="sr"><?php echo esc_html( sprintf( /* translators: %d: number of profiles. */ _n( ', %d profile', ', %d profiles', $wiw_child['count'], 'whoiswho' ), $wiw_child['count'] ) ); ?></span>
+							</a>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			</nav>
+		<?php endif; ?>
 		<?php if ( array() === $wiw_result['profiles'] ) : ?>
 			<?php
 			get_template_part(

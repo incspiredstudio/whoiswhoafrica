@@ -127,6 +127,11 @@ wiw_page_band(
 				),
 				/* translators: %d: number of profiles. */
 				'count'    => sprintf( _n( '%d profile', '%d profiles', $wiw_total, 'whoiswho' ), $wiw_total ),
+				'total'    => $wiw_total,
+				'tabs'     => array(
+					'title' => __( 'Type', 'whoiswho' ),
+					'items' => $wiw_tabs,
+				),
 				'clear'    => $wiw_on,
 			)
 		);

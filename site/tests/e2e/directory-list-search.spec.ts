@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { expectNoA11yViolations } from "./helpers/a11y";
-import { assertNoHorizontalScroll, disableScripts } from "./helpers/page";
+import { assertNoHorizontalScroll, chooseFilter, disableScripts } from "./helpers/page";
 
 // The per-list search field (REQ-008, REQ-254). What it filters is the list query (the plugin); here: it sits in the dark band as in
 // the prototype, what it writes to the address, that it is not the site search, and that the filters and the field keep each other.
@@ -40,8 +40,7 @@ test.describe("directory list search field", () => {
 
   test("changing a filter keeps the search text", async ({ page }) => {
     await page.goto("/directory/?q=alpha");
-    const select = page.locator("form.fbar select[name=sort]");
-    await Promise.all([page.waitForURL(/sort=updated/), select.selectOption("updated")]);
+    await chooseFilter(page, "sort", "updated");
     expect(new URL(page.url()).searchParams.get("q")).toBe("alpha");
   });
 
