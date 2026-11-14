@@ -493,7 +493,7 @@ final class AddProfileScreen {
 			return $this->term_select( $name, $this->terms( $taxonomy, Taxonomies::PLACE === $taxonomy ? Taxonomies::KIND_CITY : '' ), $value, $rule['required'] );
 		}
 		if ( $rule['long'] ) {
-			$rows = in_array( $key, AddProfileFields::SECTIONS, true ) ? 8 : 4;
+			$rows  = in_array( $key, AddProfileFields::SECTIONS, true ) ? 8 : 4;
 			$hint  = 'list' === $rule['type'] ? ' ' . esc_html__( 'One per line.', 'whoiswho' ) : '';
 			$count = 'wiw-count-' . $name;
 			$used  = function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );

@@ -452,7 +452,11 @@ final class AddProfileTest extends TestCase {
 		$html = ( new AddProfileScreen() )->html( new Request( array( 'entity_type' => 'organisation' ) ) );
 		$this->assertStringContainsString( '>Head office city<', $html, 'the label is the config label' );
 		$this->assertStringContainsString( '>Organisation type *<', $html );
-		foreach ( array( 'f_mandate' => 2000, 'f_summary' => 2000, 'f_bio' => 6000 ) as $name => $max ) {
+		foreach ( array(
+			'f_mandate' => 2000,
+			'f_summary' => 2000,
+			'f_bio'     => 6000,
+		) as $name => $max ) {
 			$this->assertMatchesRegularExpression( '#<textarea[^>]*name="' . $name . '"[^>]*maxlength="' . $max . '"[^>]*data-wiw-count="wiw-count-' . $name . '"#', $html, $name );
 			$this->assertStringContainsString( 'id="wiw-count-' . $name . '"', $html, $name . ' counter' );
 		}
