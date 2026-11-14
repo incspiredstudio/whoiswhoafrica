@@ -34,6 +34,9 @@ test.describe("plain admin menus (REQ-244)", () => {
     const menu = page.locator("#adminmenu");
     await expect(menu.locator("a[href*='page=wiw-profile-add']")).toHaveCount(1);
     await expect(menu.locator("a[href*='post-new.php?post_type=wiw_profile']")).toHaveCount(0);
+    // One Profiles item, under Directory: WordPress's own top-level Profiles menu is gone (issue 806).
+    await expect(menu.locator("#menu-posts-wiw_profile")).toHaveCount(0);
+    await expect(menu.locator("a[href*='edit.php?post_type=wiw_profile']")).toHaveCount(0);
     await expect(menu.locator("a[href*='page=wiw-profile-edit']")).toHaveCount(0);
     await expect(menu.locator("a[href*='page=wiw-review-item']")).toHaveCount(0);
     await expect(menu).not.toContainText("Edit profile");
@@ -51,6 +54,7 @@ test.describe("plain admin menus (REQ-244)", () => {
     await first.click();
     await expect(page).toHaveURL(/page=wiw-review-item/);
     await expect(page).toHaveTitle(/Review item/);
+    await expect(menu.locator("li#toplevel_page_wiw-menu-review.wp-has-current-submenu")).toHaveCount(1);
     const wrap = page.locator(".wrap").first();
     await expect(wrap).not.toContainText(/individual \/|organisation \/|imported_not_public|published_pending/);
     await expect(wrap.locator("select[name=reason_code] option[value=out_of_scope]")).toHaveText(/Out of scope/);
