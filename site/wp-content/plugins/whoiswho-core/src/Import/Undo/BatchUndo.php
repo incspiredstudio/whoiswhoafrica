@@ -86,7 +86,7 @@ final class BatchUndo {
 				false
 			);
 		}//end foreach
-		$counts['media_removed'] = $this->remove_media( $batch_id );
+		$counts['media_removed'] = ( new MediaUndo() )->remove( $batch_id );
 		delete_option( self::STATE_PREFIX . substr( md5( $batch_id ), 0, 20 ) );
 		$batches->advance( $batch_id, (int) $batch['progress_cursor'], 'undone' );
 		AuditLogger::for_site()->log(
@@ -138,49 +138,6 @@ final class BatchUndo {
 				'done'            => true,
 			),
 		);
-	}
-
-	/**
-	 * Delete the media library files the batch created, except on profiles a person reviewed (those are kept with their image).
-	 * Where the batch's image had replaced an earlier one, the earlier one is the profile's image again.
-	 *
-	 * @param string $batch_id Batch id.
-	 * @return int Attachments deleted.
-	 */
-	private function remove_media( string $batch_id ): int {
-		$ids     = get_posts(
-			array(
-				'post_type'        => 'attachment',
-				'post_status'      => 'any',
-				'posts_per_page'   => -1,
-				'fields'           => 'ids',
-				'meta_key'         => ImageMeta::BATCH, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- undo only.
-				'meta_value'       => $batch_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- undo only.
-				'suppress_filters' => true,
-			)
-		);
-		$states  = new StateRepository();
-		$removed = 0;
-		foreach ( $ids as $id ) {
-			$id         = (int) $id;
-			$profile_id = (int) wp_get_post_parent_id( $id );
-			$row        = $profile_id > 0 ? $states->get( $profile_id ) : null;
-			if ( null !== $row && ProfileApplier::is_reviewed( $row ) && PubState::REJECTED !== $row['pub_state'] && PubState::UNPUBLISHED !== $row['pub_state'] ) {
-				continue;
-			}
-			if ( $profile_id > 0 && (int) get_post_meta( $profile_id, PublicProfile::IMAGE_META, true ) === $id ) {
-				$previous = (int) get_post_meta( $id, ImageMeta::REPLACED, true );
-				if ( $previous > 0 && null !== get_post( $previous ) ) {
-					update_post_meta( $profile_id, PublicProfile::IMAGE_META, $previous );
-				} else {
-					delete_post_meta( $profile_id, PublicProfile::IMAGE_META );
-				}
-			}
-			if ( false !== wp_delete_attachment( $id, true ) ) {
-				++$removed;
-			}
-		}
-		return $removed;
 	}
 
 	/**

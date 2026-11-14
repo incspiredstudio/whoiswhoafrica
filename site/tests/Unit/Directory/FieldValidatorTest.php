@@ -148,6 +148,8 @@ final class FieldValidatorTest extends TestCase {
 		$validator = new FieldValidator();
 		$fields    = $this->person();
 		unset( $fields['current_title'] );
+		$this->assertSame( array(), $validator->validate( 'individual', $fields ), 'Contract 1.1: a person needs only a name.' );
+		unset( $fields['name'] );
 		$this->assertSame( 'SCHEMA', $validator->validate( 'individual', $fields )[0]['code'] );
 
 		$org = array(
