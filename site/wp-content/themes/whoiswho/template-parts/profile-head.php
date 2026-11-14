@@ -22,6 +22,8 @@ $wiw_kind  = wiw_profile_kind( $wiw_profile->entity_type );
 $wiw_role  = wiw_profile_fact( $wiw_profile, 'current_title' );
 $wiw_role  = '' !== $wiw_role ? $wiw_role : wiw_profile_fact( $wiw_profile, 'org_type' );
 $wiw_org   = wiw_profile_fact( $wiw_profile, 'current_organisation' );
+$wiw_role  = '' !== $wiw_role ? $wiw_role : wiw_profile_fact( $wiw_profile, 'field' );
+$wiw_life  = wiw_profile_lifespan( $wiw_profile );
 $wiw_where = array_filter(
 	array(
 		wiw_profile_fact( $wiw_profile, 'hq_city' ),
@@ -29,6 +31,7 @@ $wiw_where = array_filter(
 		$wiw_kind['label'],
 	)
 );
+$wiw_image = $wiw_profile->image();
 $wiw_tone  = (int) sprintf( '%u', crc32( $wiw_profile->name ) ) % 6 + 1;
 $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
@@ -61,6 +64,12 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 			<?php endif; ?>
 			<div>
 				<h1><?php echo esc_html( $wiw_profile->name ); ?></h1>
+				<?php if ( '' !== $wiw_life ) : ?>
+					<p class="profile-lifespan">
+						<span class="sr"><?php esc_html_e( 'Lived', 'whoiswho' ); ?></span>
+						<?php echo esc_html( $wiw_life ); ?>
+					</p>
+				<?php endif; ?>
 				<?php if ( '' !== $wiw_role || '' !== $wiw_org ) : ?>
 					<p class="profile-role"><?php echo esc_html( implode( ' · ', array_filter( array( $wiw_role, $wiw_org ) ) ) ); ?></p>
 				<?php endif; ?>
@@ -77,6 +86,24 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 					<?php endif; ?>
 				<?php endif; ?>
 				<p class="profile-loc meta"><?php echo wiw_icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?> <?php echo esc_html( implode( ' · ', $wiw_where ) ); ?></p>
+				<?php if ( null !== $wiw_image && '' !== $wiw_photo && ( '' !== $wiw_image['credit'] || '' !== $wiw_image['licence'] ) ) : ?>
+					<p class="profile-credit small">
+						<?php echo esc_html( 'logo' === $wiw_image['kind'] ? __( 'Logo:', 'whoiswho' ) : __( 'Photo:', 'whoiswho' ) ); ?>
+						<?php if ( '' !== $wiw_image['source_url'] && '' !== $wiw_image['credit'] ) : ?>
+							<a href="<?php echo esc_url( $wiw_image['source_url'] ); ?>" rel="nofollow noopener"><?php echo esc_html( $wiw_image['credit'] ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $wiw_image['credit'] ); ?>
+						<?php endif; ?>
+						<?php if ( '' !== $wiw_image['licence'] ) : ?>
+							<span aria-hidden="true">·</span>
+							<?php if ( '' !== $wiw_image['licence_url'] ) : ?>
+								<a href="<?php echo esc_url( $wiw_image['licence_url'] ); ?>" rel="license nofollow noopener"><?php echo esc_html( wiw_licence_label( $wiw_image['licence'] ) ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( wiw_licence_label( $wiw_image['licence'] ) ); ?>
+							<?php endif; ?>
+						<?php endif; ?>
+					</p>
+				<?php endif; ?>
 			</div>
 		</div>
 	</div>

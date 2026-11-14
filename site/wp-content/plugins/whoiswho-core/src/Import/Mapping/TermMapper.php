@@ -146,6 +146,40 @@ final class TermMapper {
 	}
 
 	/**
+	 * Add unknown values as new entries of their lists, in one go (a no-code alternative to mapping hundreds of values one by
+	 * one). A value that has meanwhile been mapped or added is left alone. One audit row carries the count.
+	 *
+	 * @param array<int, array{field: string, value: string}> $terms Unknown values from the dry run.
+	 * @return int Entries added.
+	 */
+	public function create_missing( array $terms ): int {
+		$added = 0;
+		foreach ( $terms as $term ) {
+			$taxonomy = self::FIELDS[ $term['field'] ] ?? null;
+			$value    = trim( (string) $term['value'] );
+			if ( null === $taxonomy || '' === $value || ! taxonomy_exists( $taxonomy ) || null !== $this->resolve( $term['field'], $value ) ) {
+				continue;
+			}
+			$made = wp_insert_term( mb_substr( $value, 0, 190 ), $taxonomy );
+			if ( ! is_wp_error( $made ) ) {
+				++$added;
+			}
+		}
+		if ( $added > 0 ) {
+			AuditLogger::for_site()->log(
+				'import.term_mapping',
+				array(
+					'type' => 'taxonomy',
+					'id'   => 'bulk',
+				),
+				null,
+				array( 'added' => $added )
+			);
+		}
+		return $added;
+	}
+
+	/**
 	 * A value as the key mappings use: lower case, single spaces.
 	 *
 	 * @param string $value Value.

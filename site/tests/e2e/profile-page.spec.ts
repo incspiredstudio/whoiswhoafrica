@@ -18,6 +18,8 @@ test.describe("profile page", () => {
     await expect(page.locator(".profile-cover, .banner, [class*='cover']")).toHaveCount(0);
     await expect(page.locator("a[href^='mailto:'], a[href^='tel:']")).toHaveCount(0);
     for (const link of await page.locator(".profile-main a[href^='http']").all()) {
+      // Outbound links only: the pending-review notice links to this site's own correction and removal forms.
+      if (new URL((await link.getAttribute("href")) ?? "", page.url()).origin === new URL(page.url()).origin) continue;
       expect(await link.getAttribute("rel")).toContain("noopener");
     }
     await assertNoHorizontalScroll(page);

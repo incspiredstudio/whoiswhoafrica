@@ -1445,3 +1445,21 @@ html.hdr-init .site-head, html.hdr-init .site-head *, html.hdr-init .site-head::
 .search-group + .search-group { margin-top: var(--s-9); }
 .search-group > h2 { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: var(--s-5); padding-bottom: var(--s-3); border-bottom: 1px solid var(--c-line); font: 400 var(--t-xl)/1.1 var(--font-display); }
 .search-group .count { font: 600 var(--t-sm)/1 var(--font-body); color: var(--c-muted); }
+
+/* ---------- profile narrative sections, lifespan, image credit and share panel (REQ-003, REQ-162; contract 1.1) ---------- */
+.profile-section { scroll-margin-top: calc(var(--head-h) + var(--s-4)); }
+.profile-prose { max-width: 44rem; }
+.profile-prose p { font-size: var(--t-md); line-height: var(--lh-body); }
+.profile-prose p + p { margin-top: var(--s-4); }
+.profile-section--bio .profile-prose p:first-child { font-size: var(--t-lg); line-height: var(--lh-snug); }
+.profile-lifespan { margin-top: var(--s-1); font: 400 var(--t-lg)/var(--lh-tight) var(--font-display); color: var(--c-muted); letter-spacing: .02em; }
+.profile-credit { margin-top: var(--s-2); color: var(--c-muted); font-size: var(--t-xs); }
+.profile-credit a { color: inherit; }
+.profile-website { margin-top: var(--s-5); }
+.timeline-simple .timeline-simple-one { grid-template-columns: 1fr; }
+.rail-share .share { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); align-items: stretch; }
+.rail-share .share figure { height: auto; min-height: 4.5rem; }
+.rail-share .share img { width: 100%; height: 100%; object-fit: cover; }
+.share-media--empty { display: grid; place-items: center; background: var(--c-surface); color: var(--c-muted); font: 400 var(--t-lg)/1 var(--font-display); }
+.rail-share .share div { display: grid; gap: var(--s-1); align-content: center; }
+.rail-share .pending-note { margin: 0; }

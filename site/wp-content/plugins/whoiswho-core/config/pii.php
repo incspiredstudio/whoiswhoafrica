@@ -554,6 +554,15 @@ return array(
 		'note'      => 'Contact details staff hold for a profile; private unless a detail is switched on (REQ-060).',
 	),
 	array(
+		'kind'      => 'meta',
+		'name'      => '_wiw_image_creator',
+		'class'     => 'public_after_approval',
+		'retention' => 'permanent',
+		'export'    => 'exclude',
+		'erase'     => 'keep',
+		'note'      => 'The photographer or maker credited on an open-licence profile image, as the source gives it; the licence requires the credit to be shown (contract 1.1 section 10). Removed with the image.',
+	),
+	array(
 		'kind'      => 'column',
 		'name'      => 'wiw_nominations.notes',
 		'class'     => 'pii',

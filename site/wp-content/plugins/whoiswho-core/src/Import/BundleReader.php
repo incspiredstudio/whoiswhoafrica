@@ -1,6 +1,6 @@
 <?php
 /**
- * Reads an export bundle (manifest.json and records.jsonl) and checks the manifest against the file (contract sections 2 and
+ * Reads an export bundle (manifest.json, records.jsonl and, from contract 1.1, an images/ folder) and checks the manifest against the file (contract sections 2 and
  * 12, REQ-237, REQ-212): a known contract version, the record count, the counts per entity type and records_sha256 over the
  * bytes of records.jsonl. Any mismatch refuses the whole bundle. Records are streamed line by line, never loaded together.
  * Plain PHP, no WordPress calls.
@@ -20,7 +20,7 @@ final class BundleReader {
 	/**
 	 * Contract versions this importer accepts.
 	 */
-	public const ACCEPTED_VERSIONS = array( '1.0' );
+	public const ACCEPTED_VERSIONS = array( '1.0', '1.1' );
 
 	public const MANIFEST_KEYS = array( 'contract_version', 'run_id', 'batch_id', 'generated_at', 'pipeline_version', 'source_list_version', 'sources', 'suppression_snapshot_id', 'record_count', 'counts', 'records_sha256' );
 
@@ -59,6 +59,27 @@ final class BundleReader {
 		$reader = new self( $dir );
 		$reader->check();
 		return $reader;
+	}
+
+	/**
+	 * Open a bundle that was already checked in full when its batch was registered: the manifest and records_sha256 are checked
+	 * again (so a changed file is still refused), but the per-line count pass is skipped. Used by each chunk of a large import.
+	 *
+	 * @param string $dir           Folder.
+	 * @param string $expected_hash The records hash registered for the batch.
+	 * @throws BundleRefused When the bundle no longer matches.
+	 */
+	public static function reopen( string $dir, string $expected_hash ): self {
+		$reader = new self( $dir );
+		$reader->check( $expected_hash );
+		return $reader;
+	}
+
+	/**
+	 * The bundle folder (images are read relative to it).
+	 */
+	public function dir(): string {
+		return $this->dir;
 	}
 
 	/**
@@ -110,9 +131,10 @@ final class BundleReader {
 	/**
 	 * Run every manifest check.
 	 *
+	 * @param string|null $expected_hash When given, the file must have this hash and the count pass is skipped.
 	 * @throws BundleRefused On the first problem.
 	 */
-	private function check(): void {
+	private function check( ?string $expected_hash = null ): void {
 		$manifest_path = $this->dir . '/manifest.json';
 		$records_path  = $this->dir . '/records.jsonl';
 		if ( ! is_readable( $manifest_path ) || ! is_readable( $records_path ) ) {
@@ -127,6 +149,13 @@ final class BundleReader {
 			throw new BundleRefused( 'CONTRACT_VERSION', 'This contract version is not accepted.' );
 		}
 		$this->check_shape( $manifest );
+		if ( null !== $expected_hash ) {
+			if ( ! hash_equals( $expected_hash, (string) $manifest['records_sha256'] ) || ! hash_equals( $expected_hash, 'sha256:' . hash_file( 'sha256', $records_path ) ) ) {
+				throw new BundleRefused( 'MANIFEST_MISMATCH', 'The records file does not match records_sha256.' );
+			}
+			$this->manifest = $manifest;
+			return;
+		}
 		$this->check_file( $manifest, $records_path );
 		$this->manifest = $manifest;
 	}
