@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Review\Admin;
 
 use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
+use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\State\PubState;
 
 /**
@@ -46,13 +47,23 @@ final class Labels {
 	}
 
 	/**
-	 * A profile field's label: the Add profile screen's words for the fields of config/profile-fields.php, else the key
-	 * humanised. (When the field list gets labels of its own, this is the one place to read them.)
+	 * A profile field's label, from config/profile-fields.php through FieldAllowlist::label() (the one label source). With no
+	 * entity type, the first type that lists the field gives the label; a field no type lists is shown humanised.
 	 *
-	 * @param string $key Field key.
+	 * @param string $key         Field key.
+	 * @param string $entity_type Entity type, when known.
 	 */
-	public static function field( string $key ): string {
-		return AddProfileScreen::field_label( $key );
+	public static function field( string $key, string $entity_type = '' ): string {
+		$allowlist = new FieldAllowlist();
+		if ( '' !== $entity_type && $allowlist->is_allowed( $entity_type, $key ) ) {
+			return $allowlist->label( $entity_type, $key );
+		}
+		foreach ( $allowlist->entity_types() as $type ) {
+			if ( $allowlist->is_allowed( $type, $key ) ) {
+				return $allowlist->label( $type, $key );
+			}
+		}
+		return self::humanise( $key );
 	}
 
 	/**

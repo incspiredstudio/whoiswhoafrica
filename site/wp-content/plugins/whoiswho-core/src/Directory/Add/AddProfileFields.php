@@ -74,6 +74,16 @@ final class AddProfileFields {
 	}
 
 	/**
+	 * A field's label, from config/profile-fields.php through the allowlist (the one label source).
+	 *
+	 * @param string $type Entity type.
+	 * @param string $key  Field key.
+	 */
+	public function label( string $type, string $key ): string {
+		return $this->allowlist->label( $type, $key );
+	}
+
+	/**
 	 * The form fields of a type: key => rule (type, required, max, long). Sections come last, in page order.
 	 *
 	 * @param string $type Entity type.

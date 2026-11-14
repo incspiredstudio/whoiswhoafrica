@@ -195,7 +195,7 @@ final class ProfileEditSectionsAndImageTest extends TestCase {
 		}
 		$org = $this->screen_html( $this->profile( 'organisation' ) );
 		$this->assertMatchesRegularExpression( '#<textarea[^>]*name="f_summary"[^>]*maxlength="2000"#', $org );
-		$this->assertMatchesRegularExpression( '#<textarea[^>]*name="f_mandate"#', $org );
+		$this->assertMatchesRegularExpression( '#<textarea[^>]*name="f_mandate"[^>]*maxlength="2000"#', $org );
 		$this->assertMatchesRegularExpression( '#<textarea[^>]*name="f_achievement"[^>]*maxlength="6000"#', $org );
 	}
 

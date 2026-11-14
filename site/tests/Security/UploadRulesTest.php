@@ -156,6 +156,32 @@ final class UploadRulesTest extends WpTestCase {
 		wp_set_current_user( 0 );
 	}
 
+	public function test_REQ_127_the_zip_allowance_never_applies_to_a_sideload(): void {
+		global $pagenow;
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		grant_super_admin( $admin );
+		wp_set_current_user( $admin );
+		$before_page       = $pagenow;
+		$before_action     = $GLOBALS['action'] ?? null;
+		$pagenow           = 'update.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
+		$GLOBALS['action'] = 'upload-theme'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- simulates the request.
+		$zip               = $this->zip( 'whoiswho.zip' );
+		$result            = apply_filters(
+			'wp_handle_sideload_prefilter',
+			array(
+				'name'     => 'whoiswho.zip',
+				'type'     => 'application/zip',
+				'tmp_name' => $zip,
+				'error'    => 0,
+				'size'     => (int) filesize( $zip ),
+			)
+		);
+		$pagenow           = $before_page; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+		$GLOBALS['action'] = $before_action; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+		wp_set_current_user( 0 );
+		$this->assertNotSame( 0, $result['error'], 'a sideloaded zip is refused even on the theme upload screen' );
+	}
+
 	public function test_REQ_127_disallowed_type_is_refused(): void {
 		$pdf    = $this->temp( "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF", 'pdf' );
 		$result = $this->prefilter( $pdf, 'doc.pdf', (int) filesize( $pdf ) );

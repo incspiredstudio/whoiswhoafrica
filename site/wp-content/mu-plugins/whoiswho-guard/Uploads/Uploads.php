@@ -64,7 +64,7 @@ final class Uploads {
 		add_filter( 'wp_check_filetype_and_ext', array( self::class, 'check_real_type' ), 99, 3 );
 		add_filter( 'wp_handle_upload_prefilter', array( self::class, 'prefilter' ) );
 		// Sideloads (media_handle_sideload: invitation photos, profile manager photos, import images) get the same checks (issue 810).
-		add_filter( 'wp_handle_sideload_prefilter', array( self::class, 'prefilter' ) );
+		add_filter( 'wp_handle_sideload_prefilter', array( self::class, 'sideload_prefilter' ) );
 		add_filter( 'wp_handle_upload', array( self::class, 'after_upload' ), 10, 2 );
 	}
 
@@ -136,13 +136,33 @@ final class Uploads {
 	 * @return array<string, mixed>
 	 */
 	public static function prefilter( array $file ): array {
-		$path = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
-		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
-
 		$package = self::package_upload_kind();
 		if ( '' !== $package ) {
-			return self::check_package( $file, $package, $path );
+			return self::check_package( $file, $package, isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '' );
 		}
+		return self::check_media( $file );
+	}
+
+	/**
+	 * Before WordPress stores a sideloaded file (media_handle_sideload): the media checks only. The theme or plugin zip allowance
+	 * never applies here, whatever screen the request came from, because core's package upload goes through wp_handle_upload.
+	 *
+	 * @param array<string, mixed> $file One $_FILES-like entry.
+	 * @return array<string, mixed>
+	 */
+	public static function sideload_prefilter( array $file ): array {
+		return self::check_media( $file );
+	}
+
+	/**
+	 * The media library checks: type read from content, size and scanner.
+	 *
+	 * @param array<string, mixed> $file One $_FILES-like entry.
+	 * @return array<string, mixed>
+	 */
+	private static function check_media( array $file ): array {
+		$path = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
 
 		$real = '' === $path ? '' : self::real_mime( $path );
 		if ( in_array( $real, self::VIDEO_TYPES, true ) && self::may_upload_video() ) {

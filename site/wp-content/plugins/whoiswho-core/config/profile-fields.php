@@ -45,6 +45,7 @@ $wiw_organisation = array(
 	'mandate'          => array(
 		'type'     => 'string',
 		'required' => false,
+		'max'      => 2000,
 		'label'    => 'Mandate',
 	),
 	'hq_city'          => array(
