@@ -17,7 +17,8 @@ get_header();
 wiw_page_band(
 	array(
 		'eyebrow' => __( 'Contact', 'whoiswho' ),
-		'title'   => __( 'Get in touch', 'whoiswho' ),
+		'title'   => __( 'Talk to the team', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'A person reads every message. The quickest way to change a profile is the correction form on that profile.', 'whoiswho' ),
 	)
 );

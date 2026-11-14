@@ -19,6 +19,7 @@ wiw_page_band(
 	array(
 		'eyebrow' => __( 'Newsletter', 'whoiswho' ),
 		'title'   => __( 'Unsubscribe', 'whoiswho' ),
+		'tone'    => 'dark',
 		'lede'    => __( 'You can stop the newsletter at any time. No account is needed, and it takes one click.', 'whoiswho' ),
 	)
 );

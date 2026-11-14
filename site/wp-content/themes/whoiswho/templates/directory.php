@@ -53,41 +53,46 @@ foreach ( ProfileList::filters_for( $wiw_key ) as $wiw_filter ) {
 	);
 }
 
+// The band's search field keeps every other filter; the filter bar keeps the search text (REQ-008, REQ-254).
+$wiw_keep = $wiw_params;
+unset( $wiw_keep['q'], $wiw_keep['page'] );
+
 get_header();
+// A dark compact band with the list's search field and the five lists as chips, as in the prototype (REQ-001, REQ-007).
 wiw_page_band(
 	array(
-		'eyebrow' => __( 'Directory', 'whoiswho' ),
 		'title'   => $wiw_info['title'],
 		'lede'    => $wiw_info['lede'],
-		'wide'    => true,
+		'tone'    => 'dark',
+		'compact' => true,
+		'search'  => array(
+			'action'      => $wiw_base,
+			'name'        => 'q',
+			'value'       => (string) $wiw_params['q'],
+			'label'       => __( 'Narrow this list', 'whoiswho' ),
+			'placeholder' => __( 'Name, organisation or keyword', 'whoiswho' ),
+			'button'      => __( 'Search', 'whoiswho' ),
+			'hidden'      => $wiw_keep,
+		),
+		'tabs'    => array(
+			'label' => __( 'Directory lists', 'whoiswho' ),
+			'items' => $wiw_tabs,
+		),
 	)
 );
 ?>
 <section class="section section--tight dir-list" data-list="<?php echo esc_attr( $wiw_key ); ?>">
 	<div class="wrap">
 		<?php
-		// Slot for the search box (REQ-007, live in M2).
+		// Slot for extra search tools (REQ-007).
 		do_action( 'wiw_directory_search', $wiw_key, $wiw_params );
-		get_template_part(
-			'template-parts/text-tabs',
-			null,
-			array(
-				'label' => __( 'Directory lists', 'whoiswho' ),
-				'items' => $wiw_tabs,
-			)
-		);
 		get_template_part(
 			'template-parts/filter-bar',
 			null,
 			array(
 				'action'   => $wiw_base,
 				'label'    => __( 'Filter profiles', 'whoiswho' ),
-				'search'   => array(
-					'name'        => 'q',
-					'value'       => (string) $wiw_params['q'],
-					'label'       => __( 'Narrow this list', 'whoiswho' ),
-					'placeholder' => __( 'Narrow this list by name', 'whoiswho' ),
-				),
+				'hidden'   => '' !== (string) $wiw_params['q'] ? array( 'q' => (string) $wiw_params['q'] ) : array(),
 				'controls' => $wiw_controls,
 				'view'     => array(
 					'value' => (string) $wiw_params['view'],
