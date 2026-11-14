@@ -25,7 +25,7 @@ Make a backup first if the site holds anything you want to keep.
 
 ## Steps, in this order
 
-**0. Raise the upload limit.** The child theme zip is about 4 MB and an import bundle up to 50 MB, while PHP often allows only 2 MB. In cPanel open **MultiPHP INI Editor**, choose your domain, set `upload_max_filesize` and `post_max_size` to `64M` (and `memory_limit` to `256M`), and press **Apply**. Media > Add New Media File then shows the new maximum.
+**0. Check, then raise, the upload limit.** To see the current limit, sign in to wp-admin and open **Media > Add New Media File**: under the upload box it says "Maximum upload file size: …". The child theme zip is about 4 MB and an import bundle up to 50 MB, while PHP often allows only 2 MB, so if it says less than 64 MB, raise it before you upload anything: in cPanel open **MultiPHP INI Editor**, choose your domain, set `upload_max_filesize` and `post_max_size` to `64M` (and `memory_limit` to `256M`), and press **Apply**. Media > Add New Media File then shows the new maximum.
 
 1. **Upload the themes.** Appearance > Themes > Add New Theme > Upload Theme: upload `whoiswho.zip`, then `whoiswho-child.zip`. You can leave them inactive for now.
 2. **Upload the plugin.** Plugins > Add New Plugin > Upload Plugin: upload `whoiswho-core.zip` and click **Activate Plugin**.
@@ -43,7 +43,11 @@ Make a backup first if the site holds anything you want to keep.
 5. **Settings.** Settings > General: site title, time zone (Lagos for West Africa Time), date format. Staff with the awards capability open or close nominations on the Nominations screen (Awards menu).
 6. **Optional: page cache.** The core plugin works with WP Super Cache, installed from wordpress.org (Plugins > Add New Plugin). It is not in the bundle because it does not work from inside another plugin's folder. Ask your developer before switching it on.
 
-Until the plugin is active and the child theme is switched on, wp-admin shows a red notice saying what is missing (with an Activate button when the plugin is uploaded but not active), and visitors see a short "getting this site ready" page (HTTP 503) instead of an error.
+What you see before everything is in place:
+
+- **Theme active, core plugin not active** (not uploaded, not activated, or it did not start): the Dashboard, Plugins and Themes screens show a red notice saying what is missing, with an *Activate* button when the plugin is uploaded but not active. Visitors see a short "getting this site ready" page (HTTP 503) instead of an error.
+- **Guard not installed yet:** the same screens show a red reminder about it, and the Setup checklist shows a "Recommended" line. The site works without it.
+- **Core plugin active, child theme not switched on:** there is no red notice. The Setup screen's *Site theme active* line says so and has an *Activate child theme* button.
 
 ## Before you go live
 
