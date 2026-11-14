@@ -61,5 +61,16 @@ final class SecurityHeadersTest extends WpTestCase {
 
 	public function test_REQ_046_cookies_are_secure_in_production_only(): void {
 		$this->assertFalse( apply_filters( 'secure_signon_cookie', false ), 'the test environment is not production' );
+		$this->assertTrue( Headers::wants_secure_cookie( 'production', 'https://example.org' ) );
+		$this->assertFalse( Headers::wants_secure_cookie( 'production', 'http://example.org' ), 'a site still on http keeps working cookies' );
+		$this->assertFalse( Headers::wants_secure_cookie( 'staging', 'https://example.org' ) );
+	}
+
+	public function test_REQ_046_https_redirect_waits_for_an_https_site_address(): void {
+		$this->assertTrue( Headers::should_redirect( 'production', false, 'https://example.org' ) );
+		$this->assertTrue( Headers::should_redirect( 'production', false, 'HTTPS://example.org/' ) );
+		$this->assertFalse( Headers::should_redirect( 'production', true, 'https://example.org' ), 'already on https' );
+		$this->assertFalse( Headers::should_redirect( 'production', false, 'http://example.org' ), 'no certificate yet: no lockout' );
+		$this->assertFalse( Headers::should_redirect( 'local', false, 'https://example.org' ) );
 	}
 }
