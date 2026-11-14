@@ -75,7 +75,7 @@ final class ReviewItemScreen {
 					static function (): void {
 						echo ( new self() )->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 					},
-					false,
+					true, // A detail screen, opened from its list: no menu item.
 					'review'
 				);
 				$registry->hook();
@@ -257,7 +257,7 @@ final class ReviewItemScreen {
 			return $out . '<p>' . esc_html__( 'Choose an item from the review queue.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( (string) $row['entity_type'] . ' / ' . (string) $row['pub_state'] ) . '</p>';
+		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $row['entity_type'] ) . ' · ' . Labels::state( (string) $row['pub_state'] ) ) . '</p>';
 		$out .= $this->importer_note( $row );
 		$out .= $this->diff_html( $id );
 		$out .= $this->claims_html( $id );
@@ -320,7 +320,7 @@ final class ReviewItemScreen {
 		}
 		$out = '<h3>' . esc_html__( 'Fields', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Field', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Change', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Before', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'After', 'whoiswho' ) . '</th></tr></thead><tbody>';
 		foreach ( $diff as $change ) {
-			$out .= '<tr><th scope="row">' . esc_html( (string) $change['field'] ) . '</th><td>' . esc_html( (string) $change['change'] ) . '</td><td>' . esc_html( $this->text( $change['old'] ) ) . '</td><td>' . esc_html( $this->text( $change['new'] ) ) . '</td></tr>';
+			$out .= '<tr><th scope="row">' . esc_html( Labels::field( (string) $change['field'] ) ) . '</th><td>' . esc_html( self::change_label( (string) $change['change'] ) ) . '</td><td>' . esc_html( $this->text( $change['old'] ) ) . '</td><td>' . esc_html( $this->text( $change['new'] ) ) . '</td></tr>';
 		}
 		return $out . ( array() === $diff ? '<tr><td colspan="4">' . esc_html__( 'No field changes.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
 	}
@@ -353,6 +353,20 @@ final class ReviewItemScreen {
 	}
 
 	/**
+	 * A diff change in words.
+	 *
+	 * @param string $change added, removed or changed.
+	 */
+	private static function change_label( string $change ): string {
+		$words = array(
+			'added'   => __( 'Added', 'whoiswho' ),
+			'removed' => __( 'Removed', 'whoiswho' ),
+			'changed' => __( 'Changed', 'whoiswho' ),
+		);
+		return $words[ $change ] ?? Labels::humanise( $change );
+	}
+
+	/**
 	 * A value as short text.
 	 *
 	 * @param mixed $value Value.
@@ -378,7 +392,7 @@ final class ReviewItemScreen {
 		$out    .= '</tr></thead><tbody>';
 		$entries = ( new ProvenanceRepository() )->for_profile( $id );
 		foreach ( $entries as $entry ) {
-			$out .= '<tr><th scope="row">' . esc_html( (string) $entry['field'] ) . '</th><td>' . esc_html( (string) $entry['source_url'] ) . '</td><td>' . esc_html( (string) $entry['retrieved_at'] ) . '</td><td>' . esc_html( (string) $entry['confidence'] ) . '</td><td>' . esc_html( (string) $entry['method'] ) . '</td></tr>';
+			$out .= '<tr><th scope="row">' . esc_html( Labels::field( (string) $entry['field'] ) ) . '</th><td>' . esc_html( (string) $entry['source_url'] ) . '</td><td>' . esc_html( (string) $entry['retrieved_at'] ) . '</td><td>' . esc_html( (string) $entry['confidence'] ) . '</td><td>' . esc_html( (string) $entry['method'] ) . '</td></tr>';
 		}
 		$out .= ( array() === $entries ? '<tr><td colspan="5">' . esc_html__( 'No sources recorded.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
 
@@ -390,7 +404,7 @@ final class ReviewItemScreen {
 				$urls[ (string) $passage['passage_id'] ] = (string) $passage['source_url'] . ' (' . (string) $passage['retrieved_at'] . ')';
 			}
 			foreach ( $evidence['claims'] as $claim ) {
-				$out .= '<li><strong>' . esc_html( (string) $claim['field'] ) . '</strong>: ' . esc_html( (string) $claim['claim_text'] ) . '<br /><small>' . esc_html( $urls[ (string) $claim['passage_id'] ] ?? '' ) . '</small></li>';
+				$out .= '<li><strong>' . esc_html( Labels::field( (string) $claim['field'] ) ) . '</strong>: ' . esc_html( (string) $claim['claim_text'] ) . '<br /><small>' . esc_html( $urls[ (string) $claim['passage_id'] ] ?? '' ) . '</small></li>';
 			}
 			$out .= '</ul>';
 		}
@@ -412,7 +426,7 @@ final class ReviewItemScreen {
 		}
 		$out = '<h3>' . esc_html__( 'Free-text scan', 'whoiswho' ) . '</h3><div class="notice notice-warning inline"><p>' . esc_html__( 'Flagged. The record cannot be approved until the block is cleared.', 'whoiswho' ) . '</p><ul>';
 		foreach ( $flags as $flag ) {
-			$out .= '<li>' . esc_html( (string) $flag['field'] . ': ' . (string) $flag['category'] ) . '</li>';
+			$out .= '<li>' . esc_html( Labels::field( (string) $flag['field'] ) . ': ' . Labels::humanise( (string) $flag['category'] ) ) . '</li>';
 		}
 		return $out . '</ul></div>' . $this->form( self::CLEAR, $id ) . '<p><label>' . esc_html__( 'Why the flags do not apply', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button">' . esc_html__( 'Clear the block', 'whoiswho' ) . '</button></p></form>';
 	}
@@ -434,7 +448,7 @@ final class ReviewItemScreen {
 		}
 		$out .= '</p></form>' . $this->form( self::REJECT, $id ) . '<p><label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <select name="reason_code">';
 		foreach ( DecisionLog::REASON_CODES as $code ) {
-			$out .= '<option value="' . esc_attr( $code ) . '">' . esc_html( $code ) . '</option>';
+			$out .= '<option value="' . esc_attr( $code ) . '">' . esc_html( Labels::reason( $code ) ) . '</option>';
 		}
 		return $out . '</select> <button class="button">' . esc_html__( 'Reject', 'whoiswho' ) . '</button></p></form>';
 	}

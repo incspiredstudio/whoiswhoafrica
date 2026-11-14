@@ -199,11 +199,29 @@ final class ScreenRegistry {
 			}
 		}
 		foreach ( $this->screens as $slug => $screen ) {
-			add_submenu_page( $screen['hidden'] ? null : self::menu_slug( $screen['group'] ), $screen['title'], $screen['title'], $screen['capability'], $slug, $screen['callback'] );
+			$hook = add_submenu_page( $screen['hidden'] ? null : self::menu_slug( $screen['group'] ), $screen['title'], $screen['title'], $screen['capability'], $slug, $screen['callback'] );
+			if ( $screen['hidden'] && is_string( $hook ) && '' !== $hook ) {
+				// A detail screen has no menu item, so WordPress cannot find its title: set it, and keep its group's menu open.
+				add_action( 'load-' . $hook, self::detail_screen_loader( $screen['title'], self::menu_slug( $screen['group'] ) ) );
+			}
 		}
 		foreach ( array_keys( $used ) as $id ) {
 			remove_submenu_page( self::menu_slug( $id ), self::menu_slug( $id ) );
 		}
+	}
+
+	/**
+	 * What runs when a detail screen (no menu item) loads: its page title for the browser tab and heading, and its group's menu
+	 * highlighted.
+	 *
+	 * @param string $title      Screen title.
+	 * @param string $group_menu Group menu slug.
+	 */
+	public static function detail_screen_loader( string $title, string $group_menu ): callable {
+		return static function () use ( $title, $group_menu ): void {
+			$GLOBALS['title'] = $title; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- WordPress reads the page title from this global.
+			add_filter( 'parent_file', static fn (): string => $group_menu );
+		};
 	}
 
 	/**

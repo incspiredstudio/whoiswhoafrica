@@ -69,6 +69,51 @@ final class AdminMenuGroupsTest extends WpTestCase {
 		$this->assertSame( 403, AuthorisationMatrix::status( $this->users['reviewer'], 'wiw-probe-detail' ) );
 	}
 
+	/**
+	 * A detail screen has no menu item, but its page title still renders (#810).
+	 */
+	public function test_REQ_244_a_detail_screen_still_gets_its_page_title(): void {
+		AuthorisationMatrix::menu_groups( $this->users['administrator'] );
+		$hook = get_plugin_page_hookname( 'wiw-probe-detail', '' );
+		$this->assertNotFalse( has_action( 'load-' . $hook ), 'a loader is hooked for the detail screen' );
+		$before           = $GLOBALS['title'] ?? null;
+		$GLOBALS['title'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin title.
+		do_action( 'load-' . $hook );
+		$this->assertSame( 'Probe detail', $GLOBALS['title'] );
+		$this->assertSame( ScreenRegistry::menu_slug( 'compliance' ), apply_filters( 'parent_file', '' ) );
+		$GLOBALS['title'] = $before; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore.
+	}
+
+	/**
+	 * The detail screens of the plugin (Edit profile, Review item) are not menu items; WordPress's own "Add profile" under its
+	 * Profiles menu is gone and its address leads to Directory > Add profile (#810).
+	 */
+	public function test_REQ_244_detail_screens_and_core_add_new_are_not_in_the_menus(): void {
+		foreach ( array( 'Directory/Admin/ProfileEditScreen.php', 'Review/Admin/ReviewItemScreen.php' ) as $file ) {
+			$source = (string) file_get_contents( dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/src/' . $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			$this->assertStringContainsString( 'true, // A detail screen', $source, "{$file} registers a detail screen" );
+		}
+		$screens = ScreenRegistry::shared()->screens();
+		foreach ( array( \WhoIsWho\Core\Directory\Admin\ProfileEditScreen::SCREEN, \WhoIsWho\Core\Review\Admin\ReviewItemScreen::SCREEN ) as $slug ) {
+			if ( isset( $screens[ $slug ] ) ) {
+				$this->assertTrue( $screens[ $slug ]['hidden'], "{$slug} is a detail screen" );
+			}
+		}
+
+		global $submenu;
+		$parent             = 'edit.php?post_type=wiw_profile';
+		$submenu[ $parent ] = array( array( 'Add profile', 'create_wiw_profiles', 'post-new.php?post_type=wiw_profile' ), array( 'Profiles', 'edit_wiw_profiles', $parent ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test of the admin menu.
+		\WhoIsWho\Core\Directory\Admin\AddProfileScreen::hide_core_add_new();
+		$this->assertSame( array( $parent ), array_column( array_values( $submenu[ $parent ] ), 2 ) );
+
+		wp_set_current_user( $this->users['administrator'] );
+		$this->assertSame( \WhoIsWho\Core\Directory\Admin\AddProfileScreen::url(), \WhoIsWho\Core\Directory\Admin\AddProfileScreen::core_add_new_target( 'wiw_profile' ) );
+		$this->assertNull( \WhoIsWho\Core\Directory\Admin\AddProfileScreen::core_add_new_target( 'post' ), 'other types are untouched' );
+		wp_set_current_user( $this->users['reviewer'] );
+		$this->assertNull( \WhoIsWho\Core\Directory\Admin\AddProfileScreen::core_add_new_target( 'wiw_profile' ), 'without the capability WordPress answers as before' );
+		wp_set_current_user( 0 );
+	}
+
 	public function test_REQ_240_screens_keep_their_slug_and_their_403_in_any_group(): void {
 		$this->assertSame( 200, AuthorisationMatrix::status( $this->users['reviewer'], 'wiw-probe-review' ) );
 		$this->assertSame( 403, AuthorisationMatrix::status( $this->users['reviewer'], 'wiw-probe-imports' ) );

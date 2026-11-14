@@ -179,7 +179,7 @@ final class PendingRevisionQueueTest extends TestCase {
 		$this->assertSame( $version, $mine[0]['version_id'] );
 
 		$html = ( new ReviewItemScreen() )->html( new Request( array( 'profile_id' => (string) $id ) ) );
-		$this->assertStringContainsString( 'hq_city', $html, 'The item names the field that changed.' );
+		$this->assertStringContainsString( 'Head office city', $html, 'The item names the field that changed, in words.' );
 		$this->assertStringContainsString( 'Lagos', $html, 'The item shows the value before.' );
 		$this->assertStringContainsString( 'Abuja', $html, 'The item shows the value after.' );
 		$this->assertStringContainsString( 'Pending change from the profile manager', $html );
