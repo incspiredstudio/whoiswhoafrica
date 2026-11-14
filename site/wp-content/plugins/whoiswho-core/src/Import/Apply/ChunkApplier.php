@@ -15,6 +15,7 @@ namespace WhoIsWho\Core\Import\Apply;
 
 use WhoIsWho\Core\Import\BatchRepository;
 use WhoIsWho\Core\Import\BundleReader;
+use WhoIsWho\Core\Import\Images\ImageLog;
 use WhoIsWho\Core\Import\RecordValidator;
 use WhoIsWho\Core\Import\StateAssigner;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
@@ -77,7 +78,9 @@ final class ChunkApplier {
 	 * @param string        $batch_id Batch id (registered).
 	 * @param int           $size     Records in this chunk (clamped to 1 to 50).
 	 * @param callable|null $stop     Returns true when the time budget is spent; checked before each record.
-	 * @return array{done: bool, handled: int, counts: array<string, int>} done is true when every line has been handled.
+	 * @return array{done: bool, handled: int, counts: array<string, int>, busy: bool, finished?: bool} done is true when every
+	 *         line has been handled; finished is true only for the call that completed the batch; busy is true when another
+	 *         worker held the batch, so nothing was done.
 	 * @throws \RuntimeException For an unknown batch.
 	 */
 	public function run( BundleReader $bundle, string $batch_id, int $size = self::DEFAULT_CHUNK, ?callable $stop = null ): array {
@@ -93,6 +96,31 @@ final class ChunkApplier {
 		if ( $bundle->file_hash() !== (string) $batch['file_hash'] || $bundle->file_hash() !== $previewed ) {
 			throw new \RuntimeException( 'The file changed since the dry run.' );
 		}
+		if ( ! BatchLock::acquire( $batch_id ) ) {
+			return $this->summary( $batch_id, false, 0, true );
+		}
+		try {
+			return $this->run_locked( $bundle, $batch, $batch_id, $size, $stop );
+		} finally {
+			BatchLock::release( $batch_id );
+		}
+	}
+
+	/**
+	 * Apply the next chunk while holding the batch lock.
+	 *
+	 * @param BundleReader         $bundle   The opened bundle.
+	 * @param array<string, mixed> $batch    Batch row.
+	 * @param string               $batch_id Batch id.
+	 * @param int                  $size     Records in this chunk.
+	 * @param callable|null        $stop     Time budget check.
+	 * @return array{done: bool, handled: int, counts: array<string, int>, busy: bool, finished?: bool}
+	 */
+	private function run_locked( BundleReader $bundle, array $batch, string $batch_id, int $size, ?callable $stop ): array {
+		$batch = $this->batches->get( $batch_id ) ?? $batch;
+		if ( in_array( $batch['status'], array( 'applied', 'undone', 'refused' ), true ) ) {
+			return $this->summary( $batch_id, true, 0 );
+		}
 		$size       = max( 1, min( self::MAX_CHUNK, $size ) );
 		$cursor     = (int) $batch['progress_cursor'];
 		$importer   = (int) $batch['created_by'];
@@ -103,6 +131,7 @@ final class ChunkApplier {
 		if ( 'applying' !== $batch['status'] ) {
 			$this->batches->advance( $batch_id, $cursor, 'applying' );
 		}
+		$this->applier->set_bundle_dir( $bundle->dir() );
 
 		$handled = 0;
 		$total   = (int) $batch['record_count'];
@@ -122,7 +151,9 @@ final class ChunkApplier {
 		if ( $done ) {
 			$this->batches->advance( $batch_id, $cursor, 'applied' );
 		}
-		return $this->summary( $batch_id, $done, $handled );
+		$out             = $this->summary( $batch_id, $done, $handled );
+		$out['finished'] = $done;
+		return $out;
 	}
 
 	/**
@@ -146,6 +177,9 @@ final class ChunkApplier {
 		}
 		$result = $this->applier->apply( $record, $batch_id, $importer, $import_all );
 		$this->results->record( $batch_id, (string) $record['record_id'], $result['code'], $result['profile_id'] );
+		if ( isset( $result['images'] ) ) {
+			ImageLog::add( $batch_id, (string) $record['record_id'], $result['images'] );
+		}
 	}
 
 	/**
@@ -154,13 +188,15 @@ final class ChunkApplier {
 	 * @param string $batch_id Batch.
 	 * @param bool   $done     Done.
 	 * @param int    $handled  Handled in this call.
-	 * @return array{done: bool, handled: int, counts: array<string, int>}
+	 * @param bool   $busy     Another worker holds the batch.
+	 * @return array{done: bool, handled: int, counts: array<string, int>, busy: bool}
 	 */
-	private function summary( string $batch_id, bool $done, int $handled ): array {
+	private function summary( string $batch_id, bool $done, int $handled, bool $busy = false ): array {
 		return array(
 			'done'    => $done,
 			'handled' => $handled,
 			'counts'  => $this->results->counts( $batch_id ),
+			'busy'    => $busy,
 		);
 	}
 }

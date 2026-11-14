@@ -69,6 +69,9 @@ final class ApplyTest extends TestCase {
 	protected function tearDown(): void {
 		$this->clean();
 		foreach ( $this->dirs as $dir ) {
+			if ( ! is_dir( $dir ) ) {
+				continue; // The apply job deletes a finished bundle.
+			}
 			foreach ( glob( $dir . '/*' ) ?: array() as $file ) {
 				unlink( $file );
 			}

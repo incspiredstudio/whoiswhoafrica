@@ -2,7 +2,7 @@
 /**
  * Profile field allowlists per entity type (import contract sections 4.1 and 4.2, REQ-004, REQ-005, REQ-139).
  * A field that is not listed has no storage: no meta key is registered for it and the validator refuses it.
- * Each field: type (string, url, int, list), required, and optional max length.
+ * Each field: type (string, url, int, list), required, and optional max length in characters.
  * "name" is stored in the post title, every other field in post meta "wiw_<key>".
  *
  * @package WhoIsWho
@@ -56,6 +56,27 @@ $wiw_organisation = array(
 		'required' => false,
 		'max'      => 2000,
 	),
+	// Narrative sections (contract 1.1): plain text, paragraphs separated by blank lines.
+	'bio'              => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
+	'achievement'      => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
+	'influence'        => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
+	'legacy'           => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
 );
 
 $wiw_person = array(
@@ -65,11 +86,11 @@ $wiw_person = array(
 	),
 	'current_title'            => array(
 		'type'     => 'string',
-		'required' => true,
+		'required' => false,
 	),
 	'current_organisation'     => array(
 		'type'     => 'string',
-		'required' => true,
+		'required' => false,
 	),
 	'current_organisation_ref' => array(
 		'type'     => 'string',
@@ -91,10 +112,37 @@ $wiw_person = array(
 		'type'     => 'url',
 		'required' => false,
 	),
+	// Contract 1.1: lifespan (for people who have died, such as "1924–2013") and field (profession, such as "Music").
+	'lifespan'                 => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 40,
+	),
+	'field'                    => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 120,
+	),
+	// Narrative sections (contract 1.1): plain text, paragraphs separated by blank lines.
 	'bio'                      => array(
 		'type'     => 'string',
 		'required' => false,
-		'max'      => 4000,
+		'max'      => 6000,
+	),
+	'achievement'              => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
+	'influence'                => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
+	),
+	'legacy'                   => array(
+		'type'     => 'string',
+		'required' => false,
+		'max'      => 6000,
 	),
 );
 

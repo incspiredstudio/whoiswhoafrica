@@ -29,3 +29,5 @@
 /wp-content/advanced-cache.php
 /wp-content/wp-cache-config.php
 /wp-content/cache/
+# Local private import folder (bundles hold personal data; never commit).
+/wiw-private/

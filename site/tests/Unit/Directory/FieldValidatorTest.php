@@ -57,7 +57,7 @@ final class FieldValidatorTest extends TestCase {
 	public function test_REQ_139_individual_profile_stores_only_allowlisted_fields(): void {
 		$allow = new FieldAllowlist();
 		$this->assertSame(
-			array( 'name', 'current_title', 'current_organisation', 'current_organisation_ref', 'industry', 'public_record_roles', 'published_awards', 'official_website', 'bio' ),
+			array( 'name', 'current_title', 'current_organisation', 'current_organisation_ref', 'industry', 'public_record_roles', 'published_awards', 'official_website', 'lifespan', 'field', 'bio', 'achievement', 'influence', 'legacy' ),
 			array_keys( $allow->for_type( 'individual' ) )
 		);
 		$this->assertSame( $allow->for_type( 'individual' ), $allow->for_type( 'entrepreneur' ) );
