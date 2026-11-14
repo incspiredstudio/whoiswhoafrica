@@ -77,7 +77,7 @@ final class ProfilesScreen {
 		$page    = max( 1, $request->int( 'paged' ) );
 		$result  = ( new ProfilesQuery() )->run( $filters, $page );
 
-		echo '<div class="wrap"><h1>' . esc_html__( 'Profiles', 'whoiswho' ) . '</h1>';
+		echo '<div class="wrap"><h1 class="wp-heading-inline">' . esc_html__( 'Profiles', 'whoiswho' ) . '</h1>' . ( current_user_can( AddProfileScreen::CAPABILITY ) ? ' <a class="page-title-action" href="' . esc_url( AddProfileScreen::url() ) . '">' . esc_html__( 'Add profile', 'whoiswho' ) . '</a>' : '' ) . '<hr class="wp-header-end" />'; // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 		$this->filter_form( $filters );
 		/* translators: %d: number of profiles. */
 		echo '<p>' . esc_html( sprintf( _n( '%d profile', '%d profiles', $result['total'], 'whoiswho' ), $result['total'] ) ) . '</p>';
