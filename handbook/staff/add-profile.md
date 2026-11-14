@@ -22,12 +22,13 @@ Have at least one public source address (a web page) for the facts you will ente
 | Field | Notes |
 |---|---|
 | Name | Required. The person's public name, or the organisation's registered or trading name. |
-| Country | Required |
-| Industry | Choose an existing industry |
+| Industry, Other industries | The main industry, chosen from the list grouped by sector, and any extra industries. See [Classification](/staff/classification). |
+| Organisation type | Organisations and institutions only. Required. |
+| Country | Required. Pan-African bodies use Pan-African. |
+| City | Optional. Only cities of the chosen country are offered. |
 | Current title, Current organisation | People only. Optional. |
 | Lifespan | People who have died only, for example `1924–2013` |
-| Field | People only: their field or profession, for example Music |
-| Organisation type, Official website and the other organisation details | Organisations and institutions only. Organisation type is required. |
+| Official website and the other organisation details | Organisations and institutions only. |
 | Wikidata id, Registration number | Optional. Registration number is for organisations and institutions only. They help the duplicate check. |
 | Bio, Achievement, Influence, Legacy | Under **Profile sections**: the four sections of the profile page. Each is optional. Plain text; leave a blank line between paragraphs. See [Profile sections](/staff/profile-sections). |
 | Photo or logo | Optional. Press **Choose from media library**. If you set one, the **Licence**, the **Credit** and the **Image source URL** are required. See [Photos and credits](/staff/photos-and-credits). |

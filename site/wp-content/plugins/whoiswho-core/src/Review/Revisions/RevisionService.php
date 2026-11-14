@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Review\Revisions;
 
+use WhoIsWho\Core\Directory\Edit\EditRefused;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
+use WhoIsWho\Core\Directory\Edit\ProfileEditor;
 use WhoIsWho\Core\Directory\Edit\SideFields;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
@@ -104,6 +107,17 @@ final class RevisionService {
 				SideFields::apply( $id, $key, $value );
 				continue;
 			}
+			if ( ProfileEditor::CLASSIFICATION_KEY === $key && is_array( $value ) ) {
+				$classifier = new ClassificationInput();
+				try {
+					$entity = (string) ( ( new StateRepository() )->get( $id )['entity_type'] ?? '' );
+					$classifier->assign( $id, $entity, $classifier->normalise( $value, $entity ) );
+				} catch ( EditRefused $gone ) {
+					// A term chosen in the revision was deleted since; the rest of the revision still applies.
+					unset( $gone );
+				}
+				continue;
+			}
 			if ( 0 === strpos( $key, 'terms:' ) ) {
 				$taxonomy = substr( $key, 6 );
 				if ( in_array( $taxonomy, Taxonomies::all(), true ) ) {
@@ -112,7 +126,7 @@ final class RevisionService {
 				continue;
 			}
 			$fields->set( $id, $key, null === $value ? '' : $value );
-		}
+		}//end foreach
 		$decision = $this->versions->append( $id, $actor_id, 'decision', (string) $row['reason'], $old, $new, 'approved', $version_id );
 		AuditLogger::for_site()->log(
 			'profile.revision_approved',

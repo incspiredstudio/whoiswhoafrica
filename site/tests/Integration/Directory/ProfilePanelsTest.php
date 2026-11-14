@@ -186,8 +186,8 @@ final class ProfilePanelsTest extends TestCase {
 		);
 		wp_set_current_user( $this->user( 'wiw_editor' ) );
 		$html  = ( new ProfilePanels() )->html( $id, (array) ( new StateRepository() )->get( $id ) );
-		$start = strpos( $html, 'Fields and their sources' );
-		$end   = strpos( $html, 'Source sync' );
+		$start = strpos( $html, 'Where each fact comes from' );
+		$end   = strpos( $html, 'Revision history' );
 		$this->assertIsInt( $start );
 		$section = substr( $html, $start, (int) $end - $start );
 		$this->assertStringContainsString( 'https://source.example.test/page', $section );
@@ -203,7 +203,9 @@ final class ProfilePanelsTest extends TestCase {
 		$this->assertSame( 'Lagos', get_post_meta( $id, 'wiw_hq_city', true ), 'the reviewed value is not overwritten' );
 		$flagged = array_filter( ( new ProfilePanels() )->flagged_changes( $id ), static fn ( array $r ): bool => '' === (string) $r['reason'] );
 		$this->assertCount( 1, $flagged );
-		$this->assertStringContainsString( 'A source changed', ( new ProfilePanels() )->html( $id, (array) ( new StateRepository() )->get( $id ) ) );
+		$html = ( new ProfilePanels() )->html( $id, (array) ( new StateRepository() )->get( $id ) );
+		$this->assertStringContainsString( 'Changes from the source since review', $html );
+		$this->assertStringContainsString( 'A source changed', $html );
 	}
 
 	public function test_REQ_187_internal_notes_never_public(): void {

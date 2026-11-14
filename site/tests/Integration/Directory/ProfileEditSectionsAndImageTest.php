@@ -205,8 +205,8 @@ final class ProfileEditSectionsAndImageTest extends TestCase {
 		$this->assertStringContainsString( '>Public roles on record<', $person );
 		$this->assertStringContainsString( '<label for="wiw-f-current_title">', $person, 'each label points at its field' );
 		$org = $this->screen_html( $this->profile( 'organisation' ) );
-		$this->assertStringContainsString( '>Head office city<', $org );
-		$this->assertStringContainsString( '>Organisation type *<', $org );
+		$this->assertStringContainsString( '>Licence category<', $org );
+		$this->assertStringContainsString( '>Organisation type<', $org );
 		foreach ( array( 'Hq city', 'Org type', 'Current_title', 'Year_founded' ) as $machine ) {
 			$this->assertStringNotContainsString( '>' . $machine, $org . $person );
 		}

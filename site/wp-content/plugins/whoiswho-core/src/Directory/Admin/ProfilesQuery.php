@@ -2,7 +2,8 @@
 /**
  * The staff Profiles list query (REQ-091, REQ-242, REQ-208): profiles in any state, filtered and grouped by source, batch, type,
  * state, origin and name, each row with what a visitor sees now (page, gone or not public) taken from StatePolicy. The same
- * sanitised filter set is what the bulk unpublish host acts on, so the screen and the bulk action never disagree.
+ * sanitised filter set is what the bulk unpublish host acts on, so the screen and the bulk action never disagree. The "Needs
+ * classification" view (REQ-009) lists profiles whose main industry is missing or Unclassified, or that have no main country.
  *
  * @package WhoIsWho
  */
@@ -11,6 +12,8 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Admin;
 
+use WhoIsWho\Core\Directory\Classification;
+use WhoIsWho\Core\Directory\Edit\ClassificationInput;
 use WhoIsWho\Core\Directory\ProfileType;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
@@ -23,6 +26,12 @@ use WhoIsWho\Core\Review\StatePolicy;
 final class ProfilesQuery {
 
 	public const PER_PAGE = 50;
+
+	/**
+	 * The classification filter and its one value.
+	 */
+	public const CLASSIFICATION = 'classification';
+	public const NEEDS          = 'needs';
 
 	/**
 	 * Filters and the state-table column each uses.
@@ -63,6 +72,9 @@ final class ProfilesQuery {
 		$name = $request->string( 'name' );
 		if ( '' !== $name ) {
 			$out['name'] = $name;
+		}
+		if ( self::NEEDS === $request->string( self::CLASSIFICATION ) ) {
+			$out[ self::CLASSIFICATION ] = self::NEEDS;
 		}
 		$group = $request->string( 'group' );
 		if ( isset( self::FILTERS[ $group ] ) ) {
@@ -129,6 +141,17 @@ final class ProfilesQuery {
 	}
 
 	/**
+	 * How many profiles match a filter set.
+	 *
+	 * @param array<string, string> $filters Filters.
+	 */
+	public function count( array $filters ): int {
+		global $wpdb;
+		list( $where, $args ) = $this->where( $filters );
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID' . $where, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
+	}
+
+	/**
 	 * What a visitor sees for an HTTP status.
 	 *
 	 * @param int $status HTTP status from the state policy.
@@ -184,6 +207,14 @@ final class ProfilesQuery {
 		if ( isset( $filters['name'] ) && '' !== $filters['name'] ) {
 			$where .= ' AND p.post_title LIKE %s';
 			$args[] = '%' . $wpdb->esc_like( $filters['name'] ) . '%';
+		}
+		if ( self::NEEDS === ( $filters[ self::CLASSIFICATION ] ?? '' ) ) {
+			$meta   = 'SELECT pm.meta_value FROM ' . $wpdb->postmeta . " pm WHERE pm.post_id = p.ID AND pm.meta_key = %s AND pm.meta_value NOT IN ('', '0') LIMIT 1";
+			$where .= " AND ( COALESCE(($meta), '') = '' OR ($meta) = %s OR COALESCE(($meta), '') = '' )";
+			$args[] = Classification::PRIMARY_INDUSTRY_META;
+			$args[] = Classification::PRIMARY_INDUSTRY_META;
+			$args[] = (string) ClassificationInput::unclassified_id();
+			$args[] = Classification::PRIMARY_COUNTRY_META;
 		}
 		return array( $where, $args );
 	}
