@@ -60,7 +60,7 @@ final class CustomerServiceTest extends TestCase {
 	 *
 	 * @param string $role Role.
 	 */
-	private function service( string $role = 'wiw_editor' ): CustomerService {
+	private function service( string $role = 'administrator' ): CustomerService {
 		$user = wp_insert_user(
 			array(
 				'user_login' => $role . wp_generate_password( 6, false ),
@@ -166,5 +166,12 @@ final class CustomerServiceTest extends TestCase {
 		$service = $this->service( 'subscriber' );
 		$this->expectException( \DomainException::class );
 		$service->create( array( 'name' => 'Nope' ) );
+	}
+
+	public function test_REQ_179_an_editor_cannot_manage_customers_issue_806(): void {
+		$this->assertSame( 'wiw_manage_register', CustomerService::CAP, 'customers belong to the commercial register: Administrator only' );
+		$service = $this->service( 'wiw_editor' );
+		$this->expectException( \DomainException::class );
+		$service->create( array( 'name' => 'Editor customer' ) );
 	}
 }

@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace WhoIsWho\Core\Directory\Edit;
 
 use WhoIsWho\Core\Directory\Contact\ContactSwitches;
+use WhoIsWho\Core\Directory\ImageMeta;
 use WhoIsWho\Core\Directory\PublicProfile;
+use WhoIsWho\Core\Import\Images\ImagePolicy;
 
 /**
  * Side fields.
@@ -22,6 +24,13 @@ use WhoIsWho\Core\Directory\PublicProfile;
 final class SideFields {
 
 	public const IMAGE = 'image_id';
+
+	/**
+	 * The licence, creator and source of a proposed image, set by staff on the Edit profile screen (issue 806). Its value is
+	 * {attachment_id, licence, creator, source_url, kind}; it is applied to the attachment's credit meta with the image. An assigned
+	 * user cannot propose it through ProfileEditor (acceptable() refuses any non-empty value).
+	 */
+	public const IMAGE_CREDIT = 'image_credit';
 
 	/**
 	 * Revision key => contact kind.
@@ -38,7 +47,7 @@ final class SideFields {
 	 * @return string[]
 	 */
 	public static function keys(): array {
-		return array_merge( array_keys( self::CONTACT ), array( self::IMAGE ) );
+		return array_merge( array_keys( self::CONTACT ), array( self::IMAGE, self::IMAGE_CREDIT ) );
 	}
 
 	/**
@@ -62,8 +71,9 @@ final class SideFields {
 		foreach ( self::CONTACT as $key => $kind ) {
 			$out[ $key ] = $all[ $kind ]['value'];
 		}
-		$image              = (int) get_post_meta( $profile_id, PublicProfile::IMAGE_META, true );
-		$out[ self::IMAGE ] = $image > 0 ? $image : null;
+		$image                     = (int) get_post_meta( $profile_id, PublicProfile::IMAGE_META, true );
+		$out[ self::IMAGE ]        = $image > 0 ? $image : null;
+		$out[ self::IMAGE_CREDIT ] = null;
 		return $out;
 	}
 
@@ -100,6 +110,25 @@ final class SideFields {
 	 * @param mixed  $value      Approved value; empty clears.
 	 */
 	public static function apply( int $profile_id, string $key, $value ): void {
+		if ( self::IMAGE_CREDIT === $key ) {
+			$attachment = is_array( $value ) ? (int) ( $value['attachment_id'] ?? 0 ) : 0;
+			$licence    = is_array( $value ) ? (string) ( $value['licence'] ?? '' ) : '';
+			if ( $attachment > 0 && 'attachment' === get_post_type( $attachment ) && ImagePolicy::licence_allowed( $licence ) ) {
+				$creator = (string) ( $value['creator'] ?? '' );
+				ImageMeta::save(
+					$attachment,
+					array(
+						'licence'          => $licence,
+						'licence_url'      => ImagePolicy::licence_url( $licence ),
+						'creator'          => $creator,
+						'attribution_text' => $creator,
+						'source_url'       => (string) ( $value['source_url'] ?? '' ),
+						'kind'             => in_array( $value['kind'] ?? '', ImagePolicy::KINDS, true ) ? (string) $value['kind'] : 'photo',
+					)
+				);
+			}
+			return;
+		}
 		if ( self::IMAGE === $key ) {
 			$id = (int) $value;
 			if ( $id > 0 ) {

@@ -239,6 +239,22 @@ final class CurationScreenTest extends WpTestCase {
 		$this->assertStringContainsString( '<ol class="wiw-preview"><li>Findable Gleam Story</li></ol>', $html );
 	}
 
+	public function test_REQ_257_mode_and_fill_options_have_plain_labels_issue_806(): void {
+		$html = $this->screen_as( 'wiw_editor' )->html();
+		foreach ( array( 'pinned then fill', 'pinned_then_fill' ) as $raw ) {
+			$this->assertStringNotContainsString( '>' . $raw . '<', $html, 'no raw value is shown as an option label' );
+		}
+		$this->assertStringContainsString( '<option value="pinned_then_fill">Pinned items first, then fill the rest</option>', str_replace( ' selected="selected"', '', $html ) );
+		$this->assertStringContainsString( '<option value="manual">Only the pinned items</option>', str_replace( ' selected="selected"', '', $html ) );
+		$this->assertStringContainsString( '<option value="latest">Newest first</option>', str_replace( ' selected="selected"', '', $html ) );
+		foreach ( CurationSettings::MODES as $mode ) {
+			$this->assertNotSame( $mode, CurationScreen::option_label( 'mode', $mode ) );
+		}
+		foreach ( CurationSettings::FILLS as $fill ) {
+			$this->assertNotSame( $fill, CurationScreen::option_label( 'fill', $fill ) );
+		}
+	}
+
 	public function test_REQ_257_preview_without_saving_shows_the_unsaved_setting_and_saves_nothing(): void {
 		$screen = $this->screen_as( 'wiw_editor' );
 		$first  = $this->story( 'Preview First Story' );

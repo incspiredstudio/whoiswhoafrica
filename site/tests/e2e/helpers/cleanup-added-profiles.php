@@ -1,7 +1,7 @@
 <?php
 /**
  * Removes the fictional profiles the Add profile browser test created (titles starting "E2E Addp "), with their state,
- * provenance and duplicate rows. TEST ENVIRONMENT ONLY: refuses unless the site is local and WIW_E2E_TEST_MODE=1. Prints one
+ * provenance and duplicate rows, and the pictures the Edit profile browser test uploaded. TEST ENVIRONMENT ONLY: refuses unless the site is local and WIW_E2E_TEST_MODE=1. Prints one
  * line of JSON with the number of profiles removed.
  *
  * @package WhoIsWho
@@ -36,4 +36,14 @@ foreach ( $wiw_ids as $wiw_id ) {
 	$wpdb->delete( AwardsTables::table( AwardsTables::NOMINATIONS ), array( 'profile_id' => $wiw_id ) );
 	wp_delete_post( $wiw_id, true );
 }
-echo wp_json_encode( array( 'removed' => count( $wiw_ids ) ) ) . "\n";
+// The throw-away pictures the Edit profile browser test uploaded (file names starting "e2e-edit-portrait").
+$wiw_media = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_title LIKE %s", 'e2e-edit-portrait%' ) );
+foreach ( $wiw_media as $wiw_media_id ) {
+	wp_delete_attachment( (int) $wiw_media_id, true );
+}
+echo wp_json_encode(
+	array(
+		'removed' => count( $wiw_ids ),
+		'media'   => count( $wiw_media ),
+	)
+) . "\n";
