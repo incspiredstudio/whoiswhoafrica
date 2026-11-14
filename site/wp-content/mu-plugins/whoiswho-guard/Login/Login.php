@@ -18,7 +18,7 @@ final class Login {
 	public const MAX_FAILURES = 5;
 	// Failures from one client address, across any names, before that address is refused for the window (issue 810).
 	public const MAX_ADDRESS_FAILURES = 20;
-	public const WINDOW       = 900;
+	public const WINDOW               = 900;
 	// Seconds in which failures are counted, and how long a lock lasts (15 minutes).
 	public const IDLE_LIMIT = 3600;
 	// Idle timeout in wp-admin (60 minutes).

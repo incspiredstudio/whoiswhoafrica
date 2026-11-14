@@ -58,14 +58,14 @@ final class ZipEntrySizeTest extends WpTestCase {
 		$name  = 'records.jsonl';
 		// Local file header: uncompressed size at +22 from the signature; central directory header: at +24.
 		foreach ( array( array( "PK\x03\x04", 22, 26 ), array( "PK\x01\x02", 24, 28 ) ) as $header ) {
-			$offset = 0;
-			while ( false !== ( $at = strpos( $bytes, $header[0], $offset ) ) ) {
+			$at = strpos( $bytes, $header[0] );
+			while ( false !== $at ) {
 				$length = unpack( 'v', substr( $bytes, $at + $header[2], 2 ) )[1];
-				$extra  = 'PK' . "\x01\x02" === $header[0] ? 46 : 30;
+				$extra  = "PK\x01\x02" === $header[0] ? 46 : 30;
 				if ( substr( $bytes, $at + $extra, $length ) === $name ) {
 					$bytes = substr_replace( $bytes, pack( 'V', 10 ), $at + $header[1], 4 );
 				}
-				$offset = $at + 4;
+				$at = strpos( $bytes, $header[0], $at + 4 );
 			}
 		}
 		file_put_contents( $path, $bytes );

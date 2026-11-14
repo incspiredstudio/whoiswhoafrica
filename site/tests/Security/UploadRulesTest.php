@@ -259,5 +259,5 @@ final class UploadRulesTest extends WpTestCase {
 				'size'     => (int) filesize( $jpeg ),
 			)
 		);
-		$this->assertStringContainsString( 'safety check', (string) ( $result['error'] ?? '' ), 'a sideload (invitation photo, profile manager photo, import image) is scanned too' );	}
+		$this->assertStringContainsString( 'safety check', (string) ( $result['error'] ?? '' ), 'a sideload (invitation photo, profile manager photo, import image) is scanned too' );  }
 }
