@@ -14,7 +14,6 @@ use WhoIsWho\Core\Awards\AwardsStage;
 use WhoIsWho\Core\Awards\CategoryService;
 use WhoIsWho\Core\Content\PublicStory;
 use WhoIsWho\Core\Directory\ProfileList;
-use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\Taxonomies;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -101,7 +100,7 @@ if ( ! function_exists( 'wiw_render_portrait_trio_block' ) ) {
 					if ( count( $tiles ) >= 3 ) {
 						break 2;
 					}
-					if ( ! $profile instanceof PublicProfile || null === $profile->image_id || isset( $tiles[ $profile->id ] ) ) {
+					if ( null === $profile->image_id || isset( $tiles[ $profile->id ] ) ) {
 						continue;
 					}
 					$image = $profile->image( 'wiw-poster' );

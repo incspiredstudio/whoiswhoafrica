@@ -279,7 +279,9 @@ foreach ( $wiw_live as $wiw_one ) {
 		<?php if ( array() === $wiw_live ) : ?>
 			<?php $wiw_empty( __( 'Nominees are not published yet', 'whoiswho' ), __( 'They appear here once our team makes nominees live. Nobody is listed without staff approval.', 'whoiswho' ) ); ?>
 		<?php else : ?>
-			<?php // Group filter, as the prototype: shown and run by main.js without a reload; without scripts the jump links below stay. ?>
+			<?php
+			// Group filter, as the prototype: shown and run by main.js without a reload; without scripts the jump links below stay.
+			?>
 			<div class="np-tabs" role="group" aria-label="<?php esc_attr_e( 'Show nominees by group', 'whoiswho' ); ?>" data-np-filter hidden>
 				<button type="button" class="np-tab" data-np-group="all" aria-pressed="true"><?php esc_html_e( 'All', 'whoiswho' ); ?> <span><?php echo esc_html( (string) count( $wiw_live ) ); ?></span></button>
 				<?php foreach ( AwardsTables::GROUPS as $wiw_key => $wiw_label ) : ?>

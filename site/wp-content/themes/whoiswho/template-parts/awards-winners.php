@@ -49,7 +49,9 @@ $wiw_country_opts  = isset( $wiw_data['countries'] ) && is_array( $wiw_data['cou
 		<div class="np-intro">
 			<p><?php esc_html_e( 'Chosen by independent judges against the published criteria. Filter by year, group, category or country.', 'whoiswho' ); ?></p>
 			<?php if ( ! $wiw_on && $wiw_total > 0 ) : ?>
-				<?php // The whole record at a glance, as the prototype; shown while no filter is on, so the numbers describe every winner. ?>
+				<?php
+				// The whole record at a glance, as the prototype; shown while no filter is on, so the numbers describe every winner.
+				?>
 				<dl class="np-facts">
 					<div><dt><?php esc_html_e( 'Winners', 'whoiswho' ); ?></dt><dd><?php echo esc_html( number_format_i18n( $wiw_total ) ); ?></dd></div>
 					<div><dt><?php esc_html_e( 'Editions', 'whoiswho' ); ?></dt><dd><?php echo esc_html( number_format_i18n( count( $wiw_years ) ) ); ?></dd></div>

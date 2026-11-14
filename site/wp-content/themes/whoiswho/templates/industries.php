@@ -48,7 +48,9 @@ if ( null === $wiw_term ) :
 			);
 			?>
 		<?php else : ?>
-			<?php // One row per industry, as the prototype's index list: the name, the count and an arrow. ?>
+			<?php
+			// One row per industry, as the prototype's index list: the name, the count and an arrow.
+			?>
 			<ul class="index-list ind-list">
 				<?php foreach ( $wiw_rows as $wiw_row ) : ?>
 					<li>

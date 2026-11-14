@@ -37,7 +37,9 @@ if ( SearchService::STATE_RATE_LIMITED === $wiw_r['state'] ) {
 
 get_header();
 ?>
-<?php // A dark band with the search field, as the prototype's search page. ?>
+<?php
+// A dark band with the search field, as the prototype's search page.
+?>
 <section class="page-band page-band--dark title-band on-dark pattern search-band">
 	<div class="wrap">
 		<p class="eyebrow"><?php esc_html_e( 'Search', 'whoiswho' ); ?></p>
