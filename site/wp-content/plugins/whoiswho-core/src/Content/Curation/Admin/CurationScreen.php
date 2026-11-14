@@ -247,7 +247,7 @@ final class CurationScreen {
 		$out    .= '<input type="hidden" name="block" value="' . esc_attr( $block ) . '" />';
 		$out    .= '<p><label>' . esc_html__( 'Mode', 'whoiswho' ) . ' ' . $this->select( 'mode', CurationSettings::MODES, (string) $setting['mode'] ) . '</label> ';
 		$out    .= '<label>' . esc_html__( 'Count', 'whoiswho' ) . ' <input type="number" name="count" min="1" max="' . (int) CurationSettings::MAX_COUNT . '" value="' . (int) $setting['count'] . '" /></label> ';
-		$out    .= '<label>' . esc_html__( 'Fill', 'whoiswho' ) . ' ' . $this->select( 'fill', CurationSettings::FILLS, (string) $setting['fill'] ) . '</label></p>';
+		$out    .= '<label>' . esc_html__( 'Fill any empty places', 'whoiswho' ) . ' ' . $this->select( 'fill', CurationSettings::FILLS, (string) $setting['fill'] ) . '</label></p>';
 		if ( CurationSettings::ON_THE_RECORD !== $block ) {
 			$out .= '<p><label><input type="checkbox" name="featured_first" value="1"' . ( $setting['featured_first'] ? ' checked="checked"' : '' ) . ' /> ' . esc_html__( 'Featured first', 'whoiswho' ) . '</label></p>';
 		}
@@ -392,9 +392,31 @@ final class CurationScreen {
 	private function select( string $name, array $options, string $selected ): string {
 		$out = '<select name="' . esc_attr( $name ) . '">';
 		foreach ( $options as $option ) {
-			$out .= '<option value="' . esc_attr( $option ) . '"' . ( $option === $selected ? ' selected="selected"' : '' ) . '>' . esc_html( str_replace( '_', ' ', $option ) ) . '</option>';
+			$out .= '<option value="' . esc_attr( $option ) . '"' . ( $option === $selected ? ' selected="selected"' : '' ) . '>' . esc_html( self::option_label( $name, $option ) ) . '</option>';
 		}
 		return $out . '</select>';
+	}
+
+	/**
+	 * The plain-language label of a mode or fill value (issue 806).
+	 *
+	 * @param string $name  Select name: mode or fill.
+	 * @param string $value Stored value.
+	 */
+	public static function option_label( string $name, string $value ): string {
+		$labels = array(
+			'mode' => array(
+				'latest'           => __( 'Newest first', 'whoiswho' ),
+				'random'           => __( 'Random each time', 'whoiswho' ),
+				'manual'           => __( 'Only the pinned items', 'whoiswho' ),
+				'pinned_then_fill' => __( 'Pinned items first, then fill the rest', 'whoiswho' ),
+			),
+			'fill' => array(
+				'latest' => __( 'With the newest', 'whoiswho' ),
+				'random' => __( 'With a random pick', 'whoiswho' ),
+			),
+		);
+		return $labels[ $name ][ $value ] ?? ucfirst( str_replace( '_', ' ', $value ) );
 	}
 
 	/**
