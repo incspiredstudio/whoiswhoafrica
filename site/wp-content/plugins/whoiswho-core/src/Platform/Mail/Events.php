@@ -50,6 +50,7 @@ final class Events {
 	public const DEADLINE_REQUESTS       = 'deadline_requests';
 	public const DEADLINE_ENQUIRIES      = 'deadline_enquiries';
 	public const DISPUTE_ESCALATED       = 'dispute_escalated';
+	public const TWO_FACTOR_REMINDER     = 'two_factor_reminder';
 
 	/**
 	 * Audience and placeholder subject by event.
@@ -193,6 +194,10 @@ final class Events {
 			self::DISPUTE_ESCALATED       => array(
 				'audience' => 'administrators',
 				'subject'  => 'An unresolved dispute needs the Administrator',
+			),
+			self::TWO_FACTOR_REMINDER     => array(
+				'audience' => 'public',
+				'subject'  => 'Protect your account with two-factor sign-in',
 			),
 		);
 	}

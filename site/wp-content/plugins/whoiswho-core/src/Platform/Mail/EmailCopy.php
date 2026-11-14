@@ -218,6 +218,15 @@ final class EmailCopy {
 				'body'    => array( 'A dispute was not resolved in time and has been escalated.' ),
 				'act'     => 'Open it, review what has been done so far and decide.',
 			),
+			Events::TWO_FACTOR_REMINDER     => array(
+				'heading' => 'Protect your account',
+				'body'    => array(
+					'Your staff account does not have two-factor sign-in turned on yet. With it on, a stolen password alone cannot open the admin.',
+					'It takes two minutes with an authenticator app on your phone, such as Microsoft Authenticator, Google Authenticator or Authy. Open your profile, find Two-Factor Options, tick Authenticator App, scan the code and type the six-digit number it shows.',
+					'It is optional and nothing is blocked without it, but we recommend it for every staff member.',
+				),
+				'cta'     => 'Turn it on now',
+			),
 		);
 	}
 

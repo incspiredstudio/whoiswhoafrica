@@ -12,7 +12,7 @@ Sources:
 
 | # | Gap | Recommended option |
 |---|---|---|
-| G2 | Two-factor is optional (owner decision). OWASP ASVS L2 expects it for staff (SEC-13). | Every Administrator and Editor turns it on before go-live (handbook: Users and two-factor). |
+| G2 | Two-factor is optional (owner decision). OWASP ASVS L2 expects it for staff (SEC-13). A reminder now exists (issue 814): every staff member without it sees a notice on every admin screen and a Dashboard box, and gets one email at their first sign-in, until they turn it on. | Every Administrator and Editor turns it on before go-live (handbook: Users and two-factor). The Setup checklist shows who still has not. |
 | G3 | "Add all as new list entries" created 2,437 raw list values in the full import (590 organisation types, 457 industries, 1,390 places), some in French or German, plus noise such as "Autonomous administrative territorial entity". They show in public filters once profiles are published. | The acquisition side exports a curated term map, then clean the lists before turning off "import everything as not public". |
 | G4 | The CLAUDE.md rule "production runs migrations only through the deploy script" now has an exception: the Administrator's guarded "Update the database" button (after a backup). | Confirm. The docs (CLAUDE.md, runbook) already describe it. |
 | G5 | The directory "When shared" panel is now shown on profiles (REQ-006 amended). Earlier wording said it never renders live. | Confirm. |

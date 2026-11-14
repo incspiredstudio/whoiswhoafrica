@@ -51,7 +51,19 @@ Deactivate rather than delete, so the audit log and the history of their edits s
 
 ## Two-factor sign-in
 
-Two-factor sign-in asks for a code from your phone (or your email) after your password, so a stolen password alone cannot open the admin. It is **recommended for every staff member and not enforced**: the site works without it, but the Setup checklist line **Two-factor sign-in for staff (recommended)** lists who has it on, and the team should aim for everyone.
+Two-factor sign-in asks for a code from your phone (or your email) after your password, so a stolen password alone cannot open the admin. It is **recommended for every staff member and not enforced**: the site works without it, but the Setup checklist line **Two-factor sign-in for staff (recommended)** lists who has it on, everyone without it gets a reminder (below), and the team should aim for everyone.
+
+### The reminder
+
+Until you turn two-factor on, the admin reminds you. It never blocks anything.
+
+- **On every admin screen** a yellow notice says "Protect your account: turn on two-factor sign-in. It takes two minutes with an authenticator app."
+  - **Turn it on now** opens your own profile at **Two-Factor Options**. Follow the steps below.
+  - **Remind me tomorrow** hides the notice for 24 hours, for you only. It comes back after that while two-factor is still off.
+- **On the Dashboard** a small **Two-factor sign-in** box shows the same message and button. "Remind me tomorrow" does not hide it.
+- **One email.** The first time you sign in without two-factor, the site sends you one email with the same advice and a link to your profile. It is sent once only. If the site has already sent many emails that hour, it waits and sends it at a later sign-in.
+
+The notice, the box and the email stop for good as soon as you have a method on (the authenticator app or email code; recovery codes alone do not count). Every staff member gets them: Administrators, Editors and Reviewers, and anyone given a staff capability. If the Two Factor plugin is not available, nothing is shown.
 
 ### Switch it on (each staff member)
 
