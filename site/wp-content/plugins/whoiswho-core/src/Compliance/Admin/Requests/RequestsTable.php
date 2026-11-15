@@ -215,9 +215,10 @@ final class RequestsTable extends ListTable {
 		);
 		foreach ( array_merge( $keys[ (string) $item['item_type'] ] ?? array(), array( 'escalate' ) ) as $key ) {
 			$actions[ 'wiw-' . $key ] = array(
-				'label'      => $definitions[ $key ]['label'],
-				'url'        => $this->step_url( $key, array( $id ) ),
-				'capability' => $definitions[ $key ]['capability'],
+				'label'       => $definitions[ $key ]['label'],
+				'url'         => $this->step_url( $key, array( $id ) ),
+				'capability'  => $definitions[ $key ]['capability'],
+				'destructive' => ! empty( $definitions[ $key ]['destructive'] ),
 			);
 		}
 		return $actions;

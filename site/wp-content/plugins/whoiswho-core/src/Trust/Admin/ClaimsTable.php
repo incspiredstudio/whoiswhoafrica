@@ -242,9 +242,10 @@ final class ClaimsTable extends ListTable {
 				'capability' => ClaimsScreen::CAP,
 			);
 			$actions['wiw-reject']  = array(
-				'label'      => __( 'Reject', 'whoiswho' ),
-				'url'        => $this->step_url( 'reject', array( $claim->id ) ),
-				'capability' => ClaimsScreen::CAP,
+				'label'       => __( 'Reject', 'whoiswho' ),
+				'url'         => $this->step_url( 'reject', array( $claim->id ) ),
+				'capability'  => ClaimsScreen::CAP,
+				'destructive' => true,
 			);
 		}
 		return $actions;

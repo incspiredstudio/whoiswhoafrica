@@ -239,7 +239,7 @@ final class ClaimsBulkTest extends TestCase {
 		$this->assertStringNotContainsString( 'name="ids[]" value="' . $decided . '"', $html, 'a decided claim has no checkbox' );
 		$this->assertStringContainsString( '>View<', $html );
 		$this->assertStringContainsString( 'wiw_confirm=reject', $html, 'Reject opens the reason step for that row' );
-		$this->assertStringContainsString( '<option value="reject" data-wiw-destructive="1" data-wiw-step="1">Reject</option>', $html );
+		$this->assertStringContainsString( '<option value="reject" class="wiw-destructive" data-wiw-destructive="1" data-wiw-step="1">Reject</option>', $html );
 
 		$item = array( 'claim' => ( new ClaimRepository() )->find( $open ) );
 		$this->assertArrayHasKey( 'wiw-approve', ( new ClaimsTable() )->visible_row_actions( $item ) );

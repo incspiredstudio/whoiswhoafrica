@@ -190,7 +190,7 @@ final class AwardsStaffUiTest extends WpTestCase {
 		$this->as_role( 'wiw_editor' );
 		$table = new NominationsTable();
 		$html  = $table->html( new Request( array() ) );
-		$this->assertStringContainsString( '<option value="remove" data-wiw-destructive="1">', $html );
+		$this->assertStringContainsString( '<option value="remove" class="wiw-destructive" data-wiw-destructive="1">', $html );
 		$this->assertStringNotContainsString( 'Nora', $html, 'the nominator is never on the list' );
 
 		$this->assertSame( ListTable::NEEDS_CONFIRM, $table->process_bulk( $this->bulk( NominationsTable::BULK, 'remove', array( $a, $b ) ) )['status'] );

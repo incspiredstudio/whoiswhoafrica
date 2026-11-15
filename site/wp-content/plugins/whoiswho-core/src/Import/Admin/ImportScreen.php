@@ -342,15 +342,22 @@ final class ImportScreen {
 	}
 
 	/**
-	 * A form opening tag with the action and nonce fields.
+	 * A kit form opening tag with the action and nonce fields.
 	 *
-	 * @param string $action Action.
-	 * @param bool   $upload Whether the form uploads a file.
+	 * @param string                    $action Action.
+	 * @param bool                      $upload Whether the form uploads a file.
+	 * @param array<string, string|int> $attrs  Extra attributes for the form tag.
 	 */
-	private function form( string $action, bool $upload = false ): string {
-		return '<form method="post" class="wiw-form" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"' . ( $upload ? ' enctype="multipart/form-data"' : '' ) . '>'
-			. '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" />'
+	private function form( string $action, bool $upload = false, array $attrs = array() ): string {
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" />'
 			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" />';
+		return Form::open(
+			$hidden,
+			array(
+				'enctype' => $upload ? 'multipart/form-data' : '',
+				'attrs'   => $attrs,
+			)
+		);
 	}
 
 	/**
@@ -358,7 +365,7 @@ final class ImportScreen {
 	 */
 	private function upload_form(): string {
 		$limit = (string) ( BundleStore::MAX_BYTES / 1048576 );
-		$out   = str_replace( '<form ', '<form data-wiw-import="upload" ', $this->form( self::UPLOAD, true ) );
+		$out   = $this->form( self::UPLOAD, true, array( 'data-wiw-import' => 'upload' ) );
 		$input = '<input type="file" id="wiw-f-bundle" name="bundle" accept=".zip" required="required" aria-describedby="wiw-f-bundle-help wiw-f-bundle-limit" />';
 		$out  .= Form::row(
 			'wiw-f-bundle',

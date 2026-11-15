@@ -21,8 +21,11 @@ final class StaffListTableTest extends WpTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		FakeStaffListTable::$seen = array();
-		FakeStaffListTable::$rows = array(
+		FakeStaffListTable::$seen              = array();
+		FakeStaffListTable::$read_only         = false;
+		FakeStaffListTable::$pager_on_one_page = true;
+		FakeStaffListTable::$kind              = '';
+		FakeStaffListTable::$rows              = array(
 			array(
 				'id'    => 1,
 				'name'  => 'Alpha <b>Thing</b>',
@@ -236,5 +239,121 @@ final class StaffListTableTest extends WpTestCase {
 		$html = ( new FakeStaffListTable() )->html( new Request( array( 'paged' => 3 ) ) );
 		$this->assertStringContainsString( 'Row 41', $html );
 		$this->assertStringNotContainsString( 'Row 40<', $html, '20 a page' );
+	}
+
+	/**
+	 * Fill the fake table with rows.
+	 *
+	 * @param int $count Rows.
+	 */
+	private function rows( int $count ): void {
+		FakeStaffListTable::$rows = array();
+		for ( $i = 1; $i <= $count; $i++ ) {
+			FakeStaffListTable::$rows[] = array(
+				'id'    => $i,
+				'name'  => 'Row ' . $i,
+				'state' => 'x',
+			);
+		}
+	}
+
+	/**
+	 * A pager link's address, decoded.
+	 *
+	 * @param string $html      Markup.
+	 * @param string $css_class first-page, prev-page, next-page or last-page.
+	 */
+	private function pager_link( string $html, string $css_class ): string {
+		preg_match( '#class=[\'"]' . $css_class . ' button[\'"] href=[\'"]([^\'"]+)[\'"]#', $html, $m );
+		$this->assertNotEmpty( $m, 'a ' . $css_class . ' link' );
+		return html_entity_decode( $m[1] );
+	}
+
+	public function test_REQ_275_pager_navigates_by_get_with_the_filters_kept_not_the_bulk_post(): void {
+		$this->user_with( array( FakeStaffListTable::SCREEN_CAP, FakeStaffListTable::TOUCH_CAP ) );
+		$this->rows( 45 );
+		FakeStaffListTable::$kind = 'books';
+		$html                     = ( new FakeStaffListTable() )->html( new Request( array( 'paged' => 2 ) ) );
+
+		$this->assertStringContainsString( 'method="post"', $html, 'the bulk form is still there' );
+		$this->assertMatchesRegularExpression( '#<input[^>]*name="paged"[^>]*form="wiw-pager-things"#', $html, 'the page box belongs to the GET pager form, not the bulk form' );
+		$this->assertMatchesRegularExpression( '#</form><form method="get" action="[^"]*admin\.php" id="wiw-pager-things"[^>]*>#', $html, 'the pager form follows the bulk form, not inside it' );
+		preg_match( '#<form method="get"[^>]*id="wiw-pager-things"[^>]*>(.*?)</form>#s', $html, $pager );
+		$this->assertNotEmpty( $pager );
+		$this->assertStringContainsString( '<input type="hidden" name="page" value="wiw-fake-list" />', $pager[1] );
+		$this->assertStringContainsString( '<input type="hidden" name="kind" value="books" />', $pager[1], 'the filter is kept' );
+		$this->assertStringNotContainsString( 'name="paged"', $pager[1], 'the page number comes from the page box' );
+		$this->assertStringNotContainsString( 'name="action"', $pager[1], 'nothing of the bulk form' );
+
+		$next = $this->pager_link( $html, 'next-page' );
+		$this->assertStringContainsString( 'admin.php?', $next );
+		$this->assertStringContainsString( 'page=wiw-fake-list', $next );
+		$this->assertStringContainsString( 'kind=books', $next );
+		$this->assertStringContainsString( 'paged=3', $next );
+		$first = $this->pager_link( $html, 'first-page' );
+		$this->assertStringNotContainsString( 'paged=', $first, 'page one has no paged arg' );
+		$this->assertStringContainsString( 'kind=books', $first );
+		$this->assertSame( $first, $this->pager_link( $html, 'prev-page' ), 'back to page one' );
+		$this->assertStringContainsString( 'paged=3', $this->pager_link( $html, 'last-page' ) );
+		$this->assertMatchesRegularExpression( '#name="paged" value="2"#', $html, 'the box shows the current page' );
+		$this->assertSame( 1, substr_count( $html, 'id="current-page-selector"' ), 'one page box' );
+	}
+
+	public function test_REQ_275_read_only_mode_has_no_bulk_form_and_pages_by_get(): void {
+		$this->user_with( array( FakeStaffListTable::SCREEN_CAP, FakeStaffListTable::TOUCH_CAP, FakeStaffListTable::WIPE_CAP, FakeStaffListTable::VIEW_CAP ) );
+		$this->rows( 45 );
+		FakeStaffListTable::$read_only = true;
+		FakeStaffListTable::$kind      = 'books';
+		$html                          = ( new FakeStaffListTable() )->html( new Request( array( 'paged' => 2 ) ) );
+
+		$this->assertStringNotContainsString( 'name="ids[]"', $html, 'no checkboxes' );
+		$this->assertStringNotContainsString( 'wiw-bulk-select', $html, 'no bulk dropdown' );
+		$this->assertStringNotContainsString( 'method="post"', $html, 'no POST form at all' );
+		$this->assertStringNotContainsString( 'name="_wpnonce"', $html );
+		$this->assertStringNotContainsString( 'name="action"', $html );
+		$this->assertStringContainsString( '>View<', $html, 'row actions stay' );
+		$this->assertMatchesRegularExpression( '#^<form method="get" action="[^"]*admin\.php" id="wiw-pager-things" class="wiw-list-form wiw-list-form--read-only">#', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="page" value="wiw-fake-list" />', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="kind" value="books" />', $html );
+		$this->assertStringNotContainsString( 'type="hidden" name="paged"', $html );
+		$this->assertMatchesRegularExpression( '#<input[^>]*name="paged" value="2"#', $html );
+		$this->assertDoesNotMatchRegularExpression( '#name="paged"[^>]*form=#', $html, 'the box is already inside the GET form' );
+		$this->assertSame( 1, substr_count( $html, '<form' ), 'one form' );
+		$this->assertStringContainsString( 'Row 21', $html );
+		$this->assertSame( array( 'name', 'state' ), array_keys( ( new FakeStaffListTable() )->get_columns() ), 'no checkbox column' );
+		$this->assertSame( array(), ( new FakeStaffListTable() )->allowed_bulk_actions(), 'no bulk actions in read-only mode' );
+	}
+
+	public function test_REQ_275_the_pager_can_be_dropped_when_there_is_one_page(): void {
+		$this->user_with( array( FakeStaffListTable::SCREEN_CAP ) );
+		$html = ( new FakeStaffListTable() )->html( new Request( array() ) );
+		$this->assertStringContainsString( '3 items', $html, 'by default the pager shows on one page' );
+
+		FakeStaffListTable::$pager_on_one_page = false;
+		$html                                  = ( new FakeStaffListTable() )->html( new Request( array() ) );
+		$this->assertStringNotContainsString( 'tablenav-pages', $html, 'no pager on one page' );
+		$this->assertStringNotContainsString( 'current-page-selector', $html );
+		$this->assertStringNotContainsString( 'table-paging', $html );
+		$this->assertStringNotContainsString( 'wiw-pager-things', $html, 'no pager form either' );
+
+		FakeStaffListTable::$rows = array();
+		$this->assertStringNotContainsString( 'tablenav-pages', ( new FakeStaffListTable() )->html( new Request( array() ) ), 'none on an empty list' );
+
+		$this->rows( 45 );
+		$html = ( new FakeStaffListTable() )->html( new Request( array() ) );
+		$this->assertStringContainsString( 'current-page-selector', $html, 'the pager is back when there are several pages' );
+		$this->assertStringContainsString( '45 items', $html );
+	}
+
+	public function test_REQ_275_destructive_row_and_bulk_actions_get_the_destructive_style(): void {
+		$this->user_with( array( FakeStaffListTable::SCREEN_CAP, FakeStaffListTable::TOUCH_CAP, FakeStaffListTable::WIPE_CAP, FakeStaffListTable::VIEW_CAP ) );
+		$table   = new FakeStaffListTable();
+		$actions = $table->visible_row_actions( FakeStaffListTable::$rows[0] );
+		$this->assertStringContainsString( 'class="wiw-destructive"', $actions['wipe'], 'a destructive row action' );
+		$this->assertStringNotContainsString( 'wiw-destructive', $actions['view'], 'not a plain one' );
+
+		$html = $table->html( new Request( array() ) );
+		$this->assertStringContainsString( '<option value="wipe" class="wiw-destructive" data-wiw-destructive="1">Wipe</option>', $html, 'a destructive bulk action' );
+		$this->assertStringContainsString( '<option value="touch">Touch</option>', $html, 'not a plain one' );
 	}
 }

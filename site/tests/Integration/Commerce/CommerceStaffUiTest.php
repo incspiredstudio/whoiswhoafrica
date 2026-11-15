@@ -108,6 +108,7 @@ final class CommerceStaffUiTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'type="checkbox"', $html );
 		$this->assertStringNotContainsString( 'wiw-bulk-select', $html );
 		$this->assertStringNotContainsString( 'class="row-actions"', $html );
-		$this->assertStringNotContainsString( '<form', $html, 'no bulk form around a read-only list' );
+		$this->assertStringNotContainsString( 'method="post"', $html, 'no bulk form around a read-only list' );
+		$this->assertStringContainsString( '<form method="get"', $html, 'a GET form for the pager' );
 	}
 }

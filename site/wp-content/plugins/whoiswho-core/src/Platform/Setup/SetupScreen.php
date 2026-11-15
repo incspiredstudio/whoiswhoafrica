@@ -129,7 +129,13 @@ final class SetupScreen {
 		$site_key = TurnstileSettings::site_key();
 		$saved    = TurnstileSettings::has_secret();
 		$hidden   = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_TURNSTILE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_TURNSTILE ) ) . '" />';
-		$out      = str_replace( '<form ', '<form data-personal-data="none" ', Form::open( $hidden, array( 'class' => 'wiw-turnstile-form' ) ) );
+		$out      = Form::open(
+			$hidden,
+			array(
+				'class' => 'wiw-turnstile-form',
+				'attrs' => array( 'data-personal-data' => 'none' ),
+			)
+		);
 		$out     .= Form::text(
 			'turnstile_site_key',
 			__( 'Site key', 'whoiswho' ),
@@ -261,7 +267,13 @@ final class SetupScreen {
 			return self::fix_form( 'database', $label );
 		}
 		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_FIX ) . '" /><input type="hidden" name="what" value="database" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_FIX ) ) . '" />';
-		return str_replace( '<form ', '<form data-personal-data="none" ', Form::open( $hidden, array( 'class' => 'wiw-db-form' ) ) )
+		return Form::open(
+			$hidden,
+			array(
+				'class' => 'wiw-db-form',
+				'attrs' => array( 'data-personal-data' => 'none' ),
+			)
+		)
 			. '<p class="wiw-fix"><strong>' . esc_html__( 'Take a backup in cPanel first.', 'whoiswho' ) . '</strong> ' . esc_html__( 'In cPanel, open Backup (or your host\'s backup tool) and download a full backup, or at least the database. The update only adds to the database and cannot be undone from here.', 'whoiswho' ) . '</p>'
 			. Form::checkbox( self::BACKUP_FIELD, __( 'I have a backup', 'whoiswho' ), false, array( 'required' => true ) )
 			. Form::actions( '<button type="submit" class="button button-primary">' . esc_html( $label ) . '</button>' ) . '</form>';

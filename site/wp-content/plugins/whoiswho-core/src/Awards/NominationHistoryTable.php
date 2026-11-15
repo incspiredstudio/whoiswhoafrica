@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Awards;
 
-use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 
 /**
@@ -144,25 +143,16 @@ final class NominationHistoryTable extends ListTable {
 	}
 
 	/**
-	 * The table alone, without the bulk form: a history has nothing to select.
-	 *
-	 * @param Request $request Request.
+	 * Read-only: no bulk form and no checkboxes (a history has nothing to select); the table sits in a GET form that keeps the page.
 	 */
-	public function html( Request $request ): string {
-		$this->load( $request );
-		ob_start();
-		$this->display();
-		return (string) ob_get_clean();
+	protected function read_only(): bool {
+		return true;
 	}
 
 	/**
-	 * No pager on a single page: this table shares its screen with other tables, and WordPress's pager uses fixed element ids.
-	 *
-	 * @param string $which top or bottom.
+	 * No pager on a single page: this table shares its screen with other tables, and the pager uses fixed element ids.
 	 */
-	protected function pagination( $which ): void {
-		if ( (int) $this->get_pagination_arg( 'total_pages' ) > 1 ) {
-			parent::pagination( $which );
-		}
+	protected function pager_on_one_page(): bool {
+		return false;
 	}
 }

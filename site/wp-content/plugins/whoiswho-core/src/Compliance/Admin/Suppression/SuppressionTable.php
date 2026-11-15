@@ -156,9 +156,10 @@ final class SuppressionTable extends ListTable {
 	protected function row_actions_for( array $item ): array {
 		return array(
 			'wiw-remove' => array(
-				'label'      => __( 'Remove', 'whoiswho' ),
-				'url'        => $this->step_url( 'remove', array( (int) $item['id'] ) ),
-				'capability' => SuppressionScreen::EDIT_CAP,
+				'label'       => __( 'Remove', 'whoiswho' ),
+				'url'         => $this->step_url( 'remove', array( (int) $item['id'] ) ),
+				'capability'  => SuppressionScreen::EDIT_CAP,
+				'destructive' => true,
 			),
 		);
 	}

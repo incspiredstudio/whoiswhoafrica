@@ -1,7 +1,8 @@
 <?php
 /**
  * A small list table for the ListTable base tests (REQ-275): three fixed rows, a plain bulk action that skips one id, a destructive
- * one and one with a confirmation field. Records which ids each handler saw.
+ * one and one with a confirmation field. Records which ids each handler saw. Switches for read-only mode, the one-page pager and a
+ * kept filter.
  *
  * @package WhoIsWho
  */
@@ -34,6 +35,27 @@ final class FakeStaffListTable extends ListTable {
 	 * @var array<int, array<string, mixed>>
 	 */
 	public static array $rows = array();
+
+	/**
+	 * Read-only mode (no bulk form, no checkboxes), for the read-only tests.
+	 *
+	 * @var bool
+	 */
+	public static bool $read_only = false;
+
+	/**
+	 * Whether the pager shows when there is one page.
+	 *
+	 * @var bool
+	 */
+	public static bool $pager_on_one_page = true;
+
+	/**
+	 * A list filter kept in the screen args ('' for none).
+	 *
+	 * @var string
+	 */
+	public static string $kind = '';
 
 	public function __construct() {
 		parent::__construct( 'thing', 'things' );
@@ -90,6 +112,18 @@ final class FakeStaffListTable extends ListTable {
 		return 'state' === $column ? self::pill( (string) $item['state'], 'info' ) : esc_html( (string) $item['name'] );
 	}
 
+	protected function read_only(): bool {
+		return self::$read_only;
+	}
+
+	protected function pager_on_one_page(): bool {
+		return self::$pager_on_one_page;
+	}
+
+	protected function screen_args( Request $request ): array {
+		return array_merge( '' === self::$kind ? array() : array( 'kind' => self::$kind ), parent::screen_args( $request ) );
+	}
+
 	protected function empty_message(): string {
 		return 'No fake things.';
 	}
@@ -102,9 +136,10 @@ final class FakeStaffListTable extends ListTable {
 				'capability' => self::VIEW_CAP,
 			),
 			'wipe' => array(
-				'label'      => 'Wipe',
-				'url'        => $this->step_url( 'wipe', array( (int) $item['id'] ) ),
-				'capability' => self::WIPE_CAP,
+				'label'       => 'Wipe',
+				'url'         => $this->step_url( 'wipe', array( (int) $item['id'] ) ),
+				'capability'  => self::WIPE_CAP,
+				'destructive' => true,
 			),
 		);
 	}

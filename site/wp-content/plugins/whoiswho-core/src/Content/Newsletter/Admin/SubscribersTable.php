@@ -161,14 +161,9 @@ final class SubscribersTable extends ListTable {
 	}
 
 	/**
-	 * The table alone, without the bulk form: there is nothing to select.
-	 *
-	 * @param Request $request Request.
+	 * Read-only: no bulk form and no checkboxes (there is nothing to select); the table sits in a GET form that keeps the page.
 	 */
-	public function html( Request $request ): string {
-		$this->load( $request );
-		ob_start();
-		$this->display();
-		return (string) ob_get_clean();
+	protected function read_only(): bool {
+		return true;
 	}
 }

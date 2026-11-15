@@ -227,9 +227,10 @@ final class CategoriesTable extends ListTable {
 			'capability' => CategoriesScreen::CAP,
 		);
 		$actions['wiw-remove']                                = array(
-			'label'      => __( 'Remove', 'whoiswho' ),
-			'url'        => $this->step_url( 'remove', array( $id ) ),
-			'capability' => CategoriesScreen::CAP,
+			'label'       => __( 'Remove', 'whoiswho' ),
+			'url'         => $this->step_url( 'remove', array( $id ) ),
+			'capability'  => CategoriesScreen::CAP,
+			'destructive' => true,
 		);
 		return $actions;
 	}
@@ -290,13 +291,9 @@ final class CategoriesTable extends ListTable {
 	}
 
 	/**
-	 * No pager on a single page: this table shares its screen with other tables, and WordPress's pager uses fixed element ids.
-	 *
-	 * @param string $which top or bottom.
+	 * No pager on a single page: this table shares its screen with other tables, and the pager uses fixed element ids.
 	 */
-	protected function pagination( $which ): void {
-		if ( (int) $this->get_pagination_arg( 'total_pages' ) > 1 ) {
-			parent::pagination( $which );
-		}
+	protected function pager_on_one_page(): bool {
+		return false;
 	}
 }

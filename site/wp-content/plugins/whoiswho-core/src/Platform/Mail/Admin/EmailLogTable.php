@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Platform\Mail\Admin;
 
-use WhoIsWho\Core\Platform\Admin\ReadOnlyListForm;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 
@@ -21,7 +20,6 @@ use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
  */
 final class EmailLogTable extends ListTable {
 
-	use ReadOnlyListForm;
 
 	public const BULK = 'wiw_email_log_list';
 
@@ -58,6 +56,13 @@ final class EmailLogTable extends ListTable {
 		$this->event      = $event;
 		$this->result     = $result;
 		parent::__construct( 'message', 'email-events' );
+	}
+
+	/**
+	 * Read-only: a log has nothing to select, so the table sits in a GET form that keeps the page and the filters.
+	 */
+	protected function read_only(): bool {
+		return true;
 	}
 
 	/**

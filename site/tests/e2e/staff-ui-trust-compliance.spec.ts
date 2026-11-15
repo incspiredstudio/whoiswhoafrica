@@ -104,7 +104,7 @@ test.describe("staff UI, Trust and Compliance", () => {
     expect(await page.locator(".wiw-staff .wiw-card").count()).toBeGreaterThanOrEqual(3);
     expect((await page.locator("#wiw-f-claim-reason").boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(40);
     await expect(page.getByRole("button", { name: "Approve and create account" })).toBeVisible();
-    await expect(page.locator("section[aria-labelledby=wiw-claim-reject] .wiw-actions").getByRole("button", { name: "Reject" })).toBeVisible();
+    await expect(page.locator("section#wiw-claim-reject .wiw-actions").getByRole("button", { name: "Reject" })).toBeVisible();
     await expectScreenAccessible(page);
     await shot(page, "claim-detail");
   });
@@ -133,7 +133,7 @@ test.describe("staff UI, Trust and Compliance", () => {
     await loginAs(page, baseURL as string, "editor");
     await page.goto(adminUrl("admin.php?page=wiw-corrections"));
     await page.locator("tr", { hasText: seed.corrections[0] }).getByRole("link", { name: seed.corrections[0], exact: true }).click();
-    await expect(page.locator("section[aria-labelledby=wiw-correction-decline]").getByLabel("Reason (kept private)")).toBeVisible();
+    await expect(page.locator("section#wiw-correction-decline").getByLabel("Reason (kept private)")).toBeVisible();
     await expectScreenAccessible(page);
 
     await loginAs(page, baseURL as string, "admin");

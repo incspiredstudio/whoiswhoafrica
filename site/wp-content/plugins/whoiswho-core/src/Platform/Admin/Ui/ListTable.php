@@ -13,7 +13,12 @@
  *
  * Subclass API (see docs/plugins/platform.md, "Staff UI kit"):
  *  - bulk_action(), capability(), screen_slug(), columns(), primary_column(), fetch(), item_id(), item_name(), column_html();
- *  - optionally row_actions_for(), bulk_action_definitions(), screen_args(), empty_message(), per_page().
+ *  - optionally row_actions_for(), bulk_action_definitions(), screen_args(), empty_message(), per_page(), read_only() (no bulk
+ *    form and no checkboxes: the table sits in a GET form that keeps the page and filters) and pager_on_one_page() (false drops
+ *    the pager when there is one page, so a screen with several tables does not repeat the pager's ids).
+ *
+ * Paging always moves by GET to the list's own screen with screen_args() kept: the pager links are built from them, and the page
+ * box belongs to a small GET form (by the form attribute), so pressing Enter in it never posts the bulk form. No JavaScript needed.
  *
  * @package WhoIsWho
  */
@@ -42,7 +47,7 @@ if ( ! function_exists( 'get_column_headers' ) ) {
  * Staff list table base.
  *
  * @phpstan-type BulkDefinition array{label: string, capability: string, destructive?: bool, handler: callable, done?: string, fields?: callable}
- * @phpstan-type RowAction array{label: string, url: string, capability: string, confirm?: string}
+ * @phpstan-type RowAction array{label: string, url: string, capability: string, confirm?: string, destructive?: bool}
  */
 abstract class ListTable extends \WP_List_Table {
 
@@ -81,6 +86,20 @@ abstract class ListTable extends \WP_List_Table {
 	 * @var int
 	 */
 	private int $total = 0;
+
+	/**
+	 * The current page, from 1.
+	 *
+	 * @var int
+	 */
+	private int $current_page = 1;
+
+	/**
+	 * The screen args the pager keeps (screen_args() without paged).
+	 *
+	 * @var array<string, string|int>
+	 */
+	private array $pager_args = array();
 
 	/**
 	 * Constructor.
@@ -160,8 +179,9 @@ abstract class ListTable extends \WP_List_Table {
 	abstract protected function column_html( array $item, string $column ): string;
 
 	/**
-	 * Row quick actions: key => label, url, capability and an optional confirm question. The base drops those the user may not
-	 * use. A url may point at the confirmation step of a bulk action for one row: see step_url().
+	 * Row quick actions: key => label, url, capability, an optional confirm question and an optional destructive flag (the link
+	 * gets the red destructive style). The base drops those the user may not use. A url may point at the confirmation step of a
+	 * bulk action for one row: see step_url().
 	 *
 	 * @param array<string, mixed> $item Item.
 	 * @return array<string, RowAction>
@@ -211,6 +231,22 @@ abstract class ListTable extends \WP_List_Table {
 	}
 
 	/**
+	 * Read-only mode: no bulk form, no checkboxes and no bulk actions; the table is printed inside a GET form to its own screen
+	 * that keeps the filters, so the page carries no POST form. For logs and other lists with nothing to do in bulk.
+	 */
+	protected function read_only(): bool {
+		return false;
+	}
+
+	/**
+	 * Whether the pager shows when everything fits on one page. False drops it (and its ids) on one page, for a screen with
+	 * several tables or a short embedded list.
+	 */
+	protected function pager_on_one_page(): bool {
+		return true;
+	}
+
+	/**
 	 * A row's name for the confirmation step, by id. The default reads the post title.
 	 *
 	 * @param int $id Id.
@@ -251,6 +287,9 @@ abstract class ListTable extends \WP_List_Table {
 	 * @return array<string, BulkDefinition>
 	 */
 	public function allowed_bulk_actions(): array {
+		if ( $this->read_only() ) {
+			return array();
+		}
 		$out = array();
 		foreach ( $this->bulk_action_definitions() as $key => $definition ) {
 			if ( current_user_can( $definition['capability'] ) ) { // phpcs:ignore WordPress.WP.Capabilities.Undetermined -- each definition names a wiw_* capability.
@@ -513,10 +552,63 @@ abstract class ListTable extends \WP_List_Table {
 		ob_start();
 		$this->display();
 		$table = (string) ob_get_clean();
-		$back  = static::screen_url( $this->screen_args( $request ) );
-		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-list-form" data-wiw-list="' . esc_attr( $this->_args['plural'] ) . '">';
-		$out  .= $this->hidden_fields( $back ) . $table . '</form>';
+		if ( $this->read_only() ) {
+			return $out . $this->pager_form_open( 'wiw-list-form wiw-list-form--read-only' ) . $table . '</form>';
+		}
+		$back = static::screen_url( $this->screen_args( $request ) );
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-list-form" data-wiw-list="' . esc_attr( $this->_args['plural'] ) . '">';
+		$out .= $this->hidden_fields( $back ) . $table . '</form>';
+		if ( $this->has_page_box() ) {
+			$out .= $this->pager_form_open( 'wiw-pager-form' ) . '</form>';
+		}
 		return $out;
+	}
+
+	/**
+	 * The id of the GET form the page box belongs to.
+	 */
+	private function pager_form_id(): string {
+		return 'wiw-pager-' . $this->_args['plural'];
+	}
+
+	/**
+	 * The opening tag of a GET form to the list's own screen, with the screen slug and the kept filters as hidden fields.
+	 *
+	 * @param string $css_class Form classes.
+	 */
+	private function pager_form_open( string $css_class ): string {
+		$out = '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" id="' . esc_attr( $this->pager_form_id() ) . '" class="' . esc_attr( $css_class ) . '">';
+		foreach ( array_merge( array( 'page' => static::screen_slug() ), $this->pager_args ) as $name => $value ) {
+			$out .= '<input type="hidden" name="' . esc_attr( (string) $name ) . '" value="' . esc_attr( (string) $value ) . '" />';
+		}
+		return $out;
+	}
+
+	/**
+	 * Whether the pager shows, given the option and the page count.
+	 */
+	private function pager_shown(): bool {
+		return $this->pager_on_one_page() || (int) $this->get_pagination_arg( 'total_pages' ) > 1;
+	}
+
+	/**
+	 * Whether the top pager prints the page box (any rows and a pager shown).
+	 */
+	private function has_page_box(): bool {
+		return $this->pager_shown() && $this->total > 0;
+	}
+
+	/**
+	 * A pager link: the list's screen with the kept filters and the page (none for page 1).
+	 *
+	 * @param int $page Page.
+	 */
+	private function page_url( int $page ): string {
+		$args = array_map( static fn ( $value ): string => rawurlencode( (string) $value ), $this->pager_args );
+		if ( $page > 1 ) {
+			$args['paged'] = $page;
+		}
+		return static::screen_url( $args );
 	}
 
 	/**
@@ -530,6 +622,10 @@ abstract class ListTable extends \WP_List_Table {
 		$found       = $this->fetch( $page, $per_page );
 		$this->items = $found['items'];
 		$this->total = $found['total'];
+		$args        = $this->screen_args( $request );
+		unset( $args['paged'] );
+		$this->pager_args   = $args;
+		$this->current_page = $page;
 		$this->set_pagination_args(
 			array(
 				'total_items' => $this->total,
@@ -613,8 +709,9 @@ abstract class ListTable extends \WP_List_Table {
 			if ( '' === $action['url'] || ! current_user_can( $action['capability'] ) ) { // phpcs:ignore WordPress.WP.Capabilities.Undetermined -- each action names a capability.
 				continue;
 			}
-			$confirm     = isset( $action['confirm'] ) ? ' data-wiw-confirm="' . esc_attr( $action['confirm'] ) . '"' : '';
-			$out[ $key ] = '<a href="' . esc_url( $action['url'] ) . '"' . $confirm . '>' . esc_html( $action['label'] ) . '</a>';
+			$attrs       = ! empty( $action['destructive'] ) ? ' class="wiw-destructive"' : '';
+			$attrs      .= isset( $action['confirm'] ) ? ' data-wiw-confirm="' . esc_attr( $action['confirm'] ) . '"' : '';
+			$out[ $key ] = '<a href="' . esc_url( $action['url'] ) . '"' . $attrs . '>' . esc_html( $action['label'] ) . '</a>';
 		}
 		return $out;
 	}
@@ -711,7 +808,7 @@ abstract class ListTable extends \WP_List_Table {
 		$ask = __( '%1$s: %2$d selected. This changes every selected row. Continue?', 'whoiswho' );
 		echo '<select name="' . esc_attr( $name ) . '" id="' . esc_attr( $id ) . '" class="wiw-bulk-select" data-wiw-confirm-pattern="' . esc_attr( $ask ) . '"><option value="-1">' . esc_html__( 'Bulk actions', 'whoiswho' ) . '</option>';
 		foreach ( $allowed as $key => $definition ) {
-			$attrs  = ! empty( $definition['destructive'] ) ? ' data-wiw-destructive="1"' : '';
+			$attrs  = ! empty( $definition['destructive'] ) ? ' class="wiw-destructive" data-wiw-destructive="1"' : '';
 			$attrs .= isset( $definition['fields'] ) ? ' data-wiw-step="1"' : '';
 			echo '<option value="' . esc_attr( $key ) . '"' . $attrs . '>' . esc_html( $definition['label'] ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attributes.
 		}
@@ -740,6 +837,69 @@ abstract class ListTable extends \WP_List_Table {
 		$this->extra_tablenav( $which );
 		$this->pagination( $which );
 		echo '<br class="clear" /></div>';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * The same markup as WordPress's pager (so core styles and the mobile layout apply), with links built from the list's screen
+	 * and kept filters rather than the current address, and a page box that belongs to the GET pager form. Nothing when the pager
+	 * is off on one page.
+	 *
+	 * @param string $which top or bottom.
+	 */
+	protected function pagination( $which ): void {
+		if ( ! $this->pager_shown() ) {
+			return;
+		}
+		if ( 0 === $this->total ) {
+			echo '<div class="tablenav-pages no-pages"><span class="displaying-num">' . esc_html__( '0 items', 'whoiswho' ) . '</span></div>';
+			return;
+		}
+		$pages   = max( 1, (int) $this->get_pagination_arg( 'total_pages' ) );
+		$current = $this->current_page;
+		/* translators: %s: number of items. */
+		$count = sprintf( _n( '%s item', '%s items', $this->total, 'whoiswho' ), number_format_i18n( $this->total ) );
+		$out   = '<span class="displaying-num">' . esc_html( $count ) . '</span>';
+		$links = array(
+			$current <= 1 ? self::pager_off( '&laquo;' ) : self::pager_link( 'first-page', $this->page_url( 1 ), __( 'First page', 'whoiswho' ), '&laquo;' ),
+			$current <= 1 ? self::pager_off( '&lsaquo;' ) : self::pager_link( 'prev-page', $this->page_url( max( 1, $current - 1 ) ), __( 'Previous page', 'whoiswho' ), '&lsaquo;' ),
+		);
+		$total = '<span class="total-pages">' . esc_html( number_format_i18n( $pages ) ) . '</span>';
+		/* translators: 1: current page, 2: total pages. */
+		$of = esc_html_x( '%1$s of %2$s', 'paging', 'whoiswho' );
+		if ( 'bottom' === $which ) {
+			$links[] = '<span class="screen-reader-text">' . esc_html__( 'Current Page', 'whoiswho' ) . '</span><span id="table-paging" class="paging-input"><span class="tablenav-paging-text">' . sprintf( $of, esc_html( (string) $current ), $total ) . '</span></span>';
+		} else {
+			$form    = $this->read_only() ? '' : ' form="' . esc_attr( $this->pager_form_id() ) . '"';
+			$box     = '<label for="current-page-selector" class="screen-reader-text">' . esc_html__( 'Current Page', 'whoiswho' ) . '</label><input class="current-page" id="current-page-selector" type="text" name="paged" value="' . esc_attr( (string) $current ) . '" size="' . esc_attr( (string) strlen( (string) $pages ) ) . '" aria-describedby="table-paging"' . $form . ' /><span class="tablenav-paging-text">';
+			$links[] = '<span class="paging-input">' . sprintf( $of, $box, $total ) . '</span></span>';
+		}
+		$links[] = $current >= $pages ? self::pager_off( '&rsaquo;' ) : self::pager_link( 'next-page', $this->page_url( min( $pages, $current + 1 ) ), __( 'Next page', 'whoiswho' ), '&rsaquo;' );
+		$links[] = $current >= $pages ? self::pager_off( '&raquo;' ) : self::pager_link( 'last-page', $this->page_url( $pages ), __( 'Last page', 'whoiswho' ), '&raquo;' );
+		$out    .= "\n" . '<span class="pagination-links">' . implode( "\n", $links ) . '</span>';
+		echo '<div class="tablenav-pages' . ( $pages < 2 ? ' one-page' : '' ) . '">' . $out . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
+	}
+
+	/**
+	 * A pager link.
+	 *
+	 * @param string $css_class first-page, prev-page, next-page or last-page.
+	 * @param string $url       Address.
+	 * @param string $label     Hidden label.
+	 * @param string $arrow     The arrow entity.
+	 */
+	private static function pager_link( string $css_class, string $url, string $label, string $arrow ): string {
+		return '<a class="' . esc_attr( $css_class ) . ' button" href="' . esc_url( $url ) . '"><span class="screen-reader-text">' . esc_html( $label ) . '</span><span aria-hidden="true">' . $arrow . '</span></a>';
+	}
+
+	/**
+	 * A disabled pager arrow.
+	 *
+	 * @param string $arrow The arrow entity.
+	 */
+	private static function pager_off( string $arrow ): string {
+		return '<span class="tablenav-pages-navspan button disabled" aria-hidden="true">' . $arrow . '</span>';
 	}
 
 	/**

@@ -1,23 +1,8 @@
 /*
  * Small additions to the staff UI kit for the Platform screens (REQ-275): the Audit, Email and Purge logs, Required plugins and
- * Sprint thresholds. The kit styles text and select filters; the logs also filter by number and date. A failed send stands out
- * in the Email log. WordPress admin colours and neutrals only.
+ * Sprint thresholds. The kit styles the logs' text, number, date and select filters; a failed send stands out in the Email log.
+ * WordPress admin colours and neutrals only.
  */
-
-.wiw-staff .wiw-filters input[type="number"],
-.wiw-staff .wiw-filters input[type="date"] {
-	background-color: #fff;
-	border: 1px solid #8c8f94;
-	border-radius: 6px;
-	box-shadow: none;
-	color: #1d2327;
-	font-size: 14px;
-	line-height: 1.4;
-	min-height: 40px;
-	padding: 6px 12px;
-}
-
-.wiw-staff .wiw-filters input[type="number"] { width: 9em; }
 
 .wiw-list-table tr.wiw-failed > th,
 .wiw-list-table tr.wiw-failed > td { background: #fcf0f1; }

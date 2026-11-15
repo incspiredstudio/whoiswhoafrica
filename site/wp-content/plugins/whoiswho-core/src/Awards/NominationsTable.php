@@ -326,9 +326,10 @@ final class NominationsTable extends ListTable {
 				'capability' => NominationsScreen::CAP,
 			),
 			'wiw-remove' => array(
-				'label'      => __( 'Remove', 'whoiswho' ),
-				'url'        => $this->step_url( 'remove', array( $id ) ),
-				'capability' => NominationsScreen::CAP,
+				'label'       => __( 'Remove', 'whoiswho' ),
+				'url'         => $this->step_url( 'remove', array( $id ) ),
+				'capability'  => NominationsScreen::CAP,
+				'destructive' => true,
 			),
 		);
 	}
