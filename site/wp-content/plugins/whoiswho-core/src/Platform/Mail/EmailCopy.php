@@ -227,6 +227,22 @@ final class EmailCopy {
 				),
 				'cta'     => 'Turn it on now',
 			),
+			Events::OWNER_SET_PASSWORD      => array(
+				'heading' => 'Your profile owner account is ready',
+				'body'    => array(
+					'Your claim was approved and we have made you a profile owner account. With it you can keep your profile up to date: every change is checked by our team before it appears on the site.',
+					'Choose your password with the button below. The link works once and expires after a day; you can ask for a new one on the sign-in page at any time.',
+				),
+				'cta'     => 'Set your password',
+			),
+			Events::OWNER_RESET_PASSWORD    => array(
+				'heading' => 'Reset your password',
+				'body'    => array(
+					'Someone asked to reset the password of your profile owner account. If it was you, choose a new password with the button below. The link works once and expires after a day.',
+					'If it was not you, ignore this email: your password has not changed.',
+				),
+				'cta'     => 'Choose a new password',
+			),
 		);
 	}
 

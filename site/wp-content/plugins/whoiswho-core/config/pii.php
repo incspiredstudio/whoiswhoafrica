@@ -16,7 +16,8 @@
 declare(strict_types=1);
 
 return array(
-	// WordPress accounts (staff only: there are no public accounts).
+	// WordPress accounts: staff, and Profile owner accounts (REQ-274; name and email only, exported by core and erased by the
+	// Trust owner-accounts handler, which deletes the account and unlinks its profiles).
 	array(
 		'kind'      => 'column',
 		'name'      => 'users.user_email',
@@ -24,7 +25,7 @@ return array(
 		'retention' => 'account_life',
 		'export'    => 'include',
 		'erase'     => 'anonymise',
-		'note'      => 'Staff and claimant accounts.',
+		'note'      => 'Staff and Profile owner accounts.',
 	),
 	array(
 		'kind'      => 'column',

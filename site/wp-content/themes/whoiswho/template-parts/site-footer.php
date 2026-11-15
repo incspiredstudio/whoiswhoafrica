@@ -1,7 +1,8 @@
 <?php
 /**
  * Site footer: the brand statement, four link columns (the Nominate link only while nominations are open, REQ-259), the legal row
- * with the Cookie preferences button (the notice itself is built with the cookie issue) and the base line.
+ * with the Cookie preferences button (the notice itself is built with the cookie issue) and the base line, which holds the Profile
+ * owner sign-in link ("My account" once signed in; REQ-274). The header never carries it.
  *
  * @package WhoIsWho
  */
@@ -15,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $wiw_nav     = wiw_nav_model();
 $wiw_tagline = wiw_brand( 'tagline' );
 $wiw_parts   = array_values( array_filter( array_map( 'trim', explode( '.', $wiw_tagline ) ) ) );
+$wiw_account = function_exists( 'wiw_account_link' ) ? wiw_account_link() : null;
 ?>
 <footer class="site-foot on-dark pattern">
 	<div class="wrap">
@@ -48,7 +50,12 @@ $wiw_parts   = array_values( array_filter( array_map( 'trim', explode( '.', $wiw
 			echo esc_html( sprintf( __( '© %1$s %2$s. %3$s', 'whoiswho' ), gmdate( 'Y' ), wiw_brand( 'legal_name' ), wiw_brand( 'domain' ) ) );
 			?>
 			</span>
-			<span><a href="<?php echo esc_url( home_url( '/sitemap.xml' ) ); ?>"><?php esc_html_e( 'Sitemap', 'whoiswho' ); ?></a> · <a href="<?php echo esc_url( home_url( '/unsubscribe/' ) ); ?>"><?php esc_html_e( 'Unsubscribe', 'whoiswho' ); ?></a></span>
+			<span>
+				<?php if ( null !== $wiw_account ) : ?>
+					<a class="foot-account" href="<?php echo esc_url( $wiw_account['url'] ); ?>"><?php echo esc_html( $wiw_account['label'] ); ?></a> ·
+				<?php endif; ?>
+				<a href="<?php echo esc_url( home_url( '/sitemap.xml' ) ); ?>"><?php esc_html_e( 'Sitemap', 'whoiswho' ); ?></a> · <a href="<?php echo esc_url( home_url( '/unsubscribe/' ) ); ?>"><?php esc_html_e( 'Unsubscribe', 'whoiswho' ); ?></a>
+			</span>
 		</div>
 	</div>
 </footer>

@@ -26,7 +26,7 @@ use WhoIsWho\Core\Platform\Capabilities\RoleSync;
 use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Core\Review\Revisions\RevisionService;
 use WhoIsWho\Core\Review\StateMachine;
-use WhoIsWho\Core\Trust\Admin\MyProfilesScreen;
+use WhoIsWho\Core\Trust\OwnerEdits;
 use WhoIsWho\Core\Trust\AssignedProfiles;
 use WhoIsWho\Tests\TestCase;
 
@@ -176,7 +176,7 @@ final class MyProfilesSideFieldsTest extends TestCase {
 		$manager = $this->user( self::FIXTURE_ROLE );
 		$id      = $this->profile( $manager );
 		wp_set_current_user( $manager );
-		( new MyProfilesScreen() )->save( $id, new Request( array( 'contact_email' => 'new@example.test' ) ), $manager );
+		( new OwnerEdits() )->submit( $id, new Request( array( 'contact_email' => 'new@example.test' ) ), $manager );
 
 		$this->assertSame( 'old@example.test', ( new ContactSwitches() )->all( $id )['email']['value'], 'The live contact detail does not change on save.' );
 		$reviewer = $this->user( 'wiw_reviewer' );
@@ -277,11 +277,10 @@ final class MyProfilesSideFieldsTest extends TestCase {
 		$manager = $this->user( self::FIXTURE_ROLE );
 		$id      = $this->profile( $manager );
 		wp_set_current_user( $manager );
-		$html = ( new MyProfilesScreen() )->html( new Request( array( 'profile' => (string) $id ) ), $manager );
-		foreach ( array( 'name="contact_email"', 'name="contact_phone"', 'name="contact_address"', 'name="image"', 'multipart/form-data', 'old@example.test' ) as $needle ) {
-			$this->assertStringContainsString( $needle, $html, $needle );
-		}
-		( new MyProfilesScreen() )->save( $id, new Request( array( 'contact_email' => '' ) ), $manager );
+		$form = ( new OwnerEdits() )->form( $id );
+		$this->assertSame( array( 'contact_email', 'contact_phone', 'contact_address' ), array_keys( $form['contact'] ) );
+		$this->assertSame( 'old@example.test', $form['contact']['contact_email'] );
+		( new OwnerEdits() )->submit( $id, new Request( array( 'contact_email' => '' ) ), $manager );
 		$pending = ( new RevisionService() )->pending( $id );
 		$this->assertCount( 1, $pending );
 		$this->assertSame( 'old@example.test', ( new ContactSwitches() )->all( $id )['email']['value'], 'Clearing waits for approval too.' );

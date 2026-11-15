@@ -64,9 +64,11 @@ final class RoleSync {
 	 * Create missing roles and grant capabilities not synced before.
 	 */
 	public function sync(): void {
+		$created = array();
 		foreach ( $this->catalogue->roles() as $name => $def ) {
 			if ( null === get_role( $name ) ) {
 				add_role( $name, $def['label'], array() );
+				$created[] = $name;
 			}
 		}
 
@@ -85,7 +87,8 @@ final class RoleSync {
 				continue;
 			}
 			$defaults = $this->catalogue->for_bundle( $bundle );
-			foreach ( $new as $cap ) {
+			// A role created by this sync gets its whole bundle; an existing role only the capabilities not synced before.
+			foreach ( in_array( $role_name, $created, true ) ? $defaults : $new as $cap ) {
 				if ( in_array( $cap, $defaults, true ) ) {
 					$role->add_cap( $cap );
 				}

@@ -47,7 +47,7 @@ $wp_cache_pages['pages']     = 0;
 $wp_cache_pages['single']    = 0;
 
 // Pages that carry a time-based form token or a signed link, previews and the admin: refused by address as well as by PageCachePolicy.
-$cache_rejected_uri        = array( 'wp-.*\\.php', 'index\\.php', 'wp-admin', 'wp-json', 'feed', 'preview', 'contact', 'get-listed', 'claim', 'nominate', 'correct', 'correction', 'removal', 'remove', 'report', 'newsletter', 'unsubscribe', 'confirm/', 'link/', 'healthz' );
+$cache_rejected_uri        = array( 'wp-.*\\.php', 'index\\.php', 'wp-admin', 'wp-json', 'feed', 'preview', 'contact', 'get-listed', 'claim', 'account', 'nominate', 'correct', 'correction', 'removal', 'remove', 'report', 'newsletter', 'unsubscribe', 'confirm/', 'link/', 'healthz' );
 $cache_acceptable_files    = array();
 $cache_rejected_user_agent = array();
 

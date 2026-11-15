@@ -22,6 +22,7 @@ use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Core\Review\StateMachine;
 use WhoIsWho\Core\Trust\ClaimCard;
 use WhoIsWho\Core\Trust\ClaimDecision;
+use WhoIsWho\Core\Trust\Account\OwnerRole;
 use WhoIsWho\Core\Trust\ProfileManager;
 use WhoIsWho\Tests\WpTestCase;
 
@@ -86,7 +87,7 @@ final class ClaimCardTest extends WpTestCase {
 
 	private function audit_row( int $profile_id ): ?array {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}wiw_audit_log WHERE action = %s AND subject_id = %s ORDER BY id DESC LIMIT 1", 'profile.assign_manager', (string) $profile_id ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}wiw_audit_log WHERE action = %s AND subject_id = %s ORDER BY id DESC LIMIT 1", 'profile.assign_owner', (string) $profile_id ), ARRAY_A ); // phpcs:ignore WordPress.DB, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
 		return is_array( $row ) ? $row : null;
 	}
 
@@ -110,10 +111,10 @@ final class ClaimCardTest extends WpTestCase {
 		$this->assertStringContainsString( 'Not claimed', $this->card( $this->posts[1] ) );
 	}
 
-	public function test_REQ_253_assign_sets_manager_user_and_audits(): void {
+	public function test_REQ_274_assign_transfer_and_remove_the_owner_and_audit_each(): void {
 		$id       = $this->profile( 'Assign Org Kqz', true );
 		$reviewer = self::factory()->user->create( array( 'role' => 'wiw_editor' ) );
-		$staff    = self::factory()->user->create( array( 'role' => 'wiw_reviewer' ) );
+		$staff    = self::factory()->user->create( array( 'role' => OwnerRole::ROLE ) );
 		wp_set_current_user( $reviewer );
 		$service = new ProfileManager();
 		$service->assign( $id, $staff, $reviewer );
@@ -123,19 +124,25 @@ final class ClaimCardTest extends WpTestCase {
 		$this->assertSame( (string) $reviewer, (string) $row['actor_id'] );
 		$this->assertStringContainsString( (string) $staff, (string) $row['new_value'] );
 
-		$other = self::factory()->user->create( array( 'role' => 'wiw_reviewer' ) );
+		$other = self::factory()->user->create( array( 'role' => OwnerRole::ROLE ) );
 		$service->assign( $id, $other, $reviewer );
-		$this->assertSame( $other, $service->assigned( $id ), 'one user per profile; assigning replaces' );
+		$this->assertSame( $other, $service->assigned( $id ), 'one owner per profile; assigning transfers it' );
 		$this->assertStringContainsString( (string) $staff, (string) $this->audit_row( $id )['old_value'] );
+		$this->assertSame( 'Ownership transferred', (string) $this->audit_row( $id )['reason'] );
+
+		$second = $this->profile( 'Second Org Kqz', true );
+		$service->assign( $second, $other, $reviewer );
+		$this->assertSame( array( $id, $second ), $service->owned( $other ), 'one account may own several profiles' );
 
 		$service->assign( $id, 0, $reviewer );
-		$this->assertNull( $service->assigned( $id ), 'unassign' );
+		$this->assertNull( $service->assigned( $id ), 'removed' );
+		$this->assertSame( 'Owner removed', (string) $this->audit_row( $id )['reason'] );
 	}
 
-	public function test_REQ_253_assign_refuses_unclaimed_profile_and_non_staff(): void {
+	public function test_REQ_274_assign_refuses_unclaimed_profile_and_accounts_that_are_not_owners(): void {
 		$reviewer = self::factory()->user->create( array( 'role' => 'wiw_editor' ) );
-		$staff    = self::factory()->user->create( array( 'role' => 'wiw_reviewer' ) );
-		$public   = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$staff    = self::factory()->user->create( array( 'role' => OwnerRole::ROLE ) );
+		$public   = self::factory()->user->create( array( 'role' => 'wiw_reviewer' ) );
 		wp_set_current_user( $reviewer );
 		$service = new ProfileManager();
 		try {
@@ -147,13 +154,13 @@ final class ClaimCardTest extends WpTestCase {
 		$claimed = $this->profile( 'Closed Org Kqz', true );
 		try {
 			$service->assign( $claimed, $public, $reviewer );
-			$this->fail( 'A public account cannot be assigned.' );
+			$this->fail( 'A staff account cannot be made a profile owner.' );
 		} catch ( \DomainException $e ) {
-			$this->assertStringContainsString( 'staff', $e->getMessage() );
+			$this->assertStringContainsString( 'Profile owner account', $e->getMessage() );
 		}
 		$this->assertNull( $service->assigned( $claimed ) );
-		$this->assertArrayHasKey( $staff, $service->staff_choices() );
-		$this->assertArrayNotHasKey( $public, $service->staff_choices() );
+		$this->assertArrayHasKey( $staff, $service->owner_choices() );
+		$this->assertArrayNotHasKey( $public, $service->owner_choices() );
 	}
 
 	public function test_REQ_253_assign_control_only_for_claim_reviewers_on_claimed_profiles(): void {
@@ -175,7 +182,8 @@ final class ClaimCardTest extends WpTestCase {
 	public function test_REQ_150_claimed_badge_not_in_public_output(): void {
 		$id    = $this->profile( 'Pub Org Kqz', true );
 		$staff = self::factory()->user->create( array( 'role' => 'wiw_editor' ) );
-		( new ProfileManager() )->assign( $id, $staff, $staff );
+		$owner = self::factory()->user->create( array( 'role' => OwnerRole::ROLE ) );
+		( new ProfileManager() )->assign( $id, $owner, $staff );
 		$profile = PublicProfile::find( (string) get_post_field( 'post_name', $id ) );
 		$this->assertNotNull( $profile );
 		$this->assertArrayNotHasKey( 'assigned_user_id', get_object_vars( $profile ) );

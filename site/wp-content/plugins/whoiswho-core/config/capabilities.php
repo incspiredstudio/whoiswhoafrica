@@ -4,7 +4,10 @@
  * The authoritative list is docs/requirements.md, "Capabilities and default role mapping". Edit this file, bump `version`, and
  * the next sync adds new capabilities to the roles without removing grants an Administrator added later.
  *
- * Roles: reviewer, editor, administrator. `fixed` capabilities cannot be granted to a non-Administrator.
+ * Roles: reviewer, editor, administrator, plus profile_owner (REQ-274): the customer-style Profile owner account on the public
+ * site, which holds only `read` and `wiw_own_profiles` and never reaches wp-admin. `fixed` capabilities cannot be granted to a
+ * non-Administrator.
+ * Withdrawn and not listed: wiw_edit_assigned_profiles (replaced by wiw_own_profiles; migration 2026112105 removes it).
  * Withdrawn and not listed: wiw_set_trust_labels (D-059), wiw_manage_leads (D-061).
  *
  * @package WhoIsWho
@@ -16,23 +19,28 @@ $wiw_all    = array( 'reviewer', 'editor', 'administrator' );
 $wiw_edit   = array( 'editor', 'administrator' );
 $wiw_admin  = array( 'administrator' );
 $wiw_review = array( 'reviewer', 'administrator' );
+$wiw_owner  = array( 'profile_owner' );
 
 return array(
-	'version'      => 6,
+	'version'      => 7,
 	'roles'        => array(
-		'wiw_reviewer' => array(
+		'wiw_reviewer'      => array(
 			'label'  => 'Reviewer',
 			'bundle' => 'reviewer',
 		),
-		'wiw_editor'   => array(
+		'wiw_editor'        => array(
 			'label'  => 'Editor',
 			'bundle' => 'editor',
+		),
+		'wiw_profile_owner' => array(
+			'label'  => 'Profile owner',
+			'bundle' => 'profile_owner',
 		),
 	),
 	'capabilities' => array(
 		'read'                          => array(
 			'source' => 'core',
-			'roles'  => $wiw_all,
+			'roles'  => array_merge( $wiw_all, $wiw_owner ),
 		),
 
 		// Stories.
@@ -296,9 +304,10 @@ return array(
 			'roles'  => $wiw_admin,
 			'fixed'  => true,
 		),
-		'wiw_edit_assigned_profiles'    => array(
+		// Profile owner accounts (REQ-274, REQ-253, REQ-261): edit only the profiles one owns, on the public /account/ pages.
+		'wiw_own_profiles'              => array(
 			'source' => 'plugin',
-			'roles'  => $wiw_admin,
+			'roles'  => array_merge( $wiw_owner, $wiw_admin ),
 		),
 		'wiw_run_setup'                 => array(
 			'source' => 'plugin',

@@ -56,6 +56,14 @@ final class HeaderTest extends TestCase {
 		$this->assertStringContainsString( 'get listed', $header );
 	}
 
+	public function test_REQ_274_the_profile_owner_sign_in_link_is_in_the_footer_only(): void {
+		wp_set_current_user( 0 );
+		$footer = $this->render( 'template-parts/site-footer' );
+		$this->assertStringContainsString( 'Profile owner sign in', $footer );
+		$this->assertStringContainsString( home_url( '/account/' ), $footer );
+		$this->assertStringNotContainsString( '/account/', $this->render( 'template-parts/site-header' ), 'never in the header or drawer' );
+	}
+
 	public function test_REQ_043_drawer_and_search_are_labelled_dialogs_and_menu_buttons_state_their_target(): void {
 		$header = $this->render( 'template-parts/site-header' );
 		$this->assertStringContainsString( 'id="drawer" role="dialog" aria-modal="true"', $header );

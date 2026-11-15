@@ -3,7 +3,7 @@ import { expectNoA11yViolations } from "./helpers/a11y";
 import { assertNoHorizontalScroll } from "./helpers/page";
 
 // Needs a site whose active theme is whoiswho-child (set WIW_THEME_READY=1).
-test.describe("header (REQ-259, REQ-229, REQ-043, REQ-040)", () => {
+test.describe("header (REQ-259, REQ-229, REQ-274, REQ-043, REQ-040)", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
   test("shows the groups, search, Get listed and no account menu", async ({ page, isMobile }) => {
@@ -12,7 +12,9 @@ test.describe("header (REQ-259, REQ-229, REQ-043, REQ-040)", () => {
     await expect(header).toBeVisible();
     // The header button shows from 640 px; on phones Get listed is the last link in the drawer.
     expect(await page.locator("header.site-head a.head-cta, #drawer a.drawer-link[href*='get-listed']").count()).toBeGreaterThan(0);
-    await expect(page.getByRole("link", { name: /sign in|sign up|log in|my account/i })).toHaveCount(0);
+    // The Profile owner sign-in link lives in the footer only (REQ-274); the header and the menu drawer never carry an account link.
+    await expect(page.locator("header.site-head, #drawer").getByRole("link", { name: /sign in|sign up|log in|my account/i })).toHaveCount(0);
+    await expect(page.locator("footer.site-foot").getByRole("link", { name: "Profile owner sign in" })).toHaveCount(1);
     await expect(header.getByRole("button", { name: /search the directory/i })).toBeVisible();
     const viewport = page.viewportSize();
     if (viewport && viewport.width >= 1024 && !isMobile) {

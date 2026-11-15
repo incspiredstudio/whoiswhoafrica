@@ -35,7 +35,7 @@ final class PageCachePolicy {
 	/**
 	 * Paths never cached even if a public prefix matched: form pages (time-based tokens), signed links, previews and the like.
 	 */
-	public const NEVER_PATHS = array( '/contact', '/get-listed', '/claim', '/nominate', '/correct', '/correction', '/removal', '/remove', '/report', '/newsletter', '/unsubscribe', '/confirm/', '/link/', '/wp-', '/feed', '/healthz', '/preview' );
+	public const NEVER_PATHS = array( '/contact', '/get-listed', '/claim', '/account', '/nominate', '/correct', '/correction', '/removal', '/remove', '/report', '/newsletter', '/unsubscribe', '/confirm/', '/link/', '/wp-', '/feed', '/healthz', '/preview' );
 
 	/**
 	 * Cookie name prefixes that mean a person is signed in, commenting or viewing a protected page.

@@ -1,8 +1,9 @@
 <?php
 /**
- * The profile manager of a claimed profile (REQ-253, REQ-150): one ordinary staff user per profile, set by a person who may review
- * claims and recorded in the audit log. Only a claimed profile has a manager, and only staff accounts can be picked, never a public
- * account. The manager is a staff-side note and is never shown on a public surface.
+ * The owner of a claimed profile (REQ-274, REQ-253, REQ-150): one Profile owner account per profile, set by a person who may review
+ * claims (on approval with "Approve and create account", or later on the profile screen to transfer or remove it) and recorded in
+ * the audit log. Only a claimed profile has an owner, only a Profile owner account can be picked, and one account may own several
+ * profiles. The owner is never shown on a public surface.
  *
  * @package WhoIsWho
  */
@@ -13,6 +14,7 @@ namespace WhoIsWho\Core\Trust;
 
 use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
+use WhoIsWho\Core\Trust\Account\OwnerRole;
 
 /**
  * Profile manager service.
@@ -58,62 +60,74 @@ final class ProfileManager {
 	}
 
 	/**
-	 * Ordinary staff users as id => display name: accounts that can see private profiles (so no public account appears).
+	 * Profile owner accounts as id => display name, for the owner picker.
 	 *
 	 * @return array<int, string>
 	 */
-	public function staff_choices(): array {
+	public function owner_choices(): array {
 		$out   = array();
 		$users = get_users(
 			array(
-				'role__in' => array( 'administrator', 'wiw_editor', 'wiw_reviewer' ),
-				'orderby'  => 'display_name',
-				'order'    => 'ASC',
-				'fields'   => array( 'ID', 'display_name' ),
+				'role'    => OwnerRole::ROLE,
+				'orderby' => 'display_name',
+				'order'   => 'ASC',
+				'fields'  => array( 'ID', 'display_name' ),
 			)
 		);
 		foreach ( $users as $user ) {
-			if ( user_can( (int) $user->ID, self::STAFF_CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- generated for the profile type, listed in config/capabilities.php.
-				$out[ (int) $user->ID ] = (string) $user->display_name;
-			}
+			$out[ (int) $user->ID ] = (string) $user->display_name;
 		}
 		return $out;
 	}
 
 	/**
-	 * Assign, change or clear (user id 0) the manager of a claimed profile.
+	 * The profiles a user owns, by id.
+	 *
+	 * @param int $user_id User.
+	 * @return int[]
+	 */
+	public function owned( int $user_id ): array {
+		global $wpdb;
+		if ( $user_id < 1 ) {
+			return array();
+		}
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT profile_id FROM ' . StateRepository::table() . ' WHERE assigned_user_id = %d ORDER BY profile_id ASC', $user_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+	}
+
+	/**
+	 * Assign, transfer or remove (user id 0) the owner of a claimed profile.
 	 *
 	 * @param int $profile_id Profile id.
-	 * @param int $user_id    Staff user, or 0 to unassign.
+	 * @param int $user_id    Profile owner account, or 0 to remove the owner.
 	 * @param int $actor_id   Person doing it; must hold wiw_review_claims.
-	 * @throws \DomainException When not allowed, the profile is not claimed, or the user is not staff.
+	 * @throws \DomainException When not allowed, the profile is not claimed, or the user is not a Profile owner account.
 	 */
 	public function assign( int $profile_id, int $user_id, int $actor_id ): void {
 		if ( $actor_id < 1 || ! user_can( $actor_id, ClaimDecision::CAPABILITY ) ) {
-			throw new \DomainException( 'You are not allowed to assign a profile manager.' );
+			throw new \DomainException( 'You are not allowed to change a profile owner.' );
 		}
 		$state = $this->states->get( $profile_id );
 		if ( null === $state || empty( $state['claimed'] ) ) {
-			throw new \DomainException( 'Only a claimed profile has a manager.' );
-		}
-		if ( $user_id > 0 && ! array_key_exists( $user_id, $this->staff_choices() ) ) {
-			throw new \DomainException( 'The manager must be a staff user.' );
+			throw new \DomainException( 'Only a claimed profile has an owner.' );
 		}
 		$before = $this->assigned( $profile_id );
 		$after  = $user_id > 0 ? $user_id : null;
 		if ( $before === $after ) {
 			return;
 		}
+		if ( null !== $after && ! OwnerRole::is_owner( $after ) ) {
+			throw new \DomainException( 'The owner must be a Profile owner account.' );
+		}
 		$this->states->update( $profile_id, array( 'assigned_user_id' => $after ) );
 		$this->audit->log(
-			'profile.assign_manager',
+			'profile.assign_owner',
 			array(
 				'type' => 'profile',
 				'id'   => $profile_id,
 			),
 			array( 'assigned_user_id' => $before ),
 			array( 'assigned_user_id' => $after ),
-			null === $after ? 'Manager removed' : 'Manager assigned'
+			null === $after ? 'Owner removed' : ( null === $before ? 'Owner assigned' : 'Ownership transferred' )
 		);
 	}
 }

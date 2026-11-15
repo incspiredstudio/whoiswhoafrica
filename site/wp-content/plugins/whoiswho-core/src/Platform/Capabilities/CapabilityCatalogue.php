@@ -86,6 +86,20 @@ final class CapabilityCatalogue {
 	}
 
 	/**
+	 * The bundle of the customer-style Profile owner account (REQ-274). It is not a staff role.
+	 */
+	public const OWNER_BUNDLE = 'profile_owner';
+
+	/**
+	 * The staff roles among the custom roles: every custom role except the Profile owner account (REQ-274).
+	 *
+	 * @return string[]
+	 */
+	public function staff_roles(): array {
+		return array_keys( array_filter( $this->config['roles'], static fn ( array $def ): bool => self::OWNER_BUNDLE !== $def['bundle'] ) );
+	}
+
+	/**
 	 * The custom roles to create: role name => label and bundle.
 	 *
 	 * @return array<string, array{label: string, bundle: string}>
