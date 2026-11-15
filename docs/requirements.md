@@ -72,7 +72,8 @@ Defaults: **R** = Reviewer, **E** = Editor, **A** = Administrator. The Visitor h
 | `wiw_unpublish_profiles` | Plugin | Unpublish or hide a single profile (REQ-091) | no | yes | yes |
 | `wiw_set_trust_labels` | Plugin | **Withdrawn (D-059).** Profiles have no trust labels; Featured on stories uses the core flag | - | - | - |
 | `wiw_manage_subscribers` | Plugin | Subscribers screen: newsletter list, confirm status, unsubscribe (REQ-255) | no | yes | yes |
-| `wiw_edit_assigned_profiles` | Plugin | My profiles screen: edit only the profiles assigned to the user; added in the build, Administrator by default and grantable (REQ-253) | no | no | yes |
+| `wiw_edit_assigned_profiles` | Plugin | **Withdrawn 2026-11-15 (D-071).** The wp-admin My profiles screen is removed; claimants use a Profile owner account on the public site instead | - | - | - |
+| `wiw_own_profiles` | Plugin | Held only by the `wiw_profile_owner` role (with `read`): use `/account/` on the public site and edit owned profiles through review; no wp-admin access (REQ-253, 261, 274) | no | no | no |
 | `wiw_review_claims` | Plugin | Review claims, set Claimed, assign the profile's user (REQ-251 to 253, 256) | no | yes | yes |
 | `wiw_curate_home` | Plugin | Choose how the home page and the stories page pick what they show, and pin items (REQ-257). Editor and Administrator by default; the Administrator can grant it to any role, including Reviewer | no | yes | yes |
 | `wiw_manage_events` | Plugin | Create, edit, schedule and unpublish events (REQ-262, 264). Editor and Administrator by default; the Administrator can grant it to any role, including Reviewer | no | yes | yes |
