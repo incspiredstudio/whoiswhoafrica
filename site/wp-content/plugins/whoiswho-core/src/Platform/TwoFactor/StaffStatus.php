@@ -51,7 +51,7 @@ final class StaffStatus {
 	 * @return string[]
 	 */
 	public static function staff_roles(): array {
-		return array_merge( array( 'administrator' ), array_keys( ( new CapabilityCatalogue() )->roles() ) );
+		return array_merge( array( 'administrator' ), ( new CapabilityCatalogue() )->staff_roles() );
 	}
 
 	/**
@@ -68,7 +68,8 @@ final class StaffStatus {
 			return true;
 		}
 		foreach ( (array) $user->allcaps as $cap => $granted ) {
-			if ( $granted && 0 === strpos( (string) $cap, 'wiw_' ) ) {
+			// wiw_own_profiles is the Profile owner account's capability (REQ-274), not a staff one.
+			if ( $granted && 0 === strpos( (string) $cap, 'wiw_' ) && 'wiw_own_profiles' !== $cap ) {
 				return true;
 			}
 		}

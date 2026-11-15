@@ -1,10 +1,9 @@
 <?php
 /**
- * Assigned-profiles-only access (REQ-253, REQ-261, REQ-244). A user whose role holds wiw_edit_assigned_profiles and no staff
- * profile capability may open and edit only the profiles assigned to them (the profile manager of a claimed profile, see
- * ProfileManager), and only the descriptive text and links. Every other profile answers 403. Status, slug, Claimed, arrangements,
- * labels and the lists are never writable by such a user. The plugin ships no role for this: the Administrator creates a role and
- * grants it the capability (plus read and upload_files). Staff holding edit_others_wiw_profiles are not limited by this rule.
+ * Owned-profiles-only access (REQ-274, REQ-253, REQ-261). A user holding wiw_own_profiles (the Profile owner role) and no staff
+ * profile capability may edit only the profiles they own (see ProfileManager), and only the descriptive text, links, contact
+ * details and photograph. Every other profile is refused. Status, slug, Claimed, arrangements, labels and the lists are never
+ * writable by such a user. Staff holding edit_others_wiw_profiles are not limited by this rule.
  * The decision is pure; the hooks are thin.
  *
  * @package WhoIsWho
@@ -21,11 +20,11 @@ use WhoIsWho\Core\Directory\ProfileType;
  */
 final class AssignedProfiles {
 
-	public const CAPABILITY = 'wiw_edit_assigned_profiles';
+	public const CAPABILITY = Account\OwnerRole::CAPABILITY;
 
 	/**
 	 * The fields an assigned user may change: descriptive text and links. Contact details and the photograph have their own
-	 * stores and are changed through the My profiles screen.
+	 * stores and are changed through the account edit page (OwnerEdits).
 	 */
 	public const FIELDS = array( 'summary', 'bio', 'mandate', 'website', 'official_website' );
 

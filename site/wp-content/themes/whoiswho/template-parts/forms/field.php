@@ -1,7 +1,8 @@
 <?php
 /**
  * Form field: label, control, hint tied with aria-describedby, error state. Variants: text types, textarea, select, checkbox.
- * Args: name, label (may contain safe links), type, required, hint, error, options (value => label), value, id.
+ * Args: name, label (may contain safe links), type, required, hint, error, options (value => label), value, id, autocomplete,
+ * maxlength. A password field is never refilled.
  *
  * @package WhoIsWho
  */
@@ -15,15 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 $wiw_f = wp_parse_args(
 	isset( $args ) && is_array( $args ) ? $args : array(),
 	array(
-		'name'     => '',
-		'label'    => '',
-		'type'     => 'text',
-		'required' => false,
-		'hint'     => '',
-		'error'    => '',
-		'options'  => array(),
-		'value'    => '',
-		'id'       => '',
+		'name'         => '',
+		'label'        => '',
+		'type'         => 'text',
+		'required'     => false,
+		'hint'         => '',
+		'error'        => '',
+		'options'      => array(),
+		'value'        => '',
+		'id'           => '',
+		'autocomplete' => '',
+		'maxlength'    => 0,
 	)
 );
 
@@ -34,12 +37,14 @@ $wiw_hint   = (string) $wiw_f['hint'];
 $wiw_error  = (string) $wiw_f['error'];
 $wiw_desc   = trim( ( '' !== $wiw_hint ? $wiw_id . '-hint ' : '' ) . ( '' !== $wiw_error ? $wiw_id . '-err' : '' ) );
 $wiw_common = sprintf(
-	'id="%1$s" name="%2$s"%3$s%4$s%5$s',
+	'id="%1$s" name="%2$s"%3$s%4$s%5$s%6$s%7$s',
 	esc_attr( $wiw_id ),
 	esc_attr( $wiw_name ),
 	$wiw_f['required'] ? ' required aria-required="true"' : '',
 	'' !== $wiw_desc ? ' aria-describedby="' . esc_attr( $wiw_desc ) . '"' : '',
-	'' !== $wiw_error ? ' aria-invalid="true"' : ''
+	'' !== $wiw_error ? ' aria-invalid="true"' : '',
+	'' !== (string) $wiw_f['autocomplete'] ? ' autocomplete="' . esc_attr( (string) $wiw_f['autocomplete'] ) . '"' : '',
+	(int) $wiw_f['maxlength'] > 0 ? ' maxlength="' . esc_attr( (string) (int) $wiw_f['maxlength'] ) . '"' : ''
 );
 $wiw_label  = wp_kses( (string) $wiw_f['label'], array( 'a' => array( 'href' => true ) ) );
 $wiw_req    = $wiw_f['required'] ? ' <span class="visually-hidden">' . esc_html__( '(required)', 'whoiswho' ) . '</span>' : '';
@@ -62,7 +67,7 @@ $wiw_req    = $wiw_f['required'] ? ' <span class="visually-hidden">' . esc_html_
 				<?php endforeach; ?>
 			</select>
 		<?php else : ?>
-			<input type="<?php echo esc_attr( in_array( $wiw_type, array( 'text', 'email', 'tel', 'url', 'search' ), true ) ? $wiw_type : 'text' ); ?>" value="<?php echo esc_attr( (string) $wiw_f['value'] ); ?>" <?php echo $wiw_common; // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts above. ?>>
+			<input type="<?php echo esc_attr( in_array( $wiw_type, array( 'text', 'email', 'tel', 'url', 'search', 'password' ), true ) ? $wiw_type : 'text' ); ?>" value="<?php echo esc_attr( 'password' === $wiw_type ? '' : (string) $wiw_f['value'] ); ?>" <?php echo $wiw_common; // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts above. ?>>
 		<?php endif; ?>
 	<?php endif; ?>
 	<?php if ( '' !== $wiw_hint ) : ?>

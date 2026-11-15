@@ -67,7 +67,7 @@ final class FoundationsSecuritySuiteTest extends WpTestCase {
 		$status    = new PluginStatus();
 		$this->assertTrue( $status->available(), 'the two-factor software is loaded for every role' );
 		$this->assertFalse( class_exists( '\WhoIsWho\Core\Platform\TwoFactor\Enforcement' ), 'nothing enforces it (D-070)' );
-		foreach ( array_merge( array_keys( $catalogue->roles() ), array( 'administrator' ) ) as $role ) {
+		foreach ( array_merge( $catalogue->staff_roles(), array( 'administrator' ) ) as $role ) {
 			$id = self::factory()->user->create( array( 'role' => $role ) );
 			$this->assertContains( $role, StaffStatus::staff_roles(), "$role is listed on the Setup screen's two-factor advice" );
 			$this->assertFalse( $status->is_enrolled( $id ), "$role: optional, so a new account starts without it" );

@@ -181,16 +181,17 @@ final class AssignedProfilesTest extends TestCase {
 		$this->assertFalse( AssignedProfiles::field_allowed( 'status' ) );
 	}
 
-	public function test_REQ_244_no_fourth_default_role_ships(): void {
+	public function test_REQ_274_the_only_roles_are_the_two_staff_roles_and_the_profile_owner(): void {
 		$config = require dirname( __DIR__, 3 ) . '/wp-content/plugins/whoiswho-core/config/capabilities.php';
-		$this->assertSame( array( 'wiw_reviewer', 'wiw_editor' ), array_keys( $config['roles'] ), 'The plugin registers only Reviewer and Editor.' );
+		$this->assertSame( array( 'wiw_reviewer', 'wiw_editor', 'wiw_profile_owner' ), array_keys( $config['roles'] ), 'The plugin registers Reviewer, Editor and Profile owner.' );
 		$this->assertArrayHasKey( AssignedProfiles::CAPABILITY, $config['capabilities'] );
 		foreach ( array( 'reviewer', 'editor' ) as $default ) {
-			$this->assertNotContains( $default, $config['capabilities'][ AssignedProfiles::CAPABILITY ]['roles'], 'No default role holds the assigned capability.' );
+			$this->assertNotContains( $default, $config['capabilities'][ AssignedProfiles::CAPABILITY ]['roles'], 'No staff role holds the owner capability.' );
 		}
+		$this->assertArrayNotHasKey( 'wiw_edit_assigned_profiles', $config['capabilities'], 'The wp-admin My profiles capability is withdrawn.' );
 		remove_role( self::FIXTURE_ROLE );
 		$wiw_roles = array_values( array_filter( array_keys( wp_roles()->roles ), static fn ( string $role ): bool => 0 === strpos( $role, 'wiw_' ) ) );
 		sort( $wiw_roles );
-		$this->assertSame( array( 'wiw_editor', 'wiw_reviewer' ), $wiw_roles );
+		$this->assertSame( array( 'wiw_editor', 'wiw_profile_owner', 'wiw_reviewer' ), $wiw_roles );
 	}
 }

@@ -1,10 +1,10 @@
 <?php
 /**
- * What an assigned user sees on My profiles (REQ-261, REQ-253): only the profiles assigned to them that are published or waiting
- * for review, each with its status (Published, or Pending when a change of theirs awaits a decision), the descriptive fields they
+ * What a profile owner sees under My profiles on the public account pages (REQ-274, REQ-261, REQ-253): only the profiles assigned to them that are published or waiting
+ * for review, each with its status (Live, or Changes waiting for review when a change of theirs awaits a decision), the descriptive fields they
  * may change with the live values, and the note of the last change that was returned to them. Saving never touches the live
  * profile: it files a pending revision through ProfileEditor, which a Reviewer or Administrator decides. Domain service; the
- * screen stays thin.
+ * account pages stay thin.
  *
  * @package WhoIsWho
  */
@@ -26,8 +26,8 @@ use WhoIsWho\Core\Directory\State\VersionRepository;
  */
 final class MyProfiles {
 
-	public const PUBLISHED = 'Published';
-	public const PENDING   = 'Pending';
+	public const PUBLISHED = 'Live';
+	public const PENDING   = 'Changes waiting for review';
 
 	/**
 	 * Allowlist.
@@ -142,7 +142,7 @@ final class MyProfiles {
 	 * @throws EditRefused When refused or nothing changed.
 	 */
 	public function submit( int $profile_id, array $values, int $user_id ): int {
-		$result = $this->editor->edit( $profile_id, $values, 'Change proposed by the profile manager', $user_id );
+		$result = $this->editor->edit( $profile_id, $values, 'Change proposed by the profile owner', $user_id );
 		return $result['version_id'];
 	}
 }

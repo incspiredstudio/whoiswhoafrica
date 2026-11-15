@@ -1,8 +1,8 @@
 <?php
 /**
- * The Claim and profile manager card on the profile screen (REQ-252, REQ-253, REQ-150): claim status and date with the staff-only
- * checkmark, and, for a person who may review claims and only while the profile is claimed, the control to assign or clear the
- * profile manager. It is an admin meta box saved with the profile; no public template renders any of it.
+ * The Claim and profile owner card on the profile screen (REQ-252, REQ-253, REQ-274, REQ-150): claim status and date with the staff-only
+ * checkmark, and, for a person who may review claims and only while the profile is claimed, the control to assign, transfer or remove
+ * the profile owner (a Profile owner account). It is an admin meta box saved with the profile; no public template renders any of it.
  *
  * @package WhoIsWho
  */
@@ -36,7 +36,7 @@ final class ClaimCard {
 	 * Add the box.
 	 */
 	public static function add_box(): void {
-		add_meta_box( 'wiw_claim_card', __( 'Claim and profile manager', 'whoiswho' ), array( self::class, 'render' ), ProfileType::POST_TYPE, 'side', 'default' );
+		add_meta_box( 'wiw_claim_card', __( 'Claim and profile owner', 'whoiswho' ), array( self::class, 'render' ), ProfileType::POST_TYPE, 'side', 'default' );
 	}
 
 	/**
@@ -66,8 +66,8 @@ final class ClaimCard {
 			self::assign_control( $manager, $assigned );
 		} elseif ( null !== $assigned ) {
 			$user = get_userdata( $assigned );
-			/* translators: %s: staff member's name. */
-			echo '<p>' . esc_html( sprintf( __( 'Managed by %s', 'whoiswho' ), $user ? $user->display_name : '' ) ) . '</p>';
+			/* translators: %s: the owner account's name. */
+			echo '<p>' . esc_html( sprintf( __( 'Owned by %s', 'whoiswho' ), $user ? $user->display_name : '' ) ) . '</p>';
 		}
 		echo '</div>';
 	}
@@ -80,9 +80,15 @@ final class ClaimCard {
 	 */
 	private static function assign_control( ProfileManager $manager, ?int $assigned ): void {
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_FIELD );
-		echo '<p><label for="' . esc_attr( self::FIELD ) . '"><strong>' . esc_html__( 'Profile manager', 'whoiswho' ) . '</strong></label><br />';
+		echo '<p><label for="' . esc_attr( self::FIELD ) . '"><strong>' . esc_html__( 'Profile owner', 'whoiswho' ) . '</strong></label><br />';
 		echo '<select name="' . esc_attr( self::FIELD ) . '" id="' . esc_attr( self::FIELD ) . '"><option value="0">' . esc_html__( 'Not assigned', 'whoiswho' ) . '</option>';
-		foreach ( $manager->staff_choices() as $id => $name ) {
+		$choices = $manager->owner_choices();
+		if ( null !== $assigned && ! isset( $choices[ $assigned ] ) ) {
+			// An assignment made before owner accounts (a staff user) is kept until someone changes it.
+			$legacy               = get_userdata( $assigned );
+			$choices[ $assigned ] = ( $legacy ? $legacy->display_name : '#' . $assigned ) . ' ' . __( '(earlier assignment)', 'whoiswho' );
+		}
+		foreach ( $choices as $id => $name ) {
 			echo '<option value="' . esc_attr( (string) $id ) . '"' . selected( (int) $assigned, $id, false ) . '>' . esc_html( $name ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}
 		echo '</select></p>';
@@ -104,7 +110,7 @@ final class ClaimCard {
 		try {
 			( new ProfileManager() )->assign( $post_id, $request->int( self::FIELD ), get_current_user_id() );
 		} catch ( \DomainException $e ) {
-			// Refused (not allowed, not claimed or not staff): nothing changes.
+			// Refused (not allowed, not claimed or not an owner account): nothing changes.
 			unset( $e );
 		}
 	}

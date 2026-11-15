@@ -22,7 +22,7 @@ use WhoIsWho\Core\Platform\Migrations\Runner;
 use WhoIsWho\Core\Review\Revisions\RevisionService;
 use WhoIsWho\Core\Review\StateMachine;
 use WhoIsWho\Core\Directory\Edit\EditRefused;
-use WhoIsWho\Core\Trust\Admin\MyProfilesScreen;
+use WhoIsWho\Core\Trust\OwnerEdits;
 use WhoIsWho\Core\Trust\AssignedProfiles;
 use WhoIsWho\Core\Trust\MyProfiles;
 use WhoIsWho\Tests\TestCase;
@@ -155,23 +155,17 @@ final class MyProfilesTest extends TestCase {
 		$this->assertSame( array( $mine ), array_column( $list, 'id' ), 'Only an assigned profile that is published or pending appears.' );
 		$this->assertSame( MyProfiles::PUBLISHED, $list[0]['status'] );
 
-		wp_set_current_user( $manager );
-		$html = ( new MyProfilesScreen() )->html( new Request( array() ), $manager );
-		$this->assertStringContainsString( 'Mine Bank', $html );
-		$this->assertStringNotContainsString( 'Not Mine Bank', $html );
-		$this->assertStringNotContainsString( 'Hidden Bank', $html );
-
-		$form = ( new MyProfilesScreen() )->html( new Request( array( 'profile' => (string) ( $this->profile( $other, 'Third Bank' ) ) ) ), $manager );
-		$this->assertStringNotContainsString( 'Third Bank', $form, 'Opening another profile shows the list, never that profile.' );
+		$this->assertSame( array( 'Mine Bank' ), array_column( $list, 'name' ) );
+		$this->assertFalse( ( new OwnerEdits() )->owns( $manager, $this->profile( $other, 'Third Bank' ) ), 'Another owner\'s profile is not this user\'s.' );
 	}
 
 	public function test_REQ_261_save_submits_for_review_and_live_profile_unchanged(): void {
 		$manager = $this->user( self::FIXTURE_ROLE );
 		$id      = $this->profile( $manager, 'Review Bank' );
 		wp_set_current_user( $manager );
-		$screen = new MyProfilesScreen();
+		$screen = new OwnerEdits();
 
-		$screen->save(
+		$screen->submit(
 			$id,
 			new Request(
 				array(
@@ -196,7 +190,6 @@ final class MyProfilesTest extends TestCase {
 		$list = ( new MyProfiles() )->for_user( $manager );
 		$this->assertSame( MyProfiles::PUBLISHED, $list[0]['status'] );
 		$this->assertSame( 'Please cite a source.', $list[0]['note'], 'A returned edit shows its note in My profiles.' );
-		$this->assertStringContainsString( 'Please cite a source.', $screen->html( new Request( array() ), $manager ) );
 		$this->assertSame( 'Original summary', get_post_meta( $id, 'wiw_summary', true ) );
 	}
 
@@ -205,6 +198,6 @@ final class MyProfilesTest extends TestCase {
 		$other   = $this->profile( $this->user( self::FIXTURE_ROLE ), 'Other Bank' );
 		wp_set_current_user( $manager );
 		$this->expectException( EditRefused::class );
-		( new MyProfilesScreen() )->save( $other, new Request( array( 'summary' => 'Nope.' ) ), $manager );
+		( new OwnerEdits() )->submit( $other, new Request( array( 'summary' => 'Nope.' ) ), $manager );
 	}
 }

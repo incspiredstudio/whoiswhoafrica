@@ -21,6 +21,6 @@ if ( ! wiw_core_ready() ) {
 	return;
 }
 
-foreach ( array( 'setup', 'cleanup', 'parent-notice', 'assets', 'enqueue', 'images', 'layout', 'system-pages', 'legal', 'components', 'navigation', 'email', 'events', 'patterns', 'consent', 'link-page', 'profile', 'industries', 'directory', 'stories', 'settings', 'forms', 'home', 'comments', 'enquiry', 'pages', 'claim', 'requests', 'blocks', 'awards', 'faq', 'newsletter', 'invitation' ) as $wiw_inc ) {
+foreach ( array( 'setup', 'cleanup', 'parent-notice', 'assets', 'enqueue', 'images', 'layout', 'system-pages', 'legal', 'components', 'navigation', 'email', 'events', 'patterns', 'consent', 'link-page', 'profile', 'industries', 'directory', 'stories', 'settings', 'forms', 'home', 'comments', 'enquiry', 'pages', 'claim', 'requests', 'blocks', 'awards', 'faq', 'newsletter', 'invitation', 'account' ) as $wiw_inc ) {
 	require_once get_template_directory() . '/inc/' . $wiw_inc . '.php';
 }

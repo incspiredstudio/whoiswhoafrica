@@ -3,8 +3,9 @@
  * Claim decisions (REQ-252, REQ-150, REQ-184, REQ-183, REQ-188). Approving a claim sets Claimed (a staff-only mark) and the
  * claimed date on the profile's state row, records the deciding user and offers the assign step; it sets no trust label and does
  * not touch publication state. Rejecting needs a reason, stores it and leaves the profile claimable. Both decisions email the
- * claimant (the address is looked up when the job runs) and write an audit row. Only a person holding wiw_review_claims can
- * decide; payment and arrangements have no path here.
+ * claimant (the address is looked up when the job runs) and write an audit row. "Approve and create account" (REQ-274) also
+ * creates the claimant's Profile owner account (or reuses theirs), makes it the profile's owner and sends the "Set your password"
+ * email. Only a person holding wiw_review_claims can decide; payment and arrangements have no path here.
  *
  * @package WhoIsWho
  */
@@ -17,6 +18,8 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Mail\Events;
 use WhoIsWho\Core\Platform\Mail\Notifier;
+use WhoIsWho\Core\Trust\Account\OwnerAccounts;
+use WhoIsWho\Core\Trust\Account\OwnerRole;
 
 /**
  * Claim decision service.
@@ -108,6 +111,55 @@ final class ClaimDecision {
 		return array(
 			'profile_id'   => $claim->profile_id,
 			'offer_assign' => true,
+		);
+	}
+
+	/**
+	 * Approve a claim and give the claimant a Profile owner account (REQ-274): the account is created for the claim's work email,
+	 * or the existing owner account with that address is reused; it becomes the profile's owner and is sent the "Set your
+	 * password" email. The address is checked before anything changes, so one that belongs to a staff account refuses the whole
+	 * step and the claim stays open.
+	 *
+	 * @param int                 $claim_id Claim id.
+	 * @param int                 $user_id  Deciding user.
+	 * @param OwnerAccounts|null  $accounts Owner accounts.
+	 * @param ProfileManager|null $manager  Owner assignment.
+	 * @return array{profile_id: int, owner_id: int, created: bool, emailed: bool}
+	 * @throws \DomainException When the user may not decide, the claim cannot be approved or the address cannot hold an account.
+	 */
+	public function approve_with_account( int $claim_id, int $user_id, ?OwnerAccounts $accounts = null, ?ProfileManager $manager = null ): array {
+		$claim    = $this->open_claim( $claim_id, $user_id );
+		$accounts = $accounts ?? new OwnerAccounts( $this->audit );
+		$manager  = $manager ?? new ProfileManager( $this->states, $this->audit );
+		$email    = sanitize_email( $claim->work_email );
+		if ( '' === $email ) {
+			throw new \DomainException( 'The claim has no usable email address for an account.' );
+		}
+		$existing = get_user_by( 'email', $email );
+		if ( $existing instanceof \WP_User && ! OwnerRole::is_owner_only( (int) $existing->ID ) ) {
+			throw new \DomainException( 'That email address belongs to a staff account. Approve the claim without an account, or ask the claimant for another address.' );
+		}
+		$approved = $this->approve( $claim_id, $user_id );
+		$account  = $accounts->provision( $email, $claim->name );
+		$manager->assign( $approved['profile_id'], $account['user_id'], $user_id );
+		$emailed = $accounts->send_set_password( $account['user_id'] );
+		$this->audit->log(
+			'claim.approve_with_account',
+			$this->subject( $claim ),
+			null,
+			array(
+				'profile_id' => $approved['profile_id'],
+				'owner_id'   => $account['user_id'],
+				'created'    => $account['created'],
+				'emailed'    => $emailed,
+			),
+			$account['created'] ? 'Claim approved and profile owner account created' : 'Claim approved and existing profile owner account used'
+		);
+		return array(
+			'profile_id' => $approved['profile_id'],
+			'owner_id'   => $account['user_id'],
+			'created'    => $account['created'],
+			'emailed'    => $emailed,
 		);
 	}
 

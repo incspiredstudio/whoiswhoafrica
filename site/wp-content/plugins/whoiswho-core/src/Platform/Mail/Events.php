@@ -51,6 +51,8 @@ final class Events {
 	public const DEADLINE_ENQUIRIES      = 'deadline_enquiries';
 	public const DISPUTE_ESCALATED       = 'dispute_escalated';
 	public const TWO_FACTOR_REMINDER     = 'two_factor_reminder';
+	public const OWNER_SET_PASSWORD      = 'owner_set_password';
+	public const OWNER_RESET_PASSWORD    = 'owner_reset_password';
 
 	/**
 	 * Audience and placeholder subject by event.
@@ -198,6 +200,14 @@ final class Events {
 			self::TWO_FACTOR_REMINDER     => array(
 				'audience' => 'public',
 				'subject'  => 'Protect your account with two-factor sign-in',
+			),
+			self::OWNER_SET_PASSWORD      => array(
+				'audience' => 'public',
+				'subject'  => 'Set your password to manage your profile',
+			),
+			self::OWNER_RESET_PASSWORD    => array(
+				'audience' => 'public',
+				'subject'  => 'Reset your password',
 			),
 		);
 	}

@@ -1,7 +1,7 @@
 <?php
 /**
  * The Claims admin screen (REQ-252, REQ-256): one card per claim with everything the claimant entered, the decide-by date, the
- * overdue marker and the reminder state, and Approve and Reject (a reason is required). Needs wiw_review_claims; every post is
+ * overdue marker and the reminder state, and Approve and create account (REQ-274), Approve and Reject (a reason is required). Needs wiw_review_claims; every post is
  * nonce-checked by ActionGuard and decided through ClaimDecision.
  *
  * @package WhoIsWho
@@ -118,6 +118,13 @@ final class ClaimsScreen {
 	public function handle( Request $request, int $user_id ): string {
 		$id = $request->int( 'claim_id' );
 		try {
+			if ( 'approve_account' === $request->string( 'decision' ) ) {
+				$result = $this->decision->approve_with_account( $id, $user_id );
+				if ( ! $result['emailed'] ) {
+					return 'Claim approved and the profile owner account is ready, but the "Set your password" email could not be sent. Check the mail settings, then ask the owner to use "Forgotten your password?" on the sign-in page.';
+				}
+				return $result['created'] ? 'Claim approved. A profile owner account was created and the "Set your password" email was sent.' : 'Claim approved. The existing profile owner account now owns this profile too, and a "Set your password" email was sent.';
+			}
 			if ( 'approve' === $request->string( 'decision' ) ) {
 				$this->decision->approve( $id, $user_id );
 				return 'Claim approved.';
@@ -170,6 +177,7 @@ final class ClaimsScreen {
 		}
 		$out .= '</dl>';
 		if ( $claim->is_open() ) {
+			$out .= $this->form( $claim, 'approve_account', '' );
 			$out .= $this->form( $claim, 'approve', '' );
 			$out .= $this->form( $claim, 'reject', '<label>' . esc_html__( 'Reason (required)', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" /></label> ' );
 		}
@@ -184,12 +192,17 @@ final class ClaimsScreen {
 	 * @param string $extra    Extra markup (escaped).
 	 */
 	private function form( Claim $claim, string $decision, string $extra ): string {
-		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
-		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out .= '<input type="hidden" name="claim_id" value="' . (int) $claim->id . '" />';
-		$out .= '<input type="hidden" name="decision" value="' . esc_attr( $decision ) . '" />';
-		return $out . $extra . '<button type="submit" class="button">' . esc_html( 'approve' === $decision ? __( 'Approve', 'whoiswho' ) : __( 'Reject', 'whoiswho' ) ) . '</button></form> ';
+		$out    = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out   .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
+		$out   .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
+		$out   .= '<input type="hidden" name="claim_id" value="' . (int) $claim->id . '" />';
+		$out   .= '<input type="hidden" name="decision" value="' . esc_attr( $decision ) . '" />';
+		$labels = array(
+			'approve_account' => __( 'Approve and create account', 'whoiswho' ),
+			'approve'         => __( 'Approve', 'whoiswho' ),
+			'reject'          => __( 'Reject', 'whoiswho' ),
+		);
+		return $out . $extra . '<button type="submit" class="button' . ( 'approve_account' === $decision ? ' button-primary' : '' ) . '">' . esc_html( $labels[ $decision ] ?? $decision ) . '</button></form> ';
 	}
 
 	/**
