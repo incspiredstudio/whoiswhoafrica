@@ -56,6 +56,9 @@ Sources:
 | G51 | The Directory > Profiles list still shows raw type and state codes. | Reuse `Review\Admin\Labels` there. |
 | G52 | The guard-missing reminder is a red error notice, but the checklist calls the guard "Recommended". | Make it a warning. |
 | G53 | Re-importing an undone batch also takes back a profile that a person rejected after the batch was registered (it returns to the review queue). | Acceptable; skip profiles whose last rejection was by a person if this matters. |
+| G54 | Profile owner accounts (D-071) have no retention rule yet. | Suggested: delete an owner account that has owned no profile for 12 months. **Owner** to confirm. |
+| G55 | Profile owners cannot change their own email address; staff change it under Users. | Add self-service email change with confirmation to the new address. |
+| G56 | Claim evidence standard is still open (issue #10). | Default: one of an official web page naming the claimant, a registration number or a signed letter; an Editor approves; two people for a high-profile organisation. **Owner** to confirm. |
 
 ## Security (accepted Low and Info, see docs/security-review.md)
 
