@@ -204,7 +204,7 @@ final class CategoriesScreen {
 			);
 			// The list notice is shown once, above the first group.
 			$list = new Request( array() );
-		}
+		}//end foreach
 		return $out . '</div>';
 	}
 
