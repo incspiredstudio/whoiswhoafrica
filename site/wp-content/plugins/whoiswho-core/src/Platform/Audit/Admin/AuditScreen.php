@@ -2,7 +2,8 @@
 /**
  * The Audit log screen (REQ-051, REQ-188): newest first, paged, filtered by actor, action and date, read only. A "Verify chain"
  * action checks the hash chain and reports the first broken row. Viewing is not audited; verifying is. There is no edit or delete
- * control, and the capability is wiw_view_audit.
+ * control, and the capability is wiw_view_audit. The rows are a read-only staff list table (AuditLogTable, REQ-275): no
+ * checkboxes, no bulk actions and no row actions.
  *
  * @package WhoIsWho
  */
@@ -14,6 +15,7 @@ namespace WhoIsWho\Core\Platform\Audit\Admin;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditExport;
 use WhoIsWho\Core\Platform\Audit\AuditGuard;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
@@ -135,7 +137,39 @@ final class AuditScreen {
 	public function rows( array $filters, int $page = 1 ): array {
 		global $wpdb;
 		$this->require_capability();
-		$sql  = 'SELECT id, at, actor_id, action, subject_type, subject_id, reason, batch_ref FROM ' . $wpdb->prefix . $this->table . ' WHERE 1 = 1';
+		list( $where, $args ) = $this->where( $filters );
+		$sql                  = 'SELECT id, at, actor_id, action, subject_type, subject_id, reason, batch_ref FROM ' . $wpdb->prefix . $this->table . $where . ' ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[]               = self::PER_PAGE;
+		$args[]               = max( 0, $page - 1 ) * self::PER_PAGE;
+		return (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+	}
+
+	/**
+	 * How many rows match the filters (for the pager).
+	 *
+	 * @param array{actor?: int, action?: string, from?: string, to?: string} $filters Filters.
+	 * @throws \DomainException Without the capability.
+	 */
+	public function count( array $filters ): int {
+		global $wpdb;
+		$this->require_capability();
+		list( $where, $args ) = $this->where( $filters );
+		$sql                  = 'SELECT COUNT(*) FROM ' . $wpdb->prefix . $this->table . $where;
+		if ( array() === $args ) {
+			return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name, no values.
+		}
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+	}
+
+	/**
+	 * The WHERE clause for the filters, and its values.
+	 *
+	 * @param array{actor?: int, action?: string, from?: string, to?: string} $filters Filters.
+	 * @return array{0: string, 1: array<int, int|string>}
+	 */
+	private function where( array $filters ): array {
+		global $wpdb;
+		$sql  = ' WHERE 1 = 1';
 		$args = array();
 		if ( ! empty( $filters['actor'] ) ) {
 			$sql   .= ' AND actor_id = %d';
@@ -153,10 +187,7 @@ final class AuditScreen {
 			$sql   .= ' AND at <= %s';
 			$args[] = $filters['to'] . ' 23:59:59';
 		}
-		$sql   .= ' ORDER BY id DESC LIMIT %d OFFSET %d';
-		$args[] = self::PER_PAGE;
-		$args[] = max( 0, $page - 1 ) * self::PER_PAGE;
-		return (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+		return array( $sql, $args );
 	}
 
 	/**
@@ -172,33 +203,30 @@ final class AuditScreen {
 			'from'   => $this->day( $request->string( 'from' ) ),
 			'to'     => $this->day( $request->string( 'to' ) ),
 		);
-		$rows    = $this->rows( $filters, max( 1, $request->int( 'paged' ) ) );
-
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Audit log', 'whoiswho' ) . '</h1>';
-		$out .= '<p>' . esc_html__( 'Every staff action that matters, newest first. Rows cannot be changed here.', 'whoiswho' ) . '</p>';
-		$out .= $this->notice( $request );
-		$last = AuditExport::last_run();
+		$out     = '<div class="wrap wiw-staff wiw-audit-log"><h1>' . esc_html__( 'Audit log', 'whoiswho' ) . '</h1>';
+		$out    .= '<p class="wiw-lead">' . esc_html__( 'Every staff action that matters, newest first. Rows cannot be changed here.', 'whoiswho' ) . '</p>';
+		$out    .= $this->notice( $request );
+		$last    = AuditExport::last_run();
 		/* translators: 1: on or off, 2: time of the last export, or never. */
-		$out .= '<p>' . esc_html( sprintf( __( 'Database triggers: %1$s. Last export: %2$s.', 'whoiswho' ), AuditGuard::status(), $last > 0 ? gmdate( 'Y-m-d H:i', $last ) . ' UTC' : __( 'never', 'whoiswho' ) ) ) . '</p>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" /><button class="button">' . esc_html__( 'Verify chain', 'whoiswho' ) . '</button></form>';
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
-		$out .= '<label>' . esc_html__( 'Actor (user id)', 'whoiswho' ) . ' <input type="number" name="actor" value="' . esc_attr( $filters['actor'] > 0 ? (string) $filters['actor'] : '' ) . '" /></label> ';
-		$out .= '<label>' . esc_html__( 'Action starts with', 'whoiswho' ) . ' <input type="text" name="action" value="' . esc_attr( $filters['action'] ) . '" /></label> ';
-		$out .= '<label>' . esc_html__( 'From', 'whoiswho' ) . ' <input type="date" name="from" value="' . esc_attr( $filters['from'] ) . '" /></label> ';
-		$out .= '<label>' . esc_html__( 'To', 'whoiswho' ) . ' <input type="date" name="to" value="' . esc_attr( $filters['to'] ) . '" /></label> ';
-		$out .= '<button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( __( 'Time (UTC)', 'whoiswho' ), __( 'Actor', 'whoiswho' ), __( 'Action', 'whoiswho' ), __( 'Subject', 'whoiswho' ), __( 'Reason', 'whoiswho' ), __( 'Batch', 'whoiswho' ) ) as $heading ) {
-			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="6">' . esc_html__( 'Nothing logged yet.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$out .= '<tr><td>' . esc_html( (string) $row['at'] ) . '</td><td>' . esc_html( (string) $row['actor_id'] ) . '</td><td>' . esc_html( (string) $row['action'] ) . '</td><td>' . esc_html( $row['subject_type'] . ' ' . $row['subject_id'] ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td><td>' . esc_html( (string) $row['batch_ref'] ) . '</td></tr>';
-		}
-		return $out . '</tbody></table></div>';
+		$status = '<p>' . esc_html( sprintf( __( 'Database triggers: %1$s. Last export: %2$s.', 'whoiswho' ), AuditGuard::status(), $last > 0 ? gmdate( 'Y-m-d H:i', $last ) . ' UTC' : __( 'never', 'whoiswho' ) ) ) . '</p>';
+		$verify = Form::open( '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />' )
+			. Form::actions( '<button type="submit" class="button">' . esc_html__( 'Verify chain', 'whoiswho' ) . '</button>' ) . '</form>';
+		$out   .= Form::section(
+			__( 'Chain check', 'whoiswho' ),
+			$status . $verify,
+			array(
+				'id'          => 'wiw-audit-chain',
+				'description' => __( 'Each row is linked to the one before it, so a row changed outside this screen shows up when you verify the chain.', 'whoiswho' ),
+			)
+		);
+		$out   .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		$out   .= '<label>' . esc_html__( 'Actor (user id)', 'whoiswho' ) . ' <input type="number" name="actor" min="0" value="' . esc_attr( $filters['actor'] > 0 ? (string) $filters['actor'] : '' ) . '" /></label> ';
+		$out   .= '<label>' . esc_html__( 'Action starts with', 'whoiswho' ) . ' <input type="text" name="action" value="' . esc_attr( $filters['action'] ) . '" /></label> ';
+		$out   .= '<label>' . esc_html__( 'From', 'whoiswho' ) . ' <input type="date" name="from" value="' . esc_attr( $filters['from'] ) . '" /></label> ';
+		$out   .= '<label>' . esc_html__( 'To', 'whoiswho' ) . ' <input type="date" name="to" value="' . esc_attr( $filters['to'] ) . '" /></label> ';
+		$out   .= '<button type="submit" class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$out   .= ( new AuditLogTable( $this, $filters ) )->html( $request );
+		return $out . '</div>';
 	}
 
 	/**

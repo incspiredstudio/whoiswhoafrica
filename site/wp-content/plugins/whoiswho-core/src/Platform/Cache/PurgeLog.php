@@ -45,4 +45,11 @@ interface PurgeLog {
 	 * @return array<int, array{subject_type: string, subject_id: int, url_count: int, result: string, reason: string, created_at: string}>
 	 */
 	public function rows( int $limit = 50, int $offset = 0, array $filters = array() ): array;
+
+	/**
+	 * How many rows match the filters (for the pager).
+	 *
+	 * @param array{status?: string, from?: string, to?: string} $filters Result, and first and last day (Y-m-d).
+	 */
+	public function count( array $filters = array() ): int;
 }

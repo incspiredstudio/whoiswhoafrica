@@ -70,6 +70,8 @@ Send the acquisition team the batch number and the counts if anything was refuse
 2. Press **Undo this batch**.
 3. The message "Batch undone. Reviewed profiles were kept." appears. For a large batch the message is "Undo started. It carries on in steps below." and a bar shows "Undoing the batch..." until it is done.
 
+In **History**, hover over a batch (or tab to it) for its quick links: **Open** shows the batch, **Undo** asks you to confirm and then undoes it. To undo several batches at once, tick them, choose **Undo selected** in **Bulk actions** and confirm. Each batch is undone exactly as above and gets its own audit entry; a batch that is not applied is skipped, and a large batch carries on from its own page with **Continue**.
+
 Undo takes down the profiles that batch created and nobody has reviewed: they move to **Rejected** and are no longer public anywhere. Profiles the batch only updated go back to their earlier text. Profiles someone has already reviewed are kept, and listed. The images the batch added are removed, unless a later batch uses them too. The undo is written to the audit log.
 
 ### Import an undone batch again

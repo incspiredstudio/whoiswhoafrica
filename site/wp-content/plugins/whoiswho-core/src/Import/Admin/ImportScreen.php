@@ -3,7 +3,8 @@
  * The Import screen (REQ-237, REQ-092, REQ-244; prototype A20): upload a bundle, read the dry run (result code and field diff per
  * record, filter by code, mapping step for unknown terms), confirm, watch progress, resume, undo and read the history. The
  * import-everything-as-not-public switch is shown to Administrators only. Capability wiw_run_imports on the screen and on every
- * action; each form carries a nonce through ActionGuard. Handlers stay thin and call ImportService.
+ * action; each form carries a nonce through ActionGuard. Handlers stay thin and call ImportService. The forms use the staff form kit
+ * and the history is a shared staff list table (ImportBatchesTable, REQ-275) with Open and Undo row actions and bulk Undo selected.
  *
  * @package WhoIsWho
  */
@@ -22,6 +23,8 @@ use WhoIsWho\Core\Import\Undo\BatchUndo;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
 use WhoIsWho\Core\Review\StateException;
 
@@ -87,6 +90,7 @@ final class ImportScreen {
 				}
 				ActionGuard::register( self::STEP, self::CAPABILITY, array( self::class, 'handle_step' ), true );
 				ActionGuard::register( self::PIECE, self::CAPABILITY, array( self::class, 'handle_piece' ), true );
+				ImportBatchesTable::register_bulk_handler();
 			},
 			1
 		);
@@ -296,7 +300,12 @@ final class ImportScreen {
 		if ( ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			throw new \DomainException( 'Not allowed to run imports.' );
 		}
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Import', 'whoiswho' ) . '</h1>';
+		$out = '<div class="wrap wiw-staff wiw-import"><h1>' . esc_html__( 'Import', 'whoiswho' ) . '</h1>';
+		if ( '' !== $request->string( ListTable::STEP_ACTION ) ) {
+			// The confirmation step of a bulk action (or of a row's Undo) stands alone.
+			return $out . ( new ImportBatchesTable() )->html( $request ) . '</div>';
+		}
+		$out .= '<p class="wiw-lead">' . esc_html__( 'Upload a bundle from the acquisition pipeline, read the dry run, then confirm. Nothing is written before you confirm, and a batch can be undone.', 'whoiswho' ) . '</p>';
 		$out .= $this->notice( $request );
 		$out .= $this->upload_form();
 		$out .= $this->server_html();
@@ -308,7 +317,7 @@ final class ImportScreen {
 		if ( null !== $batch ) {
 			$out .= $this->batch_html( $batch, $request->string( 'code' ) );
 		}
-		return $out . $this->history() . '</div>';
+		return $out . $this->history( $request ) . '</div>';
 	}
 
 	/**
@@ -339,7 +348,7 @@ final class ImportScreen {
 	 * @param bool   $upload Whether the form uploads a file.
 	 */
 	private function form( string $action, bool $upload = false ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"' . ( $upload ? ' enctype="multipart/form-data"' : '' ) . '>'
+		return '<form method="post" class="wiw-form" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"' . ( $upload ? ' enctype="multipart/form-data"' : '' ) . '>'
 			. '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" />'
 			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" />';
 	}
@@ -349,27 +358,34 @@ final class ImportScreen {
 	 */
 	private function upload_form(): string {
 		$limit = (string) ( BundleStore::MAX_BYTES / 1048576 );
-		$out   = '<h2>' . esc_html__( 'Upload a bundle', 'whoiswho' ) . '</h2>' . $this->form( self::UPLOAD, true );
-		$out   = str_replace( '<form ', '<form data-wiw-import="upload" ', $out );
-		$out  .= '<p><label>' . esc_html__( 'Bundle (.zip with manifest.json, records.jsonl and any images folder)', 'whoiswho' ) . ' <input type="file" name="bundle" accept=".zip" required="required" /></label> ';
-		/* translators: %s: size limit in megabytes. */
-		$out .= '<small>' . esc_html( sprintf( __( 'Up to %s MB. Large files are sent in small pieces, so the host\'s upload limit does not matter. Stored in a private folder outside the web root and deleted after the import.', 'whoiswho' ), $limit ) ) . '</small><br />';
+		$out   = str_replace( '<form ', '<form data-wiw-import="upload" ', $this->form( self::UPLOAD, true ) );
+		$input = '<input type="file" id="wiw-f-bundle" name="bundle" accept=".zip" required="required" aria-describedby="wiw-f-bundle-help wiw-f-bundle-limit" />';
+		$out  .= Form::row(
+			'wiw-f-bundle',
+			__( 'Bundle (.zip with manifest.json, records.jsonl and any images folder)', 'whoiswho' ),
+			$input,
+			array(
+				/* translators: %s: size limit in megabytes. */
+				'help' => sprintf( __( 'Up to %s MB. Large files are sent in small pieces, so the host\'s upload limit does not matter. Stored in a private folder outside the web root and deleted after the import.', 'whoiswho' ), $limit ),
+			)
+		);
 		/* translators: %s: the host's upload limit, for example "2 MB". */
-		$out .= '<small>' . esc_html( sprintf( __( 'This server accepts uploads of up to %s at once. If the upload fails, use "Import from the server" below.', 'whoiswho' ), size_format( wp_max_upload_size() ) ) ) . '</small></p>';
+		$out .= '<p class="wiw-help" id="wiw-f-bundle-limit">' . esc_html( sprintf( __( 'This server accepts uploads of up to %s at once. If the upload fails, use "Import from the server" below.', 'whoiswho' ), size_format( wp_max_upload_size() ) ) ) . '</p>';
 		$out .= '<p class="wiw-import-upload-progress" data-wiw-import="upload-progress" role="status" aria-live="polite"></p>';
-		return $out . '<p><button class="button button-primary">' . esc_html__( 'Upload and run the dry run', 'whoiswho' ) . '</button></p></form>';
+		$out .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Upload and run the dry run', 'whoiswho' ) . '</button>' ) . '</form>';
+		return Form::section( __( 'Upload a bundle', 'whoiswho' ), $out, array( 'id' => 'wiw-import-upload' ) );
 	}
 
 	/**
-	 * The import-everything-as-not-public switch (Administrators only).
+	 * The import-everything-as-not-public switch (Administrators only): one button that turns it on or off.
 	 */
 	private function switch_form(): string {
 		$on   = StateAssigner::import_all_is_on( SettingsService::for_site() );
-		$out  = '<h2>' . esc_html__( 'Import everything as not public', 'whoiswho' ) . '</h2>' . $this->form( self::SWITCH );
-		$out .= '<p>' . esc_html( $on ? __( 'On: every imported profile lands as Imported not public.', 'whoiswho' ) : __( 'Off: records land in the state the contract rules give them.', 'whoiswho' ) ) . '</p>';
-		return $out . '<input type="hidden" name="value" value="' . esc_attr( $on ? 'off' : 'on' ) . '" /><p><button class="button">' . esc_html( $on ? __( 'Turn off', 'whoiswho' ) : __( 'Turn on', 'whoiswho' ) ) . '</button></p></form>';
+		$out  = '<p>' . ListTable::pill( $on ? __( 'On', 'whoiswho' ) : __( 'Off', 'whoiswho' ), $on ? 'warning' : 'neutral' ) . ' ' . esc_html( $on ? __( 'On: every imported profile lands as Imported not public.', 'whoiswho' ) : __( 'Off: records land in the state the contract rules give them.', 'whoiswho' ) ) . '</p>';
+		$out .= $this->form( self::SWITCH ) . '<input type="hidden" name="value" value="' . esc_attr( $on ? 'off' : 'on' ) . '" />';
+		$out .= Form::actions( '<button type="submit" class="button">' . esc_html( $on ? __( 'Turn off', 'whoiswho' ) : __( 'Turn on', 'whoiswho' ) ) . '</button>' ) . '</form>';
+		return Form::section( __( 'Import everything as not public', 'whoiswho' ), $out, array( 'id' => 'wiw-import-switch' ) );
 	}
-
 	/**
 	 * One batch: dry run, mapping, confirm, progress and undo.
 	 *
@@ -379,8 +395,7 @@ final class ImportScreen {
 	private function batch_html( array $batch, string $code ): string {
 		$id      = (string) $batch['batch_id'];
 		$status  = (string) $batch['status'];
-		$out     = '<h2>' . esc_html( sprintf( /* translators: %s: batch id. */ __( 'Batch %s', 'whoiswho' ), $id ) ) . '</h2>';
-		$out    .= '<p>' . esc_html( sprintf( /* translators: 1: status, 2: records handled, 3: records in the bundle. */ __( 'Status: %1$s. %2$d of %3$d records handled.', 'whoiswho' ), $status, (int) $batch['progress_cursor'], (int) $batch['record_count'] ) ) . '</p>';
+		$out     = '<p>' . esc_html( sprintf( /* translators: 1: status, 2: records handled, 3: records in the bundle. */ __( 'Status: %1$s. %2$d of %3$d records handled.', 'whoiswho' ), $status, (int) $batch['progress_cursor'], (int) $batch['record_count'] ) ) . '</p>';
 		$undoing = 'applied' === $status && BatchUndo::in_progress( $id );
 		if ( in_array( $status, array( 'checked', 'applying' ), true ) || $undoing ) {
 			$out .= $this->progress_html( $batch );
@@ -392,12 +407,13 @@ final class ImportScreen {
 			$out .= $this->images_html( $id );
 		}
 		if ( 'dry_run' === $status ) {
-			$out .= $this->form( self::CONFIRM ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button button-primary">' . esc_html__( 'Confirm and import', 'whoiswho' ) . '</button></p></form>';
+			$out .= $this->form( self::CONFIRM ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" />' . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Confirm and import', 'whoiswho' ) . '</button>' ) . '</form>';
 		}
 		if ( 'applied' === $status && ! $undoing ) {
-			$out .= $this->form( self::UNDO ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button">' . esc_html__( 'Undo this batch', 'whoiswho' ) . '</button> <small>' . esc_html__( 'Reviewed profiles are kept.', 'whoiswho' ) . '</small></p></form>';
+			$out .= $this->form( self::UNDO ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" />' . Form::actions( '<button type="submit" class="button wiw-button--danger">' . esc_html__( 'Undo this batch', 'whoiswho' ) . '</button> <span class="wiw-help">' . esc_html__( 'Reviewed profiles are kept.', 'whoiswho' ) . '</span>' ) . '</form>';
 		}
-		return $out;
+		/* translators: %s: batch id. */
+		return Form::section( sprintf( __( 'Batch %s', 'whoiswho' ), $id ), $out, array( 'id' => 'wiw-import-batch' ) );
 	}
 
 	/**
@@ -456,9 +472,9 @@ final class ImportScreen {
 			++$shown;
 			$rows .= '<tr><td>' . esc_html( (string) $entry['record_id'] ) . '</td><td><code>' . esc_html( (string) $entry['code'] ) . '</code></td><td>' . esc_html( implode( ', ', (array) $entry['flags'] ) ) . '</td><td>' . $this->diff_html( (array) $entry['diff'], (string) $entry['field'] ) . '</td></tr>';
 		}
-		$out .= '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Result', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Flags', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Changes', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>';
+		$out .= '<table class="widefat striped wiw-list-table wiw-import-records"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Result', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Flags', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Changes', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>';
 		/* translators: %d: rows shown. */
-		$out .= '<p><small>' . esc_html( sprintf( __( 'Showing up to %d records.', 'whoiswho' ), self::MAX_ROWS ) ) . '</small></p>';
+		$out .= '<p class="wiw-help">' . esc_html( sprintf( __( 'Showing up to %d records.', 'whoiswho' ), self::MAX_ROWS ) ) . '</p>';
 		if ( array() === $mapping ) {
 			return $out;
 		}
@@ -495,21 +511,32 @@ final class ImportScreen {
 	private function server_html(): string {
 		$drop  = new ServerDrop();
 		$ready = $drop->ensure();
-		$out   = '<h2>' . esc_html__( 'Or import from the server', 'whoiswho' ) . '</h2>';
+		$out   = '';
 		/* translators: %s: folder path. */
 		$out .= '<p>' . esc_html( sprintf( __( 'For large bundles: upload the .zip files with your host\'s file manager (for example cPanel File Manager) into the folder %s, then choose one here. The folder is closed to visitors, and each file is removed from it once it is read.', 'whoiswho' ), $drop->shown_path() ) ) . '</p>';
 		if ( ! $ready ) {
-			return $out . '<p>' . esc_html__( 'The folder could not be created. Ask your host to make the uploads folder writable.', 'whoiswho' ) . '</p>';
+			return self::server_section( $out . '<div class="notice notice-error inline"><p>' . esc_html__( 'The folder could not be created. Ask your host to make the uploads folder writable.', 'whoiswho' ) . '</p></div>' );
 		}
 		$zips = $drop->zips();
 		if ( array() === $zips ) {
-			return $out . '<p><em>' . esc_html__( 'No .zip files in the folder yet.', 'whoiswho' ) . '</em></p>';
+			return self::server_section( $out . '<p class="wiw-help">' . esc_html__( 'No .zip files in the folder yet.', 'whoiswho' ) . '</p>' );
 		}
-		$out .= $this->form( self::SERVER ) . '<p><label>' . esc_html__( 'Bundle on the server', 'whoiswho' ) . ' <select name="file">';
+		$options = array();
 		foreach ( $zips as $zip ) {
-			$out .= '<option value="' . esc_attr( $zip['name'] ) . '">' . esc_html( $zip['name'] . ' (' . size_format( $zip['size'] ) . ')' ) . '</option>';
+			$options[ (string) $zip['name'] ] = $zip['name'] . ' (' . size_format( $zip['size'] ) . ')';
 		}
-		return $out . '</select></label> <button class="button button-primary">' . esc_html__( 'Import this file', 'whoiswho' ) . '</button></p></form>';
+		$out .= $this->form( self::SERVER ) . Form::select( 'file', __( 'Bundle on the server', 'whoiswho' ), $options, '', array( 'id' => 'wiw-f-server-file' ) );
+		$out .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Import this file', 'whoiswho' ) . '</button>' ) . '</form>';
+		return self::server_section( $out );
+	}
+
+	/**
+	 * The "Import from the server" card.
+	 *
+	 * @param string $body Body markup, already escaped.
+	 */
+	private static function server_section( string $body ): string {
+		return Form::section( __( 'Or import from the server', 'whoiswho' ), $body, array( 'id' => 'wiw-import-server' ) );
 	}
 
 	/**
@@ -537,8 +564,8 @@ final class ImportScreen {
 		$out  = '<div class="wiw-import-progress" data-wiw-import="progress" data-batch="' . esc_attr( $id ) . '" data-phase="' . esc_attr( $phase ) . '">';
 		$out .= '<progress max="100" value="' . esc_attr( (string) $percent ) . '" data-wiw-import="bar" aria-describedby="wiw-import-progress-text">' . esc_html( $percent . '%' ) . '</progress> ';
 		$out .= '<span id="wiw-import-progress-text" data-wiw-import="text" role="status" aria-live="polite">' . esc_html( $text ) . '</span>';
-		$out .= '<p><small>' . esc_html__( 'You can leave this page: the import carries on in the background and resumes where it stopped. Keeping the page open makes it faster.', 'whoiswho' ) . '</small></p>';
-		$out .= $this->form( self::STEP ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><p><button class="button" data-wiw-import="continue">' . esc_html__( 'Continue', 'whoiswho' ) . '</button></p></form>';
+		$out .= '<p class="wiw-help">' . esc_html__( 'You can leave this page: the import carries on in the background and resumes where it stopped. Keeping the page open makes it faster.', 'whoiswho' ) . '</p>';
+		$out .= $this->form( self::STEP ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" />' . Form::actions( '<button type="submit" class="button" data-wiw-import="continue">' . esc_html__( 'Continue', 'whoiswho' ) . '</button>' ) . '</form>';
 		return $out . '</div>';
 	}
 
@@ -561,7 +588,7 @@ final class ImportScreen {
 		foreach ( $log['examples'] as $refusal ) {
 			$rows .= '<tr><td>' . esc_html( $refusal['record_id'] ) . '</td><td>' . esc_html( $refusal['image_id'] ) . '</td><td>' . esc_html( self::image_reason( $refusal['reason'] ) ) . '</td></tr>';
 		}
-		return $out . '<details><summary>' . esc_html__( 'Refused images', 'whoiswho' ) . '</summary><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Image', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Why', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table></details>';
+		return $out . '<details class="wiw-import-images"><summary>' . esc_html__( 'Refused images', 'whoiswho' ) . '</summary><table class="widefat striped wiw-list-table"><thead><tr><th scope="col">' . esc_html__( 'Record', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Image', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Why', 'whoiswho' ) . '</th></tr></thead><tbody>' . $rows . '</tbody></table></details>';
 	}
 
 	/**
@@ -604,7 +631,7 @@ final class ImportScreen {
 	 * @param bool               $new_values Dry run with values not yet in the lists: SCHEMA is shown in words.
 	 */
 	private function counts_html( array $counts, string $id, string $active, bool $new_values = false ): string {
-		$out  = '<p>';
+		$out  = '<p class="wiw-import-counts">';
 		$all  = add_query_arg(
 			array(
 				'page'  => self::SCREEN,
@@ -670,29 +697,28 @@ final class ImportScreen {
 			)
 		);
 		$out      = $this->form( self::MAP ) . '<input type="hidden" name="batch" value="' . esc_attr( $id ) . '" /><input type="hidden" name="field" value="' . esc_attr( $field ) . '" /><input type="hidden" name="value" value="' . esc_attr( $value ) . '" />';
-		/* translators: 1: field, 2: the unknown value. */
-		$out .= '<p><label>' . esc_html( sprintf( __( 'Map %1$s "%2$s" to', 'whoiswho' ), $field, $value ) ) . ' <select name="term_id"><option value="0">' . esc_html__( 'Skip this value', 'whoiswho' ) . '</option>';
+		$options  = array( '0' => __( 'Skip this value', 'whoiswho' ) );
 		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
-			$out .= '<option value="' . esc_attr( (string) $term->term_id ) . '">' . esc_html( $term->name ) . '</option>';
+			$options[ (string) $term->term_id ] = $term->name;
 		}
-		return $out . '</select></label> <button class="button">' . esc_html__( 'Save mapping', 'whoiswho' ) . '</button></p></form>';
+		$select = Form::searchable_select(
+			'term_id',
+			/* translators: 1: field, 2: the unknown value. */
+			sprintf( __( 'Map %1$s "%2$s" to', 'whoiswho' ), $field, $value ),
+			$options,
+			'0',
+			array( 'id' => 'wiw-f-map-' . substr( md5( $field . '|' . $value ), 0, 10 ) )
+		);
+		$button = '<div class="wiw-inline-fields__action"><button type="submit" class="button">' . esc_html__( 'Save mapping', 'whoiswho' ) . '</button></div>';
+		return $out . '<div class="wiw-inline-fields">' . $select . $button . '</div></form>';
 	}
 
 	/**
-	 * The history of batches.
+	 * The history of batches: a shared staff list table with Open and Undo row actions and bulk Undo selected.
+	 *
+	 * @param Request $request Request (the page of the history).
 	 */
-	private function history(): string {
-		$rows = '';
-		foreach ( ( new BatchRepository() )->recent( 20 ) as $batch ) {
-			$link  = add_query_arg(
-				array(
-					'page'  => self::SCREEN,
-					'batch' => (string) $batch['batch_id'],
-				),
-				admin_url( 'admin.php' )
-			);
-			$rows .= '<tr><td><a href="' . esc_url( $link ) . '">' . esc_html( (string) $batch['batch_id'] ) . '</a></td><td>' . esc_html( (string) $batch['status'] ) . '</td><td>' . esc_html( (string) $batch['record_count'] ) . '</td><td>' . esc_html( (string) $batch['created_at'] ) . '</td></tr>';
-		}
-		return '<h2>' . esc_html__( 'History', 'whoiswho' ) . '</h2><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Batch', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Status', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Records', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Uploaded', 'whoiswho' ) . '</th></tr></thead><tbody>' . ( '' === $rows ? '<tr><td colspan="4">' . esc_html__( 'No imports yet.', 'whoiswho' ) . '</td></tr>' : $rows ) . '</tbody></table>';
+	private function history( Request $request ): string {
+		return Form::section( __( 'History', 'whoiswho' ), ( new ImportBatchesTable() )->html( $request ), array( 'id' => 'wiw-import-history' ) );
 	}
 }
