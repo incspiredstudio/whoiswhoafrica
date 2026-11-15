@@ -5,7 +5,9 @@
  * status, category and source, a stage control, a status control and Remove behind a confirmation step. Every control posts to one
  * guarded action, and the handler only calls NominationService, which checks the capability again and writes the audit row. There
  * is no Feature flag screen and no Shortlist and winners screen. The list shows the nominee and category only: no nominator and
- * no Contact email.
+ * no Contact email. The list is a shared staff list table (NominationsTable, REQ-275): bulk Set stage, Set status, Remove and the
+ * two emails repeat the single controls through the same services, and the row actions are Details, Change stage, Change status
+ * and Remove.
  *
  * @package WhoIsWho
  */
@@ -17,6 +19,8 @@ namespace WhoIsWho\Core\Awards;
 use WhoIsWho\Core\Awards\Admin\AddProfileForm;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 
 /**
  * Nominations screen.
@@ -47,6 +51,13 @@ final class NominationsScreen {
 	 * @var NominationEmails
 	 */
 	private NominationEmails $emails;
+
+	/**
+	 * The list table's own address values (its notice and confirmation step), passed through from the request.
+	 *
+	 * @var array<string, string>
+	 */
+	private array $list_args = array();
 
 	/**
 	 * Constructor.
@@ -88,6 +99,7 @@ final class NominationsScreen {
 						exit;
 					}
 				);
+				NominationsTable::register_bulk_handler();
 			},
 			1
 		);
@@ -155,30 +167,14 @@ final class NominationsScreen {
 	 * @param string               $inner  Inner markup (already escaped).
 	 */
 	private function form( string $op, array $fields, string $inner ): string {
-		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline">';
+		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-inline-form">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
 		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
 		$out .= '<input type="hidden" name="op" value="' . esc_attr( $op ) . '" />';
 		foreach ( $fields as $name => $value ) {
 			$out .= '<input type="hidden" name="' . esc_attr( (string) $name ) . '" value="' . esc_attr( (string) $value ) . '" />';
 		}
-		return $out . $inner . '</form> ';
-	}
-
-	/**
-	 * A select that submits a stage or status choice.
-	 *
-	 * @param string   $op      stage or status.
-	 * @param int      $id      Nomination.
-	 * @param string   $current Current value.
-	 * @param string[] $values  Allowed values.
-	 */
-	private function chooser( string $op, int $id, string $current, array $values ): string {
-		$select = '<select name="value" aria-label="' . esc_attr( 'stage' === $op ? __( 'Stage', 'whoiswho' ) : __( 'Status', 'whoiswho' ) ) . '">';
-		foreach ( $values as $value ) {
-			$select .= '<option value="' . esc_attr( $value ) . '"' . selected( $current, $value, false ) . '>' . esc_html( self::label( $value ) ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
-		}
-		return $this->form( $op, array( 'nomination_id' => $id ), $select . '</select><button type="submit" class="button">' . esc_html__( 'Save', 'whoiswho' ) . '</button>' );
+		return $out . $inner . '</form>';
 	}
 
 	/**
@@ -204,7 +200,7 @@ final class NominationsScreen {
 	 * @param array<string, string> $filters Cleaned filters.
 	 */
 	private function filter_form( array $filters ): string {
-		$out = '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />';
+		$out = '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />';
 		foreach ( array(
 			'stage'  => array( __( 'Stage', 'whoiswho' ), AwardsTables::STAGES ),
 			'status' => array( __( 'Status', 'whoiswho' ), AwardsTables::STATUSES ),
@@ -226,6 +222,33 @@ final class NominationsScreen {
 	}
 
 	/**
+	 * The removal confirmation for one nomination, asked by the remove_ask control: the nominee and a Confirm removal button that
+	 * carries the service's confirmation token.
+	 *
+	 * @param int $id Nomination.
+	 */
+	private function confirm_html( int $id ): string {
+		$row = $this->service->find( $id );
+		if ( null === $row ) {
+			return '';
+		}
+		$profile = (int) $row['profile_id'];
+		$name    = $profile > 0 ? get_the_title( $profile ) : (string) ( $row['nominee_name'] ?? '' );
+		$cancel  = add_query_arg( 'page', NominationsSwitch::SCREEN, admin_url( 'admin.php' ) );
+		$button  = $this->form(
+			'remove',
+			array(
+				'nomination_id' => $id,
+				'token'         => $this->service->confirmation_token( $id ),
+			),
+			Form::actions( '<button type="submit" class="button button-primary wiw-button--danger">' . esc_html__( 'Confirm removal', 'whoiswho' ) . '</button> <a class="button" href="' . esc_url( $cancel ) . '">' . esc_html__( 'Cancel', 'whoiswho' ) . '</a>' )
+		);
+		/* translators: 1: nominee, 2: nomination number. */
+		$text = sprintf( __( '%1$s (nomination #%2$d) will be removed. The change history keeps the removal.', 'whoiswho' ), '' === $name ? __( '(no linked profile)', 'whoiswho' ) : $name, $id );
+		return Form::section( __( 'Remove this nomination?', 'whoiswho' ), '<p>' . esc_html( $text ) . '</p>' . $button, array( 'id' => 'wiw-remove-confirm' ) );
+	}
+
+	/**
 	 * The screen markup.
 	 *
 	 * @param array<string, string> $filters Raw filters from the address.
@@ -241,67 +264,30 @@ final class NominationsScreen {
 			throw new \DomainException( 'You are not allowed to manage nominations.' );
 		}
 		$filters = NominationList::clean( $filters );
-		$out     = '<div class="wrap"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>';
-		$out    .= $this->toggle->body_html( $on );
+		$out     = '<div class="wrap wiw-staff"><h1 class="wp-heading-inline">' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>';
 		if ( current_user_can( NominationExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
-			$out .= '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=' . NominationExport::ACTION ), 'wiw_action_' . NominationExport::ACTION ) ) . '">' . esc_html__( 'Export nominations (CSV)', 'whoiswho' ) . '</a></p>';
+			$out .= ' <a class="page-title-action" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=' . NominationExport::ACTION ), 'wiw_action_' . NominationExport::ACTION ) ) . '">' . esc_html__( 'Export nominations (CSV)', 'whoiswho' ) . '</a>';
 		}
+		$out .= '<hr class="wp-header-end" />';
 		if ( '' !== $notice ) {
 			$out .= '<div class="notice notice-info"><p>' . esc_html( $notice ) . '</p></div>';
 		}
-		$out   .= ( new AddProfileForm( $this->service ) )->html( $profile_q );
-		$out   .= $this->filter_form( $filters );
-		$result = ( new NominationList() )->run( $filters, $page );
+		$values = array_merge( $filters, $this->list_args, $page > 1 ? array( 'paged' => (string) $page ) : array() );
+		$table  = new NominationsTable( $filters, $this->service, $this->emails );
+		if ( isset( $this->list_args[ ListTable::STEP_ACTION ] ) ) {
+			// A confirmation step of the list: show only the step.
+			return $out . $table->html( new Request( $values ) ) . '</div>';
+		}
+		$out .= $this->toggle->body_html( $on );
+		if ( $confirm > 0 ) {
+			$out .= $this->confirm_html( $confirm );
+		}
+		$out  .= ( new AddProfileForm( $this->service ) )->html( $profile_q );
+		$out  .= $this->filter_form( $filters );
+		$total = ( new NominationList() )->run( $filters, 1 )['total'];
 		/* translators: %d: number of nominations. */
-		$out .= '<p>' . esc_html( sprintf( _n( '%d nomination', '%d nominations', $result['total'], 'whoiswho' ), $result['total'] ) ) . '</p>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( __( 'Nominee', 'whoiswho' ), __( 'Category', 'whoiswho' ), __( 'Source', 'whoiswho' ), __( 'Stage', 'whoiswho' ), __( 'Status', 'whoiswho' ), '' ) as $heading ) {
-			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $result['rows'] ) {
-			$out .= '<tr><td colspan="6">' . esc_html__( 'No nominations match.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $result['rows'] as $row ) {
-			$id   = (int) $row['id'];
-			$out .= '<tr><td>' . esc_html( '' === (string) $row['nominee'] ? __( '(no linked profile)', 'whoiswho' ) : (string) $row['nominee'] ) . '</td>';
-			$out .= '<td>' . esc_html( (string) $row['category'] ) . '</td><td>' . esc_html( self::label( (string) $row['source'] ) ) . '</td>';
-			$out .= '<td>' . $this->chooser( 'stage', $id, (string) $row['stage'], AwardsTables::STAGES ) . '</td>';
-			$out .= '<td>' . $this->chooser( 'status', $id, (string) $row['status'], AwardsTables::STATUSES ) . '</td><td>';
-			if ( $confirm === $id ) {
-				$out .= $this->form(
-					'remove',
-					array(
-						'nomination_id' => $id,
-						'token'         => $this->service->confirmation_token( $id ),
-					),
-					'<button type="submit" class="button button-primary">' . esc_html__( 'Confirm removal', 'whoiswho' ) . '</button>'
-				);
-			} else {
-				$out .= $this->form( 'remove_ask', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Remove', 'whoiswho' ) . '</button>' );
-			}
-			if ( $this->emails->row_allows( $row, NominationEmails::KIND_NOMINATION ) ) {
-				$out .= $this->form( 'email_nomination', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Send nomination email', 'whoiswho' ) . '</button>' );
-			}
-			if ( $this->emails->row_allows( $row, NominationEmails::KIND_WINNER ) ) {
-				$out .= $this->form( 'email_winner', array( 'nomination_id' => $id ), '<button type="submit" class="button">' . esc_html__( 'Send winner email', 'whoiswho' ) . '</button>' );
-			}
-			$out .= ' <a href="' . esc_url( NominationDetailScreen::url( $id ) ) . '">' . esc_html__( 'Details', 'whoiswho' ) . '</a></td></tr>';
-		}//end foreach
-		$out .= '</tbody></table>';
-		for ( $i = 1; $result['pages'] > 1 && $i <= $result['pages']; $i++ ) {
-			$url  = add_query_arg(
-				array_merge(
-					$filters,
-					array(
-						'page'  => NominationsSwitch::SCREEN,
-						'paged' => $i,
-					)
-				),
-				admin_url( 'admin.php' )
-			);
-			$out .= $i === $page ? '<strong>' . esc_html( (string) $i ) . '</strong> ' : '<a href="' . esc_url( $url ) . '">' . esc_html( (string) $i ) . '</a> ';
-		}
+		$out .= '<p class="wiw-lead">' . esc_html( sprintf( _n( '%d nomination', '%d nominations', $total, 'whoiswho' ), $total ) ) . '</p>';
+		$out .= $table->html( new Request( $values ) );
 		return $out . '</div>';
 	}
 
@@ -317,57 +303,11 @@ final class NominationsScreen {
 		foreach ( array_keys( NominationList::FILTERS ) as $name ) {
 			$filters[ $name ] = $request->string( $name );
 		}
-		echo wp_kses(
-			$this->html( $filters, max( 1, $request->int( 'paged' ) ), $request->string( 'wiw_notice' ), $request->int( 'confirm' ), null, $request->string( 'profile_q' ) ),
-			array(
-				'div'      => array( 'class' => true ),
-				'h1'       => array(),
-				'h2'       => array(),
-				'textarea' => array(
-					'name'      => true,
-					'rows'      => true,
-					'cols'      => true,
-					'maxlength' => true,
-				),
-				'p'        => array(),
-				'br'       => array(),
-				'strong'   => array(),
-				'a'        => array(
-					'href'  => true,
-					'class' => true,
-				),
-				'label'    => array(),
-				'table'    => array( 'class' => true ),
-				'thead'    => array(),
-				'tbody'    => array(),
-				'tr'       => array(),
-				'th'       => array( 'scope' => true ),
-				'td'       => array( 'colspan' => true ),
-				'form'     => array(
-					'method' => true,
-					'action' => true,
-					'style'  => true,
-				),
-				'select'   => array(
-					'name'       => true,
-					'aria-label' => true,
-				),
-				'option'   => array(
-					'value'    => true,
-					'selected' => true,
-				),
-				'input'    => array(
-					'type'      => true,
-					'name'      => true,
-					'value'     => true,
-					'maxlength' => true,
-					'class'     => true,
-				),
-				'button'   => array(
-					'type'  => true,
-					'class' => true,
-				),
-			)
-		);
+		foreach ( array( ListTable::NOTICE_VAR, ListTable::STEP_ACTION, ListTable::STEP_IDS ) as $key ) {
+			if ( '' !== $request->string( $key ) ) {
+				$this->list_args[ $key ] = $request->string( $key );
+			}
+		}
+		echo $this->html( $filters, max( 1, $request->int( 'paged' ) ), $request->string( 'wiw_notice' ), $request->int( 'confirm' ), null, $request->string( 'profile_q' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }

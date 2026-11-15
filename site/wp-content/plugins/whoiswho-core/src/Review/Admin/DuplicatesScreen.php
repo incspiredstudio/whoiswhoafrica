@@ -17,6 +17,8 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Review\Duplicates\DuplicateMerge;
 use WhoIsWho\Core\Review\Duplicates\DuplicateRepository;
 use WhoIsWho\Core\Review\StateException;
@@ -128,8 +130,9 @@ final class DuplicatesScreen {
 			throw new \DomainException( 'Not allowed to resolve duplicates.' );
 		}
 		$pairs = ( new DuplicateRepository() )->with_status( 'open' );
-		$out   = '<div class="wrap"><h1>' . esc_html__( 'Duplicates', 'whoiswho' ) . '</h1>';
-		$out  .= '<p>' . esc_html__( 'Probable duplicates, highest match first. Nothing is merged unless you do it here.', 'whoiswho' ) . '</p>';
+		$out   = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Duplicates', 'whoiswho' ) . '</h1>';
+		$out  .= $this->notice( Request::from_globals()->string( 'result' ) );
+		$out  .= '<p class="wiw-lead">' . esc_html__( 'Probable duplicates, highest match first. Nothing is merged unless you do it here.', 'whoiswho' ) . '</p>';
 		if ( array() === $pairs ) {
 			$out .= '<p>' . esc_html__( 'No open duplicates.', 'whoiswho' ) . '</p>';
 		}
@@ -154,33 +157,86 @@ final class DuplicatesScreen {
 			$types[ $id ] = (string) ( ( new StateRepository() )->get( $id )['entity_type'] ?? '' );
 		}
 		$keys = array_values( array_intersect( array_keys( $allow->for_type( $types[ $a ] ) ), array_keys( $allow->for_type( $types[ $b ] ) ) ) );
-		$out  = '<div class="card" style="max-width:none"><h2>' . esc_html( get_the_title( $a ) . ' / ' . get_the_title( $b ) ) . '</h2>';
+		$pair = 'wiw-pair-' . $a . '-' . $b;
 		/* translators: 1: match score, 2: basis of the match. */
-		$out .= '<p>' . esc_html( sprintf( __( 'Match %1$d%% on %2$s.', 'whoiswho' ), $score, $basis ) ) . '</p>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::MERGE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::MERGE_ACTION ) ) . '" />';
-		$out .= '<input type="hidden" name="a" value="' . esc_attr( (string) $a ) . '" /><input type="hidden" name="b" value="' . esc_attr( (string) $b ) . '" />';
-		$out .= '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Field', 'whoiswho' ) . '</th><th scope="col">' . esc_html( '#' . $a ) . '</th><th scope="col">' . esc_html( '#' . $b ) . '</th></tr></thead><tbody>';
+		$body   = '<p>' . ListTable::pill( sprintf( __( 'Match %1$d%%', 'whoiswho' ), $score ), $score >= 90 ? 'warning' : 'neutral' ) . ' ' . esc_html( sprintf( __( 'Match %1$d%% on %2$s.', 'whoiswho' ), $score, $basis ) ) . '</p>';
+		$merge  = '<input type="hidden" name="action" value="' . esc_attr( self::MERGE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::MERGE_ACTION ) ) . '" />';
+		$merge .= '<input type="hidden" name="a" value="' . esc_attr( (string) $a ) . '" /><input type="hidden" name="b" value="' . esc_attr( (string) $b ) . '" />';
+		$body  .= Form::open( $merge );
+		$body  .= '<table class="widefat striped wiw-compare"><thead><tr><th scope="col">' . esc_html__( 'Field', 'whoiswho' ) . '</th><th scope="col">' . esc_html( '#' . $a ) . '</th><th scope="col">' . esc_html( '#' . $b ) . '</th></tr></thead><tbody>';
 		foreach ( $keys as $key ) {
-			$out .= '<tr><th scope="row">' . esc_html( $key ) . '</th>';
+			$body .= '<tr><th scope="row">' . esc_html( $key ) . '</th>';
 			foreach ( array( $a, $b ) as $id ) {
-				$out .= '<td>' . esc_html( $this->show( DuplicateMerge::value( $id, $key ) ) ) . '<br /><small>' . esc_html( $this->source( $id, $key ) ) . '</small></td>';
+				$body .= '<td>' . esc_html( $this->show( DuplicateMerge::value( $id, $key ) ) ) . '<br /><small>' . esc_html( $this->source( $id, $key ) ) . '</small></td>';
 			}
-			$out .= '</tr>';
+			$body .= '</tr>';
 		}
-		$out .= '</tbody></table>';
-		$out .= '<p><label>' . esc_html__( 'Keep this profile', 'whoiswho' ) . ' <select name="keep"><option value="' . esc_attr( (string) $a ) . '">#' . esc_html( (string) $a ) . '</option><option value="' . esc_attr( (string) $b ) . '">#' . esc_html( (string) $b ) . '</option></select></label></p>';
-		$out .= '<fieldset><legend>' . esc_html__( 'Take these values from the other profile', 'whoiswho' ) . '</legend>';
+		$body .= '</tbody></table>';
+		$body .= Form::select(
+			'keep',
+			__( 'Keep this profile', 'whoiswho' ),
+			array(
+				(string) $a => '#' . $a . ' ' . get_the_title( $a ),
+				(string) $b => '#' . $b . ' ' . get_the_title( $b ),
+			),
+			(string) $a,
+			array( 'id' => $pair . '-keep' )
+		);
+		$takes = '';
 		foreach ( $keys as $key ) {
-			$out .= '<label style="margin-right:1em"><input type="checkbox" name="take_' . esc_attr( $key ) . '" value="1" /> ' . esc_html( $key ) . '</label>';
+			$takes .= Form::checkbox( 'take_' . $key, $key, false, array( 'id' => $pair . '-take-' . $key ) );
 		}
-		$out .= '</fieldset>';
-		$out .= '<p><label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button button-primary">' . esc_html__( 'Merge', 'whoiswho' ) . '</button></p></form>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::DISMISS_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::DISMISS_ACTION ) ) . '" />';
-		$out .= '<input type="hidden" name="a" value="' . esc_attr( (string) $a ) . '" /><input type="hidden" name="b" value="' . esc_attr( (string) $b ) . '" />';
-		$out .= '<label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button">' . esc_html__( 'Not a duplicate', 'whoiswho' ) . '</button></form></div>';
-		return $out;
+		$body .= '<fieldset class="wiw-field wiw-take"><legend class="wiw-label">' . esc_html__( 'Take these values from the other profile', 'whoiswho' ) . '</legend><div class="wiw-field-grid">' . $takes . '</div></fieldset>';
+		$body .= Form::text(
+			'reason',
+			__( 'Reason', 'whoiswho' ),
+			'',
+			array(
+				'id'       => $pair . '-merge-reason',
+				'required' => true,
+			)
+		);
+		$body .= Form::actions( '<button class="button button-primary">' . esc_html__( 'Merge', 'whoiswho' ) . '</button>' ) . '</form>';
+
+		$dismiss  = '<input type="hidden" name="action" value="' . esc_attr( self::DISMISS_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::DISMISS_ACTION ) ) . '" />';
+		$dismiss .= '<input type="hidden" name="a" value="' . esc_attr( (string) $a ) . '" /><input type="hidden" name="b" value="' . esc_attr( (string) $b ) . '" />';
+		$no       = Form::open( $dismiss, array( 'class' => 'wiw-inline-fields' ) );
+		$no      .= Form::text(
+			'reason',
+			__( 'Reason', 'whoiswho' ),
+			'',
+			array(
+				'id'       => $pair . '-dismiss-reason',
+				'required' => true,
+			)
+		);
+		$no      .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Not a duplicate', 'whoiswho' ) . '</button></div></form>';
+		$body    .= Form::section(
+			__( 'Not a duplicate?', 'whoiswho' ),
+			$no,
+			array(
+				'level' => 3,
+				'class' => 'wiw-card--inset',
+			)
+		);
+		return Form::section( get_the_title( $a ) . ' / ' . get_the_title( $b ), $body, array( 'id' => $pair ) );
+	}
+
+	/**
+	 * The result of the last decision.
+	 *
+	 * @param string $result merged, dismissed or refused.
+	 */
+	private function notice( string $result ): string {
+		$words = array(
+			'merged'    => array( 'success', __( 'Merged. The dropped profile now sends visitors to the kept one.', 'whoiswho' ) ),
+			'dismissed' => array( 'success', __( 'Marked as not a duplicate.', 'whoiswho' ) ),
+			'refused'   => array( 'error', __( 'That was not done: check the reason and try again.', 'whoiswho' ) ),
+		);
+		if ( ! isset( $words[ $result ] ) ) {
+			return '';
+		}
+		return '<div class="notice notice-' . esc_attr( $words[ $result ][0] ) . '"><p>' . esc_html( $words[ $result ][1] ) . '</p></div>';
 	}
 
 	/**

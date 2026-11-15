@@ -2,7 +2,8 @@
 /**
  * The Subscribers screen (REQ-058, REQ-061, REQ-051): stories newsletter sign-ups with status filter, counts and dates, and a
  * logged CSV export. Read only: addresses are never edited here. Needs wiw_manage_subscribers; the export needs wiw_export_data
- * and every export is written to the audit log (without any address).
+ * and every export is written to the audit log (without any address). The list is a read-only shared staff list table
+ * (SubscribersTable, REQ-275): no checkboxes and no row actions.
  *
  * @package WhoIsWho
  */
@@ -15,6 +16,7 @@ use WhoIsWho\Core\Content\Newsletter\SubscriberRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -127,40 +129,32 @@ final class SubscribersScreen {
 	/**
 	 * The screen markup.
 	 *
-	 * @param string $state Status filter.
+	 * @param string       $state   Status filter.
+	 * @param Request|null $request Request, for the page number.
 	 * @throws \DomainException When the user may not open the screen.
 	 */
-	public function html( string $state = 'confirmed' ): string {
+	public function html( string $state = 'confirmed', ?Request $request = null ): string {
 		if ( ! current_user_can( self::CAP ) ) {
 			throw new \DomainException( 'You are not allowed to view subscribers.' );
 		}
 		$state  = self::state( $state );
 		$counts = $this->counts();
-		$out    = '<div class="wrap"><h1>' . esc_html__( 'Subscribers', 'whoiswho' ) . '</h1><ul class="subsubsub">';
+		$out    = '<div class="wrap wiw-staff"><h1 class="wp-heading-inline">' . esc_html__( 'Subscribers', 'whoiswho' ) . '</h1><hr class="wp-header-end" />';
+		$out   .= '<p class="wiw-lead">' . esc_html__( 'Stories newsletter sign-ups. Addresses are read only here.', 'whoiswho' ) . '</p><ul class="subsubsub">';
 		$links  = array();
-		foreach ( self::STATES as $key ) {
-			$label   = ucfirst( $key ) . ' (' . $counts[ $key ] . ')';
-			$links[] = '<li><a href="' . esc_url( add_query_arg( 'state', $key, admin_url( 'admin.php?page=' . self::SCREEN ) ) ) . '"' . ( $key === $state ? ' class="current"' : '' ) . '>' . esc_html( $label ) . '</a></li>';
+		$last   = count( self::STATES ) - 1;
+		foreach ( self::STATES as $i => $key ) {
+			$current = $key === $state ? ' class="current" aria-current="page"' : '';
+			$links[] = '<li><a href="' . esc_url( add_query_arg( 'state', $key, admin_url( 'admin.php?page=' . self::SCREEN ) ) ) . '"' . $current . '>' . esc_html( ucfirst( $key ) ) . ' <span class="count">(' . esc_html( (string) $counts[ $key ] ) . ')</span></a>' . ( $i < $last ? ' |' : '' ) . '</li>';
 		}
-		$out .= implode( ' | ', $links ) . '</ul><table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Email', 'Consent given', 'Confirmed', 'Unsubscribed', 'Source' ) as $heading ) {
-			$out .= '<th>' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		$rows = $this->subscribers->list( $state, 500 );
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="5">' . esc_html__( 'No subscribers in this list.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$out .= '<tr><td>' . esc_html( (string) $row['email'] ) . '</td><td>' . esc_html( (string) $row['granted_at'] ) . '</td><td>' . esc_html( (string) $row['confirmed_at'] ) . '</td><td>' . esc_html( (string) $row['revoked_at'] ) . '</td><td>' . esc_html( (string) $row['source'] ) . '</td></tr>';
-		}
-		$out .= '</tbody></table>';
+		$out .= implode( ' ', $links ) . '</ul><br class="clear" />';
+		$page = null === $request ? array() : array( 'paged' => (string) max( 1, $request->int( 'paged' ) ) );
+		$out .= ( new SubscribersTable( $this->subscribers, $state, $counts[ $state ] ) )->html( new Request( $page ) );
 		if ( current_user_can( self::EXPORT_CAP ) ) {
-			$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-			$out .= '<input type="hidden" name="action" value="' . esc_attr( self::EXPORT_ACTION ) . '" />';
-			$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::EXPORT_ACTION ) ) . '" />';
-			$out .= '<input type="hidden" name="state" value="' . esc_attr( $state ) . '" />';
-			$out .= '<p><button type="submit" class="button">' . esc_html__( 'Export this list as CSV', 'whoiswho' ) . '</button></p></form>';
+			$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::EXPORT_ACTION ) . '" />'
+				. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::EXPORT_ACTION ) ) . '" />'
+				. '<input type="hidden" name="state" value="' . esc_attr( $state ) . '" />';
+			$out   .= Form::open( $hidden ) . Form::actions( '<button type="submit" class="button">' . esc_html__( 'Export this list as CSV', 'whoiswho' ) . '</button>' ) . '</form>';
 		}
 		return $out . '</div>';
 	}
@@ -239,38 +233,6 @@ final class SubscribersScreen {
 	 * @param Request $request Request.
 	 */
 	public function render( Request $request ): void {
-		echo wp_kses(
-			$this->html( $request->string( 'state' ) ),
-			array(
-				'div'    => array( 'class' => true ),
-				'h1'     => array(),
-				'p'      => array(),
-				'ul'     => array( 'class' => true ),
-				'li'     => array(),
-				'a'      => array(
-					'href'  => true,
-					'class' => true,
-				),
-				'table'  => array( 'class' => true ),
-				'thead'  => array(),
-				'tbody'  => array(),
-				'tr'     => array(),
-				'th'     => array(),
-				'td'     => array( 'colspan' => true ),
-				'form'   => array(
-					'method' => true,
-					'action' => true,
-				),
-				'input'  => array(
-					'type'  => true,
-					'name'  => true,
-					'value' => true,
-				),
-				'button' => array(
-					'type'  => true,
-					'class' => true,
-				),
-			)
-		);
+		echo $this->html( $request->string( 'state' ), $request ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }

@@ -4,6 +4,7 @@
  * filter, and the New sponsored story form that covers steps 1 and 2 (agree the deal, record the payment). Editors and
  * Administrators see the list; only the Administrator (wiw_manage_register) sees amounts and the forms. There is no deal type
  * choice in the form: the only type is the sponsored post. Every post is nonce-checked by ActionGuard and goes to DealService.
+ * The list is a shared staff list table (SponsoredDealsTable, REQ-275); the form uses the staff form kit.
  *
  * @package WhoIsWho
  */
@@ -14,7 +15,9 @@ namespace WhoIsWho\Core\Commerce;
 
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Commerce\Admin\SponsoredDealsTable;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -157,55 +160,26 @@ final class SponsoredStoriesScreen {
 	 *
 	 * @param string $notice Message after an action.
 	 * @param string $filter A status to show, or empty for all.
+	 * @param int    $page   Page of the list.
 	 * @throws \DomainException When the user may not see the screen.
 	 */
-	public function html( string $notice = '', string $filter = '' ): string {
+	public function html( string $notice = '', string $filter = '', int $page = 1 ): string {
 		if ( ! current_user_can( self::CAP ) ) {
 			throw new \DomainException( 'You are not allowed to see sponsored stories.' );
 		}
-		$money  = current_user_can( self::MONEY );
-		$deals  = new DealService( new ArrangementRepository(), AuditLogger::for_site() );
-		$places = new PlacementRepository();
-		$today  = gmdate( 'Y-m-d' );
-		$out    = '<div class="wrap"><h1>' . esc_html__( 'Sponsored stories', 'whoiswho' ) . '</h1>';
+		$money = current_user_can( self::MONEY );
+		$out   = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Sponsored stories', 'whoiswho' ) . '</h1>';
 		if ( '' !== $notice ) {
 			$out .= '<div class="notice notice-info"><p>' . esc_html( $notice ) . '</p></div>';
 		}
-		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><select name="status"><option value="">' . esc_html__( 'All statuses', 'whoiswho' ) . '</option>';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><label>' . esc_html__( 'Status', 'whoiswho' ) . ' <select name="status"><option value="">' . esc_html__( 'All statuses', 'whoiswho' ) . '</option>';
 		foreach ( self::LABELS as $status => $label ) {
 			$out .= '<option value="' . esc_attr( $status ) . '"' . selected( $filter, $status, false ) . '>' . esc_html( $label ) . '</option>';
 		}
-		$out  .= '</select> <button type="submit" class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out  .= '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Sponsor', 'whoiswho' ) . '</th><th>' . esc_html__( 'Story', 'whoiswho' ) . '</th>' . ( $money ? '<th>' . esc_html__( 'Amount', 'whoiswho' ) . '</th>' : '' ) . '<th>' . esc_html__( 'Progress', 'whoiswho' ) . '</th><th>' . esc_html__( 'Status', 'whoiswho' ) . '</th><th>' . esc_html__( 'Next step', 'whoiswho' ) . '</th></tr></thead><tbody>';
-		$shown = 0;
-		foreach ( ( new ArrangementRepository() )->all() as $row ) {
-			$placements = $places->for_arrangement( (int) $row['id'] );
-			$status     = DealStatus::of( $row, $placements, $today );
-			if ( '' !== $filter && $status !== $filter ) {
-				continue;
-			}
-			++$shown;
-			$view     = $deals->view( $row );
-			$progress = DealStatus::progress( $row, $placements );
-			$customer = ( new CustomerRepository() )->get( (int) $row['customer_id'] );
-			$story    = empty( $row['story_id'] ) ? '' : get_the_title( (int) $row['story_id'] );
-			$dots     = '';
-			foreach ( $progress['steps'] as $done ) {
-				$dots .= $done ? '●' : '○';
-			}
-			$out .= '<tr><td>' . esc_html( null === $customer ? '' : (string) $customer['name'] ) . '</td><td>' . esc_html( $story ) . '</td>';
-			if ( $money ) {
-				$amount = ArrangementRepository::money( $view );
-				$out   .= '<td>' . esc_html( null === $amount ? '' : $amount->currency() . ' ' . number_format_i18n( $amount->minor() / 100, 2 ) ) . '</td>';
-			}
-			$out .= '<td class="wiw-dots">' . esc_html( $dots ) . '</td><td>' . esc_html( self::LABELS[ $status ] ) . '</td><td>' . esc_html( null === $progress['next'] ? '' : self::NEXT[ $progress['next'] ] ) . '</td></tr>';
-		}//end foreach
-		if ( 0 === $shown ) {
-			$out .= '<tr><td colspan="6">' . esc_html__( 'No sponsored stories yet.', 'whoiswho' ) . '</td></tr>';
-		}
-		$out .= '</tbody></table>';
+		$out .= '</select></label> <button type="submit" class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$out .= ( new SponsoredDealsTable( $filter ) )->html( new Request( array( 'paged' => (string) max( 1, $page ) ) ) );
 		if ( current_user_can( DealExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
-			$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( DealExport::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( DealExport::ACTION ) ) . '" /><p><button class="button">' . esc_html__( 'Export deals as CSV', 'whoiswho' ) . '</button></p></form>';
+			$out .= Form::open( '<input type="hidden" name="action" value="' . esc_attr( DealExport::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( DealExport::ACTION ) ) . '" />' ) . Form::actions( '<button class="button">' . esc_html__( 'Export deals as CSV', 'whoiswho' ) . '</button>' ) . '</form>';
 		}
 		if ( $money ) {
 			$out .= $this->new_deal_form();
@@ -214,23 +188,78 @@ final class SponsoredStoriesScreen {
 	}
 
 	/**
+	 * A deal status in words.
+	 *
+	 * @param string $status DealStatus value.
+	 */
+	public static function status_label( string $status ): string {
+		return self::LABELS[ $status ] ?? $status;
+	}
+
+	/**
+	 * The next step of a deal in words.
+	 *
+	 * @param string $step Progress step key.
+	 */
+	public static function next_label( string $step ): string {
+		return self::NEXT[ $step ] ?? $step;
+	}
+
+	/**
 	 * The New sponsored story form: steps 1 and 2. There is no deal type field.
 	 */
 	private function new_deal_form(): string {
-		$out  = '<h2>' . esc_html__( 'New sponsored story', 'whoiswho' ) . '</h2>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="op" value="create" />';
-		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out .= '<p><label>' . esc_html__( 'Existing customer', 'whoiswho' ) . ' <select name="customer_id"><option value="0">' . esc_html__( 'Choose', 'whoiswho' ) . '</option>';
+		$customers = array( '0' => __( 'Choose', 'whoiswho' ) );
 		foreach ( $this->customers() as $customer ) {
-			$out .= '<option value="' . (int) $customer['id'] . '">' . esc_html( (string) $customer['name'] ) . '</option>';
+			$customers[ (string) (int) $customer['id'] ] = (string) $customer['name'];
 		}
-		$out .= '</select></label> <label>' . esc_html__( 'or add a new customer', 'whoiswho' ) . ' <input type="text" name="customer_name" class="regular-text" maxlength="190" /></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Amount agreed', 'whoiswho' ) . ' <input type="text" name="amount" inputmode="decimal" /></label> <label>' . esc_html__( 'Currency', 'whoiswho' ) . ' <input type="text" name="currency" value="NGN" maxlength="3" size="4" /></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Note', 'whoiswho' ) . ' <textarea name="notes" rows="2" cols="40"></textarea></label></p>';
-		$out .= '<fieldset><legend>' . esc_html__( 'Payment received (optional)', 'whoiswho' ) . '</legend>';
-		$out .= '<label>' . esc_html__( 'Method', 'whoiswho' ) . ' <input type="text" name="method" maxlength="40" /></label> <label>' . esc_html__( 'Reference', 'whoiswho' ) . ' <input type="text" name="reference" maxlength="190" /></label> <label>' . esc_html__( 'Date received', 'whoiswho' ) . ' <input type="date" name="received_on" /></label></fieldset>';
-		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create deal', 'whoiswho' ) . '</button></p></form>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="op" value="create" />'
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
+		$deal   = '<div class="wiw-field-grid">'
+			. Form::select( 'customer_id', __( 'Existing customer', 'whoiswho' ), $customers, '0', array( 'searchable' => count( $customers ) > 10 ) )
+			. Form::text( 'customer_name', __( 'or add a new customer', 'whoiswho' ), '', array( 'maxlength' => 190 ) )
+			. Form::text(
+				'amount',
+				__( 'Amount agreed', 'whoiswho' ),
+				'',
+				array(
+					'attrs' => array( 'inputmode' => 'decimal' ),
+					'help'  => __( 'For example 500000 or 500000.50.', 'whoiswho' ),
+				)
+			)
+			. Form::text(
+				'currency',
+				__( 'Currency', 'whoiswho' ),
+				Money::DEFAULT_CURRENCY,
+				array(
+					'maxlength' => 3,
+					'class'     => 'small-text',
+				)
+			)
+			. '</div>'
+			. Form::textarea( 'notes', __( 'Note', 'whoiswho' ), '', array( 'rows' => 2 ) );
+		$paid   = '<div class="wiw-field-grid">'
+			. Form::text( 'method', __( 'Method', 'whoiswho' ), '', array( 'maxlength' => 40 ) )
+			. Form::text( 'reference', __( 'Reference', 'whoiswho' ), '', array( 'maxlength' => 190 ) )
+			. Form::row( 'wiw-f-received_on', __( 'Date received', 'whoiswho' ), '<input type="date" id="wiw-f-received_on" name="received_on" class="wiw-input" />' )
+			. '</div>';
+		$out    = Form::open( $hidden, array( 'unsaved' => true ) );
+		$out   .= Form::section(
+			__( 'New sponsored story', 'whoiswho' ),
+			$deal . Form::section(
+				__( 'Payment received (optional)', 'whoiswho' ),
+				$paid,
+				array(
+					'level' => 3,
+					'class' => 'wiw-card--inset',
+				)
+			),
+			array(
+				'id'          => 'wiw-new-deal',
+				'description' => __( 'Steps 1 and 2: agree the deal and, when it is in, record the payment. Every deal is a sponsored post.', 'whoiswho' ),
+			)
+		);
+		return $out . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Create deal', 'whoiswho' ) . '</button>' ) . '</form>';
 	}
 
 	/**
@@ -248,53 +277,6 @@ final class SponsoredStoriesScreen {
 	 */
 	public function render(): void {
 		$request = Request::from_globals();
-		echo wp_kses(
-			$this->html( $request->string( 'wiw_notice' ), $request->string( 'status' ) ),
-			array(
-				'div'      => array( 'class' => true ),
-				'h1'       => array(),
-				'h2'       => array(),
-				'p'        => array(),
-				'table'    => array( 'class' => true ),
-				'thead'    => array(),
-				'tbody'    => array(),
-				'tr'       => array(),
-				'th'       => array(),
-				'td'       => array(
-					'class'   => true,
-					'colspan' => true,
-				),
-				'form'     => array(
-					'method' => true,
-					'action' => true,
-				),
-				'fieldset' => array(),
-				'legend'   => array(),
-				'label'    => array(),
-				'select'   => array( 'name' => true ),
-				'option'   => array(
-					'value'    => true,
-					'selected' => true,
-				),
-				'textarea' => array(
-					'name' => true,
-					'rows' => true,
-					'cols' => true,
-				),
-				'input'    => array(
-					'type'      => true,
-					'name'      => true,
-					'value'     => true,
-					'class'     => true,
-					'maxlength' => true,
-					'size'      => true,
-					'inputmode' => true,
-				),
-				'button'   => array(
-					'type'  => true,
-					'class' => true,
-				),
-			)
-		);
+		echo $this->html( $request->string( 'wiw_notice' ), $request->string( 'status' ), max( 1, $request->int( 'paged' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }

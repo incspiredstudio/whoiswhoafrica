@@ -87,6 +87,8 @@ The Review queue and **Directory > Profiles** have a checkbox on each row and a 
 
 Matching uses registration number, Wikidata ID, and a normalised name plus organisation plus location. A staff member merges records. Individuals are never merged automatically.
 
+Each pair is a card: compare the fields side by side, choose the profile to keep, tick the values to take from the other, give a reason and press **Merge**. If they are different, give a reason under **Not a duplicate?** instead. Pairs are decided one at a time, so there is no bulk action.
+
 ## Sources
 
 The Sources screen is read-only. It lists each source with its profile count, last import date, import errors and removals, and a link to the Profiles list filtered by that source. Approved sources are managed outside this screen.
@@ -131,6 +133,6 @@ Unpublishing works immediately, even on pages search engines have indexed.
 2. Choose bulk unpublish and enter a reason.
 3. Check the confirmation, which shows the count and the first five names.
 4. Each profile becomes "gone", leaves the sitemap and search, and gets a purge-log entry. The audit log gets one row per profile and one for the batch.
-5. To undo it, open Recent bulk actions and choose Restore this batch.
+5. To undo it, open Recent bulk actions, hover the batch (or tab to it) and choose Restore this batch. The list is a history: it has no checkboxes.
 
 Bulk unpublish acts only on published profiles.

@@ -1,0 +1,22 @@
+/* Home page settings (REQ-257, REQ-275): the pinned items and the hero video slots inside the staff kit cards. WordPress admin
+   colours and neutrals only; no brand values live in the plugin. */
+.wiw-staff .wiw-pins,
+.wiw-staff .wiw-pin-results { margin: 0 0 16px; padding: 0; }
+
+.wiw-staff .wiw-pins li,
+.wiw-staff .wiw-pin-results li { align-items: center; border-bottom: 1px solid #f0f0f1; display: flex; flex-wrap: wrap; gap: 4px 8px; list-style: none; margin: 0; padding: 8px 0; }
+.wiw-staff .wiw-pins { counter-reset: wiw-pin; }
+.wiw-staff .wiw-pins li::before { color: #646970; content: counter(wiw-pin) "."; counter-increment: wiw-pin; font-variant-numeric: tabular-nums; min-width: 1.5em; }
+.wiw-staff .wiw-pin-form { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.wiw-staff .wiw-preview { margin: 0 0 0 1.5em; }
+.wiw-staff .wiw-card__body > h3 { font-size: 14px; margin: 24px 0 8px; }
+.wiw-hero-slots { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.wiw-hero-slot { background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px; }
+.wiw-hero-slot .wiw-card__title { margin-bottom: 12px; }
+.wiw-hero-preview { display: flex; gap: 8px; margin-bottom: 8px; }
+
+.wiw-hero-preview img,
+.wiw-hero-preview video { background: #dcdcde; border-radius: 6px; object-fit: cover; }
+.wiw-hero-field { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0 0 12px; }
+.wiw-hero-label { flex-basis: 100%; font-weight: 600; }
+.wiw-hero-name { color: #50575e; flex-basis: 100%; overflow-wrap: anywhere; }

@@ -18,7 +18,7 @@ Editors and Administrators can see sign-ups and who has unsubscribed, with conse
 
 1. Open **Audience > Subscribers**.
 2. Choose a list at the top: **Confirmed**, **Pending** (signed up but has not opened the confirmation link) or **Unsubscribed**. Each shows its count.
-3. The table shows the email, when consent was given, when it was confirmed, when they unsubscribed and where they signed up.
+3. The table shows the email, when consent was given, when it was confirmed, when they unsubscribed and where they signed up. It is read only: there are no checkboxes or row actions, 20 rows a page.
 
 ## Send a newsletter
 

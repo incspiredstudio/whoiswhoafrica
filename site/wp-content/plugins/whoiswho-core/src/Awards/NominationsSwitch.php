@@ -12,6 +12,8 @@ namespace WhoIsWho\Core\Awards;
 
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Settings\SettingsService;
 
@@ -111,7 +113,7 @@ final class NominationsSwitch {
 	 * @param bool|null $on State to show; the stored state when null.
 	 */
 	public function html( ?bool $on = null ): string {
-		return '<div class="wrap"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>' . $this->body_html( $on ) . '</div>';
+		return '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Nominations', 'whoiswho' ) . '</h1>' . $this->body_html( $on ) . '</div>';
 	}
 
 	/**
@@ -122,47 +124,28 @@ final class NominationsSwitch {
 	public function body_html( ?bool $on = null ): string {
 		$on    = $on ?? $this->is_on();
 		$state = $on ? __( 'Nominations are on.', 'whoiswho' ) : __( 'Nominations are off.', 'whoiswho' );
-		$out   = '<p>' . esc_html( $state ) . '</p>';
+		$out   = '<p class="wiw-switch-state">' . ListTable::pill( $on ? __( 'Open', 'whoiswho' ) : __( 'Closed', 'whoiswho' ), $on ? 'success' : 'neutral' ) . ' ' . esc_html( $state ) . '</p>';
+		$args  = array(
+			'id'          => 'wiw-nominations-switch',
+			'class'       => 'wiw-switch-card',
+			'description' => __( 'Whether the public Nominate page takes nominations. This is the only feature flag.', 'whoiswho' ),
+		);
 		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
-			return $out . '<p>' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p>';
+			return Form::section( __( 'Nominations page', 'whoiswho' ), $out . '<p class="wiw-help">' . esc_html__( 'Only an Administrator can change this.', 'whoiswho' ) . '</p>', $args );
 		}
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
-		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out .= '<input type="hidden" name="state" value="' . ( $on ? '0' : '1' ) . '" />';
-		$out .= '<p><label>' . esc_html__( 'Reason (optional)', 'whoiswho' ) . '<br /><input type="text" name="reason" maxlength="300" class="regular-text" /></label></p>';
-		$out .= '<p><button type="submit" class="button button-primary">' . esc_html( $on ? __( 'Turn Nominations off', 'whoiswho' ) : __( 'Turn Nominations on', 'whoiswho' ) ) . '</button></p>';
-		return $out . '</form>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />'
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />'
+			. '<input type="hidden" name="state" value="' . ( $on ? '0' : '1' ) . '" />';
+		$out   .= Form::open( $hidden );
+		$out   .= Form::text( 'reason', __( 'Reason (optional)', 'whoiswho' ), '', array( 'maxlength' => 300 ) );
+		$out   .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html( $on ? __( 'Turn Nominations off', 'whoiswho' ) : __( 'Turn Nominations on', 'whoiswho' ) ) . '</button>' );
+		return Form::section( __( 'Nominations page', 'whoiswho' ), $out . '</form>', $args );
 	}
 
 	/**
 	 * Print the screen.
 	 */
 	public function render(): void {
-		echo wp_kses(
-			$this->html(),
-			array(
-				'div'    => array( 'class' => true ),
-				'h1'     => array(),
-				'p'      => array(),
-				'br'     => array(),
-				'label'  => array(),
-				'form'   => array(
-					'method' => true,
-					'action' => true,
-				),
-				'input'  => array(
-					'type'      => true,
-					'name'      => true,
-					'value'     => true,
-					'maxlength' => true,
-					'class'     => true,
-				),
-				'button' => array(
-					'type'  => true,
-					'class' => true,
-				),
-			)
-		);
+		echo $this->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }

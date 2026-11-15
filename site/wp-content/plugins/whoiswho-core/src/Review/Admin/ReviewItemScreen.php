@@ -23,6 +23,7 @@ use WhoIsWho\Core\Import\Scan\ScanBlock;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Review\FactGate;
 use WhoIsWho\Core\Review\Metrics\DecisionLog;
 use WhoIsWho\Core\Review\ReviewService;
@@ -217,15 +218,26 @@ final class ReviewItemScreen {
 		$out = '';
 		foreach ( ( new RevisionService() )->pending( $id ) as $row ) {
 			$mine = get_current_user_id() === (int) $row['author_id'];
-			$out .= '<h3>' . esc_html__( 'Pending change from the profile manager', 'whoiswho' ) . '</h3><p>' . esc_html( (string) $row['reason'] ) . '</p>';
+			$body = '<p>' . esc_html( (string) $row['reason'] ) . '</p>';
 			if ( $mine ) {
-				$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'You made this change, so another reviewer must decide it.', 'whoiswho' ) . '</p></div>';
-				continue;
+				$body .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'You made this change, so another reviewer must decide it.', 'whoiswho' ) . '</p></div>';
+			} else {
+				$vid   = (string) $row['id'];
+				$body .= $this->form( self::REV_OK, $id ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" />' . Form::actions( '<button class="button button-primary">' . esc_html__( 'Approve this change', 'whoiswho' ) . '</button>' ) . '</form>';
+				$body .= $this->form( self::REV_NO, $id, 'wiw-inline-fields' ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" />';
+				$body .= Form::text(
+					'reason',
+					__( 'Reason', 'whoiswho' ),
+					'',
+					array(
+						'id'       => 'wiw-f-revision-reason-' . $vid,
+						'required' => true,
+					)
+				);
+				$body .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Reject this change', 'whoiswho' ) . '</button></div></form>';
 			}
-			$vid  = (string) $row['id'];
-			$out .= $this->form( self::REV_OK, $id ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" /><p><button class="button button-primary">' . esc_html__( 'Approve this change', 'whoiswho' ) . '</button></p></form>';
-			$out .= $this->form( self::REV_NO, $id ) . '<input type="hidden" name="version_id" value="' . esc_attr( $vid ) . '" /><p><label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button">' . esc_html__( 'Reject this change', 'whoiswho' ) . '</button></p></form>';
-		}
+			$out .= Form::section( __( 'Pending change from the profile manager', 'whoiswho' ), $body, array( 'id' => 'wiw-revision-' . (int) $row['id'] ) );
+		}//end foreach
 		return $out;
 	}
 
@@ -254,12 +266,12 @@ final class ReviewItemScreen {
 		}
 		$id  = $request->int( 'profile_id' );
 		$row = $id > 0 ? ( new StateRepository() )->get( $id ) : null;
-		$out = '<div class="wrap"><h1>' . esc_html__( 'Review item', 'whoiswho' ) . '</h1>';
+		$out = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Review item', 'whoiswho' ) . '</h1>';
 		if ( null === $row || null === get_post( $id ) ) {
 			return $out . '<p>' . esc_html__( 'Choose an item from the review queue.', 'whoiswho' ) . '</p></div>';
 		}
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $row['entity_type'] ) . ' · ' . Labels::state( (string) $row['pub_state'], (string) ( $row['origin'] ?? '' ) ) ) . '</p>';
+		$out .= '<div class="wiw-page-head"><h2 class="wiw-page-head__title">' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $row['entity_type'] ) . ' · ' . Labels::state( (string) $row['pub_state'], (string) ( $row['origin'] ?? '' ) ) ) . '</p></div>';
 		$out .= $this->importer_note( $row );
 		$out .= $this->diff_html( $id );
 		$out .= $this->claims_html( $id );
@@ -320,11 +332,19 @@ final class ReviewItemScreen {
 			}
 			$diff = self::diff( array(), $now );
 		}
-		$out = '<h3>' . esc_html__( 'Fields', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Field', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Change', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Before', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'After', 'whoiswho' ) . '</th></tr></thead><tbody>';
+		$out = '<table class="widefat striped wiw-compare"><thead><tr><th scope="col">' . esc_html__( 'Field', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Change', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Before', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'After', 'whoiswho' ) . '</th></tr></thead><tbody>';
 		foreach ( $diff as $change ) {
 			$out .= '<tr><th scope="row">' . esc_html( Labels::field( (string) $change['field'] ) ) . '</th><td>' . esc_html( self::change_label( (string) $change['change'] ) ) . '</td><td>' . esc_html( $this->text( $change['old'] ) ) . '</td><td>' . esc_html( $this->text( $change['new'] ) ) . '</td></tr>';
 		}
-		return $out . ( array() === $diff ? '<tr><td colspan="4">' . esc_html__( 'No field changes.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
+		$out .= ( array() === $diff ? '<tr><td colspan="4">' . esc_html__( 'No field changes.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
+		return Form::section(
+			__( 'Fields', 'whoiswho' ),
+			$out,
+			array(
+				'id'          => 'wiw-review-fields',
+				'description' => __( 'The proposed change, field by field.', 'whoiswho' ),
+			)
+		);
 	}
 
 	/**
@@ -387,7 +407,7 @@ final class ReviewItemScreen {
 	 * @param int $id Profile.
 	 */
 	private function claims_html( int $id ): string {
-		$out = '<h3>' . esc_html__( 'Sources', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr>';
+		$out = '<table class="widefat striped"><thead><tr>';
 		foreach ( array( 'Field', 'Source', 'Retrieved', 'Confidence', 'Method' ) as $heading ) {
 			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
@@ -400,7 +420,7 @@ final class ReviewItemScreen {
 
 		$evidence = ( new EvidenceRepository() )->for_reviewer( $id );
 		if ( array() !== $evidence['claims'] ) {
-			$out .= '<h3>' . esc_html__( 'Claims', 'whoiswho' ) . '</h3><ul>';
+			$out .= '<h3 class="wiw-subhead">' . esc_html__( 'Claims', 'whoiswho' ) . '</h3><ul class="wiw-claims">';
 			$urls = array();
 			foreach ( $evidence['passages'] as $passage ) {
 				$urls[ (string) $passage['passage_id'] ] = (string) $passage['source_url'] . ' (' . (string) $passage['retrieved_at'] . ')';
@@ -411,9 +431,9 @@ final class ReviewItemScreen {
 			$out .= '</ul>';
 		}
 		if ( null !== $evidence['verification'] ) {
-			$out .= '<h3>' . esc_html__( 'Verification report', 'whoiswho' ) . '</h3><p>' . esc_html( sprintf( /* translators: 1: claims kept, 2: claims dropped. */ __( 'Claims kept %1$d, dropped %2$d.', 'whoiswho' ), (int) $evidence['verification']['claims_kept'], (int) $evidence['verification']['claims_dropped'] ) ) . '</p>';
+			$out .= '<h3 class="wiw-subhead">' . esc_html__( 'Verification report', 'whoiswho' ) . '</h3><p>' . esc_html( sprintf( /* translators: 1: claims kept, 2: claims dropped. */ __( 'Claims kept %1$d, dropped %2$d.', 'whoiswho' ), (int) $evidence['verification']['claims_kept'], (int) $evidence['verification']['claims_dropped'] ) ) . '</p>';
 		}
-		return $out;
+		return Form::section( __( 'Sources', 'whoiswho' ), $out, array( 'id' => 'wiw-review-sources' ) );
 	}
 
 	/**
@@ -426,11 +446,22 @@ final class ReviewItemScreen {
 		if ( array() === $flags ) {
 			return '';
 		}
-		$out = '<h3>' . esc_html__( 'Free-text scan', 'whoiswho' ) . '</h3><div class="notice notice-warning inline"><p>' . esc_html__( 'Flagged. The record cannot be approved until the block is cleared.', 'whoiswho' ) . '</p><ul>';
+		$out = '<div class="notice notice-warning inline"><p>' . esc_html__( 'Flagged. The record cannot be approved until the block is cleared.', 'whoiswho' ) . '</p><ul>';
 		foreach ( $flags as $flag ) {
 			$out .= '<li>' . esc_html( Labels::field( (string) $flag['field'] ) . ': ' . Labels::humanise( (string) $flag['category'] ) ) . '</li>';
 		}
-		return $out . '</ul></div>' . $this->form( self::CLEAR, $id ) . '<p><label>' . esc_html__( 'Why the flags do not apply', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button">' . esc_html__( 'Clear the block', 'whoiswho' ) . '</button></p></form>';
+		$out .= '</ul></div>' . $this->form( self::CLEAR, $id, 'wiw-inline-fields' );
+		$out .= Form::text(
+			'reason',
+			__( 'Why the flags do not apply', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-f-clear-reason',
+				'required' => true,
+			)
+		);
+		$out .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Clear the block', 'whoiswho' ) . '</button></div></form>';
+		return Form::section( __( 'Free-text scan', 'whoiswho' ), $out, array( 'id' => 'wiw-review-scan' ) );
 	}
 
 	/**
@@ -439,20 +470,40 @@ final class ReviewItemScreen {
 	 * @param int $id Profile.
 	 */
 	private function decision_html( int $id ): string {
-		$out = '<h3>' . esc_html__( 'Checklist', 'whoiswho' ) . '</h3>' . $this->form( self::APPROVE, $id ) . '<ul>';
+		$checks = '';
 		foreach ( self::checklist() as $key => $label ) {
-			$out .= '<li><label><input type="checkbox" name="' . esc_attr( $key ) . '" value="1" /> ' . esc_html( $label ) . '</label></li>';
+			$checks .= Form::checkbox( $key, $label );
 		}
-		$out .= '</ul><p><button class="button button-primary">' . esc_html__( 'Approve', 'whoiswho' ) . '</button> ';
-		$edit = get_edit_post_link( $id );
+		$buttons = '<button class="button button-primary">' . esc_html__( 'Approve', 'whoiswho' ) . '</button>';
+		$edit    = get_edit_post_link( $id );
 		if ( $edit ) {
-			$out .= '<a class="button" href="' . esc_url( $edit ) . '">' . esc_html__( 'Edit (a reason is required there)', 'whoiswho' ) . '</a>';
+			$buttons .= ' <a class="button" href="' . esc_url( $edit ) . '">' . esc_html__( 'Edit (a reason is required there)', 'whoiswho' ) . '</a>';
 		}
-		$out .= '</p></form>' . $this->form( self::REJECT, $id ) . '<p><label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <select name="reason_code">';
+		$out   = Form::section(
+			__( 'Checklist', 'whoiswho' ),
+			$this->form( self::APPROVE, $id ) . $checks . Form::actions( $buttons ) . '</form>',
+			array(
+				'id'          => 'wiw-review-checklist',
+				'description' => __( 'Tick all five points to approve.', 'whoiswho' ),
+			)
+		);
+		$codes = array();
 		foreach ( DecisionLog::REASON_CODES as $code ) {
-			$out .= '<option value="' . esc_attr( $code ) . '">' . esc_html( Labels::reason( $code ) ) . '</option>';
+			$codes[ $code ] = Labels::reason( $code );
 		}
-		return $out . '</select> <button class="button">' . esc_html__( 'Reject', 'whoiswho' ) . '</button></p></form>';
+		$reject  = $this->form( self::REJECT, $id, 'wiw-inline-fields' );
+		$reject .= Form::text(
+			'reason',
+			__( 'Reason', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-f-reject-reason',
+				'required' => true,
+			)
+		);
+		$reject .= Form::select( 'reason_code', __( 'Reason code', 'whoiswho' ), $codes, '', array( 'id' => 'wiw-f-reject-code' ) );
+		$reject .= '<div class="wiw-inline-fields__action"><button class="button wiw-button--danger">' . esc_html__( 'Reject', 'whoiswho' ) . '</button></div></form>';
+		return $out . Form::section( __( 'Reject', 'whoiswho' ), $reject, array( 'id' => 'wiw-review-reject' ) );
 	}
 
 	/**
@@ -460,8 +511,9 @@ final class ReviewItemScreen {
 	 *
 	 * @param string $action Action.
 	 * @param int    $id     Profile.
+	 * @param string $extra  Extra form class.
 	 */
-	private function form( string $action, int $id ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
+	private function form( string $action, int $id, string $extra = '' ): string {
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="' . esc_attr( trim( 'wiw-form ' . $extra ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
 	}
 }

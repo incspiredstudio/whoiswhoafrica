@@ -22,6 +22,7 @@ use WhoIsWho\Core\Directory\Admin\AddProfileScreen;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
 /**
@@ -124,38 +125,73 @@ final class AddProfileForm {
 	 * @param string $query Search text from the address.
 	 */
 	public function html( string $query = '' ): string {
-		$out    = '<h2>' . esc_html__( 'Add profile to nominations', 'whoiswho' ) . '</h2>';
-		$out   .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />';
-		$out   .= '<label>' . esc_html__( 'Search profiles by name', 'whoiswho' ) . ' <input type="search" name="profile_q" value="' . esc_attr( $query ) . '" maxlength="100" /></label> ';
-		$out   .= '<button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
+		$search = '<input type="search" id="wiw-f-profile_q" name="profile_q" class="wiw-input regular-text" value="' . esc_attr( $query ) . '" maxlength="100" />';
+		$out    = Form::open(
+			'<input type="hidden" name="page" value="' . esc_attr( NominationsSwitch::SCREEN ) . '" />',
+			array(
+				'method' => 'get',
+				'action' => admin_url( 'admin.php' ),
+				'class'  => 'wiw-inline-fields',
+			)
+		);
+		$out   .= Form::row( 'wiw-f-profile_q', __( 'Search profiles by name', 'whoiswho' ), $search );
+		$out   .= '<div class="wiw-inline-fields__action"><button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></div></form>';
 		$found  = $this->picker->search( $query );
 		$create = $this->create_link( $query );
 		if ( '' !== trim( $query ) && array() === $found ) {
-			return $out . '<p>' . esc_html__( 'No existing profile matches. Only existing profiles can be nominated.', 'whoiswho' ) . '</p>' . $create;
+			return $this->card( $out . '<p>' . esc_html__( 'No existing profile matches. Only existing profiles can be nominated.', 'whoiswho' ) . '</p>' . $create );
 		}
 		if ( array() === $found ) {
-			return $out;
+			return $this->card( $out );
 		}
-		$out .= $create;
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
-		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out .= '<p><label>' . esc_html__( 'Profile', 'whoiswho' ) . ' <select name="profile_id">';
+		$out     .= $create;
+		$profiles = array();
 		foreach ( $found as $profile ) {
-			$label = $profile['name'] . ' (' . $profile['type'] . ', ' . self::state_label( $profile['state'] ) . ')';
-			$out  .= '<option value="' . esc_attr( (string) $profile['id'] ) . '">' . esc_html( $label ) . '</option>';
+			$profiles[ (string) $profile['id'] ] = $profile['name'] . ' (' . $profile['type'] . ', ' . self::state_label( $profile['state'] ) . ')';
 		}
-		$out .= '</select></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Category', 'whoiswho' ) . ' <select name="category_id">';
+		$categories = array();
 		foreach ( CategoryService::for_site()->grouped() as $group ) {
 			foreach ( $group['categories'] as $category ) {
-				$out .= '<option value="' . esc_attr( (string) $category['id'] ) . '">' . esc_html( (string) $category['title'] ) . '</option>';
+				$categories[ (string) $category['id'] ] = (string) $category['title'];
 			}
 		}
-		$out .= '</select></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Note (optional, staff only)', 'whoiswho' ) . '<br /><textarea name="note" rows="3" cols="50" maxlength="1000"></textarea></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Contact email (optional, staff only, never shown publicly)', 'whoiswho' ) . ' <input type="email" name="contact_email" maxlength="254" class="regular-text" /></label></p>';
-		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Add to nominations', 'whoiswho' ) . '</button></p></form>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
+		$out   .= Form::open( $hidden );
+		$out   .= '<div class="wiw-field-grid">' . Form::select( 'profile_id', __( 'Profile', 'whoiswho' ), $profiles ) . Form::select( 'category_id', __( 'Category', 'whoiswho' ), $categories ) . '</div>';
+		$out   .= Form::textarea(
+			'note',
+			__( 'Note (optional, staff only)', 'whoiswho' ),
+			'',
+			array(
+				'rows'      => 3,
+				'maxlength' => 1000,
+				'counter'   => true,
+			)
+		);
+		$out   .= Form::email(
+			'contact_email',
+			__( 'Contact email (optional, staff only, never shown publicly)', 'whoiswho' ),
+			'',
+			array( 'attrs' => array( 'maxlength' => '254' ) )
+		);
+		$out   .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Add to nominations', 'whoiswho' ) . '</button>' );
+		return $this->card( $out . '</form>' );
+	}
+
+	/**
+	 * The form's card.
+	 *
+	 * @param string $body Body markup, already escaped.
+	 */
+	private function card( string $body ): string {
+		return Form::section(
+			__( 'Add profile to nominations', 'whoiswho' ),
+			$body,
+			array(
+				'id'          => 'wiw-add-nominee',
+				'description' => __( 'Find an existing profile by name, then choose its category.', 'whoiswho' ),
+			)
+		);
 	}
 
 	/**

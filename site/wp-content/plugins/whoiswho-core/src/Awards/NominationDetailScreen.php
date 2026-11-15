@@ -17,6 +17,7 @@ use WhoIsWho\Core\Awards\Admin\ProfilePicker;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 
 /**
  * Nomination detail screen.
@@ -133,7 +134,7 @@ final class NominationDetailScreen {
 		}
 		$back = '<p><a href="' . esc_url( add_query_arg( 'page', NominationsSwitch::SCREEN, admin_url( 'admin.php' ) ) ) . '">' . esc_html__( 'Back to Nominations', 'whoiswho' ) . '</a></p>';
 		$row  = $this->service->find( $id );
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Nomination', 'whoiswho' ) . '</h1>' . $back;
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Nomination', 'whoiswho' ) . '</h1>' . $back;
 		if ( null === $row ) {
 			return $out . '<p>' . esc_html__( 'That nomination does not exist.', 'whoiswho' ) . '</p></div>';
 		}
@@ -142,7 +143,7 @@ final class NominationDetailScreen {
 		}
 		$profile_id = (int) $row['profile_id'];
 		$nominee    = '' !== (string) $row['nominee_name'] ? (string) $row['nominee_name'] : ( $profile_id > 0 ? get_the_title( $profile_id ) : '' );
-		$out       .= $this->facts(
+		$facts      = $this->facts(
 			array(
 				__( 'Reference', 'whoiswho' )       => (string) $row['reference'],
 				__( 'Nominee', 'whoiswho' )         => $nominee,
@@ -158,15 +159,27 @@ final class NominationDetailScreen {
 				__( 'Submitted', 'whoiswho' )       => (string) $row['created_at'],
 			)
 		);
-		$out       .= '<h2>' . esc_html__( 'Evidence', 'whoiswho' ) . '</h2><p>' . nl2br( esc_html( (string) $row['evidence'] ) ) . '</p>';
+		$out       .= Form::section( __( 'Details', 'whoiswho' ), $facts, array( 'id' => 'wiw-nomination-details' ) );
+		$out       .= Form::section( __( 'Evidence', 'whoiswho' ), '<p>' . nl2br( esc_html( (string) $row['evidence'] ) ) . '</p>', array( 'id' => 'wiw-nomination-evidence' ) );
 		$out       .= $this->duplicates( $id, $nominee, (string) $row['nominee_org'], (int) $row['category_id'] );
 		$out       .= $this->history( $id );
-		$out       .= '<h2>' . esc_html__( 'Internal notes', 'whoiswho' ) . '</h2>';
-		$out       .= '<p>' . esc_html__( 'For staff only. Never shown publicly and never in an export.', 'whoiswho' ) . '</p>';
-		$out       .= $this->form(
+		$notes      = Form::textarea(
 			'notes',
-			$id,
-			'<p><textarea name="notes" rows="5" cols="60" maxlength="' . esc_attr( (string) NominationService::NOTES_MAX ) . '">' . esc_textarea( (string) $row['notes'] ) . '</textarea></p><p><button type="submit" class="button button-primary">' . esc_html__( 'Save notes', 'whoiswho' ) . '</button></p>'
+			__( 'Notes', 'whoiswho' ),
+			(string) $row['notes'],
+			array(
+				'rows'      => 5,
+				'maxlength' => NominationService::NOTES_MAX,
+				'counter'   => true,
+			)
+		);
+		$out       .= Form::section(
+			__( 'Internal notes', 'whoiswho' ),
+			$this->form( 'notes', $id, $notes . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save notes', 'whoiswho' ) . '</button>' ) ),
+			array(
+				'id'          => 'wiw-nomination-notes',
+				'description' => __( 'For staff only. Never shown publicly and never in an export.', 'whoiswho' ),
+			)
 		);
 		if ( 0 === $profile_id ) {
 			$out .= $this->link_control( $id, $profile_q );
@@ -180,7 +193,7 @@ final class NominationDetailScreen {
 	 * @param array<string, string> $facts Label => value.
 	 */
 	private function facts( array $facts ): string {
-		$out = '<table class="widefat striped"><tbody>';
+		$out = '<table class="widefat striped wiw-facts"><tbody>';
 		foreach ( $facts as $label => $value ) {
 			if ( '' === $value ) {
 				continue;
@@ -203,7 +216,7 @@ final class NominationDetailScreen {
 		if ( array() === $ids ) {
 			return '';
 		}
-		$out = '<h2>' . esc_html__( 'Duplicate warnings', 'whoiswho' ) . '</h2>';
+		$out = '';
 		foreach ( $ids as $other ) {
 			$link = add_query_arg(
 				array(
@@ -215,7 +228,7 @@ final class NominationDetailScreen {
 			/* translators: %d: another nomination's number. */
 			$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'Possible duplicate:', 'whoiswho' ) . ' <a href="' . esc_url( $link ) . '">' . esc_html( sprintf( __( 'nomination #%d', 'whoiswho' ), $other ) ) . '</a> ' . esc_html__( 'has the same nominee in this category.', 'whoiswho' ) . '</p></div>';
 		}
-		return $out;
+		return Form::section( __( 'Duplicate warnings', 'whoiswho' ), $out, array( 'id' => 'wiw-nomination-duplicates' ) );
 	}
 
 	/**
@@ -224,21 +237,8 @@ final class NominationDetailScreen {
 	 * @param int $id Nomination.
 	 */
 	private function history( int $id ): string {
-		$out  = '<h2>' . esc_html__( 'Change history', 'whoiswho' ) . '</h2>';
-		$rows = $this->service->history( $id );
-		if ( array() === $rows ) {
-			return $out . '<p>' . esc_html__( 'No changes yet.', 'whoiswho' ) . '</p>';
-		}
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( __( 'When (UTC)', 'whoiswho' ), __( 'Change', 'whoiswho' ), __( 'From', 'whoiswho' ), __( 'To', 'whoiswho' ), __( 'Staff member', 'whoiswho' ) ) as $heading ) {
-			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		foreach ( $rows as $row ) {
-			$user = get_userdata( (int) $row['user_id'] );
-			$out .= '<tr><td>' . esc_html( (string) $row['changed_at'] ) . '</td><td>' . esc_html( (string) $row['change_type'] ) . '</td><td>' . esc_html( NominationsScreen::label( (string) $row['old_value'] ) ) . '</td><td>' . esc_html( NominationsScreen::label( (string) $row['new_value'] ) ) . '</td><td>' . esc_html( false === $user ? __( '(removed user)', 'whoiswho' ) : (string) $user->display_name ) . '</td></tr>';
-		}
-		return $out . '</tbody></table>';
+		$table = ( new NominationHistoryTable( $this->service->history( $id ) ) )->html( new Request( array() ) );
+		return Form::section( __( 'Change history', 'whoiswho' ), $table, array( 'id' => 'wiw-nomination-history' ) );
 	}
 
 	/**
@@ -248,18 +248,26 @@ final class NominationDetailScreen {
 	 * @param string $profile_q Search text.
 	 */
 	private function link_control( int $id, string $profile_q ): string {
-		$out   = '<h2>' . esc_html__( 'Link to an existing profile', 'whoiswho' ) . '</h2>';
-		$out  .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><input type="hidden" name="nomination_id" value="' . esc_attr( (string) $id ) . '" />';
-		$out  .= '<label>' . esc_html__( 'Search profiles by name', 'whoiswho' ) . ' <input type="search" name="profile_q" value="' . esc_attr( $profile_q ) . '" maxlength="100" /></label> <button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
-		$found = ( new ProfilePicker() )->search( $profile_q );
-		if ( array() === $found ) {
-			return $out;
+		$search = '<input type="search" id="wiw-f-profile_q" name="profile_q" class="wiw-input regular-text" value="' . esc_attr( $profile_q ) . '" maxlength="100" />';
+		$out    = Form::open(
+			'<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><input type="hidden" name="nomination_id" value="' . esc_attr( (string) $id ) . '" />',
+			array(
+				'method' => 'get',
+				'action' => admin_url( 'admin.php' ),
+				'class'  => 'wiw-inline-fields',
+			)
+		);
+		$out   .= Form::row( 'wiw-f-profile_q', __( 'Search profiles by name', 'whoiswho' ), $search );
+		$out   .= '<div class="wiw-inline-fields__action"><button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></div></form>';
+		$found  = ( new ProfilePicker() )->search( $profile_q );
+		if ( array() !== $found ) {
+			$options = array();
+			foreach ( $found as $profile ) {
+				$options[ (string) $profile['id'] ] = $profile['name'] . ' (' . $profile['type'] . ')';
+			}
+			$out .= $this->form( 'link', $id, Form::select( 'profile_id', __( 'Profile', 'whoiswho' ), $options ) . Form::actions( '<button type="submit" class="button">' . esc_html__( 'Link profile', 'whoiswho' ) . '</button>' ) );
 		}
-		$select = '<p><label>' . esc_html__( 'Profile', 'whoiswho' ) . ' <select name="profile_id">';
-		foreach ( $found as $profile ) {
-			$select .= '<option value="' . esc_attr( (string) $profile['id'] ) . '">' . esc_html( $profile['name'] . ' (' . $profile['type'] . ')' ) . '</option>';
-		}
-		return $out . $this->form( 'link', $id, $select . '</select></label></p><p><button type="submit" class="button">' . esc_html__( 'Link profile', 'whoiswho' ) . '</button></p>' );
+		return Form::section( __( 'Link to an existing profile', 'whoiswho' ), $out, array( 'id' => 'wiw-nomination-link' ) );
 	}
 
 	/**
@@ -270,7 +278,7 @@ final class NominationDetailScreen {
 	 * @param string $inner Inner markup (already escaped).
 	 */
 	private function form( string $op, int $id, string $inner ): string {
-		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-form">';
 		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
 		$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
 		$out .= '<input type="hidden" name="op" value="' . esc_attr( $op ) . '" />';
@@ -296,45 +304,6 @@ final class NominationDetailScreen {
 			wp_die( esc_html__( 'You are not allowed to see this page.', 'whoiswho' ), '', array( 'response' => 403 ) );
 		}
 		$request = Request::from_globals();
-		echo wp_kses(
-			$this->html( $request->int( 'nomination_id' ), $request->string( 'wiw_notice' ), $request->string( 'profile_q' ) ),
-			array(
-				'div'      => array( 'class' => true ),
-				'h1'       => array(),
-				'h2'       => array(),
-				'p'        => array(),
-				'br'       => array(),
-				'a'        => array( 'href' => true ),
-				'label'    => array(),
-				'table'    => array( 'class' => true ),
-				'thead'    => array(),
-				'tbody'    => array(),
-				'tr'       => array(),
-				'th'       => array( 'scope' => true ),
-				'td'       => array(),
-				'form'     => array(
-					'method' => true,
-					'action' => true,
-				),
-				'textarea' => array(
-					'name'      => true,
-					'rows'      => true,
-					'cols'      => true,
-					'maxlength' => true,
-				),
-				'select'   => array( 'name' => true ),
-				'option'   => array( 'value' => true ),
-				'input'    => array(
-					'type'      => true,
-					'name'      => true,
-					'value'     => true,
-					'maxlength' => true,
-				),
-				'button'   => array(
-					'type'  => true,
-					'class' => true,
-				),
-			)
-		);
+		echo $this->html( $request->int( 'nomination_id' ), $request->string( 'wiw_notice' ), $request->string( 'profile_q' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }
