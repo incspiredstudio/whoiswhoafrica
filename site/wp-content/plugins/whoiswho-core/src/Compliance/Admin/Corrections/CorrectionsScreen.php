@@ -7,6 +7,8 @@
  * and Decline (with a reason that is kept as a private staff note and never shown on the site or sent out) close the item,
  * audited; the requester is emailed when it is resolved. A claimed profile shows the hint that edits by its assigned manager wait
  * for review; a staff edit applies at once (owner decision). Viewing needs wiw_support_inbox; deciding needs wiw_handle_disputes.
+ * The list is a shared staff list table (CorrectionsTable, REQ-275) with bulk Mark resolved and Decline; the detail uses the staff
+ * form kit.
  *
  * @package WhoIsWho
  */
@@ -15,6 +17,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Compliance\Admin\Corrections;
 
+use WhoIsWho\Core\Compliance\Admin\EnquiriesTable;
 use WhoIsWho\Core\Compliance\Support\EnquiryIntake;
 use WhoIsWho\Core\Compliance\Support\ItemStatus;
 use WhoIsWho\Core\Compliance\Support\ItemType;
@@ -24,6 +27,8 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Mail\Events;
 use WhoIsWho\Core\Platform\Mail\Notifier;
@@ -117,6 +122,7 @@ final class CorrectionsScreen {
 			'review'
 		);
 		$registry->hook();
+		CorrectionsTable::register_bulk_handler();
 		ActionGuard::register(
 			self::ACTION,
 			self::CAP_DISPUTES,
@@ -245,51 +251,52 @@ final class CorrectionsScreen {
 				return $this->detail_html( $item );
 			}
 		}
-		return $this->list_html( $request->string( 'status' ) );
+		return $this->list_html( $request->string( 'status' ), $request );
 	}
 
 	/**
-	 * The list.
+	 * The address of one correction.
 	 *
-	 * @param string $status Status filter.
+	 * @param int $id Item id.
 	 */
-	private function list_html( string $status ): string {
-		$rows = $this->rows( $status );
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Corrections', 'whoiswho' ) . '</h1>';
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+	public static function item_url( int $id ): string {
+		return add_query_arg(
+			array(
+				'page' => self::SCREEN,
+				'item' => $id,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * The list: the status filter and the staff list table (REQ-275).
+	 *
+	 * @param string  $status  Status filter.
+	 * @param Request $request Request (paging and the bulk step).
+	 */
+	private function list_html( string $status, Request $request ): string {
+		$this->require_view();
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Corrections', 'whoiswho' ) . '</h1>';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Status', 'whoiswho' ) . ' <select name="status"><option value="">' . esc_html__( 'Any', 'whoiswho' ) . '</option>';
 		foreach ( ItemStatus::all() as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $status, $option, false ) . '>' . esc_html( $option ) . '</option>';
 		}
 		$out .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Reference', 'Profile', 'Suggestion', 'Received', 'Due', 'Status', 'Overdue' ) as $heading ) {
-			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="7">' . esc_html__( 'No corrections.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$out .= '<tr><td><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&item=' . (int) $row['id'] ) ) . '">' . esc_html( (string) $row['reference'] ) . '</a></td>';
-			$out .= '<td>' . esc_html( (string) $row['profile_name'] ) . '</td><td>' . esc_html( (string) $row['suggestion'] ) . '</td>';
-			$out .= '<td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( (string) $row['due_at'] ) . '</td>';
-			$out .= '<td>' . esc_html( (string) $row['status'] ) . '</td><td>' . ( $row['breach'] ? esc_html__( 'Overdue', 'whoiswho' ) : '' ) . '</td></tr>';
-		}
-		return $out . '</tbody></table></div>';
+		return $out . ( new CorrectionsTable( $status, $this ) )->html( $request ) . '</div>';
 	}
 
 	/**
-	 * One correction with Apply, Mark resolved and Decline.
+	 * One correction with Apply, Mark resolved and Decline, in the staff form kit.
 	 *
 	 * @param array<string, mixed> $item Row.
 	 */
 	private function detail_html( array $item ): string {
-		$id   = (int) $item['id'];
-		$out  = '<div class="wrap"><h1>' . esc_html( (string) $item['reference'] ) . ' ' . esc_html__( 'Correction', 'whoiswho' ) . '</h1>';
-		$out .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
-		$out .= '<p class="description">' . esc_html__( 'Everything below is for staff only. The requester\'s details and evidence are never public.', 'whoiswho' ) . '</p>';
-		$out .= '<table class="widefat striped"><tbody>';
+		$id      = (int) $item['id'];
+		$out     = '<div class="wrap wiw-staff"><h1>' . esc_html( (string) $item['reference'] ) . ' ' . esc_html__( 'Correction', 'whoiswho' ) . ' ' . EnquiriesTable::status_pill( (string) $item['status'] ) . ( ! empty( $item['breach'] ) ? ' ' . ListTable::pill( __( 'Overdue', 'whoiswho' ), 'danger' ) : '' ) . '</h1>';
+		$out    .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
+		$details = '<table class="widefat striped"><tbody>';
 		foreach ( array(
 			'Name'         => 'requester_name',
 			'Relationship' => 'requester_relationship',
@@ -300,41 +307,58 @@ final class CorrectionsScreen {
 			'Due'          => 'due_at',
 			'Message'      => 'message',
 		) as $label => $key ) {
-			$out .= '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) ( $item[ $key ] ?? '' ) ) ) . '</td></tr>';
+			$details .= '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) ( $item[ $key ] ?? '' ) ) ) . '</td></tr>';
 		}
-		$out .= '<tr><th scope="row">' . esc_html__( 'Profile', 'whoiswho' ) . '</th><td>' . esc_html( (string) $item['profile_name'] ) . '</td></tr>';
-		$out .= '</tbody></table>';
+		$details .= '<tr><th scope="row">' . esc_html__( 'Profile', 'whoiswho' ) . '</th><td>' . esc_html( (string) $item['profile_name'] ) . '</td></tr>';
+		$details .= '</tbody></table>';
 		if ( $item['claimed'] ) {
-			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager waits for review before it shows; an edit by staff applies at once.', 'whoiswho' ) . '</p></div>';
+			$details .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager waits for review before it shows; an edit by staff applies at once.', 'whoiswho' ) . '</p></div>';
 		}
+		$out .= Form::section(
+			__( 'What the requester sent', 'whoiswho' ),
+			$details,
+			array(
+				'id'          => 'wiw-correction-details',
+				'description' => __( 'Everything below is for staff only. The requester\'s details and evidence are never public.', 'whoiswho' ),
+			)
+		);
 		if ( ItemStatus::is_closed( (string) $item['status'] ) ) {
 			return $out . '<p>' . esc_html__( 'This item is closed.', 'whoiswho' ) . '</p></div>';
 		}
-		$out .= '<h2>' . esc_html__( 'Actions', 'whoiswho' ) . '</h2>';
+		$buttons = '';
 		if ( null !== $item['profile_id'] ) {
-			$out .= '<p><a class="button button-primary" href="' . esc_url( $this->apply_url( $item ) ) . '">' . esc_html__( 'Apply: edit the profile', 'whoiswho' ) . '</a> ';
-		} else {
-			$out .= '<p>';
+			$buttons .= '<a class="button button-primary" href="' . esc_url( $this->apply_url( $item ) ) . '">' . esc_html__( 'Apply: edit the profile', 'whoiswho' ) . '</a>';
 		}
-		$out .= '</p>';
-		$out .= $this->button( $id, 'resolve', __( 'Mark resolved', 'whoiswho' ) );
-		$out .= $this->button( $id, 'decline', __( 'Decline', 'whoiswho' ), '<label>' . esc_html__( 'Reason (kept private)', 'whoiswho' ) . ' <input type="text" name="reason" maxlength="1000" required="required" /></label> ' );
+		$buttons .= $this->button( $id, 'resolve', __( 'Mark resolved', 'whoiswho' ) );
+		$out     .= Form::section( __( 'Actions', 'whoiswho' ), '<div class="wiw-actions">' . $buttons . '</div>', array( 'id' => 'wiw-correction-actions' ) );
+		$reason   = Form::text(
+			'reason',
+			__( 'Reason (kept private)', 'whoiswho' ),
+			'',
+			array(
+				'required'  => true,
+				'maxlength' => 1000,
+				'help'      => __( 'Kept as a private staff note. It is never shown on the site or sent to the requester.', 'whoiswho' ),
+			)
+		);
+		$out     .= Form::section( __( 'Decline', 'whoiswho' ), $this->button( $id, 'decline', __( 'Decline', 'whoiswho' ), $reason, 'button wiw-button--danger' ), array( 'id' => 'wiw-correction-decline' ) );
 		return $out . '</div>';
 	}
 
 	/**
-	 * One action form.
+	 * One action form. With extra fields, the button sits in an actions bar below them.
 	 *
 	 * @param int    $id    Item id.
 	 * @param string $op    Operation.
 	 * @param string $label Button label.
 	 * @param string $extra Already escaped extra fields.
+	 * @param string $button_class Button classes.
 	 */
-	private function button( int $id, string $op, string $label, string $extra = '' ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:1em">'
-			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />'
-			. '<input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" /><input type="hidden" name="op" value="' . esc_attr( $op ) . '" />'
-			. $extra . '<button class="button">' . esc_html( $label ) . '</button></form>';
+	private function button( int $id, string $op, string $label, string $extra = '', string $button_class = 'button' ): string {
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />'
+			. '<input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" /><input type="hidden" name="op" value="' . esc_attr( $op ) . '" />';
+		$submit = '<button type="submit" class="' . esc_attr( $button_class ) . '">' . esc_html( $label ) . '</button>';
+		return Form::open( $hidden ) . ( '' === $extra ? $submit : $extra . Form::actions( $submit ) ) . '</form>';
 	}
 
 	/**

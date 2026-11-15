@@ -3,7 +3,9 @@
  * The Suppression list screen (REQ-207, REQ-147, REQ-244; prototype A22): the suppressed names with type, how the entry arose, who
  * added it and when, and the reason (staff only). Viewing needs wiw_view_suppression (Reviewer, Editor, Administrator). Adding or
  * removing an entry by hand needs wiw_edit_suppression (Administrator) and, for a removal, a reason; both are audited by the
- * Suppression service. The form controls are not printed for a user without wiw_edit_suppression.
+ * Suppression service. The form controls are not printed for a user without wiw_edit_suppression. The list is a shared staff list
+ * table (SuppressionTable, REQ-275): Remove is a row action and a bulk action with one shared reason; the add form uses the kit.
+ * The single remove handler stays registered for any form that still posts to it.
  *
  * @package WhoIsWho
  */
@@ -18,6 +20,7 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -55,6 +58,7 @@ final class SuppressionScreen {
 				$registry->hook();
 				ActionGuard::register( self::ADD, self::EDIT_CAP, array( self::class, 'handle_add' ) );
 				ActionGuard::register( self::REMOVE, self::EDIT_CAP, array( self::class, 'handle_remove' ) );
+				SuppressionTable::register_bulk_handler();
 			},
 			1
 		);
@@ -129,7 +133,7 @@ final class SuppressionScreen {
 			throw new \DomainException( 'Not allowed to view the suppression list.' );
 		}
 		$can_edit = current_user_can( self::EDIT_CAP ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
-		$out      = '<div class="wrap"><h1>' . esc_html__( 'Suppression list', 'whoiswho' ) . '</h1>' . $this->notice( $request );
+		$out      = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Suppression list', 'whoiswho' ) . '</h1>' . $this->notice( $request );
 		$out     .= '<p>' . esc_html__( 'Names that are never imported or published. The reason is for staff only.', 'whoiswho' ) . '</p>';
 		if ( current_user_can( SnapshotExport::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			$out .= '<p><a class="button" href="' . esc_url( SnapshotExport::url() ) . '">' . esc_html__( 'Download snapshot for acquisition', 'whoiswho' ) . '</a> ' . esc_html__( 'The file contains personal data: keep it out of shared folders and delete it after the run.', 'whoiswho' ) . '</p>';
@@ -137,23 +141,7 @@ final class SuppressionScreen {
 		if ( $can_edit ) {
 			$out .= $this->add_form();
 		}
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Name', 'Type', 'How added', 'Added by', 'Added on', 'Reason' ) as $heading ) {
-			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		$out .= $can_edit ? '<th scope="col"></th>' : '';
-		$out .= '</tr></thead><tbody>';
-		$rows = $this->entries();
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="' . ( $can_edit ? '7' : '6' ) . '">' . esc_html__( 'No names are suppressed.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$by   = (int) $row['added_by'] > 0 ? get_the_author_meta( 'display_name', (int) $row['added_by'] ) : __( 'System', 'whoiswho' );
-			$out .= '<tr><th scope="row">' . esc_html( (string) $row['name'] ) . '</th><td>' . esc_html( (string) $row['entity_type'] ) . '</td><td>' . esc_html( (string) $row['source'] ) . '</td><td>' . esc_html( (string) $by ) . '</td><td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td>';
-			$out .= $can_edit ? '<td>' . $this->remove_form( (int) $row['id'] ) . '</td>' : '';
-			$out .= '</tr>';
-		}
-		return $out . '</tbody></table></div>';
+		return $out . ( new SuppressionTable() )->html( $request ) . '</div>';
 	}
 
 	/**
@@ -174,23 +162,30 @@ final class SuppressionScreen {
 	}
 
 	/**
-	 * The add form.
+	 * The add form, in the staff form kit.
 	 */
 	private function add_form(): string {
-		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::ADD ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ADD ) ) . '" />';
-		$out .= '<p><label>' . esc_html__( 'Name', 'whoiswho' ) . ' <input type="text" name="name" class="regular-text" required="required" /></label> <label>' . esc_html__( 'Type', 'whoiswho' ) . ' <select name="entity_type">';
-		foreach ( StateRepository::ENTITY_TYPES as $type ) {
-			$out .= '<option value="' . esc_attr( $type ) . '">' . esc_html( $type ) . '</option>';
-		}
-		return $out . '</select></label> <label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" class="regular-text" required="required" /></label> <button class="button button-primary">' . esc_html__( 'Add to the list', 'whoiswho' ) . '</button></p></form>';
-	}
-
-	/**
-	 * The remove form of one row.
-	 *
-	 * @param int $id Entry id.
-	 */
-	private function remove_form( int $id ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::REMOVE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::REMOVE ) ) . '" /><input type="hidden" name="id" value="' . esc_attr( (string) $id ) . '" /><input type="text" name="reason" placeholder="' . esc_attr__( 'Reason', 'whoiswho' ) . '" required="required" /> <button class="button">' . esc_html__( 'Remove', 'whoiswho' ) . '</button></form>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ADD ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ADD ) ) . '" />';
+		$fields = '<div class="wiw-field-grid">'
+			. Form::text( 'name', __( 'Name', 'whoiswho' ), '', array( 'required' => true ) )
+			. Form::select( 'entity_type', __( 'Type', 'whoiswho' ), array_combine( StateRepository::ENTITY_TYPES, StateRepository::ENTITY_TYPES ) )
+			. Form::text(
+				'reason',
+				__( 'Reason', 'whoiswho' ),
+				'',
+				array(
+					'required' => true,
+					'help'     => __( 'For staff only.', 'whoiswho' ),
+				)
+			)
+			. '</div>';
+		return Form::section(
+			__( 'Add a name', 'whoiswho' ),
+			Form::open( $hidden ) . $fields . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Add to the list', 'whoiswho' ) . '</button>' ) . '</form>',
+			array(
+				'id'          => 'wiw-suppression-add',
+				'description' => __( 'The name is never imported or published while it is on the list.', 'whoiswho' ),
+			)
+		);
 	}
 }

@@ -28,6 +28,8 @@ Everything a visitor sends through the Get listed form, the Contact form or a pr
 
 Enquiries carry no due date.
 
+To work several at once, tick them and use **Bulk actions**: **Assign to me** (the status stays) or **Set status** (you choose the status; the owner stays). Hover over a row, or tab to it, for **Open** and **Assign to me**.
+
 ## Customers
 
 A customer record holds an external ID, name, segment and contact. Administrators create customers directly, on **Audience > Customers** or from New sponsored story. The record keeps a stable ID and change timestamps.

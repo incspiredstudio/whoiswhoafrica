@@ -22,6 +22,8 @@ The Administrator can grant `wiw_review_claims` to any role, including a Reviewe
 
 A profile that is still pending review cannot be claimed until it has been reviewed.
 
+The list has a checkbox on each open claim and a **Bulk actions** menu: **Approve**, and **Reject** with one reason sent to every claimant listed. Hover over a row, or tab to it, for **View**, **Approve** and **Reject**. **Approve and create account** is only on the claim's own page (open it with **View**), because each account needs its own check.
+
 ## Deadlines and reminders
 
 A scheduled job emails every holder of the claims capability on day 3 and day 4, then once a day while the claim is overdue. The Claims screen marks an overdue claim. Deciding the claim stops the reminders. Each reminder is recorded in the email log.
