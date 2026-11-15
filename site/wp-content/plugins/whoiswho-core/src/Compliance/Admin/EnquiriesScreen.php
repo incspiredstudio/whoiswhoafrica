@@ -4,7 +4,8 @@
  * pages are worked. It lists reference, name, organisation, interest, source, age, status and owner (an enquiry has no due date),
  * filters by status and source, and opens one item with its full detail. Staff set the owner and status and add internal notes
  * that are never public. Every change is audited with ids and statuses only, never names, addresses or note text. Held by
- * wiw_support_inbox; a user without it gets a 403 and no menu entry.
+ * wiw_support_inbox; a user without it gets a 403 and no menu entry. The list is a shared staff list table (EnquiriesTable,
+ * REQ-275) with bulk Assign to me and Set status; the detail uses the staff form kit.
  *
  * @package WhoIsWho
  */
@@ -19,6 +20,7 @@ use WhoIsWho\Core\Compliance\Support\SupportItems;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Notes\NotesService;
 
@@ -103,6 +105,7 @@ final class EnquiriesScreen {
 			'audience'
 		);
 		$registry->hook();
+		EnquiriesTable::register_bulk_handler();
 		ActionGuard::register(
 			self::ACTION,
 			self::CAP,
@@ -267,20 +270,35 @@ final class EnquiriesScreen {
 				return $this->detail_html( $item );
 			}
 		}
-		return $this->list_html( $request->string( 'status' ), $request->string( 'source' ) );
+		return $this->list_html( $request->string( 'status' ), $request->string( 'source' ), $request );
 	}
 
 	/**
-	 * The list.
+	 * The address of one enquiry.
 	 *
-	 * @param string $status Status filter.
-	 * @param string $source Source filter.
+	 * @param int $id Item id.
 	 */
-	private function list_html( string $status, string $source ): string {
-		$rows = $this->rows( $status, $source );
-		$now  = time();
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Enquiries', 'whoiswho' ) . '</h1>';
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+	public static function item_url( int $id ): string {
+		return add_query_arg(
+			array(
+				'page' => self::SCREEN,
+				'item' => $id,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * The list: the filters and the staff list table (REQ-275).
+	 *
+	 * @param string  $status  Status filter.
+	 * @param string  $source  Source filter.
+	 * @param Request $request Request (paging and the bulk step).
+	 */
+	private function list_html( string $status, string $source, Request $request ): string {
+		$this->require_capability();
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Enquiries', 'whoiswho' ) . '</h1>';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Status', 'whoiswho' ) . ' <select name="status"><option value="">' . esc_html__( 'Any', 'whoiswho' ) . '</option>';
 		foreach ( ItemStatus::all() as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $status, $option, false ) . '>' . esc_html( $option ) . '</option>';
@@ -289,41 +307,27 @@ final class EnquiriesScreen {
 		foreach ( self::SOURCES as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $source, $option, false ) . '>' . esc_html( $option ) . '</option>';
 		}
-		$out .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Reference', 'Name', 'Organisation', 'Interested in', 'Source', 'Age', 'Status', 'Owner' ) as $heading ) {
-			$out .= '<th>' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="8">' . esc_html__( 'No enquiries.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$owner = (int) $row['owner_id'] > 0 ? get_userdata( (int) $row['owner_id'] ) : false;
-			$out  .= '<tr>';
-			$out  .= '<td><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&item=' . (int) $row['id'] ) ) . '">' . esc_html( (string) $row['reference'] ) . '</a></td>';
-			$out  .= '<td>' . esc_html( (string) $row['requester_name'] ) . '</td>';
-			$out  .= '<td>' . esc_html( (string) $row['organisation'] ) . '</td>';
-			$out  .= '<td>' . esc_html( (string) $row['interest'] ) . '</td>';
-			$out  .= '<td>' . esc_html( (string) $row['source'] ) . '</td>';
-			/* translators: %d: number of days. */
-			$out .= '<td>' . esc_html( sprintf( _n( '%d day', '%d days', self::age_days( $row, $now ), 'whoiswho' ), self::age_days( $row, $now ) ) ) . '</td>';
-			$out .= '<td>' . esc_html( (string) $row['status'] ) . '</td>';
-			$out .= '<td>' . esc_html( $owner instanceof \WP_User ? $owner->display_name : '' ) . '</td></tr>';
-		}
-		return $out . '</tbody></table></div>';
+		$out  .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$table = new EnquiriesTable(
+			array(
+				'status' => in_array( $status, ItemStatus::all(), true ) ? $status : '',
+				'source' => in_array( $source, self::SOURCES, true ) ? $source : '',
+			),
+			$this
+		);
+		return $out . $table->html( $request ) . '</div>';
 	}
 
 	/**
-	 * One enquiry with its controls and internal notes.
+	 * One enquiry with its controls and internal notes, in the staff form kit.
 	 *
 	 * @param array<string, mixed> $item Row.
 	 */
 	private function detail_html( array $item ): string {
-		$id   = (int) $item['id'];
-		$out  = '<div class="wrap"><h1>' . esc_html( (string) $item['reference'] ) . '</h1>';
-		$out .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
-		$out .= '<table class="widefat striped"><tbody>';
+		$id      = (int) $item['id'];
+		$out     = '<div class="wrap wiw-staff"><h1>' . esc_html( (string) $item['reference'] ) . ' ' . EnquiriesTable::status_pill( (string) $item['status'] ) . '</h1>';
+		$out    .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
+		$details = '<table class="widefat striped"><tbody>';
 		foreach ( array(
 			'Name'          => 'requester_name',
 			'Organisation'  => 'organisation',
@@ -334,29 +338,46 @@ final class EnquiriesScreen {
 			'Received'      => 'created_at',
 			'Message'       => 'message',
 		) as $label => $key ) {
-			$out .= '<tr><th>' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) $item[ $key ] ) ) . '</td></tr>';
+			$details .= '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) $item[ $key ] ) ) . '</td></tr>';
 		}
-		$out .= '</tbody></table>';
-		$out .= '<h2>' . esc_html__( 'Status and owner', 'whoiswho' ) . '</h2>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" /><input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" />';
-		$out .= '<label>' . esc_html__( 'Status', 'whoiswho' ) . ' <select name="status">';
-		foreach ( ItemStatus::all() as $option ) {
-			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( (string) $item['status'], $option, false ) . '>' . esc_html( $option ) . '</option>';
-		}
-		$out .= '</select></label> <label>' . esc_html__( 'Owner', 'whoiswho' ) . ' <select name="owner"><option value="0">' . esc_html__( 'Nobody', 'whoiswho' ) . '</option>';
+		$details .= '</tbody></table>';
+		$out     .= Form::section( __( 'Enquiry', 'whoiswho' ), $details, array( 'id' => 'wiw-enquiry-details' ) );
+
+		$owners = array( '0' => __( 'Nobody', 'whoiswho' ) );
 		foreach ( get_users( array( 'capability' => self::CAP ) ) as $user ) {
-			$out .= '<option value="' . esc_attr( (string) $user->ID ) . '"' . selected( (int) $item['owner_id'], (int) $user->ID, false ) . '>' . esc_html( $user->display_name ) . '</option>';
+			$owners[ (string) $user->ID ] = $user->display_name;
 		}
-		$out .= '</select></label> <button class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button></form>';
-		$out .= '<h2>' . esc_html__( 'Internal notes (never public)', 'whoiswho' ) . '</h2><ul>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" /><input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" />';
+		$fields = '<div class="wiw-field-grid">' . Form::select( 'status', __( 'Status', 'whoiswho' ), array_combine( ItemStatus::all(), ItemStatus::all() ), (string) $item['status'] )
+			. Form::select( 'owner', __( 'Owner', 'whoiswho' ), $owners, (string) (int) $item['owner_id'] ) . '</div>';
+		$out   .= Form::section(
+			__( 'Status and owner', 'whoiswho' ),
+			Form::open( $hidden ) . $fields . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button>' ) . '</form>',
+			array( 'id' => 'wiw-enquiry-status' )
+		);
+
+		$notes = '<ul class="wiw-notes">';
 		foreach ( $this->notes->list( self::NOTE_TYPE, $id, self::CAP ) as $note ) {
-			$out .= '<li>' . esc_html( $note['created_at'] ) . ': ' . nl2br( esc_html( $note['body'] ) ) . '</li>';
+			$notes .= '<li><span class="description">' . esc_html( $note['created_at'] ) . ':</span> ' . nl2br( esc_html( $note['body'] ) ) . '</li>';
 		}
-		$out .= '</ul><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::NOTE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::NOTE_ACTION ) ) . '" /><input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" />';
-		$out .= '<p><textarea name="note" rows="3" cols="60" maxlength="5000"></textarea></p><button class="button">' . esc_html__( 'Add note', 'whoiswho' ) . '</button></form></div>';
-		return $out;
+		$notes .= '</ul>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::NOTE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::NOTE_ACTION ) ) . '" /><input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" />';
+		$notes .= Form::open( $hidden ) . Form::textarea(
+			'note',
+			__( 'Add a note', 'whoiswho' ),
+			'',
+			array(
+				'rows'      => 3,
+				'maxlength' => 5000,
+				'counter'   => true,
+			)
+		) . Form::actions( '<button type="submit" class="button">' . esc_html__( 'Add note', 'whoiswho' ) . '</button>' ) . '</form>';
+		$out   .= Form::section(
+			__( 'Internal notes (never public)', 'whoiswho' ),
+			$notes,
+			array( 'id' => 'wiw-enquiry-notes' )
+		);
+		return $out . '</div>';
 	}
 
 	/**

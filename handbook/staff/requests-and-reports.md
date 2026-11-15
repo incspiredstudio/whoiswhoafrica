@@ -21,6 +21,8 @@ The Kind column says which it is. Filter by kind and status. Each row shows refe
 | Removal | "Request removal" on a profile | Valid: hide and suppress, or Not valid with a reason |
 | Report | "Report" on a profile | Hide the profile now, dismiss, or resolve |
 
+Open items have a checkbox and a **Bulk actions** menu: **Resolve report**, **Dismiss report** (asks first), **Close data request: fulfilled** and **Escalate to the Administrator**. A row of another kind is skipped. Removal decisions, **Hide the profile now** and **Send information** stay on the item's own page. Hover over a row, or tab to it, for **Open** and the actions that fit its kind.
+
 ## Handle a removal
 
 1. Open the request. A due-date countdown shows the two-business-day target.

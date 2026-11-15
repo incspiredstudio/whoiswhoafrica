@@ -23,6 +23,8 @@ An unresolved dispute goes to the Administrator. The Administrator can grant the
 5. If the profile is claimed, an edit by its Profile owner waits for a Reviewer or Administrator. The screen shows a hint when this applies.
 6. The edit, the closure or the decline is written to the audit log, and the requester is emailed when the request is resolved.
 
+Open corrections have a checkbox and a **Bulk actions** menu: **Mark resolved**, and **Decline** with one private reason kept on every item listed. Hover over a row, or tab to it, for **Open**, **Apply**, **Mark resolved** and **Decline**.
+
 ## Time limits
 
 | Target | Time |

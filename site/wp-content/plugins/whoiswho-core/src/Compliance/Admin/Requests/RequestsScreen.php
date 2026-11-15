@@ -4,7 +4,8 @@
  * reports with the Kind column, status and kind filters, due date and breach flag, and a detail page with the staff actions for
  * each kind. Viewing needs wiw_handle_requests; deciding a removal, or dismissing or resolving a report, needs
  * wiw_handle_disputes (checked again in RemovalDecisions); hiding a reported profile needs wiw_bulk_unpublish or
- * wiw_unpublish_profiles. Every change is audited with ids and statuses only.
+ * wiw_unpublish_profiles. Every change is audited with ids and statuses only. The list is a shared staff list table (RequestsTable,
+ * REQ-275) with bulk Resolve, Dismiss, Close and Escalate; the detail uses the staff form kit.
  *
  * @package WhoIsWho
  */
@@ -13,6 +14,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Compliance\Admin\Requests;
 
+use WhoIsWho\Core\Compliance\Admin\EnquiriesTable;
 use WhoIsWho\Core\Compliance\Info\InformationSender;
 use WhoIsWho\Core\Compliance\Removals\RemovalDecisions;
 use WhoIsWho\Core\Compliance\Support\ItemStatus;
@@ -23,6 +25,8 @@ use WhoIsWho\Core\Directory\State\StateRepository;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
+use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Review\StateMachine;
 
@@ -121,6 +125,7 @@ final class RequestsScreen {
 			'review'
 		);
 		$registry->hook();
+		RequestsTable::register_bulk_handler();
 		$handler = static function ( Request $request ): void {
 			self::for_site()->handle( $request );
 		};
@@ -329,19 +334,35 @@ final class RequestsScreen {
 				return $this->detail_html( $item );
 			}
 		}
-		return $this->list_html( $request->string( 'kind' ), $request->string( 'status' ) );
+		return $this->list_html( $request->string( 'kind' ), $request->string( 'status' ), $request );
 	}
 
 	/**
-	 * The list.
+	 * The address of one item.
 	 *
-	 * @param string $kind   Kind filter.
-	 * @param string $status Status filter.
+	 * @param int $id Item id.
 	 */
-	private function list_html( string $kind, string $status ): string {
-		$rows = $this->rows( $kind, $status );
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Requests and reports', 'whoiswho' ) . '</h1>';
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+	public static function item_url( int $id ): string {
+		return add_query_arg(
+			array(
+				'page' => self::SCREEN,
+				'item' => $id,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * The list: the filters and the staff list table (REQ-275).
+	 *
+	 * @param string  $kind    Kind filter.
+	 * @param string  $status  Status filter.
+	 * @param Request $request Request (paging and the bulk step).
+	 */
+	private function list_html( string $kind, string $status, Request $request ): string {
+		$this->require_view();
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Requests and reports', 'whoiswho' ) . '</h1>';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Kind', 'whoiswho' ) . ' <select name="kind"><option value="">' . esc_html__( 'Any', 'whoiswho' ) . '</option>';
 		foreach ( self::KINDS as $type => $label ) {
 			$out .= '<option value="' . esc_attr( $type ) . '"' . selected( $kind, $type, false ) . '>' . esc_html( $label ) . '</option>';
@@ -350,33 +371,27 @@ final class RequestsScreen {
 		foreach ( ItemStatus::all() as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $status, $option, false ) . '>' . esc_html( $option ) . '</option>';
 		}
-		$out .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Reference', 'Kind', 'Status', 'Due', 'Breach' ) as $heading ) {
-			$out .= '<th>' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="5">' . esc_html__( 'No requests or reports.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$out .= '<tr><td><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&item=' . (int) $row['id'] ) ) . '">' . esc_html( (string) $row['reference'] ) . '</a></td>';
-			$out .= '<td>' . esc_html( (string) $row['kind'] ) . '</td><td>' . esc_html( (string) $row['status'] ) . '</td>';
-			$out .= '<td>' . esc_html( (string) $row['due_at'] ) . '</td><td>' . ( $row['breach'] ? esc_html__( 'Overdue', 'whoiswho' ) : '' ) . '</td></tr>';
-		}
-		return $out . '</tbody></table></div>';
+		$out  .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$table = new RequestsTable(
+			array(
+				'kind'   => isset( self::KINDS[ $kind ] ) ? $kind : '',
+				'status' => in_array( $status, ItemStatus::all(), true ) ? $status : '',
+			),
+			$this
+		);
+		return $out . $table->html( $request ) . '</div>';
 	}
 
 	/**
-	 * One item with the actions for its kind.
+	 * One item with the actions for its kind, in the staff form kit.
 	 *
 	 * @param array<string, mixed> $item Row.
 	 */
 	private function detail_html( array $item ): string {
-		$id   = (int) $item['id'];
-		$out  = '<div class="wrap"><h1>' . esc_html( (string) $item['reference'] ) . ' ' . esc_html( (string) $item['kind'] ) . '</h1>';
-		$out .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
-		$out .= '<table class="widefat striped"><tbody>';
+		$id      = (int) $item['id'];
+		$out     = '<div class="wrap wiw-staff"><h1>' . esc_html( (string) $item['reference'] ) . ' ' . esc_html( (string) $item['kind'] ) . ' ' . EnquiriesTable::status_pill( (string) $item['status'] ) . ( ! empty( $item['breach'] ) ? ' ' . ListTable::pill( __( 'Overdue', 'whoiswho' ), 'danger' ) : '' ) . '</h1>';
+		$out    .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
+		$details = '<table class="widefat striped"><tbody>';
 		foreach ( array(
 			'Name'     => 'requester_name',
 			'Email'    => 'requester_email',
@@ -385,55 +400,82 @@ final class RequestsScreen {
 			'Received' => 'created_at',
 			'Message'  => 'message',
 		) as $label => $key ) {
-			$out .= '<tr><th>' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) $item[ $key ] ) ) . '</td></tr>';
+			$details .= '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . nl2br( esc_html( (string) $item[ $key ] ) ) . '</td></tr>';
 		}
 		if ( null !== $item['profile_id'] ) {
-			$out .= '<tr><th>' . esc_html__( 'Profile', 'whoiswho' ) . '</th><td>' . esc_html( (string) get_the_title( (int) $item['profile_id'] ) ) . '</td></tr>';
+			$details .= '<tr><th scope="row">' . esc_html__( 'Profile', 'whoiswho' ) . '</th><td>' . esc_html( (string) get_the_title( (int) $item['profile_id'] ) ) . '</td></tr>';
 		}
-		$out .= '</tbody></table>';
+		$details .= '</tbody></table>';
+		$out     .= Form::section( __( 'Details', 'whoiswho' ), $details, array( 'id' => 'wiw-request-details' ) );
 		if ( ItemStatus::is_closed( (string) $item['status'] ) ) {
 			return $out . '<p>' . esc_html__( 'This item is closed.', 'whoiswho' ) . '</p></div>';
 		}
-		$out .= '<h2>' . esc_html__( 'Actions', 'whoiswho' ) . '</h2>';
+		$buttons = '';
+		$extra   = '';
 		switch ( (string) $item['item_type'] ) {
 			case ItemType::REMOVAL:
-				$out .= $this->button( $id, 'uphold', __( 'Valid: hide and suppress', 'whoiswho' ), self::ACTION );
-				$out .= $this->button( $id, 'decline', __( 'Not valid', 'whoiswho' ), self::ACTION, '<label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" maxlength="500" required /></label> ' );
+				$buttons .= $this->button( $id, 'uphold', __( 'Valid: hide and suppress', 'whoiswho' ), self::ACTION, '', 'button button-primary' );
+				$extra    = Form::section(
+					__( 'Not valid', 'whoiswho' ),
+					$this->button(
+						$id,
+						'decline',
+						__( 'Not valid', 'whoiswho' ),
+						self::ACTION,
+						Form::text(
+							'reason',
+							__( 'Reason', 'whoiswho' ),
+							'',
+							array(
+								'required'  => true,
+								'maxlength' => 500,
+								'help'      => __( 'Sent to the requester.', 'whoiswho' ),
+							)
+						),
+						'button wiw-button--danger'
+					),
+					array( 'id' => 'wiw-request-decline' )
+				);
 				break;
 			case ItemType::REPORT:
-				$out .= $this->button( $id, 'hide', __( 'Hide the profile now', 'whoiswho' ), current_user_can( 'wiw_bulk_unpublish' ) ? self::ACTION_HIDE : self::ACTION_HIDE_ED ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
-				$out .= $this->button( $id, 'dismiss', __( 'Dismiss', 'whoiswho' ), self::ACTION );
-				$out .= $this->button( $id, 'resolve', __( 'Resolve', 'whoiswho' ), self::ACTION );
+				$buttons .= $this->button( $id, 'hide', __( 'Hide the profile now', 'whoiswho' ), current_user_can( 'wiw_bulk_unpublish' ) ? self::ACTION_HIDE : self::ACTION_HIDE_ED, '', 'button wiw-button--danger' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+				$buttons .= $this->button( $id, 'dismiss', __( 'Dismiss', 'whoiswho' ), self::ACTION );
+				$buttons .= $this->button( $id, 'resolve', __( 'Resolve', 'whoiswho' ), self::ACTION, '', 'button button-primary' );
 				break;
 			default:
-				$out .= $this->button( $id, 'close', __( 'Close: fulfilled', 'whoiswho' ), self::ACTION );
-		}
-		$out .= $this->button( $id, 'escalate', __( 'Escalate to the Administrator', 'whoiswho' ), self::ACTION );
+				$buttons .= $this->button( $id, 'close', __( 'Close: fulfilled', 'whoiswho' ), self::ACTION, '', 'button button-primary' );
+		}//end switch
+		$buttons .= $this->button( $id, 'escalate', __( 'Escalate to the Administrator', 'whoiswho' ), self::ACTION );
+		$out     .= Form::section( __( 'Actions', 'whoiswho' ), '<div class="wiw-actions">' . $buttons . '</div>', array( 'id' => 'wiw-request-actions' ) ) . $extra;
 		if ( '' !== (string) $item['requester_email'] ) {
 			$boxes = '';
 			foreach ( InformationSender::KINDS as $kind => $label ) {
-				$boxes .= '<label style="margin-right:1em"><input type="checkbox" name="kind_' . esc_attr( $kind ) . '" value="1" /> ' . esc_html( $label ) . '</label>';
+				$boxes .= Form::checkbox( 'kind_' . $kind, $label );
 			}
-			$out .= '<h2>' . esc_html__( 'Send information to the requester', 'whoiswho' ) . '</h2>'
-				. $this->button( $id, 'send_info', __( 'Send', 'whoiswho' ), self::ACTION, $boxes );
+			$out .= Form::section(
+				__( 'Send information to the requester', 'whoiswho' ),
+				$this->button( $id, 'send_info', __( 'Send', 'whoiswho' ), self::ACTION, $boxes ),
+				array( 'id' => 'wiw-request-send-info' )
+			);
 		}
 		return $out . '</div>';
 	}
 
 	/**
-	 * One action form.
+	 * One action form. With extra fields, the button sits in an actions bar below them.
 	 *
 	 * @param int    $id     Item id.
 	 * @param string $op     Operation.
 	 * @param string $label  Button label.
 	 * @param string $action Admin-post action.
 	 * @param string $extra  Already escaped extra fields.
+	 * @param string $button_class Button classes.
 	 */
-	private function button( int $id, string $op, string $label, string $action, string $extra = '' ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:1em">'
-			. '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" />'
-			. '<input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" /><input type="hidden" name="op" value="' . esc_attr( $op ) . '" />'
-			. $extra . '<button class="button">' . esc_html( $label ) . '</button></form>';
+	private function button( int $id, string $op, string $label, string $action, string $extra = '', string $button_class = 'button' ): string {
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" />'
+			. '<input type="hidden" name="item" value="' . esc_attr( (string) $id ) . '" /><input type="hidden" name="op" value="' . esc_attr( $op ) . '" />';
+		$submit = '<button type="submit" class="' . esc_attr( $button_class ) . '">' . esc_html( $label ) . '</button>';
+		return Form::open( $hidden ) . ( '' === $extra ? $submit : $extra . Form::actions( $submit ) ) . '</form>';
 	}
 
 	/**
