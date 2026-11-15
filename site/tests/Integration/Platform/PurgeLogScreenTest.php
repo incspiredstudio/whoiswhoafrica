@@ -49,7 +49,7 @@ final class PurgeLogScreenTest extends WpTestCase {
 		$html = ( new PurgeLogScreen( $log ) )->html( new Request( array() ) );
 		$this->assertStringContainsString( 'profile #11', $html );
 		$this->assertStringContainsString( 'unpublished', $html );
-		$this->assertStringContainsString( '<td>ok</td>', $html );
+		$this->assertStringContainsString( 'wiw-pill--success">ok<', $html, 'the status is a pill in the list table cell' );
 	}
 
 	public function test_REQ_209_purge_log_filters_by_status_and_date(): void {

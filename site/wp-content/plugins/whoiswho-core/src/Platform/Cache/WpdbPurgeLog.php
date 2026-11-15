@@ -56,25 +56,12 @@ final class WpdbPurgeLog implements PurgeLog {
 	 */
 	public function rows( int $limit = 50, int $offset = 0, array $filters = array() ): array {
 		global $wpdb;
-		$sql  = 'SELECT subject_type, subject_id, url_count, result, reason, created_at FROM ' . self::table() . ' WHERE 1 = 1';
-		$args = array();
-		if ( ! empty( $filters['status'] ) ) {
-			$sql   .= ' AND result = %s';
-			$args[] = $filters['status'];
-		}
-		if ( ! empty( $filters['from'] ) ) {
-			$sql   .= ' AND created_at >= %s';
-			$args[] = $filters['from'] . ' 00:00:00';
-		}
-		if ( ! empty( $filters['to'] ) ) {
-			$sql   .= ' AND created_at <= %s';
-			$args[] = $filters['to'] . ' 23:59:59';
-		}
-		$sql   .= ' ORDER BY id DESC LIMIT %d OFFSET %d';
-		$args[] = $limit;
-		$args[] = $offset;
-		$found  = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
-		$out    = array();
+		list( $where, $args ) = self::where( $filters );
+		$sql                  = 'SELECT subject_type, subject_id, url_count, result, reason, created_at FROM ' . self::table() . $where . ' ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[]               = $limit;
+		$args[]               = $offset;
+		$found                = (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+		$out                  = array();
 		foreach ( $found as $row ) {
 			$out[] = array(
 				'subject_type' => (string) $row['subject_type'],
@@ -86,5 +73,44 @@ final class WpdbPurgeLog implements PurgeLog {
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * How many rows match.
+	 *
+	 * @param array{status?: string, from?: string, to?: string} $filters Filters.
+	 */
+	public function count( array $filters = array() ): int {
+		global $wpdb;
+		list( $where, $args ) = self::where( $filters );
+		$sql                  = 'SELECT COUNT(*) FROM ' . self::table() . $where;
+		if ( array() === $args ) {
+			return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name, no values.
+		}
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+	}
+
+	/**
+	 * The WHERE clause for the filters, and its values.
+	 *
+	 * @param array{status?: string, from?: string, to?: string} $filters Filters.
+	 * @return array{0: string, 1: array<int, string>}
+	 */
+	private static function where( array $filters ): array {
+		$sql  = ' WHERE 1 = 1';
+		$args = array();
+		if ( ! empty( $filters['status'] ) ) {
+			$sql   .= ' AND result = %s';
+			$args[] = (string) $filters['status'];
+		}
+		if ( ! empty( $filters['from'] ) ) {
+			$sql   .= ' AND created_at >= %s';
+			$args[] = $filters['from'] . ' 00:00:00';
+		}
+		if ( ! empty( $filters['to'] ) ) {
+			$sql   .= ' AND created_at <= %s';
+			$args[] = $filters['to'] . ' 23:59:59';
+		}
+		return array( $sql, $args );
 	}
 }

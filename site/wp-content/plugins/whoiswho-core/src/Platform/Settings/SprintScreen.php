@@ -16,6 +16,7 @@ namespace WhoIsWho\Core\Platform\Settings;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 
 /**
  * Sprint thresholds screen.
@@ -128,16 +129,20 @@ final class SprintScreen {
 	}
 
 	/**
-	 * The screen markup.
+	 * The screen markup: one card with the two numbers and the save bar (staff form kit, REQ-275).
 	 */
 	public function html(): string {
-		$count = (int) $this->settings->get( self::COUNT_KEY );
-		$naira = intdiv( (int) $this->settings->get( self::REVENUE_KEY ), self::KOBO );
-		$out   = '<div class="wrap"><h1>' . esc_html__( 'Sprint thresholds', 'whoiswho' ) . '</h1>';
-		$out  .= '<p>' . esc_html__( 'The sprint card on the dashboard counts the sponsored stories and the revenue against these two numbers. Changes are recorded in the audit log.', 'whoiswho' ) . '</p>';
-		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out  .= '<p><label>' . esc_html__( 'Counted deals', 'whoiswho' ) . ' <input type="number" min="0" step="1" name="count" value="' . esc_attr( (string) $count ) . '" /></label></p>';
-		$out  .= '<p><label>' . esc_html( sprintf( /* translators: %s: currency code. */ __( 'Revenue (%s, whole units)', 'whoiswho' ), self::CURRENCY ) ) . ' <input type="number" min="0" step="1" name="revenue" value="' . esc_attr( (string) $naira ) . '" /></label></p>';
-		return $out . '<button class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button></form></div>';
+		$count  = (int) $this->settings->get( self::COUNT_KEY );
+		$naira  = intdiv( (int) $this->settings->get( self::REVENUE_KEY ), self::KOBO );
+		$out    = '<div class="wrap wiw-staff wiw-staff--form"><h1>' . esc_html__( 'Sprint thresholds', 'whoiswho' ) . '</h1>';
+		$out   .= '<p class="wiw-lead">' . esc_html__( 'The sprint card on the dashboard counts the sponsored stories and the revenue against these two numbers. Changes are recorded in the audit log.', 'whoiswho' ) . '</p>';
+		$out   .= Form::open( '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />' );
+		$fields = Form::row( 'wiw-f-count', __( 'Counted deals', 'whoiswho' ), '<input type="number" id="wiw-f-count" name="count" min="0" step="1" class="small-text" value="' . esc_attr( (string) $count ) . '" aria-describedby="wiw-f-count-help" />', array( 'help' => __( 'Sponsored stories counted towards the sprint.', 'whoiswho' ) ) );
+		/* translators: %s: currency code. */
+		$label   = sprintf( __( 'Revenue (%s, whole units)', 'whoiswho' ), self::CURRENCY );
+		$fields .= Form::row( 'wiw-f-revenue', $label, '<input type="number" id="wiw-f-revenue" name="revenue" min="0" step="1" class="regular-text" value="' . esc_attr( (string) $naira ) . '" aria-describedby="wiw-f-revenue-help" />', array( 'help' => __( 'Whole naira, no kobo. It is stored as kobo.', 'whoiswho' ) ) );
+		$out    .= Form::section( __( 'Thresholds', 'whoiswho' ), '<div class="wiw-field-grid">' . $fields . '</div>', array( 'id' => 'wiw-sprint-thresholds' ) );
+		$out    .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button>' );
+		return $out . '</form></div>';
 	}
 }

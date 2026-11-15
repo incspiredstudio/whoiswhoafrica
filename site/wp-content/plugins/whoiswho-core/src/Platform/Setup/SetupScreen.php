@@ -3,7 +3,8 @@
  * The Setup screen (REQ-056, REQ-208): WHOISWHO > Setup. A live checklist, one-click fixes and one-click demo content, for someone
  * who does not write code. It opens once, straight after the plugin is activated, and a Dashboard widget keeps reminding until it
  * is dismissed. Administrators only (wiw_run_setup). Fixes are plain forms (they work without JavaScript); the demo import runs in
- * small steps over AJAX with a progress bar. Every request checks the capability and a nonce through ActionGuard.
+ * small steps over AJAX with a progress bar. Every request checks the capability and a nonce through ActionGuard. The key and
+ * database forms use the staff form kit (REQ-275).
  *
  * @package WhoIsWho
  */
@@ -15,6 +16,7 @@ namespace WhoIsWho\Core\Platform\Setup;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Permalinks;
 use WhoIsWho\Core\Compliance\Forms\TurnstileSettings;
@@ -126,18 +128,26 @@ final class SetupScreen {
 		}
 		$site_key = TurnstileSettings::site_key();
 		$saved    = TurnstileSettings::has_secret();
-		$out      = '<form method="post" class="wiw-turnstile-form" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out     .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_TURNSTILE ) . '" />';
-		$out     .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_TURNSTILE ) ) . '" />';
-		$out     .= '<p><label for="wiw-turnstile-site-key">' . esc_html__( 'Site key', 'whoiswho' ) . '</label><br />';
-		$out     .= '<input type="text" id="wiw-turnstile-site-key" name="turnstile_site_key" class="regular-text" autocomplete="off" spellcheck="false" value="' . esc_attr( $site_key ) . '" /></p>';
-		$out     .= '<p><label for="wiw-turnstile-secret">' . esc_html__( 'Secret key', 'whoiswho' ) . '</label><br />';
-		$out     .= '<input type="password" id="wiw-turnstile-secret" name="turnstile_secret" class="regular-text" autocomplete="new-password" spellcheck="false" value="" aria-describedby="wiw-turnstile-secret-note" />';
-		$out     .= '<br /><span class="description" id="wiw-turnstile-secret-note">' . esc_html( $saved ? __( 'Saved. It is not shown again. Leave this empty to keep it, or paste a new one to replace it.', 'whoiswho' ) : __( 'Not saved yet.', 'whoiswho' ) ) . '</span></p>';
+		$hidden   = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_TURNSTILE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_TURNSTILE ) ) . '" />';
+		$out      = str_replace( '<form ', '<form data-personal-data="none" ', Form::open( $hidden, array( 'class' => 'wiw-turnstile-form' ) ) );
+		$out     .= Form::text(
+			'turnstile_site_key',
+			__( 'Site key', 'whoiswho' ),
+			$site_key,
+			array(
+				'id'    => 'wiw-turnstile-site-key',
+				'attrs' => array(
+					'autocomplete' => 'off',
+					'spellcheck'   => 'false',
+				),
+			)
+		);
+		$note     = '<p class="wiw-help" id="wiw-turnstile-secret-note">' . esc_html( $saved ? __( 'Saved. It is not shown again. Leave this empty to keep it, or paste a new one to replace it.', 'whoiswho' ) : __( 'Not saved yet.', 'whoiswho' ) ) . '</p>';
+		$out     .= Form::row( 'wiw-turnstile-secret', __( 'Secret key', 'whoiswho' ), '<input type="password" id="wiw-turnstile-secret" name="turnstile_secret" class="wiw-input regular-text" autocomplete="new-password" spellcheck="false" value="" aria-describedby="wiw-turnstile-secret-note" />' . $note );
 		if ( '' !== $site_key || $saved ) {
-			$out .= '<p><label><input type="checkbox" name="turnstile_remove" value="1" /> ' . esc_html__( 'Remove both keys and go back to the built-in spam check', 'whoiswho' ) . '</label></p>';
+			$out .= Form::checkbox( 'turnstile_remove', __( 'Remove both keys and go back to the built-in spam check', 'whoiswho' ) );
 		}
-		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save Turnstile keys', 'whoiswho' ) . '</button></p></form>';
+		return $out . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save Turnstile keys', 'whoiswho' ) . '</button>' ) . '</form>';
 	}
 
 	/**
@@ -250,13 +260,11 @@ final class SetupScreen {
 		if ( SchemaState::may_self_initialise() ) {
 			return self::fix_form( 'database', $label );
 		}
-		return '<form method="post" class="wiw-db-form" data-personal-data="none" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
-			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_FIX ) . '" />'
-			. '<input type="hidden" name="what" value="database" />'
-			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_FIX ) ) . '" />'
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_FIX ) . '" /><input type="hidden" name="what" value="database" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION_FIX ) ) . '" />';
+		return str_replace( '<form ', '<form data-personal-data="none" ', Form::open( $hidden, array( 'class' => 'wiw-db-form' ) ) )
 			. '<p class="wiw-fix"><strong>' . esc_html__( 'Take a backup in cPanel first.', 'whoiswho' ) . '</strong> ' . esc_html__( 'In cPanel, open Backup (or your host\'s backup tool) and download a full backup, or at least the database. The update only adds to the database and cannot be undone from here.', 'whoiswho' ) . '</p>'
-			. '<p><label><input type="checkbox" name="' . esc_attr( self::BACKUP_FIELD ) . '" value="1" required /> ' . esc_html__( 'I have a backup', 'whoiswho' ) . '</label></p>'
-			. '<p><button type="submit" class="button button-primary">' . esc_html( $label ) . '</button></p></form>';
+			. Form::checkbox( self::BACKUP_FIELD, __( 'I have a backup', 'whoiswho' ), false, array( 'required' => true ) )
+			. Form::actions( '<button type="submit" class="button button-primary">' . esc_html( $label ) . '</button>' ) . '</form>';
 	}
 
 	/**
@@ -537,7 +545,7 @@ final class SetupScreen {
 		}
 		$items = Checklist::items();
 		$ready = Checklist::ready_count( $items );
-		$out   = '<div class="wrap wiw-setup"><h1>' . esc_html__( 'Set up your site', 'whoiswho' ) . '</h1>';
+		$out   = '<div class="wrap wiw-staff wiw-setup"><h1>' . esc_html__( 'Set up your site', 'whoiswho' ) . '</h1>';
 		$what  = $request->string( 'wiw_what' );
 		if ( '' !== $what && '' !== self::result_text( $what, '1' === $request->string( 'wiw_ok' ) ) ) {
 			$good = '1' === $request->string( 'wiw_ok' );

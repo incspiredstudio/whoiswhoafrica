@@ -38,6 +38,7 @@ final class Module implements ModuleInterface {
 		Health\HealthEndpoint::for_site()->register();
 		Dashboard\DashboardScreen::hooks();
 		Admin\Ui\StaffAssets::hooks();
+		Admin\PlatformScreenStyles::hooks();
 		add_action( 'admin_init', array( Activation::class, 'sync_version' ) );
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',

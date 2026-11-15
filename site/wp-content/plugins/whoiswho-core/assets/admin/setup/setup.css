@@ -42,3 +42,19 @@
 .wiw-auto-note { color: #50575e; font-style: italic; min-height: 1.4em; }
 .wiw-kept { background: #fcf9e8; border-left: 4px solid #996800; padding: 4px 12px; }
 .wiw-kept ul { list-style: disc; margin-left: 20px; }
+
+/* The Turnstile secret field matches the staff kit's text fields (REQ-275). */
+.wiw-setup.wiw-staff .wiw-field input[type="password"] {
+	background-color: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 6px;
+	box-shadow: none;
+	font-size: 14px;
+	line-height: 1.4;
+	min-height: 40px;
+	padding: 6px 12px;
+	width: 100%;
+}
+
+.wiw-setup .wiw-turnstile-form,
+.wiw-setup .wiw-db-form { margin-top: 12px; max-width: 560px; }

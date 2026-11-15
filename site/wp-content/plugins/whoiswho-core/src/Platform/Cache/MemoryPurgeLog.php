@@ -51,6 +51,25 @@ final class MemoryPurgeLog implements PurgeLog {
 	 * @return array<int, array{subject_type: string, subject_id: int, url_count: int, result: string, reason: string, created_at: string}>
 	 */
 	public function rows( int $limit = 50, int $offset = 0, array $filters = array() ): array {
+		return array_slice( array_reverse( $this->matching( $filters ) ), $offset, $limit );
+	}
+
+	/**
+	 * How many rows match.
+	 *
+	 * @param array{status?: string, from?: string, to?: string} $filters Filters.
+	 */
+	public function count( array $filters = array() ): int {
+		return count( $this->matching( $filters ) );
+	}
+
+	/**
+	 * The rows that match, oldest first.
+	 *
+	 * @param array{status?: string, from?: string, to?: string} $filters Filters.
+	 * @return array<int, array{subject_type: string, subject_id: int, url_count: int, result: string, reason: string, created_at: string}>
+	 */
+	private function matching( array $filters ): array {
 		$rows = array_filter(
 			$this->rows,
 			static function ( array $row ) use ( $filters ): bool {
@@ -60,6 +79,6 @@ final class MemoryPurgeLog implements PurgeLog {
 					&& ( empty( $filters['to'] ) || $day <= $filters['to'] );
 			}
 		);
-		return array_slice( array_reverse( array_values( $rows ) ), $offset, $limit );
+		return array_values( $rows );
 	}
 }

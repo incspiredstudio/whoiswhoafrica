@@ -8,6 +8,9 @@
  * records the source's latest batch refused (a refused record has no stored source, so a batch's refusals are shown against every
  * source that batch named).
  *
+ * It uses the staff kit styles (REQ-275) on a plain table, not the shared list table: the list table brings a form, a pager input
+ * and a toggle button, and this screen carries no control at all.
+ *
  * @package WhoIsWho
  */
 
@@ -107,8 +110,8 @@ final class SourcesScreen {
 		if ( ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			throw new \DomainException( 'Not allowed to view sources.' );
 		}
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Sources', 'whoiswho' ) . '</h1><p>' . esc_html__( 'Where the profiles come from. This list is read-only; the source names come from each import manifest.', 'whoiswho' ) . '</p>';
-		$out .= '<table class="widefat striped"><thead><tr>';
+		$out  = '<div class="wrap wiw-staff wiw-sources"><h1>' . esc_html__( 'Sources', 'whoiswho' ) . '</h1><p class="wiw-lead">' . esc_html__( 'Where the profiles come from. This list is read-only; the source names come from each import manifest.', 'whoiswho' ) . '</p>';
+		$out .= '<table class="widefat striped wiw-list-table wiw-list-table--sources"><thead><tr>';
 		foreach ( array( 'Source', 'Profiles', 'Last import', 'Import errors', 'Removals' ) as $heading ) {
 			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
