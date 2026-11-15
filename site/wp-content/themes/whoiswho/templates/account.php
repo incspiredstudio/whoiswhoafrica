@@ -100,6 +100,7 @@ $wiw_messages = static function () use ( $wiw_errors, $wiw_notice ): void {
 				wp_nonce_field( 'wiw_account_signin', 'wiw_account_nonce', false );
 				?>
 				<input type="hidden" name="redirect_to" value="<?php echo esc_attr( $wiw_d( 'redirect_to', home_url( '/account/' ) ) ); ?>">
+				<?php get_template_part( 'template-parts/forms/privacy-notice', null, array( 'text' => __( 'We use your account details only to run your account and the profiles you look after.', 'whoiswho' ) ) ); ?>
 				<button class="btn" type="submit"><?php esc_html_e( 'Sign in', 'whoiswho' ); ?></button>
 				<p class="meta"><a href="<?php echo esc_url( $wiw_d( 'lost_url', home_url( '/account/lost-password/' ) ) ); ?>"><?php esc_html_e( 'Forgotten your password?', 'whoiswho' ); ?></a></p>
 				<p class="meta"><?php esc_html_e( 'There is no sign-up: we make your account when we approve your claim to a profile.', 'whoiswho' ); ?> <a href="<?php echo esc_url( home_url( '/directory/' ) ); ?>"><?php esc_html_e( 'Find your profile to claim it', 'whoiswho' ); ?></a></p>
@@ -193,6 +194,7 @@ $wiw_messages = static function () use ( $wiw_errors, $wiw_notice ): void {
 						<span class="hint" id="f-image-hint"><?php esc_html_e( 'JPEG, PNG or WebP, up to 2 MB. The current photograph stays until a reviewer approves the new one.', 'whoiswho' ); ?></span>
 					</div>
 					<?php wp_nonce_field( 'wiw_account_edit', 'wiw_account_nonce', false ); ?>
+					<?php get_template_part( 'template-parts/forms/privacy-notice', null, array( 'text' => __( 'We use your account details only to run your account and the profiles you look after.', 'whoiswho' ) ) ); ?>
 					<button class="btn" type="submit"><?php esc_html_e( 'Send for review', 'whoiswho' ); ?></button>
 				</form>
 			<?php endif; ?>
@@ -253,6 +255,7 @@ $wiw_messages = static function () use ( $wiw_errors, $wiw_notice ): void {
 					?>
 				</fieldset>
 				<?php wp_nonce_field( 'wiw_account_details', 'wiw_account_nonce', false ); ?>
+				<?php get_template_part( 'template-parts/forms/privacy-notice', null, array( 'text' => __( 'We use your account details only to run your account and the profiles you look after.', 'whoiswho' ) ) ); ?>
 				<button class="btn" type="submit"><?php esc_html_e( 'Save details', 'whoiswho' ); ?></button>
 			</form>
 
@@ -276,6 +279,7 @@ $wiw_messages = static function () use ( $wiw_errors, $wiw_notice ): void {
 				get_template_part( 'template-parts/forms/bot-check', null, array( 'form' => 'account_lost' ) );
 				wp_nonce_field( 'wiw_account_lost', 'wiw_account_nonce', false );
 				?>
+				<?php get_template_part( 'template-parts/forms/privacy-notice', null, array( 'text' => __( 'We use your account details only to run your account and the profiles you look after.', 'whoiswho' ) ) ); ?>
 				<button class="btn" type="submit"><?php esc_html_e( 'Send the link', 'whoiswho' ); ?></button>
 				<p class="meta"><a href="<?php echo esc_url( $wiw_d( 'signin_url' ) ); ?>"><?php esc_html_e( 'Back to sign in', 'whoiswho' ); ?></a></p>
 			</form>
@@ -322,6 +326,7 @@ $wiw_messages = static function () use ( $wiw_errors, $wiw_notice ): void {
 				);
 				wp_nonce_field( 'wiw_account_reset', 'wiw_account_nonce', false );
 				?>
+				<?php get_template_part( 'template-parts/forms/privacy-notice', null, array( 'text' => __( 'We use your account details only to run your account and the profiles you look after.', 'whoiswho' ) ) ); ?>
 				<button class="btn" type="submit"><?php esc_html_e( 'Save password', 'whoiswho' ); ?></button>
 			</form>
 

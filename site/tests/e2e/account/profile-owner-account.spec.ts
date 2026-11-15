@@ -99,12 +99,16 @@ test("an edit is sent for review, shows Waiting for review, and a reviewer makes
   await expect(page.locator("#f-summary")).toHaveValue(summary);
 });
 
-test("an owner who opens /wp-admin/ lands on /account/, and account details pass axe", async ({ page }) => {
+test("an owner who opens /wp-admin/ lands on /account/, and account details pass axe", async ({ page, baseURL }) => {
   await signIn(page);
-  await page.goto("/wp-admin/");
-  await expect(page).toHaveURL(/\/account\/$/);
-  await page.goto("/wp-admin/profile.php");
-  await expect(page).toHaveURL(/\/account\/$/);
+  // WordPress may live in a sub-folder (the local site does), and its admin cookie reaches only that folder's wp-admin; follow
+  // /wp-admin/'s own redirect to find it. index.php by name: the local PHP server used for these tests serves no directory index.
+  const probe = await page.request.get("/wp-admin/", { maxRedirects: 0 });
+  const admin = new URL(probe.headers()["location"] ?? "/wp-admin/", baseURL).pathname.replace(/\/?$/, "/");
+  for (const screen of ["index.php", "profile.php", "edit.php"]) {
+    await page.goto(admin + screen);
+    await expect(page).toHaveURL(/\/account\/$/);
+  }
   await page.goto("/account/details/");
   await expect(page.locator("#f-display_name")).toHaveValue(/Fictional Owner/);
   await expectNoA11yViolations(page);

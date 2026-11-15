@@ -148,7 +148,11 @@ final class ProfileOwnerAccountsTest extends WpTestCase {
 		return new OwnerAccounts(
 			null,
 			function ( string $to, string $subject, string $text ): bool {
-				$this->sent[] = compact( 'to', 'subject', 'text' );
+				$this->sent[] = array(
+					'to'      => $to,
+					'subject' => $subject,
+					'text'    => $text,
+				);
 				return true;
 			}
 		);
@@ -580,7 +584,7 @@ final class ProfileOwnerAccountsTest extends WpTestCase {
 		$this->assertSame( '2026112105', $migration->version() );
 		$migration->up();
 		$this->assertFalse( get_role( 'administrator' )->has_cap( 'wiw_edit_assigned_profiles' ) );
-		$this->assertFalse( user_can( $user, 'wiw_edit_assigned_profiles' ) );
+		$this->assertFalse( user_can( $user, 'wiw_edit_assigned_profiles' ) ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- the withdrawn capability this migration removes.
 		$this->assertNotNull( get_role( OwnerRole::ROLE ) );
 		$migration->up();
 		$this->assertFalse( get_role( 'administrator' )->has_cap( 'wiw_edit_assigned_profiles' ), 'safe to run again' );
