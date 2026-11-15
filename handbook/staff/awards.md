@@ -17,6 +17,8 @@ Staff run the awards from two screens: Award categories and Nominations. Judging
 2. Add a category with **New category** and **Add category**, change a name with **Rename**, or change the order with **Move up** and **Move down**.
 3. **Remove** works only for a category with no nominations. If it has any, press **Archive** instead; **Restore** brings an archived category back.
 
+Each group is a list: hover a row, or tab to it, for **Rename**, **Move up**, **Move down**, **Archive** or **Restore** and **Remove**. To archive, restore or remove several at once, tick them and choose the action from **Bulk actions**; a category with nominations is skipped.
+
 Every change is audited. The Awards pages, the Nominate guidance and the Home marquee read categories from this screen, so a change needs no page edit. The eligibility and judging-criteria text is page copy, edited in the page editor.
 
 ## Open or close nominations
@@ -44,6 +46,8 @@ There is no free-text name field. If the person or organisation has no profile y
 | Stage | Nominated, Winner | Nominated is the default. Switch to Winner once the offline judging has decided. |
 | Status | Live, Not live | Not live is the default. Live puts it on the public site. |
 
+Change one row with its Stage or Status list and **Save**. To change several, tick them and choose **Set stage** or **Set status** from **Bulk actions**, then pick the value once; each nomination is still checked on its own (a pending-review profile cannot be set Live). Hover a row, or tab to it, for **Details**, **Change stage**, **Change status** and **Remove**.
+
 A Live nominee shows on the Nominees page. A Live winner shows on the Winners page. A Not live nomination shows nowhere. Each change records who made it and is audited.
 
 ## Make a nomination public
@@ -57,6 +61,7 @@ A Live nominee shows on the Nominees page. A Live winner shows on the Winners pa
 - Send nomination email is offered when a Contact email exists. The email carries no link and asks nothing of the nominee. Who sent it and when is recorded, and the audit entry holds no address.
 - On a winner, Send winner email goes to the same address and is recorded the same way.
 - **Remove** deletes a nomination after **Confirm removal** and is audited.
+- The two emails and Remove are also bulk actions: tick the rows first. A row without a Contact email, or a winner email for a nomination that is not a Winner, is skipped.
 
 ## Where nominations come from
 

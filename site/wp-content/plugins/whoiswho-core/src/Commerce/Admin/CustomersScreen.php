@@ -4,6 +4,7 @@
  * an add and edit form, internal notes and the enquiry each customer came from. A customer can be created from an Enquiry item,
  * which copies the name, organisation and contact and links the two. Held by the customer service's capability (wiw_manage_register,
  * Administrator only: customers belong to the commercial register); a user without it gets a 403 and no menu entry. Every write goes through CustomerService, which audits field names only.
+ * The list is a shared staff list table (CustomersTable, REQ-275) with an Edit row action; the forms use the staff form kit.
  *
  * @package WhoIsWho
  */
@@ -21,6 +22,7 @@ use WhoIsWho\Core\Compliance\Support\SupportItems;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -246,49 +248,43 @@ final class CustomersScreen {
 				return $this->form_html( $row );
 			}
 		}
-		return $this->list_html( $request->text( 's' ) );
+		return $this->list_html( $request->text( 's' ), max( 1, $request->int( 'paged' ) ) );
 	}
 
 	/**
 	 * The list, the search and the create-from-enquiry control.
 	 *
 	 * @param string $search Search text.
+	 * @param int    $page   Page of the list.
 	 */
-	private function list_html( string $search ): string {
-		$rows = $this->rows( $search );
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Customers', 'whoiswho' ) . '</h1>';
-		$out .= '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&customer=new' ) ) . '">' . esc_html__( 'Add customer', 'whoiswho' ) . '</a></p>';
+	private function list_html( string $search, int $page = 1 ): string {
+		$this->require_capability();
+		$out  = '<div class="wrap wiw-staff"><h1 class="wp-heading-inline">' . esc_html__( 'Customers', 'whoiswho' ) . '</h1>';
+		$out .= ' <a class="page-title-action" href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&customer=new' ) ) . '">' . esc_html__( 'Add customer', 'whoiswho' ) . '</a><hr class="wp-header-end" />';
 		$out .= self::export_html();
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters" role="search"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Search', 'whoiswho' ) . ' <input type="search" name="s" value="' . esc_attr( $search ) . '" /></label> <button class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'External ID', 'Name', 'Segment' ) as $heading ) {
-			$out .= '<th>' . esc_html( $heading ) . '</th>';
-		}
-		$out .= '</tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="3">' . esc_html__( 'No customers.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$out .= '<tr><td>' . esc_html( (string) $row['external_id'] ) . '</td>';
-			$out .= '<td><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN . '&customer=' . (int) $row['id'] ) ) . '">' . esc_html( (string) $row['name'] ) . '</a></td>';
-			$out .= '<td>' . esc_html( (string) $row['segment'] ) . '</td></tr>';
-		}
-		$out .= '</tbody></table>';
+		$out .= ( new CustomersTable( $this->customers, $search ) )->html( new Request( array( 'paged' => (string) $page ) ) );
 
 		$enquiries = $this->open_enquiries();
-		$out      .= '<h2>' . esc_html__( 'Create from an enquiry', 'whoiswho' ) . '</h2>';
 		if ( array() === $enquiries ) {
-			return $out . '<p>' . esc_html__( 'Every enquiry already has a customer.', 'whoiswho' ) . '</p></div>';
+			return $out . Form::section( __( 'Create from an enquiry', 'whoiswho' ), '<p>' . esc_html__( 'Every enquiry already has a customer.', 'whoiswho' ) . '</p>', array( 'id' => 'wiw-from-enquiry' ) ) . '</div>';
 		}
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::FROM_ENQUIRY ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::FROM_ENQUIRY ) ) . '" />';
-		$out .= '<label>' . esc_html__( 'Enquiry', 'whoiswho' ) . ' <select name="enquiry">';
+		$options = array();
 		foreach ( $enquiries as $item ) {
-			$label = (string) $item['reference'] . ' ' . ( '' !== (string) $item['organisation'] ? (string) $item['organisation'] : (string) $item['requester_name'] );
-			$out  .= '<option value="' . esc_attr( (string) $item['id'] ) . '">' . esc_html( $label ) . '</option>';
+			$options[ (string) $item['id'] ] = (string) $item['reference'] . ' ' . ( '' !== (string) $item['organisation'] ? (string) $item['organisation'] : (string) $item['requester_name'] );
 		}
-		return $out . '</select></label> <button class="button">' . esc_html__( 'Create customer', 'whoiswho' ) . '</button></form></div>';
+		$body  = Form::open( '<input type="hidden" name="action" value="' . esc_attr( self::FROM_ENQUIRY ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::FROM_ENQUIRY ) ) . '" />', array( 'class' => 'wiw-inline-fields' ) );
+		$body .= Form::select( 'enquiry', __( 'Enquiry', 'whoiswho' ), $options );
+		$body .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Create customer', 'whoiswho' ) . '</button></div></form>';
+		return $out . Form::section(
+			__( 'Create from an enquiry', 'whoiswho' ),
+			$body,
+			array(
+				'id'          => 'wiw-from-enquiry',
+				'description' => __( 'Copies the name, organisation and contact from the enquiry and links the two.', 'whoiswho' ),
+			)
+		) . '</div>';
 	}
 
 	/**
@@ -300,9 +296,17 @@ final class CustomersScreen {
 		if ( ! current_user_can( Invitations::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out  = '<h2>' . esc_html__( 'Invite the customer to complete their profile', 'whoiswho' ) . '</h2>';
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::INVITE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::INVITE ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />';
-		return $out . '<label>' . esc_html__( 'Send the link to', 'whoiswho' ) . ' <input type="email" name="invite_email" required="required" /></label> <button class="button">' . esc_html__( 'Send invitation', 'whoiswho' ) . '</button></form>';
+		$body  = Form::open( '<input type="hidden" name="action" value="' . esc_attr( self::INVITE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::INVITE ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />', array( 'class' => 'wiw-inline-fields' ) );
+		$body .= Form::email( 'invite_email', __( 'Send the link to', 'whoiswho' ), '', array( 'required' => true ) );
+		$body .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Send invitation', 'whoiswho' ) . '</button></div></form>';
+		return Form::section(
+			__( 'Invite the customer to complete their profile', 'whoiswho' ),
+			$body,
+			array(
+				'id'          => 'wiw-invite',
+				'description' => __( 'Sends a single-use link so the customer can fill in their own profile.', 'whoiswho' ),
+			)
+		);
 	}
 
 	/**
@@ -312,14 +316,14 @@ final class CustomersScreen {
 		if ( ! current_user_can( CustomerExport::CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out = '<p>';
+		$out = '<div class="wiw-actions wiw-exports">';
 		foreach ( array(
 			CustomerExport::CUSTOMERS_ACTION => __( 'Export customers as CSV', 'whoiswho' ),
 			CustomerExport::ENQUIRIES_ACTION => __( 'Export enquiries as CSV', 'whoiswho' ),
 		) as $action => $label ) {
-			$out .= '<form method="post" style="display:inline" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><button class="button">' . esc_html( $label ) . '</button></form> ';
+			$out .= '<form method="post" class="wiw-inline-form" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><button class="button">' . esc_html( $label ) . '</button></form> ';
 		}
-		return $out . '</p>';
+		return $out . '</div>';
 	}
 
 	/**
@@ -329,26 +333,39 @@ final class CustomersScreen {
 	 */
 	private function form_html( ?array $row ): string {
 		$id   = null === $row ? 0 : (int) $row['id'];
-		$out  = '<div class="wrap"><h1>' . esc_html( null === $row ? __( 'Add customer', 'whoiswho' ) : (string) $row['name'] ) . '</h1>';
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html( null === $row ? __( 'Add customer', 'whoiswho' ) : (string) $row['name'] ) . '</h1>';
 		$out .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=' . self::SCREEN ) ) . '">' . esc_html__( 'Back to the list', 'whoiswho' ) . '</a></p>';
 		if ( null !== $row ) {
-			$out .= '<p>' . esc_html__( 'External ID', 'whoiswho' ) . ': <code>' . esc_html( (string) $row['external_id'] ) . '</code></p>';
+			$out .= '<p class="wiw-lead">' . esc_html__( 'External ID', 'whoiswho' ) . ': <code>' . esc_html( (string) $row['external_id'] ) . '</code></p>';
 			$out .= $this->enquiry_html( $row );
+		}
+		$value  = static fn ( string $key ): string => null === $row ? '' : (string) $row[ $key ];
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::SAVE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE_ACTION ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />';
+		$fields = '<div class="wiw-field-grid">'
+			. Form::text( 'name', __( 'Name', 'whoiswho' ), $value( 'name' ), array( 'id' => 'wiw-c-name' ) )
+			. Form::text( 'segment', __( 'Segment', 'whoiswho' ), $value( 'segment' ), array( 'id' => 'wiw-c-segment' ) )
+			. Form::email( 'contact_email', __( 'Contact email', 'whoiswho' ), $value( 'contact_email' ), array( 'id' => 'wiw-c-contact_email' ) )
+			. Form::text( 'contact_phone', __( 'Contact phone', 'whoiswho' ), $value( 'contact_phone' ), array( 'id' => 'wiw-c-contact_phone' ) )
+			. '</div>';
+		$notes  = Form::textarea(
+			'notes',
+			__( 'Internal notes (never public)', 'whoiswho' ),
+			$value( 'notes' ),
+			array(
+				'id'        => 'wiw-c-notes',
+				'rows'      => 5,
+				'maxlength' => 5000,
+				'counter'   => true,
+			)
+		);
+		$out   .= Form::open( $hidden, array( 'unsaved' => true ) );
+		$out   .= Form::section( __( 'Customer', 'whoiswho' ), $fields, array( 'id' => 'wiw-customer-details' ) );
+		$out   .= Form::section( __( 'Notes', 'whoiswho' ), $notes, array( 'id' => 'wiw-customer-notes' ) );
+		$out   .= Form::actions( '<button class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button>', array( 'sticky' => true ) ) . '</form>';
+		if ( null !== $row ) {
 			$out .= self::invite_html( $id );
 		}
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out .= '<input type="hidden" name="action" value="' . esc_attr( self::SAVE_ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE_ACTION ) ) . '" /><input type="hidden" name="customer" value="' . esc_attr( (string) $id ) . '" />';
-		$out .= '<table class="form-table"><tbody>';
-		foreach ( array(
-			'name'          => array( 'Name', 'text' ),
-			'segment'       => array( 'Segment', 'text' ),
-			'contact_email' => array( 'Contact email', 'email' ),
-			'contact_phone' => array( 'Contact phone', 'text' ),
-		) as $key => $def ) {
-			$out .= '<tr><th><label for="wiw-c-' . esc_attr( $key ) . '">' . esc_html( $def[0] ) . '</label></th><td><input class="regular-text" id="wiw-c-' . esc_attr( $key ) . '" type="' . esc_attr( $def[1] ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( null === $row ? '' : (string) $row[ $key ] ) . '" /></td></tr>';
-		}
-		$out .= '<tr><th><label for="wiw-c-notes">' . esc_html__( 'Internal notes (never public)', 'whoiswho' ) . '</label></th><td><textarea id="wiw-c-notes" name="notes" rows="5" cols="60" maxlength="5000">' . esc_textarea( null === $row ? '' : (string) $row['notes'] ) . '</textarea></td></tr>';
-		return $out . '</tbody></table><button class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button></form></div>';
+		return $out . '</div>';
 	}
 
 	/**

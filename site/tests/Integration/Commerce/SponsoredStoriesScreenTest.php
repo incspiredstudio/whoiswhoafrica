@@ -139,8 +139,9 @@ final class SponsoredStoriesScreenTest extends WpTestCase {
 		$this->assertStringContainsString( 'Record the payment', $all );
 		$this->assertStringContainsString( 'Choose the story', $all );
 		$only = $screen->html( '', 'needs_payment' );
-		$this->assertStringContainsString( '<td>Unpaid Ltd</td>', $only );
-		$this->assertStringNotContainsString( '<td>Paid Ltd</td>', $only );
+		// The sponsor is the list table's primary column (REQ-275): its cell holds the name as the row title.
+		$this->assertStringContainsString( '<strong class="row-title">Unpaid Ltd</strong>', $only );
+		$this->assertStringNotContainsString( '<strong class="row-title">Paid Ltd</strong>', $only );
 	}
 
 	public function test_REQ_269_editor_list_has_no_amounts(): void {

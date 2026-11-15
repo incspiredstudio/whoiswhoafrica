@@ -5,7 +5,8 @@
  * mandatory reason, a confirmation that shows the count and the first five names, and a Recent bulk actions list with Restore
  * this batch. It plugs into the
  * `wiw_profiles_bulk_host` slot of the Profiles screen and is visible only with wiw_bulk_unpublish. The single-profile Unpublish
- * row action of the same screen is handled here too, with wiw_unpublish_profiles.
+ * row action of the same screen is handled here too, with wiw_unpublish_profiles. The panel is a staff kit card; Recent bulk
+ * actions is a read-only shared staff list table (BulkBatchesTable, REQ-275) whose one row action is Restore this batch.
  *
  * @package WhoIsWho
  */
@@ -18,8 +19,8 @@ use WhoIsWho\Core\Directory\Admin\ProfilesQuery;
 use WhoIsWho\Core\Directory\Admin\ProfilesScreen;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Review\Bulk\BulkFilter;
-use WhoIsWho\Core\Review\Bulk\BulkRepository;
 use WhoIsWho\Core\Review\Bulk\BulkUnpublish;
 use WhoIsWho\Core\Review\ReviewService;
 use WhoIsWho\Core\Review\StateException;
@@ -178,33 +179,49 @@ final class BulkUnpublishPanel {
 		$count   = $service->count( $clean );
 		$names   = $service->first_names( $clean, 5 );
 
-		echo '<div class="wiw-bulk-unpublish"><h2>' . esc_html__( 'Bulk unpublish', 'whoiswho' ) . '</h2>';
+		ob_start();
 		$this->notice();
+		$body = (string) ob_get_clean();
 		/* translators: %d: number of published profiles matching the filter. */
-		echo '<p class="wiw-bulk-count">' . esc_html( sprintf( _n( '%d published profile matches the filter.', '%d published profiles match the filter.', $count, 'whoiswho' ), $count ) ) . '</p>';
+		$body .= '<p class="wiw-bulk-count">' . esc_html( sprintf( _n( '%d published profile matches the filter.', '%d published profiles match the filter.', $count, 'whoiswho' ), $count ) ) . '</p>';
 		// The list below shows profiles in every state; only the published ones among them can be unpublished.
 		$listed = ( new ProfilesQuery() )->count( $clean );
 		if ( $listed !== $count ) {
 			/* translators: 1: number of profiles in the list, 2: how many of them are published. */
-			echo '<p class="wiw-bulk-listed">' . esc_html( sprintf( _n( 'The list shows %1$d profile; %2$d of them are published, and only those are unpublished.', 'The list shows %1$d profiles; %2$d of them are published, and only those are unpublished.', $listed, 'whoiswho' ), $listed, $count ) ) . '</p>';
+			$body .= '<p class="wiw-bulk-listed">' . esc_html( sprintf( _n( 'The list shows %1$d profile; %2$d of them are published, and only those are unpublished.', 'The list shows %1$d profiles; %2$d of them are published, and only those are unpublished.', $listed, 'whoiswho' ), $listed, $count ) ) . '</p>';
 		}
 		if ( $count > 0 ) {
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-			echo '<input type="hidden" name="action" value="' . esc_attr( self::START_ACT ) . '" />';
-			echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::START_ACT ) ) . '" />';
-			echo '<input type="hidden" name="confirmed" value="' . esc_attr( (string) $count ) . '" />';
+			$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::START_ACT ) . '" />'
+				. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::START_ACT ) ) . '" />'
+				. '<input type="hidden" name="confirmed" value="' . esc_attr( (string) $count ) . '" />';
 			foreach ( $clean as $key => $value ) {
-				echo '<input type="hidden" name="' . esc_attr( 'f_' . $key ) . '" value="' . esc_attr( $value ) . '" />';
+				$hidden .= '<input type="hidden" name="' . esc_attr( 'f_' . $key ) . '" value="' . esc_attr( $value ) . '" />';
 			}
-			echo '<p class="wiw-bulk-confirmation">';
+			$body .= Form::open( $hidden );
 			/* translators: 1: number of profiles, 2: the first five names. */
-			echo esc_html( sprintf( __( 'You are about to unpublish %1$d profiles, starting with: %2$s. Each will answer 410 Gone and leave search and the sitemap.', 'whoiswho' ), $count, implode( ', ', $names ) ) );
-			echo '</p>';
-			echo '<p><label>' . esc_html__( 'Reason (required, no personal data)', 'whoiswho' ) . ' <input type="text" name="reason" required="required" class="regular-text" /></label> ';
-			echo '<button type="submit" class="button button-primary">' . esc_html__( 'Unpublish these profiles', 'whoiswho' ) . '</button></p></form>';
-		}
-		$this->recent();
-		echo '</div>';
+			$body .= '<p class="wiw-bulk-confirmation">' . esc_html( sprintf( __( 'You are about to unpublish %1$d profiles, starting with: %2$s. Each will answer 410 Gone and leave search and the sitemap.', 'whoiswho' ), $count, implode( ', ', $names ) ) ) . '</p>';
+			$body .= Form::text(
+				'reason',
+				__( 'Reason (required, no personal data)', 'whoiswho' ),
+				'',
+				array(
+					'id'       => 'wiw-f-bulk-reason',
+					'required' => true,
+				)
+			);
+			$body .= Form::actions( '<button type="submit" class="button button-primary wiw-button--danger">' . esc_html__( 'Unpublish these profiles', 'whoiswho' ) . '</button>' ) . '</form>';
+		}//end if
+		$body .= '<h3 class="wiw-subhead">' . esc_html__( 'Recent bulk actions', 'whoiswho' ) . '</h3>' . ( new BulkBatchesTable() )->html( new Request( array() ) );
+		$html  = Form::section(
+			__( 'Bulk unpublish', 'whoiswho' ),
+			$body,
+			array(
+				'id'          => 'wiw-bulk-unpublish',
+				'class'       => 'wiw-bulk-unpublish',
+				'description' => __( 'Unpublishes every published profile in the filtered list below, in the background. Restore a batch from Recent bulk actions.', 'whoiswho' ),
+			)
+		);
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 
 	/**
@@ -221,39 +238,5 @@ final class BulkUnpublishPanel {
 		if ( isset( $messages[ $code ] ) ) {
 			echo '<div class="notice notice-info inline"><p>' . esc_html( $messages[ $code ] ) . '</p></div>';
 		}
-	}
-
-	/**
-	 * Recent bulk actions with Restore this batch.
-	 */
-	private function recent(): void {
-		$rows = ( new BulkRepository() )->recent( 10 );
-		echo '<h3>' . esc_html__( 'Recent bulk actions', 'whoiswho' ) . '</h3>';
-		if ( array() === $rows ) {
-			echo '<p>' . esc_html__( 'No bulk actions yet.', 'whoiswho' ) . '</p>';
-			return;
-		}
-		echo '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'When', 'Reason', 'Profiles', 'Status', '' ) as $heading ) {
-			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		echo '</tr></thead><tbody>';
-		foreach ( $rows as $row ) {
-			echo '<tr><td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td>';
-			echo '<td>' . esc_html( (string) $row['match_count'] ) . '</td><td>' . esc_html( (string) $row['status'] ) . '</td><td>';
-			if ( in_array( $row['status'], array( BulkRepository::DONE, BulkRepository::RUNNING ), true ) ) {
-				$url = add_query_arg(
-					array(
-						'action'   => self::RESTORE_ACT,
-						'batch'    => (string) $row['batch_ref'],
-						'_wpnonce' => ActionGuard::nonce_for( self::RESTORE_ACT ),
-					),
-					admin_url( 'admin-post.php' )
-				);
-				echo '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Restore this batch', 'whoiswho' ) . '</a>';
-			}
-			echo '</td></tr>';
-		}
-		echo '</tbody></table>';
 	}
 }

@@ -32,7 +32,7 @@ To work several at once, tick them and use **Bulk actions**: **Assign to me** (t
 
 ## Customers
 
-A customer record holds an external ID, name, segment and contact. Administrators create customers directly, on **Audience > Customers** or from New sponsored story. The record keeps a stable ID and change timestamps.
+A customer record holds an external ID, name, segment and contact. Administrators create customers directly, on **Audience > Customers** or from New sponsored story. The record keeps a stable ID and change timestamps. In the list, hover a row or tab to it for **Edit**.
 
 ## Invitation and consent links
 

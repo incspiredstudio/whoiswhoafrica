@@ -38,6 +38,8 @@ Status is worked out from the deal and never typed.
 | Ended | The slot has ended or was ended early |
 | Cancelled | The deal was cancelled and its slot ended |
 
+In the list, hover a deal (or tab to it) for **Open story**, which opens its story in the editor when you may edit it. The list has no checkboxes: each step needs its own details.
+
 A scheduled or live deal with no payment record shows "Payment not recorded". Payment does not block scheduling, but a deal counts toward the targets only when payment is recorded.
 
 ## Run a deal

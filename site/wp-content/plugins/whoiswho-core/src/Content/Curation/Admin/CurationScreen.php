@@ -16,6 +16,7 @@ use WhoIsWho\Core\Content\Home\HeroVideos;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 
 /**
@@ -134,6 +135,7 @@ final class CurationScreen {
 			return;
 		}
 		wp_enqueue_script( 'wiw-curation-pins', plugins_url( 'assets/admin/curation/pins.js', WIW_CORE_FILE ), array(), WIW_CORE_VERSION, true );
+		wp_enqueue_style( 'wiw-curation', plugins_url( 'assets/admin/curation/curation.css', WIW_CORE_FILE ), array( 'wiw-staff-ui' ), WIW_CORE_VERSION );
 		// The hero video slots choose files from the media library through the WordPress media modal.
 		wp_enqueue_media();
 		wp_enqueue_script( 'wiw-hero-videos', plugins_url( 'assets/admin/curation/hero-videos.js', WIW_CORE_FILE ), array( 'media-views' ), WIW_CORE_VERSION, true );
@@ -240,23 +242,44 @@ final class CurationScreen {
 	 */
 	private function section( string $block, ?Request $request = null ): string {
 		$setting = $this->settings->get( $block );
-		$out     = '<h2>' . esc_html( self::LABELS[ $block ] ) . '</h2>';
-		$out    .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		$out    .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
-		$out    .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out    .= '<input type="hidden" name="block" value="' . esc_attr( $block ) . '" />';
-		$out    .= '<p><label>' . esc_html__( 'Mode', 'whoiswho' ) . ' ' . $this->select( 'mode', CurationSettings::MODES, (string) $setting['mode'] ) . '</label> ';
-		$out    .= '<label>' . esc_html__( 'Count', 'whoiswho' ) . ' <input type="number" name="count" min="1" max="' . (int) CurationSettings::MAX_COUNT . '" value="' . (int) $setting['count'] . '" /></label> ';
-		$out    .= '<label>' . esc_html__( 'Fill any empty places', 'whoiswho' ) . ' ' . $this->select( 'fill', CurationSettings::FILLS, (string) $setting['fill'] ) . '</label></p>';
+		$id      = static fn ( string $name ): string => 'wiw-f-' . $block . '-' . $name;
+		$hidden  = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />'
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />'
+			. '<input type="hidden" name="block" value="' . esc_attr( $block ) . '" />'
+			. '<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		$out     = Form::open( $hidden, array( 'class' => 'wiw-curation-form' ) );
+		$out    .= '<div class="wiw-field-grid">';
+		$out    .= Form::row( $id( 'mode' ), __( 'Mode', 'whoiswho' ), $this->select( 'mode', CurationSettings::MODES, (string) $setting['mode'], $id( 'mode' ) ) );
+		$out    .= Form::row( $id( 'count' ), __( 'Count', 'whoiswho' ), '<input type="number" id="' . esc_attr( $id( 'count' ) ) . '" name="count" class="wiw-input small-text" min="1" max="' . (int) CurationSettings::MAX_COUNT . '" value="' . (int) $setting['count'] . '" />' );
+		$out    .= Form::row( $id( 'fill' ), __( 'Fill any empty places', 'whoiswho' ), $this->select( 'fill', CurationSettings::FILLS, (string) $setting['fill'], $id( 'fill' ) ) );
+		$out    .= '</div>';
 		if ( CurationSettings::ON_THE_RECORD !== $block ) {
-			$out .= '<p><label><input type="checkbox" name="featured_first" value="1"' . ( $setting['featured_first'] ? ' checked="checked"' : '' ) . ' /> ' . esc_html__( 'Featured first', 'whoiswho' ) . '</label></p>';
+			$out .= Form::toggle( 'featured_first', __( 'Featured first', 'whoiswho' ), (bool) $setting['featured_first'], array( 'id' => $id( 'featured_first' ) ) );
 		}
-		$out .= '<p><label>' . esc_html__( 'Pinned ids (comma separated)', 'whoiswho' ) . ' <input type="text" name="pinned" class="regular-text" value="' . esc_attr( implode( ', ', array_map( 'intval', $setting['pinned'] ) ) ) . '" /></label></p>';
-		$out .= '<p><label>' . esc_html__( 'Reason (optional)', 'whoiswho' ) . ' <input type="text" name="reason" maxlength="300" class="regular-text" /></label></p>';
-		$out .= '<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
-		$out .= '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button> ';
-		$out .= '<button type="submit" name="preview" value="1" formmethod="get" formaction="' . esc_url( admin_url( 'admin.php' ) ) . '" class="button">' . esc_html__( 'Preview without saving', 'whoiswho' ) . '</button></p></form>';
-		return $out . $this->pins( $block, $setting, $request ) . $this->preview( $block, $setting, $request );
+		$out .= Form::text(
+			'pinned',
+			__( 'Pinned ids (comma separated)', 'whoiswho' ),
+			implode( ', ', array_map( 'intval', $setting['pinned'] ) ),
+			array(
+				'id'   => $id( 'pinned' ),
+				'help' => __( 'Or use Pinned items below to find, order and remove pins.', 'whoiswho' ),
+			)
+		);
+		$out .= Form::text(
+			'reason',
+			__( 'Reason (optional)', 'whoiswho' ),
+			'',
+			array(
+				'id'        => $id( 'reason' ),
+				'maxlength' => 300,
+			)
+		);
+		$out .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save', 'whoiswho' ) . '</button> <button type="submit" name="preview" value="1" formmethod="get" formaction="' . esc_url( admin_url( 'admin.php' ) ) . '" class="button">' . esc_html__( 'Preview without saving', 'whoiswho' ) . '</button>' ) . '</form>';
+		return Form::section(
+			self::LABELS[ $block ],
+			$out . $this->pins( $block, $setting, $request ) . $this->preview( $block, $setting, $request ),
+			array( 'id' => 'wiw-block-' . $block )
+		);
 	}
 
 	/**
@@ -269,7 +292,7 @@ final class CurationScreen {
 	private function pins( string $block, array $setting, ?Request $request ): string {
 		$pinned = array_map( 'intval', (array) $setting['pinned'] );
 		$rows   = $this->picker->describe( $block, $pinned );
-		$out    = '<h3>' . esc_html__( 'Pinned items', 'whoiswho' ) . '</h3>';
+		$out    = '<h3 class="wiw-subhead">' . esc_html__( 'Pinned items', 'whoiswho' ) . '</h3>';
 		if ( array() === $rows ) {
 			$out .= '<p>' . esc_html__( 'Nothing is pinned.', 'whoiswho' ) . '</p>';
 		} else {
@@ -284,11 +307,17 @@ final class CurationScreen {
 			$out .= '</ol>';
 		}
 		$term = null !== $request && $block === $request->string( 'pick' ) ? $request->string( 'q' ) : null;
-		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '">';
-		$out .= '<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
-		$out .= '<input type="hidden" name="pick" value="' . esc_attr( $block ) . '" />';
-		$out .= '<p><label>' . esc_html__( 'Find an item to pin', 'whoiswho' ) . ' <input type="search" name="q" class="regular-text" value="' . esc_attr( (string) $term ) . '" /></label> ';
-		$out .= '<button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></p></form>';
+		$find = 'wiw-f-' . $block . '-q';
+		$out .= Form::open(
+			'<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><input type="hidden" name="pick" value="' . esc_attr( $block ) . '" />',
+			array(
+				'method' => 'get',
+				'action' => admin_url( 'admin.php' ),
+				'class'  => 'wiw-inline-fields',
+			)
+		);
+		$out .= Form::row( $find, __( 'Find an item to pin', 'whoiswho' ), '<input type="search" id="' . esc_attr( $find ) . '" name="q" class="wiw-input regular-text" value="' . esc_attr( (string) $term ) . '" />' );
+		$out .= '<div class="wiw-inline-fields__action"><button type="submit" class="button">' . esc_html__( 'Search', 'whoiswho' ) . '</button></div></form>';
 		if ( null === $term ) {
 			return $out;
 		}
@@ -343,7 +372,7 @@ final class CurationScreen {
 		if ( null !== $request && $unsaved ) {
 			$setting = $this->requested_setting( $request, $setting );
 		}
-		$out  = '<h3>' . esc_html( $unsaved ? __( 'Preview of your unsaved changes', 'whoiswho' ) : __( 'The block now', 'whoiswho' ) ) . '</h3>';
+		$out  = '<h3 class="wiw-subhead">' . esc_html( $unsaved ? __( 'Preview of your unsaved changes', 'whoiswho' ) : __( 'The block now', 'whoiswho' ) ) . '</h3>';
 		$out .= $unsaved ? '<p>' . esc_html__( 'Nothing is saved until you press Save.', 'whoiswho' ) . '</p>' : '';
 		$rows = $this->picker->preview( $block, $setting );
 		if ( array() === $rows ) {
@@ -388,9 +417,10 @@ final class CurationScreen {
 	 * @param string   $name     Field name.
 	 * @param string[] $options  Values.
 	 * @param string   $selected Selected value.
+	 * @param string   $id       The control's id.
 	 */
-	private function select( string $name, array $options, string $selected ): string {
-		$out = '<select name="' . esc_attr( $name ) . '">';
+	private function select( string $name, array $options, string $selected, string $id ): string {
+		$out = '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '" class="wiw-input wiw-select">';
 		foreach ( $options as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . ( $option === $selected ? ' selected="selected"' : '' ) . '>' . esc_html( self::option_label( $name, $option ) ) . '</option>';
 		}
@@ -430,7 +460,8 @@ final class CurationScreen {
 		if ( ! current_user_can( self::CAP ) ) {
 			throw new \DomainException( 'You are not allowed to change the home page settings.' );
 		}
-		$out = '<div class="wrap"><h1>' . esc_html__( 'Home page settings', 'whoiswho' ) . '</h1>';
+		$out  = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Home page settings', 'whoiswho' ) . '</h1>';
+		$out .= '<p class="wiw-lead">' . esc_html__( 'Choose what each curated block on the home page and the Stories page shows. Saving purges the cached pages.', 'whoiswho' ) . '</p>';
 		if ( '' !== $notice ) {
 			$out .= '<div class="notice notice-info"><p>' . esc_html( $notice ) . '</p></div>';
 		}
@@ -447,55 +478,6 @@ final class CurationScreen {
 	 * @param Request $request Request.
 	 */
 	public function render( Request $request ): void {
-		echo wp_kses(
-			$this->html( $request->string( 'wiw_notice' ), $request ),
-			array_replace_recursive(
-				array(
-					'div'    => array( 'class' => true ),
-					'h1'     => array(),
-					'h2'     => array(),
-					'h3'     => array(),
-					'p'      => array(),
-					'ol'     => array(
-						'class'      => true,
-						'data-block' => true,
-					),
-					'ul'     => array( 'class' => true ),
-					'li'     => array( 'data-id' => true ),
-					'span'   => array(),
-					'em'     => array(),
-					'label'  => array(),
-					'form'   => array(
-						'method' => true,
-						'action' => true,
-						'class'  => true,
-					),
-					'input'  => array(
-						'type'      => true,
-						'name'      => true,
-						'value'     => true,
-						'min'       => true,
-						'max'       => true,
-						'maxlength' => true,
-						'class'     => true,
-						'checked'   => true,
-					),
-					'select' => array( 'name' => true ),
-					'option' => array(
-						'value'    => true,
-						'selected' => true,
-					),
-					'button' => array(
-						'type'       => true,
-						'class'      => true,
-						'name'       => true,
-						'value'      => true,
-						'formmethod' => true,
-						'formaction' => true,
-					),
-				),
-				HeroVideosSection::allowed_html()
-			)
-		);
+		echo $this->html( $request->string( 'wiw_notice' ), $request ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
 	}
 }
