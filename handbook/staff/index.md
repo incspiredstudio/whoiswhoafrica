@@ -22,7 +22,6 @@ The WHOISWHO screens sit in their own menu groups near the top of the left menu.
 | WHOISWHO: Setup (including the Turnstile keys and demo content) | No | No | Yes |
 | Directory: Profiles, Duplicates | Yes | Yes | Yes |
 | Directory: Add profile, Edit profile, Home page settings | No | Yes | Yes |
-| Directory: My profiles (profiles assigned to a user after a claim) | No | No | Yes |
 | Review: Review queue | Yes | Yes | Yes |
 | Review: Claims, Corrections, Requests and reports | No | Yes | Yes |
 | Imports: Sources | Yes | Yes | Yes |
@@ -65,7 +64,7 @@ Do not confuse **Site settings** (the WHOISWHO menu near the top of the left men
 | [Profile sections](/staff/profile-sections) | Writing and editing Bio, Achievement, Influence and Legacy |
 | [Photos and credits](/staff/photos-and-credits) | Open licences, credit lines and adding a photo |
 | [Import data](/staff/importing) | Bundles from the acquisition team: dry run, confirm, undo, the full import |
-| [Claims](/staff/claims) | Deciding claims, the Claimed mark, assigned users |
+| [Claims](/staff/claims) | Deciding claims, the Claimed mark, Profile owner accounts |
 | [Corrections](/staff/corrections) | Applying or declining suggested corrections |
 | [Requests and reports](/staff/requests-and-reports) | Removals, reports, data requests, the suppression list |
 | [Sponsored stories](/staff/sponsored-stories) | The deal tracker and the labelled slot |

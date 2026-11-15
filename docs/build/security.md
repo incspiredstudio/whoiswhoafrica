@@ -1,6 +1,6 @@
 # Security
 
-The main threats, the controls that answer them, and the rules for secrets, validation, rate limits and logging. Security here starts from a small attack surface: no public accounts, no public API, no payment data.
+The main threats, the controls that answer them, and the rules for secrets, validation, rate limits and logging. Security here starts from a small attack surface: no public sign-up (the only non-staff accounts are staff-created Profile owner accounts), no public API, no payment data.
 
 Requirements: REQ-046, 047, 049, 051, 066, 069, 081, 122, 127, 229, 233. Architecture: section 6. Records: ADR-004, ADR-007, ADR-013.
 
@@ -26,8 +26,9 @@ Requirements: REQ-046, 047, 049, 051, 066, 069, 081, 122, 127, 229, 233. Archite
 ## Authentication
 
 - **Staff only.** Password plus two-factor, enforced before first use of wp-admin, with recovery codes and lockout after repeated failures (REQ-047). Idle timeout is 60 minutes in wp-admin (verify).
-- **Closed registration.** `users_can_register` is off, there is no default role, no front-end login link, no application passwords and no XML-RPC. User enumeration is blocked (author query, users REST route, user sitemaps, login error messages).
-- **No other accounts.** Visitors, owners and nominators use forms and signed links. See [No accounts](/concepts/no-accounts-model).
+- **Closed registration.** `users_can_register` is off, there is no default role, no application passwords and no XML-RPC. The only front-end sign-in is the Profile owner sign-in at `/account/`, linked from the footer only. User enumeration is blocked (author query, users REST route, user sitemaps, login error messages).
+- **Profile owners** (D-071, REQ-274). Staff-created accounts with the role `wiw_profile_owner` and no wp-admin capabilities; any `/wp-admin/` request redirects to `/account/`. Sign-in has the login lockout, Turnstile when configured and generic errors. Two-factor is optional. Account pages are noindex and never cached.
+- **No other accounts.** Visitors and nominators use forms and signed links. See [No accounts](/concepts/no-accounts-model).
 - **Authorisation** is deny by default, and a capability is checked on every admin action. See [Roles in code](/build/roles-in-code).
 
 ## Hardening

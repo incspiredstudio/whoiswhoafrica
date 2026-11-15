@@ -1,10 +1,12 @@
 # The no-accounts model
 
-Nobody outside the team has an account on the public site. This page explains what replaces accounts, who does have one, and how account-free flows stay safe.
+Nobody outside the team has an account on the public site, with one exception: Profile owners, the people behind approved claims (D-071). This page explains what replaces accounts, who does have one, and how account-free flows stay safe.
 
 ## The rule
 
-The public site has no registration, login, password reset or account area for visitors, profile owners, nominators, nominees or judges. WordPress sign-up is closed, there is no default role and no sign-in link on the public pages. The only WordPress users are staff.
+The public site has no registration, login, password reset or account area for visitors, nominators, nominees or judges. WordPress sign-up is closed and there is no default role. The only WordPress users are staff and Profile owners.
+
+A Profile owner cannot sign up. Staff create the account when they approve a claim with **Approve and create account**. The owner signs in on the public site at `/account/`, from a "Profile owner sign in" link in the footer. There is no sign-in link in the header.
 
 ## Why
 
@@ -44,7 +46,22 @@ Where staff must be sure the right person is acting, the site emails a link. Lin
 
 ## Who does have an account
 
-Staff only: Reviewer, Editor and Administrator, plus any role the Administrator creates. Staff sign in through the normal WordPress login. Two-factor sign-in is available and recommended for every staff member, but not enforced. There is no role selector on the sign-in page. A person who edits a claimed profile is an ordinary staff user. See [Roles and what each can do](/concepts/roles).
+Staff only: Reviewer, Editor and Administrator, plus any role the Administrator creates. Staff sign in through the normal WordPress login. Two-factor sign-in is available and recommended for every staff member, but not enforced. There is no role selector on the sign-in page. See [Roles and what each can do](/concepts/roles).
+
+### Profile owners
+
+| Property | Rule |
+|---|---|
+| Role | `wiw_profile_owner`, with no wp-admin capabilities |
+| Created by | Staff, from an approved claim. No public sign-up. |
+| First sign-in | A "Set your password" email |
+| Where they sign in | `/account/` on the public site, with the login lockout and, when configured, Turnstile. Errors never say whether an email has an account. |
+| wp-admin | Any wp-admin address redirects to `/account/`. No admin bar. |
+| What they can do | See their profiles and their status, edit descriptive text, links, contact details and the photo (every edit goes to staff review), change their name and password, sign out |
+| Two-factor | Optional |
+| Account pages | Noindex, not in the sitemap, never cached |
+
+See [Your profile owner account](/visitor/your-account) and [Claims](/staff/claims#profile-owner-accounts).
 
 ## Bot and abuse protection
 
@@ -58,7 +75,7 @@ A correction, removal or report counts as valid only after the requester's email
 
 ## Hardening that follows
 
-- Looking up users is blocked: the author query, the users route in the REST interface, user sitemaps and login error messages.
+- Looking up users is blocked: the author query, the users route in the REST interface, user sitemaps and login error messages, including on the Profile owner sign-in.
 - XML-RPC and application passwords are off.
 - There is no public REST route. Core REST is limited to signed-in staff.
-- A test asserts that no registration or login route is exposed to visitors.
+- A test asserts that no registration route is exposed to visitors, and that the only public sign-in is the Profile owner sign-in at `/account/`.

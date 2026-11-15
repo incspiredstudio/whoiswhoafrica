@@ -6,7 +6,7 @@ These pages explain the ideas the product is built on. They answer "why does it 
 |---|---|
 | [Trust and independence](/concepts/trust-and-independence) | Which labels exist, who sees them, and why money never buys recognition |
 | [Privacy and data rights](/concepts/privacy-and-data-rights) | What is held, what is never stored, how long, and how people use their rights |
-| [The no-accounts model](/concepts/no-accounts) | Only staff have accounts; everyone else uses forms and single-use links |
+| [The no-accounts model](/concepts/no-accounts) | Only staff and Profile owners have accounts; everyone else uses forms and single-use links |
 | [Roles and what each can do](/concepts/roles) | The three default roles, capabilities and fixed permissions |
 
 ## The principles in one list

@@ -50,7 +50,7 @@ The logo files are supplied assets. The header and drawer render the logo throug
 |---|---|---|
 | Header | Directory, Awards, Stories, About, search icon, "Get listed" | Groups open to sub-menus. The Nominate link is hidden while the Nominations switch is off (REQ-259). |
 | Drawer (phones) | The same groups as sections that open and close | Same hiding rule. |
-| Footer | Trust and rules, Legal, More, Cookie preferences | Nominate hidden while closed. |
+| Footer | Trust and rules, Legal, More, Cookie preferences, Profile owner sign in | Nominate hidden while closed. The sign-in link reads "My account" when signed in and is never in the header (D-071). |
 
 Proposal: menus are WordPress menus for ordering and wording, and the conditional hiding is theme code reading the switch.
 
@@ -101,7 +101,7 @@ The theme reads these through the plugin. It never writes them.
 | Showing Sponsored on a profile | Only stories can be Sponsored (REQ-155) |
 | Ranking by payment | Nothing in the theme or plugin orders by payment (REQ-183) |
 | A cover image on a profile | Profiles show one portrait or logo only (REQ-247) |
-| A public sign in | There are no public accounts |
+| A header sign-in or public sign-up | The only sign-in link is "Profile owner sign in" in the footer, and staff create every owner account (D-071) |
 
 ## Prototype versus build
 

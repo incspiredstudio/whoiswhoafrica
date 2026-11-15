@@ -24,7 +24,7 @@ The theme is a parent `whoiswho` and an active child `whoiswho-child` (REQ-273, 
 | Part | Used by | Notes |
 |---|---|---|
 | Header | Every page | Five groups (Directory, Awards, Stories, Events, About), a search icon and a "Get listed" button. Events is a plain link to `/events`. The Nominate links are hidden while the Nominations switch is off (REQ-259). A drawer on phones. Transparent over the home hero only. |
-| Footer | Every page | An Events link, trust and legal links, the Cookie preferences button, brand line. |
+| Footer | Every page | An Events link, trust and legal links, the Cookie preferences button, the "Profile owner sign in" link ("My account" when signed in; never in the header, D-071), brand line. |
 | Cookie notice | Every page | A small card after a little scroll, Decline and Accept. Analytics load only after Accept (REQ-062, REQ-248). |
 | Page band | Inner pages | Eyebrow, title and lede, with an optional tone colour. |
 | Profile card and story card | Lists, home, search, related blocks | Profile card: poster, industry, name, role. Story card: 16:9 image, type, date, headline, lede, author. |

@@ -75,7 +75,7 @@ Home, discover and industry lists show reviewed profiles only, so a pending prof
 
 ## Edits
 
-A staff edit to a profile goes live on one person's sign-off. Each edit writes a version, with author, time, reason and old and new values, and an audit row. **Edits to a claimed profile made by its assigned user are held for approval** by a Reviewer or Administrator (D-059); see [Trust and labels](/concepts/trust-and-labels).
+A staff edit to a profile goes live on one person's sign-off. Each edit writes a version, with author, time, reason and old and new values, and an audit row. **Edits to a claimed profile made by its Profile owner are held for approval** by a Reviewer or Administrator (D-059, D-071); see [Trust and labels](/concepts/trust-and-labels).
 
 ## How it is tested
 

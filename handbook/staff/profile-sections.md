@@ -44,7 +44,7 @@ To change the photo or logo, use the **Photo** (or **Logo**) panel on the same s
 
 If the profile is published, the public page changes at once. Every save keeps the previous version, so a change can be traced and undone.
 
-If the profile is claimed and you are its assigned profile manager, your change waits for a Reviewer or Administrator before it shows. See [Claims](/staff/claims#the-assigned-user).
+If the profile is claimed, its Profile owner can edit it from their account on the public site. Their changes wait for a Reviewer or Administrator before they show. See [Claims](/staff/claims#profile-owner-accounts).
 
 ## On the public page
 

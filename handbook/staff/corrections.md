@@ -20,7 +20,7 @@ An unresolved dispute goes to the Administrator. The Administrator can grant the
    - **Apply** opens the profile for a direct edit with a required reason. The request reference is entered as the reason. Do not edit a separate copy.
    - **Mark resolved** closes the item when no edit is needed.
    - **Decline with a reason.** The reason is kept with the request and is never public.
-5. If the profile is claimed, an edit by its assigned user waits for a Reviewer or Administrator. The screen shows a hint when this applies.
+5. If the profile is claimed, an edit by its Profile owner waits for a Reviewer or Administrator. The screen shows a hint when this applies.
 6. The edit, the closure or the decline is written to the audit log, and the requester is emailed when the request is resolved.
 
 ## Time limits

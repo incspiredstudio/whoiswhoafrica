@@ -51,7 +51,6 @@ Capabilities in the code that the table above does not name (all from `config/ca
 | `wiw_view_dashboard_review` | Review and directory dashboard widgets | yes | yes | yes |
 | `wiw_view_sources`, `wiw_view_suppression` | Read-only Sources and Suppression list | yes | yes | yes |
 | `wiw_manage_subscribers` | Subscribers screen (newsletter list) | no | yes | yes |
-| `wiw_edit_assigned_profiles` | My profiles: edit only profiles assigned to the user | no | no | yes |
 | `wiw_handle_disputes` | Decide corrections and removal requests | no | yes | yes |
 | `wiw_receive_enquiries` | Receive enquiries sent to profiles | no | no | yes |
 | `wiw_manage_capabilities` | Edit role bundles and per-user grants (fixed) | no | no | yes |
@@ -97,7 +96,22 @@ A user cannot grant themselves anything. A fixed capability cannot be granted to
 
 ## Creating extra roles
 
-The three default roles are the only ones that ship. The Administrator can create more in wp-admin and give them any non-fixed capabilities (D-059, Q93 answered). The assigned user for a claimed profile is an ordinary staff user, and a limited "Profile manager" role is one example of a role the Administrator might create (REQ-253).
+The three default staff roles are the only staff roles that ship. The Administrator can create more in wp-admin and give them any non-fixed capabilities (D-059, Q93 answered).
+
+## The Profile owner role
+
+One non-staff role also ships: `wiw_profile_owner`, shown as "Profile owner" (D-071, REQ-253, 261, 274). It is for the person behind an approved claim.
+
+| Capability | Allows |
+|---|---|
+| `read` (core) | Be signed in |
+| `wiw_own_profiles` | Open and submit edits for only the profiles linked to this owner, on the public `/account/` pages. Every edit goes to review |
+
+- The role has no wp-admin capabilities. Any `/wp-admin/` request redirects to `/account/`, and the admin bar is hidden.
+- Nobody can sign up for it. Staff with `wiw_review_claims` create the account with "Approve and create account" on a claim, and can transfer or remove ownership. Every action is audited.
+- Do not grant staff capabilities to a Profile owner. A Profile owner who needs staff access should get a separate staff account.
+- Two-factor is optional for owners.
+- The old `wiw_edit_assigned_profiles` capability and the wp-admin My profiles screen are removed.
 
 ## WordPress native, custom, or still open
 

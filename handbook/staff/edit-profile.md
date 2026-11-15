@@ -35,7 +35,7 @@ Industry, sector, organisation type, head office city and a person's field are n
 
 If the profile is published, the public page changes at once. A fact you edit keeps showing on the public page: the save records you as its source ("Staff edit", method manual, medium confidence).
 
-If the profile is claimed and you are its assigned profile manager, your change waits for a Reviewer or Administrator. See [Claims](/staff/claims#the-assigned-user).
+If the profile is claimed, its Profile owner edits it from their account on the public site, not here. Their changes wait for a Reviewer or Administrator. See [Claims](/staff/claims#profile-owner-accounts).
 
 ## Who can do it
 

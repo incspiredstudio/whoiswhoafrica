@@ -71,7 +71,7 @@ Public templates never call `get_post_meta` or `WP_Query` on the profile type. T
 |---|---|
 | Claim requests | Every form field, a received date and a decide-by date (received plus 5 days), a status and the deciding user. The architecture's `wiw_claims` name already means import claims, so the profile claim table needs another name |
 | Claimed flag | A field on the profile; the public template hides the Claim button when set |
-| Assigned user | A user ID on the claimed profile |
+| Profile owner | The user ID of the Profile owner account linked to the claimed profile (REQ-274) |
 | Pending revision of a claimed profile | Held until a Reviewer or Administrator approves; the editor cannot approve their own change |
 | Home page curation | One setting per block: mode, item count, pinned item IDs, in options. Reads go through the read models and the daily random seed is cached |
 | Story comments | wpDiscuz's own tables. Add them to the PII catalogue, the data export and erase, and the processor register |

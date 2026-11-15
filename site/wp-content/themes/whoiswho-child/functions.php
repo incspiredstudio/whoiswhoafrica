@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WIW_CHILD_VERSION', '0.3.0' );
+define( 'WIW_CHILD_VERSION', '0.3.1' );
 
 require_once get_stylesheet_directory() . '/inc/status.php';
 require_once get_stylesheet_directory() . '/inc/assets.php';

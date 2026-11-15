@@ -56,6 +56,13 @@ Sources:
 | G51 | The Directory > Profiles list still shows raw type and state codes. | Reuse `Review\Admin\Labels` there. |
 | G52 | The guard-missing reminder is a red error notice, but the checklist calls the guard "Recommended". | Make it a warning. |
 | G53 | Re-importing an undone batch also takes back a profile that a person rejected after the batch was registered (it returns to the review queue). | Acceptable; skip profiles whose last rejection was by a person if this matters. |
+| G54 | Profile owner accounts (D-071) have no retention rule yet. | Suggested: delete an owner account that has owned no profile for 12 months. **Owner** to confirm. |
+| G55 | Profile owners cannot change their own email address; staff change it under Users. | Add self-service email change with confirmation to the new address. |
+| G56 | Claim evidence standard is still open (issue #10). | Default: one of an official web page naming the claimant, a registration number or a signed letter; an Editor approves; two people for a high-profile organisation. **Owner** to confirm. |
+| G57 | Profile owners are not redirected away from admin-ajax.php, so plugins such as wpDiscuz keep working; each ajax handler checks its own capability. | Acceptable; review any new plugin's ajax handlers for owner access. |
+| G58 | Staff users assigned to a profile before D-071 keep the assignment (shown as "(earlier assignment)") but lose the old My profiles screen. None exist on live. | Transfer such profiles to a Profile owner account. |
+| G59 | The owner account journey (sign in, edit, review, wp-admin redirect) is tested in Playwright locally only: CI does not set the e2e test mode, so the spec skips there. The two-factor step for an owner who turns it on is not browser-tested. | Enable the account spec in CI with a seeded owner. |
+| G60 | Defaults picked for owner accounts, for the owner to confirm: lost-password emails go only to owner-only accounts (staff use wp-login); staff who sign in at /account/ go to wp-admin; owner login names are random; a claim whose email belongs to a staff account cannot get an owner account; one pending change per profile at a time (a second is blocked). | **Owner** to confirm. |
 
 ## Security (accepted Low and Info, see docs/security-review.md)
 

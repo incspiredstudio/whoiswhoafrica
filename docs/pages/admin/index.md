@@ -36,7 +36,6 @@ The menu is split into top-level groups by job. The default WHOISWHO group (slug
 |---|---|---|---|---|---|
 | Directory | Profiles | `read_private_wiw_profiles` | yes | yes | yes |
 | Directory | Edit profile (opens from Profiles) | `edit_wiw_profiles` | no | yes | yes |
-| Directory | My profiles | `wiw_edit_assigned_profiles` | no | no | yes |
 | Directory | Duplicates | `wiw_resolve_duplicates` | yes | yes | yes |
 | Directory | Home page settings | `wiw_curate_home` | no | yes | yes |
 | Review | Review queue (and Review item) | `wiw_review_records` | yes | yes | yes |

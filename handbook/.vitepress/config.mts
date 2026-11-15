@@ -60,6 +60,7 @@ export default defineConfig({
             { text: "Events", link: "/visitor/events" },
             { text: "Get listed", link: "/visitor/get-listed" },
             { text: "Claim a profile", link: "/visitor/claim-a-profile" },
+            { text: "Your profile owner account", link: "/visitor/your-account" },
             { text: "Corrections and removal requests", link: "/visitor/corrections-and-removals" },
             { text: "Nominations", link: "/visitor/nominations" },
           ],

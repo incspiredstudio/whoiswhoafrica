@@ -1,6 +1,6 @@
 # Visitor flows
 
-This section describes what a visitor can do on the public site and what happens behind each action. Nobody needs an account for any of it. Where a flow ends with staff work, the page links to the matching part of the staff guide.
+This section describes what a visitor can do on the public site and what happens behind each action. Nobody needs an account for any of it. The one exception is a Profile owner: the person behind an approved claim, who gets an account created by staff to keep their profile up to date. Where a flow ends with staff work, the page links to the matching part of the staff guide.
 
 ## Flows at a glance
 
@@ -12,6 +12,7 @@ This section describes what a visitor can do on the public site and what happens
 | [Events](/visitor/events) | See what is coming up | [Events](/staff/events) |
 | [Get listed](/visitor/get-listed) | Send an enquiry to the team | [Enquiries](/staff/enquiries) |
 | [Claim a profile](/visitor/claim-a-profile) | Ask to take care of a profile | [Claims](/staff/claims) |
+| [Your profile owner account](/visitor/your-account) | Sign in and edit a claimed profile | [Claims](/staff/claims#profile-owner-accounts) |
 | [Corrections and removal requests](/visitor/corrections-and-removals) | Fix a fact, report a problem or ask for removal | [Corrections](/staff/corrections), [Requests and reports](/staff/requests-and-reports) |
 | [Nominations](/visitor/nominations) | Nominate someone for an award | [Awards](/staff/awards) |
 

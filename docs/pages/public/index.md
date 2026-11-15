@@ -6,7 +6,7 @@ The pages in this section describe how the site is meant to behave and how the p
 
 ## Rules that apply to every public page
 
-**There are no public accounts.** A visitor never signs up or signs in. Every action works without one: search, corrections, claims, removal requests, nominations, enquiries, comments and data requests. Where we need to be sure of an email address, we send a single-use link (REQ-229, REQ-233, D-034). Only staff have accounts, and they use the WordPress admin.
+**There are no public accounts, except Profile owners.** A visitor never signs up or signs in. The one exception is a Profile owner, whose account staff create when they approve a claim; the owner signs in at `/account/` from a footer link (D-071, REQ-274). Every action works without one: search, corrections, claims, removal requests, nominations, enquiries, comments and data requests. Where we need to be sure of an email address, we send a single-use link (REQ-229, REQ-233, D-034). Staff have accounts and use the WordPress admin; Profile owners never do.
 
 **Only reviewed, published content is public.** A profile is visible only in a published state, and individuals and entrepreneurs are public only after a person on the team approves them. Organisations may go live before review, but they carry a label and a noindex rule (REQ-208, REQ-216, D-033). The same visibility rule drives pages, lists, search, the sitemap and share previews.
 
@@ -44,7 +44,7 @@ Error states: a profile or page that does not exist returns 404 (V13), a removed
 
 ## Header, footer and cookie notice
 
-The header has five groups: Directory, Awards, Stories, Events and About, plus a search icon and a "Get listed" button. Directory, Awards and About open menus; Events is a plain link. The footer has an Events link too. The Nominate links are hidden while nominations are closed. On phones the header becomes a drawer. The footer carries the trust and legal links and a "Cookie preferences" button.
+The header has five groups: Directory, Awards, Stories, Events and About, plus a search icon and a "Get listed" button. Directory, Awards and About open menus; Events is a plain link. The footer has an Events link too. The Nominate links are hidden while nominations are closed. On phones the header becomes a drawer. The footer carries the trust and legal links, a "Cookie preferences" button, and the "Profile owner sign in" link ("My account" when signed in). The header never has a sign-in link (D-071).
 
 The cookie notice is a small card that appears after the visitor scrolls a little, with Decline and Accept. Analytics load only after Accept (REQ-062, REQ-248).
 
