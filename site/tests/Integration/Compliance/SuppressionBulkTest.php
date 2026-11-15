@@ -92,6 +92,10 @@ final class SuppressionBulkTest extends TestCase {
 		$this->as_role( 'administrator' );
 		$a      = $this->service()->add_manual( 'Bulk Remove Alpha Qzx', 'individual', array(), 'Asked' );
 		$b      = $this->service()->add_manual( 'Bulk Remove Beta Qzx', 'organisation', array(), 'Legal' );
+		$before = array(
+			$a => $this->audit_count( $a ),
+			$b => $this->audit_count( $b ),
+		);
 		$table  = new SuppressionTable();
 		$values = array(
 			ListTable::FIELD_ACTION => 'remove',
@@ -106,7 +110,7 @@ final class SuppressionBulkTest extends TestCase {
 		$this->assertSame( '2 removed.', $table->notice_for( $result )['text'], 'the notice carries a count, not the names' );
 		foreach ( array( $a, $b ) as $id ) {
 			$this->assertNull( $this->service()->get( $id ) );
-			$this->assertSame( 1, $this->audit_count( $id ), 'one audit row per entry, with the reason' );
+			$this->assertSame( $before[ $id ] + 1, $this->audit_count( $id ), 'one audit row per entry, with the reason' );
 		}
 	}
 

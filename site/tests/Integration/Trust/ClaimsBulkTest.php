@@ -150,6 +150,10 @@ final class ClaimsBulkTest extends TestCase {
 		$this->as_role( 'wiw_editor' );
 		$a      = $this->claim( 'Claims Bulk Alpha Qzx' );
 		$b      = $this->claim( 'Claims Bulk Beta Qzx' );
+		$before = array(
+			$a => $this->audit_count( $a, 'claim.approve' ),
+			$b => $this->audit_count( $b, 'claim.approve' ),
+		);
 		$table  = new ClaimsTable();
 		$result = $table->process_bulk(
 			$this->request(
@@ -163,7 +167,7 @@ final class ClaimsBulkTest extends TestCase {
 		$this->assertSame( '2 approved.', $table->notice_for( $result )['text'] );
 		foreach ( array( $a, $b ) as $id ) {
 			$this->assertSame( Claim::APPROVED, ( new ClaimRepository() )->find( $id )->status );
-			$this->assertSame( 1, $this->audit_count( $id, 'claim.approve' ), 'one audit row per claim' );
+			$this->assertSame( $before[ $id ] + 1, $this->audit_count( $id, 'claim.approve' ), 'one audit row per claim' );
 		}
 		$again = $table->process_bulk(
 			$this->request(
@@ -181,6 +185,10 @@ final class ClaimsBulkTest extends TestCase {
 		$this->as_role( 'wiw_editor' );
 		$a      = $this->claim( 'Claims Reject Alpha Qzx' );
 		$b      = $this->claim( 'Claims Reject Beta Qzx' );
+		$before = array(
+			$a => $this->audit_count( $a, 'claim.reject' ),
+			$b => $this->audit_count( $b, 'claim.reject' ),
+		);
 		$values = array(
 			ListTable::FIELD_ACTION => 'reject',
 			ListTable::FIELD_IDS    => array( $a, $b ),
@@ -198,13 +206,14 @@ final class ClaimsBulkTest extends TestCase {
 			$claim = ( new ClaimRepository() )->find( $id );
 			$this->assertSame( Claim::REJECTED, $claim->status );
 			$this->assertSame( 'Not connected to the organisation', $claim->reason );
-			$this->assertSame( 1, $this->audit_count( $id, 'claim.reject' ) );
+			$this->assertSame( $before[ $id ] + 1, $this->audit_count( $id, 'claim.reject' ) );
 		}
 	}
 
 	public function test_REQ_275_claims_bulk_is_refused_without_the_capability(): void {
 		$this->as_role( 'wiw_editor' );
-		$a = $this->claim( 'Claims Refused Qzx' );
+		$a      = $this->claim( 'Claims Refused Qzx' );
+		$before = $this->audit_count( $a, 'claim.approve' );
 		$this->as_role( 'wiw_reviewer' );
 		$result = ( new ClaimsTable() )->process_bulk(
 			$this->request(
@@ -216,7 +225,7 @@ final class ClaimsBulkTest extends TestCase {
 		);
 		$this->assertSame( ListTable::REFUSED_CAP, $result['status'] );
 		$this->assertSame( Claim::NEW, ( new ClaimRepository() )->find( $a )->status );
-		$this->assertSame( 0, $this->audit_count( $a, 'claim.approve' ) );
+		$this->assertSame( $before, $this->audit_count( $a, 'claim.approve' ) );
 	}
 
 	public function test_REQ_275_claims_row_actions_follow_the_capability_and_decided_claims_have_no_checkbox(): void {
