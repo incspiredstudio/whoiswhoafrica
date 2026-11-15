@@ -221,6 +221,13 @@ final class ProfileOwnerAccountsTest extends WpTestCase {
 		$this->assertSame( home_url( '/account/' ), OwnerAccess::admin_redirect( $owner, false ) );
 		$this->assertSame( '', OwnerAccess::admin_redirect( $staff, false ), 'staff stay in wp-admin' );
 		$this->assertSame( '', OwnerAccess::admin_redirect( $owner, true ), 'admin-ajax.php is left to its own handlers' );
+		foreach ( array(
+			'auth_redirect'            => 'keep_user_out_of_admin',
+			'admin_page_access_denied' => 'keep_out_of_admin',
+			'admin_init'               => 'keep_out_of_admin',
+		) as $hook => $method ) {
+			$this->assertNotFalse( has_action( $hook, array( OwnerAccess::class, $method ) ), "$hook sends an owner to the account, before any wp-admin screen or its access check" );
+		}
 
 		wp_set_current_user( $owner );
 		$this->assertFalse( apply_filters( 'show_admin_bar', true ), 'no admin bar for an owner' );

@@ -21,6 +21,10 @@ final class OwnerAccess {
 	 * Attach the hooks.
 	 */
 	public static function hooks(): void {
+		// auth_redirect runs first on every wp-admin screen, before the menu's own "not allowed" stop (which comes before admin_init);
+		// admin_init and admin_page_access_denied are kept as further nets.
+		add_action( 'auth_redirect', array( self::class, 'keep_user_out_of_admin' ), 0 );
+		add_action( 'admin_page_access_denied', array( self::class, 'keep_out_of_admin' ), 0 );
 		add_action( 'admin_init', array( self::class, 'keep_out_of_admin' ), 0 );
 		add_filter( 'show_admin_bar', array( self::class, 'admin_bar' ), 99 );
 		add_filter( 'login_redirect', array( self::class, 'login_redirect' ), 99, 3 );
@@ -41,6 +45,19 @@ final class OwnerAccess {
 	 */
 	public static function keep_out_of_admin(): void {
 		$to = self::admin_redirect( get_current_user_id(), wp_doing_ajax() );
+		if ( '' !== $to ) {
+			wp_safe_redirect( $to );
+			exit;
+		}
+	}
+
+	/**
+	 * The wp-admin cookie check (auth_redirect) hands over the signed-in user's id before the current user is set.
+	 *
+	 * @param mixed $user_id User whose admin cookie was accepted.
+	 */
+	public static function keep_user_out_of_admin( $user_id ): void {
+		$to = self::admin_redirect( (int) $user_id, wp_doing_ajax() );
 		if ( '' !== $to ) {
 			wp_safe_redirect( $to );
 			exit;
