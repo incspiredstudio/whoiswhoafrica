@@ -30,6 +30,7 @@ use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
 use WhoIsWho\Core\Platform\Forms\FormInput;
 
@@ -324,7 +325,7 @@ final class AddProfileScreen {
 		if ( ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			throw new \DomainException( 'Not allowed to add profiles.' );
 		}
-		$out     = '<div class="wrap wiw-add-profile"><h1>' . esc_html__( 'Add profile', 'whoiswho' ) . '</h1>';
+		$out     = '<div class="wrap wiw-staff wiw-staff--form wiw-add-profile"><h1>' . esc_html__( 'Add profile', 'whoiswho' ) . '</h1>';
 		$created = $request->int( 'created' );
 		if ( $created > 0 ) {
 			$out .= '<div class="notice notice-success"><p>' . esc_html__( 'The profile was created. It is in the review queue and is not public until a reviewer approves it.', 'whoiswho' ) . ' <a href="' . esc_url( ProfileEditScreen::url( $created ) ) . '">' . esc_html__( 'Open the profile', 'whoiswho' ) . '</a></p></div>';
@@ -354,17 +355,23 @@ final class AddProfileScreen {
 	 * @param string           $back Return target.
 	 */
 	private function type_form( AddProfileFields $form, string $name, string $back ): string {
-		$out  = '<p>' . esc_html__( 'Choose what you are adding. The form then shows the fields for that type.', 'whoiswho' ) . '</p>';
-		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
-		$out .= '<input type="hidden" name="name" value="' . esc_attr( $name ) . '" />';
+		$hidden = '<input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" /><input type="hidden" name="name" value="' . esc_attr( $name ) . '" />';
 		if ( '' !== $back ) {
-			$out .= '<input type="hidden" name="return" value="' . esc_attr( $back ) . '" />';
+			$hidden .= '<input type="hidden" name="return" value="' . esc_attr( $back ) . '" />';
 		}
-		$out .= '<p><label for="wiw-add-type">' . esc_html__( 'Type', 'whoiswho' ) . '</label><br /><select id="wiw-add-type" name="entity_type">';
+		$types = array();
 		foreach ( $form->types() as $type ) {
-			$out .= '<option value="' . esc_attr( $type ) . '">' . esc_html( self::type_label( $type ) ) . '</option>';
+			$types[ $type ] = self::type_label( $type );
 		}
-		return $out . '</select></p><p><button type="submit" class="button button-primary">' . esc_html__( 'Continue', 'whoiswho' ) . '</button></p></form>';
+		$body  = Form::open(
+			$hidden,
+			array(
+				'method' => 'get',
+				'action' => admin_url( 'admin.php' ),
+			)
+		) . Form::select( 'entity_type', __( 'Type', 'whoiswho' ), $types, '', array( 'id' => 'wiw-add-type' ) );
+		$body .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Continue', 'whoiswho' ) . '</button>' ) . '</form>';
+		return Form::section( __( 'What are you adding?', 'whoiswho' ), $body, array( 'description' => __( 'Choose what you are adding. The form then shows the fields for that type.', 'whoiswho' ) ) );
 	}
 
 	/**
@@ -403,17 +410,22 @@ final class AddProfileScreen {
 	 * @param bool                  $duplicates Whether possible duplicates were found.
 	 */
 	private function main_form( AddProfileFields $form, string $type, string $name, string $back, array $values, array $errors, bool $duplicates ): string {
-		$value = static fn ( string $key ): string => (string) ( $values[ $key ] ?? '' );
-		$out   = '<p>' . esc_html( sprintf( /* translators: %s: entity type. */ __( 'Type: %s.', 'whoiswho' ), self::type_label( $type ) ) ) . ' <a href="' . esc_url( self::url( $name, $back ) ) . '">' . esc_html__( 'Change type', 'whoiswho' ) . '</a></p>';
-		$out  .= '<p>' . esc_html__( 'Fields marked * are required. The new profile goes to the review queue and is not public until a reviewer approves it.', 'whoiswho' ) . '</p>';
-		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-add-profile-form">';
-		$out  .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-		$out  .= '<input type="hidden" name="entity_type" value="' . esc_attr( $type ) . '" />';
+		$value   = static fn ( string $key ): string => (string) ( $values[ $key ] ?? '' );
+		$out     = '<p>' . esc_html( sprintf( /* translators: %s: entity type. */ __( 'Type: %s.', 'whoiswho' ), self::type_label( $type ) ) ) . ' <a href="' . esc_url( self::url( $name, $back ) ) . '">' . esc_html__( 'Change type', 'whoiswho' ) . '</a></p>';
+		$out    .= '<p>' . esc_html__( 'Fields marked * are required. The new profile goes to the review queue and is not public until a reviewer approves it.', 'whoiswho' ) . '</p>';
+		$hidden  = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
+		$hidden .= '<input type="hidden" name="entity_type" value="' . esc_attr( $type ) . '" />';
 		if ( '' !== $back ) {
-			$out .= '<input type="hidden" name="return" value="' . esc_attr( $back ) . '" />';
+			$hidden .= '<input type="hidden" name="return" value="' . esc_attr( $back ) . '" />';
 		}
-		$out    .= '<table class="form-table" role="presentation"><tbody>';
-		$out    .= $this->row( 'name', __( 'Name', 'whoiswho' ) . ' *', '<input type="text" id="wiw-f-name" name="name" class="regular-text" maxlength="200" required="required" value="' . esc_attr( $name ) . '" />', $errors );
+		$out    .= Form::open(
+			$hidden,
+			array(
+				'class'   => 'wiw-add-profile-form',
+				'unsaved' => true,
+			)
+		);
+		$main    = $this->row( 'name', __( 'Name', 'whoiswho' ) . ' *', '<input type="text" id="wiw-f-name" name="name" class="regular-text" maxlength="200" required="required" value="' . esc_attr( $name ) . '" />', $errors );
 		$current = array(
 			'primary_industry' => (int) $value( 'primary_industry' ),
 			'industries'       => array_values( array_filter( array_map( 'intval', explode( ',', $value( 'industries' ) ) ) ) ),
@@ -421,35 +433,43 @@ final class AddProfileScreen {
 			'country'          => (int) $value( 'country' ),
 			'city'             => (int) $value( 'city' ),
 		);
+		$classes = '';
 		foreach ( ( new ClassificationPicker( ClassificationPicker::ADD_NAMES ) )->rows( $current, $type, true ) as $picker_row ) {
-			$out .= $this->row( $picker_row['name'], $picker_row['label'], $picker_row['html'], $errors );
+			$classes .= $this->row( $picker_row['name'], $picker_row['label'], $picker_row['html'], $errors );
 		}
 		foreach ( $form->for_type( $type ) as $key => $rule ) {
 			if ( in_array( $key, AddProfileFields::SECTIONS, true ) ) {
 				continue;
 			}
-			$out .= $this->row( 'f_' . $key, $form->label( $type, $key ) . ( $rule['required'] ? ' *' : '' ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
+			$main .= $this->row( 'f_' . $key, $form->label( $type, $key ) . ( $rule['required'] ? ' *' : '' ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
 		}
-		$out .= $this->row( 'wikidata_qid', __( 'Wikidata id (optional, for example Q42)', 'whoiswho' ), '<input type="text" id="wiw-f-wikidata_qid" name="wikidata_qid" maxlength="20" value="' . esc_attr( $value( 'wikidata_qid' ) ) . '" />', $errors );
+		$main .= $this->row( 'wikidata_qid', __( 'Wikidata id (optional, for example Q42)', 'whoiswho' ), '<input type="text" id="wiw-f-wikidata_qid" name="wikidata_qid" maxlength="20" value="' . esc_attr( $value( 'wikidata_qid' ) ) . '" />', $errors );
 		if ( in_array( $type, AddProfileValidator::ORG_TYPES, true ) ) {
-			$out .= $this->row( 'rc_number', __( 'Registration number (optional)', 'whoiswho' ), '<input type="text" id="wiw-f-rc_number" name="rc_number" maxlength="40" value="' . esc_attr( $value( 'rc_number' ) ) . '" />', $errors );
+			$main .= $this->row( 'rc_number', __( 'Registration number (optional)', 'whoiswho' ), '<input type="text" id="wiw-f-rc_number" name="rc_number" maxlength="40" value="' . esc_attr( $value( 'rc_number' ) ) . '" />', $errors );
 		}
-		$out .= '</tbody></table>';
-		$out .= '<h2>' . esc_html__( 'Profile sections', 'whoiswho' ) . '</h2><p class="description">' . esc_html__( 'Plain text. Leave a blank line between paragraphs. Each section is optional.', 'whoiswho' ) . '</p><table class="form-table" role="presentation"><tbody>';
+		$out     .= Form::section( __( 'Profile details', 'whoiswho' ), $main, array( 'id' => 'wiw-add-details' ) );
+		$out     .= Form::section( __( 'Classification', 'whoiswho' ), $classes, array( 'id' => 'wiw-add-classification' ) );
+		$sections = '';
 		foreach ( $form->for_type( $type ) as $key => $rule ) {
 			if ( in_array( $key, AddProfileFields::SECTIONS, true ) ) {
-				$out .= $this->row( 'f_' . $key, $form->label( $type, $key ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
+				$sections .= $this->row( 'f_' . $key, $form->label( $type, $key ), $this->input( $key, $rule, $value( 'f_' . $key ) ), $errors );
 			}
 		}
-		$out .= '</tbody></table>';
-		$out .= $this->image_fields( $type, $values, $errors );
-		$out .= '<h2>' . esc_html__( 'Sources', 'whoiswho' ) . '</h2><table class="form-table" role="presentation"><tbody>';
-		$out .= $this->row( 'sources', __( 'Source URLs *', 'whoiswho' ), '<textarea id="wiw-f-sources" name="sources" rows="4" class="large-text" required="required">' . esc_textarea( $value( 'sources' ) ) . '</textarea><p class="description">' . esc_html__( 'One web address per line, where these facts can be checked. At least one.', 'whoiswho' ) . '</p>', $errors );
-		$out .= '</tbody></table>';
+		$out    .= Form::section(
+			__( 'Profile sections', 'whoiswho' ),
+			$sections,
+			array(
+				'id'          => 'wiw-add-sections',
+				'description' => __( 'Plain text. Leave a blank line between paragraphs. Each section is optional.', 'whoiswho' ),
+			)
+		);
+		$out    .= $this->image_fields( $type, $values, $errors );
+		$sources = $this->row( 'sources', __( 'Source URLs *', 'whoiswho' ), '<textarea id="wiw-f-sources" name="sources" rows="4" class="large-text wiw-input wiw-textarea" required="required">' . esc_textarea( $value( 'sources' ) ) . '</textarea>', $errors, __( 'One web address per line, where these facts can be checked. At least one.', 'whoiswho' ) );
 		if ( $duplicates ) {
-			$out .= '<p><label><input type="checkbox" name="create_anyway" value="1" /> ' . esc_html__( 'None of the matches above is the same. Create anyway.', 'whoiswho' ) . '</label></p>';
+			$sources .= Form::checkbox( 'create_anyway', __( 'None of the matches above is the same. Create anyway.', 'whoiswho' ) );
 		}
-		return $out . '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save profile', 'whoiswho' ) . '</button></p></form>';
+		$out .= Form::section( __( 'Sources', 'whoiswho' ), $sources, array( 'id' => 'wiw-add-sources' ) );
+		return $out . Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save profile', 'whoiswho' ) . '</button>', array( 'sticky' => true ) ) . '</form>';
 	}
 
 	/**
@@ -462,22 +482,26 @@ final class AddProfileScreen {
 	private function image_fields( string $type, array $values, array $errors ): string {
 		$person = in_array( $type, AddProfileFields::PERSON_TYPES, true );
 		$id     = (int) ( $values['image_id'] ?? 0 );
-		$out    = '<h2>' . esc_html( $person ? __( 'Photo (optional)', 'whoiswho' ) : __( 'Logo (optional)', 'whoiswho' ) ) . '</h2>';
-		$out   .= '<p class="description">' . esc_html__( 'Choose a JPEG, PNG or WebP from the media library. Only openly licensed images may be used, and the licence, credit and source are then required.', 'whoiswho' ) . '</p>';
-		$out   .= '<table class="form-table" role="presentation"><tbody>';
+		$out    = '';
 		$name   = $id > 0 ? (string) get_the_title( $id ) : __( 'Nothing chosen', 'whoiswho' );
-		$pick   = '<input type="number" min="0" id="wiw-f-image_id" name="image_id" value="' . esc_attr( $id > 0 ? (string) $id : '' ) . '" class="small-text" aria-describedby="wiw-image-name" /> <span id="wiw-image-name" class="wiw-add-image-name">' . esc_html( $name ) . '</span> ';
-		$pick  .= '<button type="button" class="button wiw-add-image-pick">' . esc_html__( 'Choose from media library', 'whoiswho' ) . '</button> <button type="button" class="button-link wiw-add-image-clear">' . esc_html__( 'Remove', 'whoiswho' ) . '</button>';
-		$pick  .= '<p class="description">' . esc_html__( 'The number is the media library item id; the button fills it in.', 'whoiswho' ) . '</p>';
-		$out   .= $this->row( 'image_id', __( 'Image', 'whoiswho' ), $pick, $errors );
-		$select = '<select id="wiw-f-image_licence" name="image_licence"><option value="">' . esc_html__( 'Choose a licence', 'whoiswho' ) . '</option>';
+		$pick   = '<div class="wiw-media-pick"><input type="number" min="0" id="wiw-f-image_id" name="image_id" value="' . esc_attr( $id > 0 ? (string) $id : '' ) . '" class="small-text wiw-input" aria-describedby="wiw-image-name" /> <span id="wiw-image-name" class="wiw-add-image-name">' . esc_html( $name ) . '</span> ';
+		$pick  .= '<button type="button" class="button wiw-add-image-pick">' . esc_html__( 'Choose from media library', 'whoiswho' ) . '</button> <button type="button" class="button-link wiw-add-image-clear">' . esc_html__( 'Remove', 'whoiswho' ) . '</button></div>';
+		$out   .= $this->row( 'image_id', __( 'Image', 'whoiswho' ), $pick, $errors, __( 'The number is the media library item id; the button fills it in.', 'whoiswho' ) );
+		$select = '<select id="wiw-f-image_licence" name="image_licence" class="wiw-input wiw-select"><option value="">' . esc_html__( 'Choose a licence', 'whoiswho' ) . '</option>';
 		foreach ( ImagePolicy::licence_choices() as $licence => $label ) {
 			$select .= '<option value="' . esc_attr( $licence ) . '"' . selected( (string) ( $values['image_licence'] ?? '' ), $licence, false ) . '>' . esc_html( $label ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}
 		$out .= $this->row( 'image_licence', __( 'Licence', 'whoiswho' ), $select . '</select>', $errors );
 		$out .= $this->row( 'image_credit', __( 'Credit (who made it, as the licence asks)', 'whoiswho' ), '<input type="text" id="wiw-f-image_credit" name="image_credit" class="regular-text" maxlength="300" value="' . esc_attr( (string) ( $values['image_credit'] ?? '' ) ) . '" />', $errors );
 		$out .= $this->row( 'image_source', __( 'Image source URL', 'whoiswho' ), '<input type="url" id="wiw-f-image_source" name="image_source" class="regular-text" maxlength="2000" value="' . esc_attr( (string) ( $values['image_source'] ?? '' ) ) . '" />', $errors );
-		return $out . '</tbody></table>';
+		return Form::section(
+			$person ? __( 'Photo (optional)', 'whoiswho' ) : __( 'Logo (optional)', 'whoiswho' ),
+			$out,
+			array(
+				'id'          => 'wiw-add-image',
+				'description' => __( 'Choose a JPEG, PNG or WebP from the media library. Only openly licensed images may be used, and the licence, credit and source are then required.', 'whoiswho' ),
+			)
+		);
 	}
 
 	/**
@@ -487,10 +511,14 @@ final class AddProfileScreen {
 	 * @param string                $label  Label.
 	 * @param string                $input  Input markup (already escaped).
 	 * @param array<string, string> $errors Errors.
+	 * @param string                $help   Help text under the field.
 	 */
-	private function row( string $name, string $label, string $input, array $errors ): string {
-		$error = isset( $errors[ $name ] ) ? '<p class="description wiw-field-error" role="alert"><strong>' . esc_html( self::error_text( (string) $errors[ $name ] ) ) . '</strong></p>' : '';
-		return '<tr' . ( '' === $error ? '' : ' class="form-invalid"' ) . '><th scope="row"><label for="wiw-f-' . esc_attr( $name ) . '">' . esc_html( $label ) . '</label></th><td>' . $input . $error . '</td></tr>';
+	private function row( string $name, string $label, string $input, array $errors, string $help = '' ): string {
+		$args = array( 'help' => $help );
+		if ( isset( $errors[ $name ] ) ) {
+			$args['error'] = self::error_text( (string) $errors[ $name ] );
+		}
+		return Form::row( 'wiw-f-' . $name, $label, $input, $args );
 	}
 
 	/**
@@ -508,11 +536,11 @@ final class AddProfileScreen {
 			$hint  = 'list' === $rule['type'] ? ' ' . esc_html__( 'One per line.', 'whoiswho' ) : '';
 			$count = 'wiw-count-' . $name;
 			$used  = function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
-			$box   = '<textarea id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" rows="' . esc_attr( (string) $rows ) . '" class="large-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '" data-wiw-count="' . esc_attr( $count ) . '" aria-describedby="' . esc_attr( $count ) . '"' . $required . '>' . esc_textarea( $value ) . '</textarea>';
-			return $box . '<p class="description"><span id="' . esc_attr( $count ) . '" class="wiw-char-count" aria-live="polite">' . esc_html( sprintf( /* translators: 1: characters used, 2: the limit. */ __( '%1$d / %2$d characters', 'whoiswho' ), $used, $rule['max'] ) ) . '</span>' . $hint . '</p>';
+			$box   = '<textarea id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" rows="' . esc_attr( (string) $rows ) . '" class="large-text wiw-input wiw-textarea" maxlength="' . esc_attr( (string) $rule['max'] ) . '" data-wiw-count="' . esc_attr( $count ) . '" aria-describedby="' . esc_attr( $count ) . '"' . $required . '>' . esc_textarea( $value ) . '</textarea>';
+			return $box . '<p class="wiw-help wiw-help--count"><span id="' . esc_attr( $count ) . '" class="wiw-char-count" aria-live="polite">' . esc_html( sprintf( /* translators: 1: characters used, 2: the limit. */ __( '%1$d / %2$d characters', 'whoiswho' ), $used, $rule['max'] ) ) . '</span>' . $hint . '</p>';
 		}
 		$html_type = 'url' === $rule['type'] ? 'url' : ( 'int' === $rule['type'] ? 'number' : 'text' );
-		return '<input type="' . esc_attr( $html_type ) . '" id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" class="regular-text" maxlength="' . esc_attr( (string) $rule['max'] ) . '" value="' . esc_attr( $value ) . '"' . $required . ' />';
+		return '<input type="' . esc_attr( $html_type ) . '" id="wiw-f-' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" class="regular-text wiw-input" maxlength="' . esc_attr( (string) $rule['max'] ) . '" value="' . esc_attr( $value ) . '"' . $required . ' />';
 	}
 
 	/**

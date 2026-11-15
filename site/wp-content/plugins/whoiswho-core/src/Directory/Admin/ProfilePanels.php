@@ -23,6 +23,7 @@ use WhoIsWho\Core\Directory\State\VersionRepository;
 use WhoIsWho\Core\Directory\Url\ProfileSlugs;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Platform\Audit\AuditLogger;
 use WhoIsWho\Core\Platform\Notes\NotesService;
 use WhoIsWho\Core\Review\Admin\Labels;
@@ -170,9 +171,28 @@ final class ProfilePanels {
 	 * @param array<string, mixed> $state State row.
 	 */
 	public function html( int $id, array $state ): string {
-		return $this->status( $state ) . $this->contact( $id ) . $this->enquiries( $id ) . $this->url_panel( $id )
+		return '<div class="wiw-panels">' . $this->status( $state ) . $this->contact( $id ) . $this->enquiries( $id ) . $this->url_panel( $id )
 			. $this->sources( $id ) . $this->sync( $id ) . $this->history( $id ) . $this->notes( $id )
-			. '<h3>' . esc_html__( 'Claim', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Nothing to show yet.', 'whoiswho' ) . '</p>';
+			. self::card( __( 'Claim', 'whoiswho' ), '<p class="wiw-help">' . esc_html__( 'Nothing to show yet.', 'whoiswho' ) . '</p>' ) . '</div>';
+	}
+
+	/**
+	 * One panel as a card of the staff form kit (REQ-275).
+	 *
+	 * @param string $title       Heading.
+	 * @param string $body        Body markup, already escaped.
+	 * @param string $description Optional description.
+	 */
+	private static function card( string $title, string $body, string $description = '' ): string {
+		return Form::section(
+			$title,
+			$body,
+			array(
+				'level'       => 3,
+				'description' => $description,
+				'class'       => 'wiw-card--panel',
+			)
+		);
 	}
 
 	/**
@@ -188,11 +208,11 @@ final class ProfilePanels {
 			__( 'Batch', 'whoiswho' )   => (string) ( $state['import_batch'] ?? '' ),
 			__( 'Claimed', 'whoiswho' ) => (int) ( $state['claimed'] ?? 0 ) > 0 ? __( 'Yes', 'whoiswho' ) : __( 'No', 'whoiswho' ),
 		);
-		$out  = '<h3>' . esc_html__( 'Status and marks', 'whoiswho' ) . '</h3><table class="widefat striped"><tbody>';
+		$out  = '<table class="widefat striped wiw-kv"><tbody>';
 		foreach ( $rows as $label => $value ) {
 			$out .= '<tr><th scope="row">' . esc_html( (string) $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';
 		}
-		return $out . '</tbody></table>';
+		return self::card( __( 'Status and marks', 'whoiswho' ), $out . '</tbody></table>' );
 	}
 
 	/**
@@ -201,11 +221,24 @@ final class ProfilePanels {
 	 * @param int $id Profile.
 	 */
 	private function contact( int $id ): string {
-		$out = '<h3>' . esc_html__( 'Contact details', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Private unless you switch one on after the owner asks. A reason is required.', 'whoiswho' ) . '</p>';
+		$out = '';
 		foreach ( ( new ContactSwitches() )->all( $id ) as $kind => $entry ) {
-			$out .= $this->form( self::CONTACT, $id ) . '<input type="hidden" name="kind" value="' . esc_attr( $kind ) . '" /><p><label>' . esc_html( ucfirst( $kind ) ) . ' <input type="text" name="value" value="' . esc_attr( $entry['value'] ) . '" class="regular-text" /></label> <label><input type="checkbox" name="public" value="1"' . ( $entry['public'] ? ' checked="checked"' : '' ) . ' /> ' . esc_html__( 'Show publicly', 'whoiswho' ) . '</label> <label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" required="required" /></label> <button class="button">' . esc_html__( 'Save', 'whoiswho' ) . '</button></p></form>';
+			$key  = 'wiw-contact-' . sanitize_key( (string) $kind );
+			$out .= $this->form( self::CONTACT, $id ) . '<input type="hidden" name="kind" value="' . esc_attr( $kind ) . '" /><div class="wiw-inline-fields">';
+			$out .= Form::text( 'value', ucfirst( (string) $kind ), (string) $entry['value'], array( 'id' => $key . '-value' ) );
+			$out .= Form::text(
+				'reason',
+				__( 'Reason', 'whoiswho' ),
+				'',
+				array(
+					'id'       => $key . '-reason',
+					'required' => true,
+				)
+			);
+			$out .= Form::toggle( 'public', __( 'Show publicly', 'whoiswho' ), (bool) $entry['public'], array( 'id' => $key . '-public' ) );
+			$out .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Save', 'whoiswho' ) . '</button></div></div></form>';
 		}
-		return $out;
+		return self::card( __( 'Contact details', 'whoiswho' ), $out, __( 'Private unless you switch one on after the owner asks. A reason is required.', 'whoiswho' ) );
 	}
 
 	/**
@@ -214,8 +247,20 @@ final class ProfilePanels {
 	 * @param int $id Profile.
 	 */
 	private function enquiries( int $id ): string {
-		$open = '1' !== (string) get_post_meta( $id, PublicProfile::ENQUIRIES_OFF_META, true );
-		return '<h3>' . esc_html__( 'Enquiries', 'whoiswho' ) . '</h3>' . $this->form( self::ENQUIRIES, $id ) . '<p><label><input type="checkbox" name="open" value="1"' . ( $open ? ' checked="checked"' : '' ) . ' /> ' . esc_html__( 'Accept enquiries about this profile', 'whoiswho' ) . '</label> <label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" required="required" /></label> <button class="button">' . esc_html__( 'Save', 'whoiswho' ) . '</button></p></form>';
+		$open  = '1' !== (string) get_post_meta( $id, PublicProfile::ENQUIRIES_OFF_META, true );
+		$body  = $this->form( self::ENQUIRIES, $id ) . '<div class="wiw-inline-fields">';
+		$body .= Form::text(
+			'reason',
+			__( 'Reason', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-enquiries-reason',
+				'required' => true,
+			)
+		);
+		$body .= Form::toggle( 'open', __( 'Accept enquiries about this profile', 'whoiswho' ), $open, array( 'id' => 'wiw-enquiries-open' ) );
+		$body .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Save', 'whoiswho' ) . '</button></div></div></form>';
+		return self::card( __( 'Enquiries', 'whoiswho' ), $body );
 	}
 
 	/**
@@ -224,9 +269,21 @@ final class ProfilePanels {
 	 * @param int $id Profile.
 	 */
 	private function url_panel( int $id ): string {
-		$post = get_post( $id );
-		$slug = $post instanceof \WP_Post ? $post->post_name : '';
-		return '<h3>' . esc_html__( 'Public URL', 'whoiswho' ) . '</h3><p><code>' . esc_html( ProfileSlugs::url_for_slug( $slug ) ) . '</code></p>' . $this->form( self::SLUG, $id ) . '<p><label>' . esc_html__( 'New address', 'whoiswho' ) . ' <input type="text" name="slug" value="' . esc_attr( $slug ) . '" /></label> <label>' . esc_html__( 'Reason', 'whoiswho' ) . ' <input type="text" name="reason" required="required" /></label> <button class="button">' . esc_html__( 'Change (the old address keeps redirecting)', 'whoiswho' ) . '</button></p></form>';
+		$post  = get_post( $id );
+		$slug  = $post instanceof \WP_Post ? $post->post_name : '';
+		$body  = '<p><code>' . esc_html( ProfileSlugs::url_for_slug( $slug ) ) . '</code></p>' . $this->form( self::SLUG, $id ) . '<div class="wiw-inline-fields">';
+		$body .= Form::text( 'slug', __( 'New address', 'whoiswho' ), $slug, array( 'id' => 'wiw-slug-value' ) );
+		$body .= Form::text(
+			'reason',
+			__( 'Reason', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-slug-reason',
+				'required' => true,
+			)
+		);
+		$body .= '<div class="wiw-inline-fields__action"><button class="button">' . esc_html__( 'Change (the old address keeps redirecting)', 'whoiswho' ) . '</button></div></div></form>';
+		return self::card( __( 'Public URL', 'whoiswho' ), $body );
 	}
 
 	/**
@@ -238,7 +295,7 @@ final class ProfilePanels {
 		if ( ! current_user_can( self::SOURCES_CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out = '<h3>' . esc_html__( 'Where each fact comes from', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr>';
+		$out = '<table class="widefat striped"><thead><tr>';
 		foreach ( array( 'Field', 'Source', 'Retrieved', 'Confidence', 'Method' ) as $heading ) {
 			$out .= '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
@@ -248,7 +305,7 @@ final class ProfilePanels {
 		foreach ( $entries as $entry ) {
 			$out .= '<tr><th scope="row">' . esc_html( Labels::field( (string) $entry['field'], $type ) ) . '</th><td>' . esc_html( (string) $entry['source_url'] ) . '</td><td>' . esc_html( (string) $entry['retrieved_at'] ) . '</td><td>' . esc_html( '' === (string) $entry['confidence'] ? '' : Labels::humanise( (string) $entry['confidence'] ) ) . '</td><td>' . esc_html( Labels::method( (string) $entry['method'] ) ) . '</td></tr>';
 		}
-		return $out . ( array() === $entries ? '<tr><td colspan="5">' . esc_html__( 'No sources recorded.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
+		return self::card( __( 'Where each fact comes from', 'whoiswho' ), $out . ( array() === $entries ? '<tr><td colspan="5">' . esc_html__( 'No sources recorded.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>' );
 	}
 
 	/**
@@ -276,14 +333,12 @@ final class ProfilePanels {
 		if ( array() === $flagged ) {
 			return '';
 		}
-		$out  = '<h3>' . esc_html__( 'Changes from the source since review', 'whoiswho' ) . '</h3>';
-		$out .= '<p class="description">' . esc_html__( 'A later import found different values at the source. They are not shown publicly until a reviewer accepts them.', 'whoiswho' ) . '</p>';
-		$out .= '<div class="notice notice-warning inline"><p>' . esc_html__( 'A source changed. The change is flagged for review and has not been applied.', 'whoiswho' ) . '</p><ul>';
+		$out = '<div class="notice notice-warning inline"><p>' . esc_html__( 'A source changed. The change is flagged for review and has not been applied.', 'whoiswho' ) . '</p><ul>';
 		foreach ( $flagged as $row ) {
 			$fields = array_keys( (array) json_decode( (string) $row['new_value'], true ) );
 			$out   .= '<li>' . esc_html( implode( ', ', array_map( static fn ( $key ): string => Labels::field( (string) $key ), $fields ) ) . ' (' . (string) $row['created_at'] . ')' ) . '</li>';
 		}
-		return $out . '</ul></div>';
+		return self::card( __( 'Changes from the source since review', 'whoiswho' ), $out . '</ul></div>', __( 'A later import found different values at the source. They are not shown publicly until a reviewer accepts them.', 'whoiswho' ) );
 	}
 
 	/**
@@ -292,13 +347,13 @@ final class ProfilePanels {
 	 * @param int $id Profile.
 	 */
 	private function history( int $id ): string {
-		$out  = '<h3>' . esc_html__( 'Revision history', 'whoiswho' ) . '</h3><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'When', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Author', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Via', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Reason', 'whoiswho' ) . '</th></tr></thead><tbody>';
+		$out  = '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'When', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Author', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Via', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Reason', 'whoiswho' ) . '</th></tr></thead><tbody>';
 		$rows = ( new VersionRepository() )->for_profile( $id );
 		foreach ( $rows as $row ) {
 			$user = (int) $row['author_id'] > 0 ? get_userdata( (int) $row['author_id'] ) : false;
 			$out .= '<tr><td>' . esc_html( (string) $row['created_at'] ) . '</td><td>' . esc_html( false === $user ? __( 'System', 'whoiswho' ) : (string) $user->display_name ) . '</td><td>' . esc_html( Labels::method( (string) $row['created_via'] ) . ( null !== $row['approval_status'] ? ' (' . Labels::humanise( (string) $row['approval_status'] ) . ')' : '' ) ) . '</td><td>' . esc_html( (string) $row['reason'] ) . '</td></tr>';
 		}
-		return $out . ( array() === $rows ? '<tr><td colspan="4">' . esc_html__( 'No changes yet.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>';
+		return self::card( __( 'Revision history', 'whoiswho' ), $out . ( array() === $rows ? '<tr><td colspan="4">' . esc_html__( 'No changes yet.', 'whoiswho' ) . '</td></tr>' : '' ) . '</tbody></table>' );
 	}
 
 	/**
@@ -310,11 +365,21 @@ final class ProfilePanels {
 		if ( ! current_user_can( self::NOTES_CAP ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out = '<h3>' . esc_html__( 'Internal notes', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Staff only. Never shown publicly.', 'whoiswho' ) . '</p><ul>';
+		$out = '<ul class="wiw-notes">';
 		foreach ( NotesService::for_site()->list( 'profile', $id, self::NOTES_CAP ) as $note ) {
 			$out .= '<li>' . esc_html( $note['created_at'] . ': ' . $note['body'] ) . '</li>';
 		}
-		return $out . '</ul>' . $this->form( self::NOTE, $id ) . '<p><label>' . esc_html__( 'Add a note', 'whoiswho' ) . '<br /><textarea name="body" rows="3" class="large-text" required="required"></textarea></label> <button class="button">' . esc_html__( 'Add note', 'whoiswho' ) . '</button></p></form>';
+		$out .= '</ul>' . $this->form( self::NOTE, $id ) . Form::textarea(
+			'body',
+			__( 'Add a note', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-note-body',
+				'rows'     => 3,
+				'required' => true,
+			)
+		) . Form::actions( '<button class="button">' . esc_html__( 'Add note', 'whoiswho' ) . '</button>' ) . '</form>';
+		return self::card( __( 'Internal notes', 'whoiswho' ), $out, __( 'Staff only. Never shown publicly.', 'whoiswho' ) );
 	}
 
 	/**
@@ -324,6 +389,6 @@ final class ProfilePanels {
 	 * @param int    $id     Profile.
 	 */
 	private function form( string $action, int $id ): string {
-		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-form"><input type="hidden" name="action" value="' . esc_attr( $action ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
 	}
 }

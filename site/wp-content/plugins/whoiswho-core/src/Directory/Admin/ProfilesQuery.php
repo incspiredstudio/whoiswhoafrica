@@ -87,18 +87,20 @@ final class ProfilesQuery {
 	 * Rows for a filter set.
 	 *
 	 * @param array<string, string> $filters Output of filters_from().
-	 * @param int                   $page    Page, from 1.
+	 * @param int                   $page     Page, from 1.
+	 * @param int                   $per_page Rows per page.
 	 * @return array{rows: array<int, array<string, mixed>>, total: int, pages: int, groups: array<int, array{value: string, count: int}>}
 	 */
-	public function run( array $filters, int $page = 1 ): array {
+	public function run( array $filters, int $page = 1, int $per_page = self::PER_PAGE ): array {
 		global $wpdb;
+		$per_page             = max( 1, $per_page );
 		list( $where, $args ) = $this->where( $filters );
 		$from                 = ' FROM ' . $wpdb->posts . ' p INNER JOIN ' . StateRepository::table() . ' s ON s.profile_id = p.ID' . $where;
 		$total                = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*)' . $from, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
-		$pages                = max( 1, (int) ceil( $total / self::PER_PAGE ) );
+		$pages                = max( 1, (int) ceil( $total / $per_page ) );
 		$page                 = max( 1, min( $page, $pages ) );
 		$found                = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare( 'SELECT p.ID, p.post_title, s.entity_type, s.pub_state, s.origin, s.source, s.import_batch, s.claimed, s.updated_at' . $from . ' ORDER BY p.post_title ASC, p.ID ASC LIMIT %d OFFSET %d', array_merge( $args, array( self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE ) ) ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
+			$wpdb->prepare( 'SELECT p.ID, p.post_title, s.entity_type, s.pub_state, s.origin, s.source, s.import_batch, s.claimed, s.updated_at' . $from . ' ORDER BY p.post_title ASC, p.ID ASC LIMIT %d OFFSET %d', array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) ) ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
 			ARRAY_A
 		);
 		$rows                 = array();

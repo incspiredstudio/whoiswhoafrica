@@ -37,6 +37,7 @@ final class Module implements ModuleInterface {
 		Users\Deactivation::for_site()->register();
 		Health\HealthEndpoint::for_site()->register();
 		Dashboard\DashboardScreen::hooks();
+		Admin\Ui\StaffAssets::hooks();
 		add_action( 'admin_init', array( Activation::class, 'sync_version' ) );
 		Jobs\JobRunner::for_site()->recurring(
 			'log.purge',

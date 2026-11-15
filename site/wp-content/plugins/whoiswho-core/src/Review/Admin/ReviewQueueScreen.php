@@ -1,7 +1,8 @@
 <?php
 /**
- * The staff Review queue screen and the dashboard review tiles (REQ-084, REQ-222, REQ-239, REQ-244). The screen needs
- * wiw_review_records; the tiles need wiw_view_dashboard_review. Assign to me is an audited admin action.
+ * The staff Review queue screen and the dashboard review tiles (REQ-084, REQ-222, REQ-239, REQ-244, REQ-275). The screen needs
+ * wiw_review_records; the tiles need wiw_view_dashboard_review. Assign to me is an audited admin action. The queue is a shared
+ * staff list table (ReviewQueueTable, REQ-275) with row quick actions and bulk actions.
  *
  * @package WhoIsWho
  */
@@ -57,6 +58,7 @@ final class ReviewQueueScreen {
 				self::register();
 				ScreenRegistry::shared()->hook();
 				ActionGuard::register( self::ASSIGN_ACT, self::CAPABILITY, array( self::class, 'handle_assign' ) );
+				ReviewQueueTable::register_bulk_handler();
 			},
 			1
 		);
@@ -99,91 +101,56 @@ final class ReviewQueueScreen {
 	 * @param Request $request Request.
 	 */
 	public static function handle_assign( Request $request ): void {
-		$profile_id = $request->int( 'profile_id' );
-		$user_id    = get_current_user_id();
-		if ( $profile_id > 0 && $user_id > 0 && null !== get_post( $profile_id ) ) {
-			( new ReviewQueue() )->assign( $profile_id, $user_id );
-			AuditLogger::for_site()->log(
-				'review.assign',
-				array(
-					'type' => 'profile',
-					'id'   => $profile_id,
-				),
-				null,
-				array( 'assignee' => $user_id )
-			);
-		}
+		self::assign_to_current_user( $request->int( 'profile_id' ) );
 		wp_safe_redirect( add_query_arg( 'page', self::SCREEN, admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/**
+	 * Assign a queue item's profile to the current user, with an audit row. The single action and the bulk action both use it.
+	 *
+	 * @param int $profile_id Profile.
+	 * @return bool Whether it was assigned.
+	 */
+	public static function assign_to_current_user( int $profile_id ): bool {
+		$user_id = get_current_user_id();
+		if ( $profile_id <= 0 || $user_id <= 0 || null === get_post( $profile_id ) || ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
+			return false;
+		}
+		( new ReviewQueue() )->assign( $profile_id, $user_id );
+		AuditLogger::for_site()->log(
+			'review.assign',
+			array(
+				'type' => 'profile',
+				'id'   => $profile_id,
+			),
+			null,
+			array( 'assignee' => $user_id )
+		);
+		return true;
 	}
 
 	/**
 	 * Print the screen.
 	 */
 	public function render(): void {
+		echo $this->html( Request::from_globals() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
+	}
+
+	/**
+	 * The screen markup: the count, the review metrics and the queue table (REQ-275).
+	 *
+	 * @param Request $request Request.
+	 */
+	public function html( Request $request ): string {
 		if ( ! current_user_can( self::CAPABILITY ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			wp_die( esc_html__( 'You are not allowed to see this page.', 'whoiswho' ), '', array( 'response' => 403 ) );
 		}
-		$page   = max( 1, Request::from_globals()->int( 'paged' ) );
-		$result = ( new ReviewQueue() )->items( $page );
-		$kinds  = array(
-			ReviewQueue::KIND_NEW        => __( 'New profile', 'whoiswho' ),
-			ReviewQueue::KIND_CLAIM      => __( 'Claim', 'whoiswho' ),
-			ReviewQueue::KIND_SUBMISSION => __( 'Customer submission', 'whoiswho' ),
-			ReviewQueue::KIND_REVISION   => __( 'Pending revision', 'whoiswho' ),
-			ReviewQueue::KIND_FLAGGED    => __( 'Flagged change', 'whoiswho' ),
-		);
-		echo '<div class="wrap"><h1>' . esc_html__( 'Review queue', 'whoiswho' ) . '</h1>';
+		$total = (int) ( new ReviewQueue() )->items( 1, 1 )['total'];
+		$out   = '<div class="wrap wiw-staff"><h1>' . esc_html__( 'Review queue', 'whoiswho' ) . '</h1>';
 		/* translators: %d: number of items. */
-		echo '<p>' . esc_html( sprintf( _n( '%d item to review', '%d items to review', $result['total'], 'whoiswho' ), $result['total'] ) ) . '</p>';
-		echo ( new ReviewMetrics() )->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped while the markup is built.
-		echo '<table class="widefat striped"><thead><tr>';
-		foreach ( array( 'Item', 'Kind', 'Type', 'State', 'Waiting since', 'Marks', 'Assigned', '' ) as $heading ) {
-			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
-		}
-		echo '</tr></thead><tbody>';
-		if ( array() === $result['items'] ) {
-			echo '<tr><td colspan="8">' . esc_html__( 'Nothing to review.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $result['items'] as $item ) {
-			$edit  = ReviewItemScreen::url( (int) $item['profile_id'] );
-			$marks = array_filter(
-				array(
-					$item['pilot'] ? __( 'Pilot', 'whoiswho' ) : '',
-					$item['ai_drafted'] ? __( 'AI-drafted', 'whoiswho' ) : '',
-					$item['edited'] ? __( 'Edited', 'whoiswho' ) : '',
-				)
-			);
-			$who   = $item['assignee'] > 0 ? get_userdata( $item['assignee'] ) : false;
-			echo '<tr><td>' . ( $edit ? '<a href="' . esc_url( $edit ) . '">' . esc_html( $item['name'] ) . '</a>' : esc_html( $item['name'] ) ) . '</td>';
-			echo '<td>' . esc_html( $kinds[ $item['kind'] ] ?? $item['kind'] ) . '</td><td>' . esc_html( Labels::entity_type( (string) $item['type'] ) ) . '</td><td>' . esc_html( Labels::state( (string) $item['state'], (string) ( $item['origin'] ?? '' ) ) ) . '</td>';
-			echo '<td>' . esc_html( $item['since'] ) . '</td><td>' . esc_html( implode( ', ', $marks ) ) . '</td>';
-			echo '<td>' . esc_html( $who ? $who->display_name : '' ) . '</td><td>';
-			$url = add_query_arg(
-				array(
-					'action'     => self::ASSIGN_ACT,
-					'profile_id' => $item['profile_id'],
-					'_wpnonce'   => ActionGuard::nonce_for( self::ASSIGN_ACT ),
-				),
-				admin_url( 'admin-post.php' )
-			);
-			echo '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Assign to me', 'whoiswho' ) . '</a></td></tr>';
-		}//end foreach
-		echo '</tbody></table>';
-		if ( $result['pages'] > 1 ) {
-			echo '<p class="wiw-pager">';
-			for ( $i = 1; $i <= $result['pages']; $i++ ) {
-				$url = add_query_arg(
-					array(
-						'page'  => self::SCREEN,
-						'paged' => $i,
-					),
-					admin_url( 'admin.php' )
-				);
-				echo $i === $page ? '<strong>' . esc_html( (string) $i ) . '</strong> ' : '<a href="' . esc_url( $url ) . '">' . esc_html( (string) $i ) . '</a> ';
-			}
-			echo '</p>';
-		}
-		echo '</div>';
+		$out .= '<p class="wiw-lead">' . esc_html( sprintf( _n( '%d item to review', '%d items to review', $total, 'whoiswho' ), $total ) ) . '</p>';
+		$out .= ( new ReviewMetrics() )->html();
+		return $out . ( new ReviewQueueTable() )->html( $request ) . '</div>';
 	}
 }

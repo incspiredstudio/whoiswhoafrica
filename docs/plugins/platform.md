@@ -98,6 +98,33 @@ Jobs run on Action Scheduler through WP-Cron, with a time budget. A real cron on
 | Staff | `/wp-login.php` (two-factor when the person switched it on), then wp-admin |
 | Health | `/healthz` |
 
+## Staff UI kit (REQ-275)
+
+Shared building blocks for staff screens, in `src/Platform/Admin/Ui/`. Phase 1 uses them on the Review queue, Profiles, Edit profile and Add profile; later screens convert the same way.
+
+**List tables.** `ListTable` extends `WP_List_Table`. A subclass needs a no-argument constructor (or overrides `make()`) and declares:
+
+| Method | What it returns |
+|---|---|
+| `bulk_action()` (static) | The admin-post action the bulk form posts to, for example `wiw_review_bulk`; also the nonce action |
+| `capability()` (static) | The screen capability, checked by ActionGuard before any bulk action |
+| `screen_slug()` (static) | The screen's page slug, where the user is sent back |
+| `columns()` | Column key to heading; the base adds the checkbox column |
+| `primary_column()` | The column that carries the row actions |
+| `fetch( $page, $per_page )` | `items` and `total` for one page (20 a page by default; override `per_page()`) |
+| `item_id( $item )` | The id the checkbox carries; 0 for a row bulk actions do not apply to |
+| `item_name( $item )` | Plain text name, for the checkbox label and the confirmation list (`name_for_id()` reads the post title by default) |
+| `column_html( $item, $column )` | One escaped cell; use `ListTable::pill( $text, $tone )` for status pills |
+| `row_actions_for( $item )` | Optional. Key to `label`, `url`, `capability` and an optional `confirm` question. Avoid the keys `approve` and `unapprove`: core CSS hides them |
+| `bulk_action_definitions()` | Optional. Key to `label`, `capability`, `handler` (`callable( int $id, Request $request ): bool\|WP_Error`), and optional `destructive`, `done` (for example `%d approved`) and `fields` (`callable(): string`, extra inputs for the confirmation step) |
+| `screen_args( $request )` | Optional. Query args kept when coming back (filters, page) |
+
+Register the handler on `init` in the admin with `MyTable::register_bulk_handler()` and print the table with `( new MyTable() )->html( $request )` inside a `wrap wiw-staff` div. The base checks the nonce and the action's capability, reads ids only through `Request`, runs the handler once per id and shows one notice. A destructive action asks in the browser and is confirmed on the server (`confirm=1`); an action with `fields` always goes through the confirmation step. `step_url( $key, array( $id ) )` gives a row action that opens that step for one row. A handler must call the same domain service as the single action, so the service checks the capability per item and writes the audit row; a bulk action never adds a power the screen did not have.
+
+**Forms.** `Form` prints fields: `text`, `email`, `url`, `textarea` (with `counter` and `maxlength`, kept live by `char-count.js`), `select`, `searchable_select`, `checkbox`, `toggle` (a switch), `radio_cards`, `row` (around a control the screen built), `section` (a card), `actions` (with `sticky`) and `open` (with `unsaved` for the leave-page warning). Common arguments: `id` (default `wiw-f-{name}`), `help`, `error`, `required`, `class`, `attrs`. An error adds `aria-invalid` and links the error text with `aria-describedby`. Names, values and validators stay with the screen.
+
+**Styles.** `StaffAssets` loads `assets/admin/ui/staff.css` and `staff.js` on WHOISWHO screens only (hook suffix `_page_wiw…`). Styles apply inside `.wiw-staff` and `.wiw-list-table`, use WordPress admin colours (`--wp-admin-theme-color`) and no brand values.
+
 ## Tests that must exist
 
 - `test_REQ_051_audit_log_chain_detects_tampering`
@@ -114,4 +141,4 @@ Nothing in the product modules. Every module depends on it.
 
 ## Requirement ids covered
 
-REQ-047, 051, 075, 081, 083, 087, 094, 108, 109, 122, 188, 194, 204, 205, 209, 228, 229, 233, 235, 239, 240, 244, 245.
+REQ-047, 051, 075, 081, 083, 087, 094, 108, 109, 122, 188, 194, 204, 205, 209, 228, 229, 233, 235, 239, 240, 244, 245, 275.

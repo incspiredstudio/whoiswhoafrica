@@ -6,7 +6,8 @@
  * select, the classification (Industry picker, Organisation type, Country and City, see ClassificationPicker; a person's
  * professions stay a list), and a Photo or Logo panel (media library picker, open licence, credit, source). Needs
  * edit_wiw_profiles on the screen and on both actions (a Reviewer does not hold it). The handlers read only allowlisted field
- * names and call ProfileEditor or ProfileImageEditor.
+ * names and call ProfileEditor or ProfileImageEditor. The markup uses the staff form kit (Platform\Admin\Ui\Form, REQ-275): card
+ * sections, labels above fields, a sticky save bar and the unsaved-changes warning.
  *
  * @package WhoIsWho
  */
@@ -29,6 +30,7 @@ use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\ScreenRegistry;
+use WhoIsWho\Core\Platform\Admin\Ui\Form;
 use WhoIsWho\Core\Review\Admin\Labels;
 
 /**
@@ -221,7 +223,8 @@ final class ProfileEditScreen {
 	}
 
 	/**
-	 * The screen markup.
+	 * The screen markup: the profile's fields in card sections with a sticky save bar, then the photo and the panels (REQ-275).
+	 * Field names, validators and save paths are the same as before; only the markup changed.
 	 *
 	 * @param Request $request Request (profile_id, result, why).
 	 * @throws \DomainException Without the capability.
@@ -232,22 +235,58 @@ final class ProfileEditScreen {
 		}
 		$id    = $request->int( 'profile_id' );
 		$state = $id > 0 ? ( new StateRepository() )->get( $id ) : null;
-		$out   = '<div class="wrap"><h1>' . esc_html__( 'Edit profile', 'whoiswho' ) . '</h1>';
+		$out   = '<div class="wrap wiw-staff wiw-staff--form"><h1>' . esc_html__( 'Edit profile', 'whoiswho' ) . '</h1>';
 		if ( null === $state || null === get_post( $id ) ) {
 			return $out . '<p>' . esc_html__( 'Choose a profile from the Profiles screen.', 'whoiswho' ) . '</p></div>';
 		}
+		$type = (string) $state['entity_type'];
 		$out .= $this->notice( $request );
-		$out .= '<h2>' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( (string) $state['entity_type'] ) . ' · ' . Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ) ) . '</p>';
+		$out .= '<header class="wiw-page-head"><h2 class="wiw-page-head__title">' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( $type ) . ' · ' . Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ) ) . '</p></header>';
 		if ( (int) $state['claimed'] > 0 ) {
 			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager goes to review before it shows.', 'whoiswho' ) . '</p></div>';
 		}
-		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( self::SAVE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
-		$out .= '<table class="form-table" role="presentation"><tbody>' . $this->fields( $id, (string) $state['entity_type'] ) . '</tbody></table>';
-		$out .= $this->terms( $id, (string) $state['entity_type'] );
-		$out .= '<p><label>' . esc_html__( 'Reason or request reference (required)', 'whoiswho' ) . '<br /><input type="text" name="reason" class="large-text" required="required" value="' . esc_attr( rawurldecode( $request->string( 'reason' ) ) ) . '" /></label></p>';
-		$out .= $this->resolves( $id, $request->int( 'resolves' ) );
-		$out .= '<p><button class="button button-primary">' . esc_html__( 'Save changes', 'whoiswho' ) . '</button></p></form>';
-		return $out . $this->image_panel( $id, (string) $state['entity_type'] ) . ( new ProfilePanels() )->html( $id, $state ) . '</div>';
+		$hidden = '<input type="hidden" name="action" value="' . esc_attr( self::SAVE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::SAVE ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
+		$fields = $this->fields( $id, $type );
+		$out   .= Form::open(
+			$hidden,
+			array(
+				'class'   => 'wiw-profile-edit-form',
+				'unsaved' => true,
+			)
+		);
+		$out   .= Form::section(
+			__( 'Profile details', 'whoiswho' ),
+			$fields[0],
+			array(
+				'id'          => 'wiw-details',
+				'description' => __( 'Fields marked * are required.', 'whoiswho' ),
+			)
+		);
+		if ( '' !== $fields[1] ) {
+			$out .= Form::section(
+				__( 'Profile sections', 'whoiswho' ),
+				$fields[1],
+				array(
+					'id'          => 'wiw-sections',
+					'description' => __( 'Plain text. Leave a blank line between paragraphs. Each section is optional.', 'whoiswho' ),
+				)
+			);
+		}
+		$out .= $this->terms( $id, $type );
+		$why  = Form::text(
+			'reason',
+			__( 'Reason or request reference (required)', 'whoiswho' ),
+			rawurldecode( $request->string( 'reason' ) ),
+			array(
+				'id'       => 'wiw-f-reason',
+				'class'    => 'large-text',
+				'required' => true,
+				'help'     => __( 'Every save writes a version and an audit row with this reason.', 'whoiswho' ),
+			)
+		);
+		$out .= Form::section( __( 'Save the change', 'whoiswho' ), $why . $this->resolves( $id, $request->int( 'resolves' ) ), array( 'id' => 'wiw-save' ) );
+		$out .= Form::actions( '<button type="submit" class="button button-primary">' . esc_html__( 'Save changes', 'whoiswho' ) . '</button>', array( 'sticky' => true ) ) . '</form>';
+		return $out . $this->image_panel( $id, $type ) . ( new ProfilePanels() )->html( $id, $state ) . '</div>';
 	}
 
 	/**
@@ -261,41 +300,51 @@ final class ProfileEditScreen {
 		$person  = in_array( $type, array( 'individual', 'entrepreneur' ), true );
 		$current = ProfileImageEditor::current( $id );
 		$has     = $current['id'] > 0;
-		$out     = '<h2 id="wiw-image">' . esc_html( $person ? __( 'Photo', 'whoiswho' ) : __( 'Logo', 'whoiswho' ) ) . '</h2>';
-		$out    .= '<p class="description">' . esc_html__( 'Choose a JPEG, PNG or WebP from the media library. Only openly licensed images may be used: the licence, the creator or credit, and the page the image comes from are required.', 'whoiswho' ) . '</p>';
-		$out    .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="wiw-profile-image-form"><input type="hidden" name="action" value="' . esc_attr( self::IMAGE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::IMAGE ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
-		$out    .= '<table class="form-table" role="presentation"><tbody>';
-		$preview = $has ? wp_get_attachment_image( $current['id'], 'thumbnail', false, array( 'class' => 'wiw-image-preview' ) ) . '<br />' : '';
+		$hidden  = '<input type="hidden" name="action" value="' . esc_attr( self::IMAGE ) . '" /><input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::IMAGE ) ) . '" /><input type="hidden" name="profile_id" value="' . esc_attr( (string) $id ) . '" />';
+		$preview = $has ? wp_get_attachment_image( $current['id'], 'thumbnail', false, array( 'class' => 'wiw-image-preview' ) ) : '';
 		$name    = $has ? (string) get_the_title( $current['id'] ) : __( 'Nothing chosen', 'whoiswho' );
-		$pick    = $preview . '<input type="number" min="0" id="wiw-f-image_id" name="image_id" value="' . esc_attr( $has ? (string) $current['id'] : '' ) . '" class="small-text" aria-describedby="wiw-image-name" /> <span id="wiw-image-name" class="wiw-add-image-name">' . esc_html( $name ) . '</span> ';
-		$pick   .= '<button type="button" class="button wiw-add-image-pick">' . esc_html__( 'Choose from media library', 'whoiswho' ) . '</button>';
-		$pick   .= '<p class="description">' . esc_html__( 'The number is the media library item id; the button fills it in.', 'whoiswho' ) . '</p>';
-		$out    .= $this->row( 'image_id', __( 'Image', 'whoiswho' ), $pick );
-		$select  = '<select id="wiw-f-image_licence" name="image_licence"><option value="">' . esc_html__( 'Choose a licence', 'whoiswho' ) . '</option>';
-		foreach ( ImagePolicy::licence_choices() as $licence => $label ) {
-			$select .= '<option value="' . esc_attr( $licence ) . '"' . selected( $current['licence'], $licence, false ) . '>' . esc_html( $label ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
-		}
-		$out .= $this->row( 'image_licence', __( 'Licence', 'whoiswho' ), $select . '</select>' );
-		$out .= $this->row( 'image_credit', __( 'Creator or credit (as the licence asks)', 'whoiswho' ), '<input type="text" id="wiw-f-image_credit" name="image_credit" class="regular-text" maxlength="' . esc_attr( (string) ProfileImageEditor::CREDIT_MAX ) . '" value="' . esc_attr( $current['creator'] ) . '" />' );
-		$out .= $this->row( 'image_source', __( 'Image source URL', 'whoiswho' ), '<input type="url" id="wiw-f-image_source" name="image_source" class="regular-text" maxlength="2000" value="' . esc_attr( $current['source_url'] ) . '" />' );
-		$out .= $this->row( 'image_reason', __( 'Reason or request reference (required)', 'whoiswho' ), '<input type="text" id="wiw-f-image_reason" name="reason" class="regular-text" required="required" />' );
-		$out .= '</tbody></table><p><button type="submit" name="op" value="set" class="button button-primary">' . esc_html( $person ? __( 'Save photo', 'whoiswho' ) : __( 'Save logo', 'whoiswho' ) ) . '</button>';
+		$pick    = '<div class="wiw-media-pick">' . $preview . '<input type="number" min="0" id="wiw-f-image_id" name="image_id" value="' . esc_attr( $has ? (string) $current['id'] : '' ) . '" class="small-text wiw-input" aria-describedby="wiw-image-name" /> <span id="wiw-image-name" class="wiw-add-image-name">' . esc_html( $name ) . '</span> ';
+		$pick   .= '<button type="button" class="button wiw-add-image-pick">' . esc_html__( 'Choose from media library', 'whoiswho' ) . '</button></div>';
+		$body    = Form::row( 'wiw-f-image_id', __( 'Image', 'whoiswho' ), $pick, array( 'help' => __( 'The number is the media library item id; the button fills it in.', 'whoiswho' ) ) );
+		$body   .= Form::select(
+			'image_licence',
+			__( 'Licence', 'whoiswho' ),
+			ImagePolicy::licence_choices(),
+			(string) $current['licence'],
+			array( 'placeholder' => __( 'Choose a licence', 'whoiswho' ) )
+		);
+		$body   .= '<div class="wiw-field-grid">' . Form::text( 'image_credit', __( 'Creator or credit (as the licence asks)', 'whoiswho' ), (string) $current['creator'], array( 'maxlength' => ProfileImageEditor::CREDIT_MAX ) );
+		$body   .= Form::url( 'image_source', __( 'Image source URL', 'whoiswho' ), (string) $current['source_url'], array( 'maxlength' => 2000 ) ) . '</div>';
+		$body   .= Form::text(
+			'reason',
+			__( 'Reason or request reference (required)', 'whoiswho' ),
+			'',
+			array(
+				'id'       => 'wiw-f-image_reason',
+				'required' => true,
+			)
+		);
+		$buttons = '<button type="submit" name="op" value="set" class="button button-primary">' . esc_html( $person ? __( 'Save photo', 'whoiswho' ) : __( 'Save logo', 'whoiswho' ) ) . '</button>';
 		if ( $has ) {
-			$out .= ' <button type="submit" name="op" value="remove" class="button">' . esc_html( $person ? __( 'Remove photo', 'whoiswho' ) : __( 'Remove logo', 'whoiswho' ) ) . '</button>';
+			$buttons .= ' <button type="submit" name="op" value="remove" class="button">' . esc_html( $person ? __( 'Remove photo', 'whoiswho' ) : __( 'Remove logo', 'whoiswho' ) ) . '</button>';
 		}
-		return $out . '</p></form>';
+		$form = Form::open(
+			$hidden,
+			array(
+				'class'   => 'wiw-profile-image-form',
+				'unsaved' => true,
+			)
+		) . $body . Form::actions( $buttons ) . '</form>';
+		return Form::section(
+			$person ? __( 'Photo', 'whoiswho' ) : __( 'Logo', 'whoiswho' ),
+			$form,
+			array(
+				'id'          => 'wiw-image',
+				'description' => __( 'Choose a JPEG, PNG or WebP from the media library. Only openly licensed images may be used: the licence, the creator or credit, and the page the image comes from are required.', 'whoiswho' ),
+			)
+		);
 	}
 
-	/**
-	 * One form row whose label points at its field.
-	 *
-	 * @param string $name  Field id suffix.
-	 * @param string $label Label.
-	 * @param string $input Input markup (already escaped).
-	 */
-	private function row( string $name, string $label, string $input ): string {
-		return '<tr><th scope="row"><label for="wiw-f-' . esc_attr( $name ) . '">' . esc_html( $label ) . '</label></th><td>' . $input . '</td></tr>';
-	}
 
 	/**
 	 * The result notice.
@@ -315,15 +364,17 @@ final class ProfileEditScreen {
 	}
 
 	/**
-	 * One row per allowlisted field.
+	 * The allowlisted fields: the details, and the four narrative sections apart.
 	 *
 	 * @param int    $id   Profile.
 	 * @param string $type Entity type.
+	 * @return array{0: string, 1: string} Details markup and sections markup.
 	 */
-	private function fields( int $id, string $type ): string {
+	private function fields( int $id, string $type ): array {
 		$values    = ( new ProfileEditor() )->current_values( $id );
 		$allowlist = new FieldAllowlist();
-		$out       = '';
+		$details   = '';
+		$sections  = '';
 		foreach ( $allowlist->for_type( $type ) as $key => $rule ) {
 			$key = (string) $key;
 			if ( in_array( $key, self::CLASSIFIED_FIELDS, true ) ) {
@@ -332,39 +383,34 @@ final class ProfileEditScreen {
 			$name  = 'f_' . $key;
 			$value = $values[ $key ] ?? '';
 			$label = $allowlist->label( $type, $key ) . ( ! empty( $rule['required'] ) ? ' *' : '' );
-			$attrs = 'id="wiw-f-' . esc_attr( $key ) . '" name="' . esc_attr( $name ) . '"';
+			$args  = array( 'id' => 'wiw-f-' . $key );
 			if ( 'list' === $rule['type'] ) {
-				$input = '<textarea ' . $attrs . ' rows="4" class="large-text">' . esc_textarea( is_array( $value ) ? implode( "\n", $value ) : '' ) . '</textarea><p class="description">' . esc_html__( 'One per line.', 'whoiswho' ) . '</p>';
+				$details .= Form::textarea( $name, $label, is_array( $value ) ? implode( "\n", $value ) : '', array_merge( $args, array( 'help' => __( 'One per line.', 'whoiswho' ) ) ) );
 			} elseif ( in_array( $key, self::LONG_TEXT, true ) ) {
-				$input = $this->long_text( $key, $name, $attrs, is_scalar( $value ) ? (string) $value : '', (int) ( $rule['max'] ?? self::DEFAULT_MAX ) );
+				$max   = (int) ( $rule['max'] ?? self::DEFAULT_MAX );
+				$story = in_array( $key, array( 'bio', 'achievement', 'influence', 'legacy' ), true );
+				$extra = array(
+					'rows'      => $max >= 6000 ? 10 : 5,
+					'maxlength' => $max,
+					'counter'   => true,
+				);
+				if ( $story ) {
+					$extra['counter_note'] = __( 'Plain text. Leave a blank line between paragraphs.', 'whoiswho' );
+				}
+				$box = Form::textarea( $name, $label, is_scalar( $value ) ? (string) $value : '', array_merge( $args, $extra ) );
+				if ( $story ) {
+					$sections .= $box;
+				} else {
+					$details .= $box;
+				}
 			} else {
-				$input = '<input type="' . ( 'url' === $rule['type'] ? 'url' : 'text' ) . '" ' . $attrs . ' value="' . esc_attr( is_scalar( $value ) ? (string) $value : '' ) . '" class="regular-text" />';
-			}
-			$out .= '<tr><th scope="row"><label for="wiw-f-' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label></th><td>' . $input . '</td></tr>';
-		}
-		return $out;
+				$text     = is_scalar( $value ) ? (string) $value : '';
+				$details .= 'url' === $rule['type'] ? Form::url( $name, $label, $text, $args ) : Form::text( $name, $label, $text, $args );
+			}//end if
+		}//end foreach
+		return array( $details, $sections );
 	}
 
-	/**
-	 * A multi-line box that keeps paragraph breaks, limited to the field's maximum, with a character counter (issue 806).
-	 *
-	 * @param string $key   Field key.
-	 * @param string $name  Input name.
-	 * @param string $attrs The id and name attributes (escaped).
-	 * @param string $value Current text.
-	 * @param int    $max   Maximum characters.
-	 */
-	private function long_text( string $key, string $name, string $attrs, string $value, int $max ): string {
-		$count = 'wiw-count-' . $name;
-		$used  = function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
-		$rows  = $max >= 6000 ? 10 : 5;
-		$out   = '<textarea ' . $attrs . ' rows="' . esc_attr( (string) $rows ) . '" class="large-text" maxlength="' . esc_attr( (string) $max ) . '" data-wiw-count="' . esc_attr( $count ) . '" aria-describedby="' . esc_attr( $count ) . '">' . esc_textarea( $value ) . '</textarea>';
-		$out  .= '<p class="description"><span id="' . esc_attr( $count ) . '" class="wiw-char-count" aria-live="polite">' . esc_html( sprintf( /* translators: 1: characters used, 2: the limit. */ __( '%1$d / %2$d characters', 'whoiswho' ), $used, $max ) ) . '</span>';
-		if ( in_array( $key, array( 'bio', 'achievement', 'influence', 'legacy' ), true ) ) {
-			$out .= ' ' . esc_html__( 'Plain text. Leave a blank line between paragraphs.', 'whoiswho' );
-		}
-		return $out . '</p>';
-	}
 
 	/**
 	 * The classification (Industry picker, Organisation type, Country and City) and, for people, the professions list. Shown only to
@@ -377,15 +423,21 @@ final class ProfileEditScreen {
 		if ( ! current_user_can( 'assign_terms' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown -- listed in config/capabilities.php.
 			return '';
 		}
-		$out  = '<h3 id="wiw-classification">' . esc_html__( 'Classification', 'whoiswho' ) . '</h3><p class="description">' . esc_html__( 'Where the profile sits in the directory: its breadcrumb is Country, Sector, Industry. Other industries shows only this profile\'s own.', 'whoiswho' ) . '</p>';
-		$out .= '<table class="form-table" role="presentation"><tbody>';
+		$body = '';
 		foreach ( ( new ClassificationPicker() )->rows( ( new ClassificationInput() )->current( $id ), $type ) as $row ) {
-			$out .= $this->row( $row['name'], $row['label'], $row['html'] );
+			$body .= Form::row( 'wiw-f-' . $row['name'], $row['label'], $row['html'] );
 		}
 		if ( ! in_array( $type, ClassificationInput::ORG_ENTITY_TYPES, true ) ) {
-			$out .= $this->professions( $id );
+			$body .= $this->professions( $id );
 		}
-		return $out . '</tbody></table>';
+		return Form::section(
+			__( 'Classification', 'whoiswho' ),
+			$body,
+			array(
+				'id'          => 'wiw-classification',
+				'description' => __( 'Where the profile sits in the directory: its breadcrumb is Country, Sector, Industry. Other industries shows only this profile\'s own.', 'whoiswho' ),
+			)
+		);
 	}
 
 	/**
@@ -407,11 +459,11 @@ final class ProfileEditScreen {
 		}
 		$have = wp_get_object_terms( $id, Taxonomies::PROFESSION, array( 'fields' => 'ids' ) );
 		$have = is_array( $have ) ? array_map( 'intval', $have ) : array();
-		$html = '<input type="hidden" name="terms_present_' . esc_attr( Taxonomies::PROFESSION ) . '" value="1" /><select multiple="multiple" id="wiw-f-professions" name="terms_' . esc_attr( Taxonomies::PROFESSION ) . '[]" size="5">';
+		$html = '<input type="hidden" name="terms_present_' . esc_attr( Taxonomies::PROFESSION ) . '" value="1" /><select multiple="multiple" id="wiw-f-professions" name="terms_' . esc_attr( Taxonomies::PROFESSION ) . '[]" size="5" class="wiw-input wiw-select">';
 		foreach ( $terms as $term ) {
 			$html .= '<option value="' . esc_attr( (string) $term->term_id ) . '"' . selected( in_array( (int) $term->term_id, $have, true ), true, false ) . '>' . esc_html( $term->name ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
 		}
-		return $this->row( 'professions', __( 'Professions', 'whoiswho' ), $html . '</select>' );
+		return Form::row( 'wiw-f-professions', __( 'Professions', 'whoiswho' ), $html . '</select>' );
 	}
 
 	/**
@@ -421,19 +473,15 @@ final class ProfileEditScreen {
 	 * @param int $selected Item to preselect (from the Corrections screen's Apply link).
 	 */
 	private function resolves( int $id, int $selected = 0 ): string {
-		$open = array();
+		$open = array( '0' => __( 'None', 'whoiswho' ) );
 		foreach ( ( new SupportItems() )->list_by_types( array( ItemType::CORRECTION ), '', 200 ) as $item ) {
 			if ( (int) $item['profile_id'] === $id && ! ItemStatus::is_closed( (string) $item['status'] ) ) {
-				$open[] = $item;
+				$open[ (string) $item['id'] ] = (string) $item['reference'];
 			}
 		}
-		if ( array() === $open ) {
+		if ( 1 === count( $open ) ) {
 			return '';
 		}
-		$out = '<p><label>' . esc_html__( 'This resolves the open item', 'whoiswho' ) . '<br /><select name="resolves"><option value="0">' . esc_html__( 'None', 'whoiswho' ) . '</option>';
-		foreach ( $open as $item ) {
-			$out .= '<option value="' . esc_attr( (string) $item['id'] ) . '"' . selected( $selected, (int) $item['id'], false ) . '>' . esc_html( (string) $item['reference'] ) . '</option>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- selected() returns a fixed attribute.
-		}
-		return $out . '</select></label></p>';
+		return Form::select( 'resolves', __( 'This resolves the open item', 'whoiswho' ), $open, (string) $selected, array( 'id' => 'wiw-f-resolves' ) );
 	}
 }

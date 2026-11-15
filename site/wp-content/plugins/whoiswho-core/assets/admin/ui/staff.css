@@ -1,0 +1,367 @@
+/*
+ * Staff UI kit (REQ-275): calm, modern staff screens. Card sections on a soft background, labels above fields, 40px inputs with a
+ * clear focus ring in the admin colour scheme, inline errors, toggle switches, status pills, hover or focus row actions and a
+ * sticky bulk bar and save bar. WordPress admin colours and neutrals only (the scheme colour is --wp-admin-theme-color); no brand
+ * values live in the plugin. Scoped to .wiw-staff (the screen wrapper) and .wiw-list-table.
+ */
+
+/* Focus, error and state rules deliberately follow the base field rules they override. */
+/* stylelint-disable no-descending-specificity */
+
+.wiw-staff {
+	--wiw-accent: var(--wp-admin-theme-color, #2271b1);
+	--wiw-accent-dark: var(--wp-admin-theme-color-darker-20, #135e96);
+	--wiw-text: #1d2327;
+	--wiw-muted: #50575e;
+	--wiw-line: #dcdcde;
+	--wiw-line-strong: #8c8f94;
+	--wiw-soft: #f6f7f7;
+	--wiw-surface: #fff;
+	--wiw-danger: #b32d2e;
+	--wiw-radius: 8px;
+	--wiw-gap: 20px;
+	--wiw-ring: 0 0 0 2px var(--wiw-surface), 0 0 0 4px var(--wiw-accent);
+
+	color: var(--wiw-text);
+	max-width: 1200px;
+}
+
+body.wiw-staff-screen #wpcontent,
+body.wiw-staff-screen #wpbody-content { background: #f0f0f1; }
+
+.wiw-staff h1 { font-size: 23px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
+.wiw-staff .wiw-lead { color: var(--wiw-muted); font-size: 14px; margin: 0 0 16px; }
+
+/* ---------------------------------------------------------------- Page head and cards. */
+
+.wiw-page-head { margin: 8px 0 20px; }
+.wiw-page-head__title { font-size: 20px; font-weight: 600; margin: 0 0 4px; padding: 0; }
+.wiw-page-head p { color: var(--wiw-muted); font-size: 14px; margin: 0; }
+
+.wiw-card {
+	background: var(--wiw-surface);
+	border: 1px solid var(--wiw-line);
+	border-radius: var(--wiw-radius);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+	margin: 0 0 var(--wiw-gap);
+	padding: 24px;
+}
+
+.wiw-card__title { color: var(--wiw-text); font-size: 16px; font-weight: 600; line-height: 1.4; margin: 0 0 4px; padding: 0; }
+h3.wiw-card__title { font-size: 15px; }
+.wiw-card__desc { color: var(--wiw-muted); font-size: 13px; margin: 0 0 16px; max-width: 75ch; }
+.wiw-card__body > :first-child { margin-top: 0; }
+.wiw-card__body > :last-child { margin-bottom: 0; }
+.wiw-card__title + .wiw-card__body { margin-top: 16px; }
+.wiw-card--inset { background: var(--wiw-soft); box-shadow: none; padding: 16px 20px; }
+.wiw-card .widefat { border-color: var(--wiw-line); border-radius: 6px; box-shadow: none; overflow: hidden; }
+.wiw-card .notice.inline { margin: 0 0 12px; }
+.wiw-panels { margin-top: 8px; }
+
+/* ---------------------------------------------------------------- Fields. */
+
+.wiw-field { margin: 0 0 20px; max-width: 760px; }
+.wiw-field:last-child { margin-bottom: 0; }
+
+.wiw-field > label,
+.wiw-staff .wiw-label {
+	color: var(--wiw-text);
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.4;
+	margin: 0 0 6px;
+}
+
+.wiw-required { color: var(--wiw-danger); margin-left: 2px; }
+
+.wiw-help,
+.wiw-staff .wiw-field .description { color: var(--wiw-muted); font-size: 13px; line-height: 1.5; margin: 6px 0 0; }
+
+.wiw-error { color: var(--wiw-danger); font-size: 13px; font-weight: 600; margin: 6px 0 0; }
+
+.wiw-staff .wiw-field input[type="text"],
+.wiw-staff .wiw-field input[type="email"],
+.wiw-staff .wiw-field input[type="url"],
+.wiw-staff .wiw-field input[type="number"],
+.wiw-staff .wiw-field input[type="search"],
+.wiw-staff .wiw-field select:not([multiple]),
+.wiw-staff .wiw-filters input[type="text"],
+.wiw-staff .wiw-filters input[type="search"],
+.wiw-staff .wiw-filters select {
+	background-color: var(--wiw-surface);
+	border: 1px solid var(--wiw-line-strong);
+	border-radius: 6px;
+	box-shadow: none;
+	color: var(--wiw-text);
+	font-size: 14px;
+	line-height: 1.4;
+	min-height: 40px;
+	padding: 6px 12px;
+	transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.wiw-staff .wiw-field select:not([multiple]),
+.wiw-staff .wiw-filters select { padding-right: 32px; }
+
+.wiw-staff .wiw-field input[type="text"],
+.wiw-staff .wiw-field input[type="email"],
+.wiw-staff .wiw-field input[type="url"],
+.wiw-staff .wiw-field textarea { width: 100%; }
+
+.wiw-staff .wiw-field input.small-text { width: 7em; }
+
+.wiw-staff .wiw-field textarea,
+.wiw-staff .wiw-field select[multiple] {
+	background-color: var(--wiw-surface);
+	border: 1px solid var(--wiw-line-strong);
+	border-radius: 6px;
+	color: var(--wiw-text);
+	font-size: 14px;
+	line-height: 1.6;
+	padding: 10px 12px;
+	transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.wiw-staff .wiw-field select[multiple] { min-width: 280px; }
+
+.wiw-staff input:focus,
+.wiw-staff select:focus,
+.wiw-staff textarea:focus,
+.wiw-staff .button:focus,
+.wiw-list-table a:focus {
+	border-color: var(--wiw-accent);
+	box-shadow: var(--wiw-ring);
+	outline: 2px solid transparent;
+}
+
+.wiw-field--invalid input,
+.wiw-field--invalid select,
+.wiw-field--invalid textarea,
+.wiw-staff [aria-invalid="true"] { border-color: var(--wiw-danger) !important; }
+
+.wiw-char-count { font-variant-numeric: tabular-nums; }
+.wiw-count-near { color: var(--wiw-danger); font-weight: 600; }
+
+.wiw-field-grid { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); max-width: 760px; }
+.wiw-field-grid .wiw-field { margin-bottom: 20px; }
+
+.wiw-media-pick { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.wiw-media-pick .wiw-image-preview { border: 1px solid var(--wiw-line); border-radius: 6px; flex-basis: 100%; height: auto; max-width: 96px; }
+
+.wiw-inline-fields { align-items: end; display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 0 0 16px; }
+.wiw-inline-fields .wiw-field { margin: 0; }
+.wiw-inline-fields__action { padding-bottom: 2px; }
+
+/* Checkbox and toggle switch. */
+
+.wiw-field--check { margin-bottom: 12px; }
+
+.wiw-check__label,
+.wiw-toggle__label { align-items: center; cursor: pointer; display: inline-flex; font-size: 14px; gap: 10px; position: relative; }
+.wiw-check__input { margin: 0 !important; }
+
+.wiw-toggle__input {
+	height: 22px;
+	margin: 0 !important;
+	opacity: 0;
+	position: absolute;
+	width: 40px;
+}
+
+.wiw-toggle__track {
+	background: var(--wiw-line-strong);
+	border-radius: 999px;
+	display: inline-block;
+	flex: none;
+	height: 22px;
+	position: relative;
+	transition: background-color .15s ease;
+	width: 40px;
+}
+
+.wiw-toggle__thumb {
+	background: var(--wiw-surface);
+	border-radius: 50%;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+	height: 16px;
+	left: 3px;
+	position: absolute;
+	top: 3px;
+	transition: transform .15s ease;
+	width: 16px;
+}
+
+.wiw-toggle__input:checked + .wiw-toggle__track { background: var(--wiw-accent); }
+.wiw-toggle__input:checked + .wiw-toggle__track .wiw-toggle__thumb { transform: translateX(18px); }
+.wiw-toggle__input:focus-visible + .wiw-toggle__track { box-shadow: var(--wiw-ring); }
+
+/* Radio cards. */
+
+.wiw-radio-cards { border: 0; margin: 0 0 20px; padding: 0; }
+.wiw-radio-cards__grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+.wiw-radio-card {
+	align-items: flex-start;
+	background: var(--wiw-surface);
+	border: 1px solid var(--wiw-line-strong);
+	border-radius: var(--wiw-radius);
+	cursor: pointer;
+	display: flex;
+	gap: 10px;
+	padding: 12px 14px;
+}
+
+.wiw-radio-card:has(input:checked) { border-color: var(--wiw-accent); box-shadow: inset 0 0 0 1px var(--wiw-accent); }
+.wiw-radio-card:has(input:focus-visible) { box-shadow: var(--wiw-ring); }
+.wiw-radio-card input { margin-top: 2px !important; }
+.wiw-radio-card__title { display: block; font-weight: 600; }
+.wiw-radio-card__desc { color: var(--wiw-muted); display: block; font-size: 13px; margin-top: 2px; }
+
+/* Searchable select. */
+
+.wiw-select-filter { display: block; margin: 0 0 6px; max-width: 320px; }
+
+/* ---------------------------------------------------------------- Actions bar. */
+
+.wiw-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 16px 0 0; }
+
+.wiw-actions--sticky {
+	background: rgb(255 255 255 / 96%);
+	border: 1px solid var(--wiw-line);
+	border-radius: var(--wiw-radius);
+	bottom: 0;
+	box-shadow: 0 -4px 12px rgb(0 0 0 / 6%);
+	margin: 0 0 var(--wiw-gap);
+	padding: 12px 24px;
+	position: sticky;
+	z-index: 20;
+}
+
+.wiw-staff .button { border-radius: 6px; min-height: 36px; padding: 2px 14px; }
+.wiw-staff .button-primary { font-weight: 600; }
+
+.wiw-staff .button.wiw-button--danger {
+	background: var(--wiw-danger);
+	border-color: var(--wiw-danger);
+	color: #fff;
+}
+
+.wiw-staff .button.wiw-button--danger:hover { background: #8a2424; border-color: #8a2424; }
+
+/* ---------------------------------------------------------------- Filters on list screens. */
+
+.wiw-staff .wiw-filters {
+	align-items: flex-end;
+	background: var(--wiw-surface);
+	border: 1px solid var(--wiw-line);
+	border-radius: var(--wiw-radius);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 16px;
+	margin: 12px 0 16px;
+	padding: 16px;
+}
+
+.wiw-staff .wiw-filters label { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; gap: 4px; }
+
+/* ---------------------------------------------------------------- List tables. */
+
+.wiw-list-table { border-color: var(--wiw-line, #dcdcde); border-radius: 8px; box-shadow: 0 1px 2px rgb(0 0 0 / 4%); overflow: hidden; }
+
+.wiw-list-table thead th,
+.wiw-list-table thead td,
+.wiw-list-table tfoot th,
+.wiw-list-table tfoot td { background: #f6f7f7; font-weight: 600; }
+
+.wiw-list-table tbody th,
+.wiw-list-table tbody td { padding-bottom: 14px; padding-top: 14px; vertical-align: middle; }
+
+.wiw-list-table tbody tr:hover { background: #f0f6fc; }
+.wiw-list-table .check-column { vertical-align: middle; }
+.wiw-list-table .row-title { font-size: 14px; font-weight: 600; }
+
+/* Row actions: hidden until the row is hovered or a link in it has focus; kept in place (not moved off screen). */
+
+.wiw-list-table .row-actions {
+	left: 0;
+	opacity: 0;
+	padding-top: 4px;
+	position: static;
+	transition: opacity .12s ease;
+}
+
+.wiw-list-table tr:hover .row-actions,
+.wiw-list-table tr:focus-within .row-actions,
+.wiw-list-table .row-actions:focus-within { opacity: 1; }
+
+.wiw-list-table .row-actions a { font-weight: 500; }
+
+.wiw-list-table .row-actions .unpublish a,
+.wiw-list-table .row-actions .wiw-reject a { color: var(--wiw-danger, #b32d2e); }
+
+/* Status pills. */
+
+.wiw-pill {
+	border-radius: 999px;
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+	padding: 2px 10px;
+	white-space: nowrap;
+}
+
+.wiw-list-table .wiw-pill { max-width: 100%; white-space: normal; }
+
+.wiw-pill--neutral { background: #f0f0f1; color: #3c434a; }
+.wiw-pill--info { background: #f0f6fc; color: #0a4b78; }
+.wiw-pill--success { background: #edfaef; color: #00450c; }
+.wiw-pill--warning { background: #fcf9e8; color: #614200; }
+.wiw-pill--danger { background: #fcf0f1; color: #8a2424; }
+
+/* The bulk bar: sticky once rows are selected, with "N selected". */
+
+.wiw-list-form .tablenav.top { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; height: auto; margin: 8px 0; padding: 8px 0; }
+.wiw-list-form .tablenav.top .tablenav-pages { margin-left: auto; }
+.wiw-list-form .tablenav .bulkactions { align-items: center; display: flex; gap: 8px; }
+.wiw-list-form .tablenav select { min-height: 36px; }
+.wiw-selected-count { color: var(--wiw-muted, #50575e); font-weight: 600; min-width: 6em; }
+
+.wiw-list-form.has-selection .tablenav.top {
+	background: #fff;
+	border: 1px solid var(--wiw-accent, #2271b1);
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+	padding: 8px 12px;
+	position: sticky;
+	top: var(--wp-admin--admin-bar--height, 32px);
+	z-index: 30;
+}
+
+.wiw-list-form.has-selection .wiw-selected-count { color: var(--wiw-accent-dark, #135e96); }
+.wiw-list-empty { color: var(--wiw-muted, #50575e); display: block; padding: 24px 0; text-align: center; }
+.wiw-list-step__names { list-style: disc; margin: 0 0 16px 20px; max-height: 240px; overflow: auto; }
+
+/* ---------------------------------------------------------------- Small screens (WordPress mobile admin). */
+
+@media screen and (width <= 782px) {
+	.wiw-staff { --wiw-gap: 16px; }
+	.wiw-card { padding: 16px; }
+	.wiw-actions--sticky { padding: 12px 16px; }
+
+	.wiw-staff .wiw-field input[type="text"],
+	.wiw-staff .wiw-field input[type="email"],
+	.wiw-staff .wiw-field input[type="url"],
+	.wiw-staff .wiw-field select:not([multiple]) { font-size: 16px; min-height: 44px; width: 100%; }
+	.wiw-staff .wiw-field select[multiple] { min-width: 0; width: 100%; }
+	.wiw-staff .wiw-filters { flex-direction: column; align-items: stretch; }
+	.wiw-list-table .row-actions { opacity: 1; }
+	.wiw-list-form .tablenav.top .tablenav-pages { margin-left: 0; }
+	.wiw-list-form.has-selection .tablenav.top { top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wiw-staff *,
+	.wiw-list-table * { transition: none !important; }
+}
