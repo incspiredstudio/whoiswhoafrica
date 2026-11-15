@@ -51,7 +51,7 @@ The public profile shows the credit, for example "Photo: A. Mensah · CC BY-SA 4
 4. Fill in **Reason or request reference (required)**.
 5. Press **Save photo** (or **Save logo**). The message "Saved. A version and an audit row were written." confirms it. To take the picture off the profile, give a reason and press **Remove photo** (or **Remove logo**); the file stays in the media library.
 
-The change is written to the audit log as `profile.image_change`, and the previous picture is kept in the profile's history. A profile's assigned user can propose a new photo from **My profiles**, which a reviewer approves (see [Claims](/staff/claims)).
+The change is written to the audit log as `profile.image_change`, and the previous picture is kept in the profile's history. A claimed profile's Profile owner can propose a new photo from their account on the public site, which a reviewer approves (see [Claims](/staff/claims#profile-owner-accounts)).
 
 ## Imported photos
 

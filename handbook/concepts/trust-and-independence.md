@@ -35,7 +35,7 @@ Featured is an editorial choice using the sticky flag on a story. Featured stori
 
 ### Claimed
 
-Claimed means a person or organisation proved who they are and staff approved the claim. Staff see a checkmark. The public sees nothing, and the Claim button disappears. Edits made by the assigned user of a claimed profile wait for approval from a Reviewer or Administrator.
+Claimed means a person or organisation proved who they are and staff approved the claim. Staff see a checkmark. The public sees nothing, and the Claim button disappears. Edits made by the Profile owner of a claimed profile wait for approval from a Reviewer or Administrator.
 
 ### Review pending
 

@@ -26,7 +26,7 @@ This page defines the codes and product terms used across the docs, with a point
 | Import batch | One delivery of records from the acquisition pipeline, filterable on the Profiles screen |
 | Claimed | A profile whose claim a staff member approved. Staff see a checkmark; the public sees nothing, and the Claim button disappears (D-059) |
 | Claim | A request from a person or representative to take care of a profile. Decided within 5 days |
-| Assigned user | The staff user kept on a claimed profile to update it. Their edits go to review (REQ-253) |
+| Profile owner | The person behind an approved claim, with a staff-created account on the public site (`/account/`, role `wiw_profile_owner`), never wp-admin. Their edits go to review (REQ-253, 274) |
 | Verified | Retired. There are no Verified profiles (D-059) |
 | Featured | A flag on stories, using the native WordPress feature. Profiles are never Featured (D-055) |
 | Event | Its own content type for something happening on a date: a conference, launch or ceremony. Has its own list and pages, not part of Stories. A story can link one event (REQ-262, 264, 265) |

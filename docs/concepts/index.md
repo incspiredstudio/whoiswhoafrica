@@ -21,7 +21,7 @@ Each page links to the requirements (REQ), decisions (D), questions (Q) and arch
 2. **Every fact has a source.** Each field carries where it came from and when it was retrieved.
 3. **Money never buys recognition.** Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label. It can only buy a labelled placement slot for a story.
 4. **Removal is fast and permanent.** A valid removal request hides the profile within two business days, and the person is kept on a suppression list so the profile is not added again.
-5. **Only staff have accounts.** Everyone else uses forms and single-use links.
+5. **Only staff and Profile owners have accounts.** A Profile owner is the person behind an approved claim; staff create the account and it never reaches wp-admin (D-071). Everyone else uses forms and single-use links.
 
 ## Where the rules live in the build
 

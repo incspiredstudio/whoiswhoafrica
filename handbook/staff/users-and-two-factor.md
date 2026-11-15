@@ -1,6 +1,6 @@
 # Users, roles and two-factor sign-in
 
-Only staff have accounts on WHOISWHO. This page shows an Administrator how to add and remove staff, change what they can do, and how every staff member switches on two-factor sign-in. The ideas behind roles are in [Roles and what each can do](/concepts/roles).
+Staff have accounts in the WHOISWHO admin. Profile owners have accounts on the public site only; see [Claims](/staff/claims#profile-owner-accounts). This page shows an Administrator how to add and remove staff, change what they can do, and how every staff member switches on two-factor sign-in. The ideas behind roles are in [Roles and what each can do](/concepts/roles).
 
 ## Who does what
 

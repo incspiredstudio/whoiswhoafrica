@@ -25,7 +25,7 @@ R is Reviewer, E is Editor, A is Administrator.
 | Single unpublish | Hide one profile | no | yes | yes |
 | Profiles | Create, edit, publish and trash profiles | no | yes | yes |
 | Add profile | Add a profile by hand (`wiw_add_profile`) | no | yes | yes |
-| Claims | Review claims, set Claimed, assign the profile's user | no | yes | yes |
+| Claims | Review claims, set Claimed, create a Profile owner account, transfer or remove ownership | no | yes | yes |
 | Curation | Home and Stories curation | no | yes | yes |
 | Events | Create, edit, schedule and unpublish events | no | yes | yes |
 | Stories | Create, schedule, publish and trash | no | yes | yes |
@@ -76,4 +76,8 @@ A user cannot grant themselves anything.
 
 ## Extra roles
 
-Only the three default roles ship. The Administrator can create more and give them any capability that is not fixed. A limited "Profile manager" role is one example for a claimed profile's assigned user.
+Only the three default staff roles ship. The Administrator can create more and give them any capability that is not fixed.
+
+## Profile owner
+
+Profile owner (`wiw_profile_owner`) is not a staff role. It is the account a person gets when staff approve their claim with **Approve and create account**. It has no wp-admin capabilities: the owner signs in on the public site at `/account/`, any wp-admin address sends them back there, and they never see the admin bar. They can edit only the profiles they own, and every edit waits for review. Two-factor sign-in is optional for owners. See [Claims](/staff/claims#profile-owner-accounts).

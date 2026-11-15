@@ -76,7 +76,7 @@ After any of these the visitor sees a "received" page with a reference and, in t
 
 | Public thing | Staff screen |
 |---|---|
-| Profiles, status, claimed mark, assigned user | Profiles list (A05) and Profile admin (A06) |
+| Profiles, status, claimed mark, profile owner | Profiles list (A05) and Profile admin (A06) |
 | New and edited records | Review queue (A03) |
 | Enquiries | Enquiries (A12) |
 | Corrections | Corrections (A64) |

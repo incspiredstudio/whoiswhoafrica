@@ -17,7 +17,7 @@ The module that decides what is public. It owns the publication state machine, t
 | Custom post status `wiw_hidden` | Registered non-public. Every state except the two Published ones uses it, so core WordPress never treats the post as public |
 | `wiw_duplicates` | Pairs of probable duplicates with a score and status |
 | `wiw_bulk_actions` | One row per bulk unpublish: filter, reason, count, actor, time, restored time |
-| Pending revisions | An edit to a claimed profile by its assigned user is saved as a pending revision (a row in `wiw_profile_versions` with an approval status) and is not public until approved |
+| Pending revisions | An edit to a claimed profile by its Profile owner (from `/account/`) is saved as a pending revision (a row in `wiw_profile_versions` with an approval status) and is not public until approved |
 
 ## Admin screens
 
@@ -59,7 +59,7 @@ None of its own. The module decides what `PublicProfile` may return. Its visible
 | State change | One transaction: set state and post status, delete or add the search row, write audit rows |
 | Bulk unpublish | One `wiw_bulk_actions` row, then chunked jobs of a few hundred profiles, one audit row per profile plus one for the batch |
 | After commit | High-priority cache purge jobs (by URL: page, list pages, sitemap, share image). A broad purge above a threshold |
-| Approving a pending revision | Publish the revision, purge, notify the assigned user |
+| Approving a pending revision | Publish the revision, purge, email the Profile owner |
 
 ## Business rules
 
@@ -67,7 +67,7 @@ None of its own. The module decides what `PublicProfile` may return. Its visible
 - **The importer cannot approve.** The reviewer approving a record must not be the person who imported it (REQ-148).
 - **Approve is one flow.** Set reviewed, remove noindex, add the sitemap and schema entries, purge the cache. Reject makes it not public (410 if it was live).
 - **A pending-review profile cannot be claimed or linked to an arrangement** until a human has reviewed it (REQ-226).
-- **Edits to a claimed profile are approved.** When the assigned user edits a claimed profile, the change waits for a Reviewer or Administrator holding `wiw_review_records`. The person who made the change cannot approve it. The previous version is kept (REQ-253).
+- **Edits to a claimed profile are approved.** When the Profile owner edits a claimed profile, the change waits for a Reviewer or Administrator holding `wiw_review_records`. The person who made the change cannot approve it. The previous version is kept (REQ-253).
 - **Staff edits on unclaimed profiles go live at once**, with a required reason, a version and an audit row.
 - **Bulk unpublish includes only published profiles.** Restore reverses one batch, only for profiles still unpublished by that batch.
 - **Reason required.** Every unpublish, reject and bulk action needs one.
@@ -86,7 +86,7 @@ None of its own. The module decides what `PublicProfile` may return. Its visible
 
 ## Depends on
 
-Directory (the profile and state row), Platform (audit, capabilities, cache purge, jobs), Trust (claimed flag and assigned user), Compliance (removal flow calls the state machine).
+Directory (the profile and state row), Platform (audit, capabilities, cache purge, jobs), Trust (claimed flag and profile owner), Compliance (removal flow calls the state machine).
 
 ## Requirement ids covered
 

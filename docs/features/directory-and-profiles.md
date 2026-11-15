@@ -91,7 +91,7 @@ None for the directory itself. There is no SEO plugin; the guard plugin writes a
 - Profile analytics beyond a view count (REQ-020).
 - A right-of-reply note on a profile (REQ-172, should-have).
 - An "include pending" view on lists (dropped).
-- Owner login or self-edit. There are no public accounts.
+- Owner self-edit on the profile page itself. Owners edit from their account at `/account/`, through review (see [Claims](/features/claims)).
 
 ## Requirement ids covered
 

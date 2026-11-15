@@ -86,7 +86,7 @@ The four narrative sections and the photo have their own pages: [Profile section
 
 Each edit is stored as a revision with author, time, reason and old and new values, and written to the audit log. Contact details are private by default, and staff switch what is public on request. Changing the address keeps a redirect from the old one. Internal notes are never public.
 
-If the profile is claimed and the edit was made by its assigned user, the edit waits for a Reviewer or Administrator. See [Claims](/staff/claims).
+If the profile is claimed and the edit was made by its Profile owner from their account on the public site, the edit waits for a Reviewer or Administrator. See [Claims](/staff/claims#profile-owner-accounts).
 
 ## Who moves a profile between states
 

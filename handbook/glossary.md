@@ -19,7 +19,7 @@ This page defines the product terms used in the handbook, with a link to the pag
 | Import batch | One imported bundle, which can be filtered on the Profiles screen and undone as a whole |
 | Claim | A request from a person or representative to take care of a profile. Decided within five days. See [Claims](/staff/claims). |
 | Claimed | A profile whose claim a staff member approved. Staff see a checkmark. The public sees nothing, and the Claim button disappears. |
-| Assigned user | The staff user kept on a claimed profile to update it. Their edits are held for approval. |
+| Profile owner | The person behind an approved claim. Staff create their account (role `wiw_profile_owner`) on the public site at `/account/`; they never use wp-admin. They edit their profiles there, and every edit is held for approval. See [Your profile owner account](/visitor/your-account). |
 | Featured | A flag on stories only, using the WordPress sticky flag. Profiles are never Featured. |
 | Sponsored | The label on a story whose placement was paid for. It never names the sponsor publicly. Only stories carry it. See [Trust and independence](/concepts/trust-and-independence). |
 | Sponsored story deal | One sponsor, one story and one paid slot, tracked on the Sponsored stories screen in four steps |

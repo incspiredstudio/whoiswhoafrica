@@ -1,6 +1,6 @@
 # Security basics
 
-The site starts from a small attack surface: no public accounts, no public API and no payment data. This page lists the main threats, the controls that answer them, and the rules for sign-in, secrets, validation and logging.
+The site starts from a small attack surface: no public sign-up, no public API and no payment data. This page lists the main threats, the controls that answer them, and the rules for sign-in, secrets, validation and logging.
 
 ## Threats and controls
 
@@ -23,10 +23,11 @@ The site starts from a small attack surface: no public accounts, no public API a
 
 ## Sign-in
 
-1. Only staff sign in, with a strong password. Two-factor sign-in is available and recommended for every staff member but not enforced; the Setup checklist shows who has it on. Recovery codes cover a lost phone, and repeated failures lock the sign-in.
-2. Registration is off, there is no default role, no public login link, no application passwords and no XML-RPC.
-3. The admin session times out when idle.
-4. Authorisation is deny by default, and a capability is checked on every admin action.
+1. Staff sign in to the admin with a strong password. Two-factor sign-in is available and recommended for every staff member but not enforced; the Setup checklist shows who has it on. Recovery codes cover a lost phone, and repeated failures lock the sign-in.
+2. Registration is off, there is no default role, no application passwords and no XML-RPC.
+3. Profile owners, the people behind approved claims, sign in on the public site at `/account/`, from a footer link only. Staff create their accounts. They have no admin access: any admin address sends them back to `/account/`. Their sign-in has the same lockout, the bot check when configured, and errors that never reveal whether an email has an account. Two-factor is optional for them.
+4. The admin session times out when idle.
+5. Authorisation is deny by default, and a capability is checked on every admin action.
 
 ## Hardening
 

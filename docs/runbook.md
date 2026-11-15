@@ -298,33 +298,32 @@ The page cache is WP Super Cache (pinned through composer, on the plugin allowli
 
 The Customers screen has two export buttons (customers, enquiries) for holders of `wiw_export_data` (the Administrator by default). Each export is audited with a row count only. Both files carry the external ID and the change timestamp, so a link to an outside CRM can be added later. A CSV import is not built; when it is, it must match rows by external ID.
 
-## Profile manager role recipe (M3-CLM-14; REQ-253, REQ-261, REQ-244)
+## Profile owner accounts (REQ-253, REQ-261, REQ-274; D-071)
 
-No fourth role ships. When a claim is approved, the Administrator creates a limited role once and gives the claimant a staff user with it. The claimant then sees only the My profiles screen and can change only the profiles assigned to them; each change waits as a pending revision until a Reviewer or Administrator other than the author approves it.
+A Profile owner is the person behind an approved claim. They have an account on the public site (role `wiw_profile_owner`: `read` and `wiw_own_profiles` only) and never use wp-admin. They sign in at `/account/` from the footer link "Profile owner sign in". There is no public sign-up. The old "Profile manager" role recipe and the `wiw_edit_assigned_profiles` capability are obsolete: do not create that role.
 
-### Create the role (once)
+### Create an owner
 
-1. Sign in as an Administrator. Open Users, then Role editor (the role-editor plugin, Administrator-only).
-2. Add a new role named `Profile manager` (slug `wiw_profile_manager`). Do not copy Editor or Reviewer: start empty.
-3. Tick exactly these capabilities and no others:
-   - `read` (needed to sign in to the dashboard shell)
-   - `wiw_edit_assigned_profiles` (opens My profiles and the assigned profiles only)
-4. Make sure none of the following are ticked on the role or on the user. Each one lets the person act as staff and would remove the limit, so the role must not have them: `wiw_review_records`, `wiw_review_claims`, `wiw_unpublish_profiles`, `wiw_bulk_unpublish`, `wiw_resolve_duplicates`, `wiw_run_imports`, `wiw_export_data`, `wiw_view_audit`, `wiw_view_suppression`, `wiw_edit_suppression`, `wiw_manage_register`, `wiw_set_sponsored`, `wiw_manage_capabilities`, and every `edit_*`, `publish_*`, `delete_*`, `upload_files` and `moderate_comments` capability of core. A user who holds a staff profile capability as well is no longer limited to assigned profiles.
-5. Save. Audit rows: `role.create` (and `role.capabilities` for any later change) with the actor and the granted capabilities.
+1. Open **Review > Claims** and check the claim's evidence offline.
+2. Press **Approve and create account** (needs `wiw_review_claims`). The site sets Claimed, creates the owner account for the claimant's email (or reuses the existing owner account for that email), links the profile, and emails a "Set your password" link. The actions are audited.
+3. If the claimant did not get the email, check the email log. The owner can also use the lost password link on `/account/`.
 
-### Create the claimant and assign the profile (each claim)
+Plain **Approve** sets Claimed without an account. Two-factor is optional for owners.
 
-1. Users, Add new. Username and email of the claimant; role `Profile manager`. Send the new-user email so they set their own password.
-2. Open the profile in the directory editor and, in the Claim and profile manager card, pick the user as the profile manager (it needs `wiw_review_claims`). The profile must be claimed (an approved claim). Audit row: `profile.assign_manager`, with the before and after user, the actor and the reason.
-3. Ask the user to switch on two-factor sign-in on their profile page (recommended, not enforced since D-070). The Setup checklist shows whether they have.
-4. The user's own screens: only My profiles and their own account page. A pending revision appears in the Review queue for a Reviewer or Administrator who is not the author. Approve or return it with a note; each decision writes an audit row (`profile.revision_approved` or `profile.revision_rejected`) with actor and reason.
+### Transfer or remove ownership
 
-### Checklist for the claim reviewer after approval
+1. Open the profile in the directory editor. The claim card shows the current owner.
+2. To transfer, choose another owner account. To remove, clear the owner. Give the reason. Both are audited.
+3. If the person no longer owns any profile and should lose access, the Administrator deactivates the user in **Users**. An email change for an owner is also made by the Administrator in **Users**.
 
-- [ ] The claim is approved on the Claims screen (audit row `claim.approve`).
-- [ ] A `Profile manager` user exists for the claimant and holds only `read` and `wiw_edit_assigned_profiles` (Role editor, user screen: no extra grants).
-- [ ] The profile is assigned to that user (audit row `profile.assign_manager`).
-- [ ] The claimant has enrolled a second factor.
-- [ ] Signing in as the claimant shows My profiles and nothing else: no Posts, Pages, Media, Users, Tools menus; opening another profile's edit address answers 403.
-- [ ] A test change from the claimant appears as a pending revision and the live profile is unchanged; approve or return it from the Review queue as a different user.
-- [ ] To end the arrangement, remove the manager from the profile (audit row `profile.assign_manager`, "Manager removed") and deactivate the user.
+### Check that an owner cannot reach wp-admin
+
+Do this after any change to the guard plugin, the plugin's roles or the theme, using a test owner account.
+
+- [ ] Signed in as the owner, open `/wp-admin/` and `/wp-admin/profile.php`: each redirects to `/account/`.
+- [ ] No admin bar shows on any public page.
+- [ ] The user holds only `read` and `wiw_own_profiles` (Users, Capabilities: no extra grants).
+- [ ] `/account/` lists only the owner's profiles; another profile's edit address is refused.
+- [ ] A test edit shows as "Changes waiting for review" and the live profile is unchanged; approve or return it from the Review queue as a different user, and check the owner is emailed.
+- [ ] The footer shows "Profile owner sign in" (or "My account" when signed in), and the header shows no sign-in link.
+- [ ] `/account/` answers with `noindex`, is not in the sitemap and is not served from the page cache.

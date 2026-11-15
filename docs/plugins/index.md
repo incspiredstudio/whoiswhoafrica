@@ -22,7 +22,7 @@ Product code lives in domain modules under `whoiswho-core/src/`. Admin screens a
 | `Directory` | Profile type and fields, taxonomies, search, the `PublicProfile` read model, versions, the Sources view | [Directory](/plugins/directory) |
 | `Review` | The `StateMachine`, review queue, duplicates, bulk unpublish, approval of edits to claimed profiles | [Review](/plugins/review) |
 | `Import` | Bundle validation, dry run, chunked apply, undo, hash check, results, suppression snapshot | [Import](/plugins/import) |
-| `Trust` | Claims, the Claimed mark, the assigned user, claim reminders | [Trust](/plugins/trust) |
+| `Trust` | Claims, the Claimed mark, Profile owner accounts and the `/account/` pages, claim reminders | [Trust](/plugins/trust) |
 | `Commerce` | Customers, sponsored story deals, the counting rule, the paid story slot | [Commerce](/plugins/commerce) |
 | `Content` | Stories support, events, home and stories curation, newsletter, comment settings, pages | [Content](/plugins/content) |
 | `Awards` | Editions, categories, criteria, nominations (stage and status), winners | [Awards](/plugins/awards) |
@@ -72,7 +72,7 @@ The plugin is built in the order the dependencies run: platform core first (role
 | Not built | Because |
 |---|---|
 | A public JSON API | There is none. Core REST is locked to staff |
-| Visitor, owner, nominator or judge accounts | No public accounts exist (REQ-229) |
+| Visitor, nominator or judge accounts, or public sign-up | No public accounts exist except staff-created Profile owner accounts (REQ-229, REQ-274) |
 | Payment processing | Customers pay offline; staff record it |
 | AI drafting on the site | It belongs to the acquisition pipeline |
 | An SEO plugin | The guard emits SEO markup so nothing can leak |

@@ -11,7 +11,7 @@ WHOISWHO is an African discovery, recognition and media platform. It documents t
 
 ## What visitors get
 
-There are no public accounts. Everything below works without signing in.
+There are no public accounts, except for Profile owners: people whose claim staff approved, who sign in at `/account/` to keep their profile up to date (D-071). Everything below works without signing in.
 
 | Area | What a visitor can do |
 |---|---|
@@ -51,7 +51,7 @@ Staff work in the WordPress admin. There are three default roles, and the Admini
 - **Money never buys recognition.** Payment never affects nominations, judging, winners, profile ranking, Featured, Claimed or any label.
 - **Only stories can be Sponsored.** A sponsor can pay for a story to be placed in a labelled slot for set dates. The label always reads Sponsored and never names the sponsor publicly (owner 2026-11-14), and the slot never reorders the other stories or search. Profiles are never Sponsored or Featured.
 - **Claimed is a staff mark.** Staff see a checkmark on a claimed profile. The public sees nothing, and the Claim button disappears. There are no Verified profiles.
-- **Claimed profiles are edited under review.** A Reviewer or Administrator approves every edit by the assigned user before it is public.
+- **Claimed profiles are edited under review.** The claimant can get a Profile owner account on the public site, never wp-admin (D-071). A Reviewer or Administrator approves every edit they make before it is public.
 - **Privacy by default.** Personal data is minimised, requests have due dates, and a valid removal request hides the profile within two business days.
 
 The reasoning behind these is in [Concepts](/concepts/).

@@ -1,14 +1,14 @@
 # The no-accounts model
 
-Nobody outside the team has an account on the public site. This page explains what replaces accounts, who does have one, and how the account-free flows stay safe.
+Nobody outside the team has an account on the public site, with one exception: Profile owners, the people behind approved claims (D-071). This page explains what replaces accounts, who does have one, and how the account-free flows stay safe.
 
-Requirements: REQ-018, 047, 081, 122, 229, 232, 233, 235. Decisions: D-034, D-044, D-048. Records: ADR-004. Architecture: section 3.7 and 6.2.
+Requirements: REQ-018, 047, 081, 122, 229, 232, 233, 235, 253, 261, 274. Decisions: D-034 (amended by D-071), D-044, D-048, D-071. Records: ADR-004. Architecture: section 3.7 and 6.2.
 
 ## The rule
 
-The public site has **no registration, login, password reset or account area** for visitors, profile owners, nominators, nominees or judges (REQ-229). WordPress front-end registration is closed: no self sign-up, no default role, no user-facing login link.
+The public site has **no registration, login, password reset or account area** for visitors, nominators, nominees or judges (REQ-229). WordPress front-end registration is closed: no self sign-up and no default role.
 
-The only WordPress users are staff.
+The only WordPress users are staff and Profile owners. Profile owners are the single exception to the rule (D-071, REQ-274): see [Profile owner accounts](#profile-owner-accounts).
 
 ## Why
 
@@ -26,7 +26,22 @@ The only WordPress users are staff.
 
 These are default bundles of named capabilities. The Administrator can grant or revoke single capabilities per user, and can create more roles (REQ-244). Staff sign in through the normal WordPress login, with a maintained two-factor plugin enforced for every staff account before first use (REQ-047). There is no role selector on sign-in (D-048).
 
-A person who edits a claimed profile is an ordinary staff user, not a public account. See [Trust and labels](/concepts/trust-and-labels).
+## Profile owner accounts
+
+A person whose claim is approved can get a customer-style account on the public site, like a shop's "My account" (D-071, REQ-274). It is not a staff account.
+
+| Property | Rule |
+|---|---|
+| Role | `wiw_profile_owner` ("Profile owner"): `read` and `wiw_own_profiles` only, no wp-admin capabilities |
+| Sign-up | None. Staff press "Approve and create account" on a claim; it creates the account (or reuses the one for that email), links the profile and emails a "Set your password" link |
+| Sign-in | `/account/`, linked from the footer only ("Profile owner sign in", or "My account" when signed in), never the header. Login lockout, Turnstile when configured, generic errors that never reveal whether an email exists |
+| wp-admin | Any `/wp-admin/` request redirects to `/account/`; no admin bar |
+| Pages | Sign-in, lost password, My profiles (each with Live or Changes waiting for review), Edit profile, Account details (name and password), Sign out |
+| Edits | Descriptive text, links, contact details and the photo. Every save goes to staff review (REQ-253, 261); the owner is emailed when it is approved or returned |
+| Cannot change | Status, slug, Claimed, labels, arrangements, or their own email (staff change it in Users) |
+| Ownership | One owner can own several profiles. Staff can transfer or remove ownership; every staff action is audited |
+| Two-factor | Optional |
+| Privacy | Account pages are noindex, out of the sitemap and never page-cached. Owner accounts are in the PII catalogue and covered by personal-data export and erasure |
 
 ## What replaces accounts
 
@@ -84,9 +99,8 @@ A correction, removal or report counts as valid only after the requester's email
 
 ## A test that guards the rule
 
-A test asserts that no registration or login route is exposed to visitors ([build: testing](/build/testing-and-ci)). The prototype's smoke test checks the same thing: routes such as `/login`, `/signup`, `/account` and `/judge` do not exist.
+A test asserts that no registration route is exposed to visitors and that the only public sign-in is the Profile owner sign-in at `/account/` ([build: testing](/build/testing-and-ci)). The prototype's smoke test predates D-071: it checks that routes such as `/login`, `/signup`, `/account` and `/judge` do not exist in the wireframe.
 
 ## Open points
 
-- Whether a profile owner's edits need a login is answered by D-059: they are made by an assigned staff user and approved by a Reviewer or Administrator.
-- A fourth "Profile manager" role is not shipped by default; the Administrator can create one (Q93).
+- How a profile owner edits is answered by D-071: through a Profile owner account on the public site, never wp-admin, with every edit approved by a Reviewer or Administrator. This replaces the wp-admin assigned user of D-059 and the optional "Profile manager" role (Q93).

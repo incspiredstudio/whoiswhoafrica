@@ -123,7 +123,7 @@ Reply in one message: "Accept all defaults except Q2: ..., Q5: ...". Claude Code
 - Speed first: finish as early as possible; the brief's dates are ceilings.
 - Claude Code builds everything; you approve at gates and handle outside work (accounts, legal, content, sales).
 - No payment processing on the website; payments are offline and admins record them.
-- No login or signup on the public website for anyone (D-034). Only staff use wp-admin, with two-factor. Corrections, removals, reports and nominations use forms and single-use signed email links. Judging is offline.
+- No signup on the public website for anyone, and no login except for Profile owners (D-034 as amended by D-071): staff create their account from an approved claim, and they sign in at `/account/` and never reach wp-admin. Only staff use wp-admin, with two-factor. Corrections, removals, reports and nominations use forms and single-use signed email links. Judging is offline.
 - Never commit secrets or read `.env` files.
 - Nothing publishes without human review.
 - New ideas found during the build become new issues, not extra scope.

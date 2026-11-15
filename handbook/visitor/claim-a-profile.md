@@ -1,6 +1,6 @@
 # Claim a profile
 
-A person, or a representative of an organisation, can ask to take care of a profile. Claiming needs no account. Staff check the evidence and decide within five days.
+A person, or a representative of an organisation, can ask to take care of a profile. Claiming needs no account. If staff approve the claim, they can give the claimant a Profile owner account to keep the profile up to date. Staff check the evidence and decide within five days.
 
 ## Claim a profile
 
@@ -22,11 +22,13 @@ Claimed is not a fact-check, a trust score or a paid status.
 
 ## Keeping a claimed profile up to date
 
-1. Staff may create a staff sign-in for the claimant with a limited role, and assign the profile to them.
-2. The claimant signs in (two-factor sign-in is recommended) and sees only their assigned profiles.
-3. They edit descriptive text, links, contact details and the photograph. They cannot change status, address, the Claimed mark or any label.
+1. When staff approve a claim, they can also create a Profile owner account for the claimant. The claimant is emailed a "Set your password" link.
+2. The owner signs in from the "Profile owner sign in" link in the site footer. There is no public sign-up.
+3. They see their profiles and can edit descriptive text, links, contact details and the photograph. They cannot change status, address, the Claimed mark or any label.
 4. Saving sends the change for review. The live profile does not change.
-5. A Reviewer or Administrator, never the author, approves it or returns it with a note. The claimant is emailed either way.
+5. A Reviewer or Administrator, never the author, approves it or returns it with a note. The owner is emailed either way.
+
+The owner's guide is [Your profile owner account](/visitor/your-account).
 
 ## Limits
 

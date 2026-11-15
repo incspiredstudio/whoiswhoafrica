@@ -95,4 +95,4 @@ The theme reads these through the plugin. It never writes them.
 | Sponsored on a profile | Only stories can be Sponsored |
 | Ranking by payment | Nothing orders by payment |
 | A cover image on a profile | Profiles show one portrait or logo only |
-| A public sign-in | There are no public accounts |
+| A header sign-in or public sign-up | The only sign-in link is "Profile owner sign in" in the footer, and staff create every owner account |

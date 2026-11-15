@@ -28,7 +28,7 @@ WHOISWHO is an African discovery, recognition and media platform, being built on
 ## Five things to know first
 
 1. **Nothing is public before review.** Imported records are checked by a person before they go live, except organisation profiles that carry an explicit "human review pending" label.
-2. **There are no public accounts.** Visitors never sign in. Only staff use the WordPress admin.
+2. **There are no public accounts, except Profile owners.** Visitors never sign in. A person whose claim is approved can get a staff-created account on the public site to edit their profile under review (D-071). Only staff use the WordPress admin.
 3. **Money never buys recognition.** Payment never affects nominations, judging, winners, profile ranking or any label. A sponsor can only pay for a labelled story placement.
 4. **Every rule has an ID.** Requirements are REQ numbers, and the pages cite them as plain text. They are never renumbered.
 5. **The prototype is not the product.** It shows behaviour with sample data. The WordPress build follows the plugin, theme and engineering pages.

@@ -49,7 +49,7 @@ The build plan will turn each row into a GitHub milestone, and each acceptance c
 
 ## Rules that every feature shares
 
-- No public accounts. Staff only have accounts (REQ-229).
+- No public sign-up. Only staff, and staff-created Profile owner accounts for approved claimants, have accounts (REQ-229, REQ-274).
 - A profile is public only in its two Published states; this holds on every surface (REQ-208).
 - Profiles are never Sponsored or Featured. Only stories are. There are no Verified profiles; staff see a Claimed mark.
 - Payment never affects nominations, judging, winners, profile ranking, search ranking or labels. It can only buy a labelled story placement slot (REQ-183, 184, 199, 263).
