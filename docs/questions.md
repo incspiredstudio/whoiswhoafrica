@@ -159,7 +159,7 @@ Judging is offline and not being decided now (D-034). Questions about judges go 
 
 ## Brand name questions (brief v2, answered 2026-11-09, D-052)
 
-From `docs/archive/change-review-2026-11-07.md`.
+From the change review of 2026-11-07 (in git history; the archive folder was removed 2026-11-15).
 
 | Q | Status | Question | Why it matters | Decision / default | WP type | Scope |
 |---|---|---|---|---|---|---|

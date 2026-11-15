@@ -73,22 +73,19 @@ Every requirement, decision and question has a **WP type** column, set by D-053.
 
 **Capability** = one permission, such as "can publish profiles". A **role** is a bundle of capabilities. There are four roles (Visitor, Reviewer, Editor, Administrator) and the Administrator can change what each holds, or give one user an extra capability, in wp-admin without code. The single list is the section "Capabilities and default role mapping" in `requirements.md`. Core capabilities come with WordPress; plugin capabilities (named `wiw_*`) are added by `whoiswho-core`.
 
-**Wireframe screens** carry a separate tag in `wireframe-inventory.md`: *native* (WordPress provides it; shown only for illustration), *customised-native* (a WordPress screen with plugin additions) or *custom* (a plugin screen). Details: `docs/wordpress-fit-report.md`.
 
 ## 5. Files at a glance
 | File | Purpose | Edited by |
 |---|---|---|
 | `docs/spec.md` | The original brief (cleaned copy). Source of truth for intent. | you |
 | `docs/requirements.md` | What the product must do (REQ numbers), with a WP type per row and the capability list | Claude Code |
-| `docs/wordpress-fit-report.md` | How much of the spec is native WordPress, what was withdrawn, and what needs your ruling | Claude Code |
 | `docs/questions.md` | Contradictions and questions, with a Status column | Claude Code, from your answers |
 | `docs/decisions.md` | Every decision (D numbers) | Claude Code |
 | `docs/architecture.md`, `docs/adr/` | Tech choices and design | Claude Code |
-| `docs/plan.md` | Milestones, tasks, timeline | Claude Code |
+| `docs/plan/` | Milestones and tasks (read by the traceability check) | Claude Code |
 | `docs/wireframe-inventory.md`, `prototype/` | Every screen and flow, and the clickable wireframe. **Since D-034 there are no login, signup, owner-area or judge screens; only staff use wp-admin.** | Claude Code |
 | `docs/contracts/import-format.md` | What the acquisition pipeline exports and what WordPress accepts; the only interface between them | The shared-docs owner |
 | `acquisition/docs/acquisition-plan.md` | Plan for the first 1,000 profiles | Claude Code (acquisition session) |
-| `docs/design-inspiration.md` | Visual references and open design questions, for the later design phase only | Claude Code |
 | `docs/traceability.md` | REQ to issue to test to verified | Claude Code |
 | `docs/verify-*.md` | Audit results with go / no-go | Claude Code |
 | `STATUS.md` | Where the project is right now; every session reads it first | Claude Code |

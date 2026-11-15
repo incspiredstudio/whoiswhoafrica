@@ -57,9 +57,9 @@ export default defineConfig({
   markdown: { html: false },
   // Working records stay in the repository but are not published in the docs site.
   srcExclude: [
-    "node_modules/**", "plan/**", "brand/**", "archive/**", "brief/**", "adr/**",
+    "node_modules/**", "plan/**", "brand/**", "brief/**", "adr/**",
     "requirements.md", "decisions.md", "questions.md", "architecture.md", "spec.md", "GUIDE.md",
-    "wireframe-inventory.md", "wireframe-findings.md", "wordpress-fit-report.md", "design-inspiration.md",
+    "wireframe-inventory.md", "wireframe-findings.md",
   ],
   themeConfig: {
     search: { provider: "local" },

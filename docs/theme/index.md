@@ -58,8 +58,6 @@ Every public page and state has an entry in the wireframe inventory. The in-prot
 | Photos, hero videos | Placeholders and supplied files; licences not confirmed |
 | Home hero | Four autoplaying vertical videos replaced the earlier 3D logo |
 
-`docs/design-inspiration.md` holds notes on two award sites used as references. Every point in it is marked unverified, so treat it as a list of things to check, not findings.
-
 ## Pages in this section
 
 The first group describes the design. The second is the build specification for the `whoiswho` theme: what to build, page by page.
