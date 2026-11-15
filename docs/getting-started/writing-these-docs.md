@@ -26,7 +26,7 @@ The build fails on a page that cannot compile and on a link that goes nowhere, w
 | `docs/build/`, `docs/contracts/` | Engineering notes and the import contract |
 | `docs/getting-started/` | How to run things and work in the repo |
 | `docs/open-questions.md` | Generated from `docs/questions.md` by `scripts/build-open-questions.js`. Do not edit by hand |
-| `docs/requirements.md`, `decisions.md`, `questions.md`, `architecture.md`, `adr/`, `spec.md`, `brief/`, `archive/` | Working records. They stay in the repository and are not published in the site |
+| `docs/requirements.md`, `decisions.md`, `questions.md`, `architecture.md`, `adr/`, `spec.md`, `brief/` | Working records. They stay in the repository and are not published in the site |
 | `docs/wireframe-inventory.md` | Generated from the prototype. Not published in the site |
 | `docs/.vitepress/config.mts` | Site title, menu and sidebar. The sidebar lists each folder's pages automatically |
 

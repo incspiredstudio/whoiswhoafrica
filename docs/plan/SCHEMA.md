@@ -1,6 +1,6 @@
 # Build plan: how the issue files are written
 
-The build plan is a set of JSON files in `docs/plan/`, one per milestone. A generator script (`scripts/plan-issues.js`) turns them into GitHub milestones, labels, issues and project items. Nothing in this folder is published on the docs site.
+The build plan is a set of JSON files in `docs/plan/`, one per milestone. They were turned into the GitHub milestones and issues at the start of the build (the generator script was removed 2026-11-15, once every issue existed); `scripts/traceability.js` still reads them. Nothing in this folder is published on the docs site.
 
 ## Milestones
 
