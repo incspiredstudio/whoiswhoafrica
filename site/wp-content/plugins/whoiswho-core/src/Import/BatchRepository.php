@@ -176,4 +176,35 @@ final class BatchRepository {
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE batch_id = %s', $batch_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
 		return is_array( $row ) ? $row : null;
 	}
+
+	/**
+	 * One page of batches, newest first, for the history list.
+	 *
+	 * @param int $limit  How many.
+	 * @param int $offset How many to skip.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function page( int $limit, int $offset = 0 ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d OFFSET %d', max( 1, $limit ), max( 0, $offset ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * How many batches there are.
+	 */
+	public function count(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+	}
+
+	/**
+	 * The batch id of a row id (the table's own key, used by the history list's checkboxes), or an empty string.
+	 *
+	 * @param int $id Row id.
+	 */
+	public function batch_id_of( int $id ): string {
+		global $wpdb;
+		return (string) $wpdb->get_var( $wpdb->prepare( 'SELECT batch_id FROM ' . self::table() . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name.
+	}
 }

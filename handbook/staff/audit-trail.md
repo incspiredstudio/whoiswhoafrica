@@ -39,6 +39,8 @@ Rules:
 4. The log is copied off the server regularly.
 5. The screen has no edit or delete control for audit rows.
 
+The Audit, Purge and Email logs are read-only lists: no checkboxes and no bulk actions. They show 50 rows a page with the pager above and below. In the Email log, hover over a row (or tab to it) for **Record bounce** and **Record complaint**; each asks you to confirm first.
+
 ## Purge log
 
 When a profile is unpublished, removed or declined, the site already answers "gone". The purge log lists each one with its cache purge so staff can confirm the cached copy is gone.

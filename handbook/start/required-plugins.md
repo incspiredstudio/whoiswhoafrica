@@ -19,6 +19,8 @@ The WHOISWHO plugin also carries Action Scheduler (background jobs) and User Rol
 5. Do the same for wpDiscuz.
 6. Open **WHOISWHO > Setup** and check that the plugin lines are Ready.
 
+To do several at once, tick the plugins and choose **Install selected** or **Activate selected** in **Bulk actions**. Each plugin is done exactly as with its own button, and each gets its own audit entry. Hover over a row (or tab to it) for its quick links: Install, Install with WordPress or Activate.
+
 You can hide the notice for 7 days with its **Remind me in 7 days** button. It comes back while a plugin is still missing.
 
 ## If Install asks for FTP details

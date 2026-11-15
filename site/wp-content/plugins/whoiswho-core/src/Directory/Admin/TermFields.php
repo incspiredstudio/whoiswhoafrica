@@ -9,6 +9,8 @@
  * - The "unclassified" industry cannot be deleted or renamed.
  * - A slug change keeps the old slug in term meta wiw_old_slugs, so old directory addresses redirect (see OldTermSlugRedirect).
  * - Clear admin columns: Kind, Code and Country for places, Sector and Also known as for industries.
+ * - A small stylesheet (assets/admin/directory/term-fields.css, REQ-275) shows the list's rules as a callout. The screens stay
+ *   WordPress's own term list and forms, which already have bulk Delete and row actions.
  *
  * The term screens need the taxonomy's manage_terms (Editors and Administrators). Saving the extra fields checks this class's nonce
  * and edit_term on the term; each save is audited through AuditLogger with the term id and the values (no personal data).
@@ -71,6 +73,19 @@ final class TermFields {
 		add_filter( 'wp_update_term_data', array( $self, 'lock_unclassified' ), 10, 3 );
 		add_filter( 'map_meta_cap', array( $self, 'no_delete_unclassified' ), 10, 4 );
 		add_filter( Taxonomies::INDUSTRY . '_row_actions', array( $self, 'row_actions' ), 10, 2 );
+		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );
+	}
+
+	/**
+	 * The term screens' small stylesheet, on the term list and term edit screens of the classification lists only.
+	 *
+	 * @param string $hook Admin page hook.
+	 */
+	public static function enqueue( $hook ): void {
+		if ( ! in_array( (string) $hook, array( 'edit-tags.php', 'term.php' ), true ) || ! in_array( Request::from_globals()->string( 'taxonomy' ), array( Taxonomies::PLACE, Taxonomies::INDUSTRY, Taxonomies::ORG_TYPE ), true ) ) {
+			return;
+		}
+		wp_enqueue_style( 'wiw-term-fields', plugins_url( 'assets/admin/directory/term-fields.css', WIW_CORE_FILE ), array(), WIW_CORE_VERSION );
 	}
 
 	/**
@@ -259,7 +274,7 @@ final class TermFields {
 			return;
 		}
 		if ( Taxonomies::INDUSTRY === $taxonomy && Classification::unclassified_slug() === $term->slug ) {
-			echo '<tr class="form-field"><td colspan="2"><p class="description">' . esc_html( self::message( 'unclassified' ) ) . '</p></td></tr>';
+			echo '<tr class="form-field wiw-term-help"><td colspan="2"><p class="description">' . esc_html( self::message( 'unclassified' ) ) . '</p></td></tr>';
 			return;
 		}
 		echo '<tr class="form-field"><th scope="row"><label for="wiw_alias">' . esc_html__( 'Also known as', 'whoiswho' ) . '</label></th><td><input type="text" id="wiw_alias" name="wiw_alias" value="' . esc_attr( implode( ', ', self::aliases( $term->term_id ) ) ) . '" /><p class="description">' . esc_html__( 'Other names for this entry, separated by commas. The import uses them to match values.', 'whoiswho' ) . '</p></td></tr>';
