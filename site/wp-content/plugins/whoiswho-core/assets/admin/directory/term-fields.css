@@ -1,0 +1,21 @@
+/*
+ * The classification term screens (REQ-009, REQ-275): Industries, Countries & cities and Organisation types use WordPress's own
+ * term list and forms (with their own bulk Delete and row actions). This sheet only makes the list's rules read as a callout
+ * above the extra fields and sizes the short code field. WordPress admin colours only.
+ */
+
+.wiw-term-help p,
+.wiw-term-help .description {
+	background: #f0f6fc;
+	border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
+	border-radius: 0 6px 6px 0;
+	color: #1d2327;
+	font-size: 13px;
+	line-height: 1.5;
+	margin: 0 0 8px;
+	max-width: 70ch;
+	padding: 10px 14px;
+}
+
+.form-field input[name="wiw_iso_code"] { max-width: 7em; text-transform: uppercase; }
+.form-field select[name="wiw_place_kind"] { min-width: 14em; }

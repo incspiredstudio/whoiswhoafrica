@@ -4,6 +4,8 @@
  * Install and an Activate button, so nobody has to search the plugin directory. Administrators only (wiw_run_setup), and WordPress's
  * own install_plugins or activate_plugins as well. Every button is a plain form through ActionGuard (capability and nonce), and every
  * install or activation is audited. A host that needs FTP details gets a link to WordPress's own install screen, which asks for them.
+ * The list is a shared staff list table (RequiredPluginsTable, REQ-275): bulk Install selected and Activate selected repeat the
+ * single actions through run(), and each row has Install, Install with WordPress or Activate as row actions.
  *
  * @package WhoIsWho
  */
@@ -47,6 +49,7 @@ final class RequiredPluginsScreen {
 		ScreenRegistry::shared()->hook();
 		ActionGuard::register( self::ACTION_INSTALL, self::CAP, array( self::class, 'handle_install' ) );
 		ActionGuard::register( self::ACTION_ACTIVATE, self::CAP, array( self::class, 'handle_activate' ) );
+		RequiredPluginsTable::register_bulk_handler();
 	}
 
 	/**
@@ -80,7 +83,7 @@ final class RequiredPluginsScreen {
 	 * @param Request $request Request.
 	 */
 	public static function handle_install( Request $request ): void {
-		self::finish( 'install', $request->string( 'plugin' ), PluginInstaller::for_site()->install( $request->string( 'plugin' ) ) );
+		self::finish( 'install', $request->string( 'plugin' ), self::run( 'install', $request->string( 'plugin' ) ) );
 	}
 
 	/**
@@ -89,20 +92,34 @@ final class RequiredPluginsScreen {
 	 * @param Request $request Request.
 	 */
 	public static function handle_activate( Request $request ): void {
-		self::finish( 'activate', $request->string( 'plugin' ), PluginInstaller::for_site()->activate( $request->string( 'plugin' ) ) );
+		self::finish( 'activate', $request->string( 'plugin' ), self::run( 'activate', $request->string( 'plugin' ) ) );
 	}
 
 	/**
-	 * Audit a success and go back to the screen with the result.
+	 * Install or activate one plugin and audit a success: the single action, shared by its button and the bulk actions.
+	 *
+	 * @param string               $what      install or activate.
+	 * @param string               $slug      Plugin slug.
+	 * @param PluginInstaller|null $installer Installer; the site's own by default.
+	 * @return string The installer's result.
+	 */
+	public static function run( string $what, string $slug, ?PluginInstaller $installer = null ): string {
+		$installer = $installer ?? PluginInstaller::for_site();
+		$result    = 'install' === $what ? $installer->install( $slug ) : $installer->activate( $slug );
+		if ( PluginInstaller::OK === $result && RequiredPlugins::known( $slug ) ) {
+			self::audit( 'plugins.' . $what, $slug );
+		}
+		return $result;
+	}
+
+	/**
+	 * Go back to the screen with the result.
 	 *
 	 * @param string $what   install or activate.
 	 * @param string $slug   Plugin slug.
 	 * @param string $result Installer result.
 	 */
 	private static function finish( string $what, string $slug, string $result ): void {
-		if ( PluginInstaller::OK === $result && RequiredPlugins::known( $slug ) ) {
-			self::audit( 'plugins.' . $what, $slug );
-		}
 		wp_safe_redirect(
 			add_query_arg(
 				array(
@@ -192,53 +209,46 @@ final class RequiredPluginsScreen {
 			throw new \DomainException( 'Not allowed to use the required plugins screen.' );
 		}
 		$plugins = $plugins ?? new RequiredPlugins();
-		$out     = '<div class="wrap wiw-required-plugins"><h1>' . esc_html__( 'Required plugins', 'whoiswho' ) . '</h1>';
+		$out     = '<div class="wrap wiw-staff wiw-required-plugins"><h1>' . esc_html__( 'Required plugins', 'whoiswho' ) . '</h1>';
 		$notice  = self::result_text( $request->string( 'wiw_what' ), $request->string( 'wiw_plugin' ), $request->string( 'wiw_result' ) );
 		if ( '' !== $notice[1] ) {
 			$out .= '<div class="notice notice-' . esc_attr( $notice[0] ) . '"><p>' . esc_html( $notice[1] ) . '</p></div>';
 		}
-		$out .= '<p>' . esc_html__( 'The site uses a few free plugins from the WordPress plugin directory for jobs WordPress does not do by itself. Press Install, then Activate, for each one that is not active yet. Nothing else is needed: the site sets them up for you where it can.', 'whoiswho' ) . '</p>';
+		$out .= '<p class="wiw-lead">' . esc_html__( 'The site uses a few free plugins from the WordPress plugin directory for jobs WordPress does not do by itself. Press Install, then Activate, for each one that is not active yet. Nothing else is needed: the site sets them up for you where it can.', 'whoiswho' ) . '</p>';
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This site is set up so that plugins cannot be added from the admin. Ask whoever looks after your hosting to add the plugins below, or to allow plugin installs.', 'whoiswho' ) . '</p></div>';
 		}
-		$out .= '<table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'Plugin', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'What it does', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Status', 'whoiswho' ) . '</th><th scope="col">' . esc_html__( 'Action', 'whoiswho' ) . '</th></tr></thead><tbody>';
-		foreach ( RequiredPlugins::catalogue() as $slug => $plugin ) {
-			$out .= self::row( $slug, $plugin, $plugins->status( $slug ) );
-		}
-		return $out . '</tbody></table></div>';
+		$out .= ( new RequiredPluginsTable( $plugins ) )->html( $request );
+		return $out . self::button_forms( $plugins ) . '</div>';
 	}
 
 	/**
-	 * One plugin row.
+	 * The id of the small form behind one plugin's button.
 	 *
-	 * @param string                                                         $slug   Slug.
-	 * @param array{name: string, file: string, required: bool, why: string} $plugin Plugin.
-	 * @param string                                                         $status Status.
+	 * @param string $action Action.
+	 * @param string $slug   Slug.
 	 */
-	private static function row( string $slug, array $plugin, string $status ): string {
-		$words = array(
-			RequiredPlugins::NOT_INSTALLED => __( 'Not installed', 'whoiswho' ),
-			RequiredPlugins::INSTALLED     => __( 'Installed, not active', 'whoiswho' ),
-			RequiredPlugins::ACTIVE        => __( 'Active', 'whoiswho' ),
-			RequiredPlugins::INCLUDED      => __( 'Included with the site plugin', 'whoiswho' ),
-		);
-		$out   = '<tr id="' . esc_attr( 'wiw-plugin-' . $slug ) . '" data-status="' . esc_attr( $status ) . '">';
-		$out  .= '<td><strong>' . esc_html( $plugin['name'] ) . '</strong><br><span class="description">' . esc_html( $plugin['required'] ? __( 'Required', 'whoiswho' ) : __( 'Recommended (optional)', 'whoiswho' ) ) . '</span></td>';
-		$out  .= '<td>' . esc_html( $plugin['why'] ) . '</td>';
-		$out  .= '<td>' . esc_html( $words[ $status ] ?? $status ) . '</td><td>';
-		if ( RequiredPlugins::NOT_INSTALLED === $status && current_user_can( 'install_plugins' ) ) {
-			/* translators: %s: plugin name. */
-			$out .= self::button( self::ACTION_INSTALL, $slug, sprintf( __( 'Install %s', 'whoiswho' ), $plugin['name'] ) );
-			$out .= ' <a href="' . esc_url( PluginInstaller::core_install_url( $slug ) ) . '">' . esc_html__( 'Install with WordPress', 'whoiswho' ) . '</a>';
-		} elseif ( RequiredPlugins::INSTALLED === $status && current_user_can( 'activate_plugins' ) ) {
-			/* translators: %s: plugin name. */
-			$out .= self::button( self::ACTION_ACTIVATE, $slug, sprintf( __( 'Activate %s', 'whoiswho' ), $plugin['name'] ) );
-		} elseif ( RequiredPlugins::ACTIVE === $status || RequiredPlugins::INCLUDED === $status ) {
-			$out .= '<span aria-hidden="true">&#10003;</span> ' . esc_html__( 'Nothing to do', 'whoiswho' );
-		} else {
-			$out .= esc_html__( 'Ask the site\'s administrator', 'whoiswho' );
+	public static function form_id( string $action, string $slug ): string {
+		return ( self::ACTION_INSTALL === $action ? 'wiw-plugin-install-' : 'wiw-plugin-activate-' ) . $slug;
+	}
+
+	/**
+	 * The small forms the per-plugin buttons post (outside the list form; each button names its form). One per plugin that has a
+	 * button: Install for a plugin not installed, Activate for one installed and not active.
+	 *
+	 * @param RequiredPlugins $plugins Status reader.
+	 */
+	private static function button_forms( RequiredPlugins $plugins ): string {
+		$out = '';
+		foreach ( array_keys( RequiredPlugins::catalogue() ) as $slug ) {
+			$status = $plugins->status( $slug );
+			if ( RequiredPlugins::NOT_INSTALLED === $status && current_user_can( 'install_plugins' ) ) {
+				$out .= self::button_form( self::ACTION_INSTALL, $slug );
+			} elseif ( RequiredPlugins::INSTALLED === $status && current_user_can( 'activate_plugins' ) ) {
+				$out .= self::button_form( self::ACTION_ACTIVATE, $slug );
+			}
 		}
-		return $out . '</td></tr>';
+		return $out;
 	}
 
 	/**
@@ -246,13 +256,11 @@ final class RequiredPluginsScreen {
 	 *
 	 * @param string $action Action.
 	 * @param string $slug   Slug.
-	 * @param string $label  Button text.
 	 */
-	private static function button( string $action, string $slug, string $label ): string {
-		return '<form method="post" class="wiw-inline-form" style="display:inline" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+	private static function button_form( string $action, string $slug ): string {
+		return '<form method="post" id="' . esc_attr( self::form_id( $action, $slug ) ) . '" class="wiw-inline-form" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
 			. '<input type="hidden" name="action" value="' . esc_attr( $action ) . '" />'
 			. '<input type="hidden" name="plugin" value="' . esc_attr( $slug ) . '" />'
-			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" />'
-			. '<button type="submit" class="button button-primary">' . esc_html( $label ) . '</button></form>';
+			. '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( $action ) ) . '" /></form>';
 	}
 }

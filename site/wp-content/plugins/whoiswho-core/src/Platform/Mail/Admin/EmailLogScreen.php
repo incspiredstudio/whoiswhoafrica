@@ -2,7 +2,8 @@
 /**
  * The Email log screen (REQ-075, REQ-051): every send, bounce and complaint with time, event, result and a short reference of
  * the recipient. It shows no message body and no address (the log stores only a keyed hash). An Administrator can record a
- * bounce or complaint found by hand against a row; that adds a log event and an audit row.
+ * bounce or complaint found by hand against a row; that adds a log event and an audit row. The rows are a read-only staff list
+ * table (EmailLogTable, REQ-275): no checkboxes and no bulk actions; Record bounce and Record complaint are its row actions.
  *
  * @package WhoIsWho
  */
@@ -115,7 +116,40 @@ final class EmailLogScreen {
 	public function rows( string $event = '', string $result = '', int $page = 1 ): array {
 		global $wpdb;
 		$this->require_capability();
-		$sql  = 'SELECT id, message_id, event, recipient_ref, type, result, created_at FROM ' . self::table() . ' WHERE 1 = 1';
+		list( $where, $args ) = self::where( $event, $result );
+		$sql                  = 'SELECT id, message_id, event, recipient_ref, type, result, created_at FROM ' . self::table() . $where . ' ORDER BY id DESC LIMIT %d OFFSET %d';
+		$args[]               = self::PER_PAGE;
+		$args[]               = max( 0, $page - 1 ) * self::PER_PAGE;
+		return (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+	}
+
+	/**
+	 * How many rows match the filters (for the pager).
+	 *
+	 * @param string $event  Event filter, or empty.
+	 * @param string $result Result filter, or empty.
+	 * @throws \DomainException Without the capability.
+	 */
+	public function count( string $event = '', string $result = '' ): int {
+		global $wpdb;
+		$this->require_capability();
+		list( $where, $args ) = self::where( $event, $result );
+		$sql                  = 'SELECT COUNT(*) FROM ' . self::table() . $where;
+		if ( array() === $args ) {
+			return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name, no values.
+		}
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+	}
+
+	/**
+	 * The WHERE clause for the filters, and its values.
+	 *
+	 * @param string $event  Event filter, or empty.
+	 * @param string $result Result filter, or empty.
+	 * @return array{0: string, 1: array<int, string>}
+	 */
+	private static function where( string $event, string $result ): array {
+		$sql  = ' WHERE 1 = 1';
 		$args = array();
 		if ( '' !== $event ) {
 			$sql   .= ' AND event = %s';
@@ -125,10 +159,7 @@ final class EmailLogScreen {
 			$sql   .= ' AND result = %s';
 			$args[] = $result;
 		}
-		$sql   .= ' ORDER BY id DESC LIMIT %d OFFSET %d';
-		$args[] = self::PER_PAGE;
-		$args[] = max( 0, $page - 1 ) * self::PER_PAGE;
-		return (array) $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table name; values prepared.
+		return array( $sql, $args );
 	}
 
 	/**
@@ -186,50 +217,36 @@ final class EmailLogScreen {
 	public function html( Request $request ): string {
 		$event  = $request->string( 'event' );
 		$result = $request->string( 'result' );
-		$rows   = $this->rows( $event, $result, max( 1, $request->int( 'paged' ) ) );
 
-		$out  = '<div class="wrap"><h1>' . esc_html__( 'Email log', 'whoiswho' ) . '</h1>';
-		$out .= '<p>' . esc_html__( 'Every message the system sent, with bounces and complaints. Recipients appear as a short reference; no address and no message text is shown.', 'whoiswho' ) . '</p>';
-		$out .= '<form method="get"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
+		$out  = '<div class="wrap wiw-staff wiw-email-log"><h1>' . esc_html__( 'Email log', 'whoiswho' ) . '</h1>';
+		$out .= '<p class="wiw-lead">' . esc_html__( 'Every message the system sent, with bounces and complaints. Recipients appear as a short reference; no address and no message text is shown.', 'whoiswho' ) . '</p>';
+		$out .= '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="wiw-filters"><input type="hidden" name="page" value="' . esc_attr( self::SCREEN ) . '" />';
 		$out .= '<label>' . esc_html__( 'Event', 'whoiswho' ) . ' <input type="text" name="event" value="' . esc_attr( $event ) . '" /></label> ';
 		$out .= '<label>' . esc_html__( 'Result', 'whoiswho' ) . ' <select name="result"><option value="">' . esc_html__( 'Any', 'whoiswho' ) . '</option>';
 		foreach ( array( 'queued', 'sent', 'failed', 'recorded' ) as $option ) {
 			$out .= '<option value="' . esc_attr( $option ) . '"' . selected( $result, $option, false ) . '>' . esc_html( $option ) . '</option>';
 		}
-		$out .= '</select></label> <button class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
-		$out .= '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time (UTC)', 'whoiswho' ) . '</th><th>' . esc_html__( 'Event', 'whoiswho' ) . '</th><th>' . esc_html__( 'Recipient', 'whoiswho' ) . '</th><th>' . esc_html__( 'Type', 'whoiswho' ) . '</th><th>' . esc_html__( 'Result', 'whoiswho' ) . '</th><th>' . esc_html__( 'Record', 'whoiswho' ) . '</th></tr></thead><tbody>';
-		if ( array() === $rows ) {
-			$out .= '<tr><td colspan="6">' . esc_html__( 'Nothing logged yet.', 'whoiswho' ) . '</td></tr>';
-		}
-		foreach ( $rows as $row ) {
-			$failed = 'failed' === $row['result'];
-			$out   .= '<tr' . ( $failed ? ' class="wiw-failed" style="background:#fcf0f1"' : '' ) . '>';
-			$out   .= '<td>' . esc_html( (string) $row['created_at'] ) . '</td>';
-			$out   .= '<td>' . esc_html( (string) $row['event'] ) . '</td>';
-			$out   .= '<td><code>' . esc_html( substr( (string) $row['recipient_ref'], 0, 10 ) ) . '</code></td>';
-			$out   .= '<td>' . esc_html( (string) $row['type'] ) . '</td>';
-			$out   .= '<td>' . ( $failed ? '<strong>' . esc_html__( 'Failed', 'whoiswho' ) . '</strong>' : esc_html( (string) $row['result'] ) ) . '</td>';
-			$out   .= '<td>' . $this->record_forms( (int) $row['id'] ) . '</td></tr>';
-		}
-		return $out . '</tbody></table></div>';
+		$out .= '</select></label> <button type="submit" class="button">' . esc_html__( 'Filter', 'whoiswho' ) . '</button></form>';
+		$out .= ( new EmailLogTable( $this, $event, $result ) )->html( $request );
+		return $out . '</div>';
 	}
 
 	/**
-	 * The two small forms that record a bounce or a complaint on one row.
+	 * The address of the record action for one row: the same admin-post action and nonce the record forms used.
 	 *
-	 * @param int $id Row id.
+	 * @param int    $id   Row id.
+	 * @param string $kind bounce or complaint.
 	 */
-	private function record_forms( int $id ): string {
-		$out = '';
-		foreach ( self::KINDS as $kind ) {
-			$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline">';
-			$out .= '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '" />';
-			$out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr( ActionGuard::nonce_for( self::ACTION ) ) . '" />';
-			$out .= '<input type="hidden" name="row" value="' . esc_attr( (string) $id ) . '" />';
-			$out .= '<input type="hidden" name="kind" value="' . esc_attr( $kind ) . '" />';
-			$out .= '<button class="button-link">' . esc_html( 'bounce' === $kind ? __( 'Record bounce', 'whoiswho' ) : __( 'Record complaint', 'whoiswho' ) ) . '</button></form> ';
-		}
-		return $out;
+	public static function record_url( int $id, string $kind ): string {
+		return add_query_arg(
+			array(
+				'action'   => self::ACTION,
+				'row'      => $id,
+				'kind'     => $kind,
+				'_wpnonce' => ActionGuard::nonce_for( self::ACTION ),
+			),
+			admin_url( 'admin-post.php' )
+		);
 	}
 
 	/**
