@@ -67,6 +67,22 @@ The approver cannot be the person who imported or drafted the record. Every appr
 | Approve | The profile becomes Published, reviewed. An individual becomes public. The noindex instruction lifts, the sitemap entry and structured data are added and the cache is cleared in the same step. |
 | Reject | The record stays non-public. If it was live, it answers "gone". |
 
+## Bulk actions and row actions
+
+The Review queue and **Directory > Profiles** have a checkbox on each row and a **Bulk actions** menu above and below the table. Tick rows (or the box in the heading to tick the whole page); the bar above the table then shows how many are selected and stays in view as you scroll. Hover over a row, or tab to it, to see its quick links.
+
+| Screen | Row links | Bulk actions |
+|---|---|---|
+| Review queue | Review, Assign to me, Approve, Reject | Approve, Reject, Assign to me |
+| Profiles | Edit, View, Unpublish | Unpublish selected |
+
+- Bulk actions do exactly what the single action does, one row at a time, with the same rules. Each row gets its own audit entry. The menu lists only the actions you are allowed to take.
+- **Approve** asks for the five-point checklist once; it applies to every row listed. Each row still has to pass its own checks (sources, the importer rule, the free-text scan), so some may be skipped.
+- **Reject** asks for one reason, recorded for every row listed.
+- **Unpublish selected** asks you to confirm first.
+- Afterwards one message says how many were done and how many were skipped, with the reason, for example "3 approved, 1 skipped (not in a state that allows this)."
+- Pending changes from a profile manager and flagged source changes have no checkbox: open them with **Review**.
+
 ## Duplicates
 
 Matching uses registration number, Wikidata ID, and a normalised name plus organisation plus location. A staff member merges records. Individuals are never merged automatically.

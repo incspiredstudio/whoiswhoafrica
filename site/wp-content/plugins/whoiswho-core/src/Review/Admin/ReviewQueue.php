@@ -39,10 +39,12 @@ final class ReviewQueue {
 	/**
 	 * One page of queue items in the default order.
 	 *
-	 * @param int $page Page, from 1.
+	 * @param int $page     Page, from 1.
+	 * @param int $per_page Items per page.
 	 * @return array{items: array<int, array<string, mixed>>, total: int, pages: int}
 	 */
-	public function items( int $page = 1 ): array {
+	public function items( int $page = 1, int $per_page = self::PER_PAGE ): array {
+		$per_page = max( 1, $per_page );
 		global $wpdb;
 		$states = StateRepository::table();
 		$vers   = VersionRepository::table();
@@ -65,10 +67,10 @@ final class ReviewQueue {
 
 		$type  = ProfileType::POST_TYPE;
 		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM ({$union}) q", $type, $type ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders -- fixed names; values prepared.
-		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
+		$pages = max( 1, (int) ceil( $total / $per_page ) );
 		$page  = max( 1, min( $page, $pages ) );
 		$found = (array) $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare( "SELECT q.*, p.post_title, st.entity_type, st.pub_state, st.origin FROM ({$union}) q INNER JOIN {$wpdb->posts} p ON p.ID = q.profile_id INNER JOIN {$states} st ON st.profile_id = q.profile_id ORDER BY q.prio ASC, q.pilot ASC, q.grp ASC, q.ts ASC, q.profile_id ASC, q.version_id ASC LIMIT %d OFFSET %d", $type, $type, self::PER_PAGE, ( $page - 1 ) * self::PER_PAGE ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
+			$wpdb->prepare( "SELECT q.*, p.post_title, st.entity_type, st.pub_state, st.origin FROM ({$union}) q INNER JOIN {$wpdb->posts} p ON p.ID = q.profile_id INNER JOIN {$states} st ON st.profile_id = q.profile_id ORDER BY q.prio ASC, q.pilot ASC, q.grp ASC, q.ts ASC, q.profile_id ASC, q.version_id ASC LIMIT %d OFFSET %d", $type, $type, $per_page, ( $page - 1 ) * $per_page ), // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed names; values prepared.
 			ARRAY_A
 		);
 		$items = array();

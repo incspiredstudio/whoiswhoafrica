@@ -119,7 +119,7 @@ test.describe("0.3.0 release-test fixes", () => {
       adminUrl("admin.php?page=wiw-profiles&classification=needs"),
     );
     const states = await page
-      .locator("table.widefat tbody tr td:nth-child(3)")
+      .locator("table.wiw-list-table tbody tr td.column-state")
       .allInnerTexts();
     const published = states.filter((s) => s.startsWith("published_")).length;
     const all = await page.goto(adminUrl("admin.php?page=wiw-profiles"));

@@ -108,12 +108,24 @@ final class BulkUnpublishPanel {
 	 * @param int     $actor   Acting user.
 	 */
 	public static function unpublish_one( Request $request, int $actor ): string {
+		return true === self::unpublish_id( $request->int( 'profile_id' ), $actor ) ? 'unpublished' : 'refused';
+	}
+
+	/**
+	 * Unpublish one profile with the Profiles list's fixed reason, through the review service (which checks the capability and
+	 * the state; the state machine writes the audit row). The row action and the list's bulk Unpublish selected (REQ-275) use it.
+	 *
+	 * @param int $profile_id Profile.
+	 * @param int $actor      Acting user.
+	 * @return true|\WP_Error
+	 */
+	public static function unpublish_id( int $profile_id, int $actor ) {
 		try {
-			( new ReviewService() )->unpublish( $request->int( 'profile_id' ), __( 'Unpublished from the Profiles list', 'whoiswho' ), $actor );
+			( new ReviewService() )->unpublish( $profile_id, __( 'Unpublished from the Profiles list', 'whoiswho' ), $actor );
 		} catch ( StateException $e ) {
-			return 'refused';
+			return new \WP_Error( 'wiw_unpublish_refused', $e->getMessage() );
 		}
-		return 'unpublished';
+		return true;
 	}
 
 	/**
