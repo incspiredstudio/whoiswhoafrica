@@ -237,6 +237,10 @@ final class ProfileListTemplateTest extends TestCase {
 		$this->assertSame( '', wiw_directory_legacy_target( '/stories/', array( 'type' => 'entrepreneur' ) ), 'Only directory lists read a type.' );
 		$this->assertSame( '', wiw_directory_legacy_target( '/profile/entrepreneurs/', array() ) );
 
+		$saved                     = array(
+			'REQUEST_URI'    => $_SERVER['REQUEST_URI'] ?? null,
+			'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? null,
+		);
 		$_SERVER['REQUEST_URI']    = '/entrepreneurs/?sort=updated';
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 		$seen                      = array();
@@ -251,7 +255,13 @@ final class ProfileListTemplateTest extends TestCase {
 			unset( $e );
 		} finally {
 			remove_filter( 'wp_redirect', $catch, 10 );
-			unset( $_SERVER['REQUEST_URI'] );
+			foreach ( $saved as $key => $value ) {
+				if ( null === $value ) {
+					unset( $_SERVER[ $key ] );
+				} else {
+					$_SERVER[ $key ] = $value;
+				}
+			}
 		}
 		$this->assertSame( array( 301, home_url( '/people/?sort=updated' ) ), $seen, '/entrepreneurs/ answers 301 to /people/.' );
 	}
