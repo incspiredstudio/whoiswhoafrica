@@ -101,7 +101,8 @@ final class SubscribersScreenTest extends WpTestCase {
 		$this->assertStringNotContainsString( 'active@example.test', $html );
 		$this->assertStringContainsString( '2026-11-12 09:00:00', $html, 'Consent and withdrawal dates are shown.' );
 		$this->assertStringContainsString( 'active@example.test', $screen->html( 'confirmed' ) );
-		$this->assertStringNotContainsString( 'type="text"', $html, 'Addresses are not editable.' );
+		$this->assertDoesNotMatchRegularExpression( '#<(input|textarea)[^>]*example\.test#', $html, 'Addresses are not editable.' );
+		$this->assertSame( substr_count( $html, 'id="current-page-selector"' ), substr_count( $html, 'type="text"' ), 'The only text box is the page number.' );
 	}
 
 	public function test_REQ_051_subscriber_export_is_audited(): void {
