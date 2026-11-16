@@ -5,10 +5,10 @@ import { assertNoHorizontalScroll, disableScripts, setReducedMotion } from "./he
 test.describe("home acts, doors and closing call (REQ-001, REQ-002)", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
 
-  test("the doors link to the four directory lists", async ({ page }) => {
+  test("the doors link to the three directory lists", async ({ page }) => {
     await page.goto("/");
     const hrefs = await page.locator(".h-door").evaluateAll((a) => a.map((x) => new URL((x as HTMLAnchorElement).href).pathname));
-    expect(hrefs).toEqual(["/people/", "/entrepreneurs/", "/businesses/", "/institutions/"]);
+    expect(hrefs).toEqual(["/people/", "/businesses/", "/institutions/"]);
   });
 
   test("no horizontal scroll at 360 px", async ({ page }) => {

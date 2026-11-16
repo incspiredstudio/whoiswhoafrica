@@ -1,11 +1,11 @@
 # Directory and profiles
 
-The directory is the core of the platform: public profiles of people, entrepreneurs, businesses and institutions, each fact shown with its source, browsable by list and filter.
+The directory is the core of the platform: public profiles of people (including entrepreneurs), businesses and institutions, each fact shown with its source, browsable by list and filter.
 
 ## What it does
 
 - Publishes a profile page for every public person, business and institution, with a stable URL.
-- Lists them in five lists (All, People, Entrepreneurs, Businesses, Institutions) with filters, sort and a per-list search box.
+- Lists them in four lists (All, People, Businesses, Institutions; People holds individuals and entrepreneurs, D-072) with filters, sort and a per-list search box.
 - Shows a source and retrieval date beside each key fact, and hides facts that have none.
 - Gives every profile four public actions: claim, suggest a correction, request removal, report.
 - Applies the publication states so that only profiles that are allowed to be public are shown, on every surface.
@@ -39,7 +39,7 @@ The directory is the core of the platform: public profiles of people, entreprene
 
 ### Pages and screens
 
-- Public: `/directory`, `/people`, `/entrepreneurs`, `/businesses`, `/institutions`, `/industries`, `/industries/:name`, `/profile/:slug`.
+- Public: `/directory`, `/people`, `/businesses`, `/institutions` (`/entrepreneurs` redirects 301 to `/people`), `/industries`, `/industries/:name`, `/profile/:slug`.
 - Staff: Profiles list (filter and group by source, batch, type, state, origin), Profile screen (edit with reason, fields and their sources, revision history, internal notes, public URL, contact switches), Review queue.
 
 ### Third-party plugins
@@ -65,7 +65,7 @@ None for the directory itself. There is no SEO plugin; the guard plugin writes a
 
 ## Acceptance criteria
 
-- [ ] Each of the five lists loads, shows 16 profiles per page, and applies filters from the URL.
+- [ ] Each of the four lists loads, shows 16 profiles per page, and applies filters from the URL.
 - [ ] Filters offered: industry, country, city on all lists; profession on People and Entrepreneurs; organisation type on Businesses and Institutions.
 - [ ] A filtered list URL, opened in a new browser, shows the same filtered result.
 - [ ] A profile in every one of the six states, requested on the page, lists, search, sitemap, feed, REST, oEmbed and previews, returns the response the state table says (200, 404 or 410) and appears only where allowed.

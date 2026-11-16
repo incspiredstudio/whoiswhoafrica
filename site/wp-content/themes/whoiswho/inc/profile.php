@@ -44,19 +44,14 @@ add_filter( 'template_include', 'wiw_profile_template', 11 );
 
 if ( ! function_exists( 'wiw_profile_kind' ) ) {
 	/**
-	 * Label, list address and section title for a profile's entity type.
+	 * Label, list address and section title for a profile's entity type. An entrepreneur reads as a person and belongs to People
+	 * (D-072); the data keeps the type.
 	 *
 	 * @param string $entity_type individual, entrepreneur, organisation or institution.
 	 * @return array{label: string, list: string, list_title: string}
 	 */
 	function wiw_profile_kind( string $entity_type ): array {
 		switch ( $entity_type ) {
-			case 'entrepreneur':
-				return array(
-					'label'      => __( 'Entrepreneur', 'whoiswho' ),
-					'list'       => home_url( '/entrepreneurs/' ),
-					'list_title' => __( 'Entrepreneurs', 'whoiswho' ),
-				);
 			case 'organisation':
 				return array(
 					'label'      => __( 'Business', 'whoiswho' ),

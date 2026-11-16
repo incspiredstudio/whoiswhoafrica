@@ -18,7 +18,6 @@ const ready = () =>
 const lists = [
   "/directory/",
   "/people/",
-  "/entrepreneurs/",
   "/businesses/",
   "/institutions/",
 ];

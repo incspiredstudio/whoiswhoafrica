@@ -1,10 +1,10 @@
 # Directory and profiles
 
-The directory is a browsable record of people, entrepreneurs, businesses and institutions. Each profile states facts, shows a source beside every fact, and gives anyone a way to correct, claim, report or ask to remove it without an account.
+The directory is a browsable record of people, businesses and institutions. People includes entrepreneurs and founders. Each profile states facts, shows a source beside every fact, and gives anyone a way to correct, claim, report or ask to remove it without an account.
 
 ## Browse the directory
 
-1. Open the directory and choose a list: All, People, Entrepreneurs, Businesses or Institutions.
+1. Open the directory and choose a list: All, People, Businesses or Institutions. Entrepreneurs are listed under People; the old Entrepreneurs address takes you to People.
 2. Type a name, organisation or keyword in the box at the top of the list to narrow that list only.
 3. Choose filters. They apply at once and there is no Apply button.
 4. Sort by Name A to Z or Recently updated, and switch between grid and list view.
@@ -13,7 +13,7 @@ The directory is a browsable record of people, entrepreneurs, businesses and ins
 | Filter | Applies to |
 |---|---|
 | Industry, Country, City | All lists |
-| Profession | People and Entrepreneurs |
+| Profession | People |
 | Organisation type | Businesses and Institutions |
 
 The filters are kept in the page address, so a filtered view can be shared as a link.

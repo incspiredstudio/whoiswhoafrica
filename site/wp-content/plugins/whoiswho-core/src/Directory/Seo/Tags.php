@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Directory\Seo;
 
+use WhoIsWho\Core\Directory\ProfileList;
 use WhoIsWho\Core\Directory\PublicProfile;
 
 /**
@@ -25,11 +26,10 @@ final class Tags {
 	 * @var array<string, array{0: string, 1: string}> List => title, description.
 	 */
 	private const LISTS = array(
-		'all'           => array( 'Directory', 'Browse the verified public record of people, entrepreneurs, businesses and institutions across Africa.' ),
-		'people'        => array( 'People', 'Browse people on the public record across Africa, each fact shown with its source.' ),
-		'entrepreneurs' => array( 'Entrepreneurs', 'Browse entrepreneurs on the public record across Africa, each fact shown with its source.' ),
-		'businesses'    => array( 'Businesses', 'Browse businesses on the public record across Africa, each fact shown with its source.' ),
-		'institutions'  => array( 'Institutions', 'Browse institutions on the public record across Africa, each fact shown with its source.' ),
+		'all'          => array( 'Directory', 'Browse the verified public record of people, businesses and institutions across Africa.' ),
+		'people'       => array( 'People', 'Browse leaders, founders and changemakers on the public record across Africa, each fact shown with its source.' ),
+		'businesses'   => array( 'Businesses', 'Browse businesses on the public record across Africa, each fact shown with its source.' ),
+		'institutions' => array( 'Institutions', 'Browse institutions on the public record across Africa, each fact shown with its source.' ),
 	);
 
 	/**
@@ -87,14 +87,14 @@ final class Tags {
 	/**
 	 * Tags for a directory list page. Filtered and sorted views share the unfiltered list's canonical; a later page carries its own.
 	 *
-	 * @param string $list_name     List name (all, people, entrepreneurs, businesses, institutions).
+	 * @param string $list_name     List name (all, people, businesses, institutions; the old "entrepreneurs" reads as people, D-072).
 	 * @param string $list_url Address of the unfiltered list.
 	 * @param int    $page     Page number.
 	 * @return array<string, mixed>
 	 */
 	public function for_list( string $list_name, string $list_url, int $page = 1 ): array {
 		$brand     = self::brand();
-		$entry     = self::LISTS[ $list_name ] ?? self::LISTS['all'];
+		$entry     = self::LISTS[ ProfileList::canonical( $list_name ) ] ?? self::LISTS['all'];
 		$canonical = trailingslashit( $list_url );
 		if ( $page > 1 ) {
 			$canonical .= 'page/' . $page . '/';

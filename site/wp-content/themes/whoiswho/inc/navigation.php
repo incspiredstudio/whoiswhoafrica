@@ -77,8 +77,7 @@ if ( ! function_exists( 'wiw_nav_model' ) ) {
 			'directory' => array(
 				'label'      => __( 'Directory', 'whoiswho' ),
 				'links'      => array(
-					wiw_nav_link( '/people/', __( 'People', 'whoiswho' ), __( 'Leaders and professionals on public record', 'whoiswho' ) ),
-					wiw_nav_link( '/entrepreneurs/', __( 'Entrepreneurs', 'whoiswho' ), __( 'Founders and the ventures they built', 'whoiswho' ) ),
+					wiw_nav_link( '/people/', __( 'People', 'whoiswho' ), __( 'Leaders, founders and changemakers on public record', 'whoiswho' ) ),
 					wiw_nav_link( '/businesses/', __( 'Businesses', 'whoiswho' ), __( 'Companies, from startups to listed groups', 'whoiswho' ) ),
 					wiw_nav_link( '/institutions/', __( 'Institutions', 'whoiswho' ), __( 'Universities, associations and public bodies', 'whoiswho' ) ),
 				),
@@ -113,7 +112,6 @@ if ( ! function_exists( 'wiw_nav_model' ) ) {
 			'footer'    => array(
 				__( 'Directory', 'whoiswho' )   => array(
 					wiw_nav_link( '/people/', __( 'People', 'whoiswho' ) ),
-					wiw_nav_link( '/entrepreneurs/', __( 'Entrepreneurs', 'whoiswho' ) ),
 					wiw_nav_link( '/businesses/', __( 'Businesses', 'whoiswho' ) ),
 					wiw_nav_link( '/institutions/', __( 'Institutions', 'whoiswho' ) ),
 					wiw_nav_link( '/industries/', __( 'Industries', 'whoiswho' ) ),

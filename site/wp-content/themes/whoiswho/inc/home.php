@@ -151,7 +151,7 @@ if ( ! function_exists( 'wiw_home_acts' ) ) {
 
 if ( ! function_exists( 'wiw_home_doors' ) ) {
 	/**
-	 * The four doors to the directory lists.
+	 * The three doors to the directory lists (People holds individuals and entrepreneurs, D-072).
 	 *
 	 * @return array<int, array{tone: string, mark: string, title: string, text: string, url: string}>
 	 */
@@ -161,15 +161,8 @@ if ( ! function_exists( 'wiw_home_doors' ) ) {
 				'tone'  => 'blue',
 				'mark'  => 'star',
 				'title' => __( 'People', 'whoiswho' ),
-				'text'  => __( 'Leaders and professionals on the public record', 'whoiswho' ),
+				'text'  => __( 'Leaders, founders and changemakers on the public record', 'whoiswho' ),
 				'url'   => home_url( '/people/' ),
-			),
-			array(
-				'tone'  => 'orange',
-				'mark'  => 'comb',
-				'title' => __( 'Entrepreneurs', 'whoiswho' ),
-				'text'  => __( 'Founders and the ventures they built', 'whoiswho' ),
-				'url'   => home_url( '/entrepreneurs/' ),
 			),
 			array(
 				'tone'  => 'green',

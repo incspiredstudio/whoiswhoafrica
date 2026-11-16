@@ -194,7 +194,7 @@ final class ProfileListTest extends TestCase {
 		$list = new ProfileList();
 
 		$this->assertContains( 'profession', ProfileList::filters_for( 'people' ) );
-		$this->assertContains( 'profession', ProfileList::filters_for( 'entrepreneurs' ) );
+		$this->assertNotContains( 'entrepreneurs', ProfileList::lists(), 'People holds entrepreneurs; there is no separate list (D-072).' );
 		$this->assertNotContains( 'profession', ProfileList::filters_for( 'businesses' ) );
 		$this->assertNotContains( 'profession', ProfileList::filters_for( 'all' ) );
 		$this->assertContains( 'org_type', ProfileList::filters_for( 'institutions' ) );
@@ -224,15 +224,31 @@ final class ProfileListTest extends TestCase {
 		$list = new ProfileList();
 		$this->assertSame( 4, $list->query( 'all', array( 'industry' => 'types-qwv' ) )['total'] );
 		foreach ( array(
-			'people'        => 'individual',
-			'entrepreneurs' => 'entrepreneur',
-			'businesses'    => 'organisation',
-			'institutions'  => 'institution',
-		) as $name => $type ) {
+			'people'       => array( 'entrepreneur', 'individual' ),
+			'businesses'   => array( 'organisation' ),
+			'institutions' => array( 'institution' ),
+		) as $name => $types ) {
 			$result = $list->query( $name, array( 'industry' => 'types-qwv' ) );
-			$this->assertSame( 1, $result['total'], $name );
-			$this->assertSame( $type, $result['profiles'][0]->entity_type );
+			$this->assertSame( count( $types ), $result['total'], $name );
+			$found = array_map( static fn ( $p ) => $p->entity_type, $result['profiles'] );
+			sort( $found );
+			$this->assertSame( $types, $found, $name );
 		}
+	}
+
+	public function test_REQ_001_people_list_holds_individuals_and_entrepreneurs_and_the_old_name_reads_as_people(): void {
+		$prof = $this->term( 'Founder Qwv', Taxonomies::PROFESSION );
+		$this->profile( 'Person Qwv', 'individual', 'reviewed', array( Taxonomies::PROFESSION => array( $prof ) ) );
+		$this->profile( 'Founder Qwv', 'entrepreneur', 'reviewed', array( Taxonomies::PROFESSION => array( $prof ) ) );
+		$this->profile( 'Firm Qwv', 'organisation', 'reviewed' );
+		$list = new ProfileList();
+
+		$people = $list->query( 'people', array( 'profession' => 'founder-qwv' ) );
+		$this->assertEqualsCanonicalizing( array( 'Person Qwv', 'Founder Qwv' ), array_map( static fn ( $p ) => $p->name, $people['profiles'] ), 'People holds individuals and entrepreneurs (D-072).' );
+		$this->assertSame( array( 'all', 'people', 'businesses', 'institutions' ), ProfileList::lists() );
+		$this->assertSame( 'people', ProfileList::canonical( 'entrepreneurs' ), 'A saved "entrepreneurs" list name reads as People.' );
+		$this->assertSame( 2, $list->query( 'entrepreneurs', array( 'profession' => 'founder-qwv' ) )['total'] );
+		$this->assertSame( ProfileList::filters_for( 'people' ), ProfileList::filters_for( 'entrepreneurs' ) );
 	}
 
 	public function test_REQ_218_pending_profile_never_listed(): void {

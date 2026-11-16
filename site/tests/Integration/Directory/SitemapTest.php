@@ -137,4 +137,10 @@ final class SitemapTest extends TestCase {
 		$sitemap->purge();
 		$this->assertNotSame( $key, 'wiw_sm_' . (int) get_option( Sitemap::VERSION, 0 ) . '_pages' );
 	}
+
+	public function test_REQ_001_the_sitemap_has_no_entrepreneurs_address(): void {
+		$sitemap = new Sitemap();
+		$out     = $sitemap->respond( 'sitemap.xml' )['body'] . $sitemap->respond( 'sitemap-pages.xml' )['body'] . $this->profiles_xml();
+		$this->assertStringNotContainsString( '/entrepreneurs', $out, 'People holds entrepreneurs (D-072); the old list is only a redirect.' );
+	}
 }

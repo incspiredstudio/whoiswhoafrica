@@ -10,7 +10,7 @@ WHOISWHO is an African discovery, recognition and media platform. It records the
 
 | Area | What it does |
 |---|---|
-| Directory | Browse people, entrepreneurs, businesses and institutions, with filters. Every fact on a profile has a source beside it. |
+| Directory | Browse people (including founders), businesses and institutions, with filters. Every fact on a profile has a source beside it. |
 | Search | One search across profiles and stories. |
 | Stories | Interviews, features, spotlights, opinion, announcements and news. |
 | Events | A calendar of conferences, launches and ceremonies, with a link to the organiser's registration page. |

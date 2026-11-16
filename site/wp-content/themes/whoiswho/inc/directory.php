@@ -1,7 +1,8 @@
 <?php
 /**
- * Directory lists (REQ-001, REQ-007, REQ-218, REQ-208): the routes /directory, /people, /entrepreneurs, /businesses and
- * /institutions, the template choice, and the helpers the list template uses. Lists are read only through ProfileList, so a
+ * Directory lists (REQ-001, REQ-007, REQ-218, REQ-208): the routes /directory, /people, /businesses and /institutions, the
+ * template choice, and the helpers the list template uses. People holds individuals and entrepreneurs (D-072); the old
+ * /entrepreneurs/ address and a ?type=entrepreneur list address answer 301 to People. Lists are read only through ProfileList, so a
  * profile that is pending review, hidden or removed is never named. Filters, sort and page live in the address.
  *
  * @package WhoIsWho
@@ -13,42 +14,37 @@ use WhoIsWho\Core\Directory\Classification;
 use WhoIsWho\Core\Directory\ProfileList;
 use WhoIsWho\Core\Directory\Taxonomies;
 
-const WIW_LIST_VAR      = 'wiw_list';
-const WIW_LIST_RULES_OP = 'wiw_theme_list_rules';
+const WIW_LIST_VAR       = 'wiw_list';
+const WIW_LIST_RULES_OP  = 'wiw_theme_list_rules';
+const WIW_LIST_RULES_VER = '2';
 
 if ( ! function_exists( 'wiw_directory_lists' ) ) {
 	/**
-	 * The five lists: key => array( path, tab label, page title, lede ).
+	 * The four lists: key => array( path, tab label, page title, lede ).
 	 *
 	 * @return array<string, array{path: string, tab: string, title: string, lede: string}>
 	 */
 	function wiw_directory_lists(): array {
 		return array(
-			'all'           => array(
+			'all'          => array(
 				'path'  => 'directory',
 				'tab'   => __( 'All', 'whoiswho' ),
 				'title' => __( 'The directory', 'whoiswho' ),
-				'lede'  => __( 'Reviewed people, entrepreneurs, businesses and institutions across Africa, each fact shown with its source.', 'whoiswho' ),
+				'lede'  => __( 'Reviewed people, businesses and institutions across Africa, each fact shown with its source.', 'whoiswho' ),
 			),
-			'people'        => array(
+			'people'       => array(
 				'path'  => 'people',
 				'tab'   => __( 'People', 'whoiswho' ),
 				'title' => __( 'People', 'whoiswho' ),
-				'lede'  => __( 'Professionals and public figures, with professional facts only.', 'whoiswho' ),
+				'lede'  => __( 'Leaders, founders and changemakers across Africa, with professional facts only.', 'whoiswho' ),
 			),
-			'entrepreneurs' => array(
-				'path'  => 'entrepreneurs',
-				'tab'   => __( 'Entrepreneurs', 'whoiswho' ),
-				'title' => __( 'Entrepreneurs', 'whoiswho' ),
-				'lede'  => __( 'Founders and the ventures they have built.', 'whoiswho' ),
-			),
-			'businesses'    => array(
+			'businesses'   => array(
 				'path'  => 'businesses',
 				'tab'   => __( 'Businesses', 'whoiswho' ),
 				'title' => __( 'Businesses', 'whoiswho' ),
 				'lede'  => __( 'Companies and what they make, sell and do.', 'whoiswho' ),
 			),
-			'institutions'  => array(
+			'institutions' => array(
 				'path'  => 'institutions',
 				'tab'   => __( 'Institutions', 'whoiswho' ),
 				'title' => __( 'Institutions', 'whoiswho' ),
@@ -216,6 +212,58 @@ if ( ! function_exists( 'wiw_directory_filter_labels' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wiw_directory_legacy_target' ) ) {
+	/**
+	 * Where an old Entrepreneurs address should go (REQ-001, D-072): /entrepreneurs/ (and its pages) and a directory list address
+	 * with ?type=entrepreneur go to the People equivalent, keeping the other query arguments. Any other address stays.
+	 *
+	 * @param string                   $request_path Path of the request, with or without the site's own folder.
+	 * @param array<int|string, mixed> $query        Query arguments of the request (numeric names are dropped).
+	 * @return string Address to redirect to, or an empty string for no redirect.
+	 */
+	function wiw_directory_legacy_target( string $request_path, array $query ): string {
+		$path = trim( $request_path, '/' );
+		$home = trim( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+		if ( '' !== $home && ( $path === $home || str_starts_with( $path, $home . '/' ) ) ) {
+			$path = trim( substr( $path, strlen( $home ) ), '/' );
+		}
+		$type = isset( $query['type'] ) && is_string( $query['type'] ) ? sanitize_key( $query['type'] ) : '';
+		$page = 1;
+		if ( 1 === preg_match( '#^entrepreneurs(?:/page/([0-9]+))?$#', $path, $match ) ) {
+			$page = isset( $match[1] ) ? max( 1, (int) $match[1] ) : 1;
+		} elseif ( ! in_array( $type, array( 'entrepreneur', 'entrepreneurs' ), true ) || 1 !== preg_match( '#^(' . implode( '|', array_column( wiw_directory_lists(), 'path' ) ) . ')(?:/page/[0-9]+)?$#', $path ) ) {
+			return '';
+		}
+		unset( $query['type'], $query['page'], $query['paged'] );
+		$keep = array();
+		foreach ( $query as $name => $value ) {
+			if ( is_string( $name ) && is_scalar( $value ) ) {
+				$keep[ sanitize_key( $name ) ] = sanitize_text_field( (string) $value );
+			}
+		}
+		return wiw_directory_url( 'people', array_merge( $keep, array( 'page' => $page ) ) );
+	}
+}//end if
+
+add_action(
+	'template_redirect',
+	static function (): void {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
+		if ( ! in_array( strtoupper( $method ), array( 'GET', 'HEAD' ), true ) ) {
+			return;
+		}
+		$uri   = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only split into path and query; each value is sanitised in wiw_directory_legacy_target.
+		$query = array();
+		wp_parse_str( (string) wp_parse_url( $uri, PHP_URL_QUERY ), $query );
+		$to = wiw_directory_legacy_target( (string) wp_parse_url( $uri, PHP_URL_PATH ), $query );
+		if ( '' !== $to ) {
+			wp_safe_redirect( $to, 301 );
+			exit;
+		}
+	},
+	0
+);
+
 add_filter(
 	'query_vars',
 	static function ( array $vars ): array {
@@ -229,9 +277,10 @@ add_action(
 		$paths = implode( '|', array_column( wiw_directory_lists(), 'path' ) );
 		add_rewrite_rule( '^(' . $paths . ')/page/([0-9]+)/?$', 'index.php?' . WIW_LIST_VAR . '=$matches[1]&paged=$matches[2]', 'top' );
 		add_rewrite_rule( '^(' . $paths . ')/?$', 'index.php?' . WIW_LIST_VAR . '=$matches[1]', 'top' );
-		if ( '1' !== get_option( WIW_LIST_RULES_OP ) ) {
+		// The version changes when the set of lists changes (2: Entrepreneurs folded into People, D-072), so the rules are rebuilt once.
+		if ( WIW_LIST_RULES_VER !== get_option( WIW_LIST_RULES_OP ) ) {
 			flush_rewrite_rules( false );
-			update_option( WIW_LIST_RULES_OP, '1', false );
+			update_option( WIW_LIST_RULES_OP, WIW_LIST_RULES_VER, false );
 		}
 	},
 	7

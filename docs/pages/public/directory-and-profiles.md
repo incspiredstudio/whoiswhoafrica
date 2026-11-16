@@ -1,18 +1,17 @@
 # Directory and profiles
 
-The directory is the core of the site: a browsable record of people, entrepreneurs, businesses and institutions. Each profile states facts, shows a source beside every fact, and gives anyone a way to correct, claim, report or remove it without an account.
+The directory is the core of the site: a browsable record of people (including entrepreneurs), businesses and institutions. Each profile states facts, shows a source beside every fact, and gives anyone a way to correct, claim, report or remove it without an account.
 
-Routes: `/directory`, `/people`, `/entrepreneurs`, `/businesses`, `/institutions`, `/industries`, `/profile/:slug` (V03 to V11, V52 to V54, V56). Requirements: REQ-003 to REQ-007, REQ-018, REQ-208, REQ-216 to REQ-218, REQ-232 (requirements).
+Routes: `/directory`, `/people`, `/businesses`, `/institutions` (`/entrepreneurs` redirects to `/people`, D-072), `/industries`, `/profile/:slug` (V03 to V11, V52 to V54, V56). Requirements: REQ-003 to REQ-007, REQ-018, REQ-208, REQ-216 to REQ-218, REQ-232 (requirements).
 
 ## Lists
 
-There are five lists, each a tab in the same layout:
+There are four lists, each a tab in the same layout (D-072):
 
 | List | Contains |
 |---|---|
 | All (the directory) | Every public profile |
-| People | Individuals |
-| Entrepreneurs | Individuals flagged as founders, with their ventures |
+| People | Individuals and entrepreneurs (the data keeps both types) |
 | Businesses | Companies |
 | Institutions | Universities, associations, public bodies, foundations |
 
@@ -21,7 +20,7 @@ Each list has a search box (name, organisation or keyword) in the header band an
 | Filter | Applies to |
 |---|---|
 | Industry, Country, City | All lists |
-| Profession | People and Entrepreneurs |
+| Profession | People |
 | Organisation type | Businesses and Institutions |
 
 Choosing a filter applies it at once; there is no Apply button. A filter that is on is underlined, the count of matching profiles is announced, and a Clear link shows only while a filter is on. Sort is Name A to Z, or Recently updated. The filters live in the address, so a filtered view can be shared.
