@@ -48,7 +48,7 @@ test.describe("home hero videos from the admin", () => {
     await expect(form.locator('input[name="video_id"]')).not.toHaveValue("0");
     await expect(form.locator('input[name="poster_id"]')).not.toHaveValue("0");
     await form.getByRole("button", { name: "Save clip" }).click();
-    await expect(page.locator(".notice")).toContainText("Saved slot 3");
+    await expect(page.locator(".wrap .notice-info")).toContainText("Saved slot 3"); // not the two-factor reminder, which is also a .notice
     await expect(page.locator('form.wiw-hero-slot[data-slot="3"] .wiw-hero-state')).toContainText("Your clip");
 
     // The home page now plays the chosen file for that slot and the bundled one for the others.
@@ -64,7 +64,7 @@ test.describe("home hero videos from the admin", () => {
 
     await page.goto(adminUrl("admin.php?page=wiw-home-settings"));
     await page.locator('form.wiw-hero-slot[data-slot="3"]').getByRole("button", { name: "Reset to bundled" }).click();
-    await expect(page.locator(".notice")).toContainText("bundled clip");
+    await expect(page.locator(".wrap .notice-info")).toContainText("bundled clip");
     await page.goto("/");
     const after = await page.locator(".h-vid video").nth(2).evaluate((v) => ((v as HTMLVideoElement).querySelector('source[type="video/mp4"]') as HTMLSourceElement).src);
     expect(after).toMatch(/\/assets\/home\/hero-3\.mp4$/);
