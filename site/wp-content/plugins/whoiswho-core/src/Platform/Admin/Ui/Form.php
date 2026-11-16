@@ -211,14 +211,15 @@ final class Form {
 	 *
 	 * @param string               $title Heading.
 	 * @param string               $body  Body markup, already escaped.
-	 * @param array<string, mixed> $args  description, id (the section's id, also the heading's anchor), class, level (2 or 3).
+	 * @param array<string, mixed> $args  description, id (the section's id, so #id links land on the card; the heading gets
+	 *                                    {id}-title and names the section), class, level (2 or 3).
 	 */
 	public static function section( string $title, string $body, array $args = array() ): string {
 		$level = 3 === (int) ( $args['level'] ?? 2 ) ? 'h3' : 'h2';
 		$id    = isset( $args['id'] ) ? (string) $args['id'] : '';
 		$class = trim( 'wiw-card ' . (string) ( $args['class'] ?? '' ) );
-		$out   = '<section class="' . esc_attr( $class ) . '"' . ( '' !== $id ? ' aria-labelledby="' . esc_attr( $id ) . '"' : '' ) . '>';
-		$out  .= '<' . $level . ( '' !== $id ? ' id="' . esc_attr( $id ) . '"' : '' ) . ' class="wiw-card__title">' . esc_html( $title ) . '</' . $level . '>';
+		$out   = '<section class="' . esc_attr( $class ) . '"' . ( '' !== $id ? ' id="' . esc_attr( $id ) . '" aria-labelledby="' . esc_attr( $id . '-title' ) . '"' : '' ) . '>';
+		$out  .= '<' . $level . ( '' !== $id ? ' id="' . esc_attr( $id . '-title' ) . '"' : '' ) . ' class="wiw-card__title">' . esc_html( $title ) . '</' . $level . '>';
 		if ( isset( $args['description'] ) && '' !== (string) $args['description'] ) {
 			$out .= '<p class="wiw-card__desc">' . esc_html( (string) $args['description'] ) . '</p>';
 		}
@@ -240,13 +241,20 @@ final class Form {
 	 * data-wiw-unsaved turns on the unsaved-changes warning.
 	 *
 	 * @param string               $hidden Hidden fields markup, already escaped.
-	 * @param array<string, mixed> $args   class, unsaved (bool), action (the form's address; admin-post.php by default), method.
+	 * @param array<string, mixed> $args   class, unsaved (bool), action (the form's address; admin-post.php by default), method,
+	 *                                     enctype (multipart/form-data for an upload, or application/x-www-form-urlencoded) and
+	 *                                     attrs (extra attributes, name => value; true prints the bare attribute, false or null
+	 *                                     leaves it out).
 	 */
 	public static function open( string $hidden, array $args = array() ): string {
-		$action = isset( $args['action'] ) ? (string) $args['action'] : admin_url( 'admin-post.php' );
-		$method = 'get' === ( $args['method'] ?? 'post' ) ? 'get' : 'post';
-		$class  = trim( 'wiw-form ' . (string) ( $args['class'] ?? '' ) );
-		return '<form method="' . $method . '" action="' . esc_url( $action ) . '" class="' . esc_attr( $class ) . '"' . ( ! empty( $args['unsaved'] ) ? ' data-wiw-unsaved="1"' : '' ) . '>' . $hidden;
+		$action  = isset( $args['action'] ) ? (string) $args['action'] : admin_url( 'admin-post.php' );
+		$method  = 'get' === ( $args['method'] ?? 'post' ) ? 'get' : 'post';
+		$class   = trim( 'wiw-form ' . (string) ( $args['class'] ?? '' ) );
+		$enctype = (string) ( $args['enctype'] ?? '' );
+		$out     = '<form method="' . $method . '" action="' . esc_url( $action ) . '" class="' . esc_attr( $class ) . '"';
+		$out    .= in_array( $enctype, array( 'multipart/form-data', 'application/x-www-form-urlencoded' ), true ) ? ' enctype="' . esc_attr( $enctype ) . '"' : '';
+		$out    .= ! empty( $args['unsaved'] ) ? ' data-wiw-unsaved="1"' : '';
+		return $out . self::extra_attrs( (array) ( $args['attrs'] ?? array() ) ) . '>' . $hidden;
 	}
 
 	/* ---------------------------------------------------------------- Internals. */
@@ -357,7 +365,18 @@ final class Form {
 		$out  = '' !== $described ? ' aria-describedby="' . esc_attr( $described ) . '"' : '';
 		$out .= isset( $args['error'] ) && '' !== (string) $args['error'] ? ' aria-invalid="true"' : '';
 		$out .= ! empty( $args['required'] ) ? ' required="required"' : '';
-		foreach ( (array) ( $args['attrs'] ?? array() ) as $attr => $value ) {
+		return $out . self::extra_attrs( (array) ( $args['attrs'] ?? array() ) );
+	}
+
+	/**
+	 * Extra attributes: name => value, names cleaned to lowercase letters, digits, - and _; true prints the bare attribute and
+	 * false or null leaves it out.
+	 *
+	 * @param array<int|string, mixed> $attrs Attributes.
+	 */
+	private static function extra_attrs( array $attrs ): string {
+		$out = '';
+		foreach ( $attrs as $attr => $value ) {
 			$attr = (string) preg_replace( '/[^a-z0-9_-]/', '', strtolower( (string) $attr ) );
 			if ( '' === $attr || false === $value || null === $value ) {
 				continue;

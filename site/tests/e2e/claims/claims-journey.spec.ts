@@ -114,11 +114,17 @@ test.describe("claims journey", () => {
     const opened = await editor.goto(CLAIMS());
     expect(opened?.status()).toBe(200);
     await expect(editor.locator("body")).toContainText("Fictional Claimant");
+    // The Claims list is a staff list table (REQ-275): Approve is a row quick action that opens the confirmation step.
+    const row = editor.locator("table.wiw-list-table tbody tr", { hasText: "Fictional Claimant" }).first();
+    await row.hover();
+    await row.locator(".row-actions").getByRole("link", { name: "Approve", exact: true }).click();
+    const step = editor.locator(".wiw-list-step");
+    await expect(step.getByRole("heading", { name: "Approve" })).toBeVisible();
     await Promise.all([
       editor.waitForURL(/wiw-claims/, { timeout: 60_000 }),
-      editor.getByRole("button", { name: "Approve" }).first().click(),
+      step.getByRole("button", { name: "Approve", exact: true }).click(),
     ]);
-    await expect(editor.locator("body")).toContainText(/approved/i);
+    await expect(editor.locator(".wiw-list-notice")).toContainText(/1 approved/i);
   });
 
   test("after approval the Claim button is gone and a second claim is turned away (REQ-252)", async ({

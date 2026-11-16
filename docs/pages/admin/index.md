@@ -86,6 +86,15 @@ These are not designed in the wireframe, because WordPress does them natively (D
 | [Events](./events) | Create and publish events, link one to a story |
 | [Audit and compliance](./audit-and-compliance) | Audit, purge and email logs, data requests, exports (provided by WordPress) |
 
+## Lists, quick actions and bulk actions
+
+Every staff list works the same way (REQ-275):
+
+- **Paging.** Most lists show 20 rows a page; the logs and Nominations show 50. Award categories and a nomination's history show everything on one page. The arrows and the page box keep the list's filters; type a page number and press Enter to jump to it.
+- **Quick actions.** Hover a row, or tab into it, to see its actions under the name. Actions that remove, reject or decline are shown in red.
+- **Bulk actions.** Tick rows (or the box in the header to tick the page), choose a bulk action and press Apply. A bulk action only repeats an action the screen already offers for one row, with the same checks and one audit row per item; you never get a power in bulk that you lack for one row. The bar shows how many rows are ticked. A red action asks before it runs; an action that needs a reason or a checklist opens a confirmation step that lists the rows first. The result comes back as one notice with counts, for example "3 approved, 1 skipped (not in a state that allows this)".
+- **Read-only lists.** The logs, Subscribers, Customers, Sponsored stories, the nomination history and the recent bulk actions have no checkboxes and no bulk actions.
+
 ## Rules that apply to every screen
 
 - **Public only after review.** An organisation can be live before review but carries a visible label; an individual is public only after a person approves them (REQ-208).

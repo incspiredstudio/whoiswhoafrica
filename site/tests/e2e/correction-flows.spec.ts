@@ -75,8 +75,10 @@ test.describe("correction, removal and report flows", () => {
     await page.getByRole("link", { name: /apply/i }).click();
     await expect(page.locator("input[name=reason]").first()).toHaveValue(correctionRef);
     await expect(page.locator("select[name=resolves]")).not.toHaveValue("0");
-    await page.locator("input[name=f_org_type]").fill("Company"); // the fictional profile was seeded without its required field
-    await page.locator("input[name=f_hq_city]").fill("Abuja");
+    // The organisation type and city are classification pickers now (REQ-009), optional on Edit profile; make one text change so
+    // the save is not "Nothing changed".
+    await expect(page.locator(`select[name$="org_type"]`)).toBeVisible();
+    await page.getByLabel("Regulator", { exact: true }).fill("E2E Regulator");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.locator(".notice-success")).toContainText("Saved");
     await page.goto(adminUrl("admin.php?page=wiw-corrections"));

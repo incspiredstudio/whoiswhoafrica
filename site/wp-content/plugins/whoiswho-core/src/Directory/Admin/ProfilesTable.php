@@ -190,8 +190,8 @@ final class ProfilesTable extends ListTable {
 		}
 		if ( $public && has_action( 'admin_post_' . ProfilesScreen::UNPUBLISH_ACT ) ) {
 			$actions['unpublish'] = array(
-				'label'      => __( 'Unpublish', 'whoiswho' ),
-				'url'        => add_query_arg(
+				'label'       => __( 'Unpublish', 'whoiswho' ),
+				'url'         => add_query_arg(
 					array(
 						'action'     => ProfilesScreen::UNPUBLISH_ACT,
 						'profile_id' => $id,
@@ -199,7 +199,8 @@ final class ProfilesTable extends ListTable {
 					),
 					admin_url( 'admin-post.php' )
 				),
-				'capability' => ProfilesScreen::UNPUBLISH_CAP,
+				'capability'  => ProfilesScreen::UNPUBLISH_CAP,
+				'destructive' => true,
 			);
 		}
 		return $actions;

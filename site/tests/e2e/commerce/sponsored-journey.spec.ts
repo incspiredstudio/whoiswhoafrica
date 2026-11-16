@@ -95,6 +95,8 @@ test.describe("sponsored story journey", () => {
   }) => {
     await loginAs(page, baseURL as string, "admin");
     await page.goto(adminUrl("index.php"));
+    // On a freshly installed site the first Administrator visit to the Dashboard is sent once to the Setup screen (FirstRun).
+    if (/page=wiw-setup/.test(page.url())) await page.goto(adminUrl("index.php"));
     await expect(page.locator("#wpbody-content")).toContainText(
       /Confirmed revenue|Counted deals/i,
     );

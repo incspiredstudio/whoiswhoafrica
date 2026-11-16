@@ -102,11 +102,42 @@ final class StaffFormTest extends WpTestCase {
 				'id'          => 'wiw-image',
 			)
 		);
-		$this->assertStringContainsString( '<h2 id="wiw-image" class="wiw-card__title">Photo</h2>', $section );
-		$this->assertStringContainsString( 'aria-labelledby="wiw-image"', $section );
+		$this->assertStringContainsString( '<section class="wiw-card" id="wiw-image" aria-labelledby="wiw-image-title">', $section, 'the id is on the section, so #wiw-image links land on the card' );
+		$this->assertStringContainsString( '<h2 id="wiw-image-title" class="wiw-card__title">Photo</h2>', $section, 'the heading keeps an id of its own' );
+		$this->assertSame( 1, substr_count( $section, 'id="wiw-image"' ), 'no duplicate id' );
 
 		$this->assertStringContainsString( 'wiw-actions--sticky', Form::actions( '<button>Save</button>', array( 'sticky' => true ) ) );
 		$this->assertStringContainsString( 'data-wiw-unsaved="1"', Form::open( '', array( 'unsaved' => true ) ) );
+	}
+
+	public function test_REQ_275_open_takes_an_enctype_and_extra_attributes(): void {
+		$open = Form::open(
+			'<input type="hidden" name="action" value="x" />',
+			array(
+				'class'   => 'wiw-upload',
+				'enctype' => 'multipart/form-data',
+				'attrs'   => array(
+					'data-wiw-import'    => 'upload',
+					'data-personal-data' => 'none',
+					'novalidate'         => true,
+					'data-skip'          => false,
+					'onclick"x'          => 'y',
+				),
+			)
+		);
+		$this->assertStringStartsWith( '<form method="post" action="', $open );
+		$this->assertStringContainsString( ' class="wiw-form wiw-upload"', $open );
+		$this->assertStringContainsString( ' enctype="multipart/form-data"', $open );
+		$this->assertStringContainsString( ' data-wiw-import="upload"', $open );
+		$this->assertStringContainsString( ' data-personal-data="none"', $open );
+		$this->assertStringContainsString( ' novalidate="novalidate"', $open );
+		$this->assertStringNotContainsString( 'data-skip', $open, 'false leaves the attribute out' );
+		$this->assertStringNotContainsString( 'onclick"', $open, 'attribute names are cleaned' );
+		$this->assertStringEndsWith( '><input type="hidden" name="action" value="x" />', $open );
+
+		$this->assertStringNotContainsString( 'enctype', Form::open( '', array( 'enctype' => 'text/evil' ) ), 'only the known encodings' );
+		$this->assertStringContainsString( 'enctype="application/x-www-form-urlencoded"', Form::open( '', array( 'enctype' => 'application/x-www-form-urlencoded' ) ) );
+		$this->assertStringNotContainsString( 'enctype', Form::open( '' ), 'none by default' );
 	}
 
 	public function test_REQ_275_row_marks_a_ready_made_control_invalid(): void {

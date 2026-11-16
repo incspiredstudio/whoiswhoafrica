@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace WhoIsWho\Core\Platform\Cache\Admin;
 
-use WhoIsWho\Core\Platform\Admin\ReadOnlyListForm;
 use WhoIsWho\Core\Platform\Admin\Request;
 use WhoIsWho\Core\Platform\Admin\Ui\ListTable;
 use WhoIsWho\Core\Platform\Cache\PurgeLog;
@@ -22,7 +21,6 @@ use WhoIsWho\Core\Platform\Cache\WpdbPurgeLog;
  */
 final class PurgeLogTable extends ListTable {
 
-	use ReadOnlyListForm;
 
 	public const BULK = 'wiw_purge_log_list';
 
@@ -54,6 +52,13 @@ final class PurgeLogTable extends ListTable {
 			'to'     => (string) ( $filters['to'] ?? '' ),
 		);
 		parent::__construct( 'purge', 'purges' );
+	}
+
+	/**
+	 * Read-only: a log has nothing to select, so the table sits in a GET form that keeps the page and the filters.
+	 */
+	protected function read_only(): bool {
+		return true;
 	}
 
 	/**

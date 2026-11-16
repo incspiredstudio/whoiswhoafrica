@@ -83,11 +83,14 @@ h3.wiw-card__title { font-size: 15px; }
 .wiw-staff .wiw-field input[type="text"],
 .wiw-staff .wiw-field input[type="email"],
 .wiw-staff .wiw-field input[type="url"],
+.wiw-staff .wiw-field input[type="password"],
 .wiw-staff .wiw-field input[type="number"],
 .wiw-staff .wiw-field input[type="search"],
 .wiw-staff .wiw-field select:not([multiple]),
 .wiw-staff .wiw-filters input[type="text"],
 .wiw-staff .wiw-filters input[type="search"],
+.wiw-staff .wiw-filters input[type="number"],
+.wiw-staff .wiw-filters input[type="date"],
 .wiw-staff .wiw-filters select {
 	background-color: var(--wiw-surface);
 	border: 1px solid var(--wiw-line-strong);
@@ -107,7 +110,10 @@ h3.wiw-card__title { font-size: 15px; }
 .wiw-staff .wiw-field input[type="text"],
 .wiw-staff .wiw-field input[type="email"],
 .wiw-staff .wiw-field input[type="url"],
+.wiw-staff .wiw-field input[type="password"],
 .wiw-staff .wiw-field textarea { width: 100%; }
+
+.wiw-staff .wiw-filters input[type="number"] { width: 9em; }
 
 .wiw-staff .wiw-field input.small-text { width: 7em; }
 
@@ -158,7 +164,9 @@ h3.wiw-card__title { font-size: 15px; }
 .wiw-field--check { margin-bottom: 12px; }
 
 .wiw-check__label,
-.wiw-toggle__label { align-items: center; cursor: pointer; display: inline-flex; font-size: 14px; gap: 10px; position: relative; }
+.wiw-toggle__label,
+.wiw-field--check > .wiw-check__label,
+.wiw-field--check > .wiw-toggle__label { align-items: center; cursor: pointer; display: inline-flex; font-size: 14px; gap: 10px; margin: 0; position: relative; }
 .wiw-check__input { margin: 0 !important; }
 
 .wiw-toggle__input {
@@ -297,8 +305,20 @@ h3.wiw-card__title { font-size: 15px; }
 
 .wiw-list-table .row-actions a { font-weight: 500; }
 
+/* Destructive actions in red: any row or bulk action declared destructive (plus the older unpublish and wiw-reject keys). */
 .wiw-list-table .row-actions .unpublish a,
-.wiw-list-table .row-actions .wiw-reject a { color: var(--wiw-danger, #b32d2e); }
+.wiw-list-table .row-actions .wiw-reject a,
+.wiw-list-table .row-actions a.wiw-destructive { color: var(--wiw-danger, #b32d2e); }
+
+.wiw-list-table .row-actions a.wiw-destructive:hover,
+.wiw-list-table .row-actions a.wiw-destructive:focus { color: #8a2424; }
+
+.wiw-bulk-select option.wiw-destructive { color: var(--wiw-danger, #b32d2e); }
+
+.wiw-list-form .bulkactions:has(.wiw-bulk-select option.wiw-destructive:checked) .wiw-bulk-apply {
+	border-color: var(--wiw-danger, #b32d2e);
+	color: var(--wiw-danger, #b32d2e);
+}
 
 /* Status pills. */
 
@@ -353,10 +373,32 @@ h3.wiw-card__title { font-size: 15px; }
 	.wiw-staff .wiw-field input[type="text"],
 	.wiw-staff .wiw-field input[type="email"],
 	.wiw-staff .wiw-field input[type="url"],
+	.wiw-staff .wiw-field input[type="password"],
 	.wiw-staff .wiw-field select:not([multiple]) { font-size: 16px; min-height: 44px; width: 100%; }
 	.wiw-staff .wiw-field select[multiple] { min-width: 0; width: 100%; }
 	.wiw-staff .wiw-filters { flex-direction: column; align-items: stretch; }
 	.wiw-list-table .row-actions { opacity: 1; }
+
+	/*
+	 * WordPress's mobile list table shows the checkbox and the primary cell, with each later cell under its column name once the
+	 * row is opened. It assumes the primary column comes first: a cell before it stays shown with its column name drawn over its
+	 * text. Treat every other cell as a later one (hidden until the row is opened, room for the name) and put the primary cell
+	 * first, whatever its place, so no table has to move its primary column to the front.
+	 */
+	.wiw-list-table tr > .check-column { order: 0; }
+	.wiw-list-table tr > .column-primary { order: 1; }
+
+	.wiw-list-table thead tr > :not(.check-column, .column-primary),
+	.wiw-list-table tfoot tr > :not(.check-column, .column-primary) { display: none; }
+
+	.wiw-list-table tbody tr:not(.inline-edit-row, .no-items) > :not(.check-column, .column-primary) {
+		flex: 0 1 100%;
+		order: 2;
+		padding: 3px 8px 3px 35%;
+	}
+
+	.wiw-list-table tbody tr:not(.is-expanded, .inline-edit-row, .no-items) > :not(.check-column, .column-primary) { display: none; }
+
 	.wiw-list-form .tablenav.top .tablenav-pages { margin-left: 0; }
 	.wiw-list-form.has-selection .tablenav.top { top: 0; }
 }

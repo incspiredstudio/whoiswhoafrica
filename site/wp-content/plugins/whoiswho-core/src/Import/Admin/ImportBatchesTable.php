@@ -227,9 +227,10 @@ final class ImportBatchesTable extends ListTable {
 		);
 		if ( 'applied' === ( $item['status'] ?? '' ) && ! BatchUndo::in_progress( $batch_id ) ) {
 			$actions['wiw-undo'] = array(
-				'label'      => __( 'Undo', 'whoiswho' ),
-				'url'        => $this->step_url( 'undo', array( (int) $item['id'] ) ),
-				'capability' => ImportScreen::CAPABILITY,
+				'label'       => __( 'Undo', 'whoiswho' ),
+				'url'         => $this->step_url( 'undo', array( (int) $item['id'] ) ),
+				'capability'  => ImportScreen::CAPABILITY,
+				'destructive' => true,
 			);
 		}
 		return $actions;

@@ -43,7 +43,7 @@ The prototype shows this label only as a preview on the review screen. The publi
 2. Open an item. You see a field-level diff, each fact with its source URL, retrieval date, confidence and method, and flags from the free-text scan.
 3. Fix or remove any fact the queue flags. A fact with low confidence or no source cannot be published (REQ-143). A record that fails the free-text scan stays blocked until it is cleared (REQ-141).
 4. Check for a possible duplicate. Resolve it in Duplicates first.
-5. Approve or reject with a reason.
+5. Approve or reject with a reason. From the list you can also tick several items and use the bulk actions: bulk Approve asks for the checklist once for all of them, bulk Reject takes one reason for all of them, and Assign to me takes them all (see [Lists, quick actions and bulk actions](./#lists-quick-actions-and-bulk-actions)).
 
 The checklist in the prototype is five points: no allegations, litigation or rumours; no opinion or praise; no personal life, family, health or finances; every fact dated and sourced; professional facts only.
 

@@ -170,6 +170,8 @@ final class RequiredPluginsBulkTest extends TestCase {
 		$this->assertStringContainsString( 'Install selected', $html );
 		$this->assertMatchesRegularExpression( '#<button type="submit" form="wiw-plugin-install-fluent-smtp"[^>]*>Install FluentSMTP</button>#', $html, 'the per-plugin button posts its own form' );
 		$this->assertMatchesRegularExpression( '#<form method="post" id="wiw-plugin-install-fluent-smtp"#', $html );
+		$this->assertStringContainsString( '<tr id="wiw-plugin-fluent-smtp" data-status="not_installed">', $html, 'each row keeps its id and status for the reminder and the browser test' );
+		$this->assertStringContainsString( '<tr id="wiw-plugin-wpdiscuz" data-status="not_installed">', $html );
 
 		$this->as_role( 'wiw_editor' );
 		$this->assertSame( array(), $table->visible_row_actions( $item ), 'no row actions without the capability' );

@@ -221,9 +221,10 @@ final class CorrectionsTable extends ListTable {
 			'capability' => CorrectionsScreen::CAP_DISPUTES,
 		);
 		$actions['wiw-decline'] = array(
-			'label'      => __( 'Decline', 'whoiswho' ),
-			'url'        => $this->step_url( 'decline', array( $id ) ),
-			'capability' => CorrectionsScreen::CAP_DISPUTES,
+			'label'       => __( 'Decline', 'whoiswho' ),
+			'url'         => $this->step_url( 'decline', array( $id ) ),
+			'capability'  => CorrectionsScreen::CAP_DISPUTES,
+			'destructive' => true,
 		);
 		return $actions;
 	}

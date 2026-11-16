@@ -282,6 +282,21 @@ final class RequiredPluginsTable extends ListTable {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * Each row keeps the id wiw-plugin-{slug} and its status in data-status, as before the staff kit, so a row can be found by
+	 * its plugin (the Required plugins browser test reads them).
+	 *
+	 * @param array<string, mixed>|object $item Item.
+	 */
+	public function single_row( $item ): void {
+		$item = (array) $item;
+		echo '<tr id="' . esc_attr( 'wiw-plugin-' . (string) ( $item['slug'] ?? '' ) ) . '" data-status="' . esc_attr( (string) ( $item['status'] ?? '' ) ) . '">';
+		$this->single_row_columns( $item );
+		echo '</tr>';
+	}
+
+	/**
+	 * {@inheritDoc}
 	 */
 	protected function bulk_action_definitions(): array {
 		$all = array(

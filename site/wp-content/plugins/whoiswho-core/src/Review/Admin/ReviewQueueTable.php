@@ -202,9 +202,10 @@ final class ReviewQueueTable extends ListTable {
 				'capability' => ReviewItemScreen::CAPABILITY,
 			);
 			$actions['wiw-reject']  = array(
-				'label'      => __( 'Reject', 'whoiswho' ),
-				'url'        => $this->step_url( 'reject', array( $id ) ),
-				'capability' => ReviewItemScreen::CAPABILITY,
+				'label'       => __( 'Reject', 'whoiswho' ),
+				'url'         => $this->step_url( 'reject', array( $id ) ),
+				'capability'  => ReviewItemScreen::CAPABILITY,
+				'destructive' => true,
 			);
 		}
 		return $actions;
