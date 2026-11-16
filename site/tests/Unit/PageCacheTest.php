@@ -26,7 +26,7 @@ final class PageCacheTest extends TestCase {
 
 	public function test_REQ_209_every_real_directory_list_route_is_cached_for_60_seconds(): void {
 		$theme = (string) file_get_contents( dirname( __DIR__, 2 ) . '/wp-content/themes/whoiswho/inc/directory.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
-		$this->assertGreaterThanOrEqual( 5, preg_match_all( "/'path'\s*=>\s*'([a-z-]+)'/", $theme, $found ), 'the theme names its list paths' );
+		$this->assertGreaterThanOrEqual( 4, preg_match_all( "/'path'\s*=>\s*'([a-z-]+)'/", $theme, $found ), 'the theme names its list paths' );
 		foreach ( $found[1] as $path ) {
 			foreach ( array( '/' . $path, '/' . $path . '/', '/' . $path . '/page/2/' ) as $url ) {
 				$decision = $this->decide( array( 'path' => $url ) );

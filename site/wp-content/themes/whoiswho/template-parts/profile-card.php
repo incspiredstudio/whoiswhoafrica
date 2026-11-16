@@ -3,6 +3,8 @@
  * Profile card for lists, home and search (REQ-216, REQ-155, REQ-247, REQ-009): poster, industry (the classified industry, none
  * when unclassified), name, role (title, else the organisation type). No Verified, Featured,
  * Sponsored or Claimed mark and no cover image: the only label is the pending-review one, read from the profile.
+ * The whole card opens the profile (REQ-040): the picture is a link the tab key and screen readers skip (tabindex -1, aria-hidden),
+ * and the name link, the card's one tab stop, stretches over the text. The arrow is decoration and turns on hover or focus.
  * Reads the profile only through PublicProfile. Args: profile (PublicProfile).
  *
  * @package WhoIsWho
@@ -40,7 +42,7 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 ) : '';
 ?>
 <article class="pcard<?php echo $wiw_pend ? ' pcard--pending' : ''; ?>" data-profile="<?php echo esc_attr( $wiw_profile->slug ); ?>">
-	<span class="poster poster--<?php echo esc_attr( $wiw_style['tone'] ); ?><?php echo '' === $wiw_photo ? ' poster--org' : ''; ?> pcard-media" aria-hidden="true">
+	<a class="poster poster--<?php echo esc_attr( $wiw_style['tone'] ); ?><?php echo '' === $wiw_photo ? ' poster--org' : ''; ?> pcard-media" href="<?php echo esc_url( $wiw_profile->url ); ?>" tabindex="-1" aria-hidden="true">
 		<span class="poster-pat"></span>
 		<span class="poster-mark poster-mark--<?php echo esc_attr( $wiw_style['mark'] ); ?>"></span>
 		<?php if ( '' !== $wiw_photo ) : ?>
@@ -48,7 +50,7 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 		<?php else : ?>
 			<span class="poster-ini"><?php echo esc_html( wiw_initials( $wiw_profile->name ) ); ?></span>
 		<?php endif; ?>
-	</span>
+	</a>
 	<div class="pcard-body">
 		<?php if ( '' !== $wiw_ind ) : ?>
 			<p class="pcard-kick"><?php echo esc_html( $wiw_ind ); ?></p>

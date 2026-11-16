@@ -4,7 +4,7 @@ import { assertNoHorizontalScroll, chooseFilter, disableScripts } from "./helper
 
 // The per-list search field (REQ-008, REQ-254). What it filters is the list query (the plugin); here: it sits in the dark band as in
 // the prototype, what it writes to the address, that it is not the site search, and that the filters and the field keep each other.
-const LISTS = ["/directory/", "/people/", "/entrepreneurs/", "/businesses/", "/institutions/"];
+const LISTS = ["/directory/", "/people/", "/businesses/", "/institutions/"];
 
 test.describe("directory list search field", () => {
   test.skip(!process.env.WIW_THEME_READY, "theme not active yet");
@@ -16,7 +16,7 @@ test.describe("directory list search field", () => {
       const field = band.locator("form[role=search] input[type=search][name=q]");
       await expect(field).toHaveCount(1);
       await expect(band.getByRole("searchbox", { name: "Narrow this list" })).toHaveCount(1);
-      await expect(band.locator("nav.tabs[aria-label='Directory lists'] a")).toHaveCount(5);
+      await expect(band.locator("nav.tabs[aria-label='Directory lists'] a")).toHaveCount(4);
       await expect(page.locator("form.fbar input[type=search]")).toHaveCount(0);
       await expect(page.locator("form.fbar .fbar-n")).toHaveAttribute("role", "status");
       await assertNoHorizontalScroll(page);

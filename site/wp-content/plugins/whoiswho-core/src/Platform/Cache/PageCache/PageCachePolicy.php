@@ -25,12 +25,12 @@ final class PageCachePolicy {
 	/**
 	 * Path prefixes that may be cached (exact "/" is the home page). Filter: wiw_page_cache_public_paths.
 	 */
-	public const PUBLIC_PATHS = array( '/profile/', '/directory', '/people', '/entrepreneurs', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search', '/about', '/faq', '/methodology', '/privacy', '/terms', '/cookies' );
+	public const PUBLIC_PATHS = array( '/profile/', '/directory', '/people', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search', '/about', '/faq', '/methodology', '/privacy', '/terms', '/cookies' );
 
 	/**
 	 * Prefixes whose responses are lists or search results: 60 seconds.
 	 */
-	public const LIST_PATHS = array( '/directory', '/people', '/entrepreneurs', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search' );
+	public const LIST_PATHS = array( '/directory', '/people', '/businesses', '/institutions', '/stories', '/events', '/awards', '/industries', '/search' );
 
 	/**
 	 * Paths never cached even if a public prefix matched: form pages (time-based tokens), signed links, previews and the like.

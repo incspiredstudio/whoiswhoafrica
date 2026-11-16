@@ -11,12 +11,12 @@ test.describe("home motion (REQ-043, REQ-041)", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
     await expect(page.locator("html")).toHaveClass(/home-live/);
-    await expect(page.locator(".h-door.h-rv-clip")).toHaveCount(4);
+    await expect(page.locator(".h-door.h-rv-clip")).toHaveCount(3);
     await expect(page.locator(".h-final-title.h-rv .h-line")).toHaveCount(3);
     await page.locator(".h-final-title").scrollIntoViewIfNeeded();
     await expect(page.locator(".h-final-title.h-rv")).toHaveClass(/\bin\b/);
     await page.locator(".h-doors").scrollIntoViewIfNeeded();
-    await expect(page.locator(".h-door.h-rv-clip.in")).toHaveCount(4);
+    await expect(page.locator(".h-door.h-rv-clip.in")).toHaveCount(3);
   });
 
   test("the header slides away reading down and returns on scrolling up", async ({ page }) => {

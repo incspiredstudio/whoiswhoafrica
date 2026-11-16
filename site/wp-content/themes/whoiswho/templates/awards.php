@@ -239,7 +239,7 @@ $wiw_groups = array();
 foreach ( $wiw_live as $wiw_one ) {
 	$wiw_groups[ $wiw_one->group_key ][] = $wiw_one;
 }
-$wiw_people = count( array_filter( $wiw_live, static fn ( PublicNominee $n ): bool => 'individual' === $n->profile->entity_type ) );
+$wiw_people = count( array_filter( $wiw_live, static fn ( PublicNominee $n ): bool => in_array( $n->profile->entity_type, array( 'individual', 'entrepreneur' ), true ) ) );
 $wiw_ncats  = count( array_unique( array_map( static fn ( PublicNominee $n ): int => $n->category_id, $wiw_live ) ) );
 // The hero's poster reel, as the prototype: every nominee's poster, run twice so the loop has no seam. Decorative (aria-hidden), the
 // list below carries the names and links; it stops for reduced motion.

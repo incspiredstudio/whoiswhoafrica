@@ -1,7 +1,8 @@
 <?php
 /**
- * Home four doors (REQ-001, REQ-002): large colour blocks that link to the four directory lists. On desktop they sit in one row and the
- * one under the pointer grows wider; on phones they form a 2 by 2 grid. Args: home (the home model).
+ * Home doors (REQ-001, REQ-002): large colour blocks that link to the directory lists (People, Businesses, Institutions; D-072). On
+ * desktop they sit in one row and the one under the pointer grows wider; on phones they form a two-column grid where an odd last
+ * door spans the row. Args: home (the home model).
  *
  * @package WhoIsWho
  */

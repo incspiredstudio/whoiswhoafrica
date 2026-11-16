@@ -37,7 +37,7 @@ The theme is a parent `whoiswho` and an active child `whoiswho-child` (REQ-273, 
 | Page | Address | Template | Reads | States to handle |
 |---|---|---|---|---|
 | Home (V01) | `/` | `front-page` | Curated profile and story blocks through the read models (REQ-257), the next three upcoming events through `PublicEvent`, published nominees | Nominees block absent (not empty) before nominees are published. Events block absent when no event is upcoming. No awards band; the marquee carries the category names. Static page when scripts or motion are off. |
-| Directory lists (V52, V03, V53, V04, V05) | `/directory`, `/people`, `/entrepreneurs`, `/businesses`, `/institutions` | `directory` with a type argument | `PublicProfile` list queries: reviewed profiles only, filtered, sorted, 16 per page | No results; active filter chips; filters kept in the address; a profile pending review is never listed (REQ-218). |
+| Directory lists (V52, V03, V04, V05; V53 merged into People, D-072) | `/directory`, `/people`, `/businesses`, `/institutions` | `directory` with a type argument | `PublicProfile` list queries: reviewed profiles only, filtered, sorted, 16 per page | No results; active filter chips; filters kept in the address; a profile pending review is never listed (REQ-218). |
 | Industries (V06) | `/industries` | `industries` | Industry terms with public counts | An industry with no public profiles. |
 | Industry page (V07) | `/industries/:name` | `industry` | Profiles and stories in the sector | No profiles; no stories. |
 

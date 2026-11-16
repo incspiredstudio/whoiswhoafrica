@@ -132,6 +132,7 @@
 /* ---------- profile card: poster on top, then industry, name and role ---------- */
 .pcard { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); height: 100%; align-content: start; color: inherit; }
 .pcard .poster { aspect-ratio: 4 / 5; }
+.pcard-media { color: inherit; text-decoration: none; cursor: pointer; }
 .pcard .poster-ini { font-size: clamp(3rem, 2rem + 3vw, 5rem); }
 .pcard-body { position: relative; display: grid; gap: var(--s-1); padding-right: 2.75rem; }
 .pcard-kick { font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; color: var(--c-muted); overflow-wrap: anywhere; }

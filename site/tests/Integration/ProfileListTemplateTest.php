@@ -11,6 +11,7 @@ namespace WhoIsWho\Tests\Integration;
 
 use WhoIsWho\Core\Directory\Fields\ProfileFields;
 use WhoIsWho\Core\Directory\ProfileType;
+use WhoIsWho\Core\Directory\PublicProfile;
 use WhoIsWho\Core\Directory\State\ProvenanceRepository;
 use WhoIsWho\Core\Directory\State\PubState;
 use WhoIsWho\Core\Directory\State\StateRepository;
@@ -101,14 +102,16 @@ final class ProfileListTemplateTest extends TestCase {
 		return (string) ob_get_clean();
 	}
 
-	public function test_REQ_001_the_five_list_addresses_are_routed_to_the_list_variable(): void {
+	public function test_REQ_001_the_four_list_addresses_are_routed_to_the_list_variable(): void {
 		global $wp_rewrite;
 		$wp_rewrite->set_permalink_structure( '/%postname%/' );
 		$wp_rewrite->flush_rules( false );
 		$rules = implode( "\n", array_keys( (array) $wp_rewrite->wp_rewrite_rules() ) );
-		foreach ( array( 'directory', 'people', 'entrepreneurs', 'businesses', 'institutions' ) as $path ) {
+		foreach ( array( 'directory', 'people', 'businesses', 'institutions' ) as $path ) {
 			$this->assertStringContainsString( $path, $rules, $path );
 		}
+		$this->assertStringNotContainsString( 'entrepreneurs', $rules, 'People holds entrepreneurs (D-072); the old address only redirects.' );
+		$this->assertSame( array( 'All', 'People', 'Businesses', 'Institutions' ), array_values( array_column( wiw_directory_lists(), 'tab' ) ) );
 		set_query_var( 'wiw_list', 'directory' );
 		$this->assertSame( 'all', wiw_directory_current_list() );
 		$this->assertStringEndsWith( '/directory/', wiw_directory_url( 'all' ) );
@@ -166,7 +169,7 @@ final class ProfileListTemplateTest extends TestCase {
 	}
 
 	public function test_REQ_254_every_list_has_its_own_search_field_in_the_dark_band_with_chip_tabs(): void {
-		foreach ( array( 'all', 'people', 'entrepreneurs', 'businesses', 'institutions' ) as $list ) {
+		foreach ( array( 'all', 'people', 'businesses', 'institutions' ) as $list ) {
 			$out   = $this->render( $list );
 			$start = (int) strpos( $out, 'page-band' );
 			$band  = substr( $out, $start, (int) strpos( $out, '<form class="fbar"' ) - $start );
@@ -204,5 +207,103 @@ final class ProfileListTemplateTest extends TestCase {
 			'industry' => 'energy',
 		);
 		$this->assertStringEndsWith( '/directory/?q=alpha&industry=energy', wiw_directory_url( 'all', $params ) );
+	}
+
+	public function test_REQ_001_the_old_entrepreneurs_addresses_redirect_to_people_keeping_the_other_arguments(): void {
+		$this->assertSame( home_url( '/people/' ), wiw_directory_legacy_target( '/entrepreneurs/', array() ) );
+		$this->assertSame( home_url( '/people/' ), wiw_directory_legacy_target( '/entrepreneurs', array() ) );
+		$this->assertSame(
+			home_url( '/people/page/2/?industry=energy&q=ada' ),
+			wiw_directory_legacy_target(
+				'/entrepreneurs/page/2/',
+				array(
+					'industry' => 'energy',
+					'q'        => 'ada',
+				)
+			)
+		);
+		$this->assertSame(
+			home_url( '/people/?country=nigeria' ),
+			wiw_directory_legacy_target(
+				'/directory/',
+				array(
+					'type'    => 'entrepreneur',
+					'country' => 'nigeria',
+				)
+			)
+		);
+		$this->assertSame( home_url( '/people/' ), wiw_directory_legacy_target( '/people/', array( 'type' => 'entrepreneurs' ) ) );
+		$this->assertSame( '', wiw_directory_legacy_target( '/people/', array( 'industry' => 'energy' ) ) );
+		$this->assertSame( '', wiw_directory_legacy_target( '/stories/', array( 'type' => 'entrepreneur' ) ), 'Only directory lists read a type.' );
+		$this->assertSame( '', wiw_directory_legacy_target( '/profile/entrepreneurs/', array() ) );
+
+		$saved                     = array(
+			'REQUEST_URI'    => $_SERVER['REQUEST_URI'] ?? null,
+			'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? null,
+		);
+		$_SERVER['REQUEST_URI']    = '/entrepreneurs/?sort=updated';
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$seen                      = array();
+		$catch                     = static function ( $location, $status ) use ( &$seen ) {
+			$seen = array( $status, $location );
+			throw new \RuntimeException( 'redirected' );
+		};
+		add_filter( 'wp_redirect', $catch, 10, 2 );
+		try {
+			do_action( 'template_redirect' );
+		} catch ( \RuntimeException $e ) {
+			unset( $e );
+		} finally {
+			remove_filter( 'wp_redirect', $catch, 10 );
+			foreach ( $saved as $key => $value ) {
+				if ( null === $value ) {
+					unset( $_SERVER[ $key ] );
+				} else {
+					$_SERVER[ $key ] = $value;
+				}
+			}
+		}
+		$this->assertSame( array( 301, home_url( '/people/?sort=updated' ) ), $seen, '/entrepreneurs/ answers 301 to /people/.' );
+	}
+
+	public function test_REQ_001_an_entrepreneur_reads_as_a_person_on_the_public_site(): void {
+		$kind = wiw_profile_kind( 'entrepreneur' );
+		$this->assertSame( 'Person', $kind['label'] );
+		$this->assertSame( home_url( '/people/' ), $kind['list'] );
+		$this->assertSame( 'People', $kind['list_title'] );
+		$this->profile( 'Dirlist Founder', 'entrepreneur', true );
+		$out = $this->render( 'people' );
+		$this->assertStringContainsString( 'Dirlist Founder', $out, 'An entrepreneur is listed under People.' );
+		$this->assertStringContainsString( 'founders', $out, 'The People intro covers founders.' );
+		$this->assertStringNotContainsString( 'Entrepreneur', $out );
+		$this->assertStringNotContainsString( '/entrepreneurs/', $out );
+		$this->assertStringNotContainsString( '/entrepreneurs/', wp_json_encode( wiw_nav_model() ) );
+		$this->assertSame( array( '/people/', '/businesses/', '/institutions/' ), array_map( static fn ( array $d ): string => (string) wp_parse_url( $d['url'], PHP_URL_PATH ), wiw_home_doors() ) );
+	}
+
+	public function test_REQ_040_the_whole_card_opens_the_profile_with_one_tab_stop(): void {
+		$id      = $this->profile( 'Dirlist Card Person', 'individual', true );
+		$profile = PublicProfile::find_by_id( $id );
+		$this->assertNotNull( $profile );
+		ob_start();
+		get_template_part( 'template-parts/profile-card', null, array( 'profile' => $profile ) );
+		$html = (string) ob_get_clean();
+		$doc  = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$doc->loadHTML( '<?xml encoding="utf-8"?><div>' . $html . '</div>' );
+		libxml_clear_errors();
+		$xpath = new \DOMXPath( $doc );
+		$links = $xpath->query( '//a[@href="' . $profile->url . '"]' );
+		$focus = 0;
+		foreach ( $links as $link ) {
+			if ( '-1' !== $link->getAttribute( 'tabindex' ) ) {
+				++$focus;
+			}
+		}
+		$this->assertSame( 1, $focus, 'Exactly one focusable link to the profile.' );
+		$this->assertSame( 0, $xpath->query( '//a[not(@href="' . $profile->url . '")] | //button' )->length, 'No other interactive element on the card.' );
+		$media = $xpath->query( '//a[@href="' . $profile->url . '"][@tabindex="-1"][@aria-hidden="true"]//*[contains(@class,"pcard-media")] | //a[@href="' . $profile->url . '"][@tabindex="-1"][@aria-hidden="true"][contains(@class,"pcard-media")]' );
+		$this->assertSame( 1, $media->length, 'The picture is inside a link to the profile that screen readers and the tab key skip.' );
+		$this->assertSame( 1, $xpath->query( '//h3[@class="pcard-name"]/a[@class="stretched"]' )->length, 'The name link stretches over the card.' );
 	}
 }

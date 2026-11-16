@@ -25,7 +25,7 @@ The prototype uses hash routes (`#/people`). The WordPress build uses normal pat
 | Route | What it is | Page in this guide |
 |---|---|---|
 | `/` | Home (V01) | [Home](/pages/public/home) |
-| `/directory`, `/people`, `/entrepreneurs`, `/businesses`, `/institutions` | Directory lists with search and filters (V52, V03, V53, V04, V05) | [Directory and profiles](/pages/public/directory-and-profiles) |
+| `/directory`, `/people`, `/businesses`, `/institutions` | Directory lists with search and filters (V52, V03, V04, V05); `/entrepreneurs` (V53) redirects to `/people` (D-072) | [Directory and profiles](/pages/public/directory-and-profiles) |
 | `/industries`, `/industries/:name` | Browse by sector, with profiles and stories (V06, V07) | [Directory and profiles](/pages/public/directory-and-profiles) |
 | `/profile/:slug` | A person, business, institution or entrepreneur (V09 to V11, V54, V56) | [Directory and profiles](/pages/public/directory-and-profiles) |
 | `/claim/:slug`, `/correct/:slug`, `/remove/:slug` | Claim, correction and removal forms (V57, V39, V40) | [Directory and profiles](/pages/public/directory-and-profiles) |

@@ -1,12 +1,15 @@
 <?php
 /**
- * The public list query service (REQ-007, REQ-218, REQ-208, REQ-009): the five directory lists with their filters, sort and
+ * The public list query service (REQ-007, REQ-218, REQ-208, REQ-009, REQ-001): the four directory lists with their filters, sort and
  * pagination, and the industry counts. It is the only way a template reads a list of profiles, so no template runs its own
  * query on the profile type. Only profiles whose state allows lists (StatePolicy::in_lists, read from the state table on every
  * call) and whose post is published are returned; a pending-review profile never appears. Sorting never uses a commercial signal.
  *
  * Filters arrive as slugs of the controlled-list terms (industry, country, city, profession, org_type). A filter that does not
  * apply to the list (profession on Businesses, organisation type on People) is ignored, so a shared URL never errors.
+ *
+ * People holds individuals and entrepreneurs (D-072): the data keeps both entity types, the public site shows one group. The old
+ * list name "entrepreneurs" is read as People, so a saved name or link never errors.
  *
  * @package WhoIsWho
  */
@@ -30,16 +33,24 @@ final class ProfileList {
 	public const SORT_UPDATED = 'updated';
 
 	/**
-	 * The five lists and the entity types each one holds.
+	 * The four lists and the entity types each one holds. People holds individuals and entrepreneurs (D-072).
 	 *
 	 * @var array<string, string[]>
 	 */
 	private const LISTS = array(
-		'all'           => array(),
-		'people'        => array( 'individual' ),
-		'entrepreneurs' => array( 'entrepreneur' ),
-		'businesses'    => array( 'organisation' ),
-		'institutions'  => array( 'institution' ),
+		'all'          => array(),
+		'people'       => array( 'individual', 'entrepreneur' ),
+		'businesses'   => array( 'organisation' ),
+		'institutions' => array( 'institution' ),
+	);
+
+	/**
+	 * Old list names and the list each one now reads as.
+	 *
+	 * @var array<string, string>
+	 */
+	private const ALIASES = array(
+		'entrepreneurs' => 'people',
 	);
 
 	/**
@@ -51,7 +62,7 @@ final class ProfileList {
 		'industry'   => array( Taxonomies::INDUSTRY, array() ),
 		'country'    => array( Taxonomies::PLACE, array() ),
 		'city'       => array( Taxonomies::PLACE, array() ),
-		'profession' => array( Taxonomies::PROFESSION, array( 'people', 'entrepreneurs' ) ),
+		'profession' => array( Taxonomies::PROFESSION, array( 'people' ) ),
 		'org_type'   => array( Taxonomies::ORG_TYPE, array( 'businesses', 'institutions' ) ),
 	);
 
@@ -65,13 +76,23 @@ final class ProfileList {
 	}
 
 	/**
+	 * The list a name reads as: an old name (entrepreneurs) becomes its current list (people); any other name is returned as is.
+	 *
+	 * @param string $list_name List name.
+	 */
+	public static function canonical( string $list_name ): string {
+		return self::ALIASES[ $list_name ] ?? $list_name;
+	}
+
+	/**
 	 * Filters that apply to a list.
 	 *
 	 * @param string $list_name List name.
 	 * @return string[]
 	 */
 	public static function filters_for( string $list_name ): array {
-		$out = array();
+		$list_name = self::canonical( $list_name );
+		$out       = array();
 		foreach ( self::FILTERS as $name => list( , $lists ) ) {
 			if ( array() === $lists || in_array( $list_name, $lists, true ) ) {
 				$out[] = $name;
@@ -89,6 +110,7 @@ final class ProfileList {
 	 */
 	public function query( string $list_name, array $params = array() ): array {
 		global $wpdb;
+		$list_name = self::canonical( $list_name );
 		$list_name = isset( self::LISTS[ $list_name ] ) ? $list_name : 'all';
 		$page      = max( 1, (int) ( $params['page'] ?? 1 ) );
 		$sort      = self::SORT_UPDATED === ( $params['sort'] ?? '' ) ? self::SORT_UPDATED : self::SORT_NAME;

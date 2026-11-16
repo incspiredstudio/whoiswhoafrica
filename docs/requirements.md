@@ -128,7 +128,7 @@ The spec is mostly a **business, brand and sales plan**. Software is a minority 
 
 | ID | Requirement | Source | Pri | Scope | WP type |
 |---|---|---|---|---|---|
-| REQ-001 | The public site provides pages: Home, About, Discover People, Discover Businesses, Discover Institutions, Industries, Awards/Maiden Edition, Stories, Subscribe/Get Featured, Nominate, Contact. | 12.2 | M | SITE | Theme |
+| REQ-001 | **AMENDED 2026-11-16 (D-072).** The public site provides pages: Home, About, Discover People (individuals and entrepreneurs together; there is no separate public Entrepreneurs list, and the old `/entrepreneurs/` address redirects to People), Discover Businesses, Discover Institutions, Industries, Awards/Maiden Edition, Stories, Subscribe/Get Featured, Nominate, Contact. ~~The public site provides pages: Home, About, Discover People, Discover Businesses, Discover Institutions, Industries, Awards/Maiden Edition, Stories, Subscribe/Get Featured, Nominate, Contact.~~ | 12.2 | M | SITE | Theme |
 | REQ-002 | The home page states what the brand is (name from the theme config), who it is for, and how to get listed, featured, nominated or recognised, without scrolling past the first screen on mobile. | 12.3 | M | SITE | Theme |
 | REQ-003 | The system supports individual profiles with: full name, title, industry/expertise, biography, career history, achievements, education, affiliation, social/professional links, media appearances, awards, enquiry option. | 5.1 | M | BOTH | Native+config |
 | REQ-004 | The system supports business profiles with: name, industry/sector, description, founding year, HQ and locations, leadership, products/services, achievements, website/social, business contact, media features. | 5.1 | M | BOTH | Native+config |

@@ -135,12 +135,13 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertSame( 3, substr_count( $out, 'h-act-mark' ) );
 	}
 
-	public function test_REQ_001_the_four_doors_link_to_the_four_directory_lists(): void {
+	public function test_REQ_001_the_three_doors_link_to_the_three_directory_lists(): void {
 		$out = $this->render();
-		$this->assertSame( 4, substr_count( $out, 'class="h-door h-rv-clip h-door--' ) );
-		foreach ( array( '/people/', '/entrepreneurs/', '/businesses/', '/institutions/' ) as $path ) {
+		$this->assertSame( 3, substr_count( $out, 'class="h-door h-rv-clip h-door--' ) );
+		foreach ( array( '/people/', '/businesses/', '/institutions/' ) as $path ) {
 			$this->assertStringContainsString( 'href="' . home_url( $path ) . '"', $out );
 		}
+		$this->assertStringNotContainsString( '/entrepreneurs/', $out, 'People holds entrepreneurs (D-072).' );
 	}
 
 	public function test_REQ_043_the_motion_hooks_are_plain_classes_that_leave_the_static_page_complete(): void {
@@ -150,8 +151,8 @@ final class HomeFrontPageTest extends WpTestCase {
 		$this->assertSame( 3, substr_count( $title[1] ?? '', 'class="h-line"' ) );
 		$this->assertStringContainsString( 'class="h-final-title h-rv"', $out );
 		// The doors carry their stagger index and a cursor label; nothing is hidden by the markup itself (hiding is CSS behind html.home-live).
-		$this->assertSame( 4, substr_count( $out, 'data-cursor="Browse"' ) );
-		$this->assertStringContainsString( 'style="--d:3"', $out );
+		$this->assertSame( 3, substr_count( $out, 'data-cursor="Browse"' ) );
+		$this->assertStringContainsString( 'style="--d:2"', $out );
 		$this->assertStringNotContainsString( 'style="opacity', $out );
 	}
 

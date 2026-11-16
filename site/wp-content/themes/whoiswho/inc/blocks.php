@@ -94,24 +94,22 @@ if ( ! function_exists( 'wiw_render_portrait_trio_block' ) ) {
 	function wiw_render_portrait_trio_block(): string {
 		$tiles = array();
 		if ( class_exists( ProfileList::class ) ) {
-			$list = new ProfileList();
-			foreach ( array( 'people', 'entrepreneurs' ) as $list_name ) {
-				foreach ( $list->query( $list_name )['profiles'] as $profile ) {
-					if ( count( $tiles ) >= 3 ) {
-						break 2;
-					}
-					if ( null === $profile->image_id || isset( $tiles[ $profile->id ] ) ) {
-						continue;
-					}
-					$image = $profile->image( 'wiw-poster' );
-					if ( null === $image || 'photo' !== $image['kind'] ) {
-						continue;
-					}
-					$tiles[ $profile->id ] = array(
-						'key'   => $profile->slug,
-						'photo' => wp_get_attachment_image( (int) $profile->image_id, 'wiw-poster', false, array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) ) ),
-					);
+			// People holds individuals and entrepreneurs (D-072).
+			foreach ( ( new ProfileList() )->query( 'people' )['profiles'] as $profile ) {
+				if ( count( $tiles ) >= 3 ) {
+					break;
 				}
+				if ( null === $profile->image_id || isset( $tiles[ $profile->id ] ) ) {
+					continue;
+				}
+				$image = $profile->image( 'wiw-poster' );
+				if ( null === $image || 'photo' !== $image['kind'] ) {
+					continue;
+				}
+				$tiles[ $profile->id ] = array(
+					'key'   => $profile->slug,
+					'photo' => wp_get_attachment_image( (int) $profile->image_id, 'wiw-poster', false, array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) ) ),
+				);
 			}
 		}//end if
 		$tiles = array_values( $tiles );
