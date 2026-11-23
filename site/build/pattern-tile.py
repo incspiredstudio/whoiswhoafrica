@@ -1,11 +1,11 @@
-"""Builds the brand pattern tile from the four approved Adinkra marks (REQ-273, issue 808).
+"""Builds the brand pattern tile from the four approved brand marks (REQ-273, issue 808).
 
 The brand guide's pattern rule: the marks in varying shades of a single colour, in a clean, balanced and consistent
 arrangement. The tile is an alpha-only image (black at varying opacity): the theme uses it as a CSS mask and paints the
 colour through a token, so one file serves light, dark and coloured surfaces.
 
-Only these four marks may appear in a pattern: Adinkrahene (mark-star), Dwennimmen (mark-comb), Nkonsonkonson
-(mark-link) and Sankofa (mark-spiral). See docs/theme/brand-and-tokens.md, "Approved symbols".
+Only these four marks may appear in a pattern: the cowrie shell (mark-cowrie), the lion (mark-lion), Gye Nyame
+(mark-gye-nyame) and the pyramid (mark-pyramid). See docs/theme/brand-and-tokens.md, "Approved symbols".
 
 Run from the repository root (needs Python 3 and Pillow):
     python site/build/pattern-tile.py
@@ -17,7 +17,7 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 BRAND = Path(__file__).resolve().parent.parent / "wp-content" / "themes" / "whoiswho-child" / "assets" / "brand"
-MARKS = ["star", "comb", "link", "spiral"]
+MARKS = ["cowrie", "lion", "gye-nyame", "pyramid"]
 
 TILE = 640  # pixels; the CSS shows it at 320 px or less, so it stays sharp on 2x screens
 CELLS = 4  # 4 x 4 cells, every mark once per row and per column
@@ -34,7 +34,7 @@ def mark(name: str) -> Image.Image:
     box = alpha.getbbox()
     alpha = alpha.crop(box) if box else alpha
     w, h = alpha.size
-    # Size by area, not by the longer side, so the wide, low chain (mark-link) does not look smaller than the round marks.
+    # Size by area, not by the longer side, so a wide, low mark does not look smaller than the round ones.
     scale = min(1.3 * MARK / max(w, h), 0.9 * MARK / (w * h) ** 0.5)
     alpha = alpha.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS)
     box = BOX

@@ -112,9 +112,9 @@ final class ThemeParityTest extends TestCase {
 		$out = wiw_render_portrait_trio_block();
 		$this->assertStringContainsString( 'class="ab-stack wiw-portrait-trio" aria-hidden="true"', $out );
 		$this->assertSame( 3, substr_count( $out, 'class="ab-stack-item"' ) );
-		preg_match_all( '#poster-mark--([a-z]+)#', $out, $marks );
+		preg_match_all( '#poster-mark--([a-z-]+)#', $out, $marks );
 		foreach ( $marks[1] as $mark ) {
-			$this->assertContains( $mark, array( 'star', 'comb', 'link', 'spiral' ), 'only the four approved marks' );
+			$this->assertContains( $mark, array( 'cowrie', 'lion', 'gye-nyame', 'pyramid' ), 'only the four approved marks' );
 		}
 	}
 

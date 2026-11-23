@@ -105,7 +105,7 @@ function build(light, accent) {
   const gl = createPoints(canvas, VS, FS, { aFrom: 3, aTo: 3, aRnd: 4 });
   if (!gl) throw new Error("webgl");
   const globe = globePoints(n);
-  const marks = ["star", "comb", "spiral"].map((k) => maskPoints(MARKS[k], n));
+  const marks = ["cowrie", "lion", "pyramid"].map((k) => maskPoints(MARKS[k], n));
   const toBuffer = (list) => {
     const a = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {

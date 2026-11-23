@@ -257,7 +257,7 @@ ul.sponsors { list-style: none; }
 /* ---------- home hero ---------- */
 .hero { position: relative; overflow: hidden; background: var(--c-dark-deep); color: var(--c-on-dark); isolation: isolate; }
 
-/* The brand pattern: the four approved Adinkra marks in shades of the text colour (docs/theme/brand-and-tokens.md, "Approved symbols"). */
+/* The brand pattern: the four approved brand marks in shades of the text colour (docs/theme/brand-and-tokens.md, "Approved symbols"). */
 .hero::before, .pattern::before { content: ""; position: absolute; inset: 0; z-index: -1; background: currentcolor; opacity: .05; pointer-events: none; mask: var(--img-pattern-tile) 0 0 / 320px 320px repeat; }
 .pattern { position: relative; isolation: isolate; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding-block: var(--s-6) 0; }
@@ -769,7 +769,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .poster--red { --pt: var(--red); --pa: var(--orange); --pi: var(--c-white); }
 .poster-pat { position: absolute; inset: 0; z-index: 0; background: rgb(0, 0, 0, .16); mask: var(--img-pattern-tile) 0 0 / 200px 200px repeat; transition: -webkit-mask-position 1200ms var(--ease-out), mask-position 1200ms var(--ease-out); }
 .poster-mark { position: absolute; z-index: 1; top: 3%; right: -6%; width: 62%; aspect-ratio: 1; background: var(--pa); mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; transition: transform 1100ms var(--ease-out); }
-.poster-mark--star { --m: var(--img-mark-star); } .poster-mark--comb { --m: var(--img-mark-comb); } .poster-mark--link { --m: var(--img-mark-link); } .poster-mark--spiral { --m: var(--img-mark-spiral); }
+.poster-mark--cowrie { --m: var(--img-mark-cowrie); } .poster-mark--lion { --m: var(--img-mark-lion); } .poster-mark--gye-nyame { --m: var(--img-mark-gye-nyame); } .poster-mark--pyramid { --m: var(--img-mark-pyramid); }
 .poster-photo { position: absolute; z-index: 2; left: 12%; right: 12%; bottom: 0; width: 76%; height: 80%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 -2px 0 0 rgb(0, 0, 0, .06); transition: transform 900ms var(--ease-out); }
 .poster-ini { position: absolute; z-index: 2; left: 9%; bottom: 7%; font: 400 clamp(3.5rem, 2.5rem + 3vw, 5.5rem)/.9 var(--font-display); color: var(--pi); }
 .poster--org .poster-mark { top: -6%; bottom: auto; right: -12%; width: 66%; }

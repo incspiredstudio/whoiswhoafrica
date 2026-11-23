@@ -12,17 +12,17 @@
 $wiw_pillars = array(
 	array(
 		'tone' => 'blue',
-		'mark' => 'star',
+		'mark' => 'cowrie',
 		'num'  => '01',
 	),
 	array(
 		'tone' => 'orange',
-		'mark' => 'comb',
+		'mark' => 'lion',
 		'num'  => '02',
 	),
 	array(
 		'tone' => 'green',
-		'mark' => 'spiral',
+		'mark' => 'pyramid',
 		'num'  => '03',
 	),
 );

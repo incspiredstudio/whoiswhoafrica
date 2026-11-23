@@ -84,7 +84,7 @@ if ( ! function_exists( 'wiw_poster_style' ) ) {
 	 */
 	function wiw_poster_style( string $key ): array {
 		$tones = array( 'blue', 'purple', 'green', 'red', 'orange' );
-		$marks = array( 'star', 'comb', 'spiral', 'link' );
+		$marks = array( 'cowrie', 'lion', 'pyramid', 'gye-nyame' );
 		$hash  = (int) sprintf( '%u', crc32( $key ) );
 		return array(
 			'tone' => $tones[ $hash % count( $tones ) ],
