@@ -8,6 +8,7 @@ import { initCookieNotice } from "./cookie.js";
 import { initReportDialog } from "./report-dialog.js";
 import { initNomineeTabs } from "./nominee-tabs.js";
 import { initCreditToggles } from "./credit-toggle.js";
+import { initPagerJump } from "./pager.js";
 
 window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed, scrollToY });
 initFilterBars();
@@ -17,3 +18,4 @@ initCookieNotice();
 initReportDialog();
 initNomineeTabs();
 initCreditToggles();
+initPagerJump();

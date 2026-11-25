@@ -180,20 +180,7 @@ $wiw_country_opts  = isset( $wiw_data['countries'] ) && is_array( $wiw_data['cou
 
 		if ( $wiw_pages > 1 ) :
 			?>
-			<nav class="pager" aria-label="<?php esc_attr_e( 'Pages', 'whoiswho' ); ?>">
-				<?php if ( $wiw_page > 1 ) : ?>
-					<a class="btn alt" rel="prev" href="<?php echo esc_url( wiw_awards_winners_url( array_merge( $wiw_params, array( 'page' => $wiw_page - 1 ) ) ) ); ?>"><?php esc_html_e( 'Previous', 'whoiswho' ); ?></a>
-				<?php endif; ?>
-				<span class="pager-pos" aria-current="page">
-					<?php
-					/* translators: 1: current page, 2: number of pages. */
-					echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'whoiswho' ), $wiw_page, $wiw_pages ) );
-					?>
-				</span>
-				<?php if ( $wiw_page < $wiw_pages ) : ?>
-					<a class="btn alt" rel="next" href="<?php echo esc_url( wiw_awards_winners_url( array_merge( $wiw_params, array( 'page' => $wiw_page + 1 ) ) ) ); ?>"><?php esc_html_e( 'Next', 'whoiswho' ); ?></a>
-				<?php endif; ?>
-			</nav>
+			<?php echo wp_kses( wiw_pager( (int) $wiw_page, (int) $wiw_pages, static fn ( int $p ): string => wiw_awards_winners_url( array_merge( $wiw_params, array( 'page' => $p ) ) ) ), wiw_pager_kses() ); ?>
 		<?php endif; ?>
 	</div>
 </section>

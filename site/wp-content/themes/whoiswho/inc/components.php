@@ -180,3 +180,160 @@ if ( ! function_exists( 'wiw_filter_bar_state' ) ) {
 		);
 	}
 }//end if
+
+if ( ! function_exists( 'wiw_pager_items' ) ) {
+	/**
+	 * The page numbers a pager shows (REQ-007): the first and last page, the current page and its neighbours, with "gap" where
+	 * pages are left out. A gap never hides a single page (1 2 3, not 1 … 3).
+	 *
+	 * @param int $page  Current page.
+	 * @param int $pages Number of pages.
+	 * @param int $near  Neighbours shown on each side of the current page.
+	 * @return list<int|string> Page numbers and "gap".
+	 */
+	function wiw_pager_items( int $page, int $pages, int $near = 1 ): array {
+		$keep = array( 1, $pages );
+		for ( $i = $page - $near; $i <= $page + $near; $i++ ) {
+			$keep[] = $i;
+		}
+		$keep = array_values( array_unique( array_filter( $keep, static fn ( int $p ): bool => $p >= 1 && $p <= $pages ) ) );
+		sort( $keep );
+		$out  = array();
+		$prev = 0;
+		foreach ( $keep as $p ) {
+			if ( $p - $prev === 2 ) {
+				$out[] = $prev + 1;
+			} elseif ( $p - $prev > 2 ) {
+				$out[] = 'gap';
+			}
+			$out[] = $p;
+			$prev  = $p;
+		}
+		return $out;
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_pager' ) ) {
+	/**
+	 * The pager under a list (REQ-007, REQ-043): Previous and Next with arrows, numbered pages with gaps, the current page
+	 * marked aria-current="page", a "Page X of Y" status, and on long lists a "Go to page" box (shown by pager.js; it needs
+	 * scripts because page addresses are paths). Previous and Next stay in place on the first and last page, disabled, so the
+	 * numbers do not jump. Empty for one page.
+	 *
+	 * @param int      $page  Current page.
+	 * @param int      $pages Number of pages.
+	 * @param callable $url   fn( int $page ): string, the address of a page with the list's filters kept.
+	 */
+	function wiw_pager( int $page, int $pages, callable $url ): string {
+		if ( $pages <= 1 ) {
+			return '';
+		}
+		$page = max( 1, min( $page, $pages ) );
+		$step = static function ( string $rel, int $to, string $label, string $icon ) use ( $url, $page, $pages ): string {
+			$off  = 'prev' === $rel ? $page <= 1 : $page >= $pages;
+			$body = 'prev' === $rel
+				? '<span class="pager-arrow pager-arrow--back" aria-hidden="true">' . wiw_icon( $icon ) . '</span><span class="pager-step-label">' . esc_html( $label ) . '</span>'
+				: '<span class="pager-step-label">' . esc_html( $label ) . '</span><span class="pager-arrow" aria-hidden="true">' . wiw_icon( $icon ) . '</span>';
+			return $off
+				? '<span class="pager-step is-off" aria-disabled="true">' . $body . '</span>'
+				: '<a class="pager-step" rel="' . esc_attr( $rel ) . '" href="' . esc_url( (string) $url( $to ) ) . '">' . $body . '</a>';
+		};
+		$nums = '';
+		foreach ( wiw_pager_items( $page, $pages ) as $item ) {
+			if ( 'gap' === $item ) {
+				$nums .= '<li class="pager-gap" aria-hidden="true">…</li>';
+				continue;
+			}
+			$near = abs( (int) $item - $page ) === 1 && 1 !== $item && $pages !== $item ? ' class="pager-near"' : '';
+			/* translators: %d: page number. */
+			$name  = sprintf( __( 'Page %d', 'whoiswho' ), (int) $item );
+			$nums .= (int) $item === $page
+				? '<li><span class="pager-num is-current" aria-current="page"><span class="sr">' . esc_html__( 'Page', 'whoiswho' ) . ' </span>' . (int) $item . '</span></li>'
+				: '<li' . $near . '><a class="pager-num" href="' . esc_url( (string) $url( (int) $item ) ) . '" aria-label="' . esc_attr( $name ) . '">' . (int) $item . '</a></li>';
+		}
+		$jump = '';
+		if ( $pages > 7 ) {
+			$probe   = 987654321;
+			$pattern = str_replace( (string) $probe, '{page}', (string) $url( $probe ) );
+			$jump    = '<form class="pager-jump" data-pager-jump="' . esc_attr( $pattern ) . '" data-pages="' . (int) $pages . '" hidden>'
+				. '<label><span>' . esc_html__( 'Go to page', 'whoiswho' ) . '</span> <input type="number" inputmode="numeric" min="1" max="' . (int) $pages . '" value="' . (int) $page . '" required /></label>'
+				. '<button type="submit" class="pager-go">' . esc_html__( 'Go', 'whoiswho' ) . '</button></form>';
+		}
+		/* translators: 1: current page, 2: number of pages. */
+		$status = sprintf( __( 'Page %1$d of %2$d', 'whoiswho' ), $page, $pages );
+		return '<nav class="pager" aria-label="' . esc_attr__( 'Pages', 'whoiswho' ) . '">'
+			. '<div class="pager-row">' . $step( 'prev', $page - 1, __( 'Previous', 'whoiswho' ), 'arrow' )
+			. '<ol class="pager-pages">' . $nums . '</ol>'
+			. $step( 'next', $page + 1, __( 'Next', 'whoiswho' ), 'arrow' ) . '</div>'
+			. '<div class="pager-foot"><p class="pager-status">' . esc_html( $status ) . '</p>' . $jump . '</div>'
+			. '</nav>';
+	}
+}//end if
+
+if ( ! function_exists( 'wiw_pager_kses' ) ) {
+	/**
+	 * The tags a pager may hold, for wp_kses.
+	 *
+	 * @return array<string, array<string, bool>>
+	 */
+	function wiw_pager_kses(): array {
+		return array(
+			'nav'    => array(
+				'class'      => true,
+				'aria-label' => true,
+			),
+			'div'    => array( 'class' => true ),
+			'ol'     => array( 'class' => true ),
+			'li'     => array(
+				'class'       => true,
+				'aria-hidden' => true,
+			),
+			'a'      => array(
+				'class'      => true,
+				'href'       => true,
+				'rel'        => true,
+				'aria-label' => true,
+			),
+			'span'   => array(
+				'class'         => true,
+				'aria-hidden'   => true,
+				'aria-current'  => true,
+				'aria-disabled' => true,
+			),
+			'p'      => array( 'class' => true ),
+			'form'   => array(
+				'class'          => true,
+				'data-pager-jump' => true,
+				'data-pages'     => true,
+				'hidden'         => true,
+			),
+			'label'  => array(),
+			'input'  => array(
+				'type'      => true,
+				'inputmode' => true,
+				'min'       => true,
+				'max'       => true,
+				'value'     => true,
+				'required'  => true,
+			),
+			'button' => array(
+				'type'  => true,
+				'class' => true,
+			),
+			'svg'    => array(
+				'class'       => true,
+				'viewbox'     => true,
+				'aria-hidden' => true,
+				'focusable'   => true,
+				'width'       => true,
+				'height'      => true,
+				'fill'        => true,
+				'stroke'      => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+			),
+			'path'   => array( 'd' => true ),
+		);
+	}
+}//end if
