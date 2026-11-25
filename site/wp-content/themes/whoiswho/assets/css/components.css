@@ -385,8 +385,8 @@ a.pager-step:hover .pager-arrow--back .ico { transform: scaleX(-1) translateX(3p
 .pager-status { margin: 0; font-variant-numeric: tabular-nums; }
 .pager-jump { display: flex; align-items: center; gap: var(--s-2); }
 .pager-jump label { display: flex; align-items: center; gap: var(--s-2); }
-.pager-jump input { width: 5rem; height: 2.25rem; padding-inline: var(--s-2); border: 1px solid var(--c-line-strong); border-radius: var(--r-2); background: var(--c-surface); color: var(--c-text); font: inherit; text-align: center; }
-.pager-go { height: 2.25rem; padding-inline: var(--s-3); border: 1px solid var(--c-line-strong); border-radius: var(--r-2); background: transparent; color: var(--c-text); font: inherit; font-weight: 500; cursor: pointer; }
+.pager-jump input { width: 5rem; height: 2.75rem; min-height: 0; padding-inline: var(--s-2); border: 1px solid var(--c-line-strong); border-radius: var(--r-2); background: var(--c-surface); color: var(--c-text); font: inherit; text-align: center; }
+.pager-go { height: 2.75rem; padding-inline: var(--s-3); border: 1px solid var(--c-line-strong); border-radius: var(--r-2); background: transparent; color: var(--c-text); font: inherit; font-weight: 500; cursor: pointer; }
 .pager-go:hover { background: var(--c-dark); color: var(--c-on-dark); }
 
 @media (width < 40rem) {
