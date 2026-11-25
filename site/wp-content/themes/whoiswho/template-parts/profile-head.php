@@ -30,7 +30,17 @@ $wiw_image = $wiw_profile->image();
 $wiw_mode  = wiw_profile_credit_mode( $wiw_image );
 $wiw_cred  = null !== $wiw_image && 'hidden' !== $wiw_mode ? wiw_profile_credit_html( $wiw_image ) : '';
 $wiw_tone  = (int) sprintf( '%u', crc32( $wiw_profile->name ) ) % 6 + 1;
-$wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
+$wiw_logo  = null !== $wiw_image && 'logo' === $wiw_image['kind'] && null !== $wiw_profile->image_id;
+$wiw_photo = $wiw_logo ? wiw_logo_img(
+	(int) $wiw_profile->image_id,
+	array(
+		/* translators: %s: name. */
+		'alt'           => sprintf( __( 'Logo of %s', 'whoiswho' ), $wiw_profile->name ),
+		'loading'       => 'eager',
+		'decoding'      => 'async',
+		'fetchpriority' => 'high',
+	)
+) : ( null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
 	'wiw-poster',
 	false,
@@ -42,8 +52,13 @@ $wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
 		),
 		'head'
 	)
-) : '';
+) : '' );
 $wiw_large = '' !== $wiw_photo ? wp_get_attachment_image_src( (int) $wiw_profile->image_id, 'large' ) : false;
+if ( $wiw_logo && '' !== $wiw_photo ) {
+	// A logo opens trimmed, like the header shows it.
+	$wiw_trim  = wiw_logo_trimmed( (int) $wiw_profile->image_id );
+	$wiw_large = null === $wiw_trim ? false : array( $wiw_trim['url'], $wiw_trim['width'], $wiw_trim['height'] );
+}
 $wiw_alt   = sprintf(
 	/* translators: %s: name. */
 	null !== $wiw_image && 'logo' === $wiw_image['kind'] ? __( 'Logo of %s', 'whoiswho' ) : __( 'Photo of %s', 'whoiswho' ),
@@ -58,7 +73,7 @@ $wiw_alt   = sprintf(
 		<div class="profile-id">
 			<?php if ( '' !== $wiw_photo ) : ?>
 				<div class="profile-photo">
-					<div class="monogram monogram--<?php echo 'organisation' === $wiw_profile->entity_type || 'institution' === $wiw_profile->entity_type ? 'org' : 'person'; ?> monogram--photo">
+					<div class="monogram monogram--<?php echo 'organisation' === $wiw_profile->entity_type || 'institution' === $wiw_profile->entity_type ? 'org' : 'person'; ?> monogram--photo<?php echo $wiw_logo ? ' monogram--logo' : ''; ?>">
 						<?php if ( is_array( $wiw_large ) ) : ?>
 							<a class="photo-zoom" href="<?php echo esc_url( (string) $wiw_large[0] ); ?>" data-photo-zoom="profile-photo-dialog" aria-haspopup="dialog">
 								<?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?>

@@ -682,6 +682,9 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 
 .monogram--photo { position: relative; overflow: hidden; background: var(--stone-300); }
 .monogram--photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+/* A logo is never cropped: whole, centred on a light tile with breathing room (REQ-247). */
+.monogram--logo { background: var(--c-white, var(--c-surface)); box-shadow: inset 0 0 0 1px var(--c-line); }
+.monogram--logo img { box-sizing: border-box; padding: 14%; object-fit: contain; object-position: center; }
 
 /* ---------- nominee card: colour panel with the citation slides up on hover ---------- */
 .nom-media { position: relative; display: block; overflow: hidden; }
@@ -773,6 +776,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 .poster-mark--cowrie { --m: var(--img-mark-cowrie); } .poster-mark--lion { --m: var(--img-mark-lion); } .poster-mark--shield { --m: var(--img-mark-shield); } .poster-mark--pyramid { --m: var(--img-mark-pyramid); }
 .poster-photo { position: absolute; z-index: 2; left: 12%; right: 12%; bottom: 0; width: 76%; height: 80%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 -2px 0 0 rgb(0, 0, 0, .06); transition: transform 900ms var(--ease-out); }
 .poster-ini { position: absolute; z-index: 2; left: 9%; bottom: 7%; font: 400 clamp(3.5rem, 2.5rem + 3vw, 5.5rem)/.9 var(--font-display); color: var(--pi); }
+.poster-photo.poster-logo { box-sizing: border-box; padding: 12%; background: var(--c-white, var(--c-surface)); object-fit: contain; object-position: center; }
 .poster--org .poster-mark { top: -6%; bottom: auto; right: -12%; width: 66%; }
 a:hover .poster-photo, a:focus-visible .poster-photo { transform: translateY(-3%); }
 a:hover .poster-mark, a:focus-visible .poster-mark { transform: rotate(18deg) scale(1.08); }
@@ -1635,7 +1639,7 @@ html.fbar-locked, html.fbar-locked body { overflow: hidden; }
 
 /* As large as the screen allows, but never more than twice the file's own width, so a small original does not blur. */
 .photo-dialog img { display: block; width: min(100%, 64rem, calc((100dvh - 9rem) * var(--ar, 1)), calc(var(--w, 9999) * 2px)); height: auto; object-fit: contain; border-radius: var(--r-2); cursor: zoom-out; transform-origin: center; will-change: transform; }
-.photo-dialog--logo img { padding: var(--s-5); background: var(--c-surface); }
+.photo-dialog--logo img { box-sizing: border-box; padding: var(--s-6); background: var(--c-white, var(--c-surface)); }
 .photo-dialog figcaption { max-width: 40rem; font-size: var(--t-xs); color: var(--c-on-dark-muted); text-align: center; }
 .photo-dialog figcaption a { color: inherit; text-decoration: underline; text-underline-offset: .16em; }
 .photo-dialog-close { position: absolute; top: var(--s-3); right: var(--s-3); display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--c-on-dark) 14%, transparent); color: var(--c-on-dark); cursor: pointer; }
