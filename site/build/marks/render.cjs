@@ -1,3 +1,4 @@
+/* global process, __dirname */
 // Renders the SVG sources in this folder to 600 px PNGs (black on transparent); build-marks.py turns them into the brand files.
 // Run from site/: node build/marks/render.cjs <out-dir>
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
