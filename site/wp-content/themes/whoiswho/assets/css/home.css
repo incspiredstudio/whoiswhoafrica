@@ -103,7 +103,7 @@ html.home-live.home-in .h-hero-foot { opacity: 1; transition: opacity 900ms ease
 .h-mark { display: block; background: center / contain no-repeat; }
 .h-mark--cowrie { background-image: var(--img-mark-cowrie); }
 .h-mark--lion { background-image: var(--img-mark-lion); }
-.h-mark--gye-nyame { background-image: var(--img-mark-gye-nyame); }
+.h-mark--shield { background-image: var(--img-mark-shield); }
 .h-mark--pyramid { background-image: var(--img-mark-pyramid); }
 
 /* Three acts: stacked full-height colour scenes (pinned and animated only when motion is allowed). */

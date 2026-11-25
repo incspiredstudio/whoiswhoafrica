@@ -21,7 +21,7 @@
   --img-pattern-tile: url("../brand/pattern-marks.webp"); /* the four approved brand marks only; built by site/build/pattern-tile.py */
   --img-mark-cowrie: url("../brand/mark-cowrie.webp");
   --img-mark-lion: url("../brand/mark-lion.webp");
-  --img-mark-gye-nyame: url("../brand/mark-gye-nyame.webp");
+  --img-mark-shield: url("../brand/mark-shield.webp");
   --img-mark-pyramid: url("../brand/mark-pyramid.webp");
 
   /* Raw palette */

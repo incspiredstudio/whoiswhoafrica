@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+ <!-- WHOISWHO brand mark: the pyramid (Legacy). Original drawing, three-quarter view, stone courses on the lit face. D-073. -->
+ <mask id="m"><rect width="600" height="600" fill="#fff"/><path d="M285,80 L345,525" stroke="#000" stroke-width="16"/>
+  <g stroke="#000" stroke-width="9" fill="none"><path d="M309,256 L403,206"/><path d="M318,323 L447,254"/><path d="M327,390 L491,302"/><path d="M336,457 L535,350"/></g>
+ </mask>
+ <path mask="url(#m)" d="M285,80 L40,430 L345,525 L565,405 Z"/>
+</svg>

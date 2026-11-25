@@ -15,7 +15,7 @@ This page defines the product terms used in the handbook, with a link to the pag
 | Open licence | A licence that lets anyone reuse an image with credit: CC0, public domain, CC BY or CC BY-SA. See [Photos and credits](/staff/photos-and-credits). |
 | Demo content | Sample profiles, stories, comments, events, awards and pages added from the Setup screen and removable per part. See [Demo content](/start/demo-content). |
 | Setup checklist | The WHOISWHO > Setup screen that shows whether each install step is ready. See [Setup checklist](/start/setup-checklist). |
-| Brand symbols | The four approved brand marks: cowrie shell, lion, Gye Nyame and pyramid. See [Brand tokens](/theme/brand-tokens#approved-symbols). |
+| Brand symbols | The four approved brand marks: cowrie shell, lion, shield and crossed spears, and pyramid. See [Brand tokens](/theme/brand-tokens#approved-symbols). |
 | Import batch | One imported bundle, which can be filtered on the Profiles screen and undone as a whole |
 | Claim | A request from a person or representative to take care of a profile. Decided within five days. See [Claims](/staff/claims). |
 | Claimed | A profile whose claim a staff member approved. Staff see a checkmark. The public sees nothing, and the Claim button disappears. |

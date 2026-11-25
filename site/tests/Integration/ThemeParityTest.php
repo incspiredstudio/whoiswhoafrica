@@ -114,7 +114,7 @@ final class ThemeParityTest extends TestCase {
 		$this->assertSame( 3, substr_count( $out, 'class="ab-stack-item"' ) );
 		preg_match_all( '#poster-mark--([a-z-]+)#', $out, $marks );
 		foreach ( $marks[1] as $mark ) {
-			$this->assertContains( $mark, array( 'cowrie', 'lion', 'gye-nyame', 'pyramid' ), 'only the four approved marks' );
+			$this->assertContains( $mark, array( 'cowrie', 'lion', 'shield', 'pyramid' ), 'only the four approved marks' );
 		}
 	}
 
