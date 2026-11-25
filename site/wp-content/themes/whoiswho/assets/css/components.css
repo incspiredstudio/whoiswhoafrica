@@ -682,6 +682,7 @@ table.t th, table.t td { padding: var(--s-2) var(--s-3); border-bottom: 1px soli
 
 .monogram--photo { position: relative; overflow: hidden; background: var(--stone-300); }
 .monogram--photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+
 /* A logo is never cropped: whole, centred on a light tile with breathing room (REQ-247). */
 .monogram--logo { background: var(--c-white, var(--c-surface)); box-shadow: inset 0 0 0 1px var(--c-line); }
 .monogram--logo img { box-sizing: border-box; padding: 14%; object-fit: contain; object-position: center; }
