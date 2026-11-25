@@ -34,12 +34,22 @@ if ( '' !== $wiw_org && $wiw_org !== $wiw_profile->name ) {
 	$wiw_sub .= ( '' !== $wiw_sub ? ', ' : '' ) . $wiw_org;
 }
 $wiw_pend  = null !== $wiw_profile->label;
-$wiw_photo = null !== $wiw_profile->image_id ? wp_get_attachment_image(
+$wiw_image = $wiw_profile->image();
+$wiw_logo  = null !== $wiw_image && 'logo' === $wiw_image['kind'] && null !== $wiw_profile->image_id;
+$wiw_photo = $wiw_logo ? wiw_logo_img(
+	(int) $wiw_profile->image_id,
+	array(
+		'class'    => 'poster-photo poster-logo',
+		'alt'      => '',
+		'loading'  => 'lazy',
+		'decoding' => 'async',
+	)
+) : ( null !== $wiw_profile->image_id ? wp_get_attachment_image(
 	$wiw_profile->image_id,
 	'wiw-poster',
 	false,
 	array_merge( array( 'class' => 'poster-photo' ), wiw_poster_image_attrs( '', 'card' ) )
-) : '';
+) : '' );
 ?>
 <article class="pcard<?php echo $wiw_pend ? ' pcard--pending' : ''; ?>" data-profile="<?php echo esc_attr( $wiw_profile->slug ); ?>">
 	<a class="poster poster--<?php echo esc_attr( $wiw_style['tone'] ); ?><?php echo '' === $wiw_photo ? ' poster--org' : ''; ?> pcard-media" href="<?php echo esc_url( $wiw_profile->url ); ?>" tabindex="-1" aria-hidden="true">
