@@ -384,7 +384,7 @@ if ( ! function_exists( 'wiw_profile_crumbs' ) ) {
 		if ( null !== $country ) {
 			$country['flag'] = wiw_country_flag_url( (string) ( $classification['country']['code'] ?? '' ) );
 		}
-		$out     = array();
+		$out = array();
 		if ( null === $country ) {
 			$out[] = array(
 				'label' => __( 'Directory', 'whoiswho' ),
