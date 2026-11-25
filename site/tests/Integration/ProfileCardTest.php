@@ -123,6 +123,14 @@ final class ProfileCardTest extends TestCase {
 		$this->assertStringContainsString( 'poster-ini', $out, 'No image: the monogram shows.' );
 	}
 
+	public function test_REQ_052_profile_cards_carry_no_brand_symbols(): void {
+		$profile = $this->profile( 'Cardtest No Symbols', 'individual', true );
+		$out     = $this->render( 'template-parts/profile-card', array( 'profile' => $profile ) );
+		$this->assertStringNotContainsString( 'poster-mark', $out, 'no accent symbol on a profile card (owner, 2026-11-25)' );
+		$this->assertStringNotContainsString( 'poster-pat', $out, 'no symbol pattern on a profile card (owner, 2026-11-25)' );
+		$this->assertStringContainsString( 'class="poster poster--', $out, 'the coloured panel stays' );
+	}
+
 	public function test_REQ_216_pending_notice_variant_has_correction_links_and_empty_label_renders_nothing(): void {
 		$out = $this->render(
 			'template-parts/pending-label',
