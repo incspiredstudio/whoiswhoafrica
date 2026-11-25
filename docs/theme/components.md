@@ -22,7 +22,7 @@ Most live in `prototype/theme/components.js` and hang off the global `W`.
 
 ## The poster
 
-A poster is the coloured panel behind a profile or nominee. It has a pattern layer (`poster-pat`), one accent mark (`poster-mark--star`, `--comb`, `--link` or `--spiral`) and, when there is one, a portrait on top. Group colour decides the tone. Organisation marks sit in the top corner so they do not collide with the title.
+A poster is the coloured panel behind a profile or nominee. It has a pattern layer (`poster-pat`), one accent mark (`poster-mark--cowrie`, `--lion`, `--gye-nyame` or `--pyramid`) and, when there is one, a portrait on top. Group colour decides the tone. Organisation marks sit in the top corner so they do not collide with the title.
 
 On profile cards the portrait is a rounded square, like the business tiles, not a small circle. When a profile has no photo the poster shows the coloured panel and mark, which is also what the "On the record" hover card falls back to.
 

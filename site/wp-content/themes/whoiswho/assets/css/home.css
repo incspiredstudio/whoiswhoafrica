@@ -103,10 +103,10 @@ html.home-live.home-in .h-hero-foot { opacity: 1; transition: opacity 900ms ease
 
 /* Brand marks: images from the child theme's tokens (--img-mark-*). */
 .h-mark { display: block; background: center / contain no-repeat; }
-.h-mark--star { background-image: var(--img-mark-star); }
-.h-mark--comb { background-image: var(--img-mark-comb); }
-.h-mark--link { background-image: var(--img-mark-link); }
-.h-mark--spiral { background-image: var(--img-mark-spiral); }
+.h-mark--cowrie { background-image: var(--img-mark-cowrie); }
+.h-mark--lion { background-image: var(--img-mark-lion); }
+.h-mark--gye-nyame { background-image: var(--img-mark-gye-nyame); }
+.h-mark--pyramid { background-image: var(--img-mark-pyramid); }
 
 /* Three acts: stacked full-height colour scenes (pinned and animated only when motion is allowed). */
 .h-act { position: relative; display: flex; min-height: 90svh; overflow: hidden; }

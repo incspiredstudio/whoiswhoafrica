@@ -18,11 +18,11 @@
   /* Brand images; the url() resolves from this file, so these work wherever the component CSS is served from */
   --c-white: #fff;
   --img-logo: url("../logo/wiw-logo-mask.webp"); /* the wordmark as an alpha mask, painted in the text colour */
-  --img-pattern-tile: url("../brand/pattern-marks.webp"); /* the four approved Adinkra marks only; built by site/build/pattern-tile.py */
-  --img-mark-star: url("../brand/mark-star.webp");
-  --img-mark-comb: url("../brand/mark-comb.webp");
-  --img-mark-link: url("../brand/mark-link.webp");
-  --img-mark-spiral: url("../brand/mark-spiral.webp");
+  --img-pattern-tile: url("../brand/pattern-marks.webp"); /* the four approved brand marks only; built by site/build/pattern-tile.py */
+  --img-mark-cowrie: url("../brand/mark-cowrie.webp");
+  --img-mark-lion: url("../brand/mark-lion.webp");
+  --img-mark-gye-nyame: url("../brand/mark-gye-nyame.webp");
+  --img-mark-pyramid: url("../brand/mark-pyramid.webp");
 
   /* Raw palette */
   --charcoal-950: #1f1f1f;

@@ -122,11 +122,11 @@ final class ChildBrandTokensTest extends TestCase {
 		$this->assertStringContainsString( 'pattern-marks.webp', (string) file_get_contents( $this->child() . '/inc/assets.php' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
 
-	public function test_REQ_273_only_the_four_approved_adinkra_marks_and_the_pattern_built_from_them_are_brand_symbols(): void {
-		$approved = array( 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'mark-star.webp', 'pattern-marks.webp' );
+	public function test_REQ_273_only_the_four_approved_brand_marks_and_the_pattern_built_from_them_are_brand_symbols(): void {
+		$approved = array( 'mark-cowrie.webp', 'mark-gye-nyame.webp', 'mark-lion.webp', 'mark-pyramid.webp', 'pattern-marks.webp' );
 		$found    = array_map( 'basename', (array) glob( $this->child() . '/assets/brand/*' ) );
 		sort( $found );
-		$this->assertSame( $approved, $found, 'the brand folder holds the four approved marks (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa) and the tile made from them, nothing else' );
+		$this->assertSame( $approved, $found, 'the brand folder holds the four approved marks (cowrie, lion, Gye Nyame, pyramid) and the tile made from them, nothing else' );
 		$this->assertFileDoesNotExist( $this->child() . '/assets/brand/pattern-tile.webp', 'the brush-glyph tile is not an approved symbol' );
 		$this->assertFileExists( dirname( __DIR__, 2 ) . '/build/pattern-tile.py', 'the tile is rebuilt from the four marks by a script' );
 		// No theme stylesheet, template or script points at a brand image outside the approved list.
@@ -148,7 +148,7 @@ final class ChildBrandTokensTest extends TestCase {
 		foreach ( array( 'wiw-logo.png', 'wiw-icon.png', 'wiw-icon-black.png' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/logo/' . $file );
 		}
-		foreach ( array( 'mark-star.webp', 'mark-comb.webp', 'mark-link.webp', 'mark-spiral.webp', 'pattern-marks.webp' ) as $file ) {
+		foreach ( array( 'mark-cowrie.webp', 'mark-lion.webp', 'mark-gye-nyame.webp', 'mark-pyramid.webp', 'pattern-marks.webp' ) as $file ) {
 			$this->assertFileExists( $this->child() . '/assets/brand/' . $file );
 		}
 	}

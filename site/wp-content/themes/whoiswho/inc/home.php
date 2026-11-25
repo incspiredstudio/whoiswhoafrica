@@ -123,7 +123,7 @@ if ( ! function_exists( 'wiw_home_acts' ) ) {
 		return array(
 			array(
 				'tone' => 'blue',
-				'mark' => 'star',
+				'mark' => 'cowrie',
 				'word' => $words[0] . '.',
 				'text' => __( 'The people and organisations making a difference and shaping the world around them.', 'whoiswho' ),
 				'link' => __( 'Discover the people', 'whoiswho' ),
@@ -131,7 +131,7 @@ if ( ! function_exists( 'wiw_home_acts' ) ) {
 			),
 			array(
 				'tone' => 'orange',
-				'mark' => 'comb',
+				'mark' => 'lion',
 				'word' => $words[1] . '.',
 				'text' => __( 'The milestones, contributions and innovations that deserve to be on the record.', 'whoiswho' ),
 				'link' => __( 'See how recognition works', 'whoiswho' ),
@@ -139,7 +139,7 @@ if ( ! function_exists( 'wiw_home_acts' ) ) {
 			),
 			array(
 				'tone' => 'purple',
-				'mark' => 'spiral',
+				'mark' => 'pyramid',
 				'word' => $words[2] . '.',
 				'text' => __( 'The lasting impact people and institutions leave behind, kept accurate over time.', 'whoiswho' ),
 				'link' => __( 'Read the stories', 'whoiswho' ),
@@ -159,21 +159,21 @@ if ( ! function_exists( 'wiw_home_doors' ) ) {
 		return array(
 			array(
 				'tone'  => 'blue',
-				'mark'  => 'star',
+				'mark'  => 'cowrie',
 				'title' => __( 'People', 'whoiswho' ),
 				'text'  => __( 'Leaders, founders and changemakers on the public record', 'whoiswho' ),
 				'url'   => home_url( '/people/' ),
 			),
 			array(
 				'tone'  => 'green',
-				'mark'  => 'link',
+				'mark'  => 'gye-nyame',
 				'title' => __( 'Businesses', 'whoiswho' ),
 				'text'  => __( 'Companies, from startups to listed groups', 'whoiswho' ),
 				'url'   => home_url( '/businesses/' ),
 			),
 			array(
 				'tone'  => 'purple',
-				'mark'  => 'spiral',
+				'mark'  => 'pyramid',
 				'title' => __( 'Institutions', 'whoiswho' ),
 				'text'  => __( 'Universities, associations and public bodies', 'whoiswho' ),
 				'url'   => home_url( '/institutions/' ),
