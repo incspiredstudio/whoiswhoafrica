@@ -166,7 +166,7 @@ if ( ! function_exists( 'wiw_home_doors' ) ) {
 			),
 			array(
 				'tone'  => 'green',
-				'mark'  => 'gye-nyame',
+				'mark'  => 'shield',
 				'title' => __( 'Businesses', 'whoiswho' ),
 				'text'  => __( 'Companies, from startups to listed groups', 'whoiswho' ),
 				'url'   => home_url( '/businesses/' ),

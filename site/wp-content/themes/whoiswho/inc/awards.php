@@ -57,7 +57,7 @@ if ( ! function_exists( 'wiw_award_group_style' ) ) {
 			'leadership-public-impact'     => array( 'blue', 'cowrie' ),
 			'entrepreneurship-business'    => array( 'orange', 'lion' ),
 			'technology-innovation'        => array( 'purple', 'pyramid' ),
-			'professional-excellence'      => array( 'green', 'gye-nyame' ),
+			'professional-excellence'      => array( 'green', 'shield' ),
 			'industry-institutional-recog' => array( 'red', 'lion' ),
 		);
 		$row = $map[ $group_key ] ?? array( 'blue', 'cowrie' );

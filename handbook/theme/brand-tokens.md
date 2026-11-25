@@ -57,10 +57,10 @@ WHOISWHO uses exactly four symbols, drawn solid like an Adinkra stamp, and no ot
 |---|---|---|
 | **Cowrie shell** | Influence (blue) | Wealth, exchange, connection across Africa |
 | **Lion** | Achievement (orange) | Strength, leadership, triumph |
-| **Gye Nyame** | Green | Adinkra, "Except God": supremacy, endurance |
+| **Shield and crossed spears** | Businesses (green) | Protection, readiness, standing your ground |
 | **Pyramid** | Legacy (purple) | What lasts beyond a lifetime |
 
-These replaced the four Adinkra symbols (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa) on 2026-11-24.
+These replaced the four Adinkra symbols (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa) on 2026-11-24. On 2026-11-25 the shield replaced Gye Nyame and the pyramid was redrawn.
 
 Rules:
 

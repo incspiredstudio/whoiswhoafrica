@@ -4,8 +4,8 @@ The brand guide's pattern rule: the marks in varying shades of a single colour, 
 arrangement. The tile is an alpha-only image (black at varying opacity): the theme uses it as a CSS mask and paints the
 colour through a token, so one file serves light, dark and coloured surfaces.
 
-Only these four marks may appear in a pattern: the cowrie shell (mark-cowrie), the lion (mark-lion), Gye Nyame
-(mark-gye-nyame) and the pyramid (mark-pyramid). See docs/theme/brand-and-tokens.md, "Approved symbols".
+Only these four marks may appear in a pattern: the cowrie shell (mark-cowrie), the lion (mark-lion), the shield and spears
+(mark-shield) and the pyramid (mark-pyramid). See docs/theme/brand-and-tokens.md, "Approved symbols".
 
 Run from the repository root (needs Python 3 and Pillow):
     python site/build/pattern-tile.py
@@ -17,7 +17,7 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 BRAND = Path(__file__).resolve().parent.parent / "wp-content" / "themes" / "whoiswho-child" / "assets" / "brand"
-MARKS = ["cowrie", "lion", "gye-nyame", "pyramid"]
+MARKS = ["cowrie", "lion", "shield", "pyramid"]
 
 TILE = 640  # pixels; the CSS shows it at 320 px or less, so it stays sharp on 2x screens
 CELLS = 4  # 4 x 4 cells, every mark once per row and per column

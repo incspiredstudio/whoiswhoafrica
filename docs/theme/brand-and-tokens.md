@@ -57,7 +57,7 @@ The logo wordmark is the shortened form of the public name WHOISWHO (D-060). Ora
 
 ## Brand marks
 
-Four solid African symbols, drawn in the style of an Adinkra stamp, are the brand marks (D-073, 2026-11-24). They replaced the four Adinkra marks of 2026-11-14, which had replaced the earlier brush strokes. They are `webp` files in `whoiswho-child/assets/brand/`: `mark-cowrie`, `mark-lion`, `mark-gye-nyame` and `mark-pyramid`. They appear on the home colour blocks, the directory doors and the poster component (see [Components](/theme/components)). Each has a CSS variable (`--img-mark-*`, used as `--m` on a poster) so a poster can tint and place one. The home particle stage samples three of them (cowrie, lion, pyramid) from `assets/js/stage/marks.js`.
+Four solid African symbols, drawn in the style of an Adinkra stamp, are the brand marks (D-073, 2026-11-24). They replaced the four Adinkra marks of 2026-11-14, which had replaced the earlier brush strokes. They are `webp` files in `whoiswho-child/assets/brand/`: `mark-cowrie`, `mark-lion`, `mark-shield` and `mark-pyramid`. They appear on the home colour blocks, the directory doors and the poster component (see [Components](/theme/components)). Each has a CSS variable (`--img-mark-*`, used as `--m` on a poster) so a poster can tint and place one. The home particle stage samples three of them (cowrie, lion, pyramid) from `assets/js/stage/marks.js`.
 
 ### Approved symbols (owner rule, 2026-11-24, D-073)
 
@@ -67,12 +67,12 @@ Only four symbols may appear anywhere on the site, alone or in a pattern:
 |---|---|---|---|
 | Cowrie shell | Influence (blue) | Wealth, exchange, connection across Africa | `mark-cowrie.webp` |
 | Lion | Achievement (orange) | Strength, leadership, triumph | `mark-lion.webp` |
-| Gye Nyame (Adinkra) | Green | "Except God": supremacy, endurance | `mark-gye-nyame.webp` |
+| Shield and crossed spears | Businesses (green) | Protection, readiness, standing your ground | `mark-shield.webp` |
 | Pyramid | Legacy (purple) | What lasts beyond a lifetime | `mark-pyramid.webp` |
 
-Gye Nyame follows a public-domain (CC0) drawing by kasahorow (Openclipart, via Wikimedia Commons: `File:Gye_Nyame_(Adinkra_Symbol).svg`). The other three were drawn for WHOISWHO.
+All four were drawn for WHOISWHO. On 2026-11-25 the shield and crossed spears replaced Gye Nyame, and the pyramid was redrawn in three-quarter view (D-073, amended). The shield and pyramid sources are SVG files in `site/build/marks/`: `node build/marks/render.cjs <tmp>` renders them, `python build/marks/build-marks.py <tmp>/*.png` writes the mark files and regenerates `assets/js/stage/marks.js`, then `python site/build/pattern-tile.py` rebuilds the pattern.
 
-- **Not approved:** the earlier Adinkra marks (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa), the brush-glyph pattern tile (`pattern-tile.webp`) and the brush strokes on the brand guide's Pattern System page. They were removed from the theme. Do not add other symbols, icons drawn as symbols, or new mark files. The interface icons (search, arrow, chevron and so on in `inc/components.php`) and the logo are not symbols in this sense.
+- **Not approved:** the earlier Adinkra marks (Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa), Gye Nyame, the brush-glyph pattern tile (`pattern-tile.webp`) and the brush strokes on the brand guide's Pattern System page. They were removed from the theme. Do not add other symbols, icons drawn as symbols, or new mark files. The interface icons (search, arrow, chevron and so on in `inc/components.php`) and the logo are not symbols in this sense.
 - **The pattern** is `pattern-marks.webp`, built only from the four marks by `site/build/pattern-tile.py` (run `python site/build/pattern-tile.py` from the repository root; it needs Pillow). It follows the guide's pattern rule: the marks in varying shades of one colour, in a clean, balanced brick grid where every mark and every shade appears once per row and column.
 - The tile is alpha only. Use it as a CSS mask and paint the colour through a token (`background: currentcolor` or a colour token), never as a coloured background image. The token is `--img-pattern-tile`. Keep it subtle: about 5% on the dark footer and 8% on the empty story picture and a 16% dark wash inside posters (more fails text contrast on the orange poster).
 - A test (`ChildBrandTokensTest`) fails if the brand folder holds any other file or a theme file points at an unapproved brand image.
