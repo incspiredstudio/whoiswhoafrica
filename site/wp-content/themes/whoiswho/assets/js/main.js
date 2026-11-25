@@ -9,6 +9,7 @@ import { initReportDialog } from "./report-dialog.js";
 import { initNomineeTabs } from "./nominee-tabs.js";
 import { initCreditToggles } from "./credit-toggle.js";
 import { initPhotoZoom } from "./photo-zoom.js";
+import { initPagerJump } from "./pager.js";
 
 window.wiw = Object.assign(window.wiw || {}, { trapFocus, announce, motionAllowed, scrollToY });
 initFilterBars();
@@ -19,3 +20,4 @@ initReportDialog();
 initNomineeTabs();
 initCreditToggles();
 initPhotoZoom();
+initPagerJump();
