@@ -224,6 +224,24 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 		$this->assertStringNotContainsString( 'crumbs--foldable', $short );
 	}
 
+	public function test_REQ_009_country_flags_come_from_the_theme_for_valid_codes_only(): void {
+		$this->assertStringEndsWith( '/assets/flags/ng.svg', wiw_country_flag_url( 'NG' ) );
+		$this->assertStringEndsWith( '/assets/flags/za.svg', wiw_country_flag_url( ' za ' ) );
+		$this->assertSame( '', wiw_country_flag_url( 'PAN' ), 'Pan-African has no flag' );
+		$this->assertSame( '', wiw_country_flag_url( 'FR' ), 'only African flags ship with the theme' );
+		$this->assertSame( '', wiw_country_flag_url( '../x' ) );
+		$this->assertSame( '', wiw_country_flag_url( '' ) );
+	}
+
+	public function test_REQ_043_the_breadcrumb_separator_is_a_decorative_chevron(): void {
+		$html = wiw_profile_crumbs_html( wiw_profile_crumbs( 'Ada Bank', $this->classified() ) );
+		$this->assertStringNotContainsString( '›', $html );
+		$this->assertSame( 4, substr_count( $html, '<svg class="crumbs-sep" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' ), 'three between the crumbs and one before the phone "…"' );
+		$kept = wp_kses( $html, wiw_crumbs_kses() );
+		$this->assertStringContainsString( 'class="crumbs-sep"', $kept, 'the chevron survives the allowlist' );
+		$this->assertStringContainsString( '<path d="m6 3 5 5-5 5"', $kept );
+	}
+
 	public function test_REQ_009_the_header_renders_the_breadcrumb_from_the_read_model_and_no_old_text_meta(): void {
 		$profile = $this->profile( 'Crumbtest Person', array( 'current_title' => 'Governor' ) );
 		update_post_meta( $profile->id, 'wiw_industry', 'Oldtext Industry' );
@@ -252,6 +270,7 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/>Nigeria<.*>Financial Services<.*>Banking<.*aria-current="page">Crumbtest Classified</s', $head );
 		$this->assertStringContainsString( 'crumbs--foldable', $head );
 		$this->assertStringContainsString( 'directory/?country=nigeria&amp;industry=banking"', $head );
+		$this->assertMatchesRegularExpression( '#<a href="[^"]+"><img class="crumbs-flag" src="[^"]+/assets/flags/ng\.svg" alt="" width="20" height="15"[^>]*>Nigeria</a>#', $head, 'the country crumb shows its flag, decorative, before the name' );
 		$this->assertStringContainsString( 'Nigeria', $head, 'the place line names the country' );
 		$card = $this->render( 'template-parts/profile-card', $fresh );
 		$this->assertStringContainsString( '<p class="pcard-kick">Banking</p>', $card );
@@ -281,7 +300,7 @@ final class ProfileBreadcrumbCreditTest extends TestCase {
 		$profile = PublicProfile::find_by_id( $id );
 		$this->assertNotNull( $profile );
 		$head = $this->render( 'template-parts/profile-head', $profile );
-		$this->assertMatchesRegularExpression( '/>Ghana<\/a><\/li><li><span class="crumbs-sep" aria-hidden="true">›<\/span><span aria-current="page">Crumbtest Unclassified Org</s', $head );
+		$this->assertMatchesRegularExpression( '/>Ghana<\/a><\/li><li><svg class="crumbs-sep"[^>]*>.*?<\/svg><span aria-current="page">Crumbtest Unclassified Org</s', $head );
 		$this->assertStringNotContainsString( 'crumbs-fold', $head );
 		$this->assertStringNotContainsString( 'Unclassified<', $head, 'unclassified is never shown as an industry' );
 		$type = $profile->org_type();

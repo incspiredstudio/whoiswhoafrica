@@ -1609,7 +1609,8 @@ html.fbar-locked, html.fbar-locked body { overflow: hidden; }
 .crumbs-list { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; font-size: var(--t-xs); font-weight: 500; letter-spacing: var(--track-label); text-transform: uppercase; }
 .crumbs-list li { display: inline-flex; flex: none; align-items: center; white-space: nowrap; }
 .crumbs-list li:last-child { flex: 0 1 auto; min-width: 0; }
-.crumbs-sep { margin-inline: var(--s-2); color: var(--c-muted); font-weight: 400; }
+.crumbs-sep { flex: none; width: 1rem; height: 1rem; margin-inline: var(--s-2); fill: none; stroke: currentcolor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; color: var(--c-muted); }
+.crumbs-flag { flex: none; width: 1.25rem; height: .9375rem; margin-inline-end: var(--s-2); border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-text) 14%, transparent); }
 .crumbs-list a { display: inline-flex; align-items: center; min-height: 1.5rem; color: var(--c-muted); text-decoration: none; background: linear-gradient(currentcolor, currentcolor) left calc(100% - .25rem) / 0 1px no-repeat; transition: background-size var(--m-base) var(--ease-out), color var(--m-fast) var(--ease-out); }
 .crumbs-list a:hover, .crumbs-list a:focus-visible { color: var(--c-text); background-size: 100% 1px; }
 .crumbs-list [aria-current="page"] { overflow: hidden; color: var(--c-text); text-overflow: ellipsis; }
@@ -1620,6 +1621,26 @@ html.fbar-locked, html.fbar-locked body { overflow: hidden; }
   .crumbs--foldable .crumbs-mid:not(:focus-within) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .profile-photo { position: relative; flex: none; align-self: flex-start; }
+
+/* Profile photo viewer (REQ-003): the photo links to its large version; photo-zoom.js opens it in a modal that grows out of it. */
+.photo-zoom { display: block; width: 100%; height: 100%; cursor: zoom-in; }
+.photo-zoom img { transition: transform var(--m-base) var(--ease-out); }
+.photo-zoom:hover img { transform: scale(1.04); }
+.photo-zoom:focus-visible { outline-offset: -3px; }
+.photo-dialog { width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: var(--s-6) var(--gutter); border: 0; background: color-mix(in srgb, var(--c-dark-deep) 92%, transparent); color: var(--c-on-dark); overflow: hidden; }
+.photo-dialog[open] { display: grid; place-items: center; }
+.photo-dialog::backdrop { background: transparent; }
+.photo-dialog figure { display: grid; justify-items: center; gap: var(--s-3); margin: 0; max-width: 100%; }
+.photo-dialog img { display: block; width: auto; height: auto; max-width: min(100%, 64rem); max-height: calc(100dvh - 9rem); border-radius: var(--r-2); cursor: zoom-out; transform-origin: center; will-change: transform; }
+.photo-dialog--logo img { padding: var(--s-5); background: var(--c-surface); }
+.photo-dialog figcaption { max-width: 40rem; font-size: var(--t-xs); color: var(--c-on-dark-muted); text-align: center; }
+.photo-dialog figcaption a { color: inherit; text-decoration: underline; text-underline-offset: .16em; }
+.photo-dialog-close { position: absolute; top: var(--s-3); right: var(--s-3); display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--c-on-dark) 14%, transparent); color: var(--c-on-dark); cursor: pointer; }
+.photo-dialog-close:hover { background: color-mix(in srgb, var(--c-on-dark) 24%, transparent); }
+.photo-dialog-close .ico { width: 1.25rem; height: 1.25rem; }
+.photo-dialog :focus-visible { outline-color: var(--c-focus-on-dark); }
+
+@media (prefers-reduced-motion: reduce) { .photo-zoom img { transition: none; } .photo-zoom:hover img { transform: none; } }
 .credit-toggle { position: absolute; right: var(--s-1); bottom: var(--s-1); display: grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--c-dark) 82%, transparent); color: var(--c-on-dark); box-shadow: var(--sh-2); cursor: pointer; backdrop-filter: blur(6px); transition: background-color var(--m-fast) var(--ease-out), color var(--m-fast) var(--ease-out), transform var(--m-fast) var(--ease-out); }
 .credit-toggle .ico { width: 1rem; height: 1rem; }
 .credit-toggle:hover { transform: scale(1.08); }
