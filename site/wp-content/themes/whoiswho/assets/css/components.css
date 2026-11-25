@@ -364,6 +364,7 @@ ul.sponsors { list-style: none; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
 .chip { display: inline-flex; align-items: center; gap: var(--s-1); padding: .25rem .625rem; min-height: 2rem; border: 1px solid var(--c-text); border-radius: var(--r-pill); color: var(--c-text); font-size: var(--t-sm); text-decoration: none; }
 .chip:hover { background: var(--c-text); color: var(--c-surface); }
+
 /* Pager (REQ-007): arrows, numbered pages with gaps, the current page filled, a status line and a "Go to page" box. */
 .pager { display: grid; justify-items: center; gap: var(--s-3); margin-top: var(--s-7); padding-top: var(--s-5); border-top: 1px solid var(--c-line); }
 .pager-row { display: flex; align-items: center; justify-content: center; gap: var(--s-2); max-width: 100%; }

@@ -201,7 +201,7 @@ if ( ! function_exists( 'wiw_pager_items' ) ) {
 		$out  = array();
 		$prev = 0;
 		foreach ( $keep as $p ) {
-			if ( $p - $prev === 2 ) {
+			if ( 2 === $p - $prev ) {
 				$out[] = $prev + 1;
 			} elseif ( $p - $prev > 2 ) {
 				$out[] = 'gap';
@@ -302,10 +302,10 @@ if ( ! function_exists( 'wiw_pager_kses' ) ) {
 			),
 			'p'      => array( 'class' => true ),
 			'form'   => array(
-				'class'          => true,
+				'class'           => true,
 				'data-pager-jump' => true,
-				'data-pages'     => true,
-				'hidden'         => true,
+				'data-pages'      => true,
+				'hidden'          => true,
 			),
 			'label'  => array(),
 			'input'  => array(
@@ -321,14 +321,14 @@ if ( ! function_exists( 'wiw_pager_kses' ) ) {
 				'class' => true,
 			),
 			'svg'    => array(
-				'class'       => true,
-				'viewbox'     => true,
-				'aria-hidden' => true,
-				'focusable'   => true,
-				'width'       => true,
-				'height'      => true,
-				'fill'        => true,
-				'stroke'      => true,
+				'class'           => true,
+				'viewbox'         => true,
+				'aria-hidden'     => true,
+				'focusable'       => true,
+				'width'           => true,
+				'height'          => true,
+				'fill'            => true,
+				'stroke'          => true,
 				'stroke-width'    => true,
 				'stroke-linecap'  => true,
 				'stroke-linejoin' => true,
