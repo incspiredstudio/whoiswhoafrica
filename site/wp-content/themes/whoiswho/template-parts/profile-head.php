@@ -118,7 +118,7 @@ $wiw_alt   = sprintf(
 				<span class="sr"><?php esc_html_e( 'Close', 'whoiswho' ); ?></span>
 			</button>
 			<figure>
-				<img data-src="<?php echo esc_url( (string) $wiw_large[0] ); ?>" alt="<?php echo esc_attr( $wiw_alt ); ?>" width="<?php echo (int) $wiw_large[1]; ?>" height="<?php echo (int) $wiw_large[2]; ?>" decoding="async" />
+				<img data-src="<?php echo esc_url( (string) $wiw_large[0] ); ?>" alt="<?php echo esc_attr( $wiw_alt ); ?>" width="<?php echo (int) $wiw_large[1]; ?>" height="<?php echo (int) $wiw_large[2]; ?>" style="--w:<?php echo (int) $wiw_large[1]; ?>;--ar:<?php echo esc_attr( (string) round( (int) $wiw_large[1] / max( 1, (int) $wiw_large[2] ), 4 ) ); ?>" decoding="async" />
 				<?php if ( '' !== $wiw_cred ) : ?>
 					<figcaption><?php echo wp_kses( $wiw_cred, wiw_credit_kses() ); ?></figcaption>
 				<?php endif; ?>
