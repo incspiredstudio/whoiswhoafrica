@@ -123,7 +123,7 @@ final class ChildBrandTokensTest extends TestCase {
 	}
 
 	public function test_REQ_273_only_the_four_approved_brand_marks_and_the_pattern_built_from_them_are_brand_symbols(): void {
-		$approved = array( 'mark-cowrie.webp', 'mark-shield.webp', 'mark-lion.webp', 'mark-pyramid.webp', 'pattern-marks.webp' );
+		$approved = array( 'mark-cowrie.webp', 'mark-lion.webp', 'mark-pyramid.webp', 'mark-shield.webp', 'pattern-marks.webp' );
 		$found    = array_map( 'basename', (array) glob( $this->child() . '/assets/brand/*' ) );
 		sort( $found );
 		$this->assertSame( $approved, $found, 'the brand folder holds the four approved marks (cowrie, lion, shield, pyramid) and the tile made from them, nothing else' );
