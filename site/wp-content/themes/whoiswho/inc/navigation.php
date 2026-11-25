@@ -77,6 +77,7 @@ if ( ! function_exists( 'wiw_nav_model' ) ) {
 			'directory' => array(
 				'label'      => __( 'Directory', 'whoiswho' ),
 				'links'      => array(
+					wiw_nav_link( '/directory/', __( 'All profiles', 'whoiswho' ), __( 'Everyone in the directory: people, businesses and institutions', 'whoiswho' ) ),
 					wiw_nav_link( '/people/', __( 'People', 'whoiswho' ), __( 'Leaders, founders and changemakers on public record', 'whoiswho' ) ),
 					wiw_nav_link( '/businesses/', __( 'Businesses', 'whoiswho' ), __( 'Companies, from startups to listed groups', 'whoiswho' ) ),
 					wiw_nav_link( '/institutions/', __( 'Institutions', 'whoiswho' ), __( 'Universities, associations and public bodies', 'whoiswho' ) ),
