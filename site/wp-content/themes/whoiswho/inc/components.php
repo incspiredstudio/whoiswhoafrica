@@ -215,10 +215,9 @@ if ( ! function_exists( 'wiw_pager_items' ) ) {
 
 if ( ! function_exists( 'wiw_pager' ) ) {
 	/**
-	 * The pager under a list (REQ-007, REQ-043): Previous and Next with arrows, numbered pages with gaps, the current page
-	 * marked aria-current="page", a "Page X of Y" status, and on long lists a "Go to page" box (shown by pager.js; it needs
-	 * scripts because page addresses are paths). Previous and Next stay in place on the first and last page, disabled, so the
-	 * numbers do not jump. Empty for one page.
+	 * The pager under a list (REQ-007, REQ-043): Previous and Next with arrows, and numbered pages with gaps, the current
+	 * page marked aria-current="page". Previous and Next stay in place on the first and last page, disabled, so the numbers
+	 * do not jump. Empty for one page.
 	 *
 	 * @param int      $page  Current page.
 	 * @param int      $pages Number of pages.
@@ -251,21 +250,10 @@ if ( ! function_exists( 'wiw_pager' ) ) {
 				? '<li><span class="pager-num is-current" aria-current="page"><span class="sr">' . esc_html__( 'Page', 'whoiswho' ) . ' </span>' . (int) $item . '</span></li>'
 				: '<li' . $near . '><a class="pager-num" href="' . esc_url( (string) $url( (int) $item ) ) . '" aria-label="' . esc_attr( $name ) . '">' . (int) $item . '</a></li>';
 		}
-		$jump = '';
-		if ( $pages > 7 ) {
-			$probe   = 987654321;
-			$pattern = str_replace( (string) $probe, '{page}', (string) $url( $probe ) );
-			$jump    = '<form class="pager-jump" data-pager-jump="' . esc_attr( $pattern ) . '" data-pages="' . (int) $pages . '" hidden>'
-				. '<label><span>' . esc_html__( 'Go to page', 'whoiswho' ) . '</span> <input type="number" inputmode="numeric" min="1" max="' . (int) $pages . '" value="' . (int) $page . '" required /></label>'
-				. '<button type="submit" class="pager-go">' . esc_html__( 'Go', 'whoiswho' ) . '</button></form>';
-		}
-		/* translators: 1: current page, 2: number of pages. */
-		$status = sprintf( __( 'Page %1$d of %2$d', 'whoiswho' ), $page, $pages );
 		return '<nav class="pager" aria-label="' . esc_attr__( 'Pages', 'whoiswho' ) . '">'
 			. '<div class="pager-row">' . $step( 'prev', $page - 1, __( 'Previous', 'whoiswho' ), 'arrow' )
 			. '<ol class="pager-pages">' . $nums . '</ol>'
 			. $step( 'next', $page + 1, __( 'Next', 'whoiswho' ), 'arrow' ) . '</div>'
-			. '<div class="pager-foot"><p class="pager-status">' . esc_html( $status ) . '</p>' . $jump . '</div>'
 			. '</nav>';
 	}
 }//end if
@@ -278,49 +266,29 @@ if ( ! function_exists( 'wiw_pager_kses' ) ) {
 	 */
 	function wiw_pager_kses(): array {
 		return array(
-			'nav'    => array(
+			'nav'  => array(
 				'class'      => true,
 				'aria-label' => true,
 			),
-			'div'    => array( 'class' => true ),
-			'ol'     => array( 'class' => true ),
-			'li'     => array(
+			'div'  => array( 'class' => true ),
+			'ol'   => array( 'class' => true ),
+			'li'   => array(
 				'class'       => true,
 				'aria-hidden' => true,
 			),
-			'a'      => array(
+			'a'    => array(
 				'class'      => true,
 				'href'       => true,
 				'rel'        => true,
 				'aria-label' => true,
 			),
-			'span'   => array(
+			'span' => array(
 				'class'         => true,
 				'aria-hidden'   => true,
 				'aria-current'  => true,
 				'aria-disabled' => true,
 			),
-			'p'      => array( 'class' => true ),
-			'form'   => array(
-				'class'           => true,
-				'data-pager-jump' => true,
-				'data-pages'      => true,
-				'hidden'          => true,
-			),
-			'label'  => array(),
-			'input'  => array(
-				'type'      => true,
-				'inputmode' => true,
-				'min'       => true,
-				'max'       => true,
-				'value'     => true,
-				'required'  => true,
-			),
-			'button' => array(
-				'type'  => true,
-				'class' => true,
-			),
-			'svg'    => array(
+			'svg'  => array(
 				'class'           => true,
 				'viewbox'         => true,
 				'aria-hidden'     => true,
@@ -333,7 +301,7 @@ if ( ! function_exists( 'wiw_pager_kses' ) ) {
 				'stroke-linecap'  => true,
 				'stroke-linejoin' => true,
 			),
-			'path'   => array( 'd' => true ),
+			'path' => array( 'd' => true ),
 		);
 	}
 }//end if
