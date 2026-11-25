@@ -160,20 +160,7 @@ else :
 				<?php endforeach; ?>
 			</div>
 			<?php if ( $wiw_result['pages'] > 1 ) : ?>
-				<nav class="pager" aria-label="<?php esc_attr_e( 'Pages', 'whoiswho' ); ?>">
-					<?php if ( $wiw_result['page'] > 1 ) : ?>
-						<a class="btn alt" rel="prev" href="<?php echo esc_url( $wiw_result['page'] > 2 ? $wiw_base . 'page/' . ( $wiw_result['page'] - 1 ) . '/' : $wiw_base ); ?>"><?php esc_html_e( 'Previous', 'whoiswho' ); ?></a>
-					<?php endif; ?>
-					<span class="pager-pos">
-						<?php
-						/* translators: 1: current page, 2: number of pages. */
-						echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'whoiswho' ), $wiw_result['page'], $wiw_result['pages'] ) );
-						?>
-					</span>
-					<?php if ( $wiw_result['page'] < $wiw_result['pages'] ) : ?>
-						<a class="btn alt" rel="next" href="<?php echo esc_url( $wiw_base . 'page/' . ( $wiw_result['page'] + 1 ) . '/' ); ?>"><?php esc_html_e( 'Next', 'whoiswho' ); ?></a>
-					<?php endif; ?>
-				</nav>
+				<?php echo wp_kses( wiw_pager( (int) $wiw_result['page'], (int) $wiw_result['pages'], static fn ( int $p ): string => $p > 1 ? $wiw_base . 'page/' . $p . '/' : $wiw_base ), wiw_pager_kses() ); ?>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( array() !== $wiw_stories ) : ?>

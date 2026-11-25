@@ -247,7 +247,7 @@ These refine existing questions; no question was renumbered.
 | No-code setup | Nobody edits wp-config or uses a command line. Keys are generated automatically, email is set in FluentSMTP, demo content is optional and chosen on the Setup screen (2026-11-14) | REQ-056, REQ-075 |
 | Two-factor | Available and recommended for staff, not enforced in code (2026-11-14) | REQ-047, REQ-235 |
 | Database | MySQL or MariaDB only; SQLite (WordPress Studio) is not supported (2026-11-14) | REQ-056 |
-| Symbols | Only the four Adinkra marks are approved: Adinkrahene, Dwennimmen, Nkonsonkonson, Sankofa (2026-11-14) | REQ-052 |
+| Symbols | Only four marks are approved: cowrie shell, lion, shield and crossed spears, and pyramid, drawn solid (2026-11-24, amended 2026-11-25, D-073; replaces the four Adinkra marks of 2026-11-14) | REQ-052 |
 | Sample profiles | About 50 real records from acquisition, shipped only inside the install bundle, never committed; photos only with an open licence and credit (2026-11-14) | REQ-203, REQ-237 |
 
 ## Risk register

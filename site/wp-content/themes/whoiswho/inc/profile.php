@@ -333,15 +333,42 @@ if ( ! function_exists( 'wiw_profile_place' ) ) {
 	}
 }//end if
 
+if ( ! function_exists( 'wiw_country_flag_url' ) ) {
+	/**
+	 * The URL of a country's flag (REQ-009): assets/flags/<code>.svg in the parent theme, from flag-icons (MIT). Empty for a
+	 * code with no flag file, such as PAN (Pan-African) or a code staff typed wrongly.
+	 *
+	 * @param string $code ISO 3166-1 alpha-2 country code, any case.
+	 */
+	function wiw_country_flag_url( string $code ): string {
+		$code = strtolower( trim( $code ) );
+		if ( 1 !== preg_match( '/^[a-z]{2}$/', $code ) ) {
+			return '';
+		}
+		$file = '/assets/flags/' . $code . '.svg';
+		return is_file( get_template_directory() . $file ) ? get_template_directory_uri() . $file : '';
+	}
+}
+
+if ( ! function_exists( 'wiw_crumbs_sep' ) ) {
+	/**
+	 * The breadcrumb separator: a chevron drawn at the text's cap height, hidden from screen readers (the list is the structure).
+	 */
+	function wiw_crumbs_sep(): string {
+		return '<svg class="crumbs-sep" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg>';
+	}
+}
+
 if ( ! function_exists( 'wiw_profile_crumbs' ) ) {
 	/**
 	 * The profile breadcrumb (REQ-009, REQ-003): Country › Sector › Industry › Name, each crumb but the last linking to the
 	 * directory filtered by it. An unclassified profile gives Country › Name; with no country it is Directory › Name. A middle
-	 * crumb (sector, industry) carries mid = true so phones can fold it into "…".
+	 * crumb (sector, industry) carries mid = true so phones can fold it into "…". The country crumb carries its flag's URL
+	 * (empty when there is no flag file, for example Pan-African).
 	 *
 	 * @param string               $name           Profile name.
 	 * @param array<string, mixed> $classification As returned by wiw_profile_classification().
-	 * @return array<int, array{label: string, url: string, mid: bool}>
+	 * @return array<int, array{label: string, url: string, mid: bool, flag?: string}>
 	 */
 	function wiw_profile_crumbs( string $name, array $classification ): array {
 		$crumb   = static function ( $part ): ?array {
@@ -354,7 +381,10 @@ if ( ! function_exists( 'wiw_profile_crumbs' ) ) {
 			);
 		};
 		$country = $crumb( $classification['country'] ?? null );
-		$out     = array();
+		if ( null !== $country ) {
+			$country['flag'] = wiw_country_flag_url( (string) ( $classification['country']['code'] ?? '' ) );
+		}
+		$out = array();
 		if ( null === $country ) {
 			$out[] = array(
 				'label' => __( 'Directory', 'whoiswho' ),
@@ -384,7 +414,7 @@ if ( ! function_exists( 'wiw_profile_crumbs_html' ) ) {
 	 * Breadcrumb markup (REQ-009, REQ-043): an ordered list in a labelled nav, the last crumb marked aria-current="page". The
 	 * middle crumbs stay in the markup for screen readers; on phones CSS hides them visually and shows a decorative "…".
 	 *
-	 * @param array<int, array{label: string, url: string, mid: bool}> $crumbs Crumbs from wiw_profile_crumbs().
+	 * @param array<int, array{label: string, url: string, mid: bool, flag?: string}> $crumbs Crumbs from wiw_profile_crumbs().
 	 */
 	function wiw_profile_crumbs_html( array $crumbs ): string {
 		$last   = count( $crumbs ) - 1;
@@ -392,14 +422,15 @@ if ( ! function_exists( 'wiw_profile_crumbs_html' ) ) {
 		$folded = false;
 		foreach ( $crumbs as $i => $c ) {
 			if ( $c['mid'] && ! $folded ) {
-				$items .= '<li class="crumbs-fold" aria-hidden="true"><span class="crumbs-sep">›</span><span>…</span></li>';
+				$items .= '<li class="crumbs-fold" aria-hidden="true">' . wiw_crumbs_sep() . '<span>…</span></li>';
 				$folded = true;
 			}
-			$sep    = $i > 0 ? '<span class="crumbs-sep" aria-hidden="true">›</span>' : '';
+			$sep    = $i > 0 ? wiw_crumbs_sep() : '';
+			$flag   = isset( $c['flag'] ) && '' !== $c['flag'] ? '<img class="crumbs-flag" src="' . esc_url( $c['flag'] ) . '" alt="" width="20" height="15" decoding="async" />' : '';
 			$class  = $c['mid'] ? ' class="crumbs-mid"' : '';
 			$inner  = $i === $last || '' === $c['url']
-				? '<span' . ( $i === $last ? ' aria-current="page"' : '' ) . '>' . esc_html( $c['label'] ) . '</span>'
-				: '<a href="' . esc_url( $c['url'] ) . '">' . esc_html( $c['label'] ) . '</a>';
+				? '<span' . ( $i === $last ? ' aria-current="page"' : '' ) . '>' . $flag . esc_html( $c['label'] ) . '</span>'
+				: '<a href="' . esc_url( $c['url'] ) . '">' . $flag . esc_html( $c['label'] ) . '</a>';
 			$items .= '<li' . $class . '>' . $sep . $inner . '</li>';
 		}
 		return '<nav class="crumbs crumbs--profile' . ( $folded ? ' crumbs--foldable' : '' ) . '" aria-label="' . esc_attr__( 'Breadcrumb', 'whoiswho' ) . '"><ol class="crumbs-list">' . $items . '</ol></nav>';
@@ -546,6 +577,21 @@ if ( ! function_exists( 'wiw_crumbs_kses' ) ) {
 				'aria-hidden'  => true,
 				'aria-current' => true,
 			),
+			'img'  => array(
+				'class'    => true,
+				'src'      => true,
+				'alt'      => true,
+				'width'    => true,
+				'height'   => true,
+				'decoding' => true,
+			),
+			'svg'  => array(
+				'class'       => true,
+				'viewbox'     => true,
+				'aria-hidden' => true,
+				'focusable'   => true,
+			),
+			'path' => array( 'd' => true ),
 		);
 	}
 }//end if

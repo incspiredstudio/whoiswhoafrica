@@ -1,6 +1,6 @@
 <?php
 /**
- * Every part of the release carries the same version, 0.3.3, so WordPress shows a version change when each part is updated
+ * Every part of the release carries the same version, 0.3.4, so WordPress shows a version change when each part is updated
  * (issue 806, REQ-046, REQ-056).
  *
  * @package WhoIsWho
@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ReleaseVersionTest extends TestCase {
 
-	private const VERSION = '0.3.3';
+	private const VERSION = '0.3.4';
 
 	/**
 	 * The first match of a pattern in a file.

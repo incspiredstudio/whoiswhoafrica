@@ -41,7 +41,7 @@ The production-level test results are summarised in `docs/gaps.md` (sources sect
   - A chooser on the Setup screen (profiles, stories, comments, events, awards, curation, pages, settings), with per-part removal that keeps anything staff edited.
   - The 50 real sample profiles ship only inside the plugin zip (`SAMPLE_BUNDLE`, never committed); demo awards use invented stand-ins.
 - **Theme:**
-  - Matches the prototype pages, using only the four approved Adinkra marks.
+  - Matches the prototype pages, using only the four approved brand marks (D-073).
   - Three.js is replaced by a small WebGL helper; CSS went from 179 KB to 104 KB; story CLS is 0.
   - wpDiscuz is styled with tokens.
 - **Security:** the review is in `docs/security-review.md` (no Critical or High findings; SEC-01 to SEC-06 fixed). The guard's HTTPS redirect waits for an https site address. Theme and plugin zip updates work with the guard active (update the guard first).

@@ -156,20 +156,7 @@ wiw_page_band(
 				<?php endforeach; ?>
 			</div>
 			<?php if ( $wiw_result['pages'] > 1 ) : ?>
-				<nav class="pager" aria-label="<?php esc_attr_e( 'Pages', 'whoiswho' ); ?>">
-					<?php if ( $wiw_result['page'] > 1 ) : ?>
-						<a class="btn alt" rel="prev" href="<?php echo esc_url( wiw_directory_url( $wiw_key, array_merge( $wiw_params, array( 'page' => $wiw_result['page'] - 1 ) ) ) ); ?>"><?php esc_html_e( 'Previous', 'whoiswho' ); ?></a>
-					<?php endif; ?>
-					<span class="pager-pos" aria-current="page">
-						<?php
-						/* translators: 1: current page, 2: number of pages. */
-						echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'whoiswho' ), $wiw_result['page'], $wiw_result['pages'] ) );
-						?>
-					</span>
-					<?php if ( $wiw_result['page'] < $wiw_result['pages'] ) : ?>
-						<a class="btn alt" rel="next" href="<?php echo esc_url( wiw_directory_url( $wiw_key, array_merge( $wiw_params, array( 'page' => $wiw_result['page'] + 1 ) ) ) ); ?>"><?php esc_html_e( 'Next', 'whoiswho' ); ?></a>
-					<?php endif; ?>
-				</nav>
+				<?php echo wp_kses( wiw_pager( (int) $wiw_result['page'], (int) $wiw_result['pages'], static fn ( int $p ): string => wiw_directory_url( $wiw_key, array_merge( $wiw_params, array( 'page' => $p ) ) ) ), wiw_pager_kses() ); ?>
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>

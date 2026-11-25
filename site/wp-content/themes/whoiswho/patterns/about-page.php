@@ -10,9 +10,9 @@
  */
 
 $wiw_pillars = array(
-	array( 'blue', 'star', '01', _x( 'Influence', 'pattern text', 'whoiswho' ), _x( 'The people and organisations making a difference and shaping the world around them.', 'pattern text', 'whoiswho' ) ),
-	array( 'orange', 'comb', '02', _x( 'Achievement', 'pattern text', 'whoiswho' ), _x( 'The milestones, contributions and innovations that deserve to be recognised.', 'pattern text', 'whoiswho' ) ),
-	array( 'green', 'spiral', '03', _x( 'Legacy', 'pattern text', 'whoiswho' ), _x( 'The lasting impact people and institutions leave behind.', 'pattern text', 'whoiswho' ) ),
+	array( 'blue', 'cowrie', '01', _x( 'Influence', 'pattern text', 'whoiswho' ), _x( 'The people and organisations making a difference and shaping the world around them.', 'pattern text', 'whoiswho' ) ),
+	array( 'orange', 'lion', '02', _x( 'Achievement', 'pattern text', 'whoiswho' ), _x( 'The milestones, contributions and innovations that deserve to be recognised.', 'pattern text', 'whoiswho' ) ),
+	array( 'green', 'pyramid', '03', _x( 'Legacy', 'pattern text', 'whoiswho' ), _x( 'The lasting impact people and institutions leave behind.', 'pattern text', 'whoiswho' ) ),
 );
 $wiw_ways    = array(
 	array( '/directory/', _x( 'The directory', 'pattern text', 'whoiswho' ), _x( 'Profiles of people, businesses and institutions, with the facts and the sources behind each one.', 'pattern text', 'whoiswho' ) ),

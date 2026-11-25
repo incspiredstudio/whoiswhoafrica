@@ -74,6 +74,12 @@ final class HeaderTest extends TestCase {
 		$this->assertStringContainsString( 'aria-label="Main"', $header );
 	}
 
+	public function test_REQ_259_the_directory_menu_starts_with_all_profiles_then_the_three_lists(): void {
+		$links = wiw_nav_model()['directory']['links'];
+		$this->assertSame( array( 'All profiles', 'People', 'Businesses', 'Institutions' ), array_column( $links, 'label' ) );
+		$this->assertSame( '/directory/', (string) wp_parse_url( $links[0]['url'], PHP_URL_PATH ) );
+	}
+
 	public function test_REQ_259_the_groups_are_directory_awards_stories_events_about(): void {
 		$model = wiw_nav_model();
 		$this->assertSame( array( 'Directory', 'Awards', 'Stories', 'Events', 'About' ), array_map( static fn ( $k ) => $model[ $k ]['label'], array( 'directory', 'awards', 'stories', 'events', 'about' ) ) );

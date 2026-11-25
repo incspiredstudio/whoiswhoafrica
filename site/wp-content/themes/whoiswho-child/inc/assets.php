@@ -18,7 +18,7 @@ add_action(
 		// A url() inside a custom property resolves against the stylesheet that uses it, which is the built bundle, not tokens.css. Absolute addresses keep the brand images working everywhere.
 		$brand = trailingslashit( get_stylesheet_directory_uri() ) . 'assets/brand/';
 		$css   = ':root{';
-		foreach ( array( 'star', 'comb', 'link', 'spiral' ) as $mark ) {
+		foreach ( array( 'cowrie', 'lion', 'shield', 'pyramid' ) as $mark ) {
 			$css .= '--img-mark-' . $mark . ':url("' . esc_url_raw( $brand . 'mark-' . $mark . '.webp' ) . '");';
 		}
 		$css .= '--img-pattern-tile:url("' . esc_url_raw( $brand . 'pattern-marks.webp' ) . '");';

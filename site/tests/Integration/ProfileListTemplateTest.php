@@ -134,16 +134,38 @@ final class ProfileListTemplateTest extends TestCase {
 		$this->assertStringNotContainsString( 'Dirlist Reviewed Org', $this->render( 'people' ), 'a business is not on People' );
 	}
 
+	public function test_REQ_007_the_pager_shows_first_last_and_neighbours_with_gaps(): void {
+		$this->assertSame( array( 1, 2, 'gap', 837 ), wiw_pager_items( 1, 837 ) );
+		$this->assertSame( array( 1, 'gap', 4, 5, 6, 'gap', 837 ), wiw_pager_items( 5, 837 ) );
+		$this->assertSame( array( 1, 2, 3, 4, 'gap', 837 ), wiw_pager_items( 3, 837 ), 'a gap never hides a single page' );
+		$this->assertSame( array( 1, 'gap', 836, 837 ), wiw_pager_items( 837, 837 ) );
+		$this->assertSame( array( 1, 2 ), wiw_pager_items( 2, 2 ) );
+		$this->assertSame( '', wiw_pager( 1, 1, static fn ( int $p ): string => '/x/' . $p ) );
+	}
+
+	public function test_REQ_043_the_pager_marks_the_current_page_and_has_no_status_or_jump_box(): void {
+		$url  = static fn ( int $p ): string => home_url( '/people/' . ( $p > 1 ? 'page/' . $p . '/' : '' ) . '?sort=name' );
+		$html = wp_kses( wiw_pager( 5, 837, $url ), wiw_pager_kses() );
+		$this->assertStringContainsString( '<nav class="pager" aria-label="Pages">', $html );
+		$this->assertSame( 1, substr_count( $html, 'aria-current="page"' ) );
+		$this->assertStringNotContainsString( 'Page 5 of 837', $html, 'no status line (owner, 2026-11-25)' );
+		$this->assertStringNotContainsString( 'pager-jump', $html, 'no Go to page box (owner, 2026-11-25)' );
+		$this->assertStringContainsString( 'aria-label="Page 837"', $html );
+		$this->assertSame( 2, substr_count( $html, 'class="pager-gap" aria-hidden="true"' ) );
+		$this->assertMatchesRegularExpression( '#<a class="pager-step" rel="prev" href="[^"]*/people/page/4/\?sort=name"#', $html );
+	}
+
 	public function test_REQ_007_sixteen_a_page_with_pagination_and_the_tabs_mark_the_current_list(): void {
 		for ( $i = 1; $i <= 17; $i++ ) {
 			$this->profile( sprintf( 'Dirlist Page Org %02d', $i ), 'institution', true );
 		}
 		$out = $this->render( 'institutions' );
 		$this->assertSame( 16, substr_count( $out, '<article class="pcard' ) );
-		$this->assertStringContainsString( 'Page 1 of 2', $out );
 		$this->assertStringContainsString( '/institutions/page/2/', $out );
 		$this->assertMatchesRegularExpression( '#<a href="[^"]*/institutions/" aria-current="page">Institutions</a>#', $out );
-		$this->assertSame( 1, substr_count( $out, 'aria-current="page">' ) - substr_count( $out, 'pager-pos' ) );
+		$this->assertSame( 2, substr_count( $out, 'aria-current="page"' ), 'the current list tab and the current page number' );
+		$this->assertStringContainsString( '<span class="pager-step is-off" aria-disabled="true">', $out, 'Previous stays in place, disabled, on page one' );
+		$this->assertMatchesRegularExpression( '#<a class="pager-step" rel="next" href="[^"]*/institutions/page/2/"#', $out );
 		$this->assertSame( 1, substr_count( $out, '<h1>' ) );
 		set_query_var( 'paged', 2 );
 		$this->assertSame( 1, substr_count( $this->render( 'institutions' ), '<article class="pcard' ) );
