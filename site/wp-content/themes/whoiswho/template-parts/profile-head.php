@@ -61,7 +61,7 @@ if ( $wiw_logo && '' !== $wiw_photo ) {
 }
 $wiw_alt = sprintf(
 	/* translators: %s: name. */
-	null !== $wiw_image && 'logo' === $wiw_image['kind'] ? __( 'Logo of %s', 'whoiswho' ) : __( 'Photo of %s', 'whoiswho' ),
+	$wiw_logo ? __( 'Logo of %s', 'whoiswho' ) : __( 'Photo of %s', 'whoiswho' ),
 	$wiw_profile->name
 );
 ?>
@@ -77,7 +77,7 @@ $wiw_alt = sprintf(
 						<?php if ( is_array( $wiw_large ) ) : ?>
 							<a class="photo-zoom" href="<?php echo esc_url( (string) $wiw_large[0] ); ?>" data-photo-zoom="profile-photo-dialog" aria-haspopup="dialog">
 								<?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?>
-								<span class="sr"><?php echo esc_html( null !== $wiw_image && 'logo' === $wiw_image['kind'] ? __( 'Enlarge the logo', 'whoiswho' ) : __( 'Enlarge the photo', 'whoiswho' ) ); ?></span>
+								<span class="sr"><?php echo esc_html( $wiw_logo ? __( 'Enlarge the logo', 'whoiswho' ) : __( 'Enlarge the photo', 'whoiswho' ) ); ?></span>
 							</a>
 						<?php else : ?>
 							<?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?>
@@ -127,7 +127,7 @@ $wiw_alt = sprintf(
 		</div>
 	</div>
 	<?php if ( is_array( $wiw_large ) ) : ?>
-		<dialog class="photo-dialog<?php echo null !== $wiw_image && 'logo' === $wiw_image['kind'] ? ' photo-dialog--logo' : ''; ?>" id="profile-photo-dialog" aria-label="<?php echo esc_attr( $wiw_alt ); ?>">
+		<dialog class="photo-dialog<?php echo $wiw_logo ? ' photo-dialog--logo' : ''; ?>" id="profile-photo-dialog" aria-label="<?php echo esc_attr( $wiw_alt ); ?>">
 			<button type="button" class="photo-dialog-close" data-photo-close>
 				<?php echo wiw_icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static icon markup. ?>
 				<span class="sr"><?php esc_html_e( 'Close', 'whoiswho' ); ?></span>
