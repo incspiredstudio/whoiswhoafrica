@@ -53,8 +53,6 @@ $wiw_photo = $wiw_logo ? wiw_logo_img(
 ?>
 <article class="pcard<?php echo $wiw_pend ? ' pcard--pending' : ''; ?>" data-profile="<?php echo esc_attr( $wiw_profile->slug ); ?>">
 	<a class="poster poster--<?php echo esc_attr( $wiw_style['tone'] ); ?><?php echo '' === $wiw_photo ? ' poster--org' : ''; ?> pcard-media" href="<?php echo esc_url( $wiw_profile->url ); ?>" tabindex="-1" aria-hidden="true">
-		<span class="poster-pat"></span>
-		<span class="poster-mark poster-mark--<?php echo esc_attr( $wiw_style['mark'] ); ?>"></span>
 		<?php if ( '' !== $wiw_photo ) : ?>
 			<?php echo $wiw_photo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by wp_get_attachment_image. ?>
 		<?php else : ?>
