@@ -143,18 +143,16 @@ final class ProfileListTemplateTest extends TestCase {
 		$this->assertSame( '', wiw_pager( 1, 1, static fn ( int $p ): string => '/x/' . $p ) );
 	}
 
-	public function test_REQ_043_the_pager_marks_the_current_page_and_offers_go_to_page_on_long_lists(): void {
+	public function test_REQ_043_the_pager_marks_the_current_page_and_has_no_status_or_jump_box(): void {
 		$url  = static fn ( int $p ): string => home_url( '/people/' . ( $p > 1 ? 'page/' . $p . '/' : '' ) . '?sort=name' );
 		$html = wp_kses( wiw_pager( 5, 837, $url ), wiw_pager_kses() );
 		$this->assertStringContainsString( '<nav class="pager" aria-label="Pages">', $html );
 		$this->assertSame( 1, substr_count( $html, 'aria-current="page"' ) );
-		$this->assertStringContainsString( 'Page 5 of 837', $html );
+		$this->assertStringNotContainsString( 'Page 5 of 837', $html, 'no status line (owner, 2026-11-25)' );
+		$this->assertStringNotContainsString( 'pager-jump', $html, 'no Go to page box (owner, 2026-11-25)' );
 		$this->assertStringContainsString( 'aria-label="Page 837"', $html );
 		$this->assertSame( 2, substr_count( $html, 'class="pager-gap" aria-hidden="true"' ) );
 		$this->assertMatchesRegularExpression( '#<a class="pager-step" rel="prev" href="[^"]*/people/page/4/\?sort=name"#', $html );
-		$this->assertStringContainsString( 'data-pager-jump="' . esc_attr( home_url( '/people/page/{page}/?sort=name' ) ) . '"', $html, 'the jump box keeps the filters' );
-		$this->assertStringContainsString( 'hidden', $html, 'the jump box needs scripts, so it starts hidden' );
-		$this->assertStringNotContainsString( 'pager-jump', wiw_pager( 2, 5, $url ), 'no jump box on a short list' );
 	}
 
 	public function test_REQ_007_sixteen_a_page_with_pagination_and_the_tabs_mark_the_current_list(): void {
@@ -163,7 +161,6 @@ final class ProfileListTemplateTest extends TestCase {
 		}
 		$out = $this->render( 'institutions' );
 		$this->assertSame( 16, substr_count( $out, '<article class="pcard' ) );
-		$this->assertStringContainsString( 'Page 1 of 2', $out );
 		$this->assertStringContainsString( '/institutions/page/2/', $out );
 		$this->assertMatchesRegularExpression( '#<a href="[^"]*/institutions/" aria-current="page">Institutions</a>#', $out );
 		$this->assertSame( 2, substr_count( $out, 'aria-current="page"' ), 'the current list tab and the current page number' );
