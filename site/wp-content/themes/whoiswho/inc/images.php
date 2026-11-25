@@ -89,7 +89,7 @@ function wiw_logo_trimmed( int $id ): ?array {
 		'width'  => (int) $full[1],
 		'height' => (int) $full[2],
 	);
-	$meta = get_post_meta( $id, '_wiw_logo_trim', true );
+	$meta     = get_post_meta( $id, '_wiw_logo_trim', true );
 	if ( 'none' === $meta ) {
 		return $original;
 	}
@@ -167,10 +167,12 @@ function wiw_logo_drawn_box( string $file ): ?array {
 		for ( $x = 0; $x < $sw; $x++ ) {
 			$c = imagecolorsforindex( $small, imagecolorat( $small, $x, $y ) );
 			if ( $c['alpha'] >= 110 ) {
-				continue; // Transparent.
+				// Transparent.
+				continue;
 			}
 			if ( $corner['alpha'] < 110 && abs( $c['red'] - $corner['red'] ) + abs( $c['green'] - $corner['green'] ) + abs( $c['blue'] - $corner['blue'] ) < 24 ) {
-				continue; // The plain background colour.
+				// The plain background colour.
+				continue;
 			}
 			$x0 = min( $x0, $x );
 			$y0 = min( $y0, $y );

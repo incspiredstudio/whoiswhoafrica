@@ -59,7 +59,7 @@ if ( $wiw_logo && '' !== $wiw_photo ) {
 	$wiw_trim  = wiw_logo_trimmed( (int) $wiw_profile->image_id );
 	$wiw_large = null === $wiw_trim ? false : array( $wiw_trim['url'], $wiw_trim['width'], $wiw_trim['height'] );
 }
-$wiw_alt   = sprintf(
+$wiw_alt = sprintf(
 	/* translators: %s: name. */
 	null !== $wiw_image && 'logo' === $wiw_image['kind'] ? __( 'Logo of %s', 'whoiswho' ) : __( 'Photo of %s', 'whoiswho' ),
 	$wiw_profile->name
