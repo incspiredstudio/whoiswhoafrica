@@ -74,7 +74,8 @@ function wiw_poster_image_attrs( string $alt = '', string $context = 'card' ): a
  * canvas, so a logo shown whole would be small and off centre. The first time a logo is shown, the drawn area is found on a
  * scaled-down copy (transparent pixels, or pixels matching the corner colour), cropped from the original with the image
  * editor, and saved beside it as <name>-wiwtrim.webp. The result is cached in attachment meta; "none" means the file needs
- * no trim or cannot be read, and the original is used. The trimmed copy is deleted with the attachment.
+ * no trim or cannot be read, and the original is used. The cache lives in the attachment's own metadata (key wiw_logo_trim),
+ * like WordPress's other derived sizes. The trimmed copy is deleted with the attachment.
  *
  * @param int $id Attachment ID.
  * @return array{url: string, width: int, height: int}|null Null when the attachment is not an image.
@@ -89,7 +90,13 @@ function wiw_logo_trimmed( int $id ): ?array {
 		'width'  => (int) $full[1],
 		'height' => (int) $full[2],
 	);
-	$meta     = get_post_meta( $id, '_wiw_logo_trim', true );
+	$data     = wp_get_attachment_metadata( $id );
+	$data     = is_array( $data ) ? $data : array();
+	$meta     = $data['wiw_logo_trim'] ?? null;
+	$save     = static function ( $value ) use ( $id, $data ): void {
+		$data['wiw_logo_trim'] = $value;
+		wp_update_attachment_metadata( $id, $data );
+	};
 	if ( 'none' === $meta ) {
 		return $original;
 	}
@@ -103,23 +110,21 @@ function wiw_logo_trimmed( int $id ): ?array {
 	}
 	$box = '' !== $file && is_file( $file ) ? wiw_logo_drawn_box( $file ) : null;
 	if ( null === $box ) {
-		update_post_meta( $id, '_wiw_logo_trim', 'none' );
+		$save( 'none' );
 		return $original;
 	}
 	$editor = wp_get_image_editor( $file );
 	if ( is_wp_error( $editor ) || is_wp_error( $editor->crop( $box[0], $box[1], $box[2], $box[3] ) ) ) {
-		update_post_meta( $id, '_wiw_logo_trim', 'none' );
+		$save( 'none' );
 		return $original;
 	}
 	$name  = pathinfo( $file, PATHINFO_FILENAME ) . '-wiwtrim.webp';
 	$saved = $editor->save( dirname( $file ) . '/' . $name, 'image/webp' );
 	if ( is_wp_error( $saved ) ) {
-		update_post_meta( $id, '_wiw_logo_trim', 'none' );
+		$save( 'none' );
 		return $original;
 	}
-	update_post_meta(
-		$id,
-		'_wiw_logo_trim',
+	$save(
 		array(
 			'file'   => $name,
 			'width'  => (int) $saved['width'],
@@ -197,7 +202,8 @@ function wiw_logo_drawn_box( string $file ): ?array {
  * @param int $id Attachment ID.
  */
 function wiw_logo_trim_delete( int $id ): void {
-	$meta = get_post_meta( $id, '_wiw_logo_trim', true );
+	$data = wp_get_attachment_metadata( $id );
+	$meta = is_array( $data ) ? ( $data['wiw_logo_trim'] ?? null ) : null;
 	if ( is_array( $meta ) && isset( $meta['file'] ) ) {
 		$path = dirname( (string) get_attached_file( $id ) ) . '/' . basename( (string) $meta['file'] );
 		if ( is_file( $path ) ) {
