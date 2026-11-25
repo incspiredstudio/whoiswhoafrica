@@ -1623,7 +1623,8 @@ html.fbar-locked, html.fbar-locked body { overflow: hidden; }
 .profile-photo { position: relative; flex: none; align-self: flex-start; }
 
 /* Profile photo viewer (REQ-003): the photo links to its large version; photo-zoom.js opens it in a modal that grows out of it. */
-.photo-zoom { display: block; width: 100%; height: 100%; cursor: zoom-in; }
+.photo-zoom { position: absolute; inset: 0; display: block; cursor: zoom-in; }
+.photo-zoom .sr { position: absolute; } /* .monogram span sets position: relative, which would put the hidden label in the layout */
 .photo-zoom img { transition: transform var(--m-base) var(--ease-out); }
 .photo-zoom:hover img { transform: scale(1.04); }
 .photo-zoom:focus-visible { outline-offset: -3px; }
