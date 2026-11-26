@@ -2,11 +2,47 @@
 
 **Shared-docs owner: the website session** (Gate 2 and Gate 3 are done; stages are in `CLAUDE.md`). To hand over, commit and change this line.
 
-**Updated 2026-11-14** after the no-code production build (integration rounds 9 and 10 and the release-blocker PR #825) was merged into `chore/structured-build-setup`. Release **0.2.0** (build ff6f79d) is in the local `dist/` folder (git-ignored).
+**Updated 2026-11-26.** **The site is live at https://wiwi.africa** with all imported profiles (see "Live site" below).
+- The latest release is **0.3.4** (PR #878, build 72f0408), in the local `dist/` folder (git-ignored). Earlier builds are kept in `dist-previous-0.3.x/`.
+- Since then, #882 (the cache-safe CSP, which closes #719) has been merged. It ships in the next release.
 
 **Repo layout:** `docs/` shared (a VitePress site); `site/` the WordPress code; `prototype/` the wireframe; `acquisition/` data acquisition; `handbook/` the staff handbook (VitePress). Interface between acquisition and the website: `docs/contracts/import-format.md` (**v1.1**). Other sessions keep their own status in `prototype/STATUS.md` or `acquisition/STATUS.md`.
 
-## Where the project is
+## Live site (2026-11-26)
+
+- **Host:** cPanel with nginx in front; table prefix `wpup_`. The live install runs 0.3.4. The guard sits in `wp-content/mu-plugins`; it had first been extracted into `plugins/` by mistake and was moved.
+- **Content:** copied from the finished local test site (MariaDB `wiw_final`, served at 127.0.0.1:8990), not re-imported. Re-importing would have needed a second review of every profile, and the Review queue has no bulk approve.
+  - **Database:**
+    - A copy of the database had every `127.0.0.1:8990` address changed to `https://wiwi.africa`, with a serialisation-safe replace.
+    - Transients, sessions and the local FluentSMTP settings were removed, and the tables were renamed to `wpup_`.
+  - **Kept from live:**
+    - the live site's own accounts;
+    - its email settings (FluentSMTP and the admin email);
+    - its email log.
+  - **Accounts:** the local `owner` and `editor` accounts were not copied. Their pages now belong to the live Administrator.
+  - **Triggers:** the four append-only triggers (audit log and profile versions) went in as a separate file, without a DEFINER.
+  - **Photos:** `uploads` (28,755 files, about 600 MB) was copied by zip, without `wiw-private` and `wiw-import`.
+  - **Files:** the copy files are in `D:\backups\golive\` on the owner's machine, not in git.
+- **Result:**
+  - 13,377 profiles are live.
+  - 38 profiles held by the free-text scan wait in the Review queue. They must be approved by a different account from the importer.
+  - Checked from outside the host:
+    - home, Directory, People, search, profile pages and photos load;
+    - HTTP redirects to HTTPS;
+    - the security headers are present;
+    - the sitemap lists the profiles;
+    - search engines are allowed.
+- **From now on the live database is the master** (Q90). Never copy a local database over live again. Updates go in as zips (the guard first) plus the Setup screen's **Update the database**. New content goes in through the Import screen or wp-admin.
+- **#128 (the live migration) stays open.** The content move is done and recorded there, but its launch-checklist evidence (smoke script, firewall decision Q85, 24-hour watch) is still to come.
+- **Keep the page cache off on live** until the next release (with #882) is installed and #880 has been checked on the host.
+- **Still to do on live:**
+  - delete `wp-content/uploads-old` once the site is checked;
+  - submit the sitemap to Google Search Console;
+  - review the 38 held profiles;
+  - add an Editor account;
+  - #881 (the CSP blocks Elementor's inline script and its Google Fonts).
+
+## Where the project was on 2026-11-14 (release 0.2.0)
 
 The site installs and runs with **no code and no command line**. You upload the zips in wp-admin, the Setup screen walks you through the rest, and demo content is optional (you choose the parts). This was verified on fresh production-style WordPress 7.1.4 sites on MariaDB:
 - The environment was left at production and only the `dist/` zips were used.
@@ -52,6 +88,10 @@ The production-level test results are summarised in `docs/gaps.md` (sources sect
 
 ## What remains
 
+- **Go-live follow-ups:**
+  - a release with #882;
+  - #880: prove the page cache end to end on the host before turning it on;
+  - #881: Elementor and the CSP.
 - **Owner decisions:** #813 to #821 (G1 to G9 in `docs/gaps.md`). First is #813, the guard's DISALLOW_FILE_MODS/EDIT notice, which shows on every no-code install. Then #814 two-factor before go-live, and #815 cleaning up the 2,437 raw list values created by the full import before profiles go public.
 - **Follow-ups:** #822 (gaps G10 to G53, each with a recommended option).
 - **Human-only issues from earlier:** licences (#8, #31), host check (#37), mailbox and DNS (#1, #38), data-rights period (#544), legal pages and backups (deferred), the live migration (#128).
@@ -73,6 +113,7 @@ See `docs/decisions.md` (D-070: two-factor optional) and `docs/questions.md`, wh
 
 ## Next up
 
+- Website session: build release 0.3.5 with #882 and install it on live. Upload the guard zip into `mu-plugins` first.
 - Owner: decide #813 to #821; check the test inboxes (+prodtest, +clean, +final, +upgrade) for delivery.
 - Website session: the #822 follow-ups. Before going live, measure directory and search with published profiles, and add a cPanel cron.
 - Acquisition session: a curated term map (G3), provenance labels (G10), and the README update for the exporter (G15).
