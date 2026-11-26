@@ -1,7 +1,12 @@
 <?php
 /**
  * Security headers and the HTTPS redirect. Every response gets HSTS (on HTTPS), nosniff, Referrer-Policy, Permissions-Policy
- * and a Content-Security-Policy; inline scripts run only with the per-request nonce from wiw_csp_nonce().
+ * and a Content-Security-Policy. While a public page is built, trusted scripts carry the per-request nonce from wiw_csp_nonce()
+ * (WordPress adds it to every script it prints). When the finished page leaves PHP, the nonce is traded for the SHA-256 hashes of
+ * those inline scripts (and the origins of trusted scripts on other hosts), and the header is replaced to match. So the stored
+ * body of a cached page holds no per-request token, and its policy comes from the body alone: a page cache that stores the
+ * body and its headers (WP Super Cache does) always serves a matching pair (issue 719). A page that cannot be finished this way
+ * (flushed in parts, or not HTML) keeps the nonce and the nonce header, which also match.
  *
  * @package WhoIsWho
  */
@@ -60,13 +65,18 @@ final class Headers {
 	/**
 	 * The policy for public pages: scripts only with the nonce, nothing framed, nothing plugin-based.
 	 *
-	 * @param string                  $nonce The request nonce.
-	 * @param array<string, string[]> $extra Extra sources by directive.
+	 * @param string                  $nonce   The request nonce; empty for none.
+	 * @param array<string, string[]> $extra   Extra sources by directive.
+	 * @param string[]                $scripts Script hashes and origins taken from a finished page.
 	 */
-	public static function csp( string $nonce, array $extra = array() ): string {
+	public static function csp( string $nonce, array $extra = array(), array $scripts = array() ): string {
+		$script_src = array( "'self'" );
+		if ( '' !== $nonce ) {
+			$script_src[] = "'nonce-{$nonce}'";
+		}
 		$directives = array(
 			'default-src'     => array( "'self'" ),
-			'script-src'      => array( "'self'", "'nonce-{$nonce}'" ),
+			'script-src'      => array_merge( $script_src, $scripts ),
 			'style-src'       => array( "'self'", "'unsafe-inline'" ),
 			'img-src'         => array( "'self'", 'data:' ),
 			'font-src'        => array( "'self'" ),
@@ -134,6 +144,112 @@ final class Headers {
 			return;
 		}
 		self::emit( self::headers( is_ssl(), false, self::nonce() ) );
+		// Web requests only: the test suite and WP-CLI print nothing to a browser.
+		if ( 'cli' !== PHP_SAPI ) {
+			ob_start( array( self::class, 'finish' ) );
+		}
+	}
+
+	/**
+	 * Output-buffer callback for public pages: once the whole page is ready, trade the nonce for script hashes and replace the
+	 * policy header to match (issue 719). Anything else passes through untouched, with the nonce header sent earlier.
+	 *
+	 * @param string $buffer The page.
+	 * @param int    $phase  PHP output-handler phase flags.
+	 */
+	public static function finish( string $buffer, int $phase ): string {
+		$whole = ( $phase & PHP_OUTPUT_HANDLER_START ) && ( $phase & PHP_OUTPUT_HANDLER_FINAL ) && ! headers_sent();
+		$done  = self::finish_policy( $buffer, self::nonce(), self::content_type(), $whole );
+		if ( null === $done ) {
+			return $buffer;
+		}
+		header( 'Content-Security-Policy: ' . $done[1], true );
+		return $done[0];
+	}
+
+	/**
+	 * The finished body and its policy, or null when the output must be left as it is: not HTML, or not the whole page in one
+	 * piece (a page flushed in parts has already sent its header, so it keeps the nonce that header names).
+	 *
+	 * @param string $buffer       The output.
+	 * @param string $nonce        The request nonce.
+	 * @param string $content_type The response Content-Type ('' when none was set, which PHP sends as HTML).
+	 * @param bool   $whole        Whether this is the whole page and the header can still be replaced.
+	 * @return array{0: string, 1: string}|null
+	 */
+	public static function finish_policy( string $buffer, string $nonce, string $content_type, bool $whole ): ?array {
+		if ( ! $whole || '' === $nonce || ( '' !== $content_type && false === stripos( $content_type, 'text/html' ) ) ) {
+			return null;
+		}
+		list( $body, $scripts ) = self::finalise( $buffer, $nonce, (string) get_option( 'home' ) );
+		return array( $body, self::csp( '', self::sources(), $scripts ) );
+	}
+
+	/**
+	 * Remove this request's nonce from every script tag that carries it, and list what the policy must allow for those scripts:
+	 * the SHA-256 hash of each inline script that runs, and the origin of each script file on another host. Scripts without the
+	 * nonce (anything that slipped into the content) are left out, so they stay blocked. The result depends only on the page, not
+	 * on the nonce, so two requests for the same page give the same body and the same policy.
+	 *
+	 * @param string $html  The page.
+	 * @param string $nonce The request nonce.
+	 * @param string $home  The site address, to tell same-origin files from other hosts.
+	 * @return array{0: string, 1: string[]}
+	 */
+	public static function finalise( string $html, string $nonce, string $home ): array {
+		$attr    = '/\snonce=(["\'])' . preg_quote( $nonce, '/' ) . '\1/';
+		$own     = strtolower( (string) wp_parse_url( $home, PHP_URL_HOST ) );
+		$scripts = array();
+		$body    = preg_replace_callback(
+			'#<script\b([^>]*)>(.*?)</script>#is',
+			static function ( array $m ) use ( $attr, $own, &$scripts ): string {
+				if ( 1 !== preg_match( $attr, $m[1] ) ) {
+					return $m[0];
+				}
+				$attrs = (string) preg_replace( $attr, '', $m[1] );
+				if ( 1 === preg_match( '/\ssrc=(["\'])(.*?)\1/i', $attrs, $src ) ) {
+					$url    = 0 === strpos( $src[2], '//' ) ? 'https:' . $src[2] : $src[2];
+					$host   = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+					$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+					if ( '' !== $host && $host !== $own && in_array( $scheme, array( 'https', 'http' ), true ) ) {
+						$scripts[] = $scheme . '://' . $host;
+					}
+				} elseif ( self::runs( $attrs ) ) {
+					$scripts[] = "'sha256-" . base64_encode( hash( 'sha256', $m[2], true ) ) . "'"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- CSP hashes are base64.
+				}
+				return '<script' . $attrs . '>' . $m[2] . '</script>';
+			},
+			$html
+		);
+		$scripts = array_values( array_unique( $scripts ) );
+		sort( $scripts );
+		return array( null === $body ? $html : $body, $scripts );
+	}
+
+	/**
+	 * Whether an inline script with these attributes is run by the browser (and so needs to be allowed). Data blocks such as
+	 * JSON-LD are never run.
+	 *
+	 * @param string $attrs The tag's attributes.
+	 */
+	private static function runs( string $attrs ): bool {
+		if ( 1 !== preg_match( '/\stype=(["\'])(.*?)\1/i', $attrs, $type ) ) {
+			return true;
+		}
+		$type = strtolower( trim( $type[2] ) );
+		return in_array( $type, array( '', 'text/javascript', 'application/javascript', 'module', 'speculationrules' ), true );
+	}
+
+	/**
+	 * The Content-Type this response will be sent with, or '' when none has been set yet.
+	 */
+	private static function content_type(): string {
+		foreach ( headers_list() as $line ) {
+			if ( 0 === stripos( $line, 'content-type:' ) ) {
+				return trim( substr( $line, 13 ) );
+			}
+		}
+		return '';
 	}
 
 	/**
