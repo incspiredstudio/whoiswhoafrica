@@ -12,6 +12,7 @@ namespace WhoIsWho\Tests\Security;
 use WhoIsWho\Guard\Headers\Headers;
 use WhoIsWho\Tests\WpTestCase;
 
+// phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedScript -- the tests feed literal script tags to the CSP finisher.
 final class SecurityHeadersTest extends WpTestCase {
 
 	public function test_REQ_046_every_response_carries_security_headers(): void {
@@ -69,6 +70,63 @@ final class SecurityHeadersTest extends WpTestCase {
 		$this->assertStringContainsString( 'nonce="' . wiw_csp_nonce() . '"', $tag );
 		$inline = wp_get_inline_script_tag( 'console.log(1);' );
 		$this->assertStringContainsString( 'nonce="' . wiw_csp_nonce() . '"', $inline );
+	}
+
+	/**
+	 * Issue 719: a page cache stores the page body. The finished body must carry no per-request token, and the policy must be
+	 * derived from the body alone (hashes of the trusted inline scripts), so a stored body and a stored or replayed header always
+	 * agree and no visitor ever gets a body whose scripts the header blocks.
+	 */
+	public function test_REQ_046_finished_page_trades_the_nonce_for_script_hashes(): void {
+		$code = 'document.documentElement.classList.add("at-top");';
+		$html = '<html><head><script nonce="N1" data-home="1">' . $code . '</script>'
+			. '<script nonce="N1" src="/wp-content/themes/whoiswho/assets/js/main.js" defer></script>'
+			. '<script type="application/ld+json" nonce="N1">{"@type":"Person"}</script>'
+			. '</head><body><p>Hi</p><script>alert("injected")</script></body></html>';
+
+		list( $body, $sources ) = Headers::finalise( $html, 'N1', 'https://example.org' );
+
+		$this->assertStringNotContainsString( 'nonce=', $body, 'no per-request token is left in the stored body' );
+		$this->assertStringContainsString( '<script data-home="1">' . $code . '</script>', $body, 'the script itself is unchanged' );
+		$hash = "'sha256-" . base64_encode( hash( 'sha256', $code, true ) ) . "'"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		$this->assertContains( $hash, $sources, 'the trusted inline script is allowed by its hash' );
+		$injected = "'sha256-" . base64_encode( hash( 'sha256', 'alert("injected")', true ) ) . "'"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		$this->assertNotContains( $injected, $sources, 'a script without this request\'s nonce is never trusted' );
+		$this->assertCount( 1, $sources, 'same-origin files and data blocks need no extra source' );
+
+		$csp = Headers::csp( '', array(), $sources );
+		preg_match( '/script-src ([^;]+)/', $csp, $m );
+		$this->assertStringContainsString( $hash, $m[1] );
+		$this->assertStringNotContainsString( 'nonce-', $m[1] );
+		$this->assertStringNotContainsString( 'unsafe-inline', $m[1] );
+	}
+
+	public function test_REQ_046_two_requests_for_the_same_page_give_the_same_body_and_policy(): void {
+		$page   = static function ( string $nonce ): string {
+			return '<head><script nonce="' . $nonce . '">window.wiwMotion={"lenis":"x"};</script></head><body>x</body>';
+		};
+		$first  = Headers::finalise( $page( 'AAAA' ), 'AAAA', 'https://example.org' );
+		$second = Headers::finalise( $page( 'BBBB' ), 'BBBB', 'https://example.org' );
+		$this->assertSame( $first, $second, 'a cached copy of either request matches the policy of both' );
+	}
+
+	public function test_REQ_046_a_trusted_script_from_another_host_keeps_working(): void {
+		$html                   = '<script nonce="N" src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>'
+			. '<script nonce="N" src="//cdn.example.net/x.js"></script><script src="https://evil.example/x.js"></script>';
+		list( $body, $sources ) = Headers::finalise( $html, 'N', 'https://example.org' );
+		$this->assertSame( array( 'https://cdn.example.net', 'https://challenges.cloudflare.com' ), $sources );
+		$this->assertStringNotContainsString( 'evil.example', implode( ' ', $sources ) );
+		$this->assertStringNotContainsString( 'nonce=', $body );
+	}
+
+	public function test_REQ_046_output_that_is_not_a_whole_html_page_is_left_alone(): void {
+		$this->assertNull( Headers::finish_policy( '<rss></rss>', 'N', 'application/rss+xml; charset=UTF-8', true ), 'feeds keep the early header' );
+		$this->assertNull( Headers::finish_policy( '<p nonce="N">part</p>', 'N', 'text/html; charset=UTF-8', false ), 'a page flushed in parts keeps its nonce and header' );
+		$done = Headers::finish_policy( '<script nonce="N">a()</script>', 'N', 'text/html; charset=UTF-8', true );
+		$this->assertIsArray( $done );
+		$this->assertStringNotContainsString( 'nonce', $done[0] );
+		$this->assertStringContainsString( "'sha256-", $done[1] );
+		$this->assertStringContainsString( "frame-ancestors 'none'", $done[1] );
 	}
 
 	public function test_REQ_046_cookies_are_secure_in_production_only(): void {

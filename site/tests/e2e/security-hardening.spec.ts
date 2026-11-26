@@ -18,7 +18,9 @@ test.describe("security on the served site (REQ-046, REQ-047, REQ-229)", () => {
     const csp = h["content-security-policy"] || h["content-security-policy-report-only"] || "";
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("script-src");
-    expect(csp).toMatch(/nonce-/);
+    // Inline scripts are allowed by hash on a finished page, or by nonce on one flushed in parts (issue 719); never unsafe-inline.
+    expect(csp).toMatch(/sha256-|nonce-/);
+    expect(csp.match(/script-src[^;]*/)?.[0] ?? "").not.toContain("unsafe-inline");
     if (https) expect(h["strict-transport-security"]).toContain("max-age=");
   };
 
