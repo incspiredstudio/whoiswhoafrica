@@ -17,6 +17,7 @@ The directory is the core of the platform: public profiles of people (including 
 - As a visitor, I can send an enquiry to a profile owner without seeing their email or phone.
 - As a Reviewer, I can see which profiles are public and what visitors would see for a profile that is not.
 - As an Editor, I can edit a profile in wp-admin with a reason, and the public page changes at once.
+- As an Administrator, I can upload a translations file on **Directory > Translations**, check what it will change, and apply it: names and text in another language become English, the original name stays visible to staff and searchable, and each change has a version and an audit row (REQ-276).
 
 ## The pieces
 
@@ -95,4 +96,4 @@ None for the directory itself. There is no SEO plugin; the guard plugin writes a
 
 ## Requirement ids covered
 
-REQ-001, 003, 004, 005, 006, 007, 009, 018, 040, 041, 043, 060, 068, 123, 125, 139, 140, 142, 143, 144, 156, 162, 208, 209, 210, 216, 217, 218, 226, 247. Milestone: profile templates and directory structure by 20 Nov 2026 (REQ-098).
+REQ-001, 003, 004, 005, 006, 007, 009, 018, 040, 041, 043, 060, 068, 123, 125, 139, 140, 142, 143, 144, 156, 162, 208, 209, 210, 216, 217, 218, 226, 247, 276. Milestone: profile templates and directory structure by 20 Nov 2026 (REQ-098).

@@ -80,8 +80,11 @@ final class UploadPathsTest extends TestCase {
 		// OwnerEdits.php: a signed-in Profile owner (REQ-274) proposes a new photograph for a claimed profile. The same
 		// ImageCheck runs, the file goes to the media library, and it becomes the profile's picture only when a Reviewer approves
 		// the pending revision (REQ-261, REQ-253).
+		// TranslationsScreen.php: Directory > Translations (REQ-276), Administrators only (wiw_run_imports, ActionGuard). It reads
+		// one JSON text file of at most 2 MB; TranslationFile::parse refuses anything that is not the wiw-translations format. The
+		// file is kept in the private folder outside the web root (BundleStore's check) and never reaches the media library.
 		sort( $callers );
-		$this->assertSame( array( 'ImportScreen.php', 'InvitationRoute.php', 'OwnerEdits.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
+		$this->assertSame( array( 'ImportScreen.php', 'InvitationRoute.php', 'OwnerEdits.php', 'TranslationsScreen.php' ), $callers, 'a new file upload must go through the guard and be added to this matrix' );
 	}
 
 	public function test_REQ_127_evidence_not_served_inline(): void {
