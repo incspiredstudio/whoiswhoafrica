@@ -25,6 +25,7 @@ use WhoIsWho\Core\Directory\Edit\ProfileEditor;
 use WhoIsWho\Core\Directory\Edit\ProfileImageEditor;
 use WhoIsWho\Core\Directory\Fields\FieldAllowlist;
 use WhoIsWho\Core\Directory\State\StateRepository;
+use WhoIsWho\Core\Directory\Translate\OriginalName;
 use WhoIsWho\Core\Directory\Taxonomies;
 use WhoIsWho\Core\Import\Images\ImagePolicy;
 use WhoIsWho\Core\Platform\Admin\ActionGuard;
@@ -241,7 +242,7 @@ final class ProfileEditScreen {
 		}
 		$type = (string) $state['entity_type'];
 		$out .= $this->notice( $request );
-		$out .= '<header class="wiw-page-head"><h2 class="wiw-page-head__title">' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( $type ) . ' · ' . Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ) ) . '</p></header>';
+		$out .= '<header class="wiw-page-head"><h2 class="wiw-page-head__title">' . esc_html( get_the_title( $id ) ) . '</h2><p>' . esc_html( Labels::entity_type( $type ) . ' · ' . Labels::state( (string) $state['pub_state'], (string) ( $state['origin'] ?? '' ) ) ) . '</p>' . $this->original_name( $id ) . '</header>';
 		if ( (int) $state['claimed'] > 0 ) {
 			$out .= '<div class="notice notice-info inline"><p>' . esc_html__( 'This profile is claimed. An edit by its assigned manager goes to review before it shows.', 'whoiswho' ) . '</p></div>';
 		}
@@ -345,6 +346,23 @@ final class ProfileEditScreen {
 		);
 	}
 
+
+	/**
+	 * The original-language name a translated profile keeps (REQ-276): shown to staff only, read-only. Search matches it; the
+	 * public page never shows it.
+	 *
+	 * @param int $id Profile.
+	 */
+	private function original_name( int $id ): string {
+		$original = OriginalName::get( $id );
+		if ( null === $original ) {
+			return '';
+		}
+		$lang = $original['lang'];
+		/* translators: %s: language name, for example Arabic. */
+		$label = sprintf( __( 'Original name (%s):', 'whoiswho' ), OriginalName::language_name( $lang ) );
+		return '<p class="wiw-original-name">' . esc_html( $label ) . ' <span lang="' . esc_attr( $lang ) . '" dir="auto">' . esc_html( $original['name'] ) . '</span> <small>' . esc_html__( 'Staff and search only; not shown on the public page.', 'whoiswho' ) . '</small></p>';
+	}
 
 	/**
 	 * The result notice.

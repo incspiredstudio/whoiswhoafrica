@@ -36,6 +36,7 @@ final class Module implements ModuleInterface {
 		Admin\TermMenus::hooks();
 		Admin\ProfileEditScreen::hooks();
 		Admin\AddProfileScreen::hooks();
+		Admin\TranslationsScreen::hooks();
 		( new Views\ViewCounter() )->register();
 		( new Sitemap\Sitemap() )->register();
 		Purge\PurgeQueue::for_site()->register();
